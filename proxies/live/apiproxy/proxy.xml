@@ -1,0 +1,4 @@
+<APIProxy name="ifa">
+  <!-- This is the root of the application -->
+  <Description>"immunisation-fhir-api"</Description>
+</APIProxy>
