@@ -22,14 +22,7 @@ def status():
 
 
 @router.get('/health',
-            description="Health check endpoint only returns 200")
+            description="Health check endpoint only returns 200",
+            tags=['health'])
 def health():
-    """ health sandbox """
     return PlainTextResponse(None, 200)
-
-
-@router.get('/hello',
-            description="Hello endpoint only returns Hello World")
-def hello():
-    """ hello sandbox """
-    return {"message": "Hello World!"}
