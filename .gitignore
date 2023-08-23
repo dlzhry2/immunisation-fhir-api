@@ -20,3 +20,4 @@ env
 .dir-locals.el
 *.pyc
 .python-version
+mock_provider/specification/

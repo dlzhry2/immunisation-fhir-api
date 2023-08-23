@@ -12,4 +12,4 @@ docker_service:
         value: "{{ SERVICE_BASE_PATH }}"
     health_check:
       matcher: "200"
-      path: "/_ping"
+      path: "/_status"
