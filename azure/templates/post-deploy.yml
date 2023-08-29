@@ -13,10 +13,46 @@ steps:
 
   - bash: |
       make install-python
-
     workingDirectory: $(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)
     displayName: Setup pytests
     condition: always()
+  
+  - template: "azure/components/aws-assume-role.yml@common"
+    parameters:
+      role: "auto-ops"
+      profile: "apim-dev"
+      aws_account: "dev"
+
+  - bash: |
+      set -e
+      if ! [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
+        export AWS_PROFILE=apim-dev
+        aws_account_no="$(aws sts get-caller-identity --query Account --output text)"
+
+        service_name=$(FULLY_QUALIFIED_SERVICE_NAME)
+
+        pr_no=$(echo $service_name | { grep -oE '[0-9]+$' || true; })
+        if [ -z $pr_no ]; then
+          workspace=$APIGEE_ENVIRONMENT
+        else
+          workspace=pr-$pr_no
+        fi
+
+        echo Deploy mock provider with following parameters:
+        echo service_name: $service_name
+        echo workspace: $workspace
+        echo Apigee environment: $APIGEE_ENVIRONMENT
+        echo pr_no: $pr_no
+
+        cd terraform
+        make init
+        make apply aws_account_no=${aws_account_no} environment=$workspace 
+        cd ..
+      fi
+    displayName: Deploy mock provider
+    workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
+    retryCountOnTaskFailure: 2
+
 
   - bash: |
       set -e
@@ -27,18 +63,18 @@ steps:
       export APIGEE_ACCESS_TOKEN="$(secret.AccessToken)"
       export PROXY_NAME="$(FULLY_QUALIFIED_SERVICE_NAME)"
       export STATUS_ENDPOINT_API_KEY="$(status-endpoint-api-key)"
-
+      marker="not mock_provider_int"
       if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]
       then
-       poetry run pytest -v -m "not nhsd_apim_authorization and not mock_provider_int" --api-name=immunisation-fhir-api --proxy-name=$PROXY_NAME -o junit_logging=all --junitxml=test-report.xml
-
+        echo "Sandox env tests"
+        marker="not nhsd_apim_authorization and not mock_provider_int"
       elif [[ $APIGEE_ENVIRONMENT == "int" ]]
       then
        echo "Int tests to be set as of now"
-
-      else
-       poetry run pytest -v -m "not mock_provider_int" --api-name=immunisation-fhir-api --proxy-name=$PROXY_NAME -o junit_logging=all --junitxml=test-report.xml
       fi
+      echo "Internal-dev env tests"
+      poetry run pytest -v -m $marker --api-name=immunisation-fhir-api --proxy-name=$PROXY_NAME -o junit_logging=all --junitxml=test-report.xml
+      
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/tests"
     displayName: Run full test suite
 
