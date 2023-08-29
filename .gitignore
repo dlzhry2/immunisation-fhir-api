@@ -19,5 +19,5 @@ smoketest-report.xml
 .dir-locals.el
 *.pyc
 .python-version
-mock_provider/specification/
 **/.terraform/
+sandbox/specification/

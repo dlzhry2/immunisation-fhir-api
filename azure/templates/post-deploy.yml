@@ -67,7 +67,7 @@ steps:
       if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]
       then
         echo "Sandox env tests"
-        marker="not nhsd_apim_authorization and not mock_provider_int"
+        marker="not nhsd_apim_authorization and not sandbox_int"
       elif [[ $APIGEE_ENVIRONMENT == "int" ]]
       then
        echo "Int tests to be set as of now"
