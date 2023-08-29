@@ -28,15 +28,15 @@ clean:
 publish: clean
 	mkdir -p build
 	npm run publish 2> /dev/null
-	cp build/immunisation-fhir-api.json mock_provider/
-	cp -r specification mock_provider/specification
+	cp build/immunisation-fhir-api.json sandbox/
+	cp -r specification sandbox/specification
 
 #Runs build proxy script
 build-proxy:
 	scripts/build_proxy.sh
 
 #Files to loop over in release
-_dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/. tests specification mock_provider"
+_dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/. tests specification sandbox"
 
 #Create /dist/ sub-directory and copy files into directory
 release: clean publish build-proxy
