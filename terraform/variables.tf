@@ -42,6 +42,3 @@ variable "root_domain_name" {
 variable "container_port" {
   default = 9000
 }
-variable "client_id" {}
-variable "client_secret" {}
-variable "keycloak_environment" {}
