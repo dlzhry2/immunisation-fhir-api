@@ -38,7 +38,3 @@ variable "region" {
 variable "root_domain_name" {
   default = "dev.api.platform.nhs.uk"
 }
-
-variable "container_port" {
-  default = 9000
-}

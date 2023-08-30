@@ -38,7 +38,7 @@ steps:
           workspace=pr-$pr_no
         fi
 
-        echo Deploy mock provider with following parameters:
+        echo sandbox with following parameters:
         echo service_name: $service_name
         echo workspace: $workspace
         echo Apigee environment: $APIGEE_ENVIRONMENT
@@ -49,7 +49,7 @@ steps:
         make apply aws_account_no=${aws_account_no} environment=$workspace 
         cd ..
       fi
-    displayName: Deploy mock provider
+    displayName: Deploy sandbox
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
     retryCountOnTaskFailure: 2
 
@@ -72,7 +72,6 @@ steps:
       then
        echo "Int tests to be set as of now"
       fi
-      echo "Internal-dev env tests"
       echo "$marker"
       poetry run pytest -v -m $marker --api-name=immunisation-fhir-api --proxy-name=$PROXY_NAME -o junit_logging=all --junitxml=test-report.xml
       
