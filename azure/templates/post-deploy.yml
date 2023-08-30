@@ -72,8 +72,8 @@ steps:
       then
        echo "Int tests to be set as of now"
       fi
-      echo "$marker"
-      poetry run pytest -v -m \"$marker\" --api-name=immunisation-fhir-api --proxy-name=$PROXY_NAME -o junit_logging=all --junitxml=test-report.xml
+      echo $marker 
+      poetry run pytest -v -m "$marker" --api-name=immunisation-fhir-api --proxy-name=$PROXY_NAME -o junit_logging=all --junitxml=test-report.xml
       
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/tests"
     displayName: Run full test suite
