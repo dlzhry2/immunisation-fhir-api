@@ -63,7 +63,7 @@ steps:
       export APIGEE_ACCESS_TOKEN="$(secret.AccessToken)"
       export PROXY_NAME="$(FULLY_QUALIFIED_SERVICE_NAME)"
       export STATUS_ENDPOINT_API_KEY="$(status-endpoint-api-key)"
-      marker="not mock_provider_int"
+      marker="not sandbox_int"
       if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]
       then
         echo "Sandox env tests"
@@ -73,7 +73,7 @@ steps:
        echo "Int tests to be set as of now"
       fi
       echo "$marker"
-      poetry run pytest -v -m $marker --api-name=immunisation-fhir-api --proxy-name=$PROXY_NAME -o junit_logging=all --junitxml=test-report.xml
+      poetry run pytest -v -m \"$marker\" --api-name=immunisation-fhir-api --proxy-name=$PROXY_NAME -o junit_logging=all --junitxml=test-report.xml
       
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/tests"
     displayName: Run full test suite
