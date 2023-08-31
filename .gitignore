@@ -1,4 +1,4 @@
-
+**/.terraform
 .direnv
 node_modules/
 bin/
@@ -14,10 +14,10 @@ __pycache__/
 .envrc
 .idea/
 .venv/
-
+.env
 smoketest-report.xml
-env
 .dir-locals.el
 *.pyc
 .python-version
+**/.terraform/
 sandbox/specification/
