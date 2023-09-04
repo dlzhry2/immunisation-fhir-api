@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "batch_lambda_source_bucket" {
-    bucket = "${var.prefix}-batch-lambda-source-"
+    bucket = "${var.prefix}-batch-lambda-source"
     force_destroy = true
 }
 
