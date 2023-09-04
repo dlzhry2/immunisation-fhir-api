@@ -9,10 +9,12 @@ data "archive_file" "lambda_zip" {
 }
 
 resource "aws_lambda_function" "batch_processing_lambda" {
-    function_name    = "${var.short_prefix}-token-validator-lambda"
     role             = aws_iam_role.lambda_role.arn
     timeout          = 300
     filename         = data.archive_file.lambda_zip.output_path
+    function_name    = "${var.short_prefix}_batch_processing_lambda"
+    handler          = "batch_processing.lambda_handler"
+    runtime          = "python3.9"
     source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 }
 
