@@ -19,30 +19,6 @@ resource "aws_iam_role" batch_processing_lambda_role {
     EOF
 }
 
-data "aws_iam_policy_document" "batch_processing_lambda_policy_document" {
-  statement {
-    actions = [
-      "sts:AssumeRole",
-      "s3:DeleteObject",
-      "s3:ListBucket",
-      "s3:HeadObject",
-      "s3:GetObject",
-      "s3:GetObjectVersion",
-      "s3:PutObject"
-    ]
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["apigateway.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role" "batch_processing_lambda_role" {
-  name               = "${var.short_prefix}-batch_processing_lambda_role"
-  assume_role_policy = data.aws_iam_policy_document.batch_processing_lambda_policy_document.json
-}
-
 resource "aws_iam_policy" batch_processing_lambda_policy {
     name = "${var.short_prefix}-batch-processing-lambda-policy"
     policy = <<EOF
@@ -58,7 +34,7 @@ resource "aws_iam_policy" batch_processing_lambda_policy {
       ],
       "Effect": "Allow",
       "Resource": [
-        "arn:aws:s3:::"${var.prefix}-batch-lambda-source",
+        "arn:aws:s3:::${var.prefix}-batch-lambda-source",
         "arn:aws:s3:::${var.prefix}-batch-lambda-source/*"
       ]
     },
