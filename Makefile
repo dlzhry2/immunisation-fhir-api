@@ -36,7 +36,7 @@ build-proxy:
 	scripts/build_proxy.sh
 
 #Files to loop over in release
-_dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/. tests specification sandbox terraform"
+_dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/. tests specification sandbox terraform lambda_typescript"
 
 #Create /dist/ sub-directory and copy files into directory
 release: clean publish build-proxy
