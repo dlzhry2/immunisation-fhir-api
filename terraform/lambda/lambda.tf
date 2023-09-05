@@ -5,8 +5,6 @@ resource "aws_s3_bucket" "lambda_bucket" {
 
 #Upload object for the first time, then it gets updated via local-exec
 resource "aws_s3_object" "lambda_function_code" {
-  depends_on  = [null_resource.lambda_typescript_dist
-  ]
   bucket = aws_s3_bucket.lambda_bucket.bucket
   key    = "${var.lambda_zip_name}.zip"
   source = "zips/lambda_function.zip"  # Local path to your ZIP file
@@ -19,7 +17,8 @@ data "aws_s3_object" "lambda_function_code" {
 }
 
 resource "aws_lambda_function" "imms_lambda" {
-  depends_on  = [null_resource.lambda_typescript_dist
+  depends_on  = [null_resource.lambda_typescript_dist,
+                aws_s3_object.lambda_function_code
   ]
   s3_bucket=aws_s3_bucket.lambda_bucket.bucket
   s3_key  ="${var.lambda_zip_name}.zip"

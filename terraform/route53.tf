@@ -15,6 +15,7 @@ resource "aws_route53_zone" "project_zone" {
 }
 
 resource "aws_route53_record" "project_ns_record" {
+  allow_overwrite = true
   name    = local.project_zone_name
   type    = "NS"
   ttl     = 172800
