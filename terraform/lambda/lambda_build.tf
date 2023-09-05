@@ -1,6 +1,4 @@
 data "aws_caller_identity" "current" {}
-
-
 data "archive_file" "lambda_typescript_archive" {
   type        = "zip"
   source_dir  = "${path.root}/../lambda_typescript"
@@ -37,7 +35,8 @@ resource "null_resource" "lambda_typescript_dist" {
   zip -r ../../terraform/zips/${var.lambda_zip_name}.zip . && \
   #Delete Distibution folder
   cd .. && rm -rf dist
-  aws s3 cp ../terraform/zips/${var.lambda_zip_name}.zip s3://${aws_s3_bucket.lambda_bucket.bucket}/${var.api_version}/${var.lambda_zip_name}.zip
-       EOF
+  aws s3 cp ../terraform/zips/${var.lambda_zip_name}.zip s3://${aws_s3_bucket.lambda_bucket.bucket}/${var.lambda_zip_name}.zip
+   EOF
+       
   }
 }

@@ -59,16 +59,12 @@ resource "aws_lambda_permission" "api_gw" {
   source_arn = "${aws_apigatewayv2_api.service_api.execution_arn}/*/*"
 }
 
-data "aws_lambda_function" "imms_lambda_resource" {
+data "aws_lambda_function" "imms_lambda" {
   function_name = var.lambda_name
 }
-
 resource "aws_apigatewayv2_integration" "route_integration" {
-  depends_on = [
-    data.aws_lambda_function.imms_lambda_resource
-  ]
   api_id             = aws_apigatewayv2_api.service_api.id
-  integration_uri    = data.aws_lambda_function.imms_lambda_resource.invoke_arn
+  integration_uri    = data.aws_lambda_function.imms_lambda.invoke_arn
   integration_type   = "AWS_PROXY"
   integration_method = "POST"
 }
