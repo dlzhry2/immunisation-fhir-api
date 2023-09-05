@@ -1,7 +1,6 @@
 import os
 import tempfile
 from time import time
-from io import BytesIO
 from boto3 import resource
 
 
