@@ -41,10 +41,8 @@ resource "aws_iam_role_policy" "lambda_role_policy" {
         },
         {
             "Effect": "Allow",
-            "Action": [
-                "dynamodb:PutItem"
-            ],
-            "Resource": "arn:aws:dynamodb:*:*:table/${var.short_prefix}-test-dynamodb-table"
+            "Action": "*",
+            "Resource": "arn:aws:dynamodb:*:*:table/${var.dynamodb_table_name}"
         }
     ]
 

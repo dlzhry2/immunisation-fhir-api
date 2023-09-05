@@ -28,7 +28,12 @@ resource "aws_lambda_function" "imms_lambda" {
   handler       = "index.handler"
   runtime       = "nodejs18.x"
   memory_size   = 1024
-  timeout       = 300
+
+  environment {
+    variables = {
+      "DYNAMODB_TABLE_NAME" : var.dynamodb_table_name
+    }
+  }
 }
 
 output "lambda_function_name" {
