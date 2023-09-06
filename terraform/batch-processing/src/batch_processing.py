@@ -1,5 +1,3 @@
-import os
-import tempfile
 from time import time
 from boto3 import resource
 
