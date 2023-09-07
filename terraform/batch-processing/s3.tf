@@ -1,6 +1,6 @@
 locals {
     // Flag so we can force delete s3 buckets with items in for pr and shortcode environments only.
-    is_temp = length(regexall("[a-z]{2,4}-?[0-9]{2}", var.environment)) > 0
+    is_temp = length(regexall("[a-z]{2,4}-?[0-9]+", var.environment)) > 0
 }
 
 resource "aws_s3_bucket" "batch_lambda_source_bucket" {
