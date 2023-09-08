@@ -86,3 +86,7 @@ resource "aws_route53_record" "api_domain" {
     zone_id                = aws_apigatewayv2_domain_name.service_api_domain_name.domain_name_configuration[0].hosted_zone_id
   }
 }
+
+output "service_domain_name" {
+  value = aws_apigatewayv2_api_mapping.api_mapping.domain_name
+}

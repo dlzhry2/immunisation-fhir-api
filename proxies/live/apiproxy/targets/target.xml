@@ -7,6 +7,16 @@
       <Step>
         <Name>FlowCallout.ApplyRateLimiting</Name>
       </Step>
+      <Step>
+        <Name>KeyValueMapOperations.GetEndpoint</Name>
+      </Step>
+      <Step>
+        <Name>JavaScript.SetEndpoint</Name>
+      </Step>
+      <Step>
+        <Name>RaiseFault.404TargetNotFound</Name>
+        <Condition>endpointNotFound == true</Condition>
+      </Step>
     </Request>
   </PreFlow>
   <FaultRules>

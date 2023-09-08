@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KeyValueMapOperations async="false" continueOnError="false" enabled="true" name="KeyValueMapOperations.GetEndpoint" mapIdentifier="{{ DOMAIN_ENDPOINT }}">
+    <DisplayName>KeyValueMapOperations.GetEndpoint</DisplayName>
+    <Get assignTo="endpoint">
+        <Key>
+            <Parameter ref="domain_name"/>
+        </Key>
+    </Get>
+</KeyValueMapOperations>

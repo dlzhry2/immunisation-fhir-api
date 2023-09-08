@@ -13,7 +13,7 @@ locals {
 }
 
 locals {
-  project_domain_name = aws_route53_zone.project_zone.name
+  project_domain_name = data.aws_route53_zone.project_zone.name
 }
 
 locals {

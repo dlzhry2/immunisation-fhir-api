@@ -57,7 +57,14 @@ steps:
         cd terraform
         make init
         make apply aws_account_no=${aws_account_no} environment=$workspace 
-        sleep 50 #Just adding sleep to give AWS certificate some time to be cerated for first time
+        cd ..
+
+        if [ -n "$pr_no" ]; then
+          echo add KVM for PR-$pr_no
+          source .venv/bin/activate
+          domain_name=https://$(make -C terraform -s output name=service_domain_name)
+          python scripts/apigee_kvm.py --env $APIGEE_ENVIRONMENT --access-token $(secret.AccessToken) populate_kvm immunisation-fhir-api-pr-$pr_no --key domain_name --value $domain_name
+        fi
       fi
     displayName: Deploy sandbox
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
