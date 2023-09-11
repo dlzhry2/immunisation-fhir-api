@@ -7,16 +7,6 @@
       <Step>
         <Name>FlowCallout.ApplyRateLimiting</Name>
       </Step>
-      <Step>
-        <Name>KeyValueMapOperations.GetEndpoint</Name>
-      </Step>
-      <Step>
-        <Name>JavaScript.SetEndpoint</Name>
-      </Step>
-      <Step>
-        <Name>RaiseFault.404TargetNotFound</Name>
-        <Condition>endpointNotFound == true</Condition>
-      </Step>
     </Request>
   </PreFlow>
   <FaultRules>
@@ -43,7 +33,7 @@
     </HTTPTargetConnection>
   -->
   <HTTPTargetConnection>
-    <URL>http://mocktarget.apigee.net</URL>
+    <URL> {{ DOMAIN_ENDPOINT }}  </URL>
     <Properties>
       <Property name="supports.http10">true</Property>
       <Property name="request.retain.headers">User-Agent,Referer,Accept-Language</Property>

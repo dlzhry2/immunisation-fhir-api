@@ -11,35 +11,42 @@ import requests
 from assertpy import assert_that
 
 
-@pytest.mark.smoketest
 @pytest.mark.debug
+@pytest.mark.smoketest
+@pytest.mark.nhsd_apim_authorization(
+        {
+            "access": "healthcare_worker",
+            "level": "aal3",
+            "login_form": {"username": "656005750104"},
+        }
+    )
 def test_lambda_crud(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     """
     Test for the POST,GET and Delete for Lambda endpoints.
     """
     timestamp = int(time.time())
     random.seed(timestamp)
-    id = random.randint(0, 1000)
+    id = str(random.randint(0, 1000))
     expected_post_status_code = 201
     expected_delete_status_code = 200
     expected_get_status_code = 200
     headers = {
-                "Accept": "*/*",
-                "Content-Type": "application/json",
-                "Content-Length": "59"
+                "Content-Type": "application/json"
     }
     request_payload = {
                       "id": id,
                       "message": "Hello World"}
     json_payload = json.dumps(request_payload)
+
+    headers.update(nhsd_apim_auth_headers)
     post_response = requests.post(
-            url=f"{nhsd_apim_proxy_url}/",
+            url=f"{nhsd_apim_proxy_url}/event",
             headers=headers,
             data=json_payload
         )
 
     get_response = requests.get(
-            url=f"{nhsd_apim_proxy_url}/",
+            url=f"{nhsd_apim_proxy_url}/event",
             headers=headers,
             params={
                 "id": id
@@ -47,7 +54,7 @@ def test_lambda_crud(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
         )
 
     delete_response = requests.delete(
-            url=f"{nhsd_apim_proxy_url}/id",
+            url=f"{nhsd_apim_proxy_url}/event",
             headers=headers,
             params={
                 "id": id
