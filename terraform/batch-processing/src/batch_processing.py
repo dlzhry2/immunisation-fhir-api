@@ -21,12 +21,29 @@ def lambda_handler(_event, _context):
     #send JSON object to API-gateway if succesfully downloaded
     if response.status_code == 200:
         json_data = json.loads(response.text)
-        api_response = requests.post(api_gateway_url, json=json_data)
         filename = f"output_report_{time()}.txt"
+        
+        # Send data to the API Gateway
+        api_response = requests.post(api_gateway_url, json=payload_json)
+        
+        #Construct JSON object to be sent to logged to output bucket
+        payload = {
+            "timestamp": f"output_report_{time()}.txt",
+            "level": json_data,
+            "request": {
+                "x-request-id": "",
+                "x-correlation-id": ""
+            }
+        }
+        
+        #Convert payload to JSON string
+        payload_json = json.dumps(payload)
+        
+        #Send payload as JSON string to output bucket
         output_bucket.put_object(Body=json_data, Key=filename)
         
+        #return status codes depending on api_response
         if api_response.status_code == 200:
-            
             return {
                 'statusCode': 200,
                 'body': 'Successfully sent JSON data to the API Gateway.'
