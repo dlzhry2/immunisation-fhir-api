@@ -1,6 +1,6 @@
 from time import time
 from boto3 import resource
-import requests
+import http.client
 import json
 import uuid
 
@@ -17,19 +17,26 @@ def lambda_handler(_event, _context):
 
 # download JSON object from S3
     s3_object_url = f"s3://{source_bucket_name}/{object_key}"
-    response = requests.get(s3_object_url)
+    conn = http.client.HTTPSConnection(api_gateway_url)
+    conn.request("GET", s3_object_url)
+    
+    response = conn.getresponse()
 
-# send JSON object to API-gateway if succesfully downloaded
-    if response.status_code == 200:
-        json_data = json.loads(response.text)
+# send JSON object to API-gateway if successfully downloaded
+    if response.status == 200:
+        json_data = json.loads(response.read().decode('utf-8'))
         filename = f"output_report_{time()}.txt"
 
 # Send data to the API Gateway
-        api_response = requests.post(api_gateway_url, json=json_data)
+        payload = json.dumps(json_data)
+        headers = {
+            "Content-Type": "application/json"
+        }
+        conn.request("POST", "/alli5", body=payload, headers=headers)
+        api_response = conn.getresponse()
 
-# Construct JSON object to be sent to logged to output bucket
+# Construct JSON object to be sent to the output bucket
         request_id = str(uuid.uuid4())
-
         payload = {
             "timestamp": filename,
             "level": json_data,
@@ -45,29 +52,19 @@ def lambda_handler(_event, _context):
 # Send payload as JSON string to output bucket
         output_bucket.put_object(Body=payload_json, Key="body")
 
-# return status codes depending on api_response
-        if api_response.status_code == 200:
+# Return status codes depending on api_response
+        if api_response.status == 200:
             return {
                 'statusCode': 200,
                 'body': 'Successfully sent JSON data to the API Gateway.'
             }
         else:
             return {
-                'statusCode': api_response.status_code,
+                'statusCode': api_response.status,
                 'body': 'Error sending JSON data to the API Gateway.'
             }
     else:
         return {
-            'statusCode': response.status_code,
+            'statusCode': response.status,
             'body': 'Error fetching JSON object from S3.'
         }
-
-# Write some placeholder bytestring data to a file in the bucket,
-# so we can test that the lambda writes to the correct output bucket.
-# filename = f"output_report_{time()}.txt"
-# data = (b'Test file to see if the lambda writes to the correct s3 bucket. '
-#         b'If our AWS bill skyrockets, this file has been written to the wrong bucket!')
-# output_bucket.put_object(Body=data, Key=filename)
-# return {
-#     'statusCode': 200
-# }
