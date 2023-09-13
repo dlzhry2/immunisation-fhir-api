@@ -31,7 +31,7 @@ def lambda_handler(_event, _context):
         request_id = str(uuid.uuid4())
         
         payload = {
-            "timestamp": f"output_report_{time()}.txt",
+            "timestamp": filename,
             "level": json_data,
             "request": {
                 "x-request-id": request_id,
@@ -43,7 +43,7 @@ def lambda_handler(_event, _context):
         payload_json = json.dumps(payload)
 
 # Send payload as JSON string to output bucket
-        output_bucket.put_object(Body=payload_json, Key=filename)
+        output_bucket.put_object(Body=payload_json, Key="body")
 
 # return status codes depending on api_response
         if api_response.status_code == 200:
