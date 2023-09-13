@@ -7,7 +7,7 @@ import uuid
 
 def lambda_handler(_event, _context):
     # Check if "Records" key exists and it's a non-empty list
-    if "Records" in _event and isinstance(event["Records"], list) and len(_event["Records"]) > 0:
+    if "Records" in _event and isinstance(_event["Records"], list) and len(_event["Records"]) > 0:
         s3_record = _event["Records"][0]["s3"]
 
         # Check if "bucket" key exists and it's a dictionary
@@ -39,29 +39,15 @@ def lambda_handler(_event, _context):
                     filename = f"output_report_{time()}.txt"
 
             # Send data to the API Gateway
-                    payload = json.dumps(json_data)
+                    payload_for_api_gateway = json.dumps(json_data)
                     headers = {
                         "Content-Type": "application/json"
                     }
-                    conn.request("POST", "/alli5", body=payload, headers=headers)
+                    conn.request("POST", "/alli5", body=payload_for_api_gateway, headers=headers)
                     api_response = conn.getresponse()
-
-            # Construct JSON object to be sent to the output bucket
-                    request_id = str(uuid.uuid4())
-                    payload = {
-                        "timestamp": filename,
-                        "level": json_data,
-                        "request": {
-                            "x-request-id": request_id,
-                            "x-correlation-id": request_id
-                        }
-                    }
 
             # Convert payload to JSON string
                     payload_json = json.dumps(payload)
-
-            # Send payload as JSON string to output bucket
-                    output_bucket.put_object(Body=payload_json, Key="body")
 
             # Return status codes depending on api_response
                     if api_response.status == 200:
@@ -70,6 +56,20 @@ def lambda_handler(_event, _context):
                             'body': 'Successfully sent JSON data to the API Gateway.'
                         }
                     else:
+                        # Construct JSON object to be sent to the output bucket
+                        request_id = str(uuid.uuid4())
+                        payload_for_output_bucket = {
+                            "timestamp": filename,
+                            "level": json_data,
+                            "request": {
+                                "x-request-id": request_id,
+                                "x-correlation-id": request_id
+                            }
+                        }
+
+                        # Send payload as JSON string to output bucket with failures
+                        output_bucket.put_object(Body=payload_for_output_bucket, Key="body")
+
                         return {
                             'statusCode': api_response.status,
                             'body': 'Error sending JSON data to the API Gateway.'
