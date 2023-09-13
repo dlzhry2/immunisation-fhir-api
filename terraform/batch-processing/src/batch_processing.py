@@ -25,11 +25,11 @@ def lambda_handler(_event, _context):
         filename = f"output_report_{time()}.txt"
 
 # Send data to the API Gateway
-        api_response = requests.post(api_gateway_url, json=payload_json)
+        api_response = requests.post(api_gateway_url, json=json_data)
 
 # Construct JSON object to be sent to logged to output bucket
         request_id = str(uuid.uuid4())
-        
+
         payload = {
             "timestamp": filename,
             "level": json_data,
@@ -61,7 +61,7 @@ def lambda_handler(_event, _context):
             'statusCode': response.status_code,
             'body': 'Error fetching JSON object from S3.'
         }
-        
+
 # Write some placeholder bytestring data to a file in the bucket,
 # so we can test that the lambda writes to the correct output bucket.
 # filename = f"output_report_{time()}.txt"
