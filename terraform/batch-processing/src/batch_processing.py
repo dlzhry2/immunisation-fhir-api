@@ -19,7 +19,6 @@ def lambda_handler(_event, _context):
     s3_object_url = f"s3://{source_bucket_name}/{object_key}"
     conn = http.client.HTTPSConnection(api_gateway_url)
     conn.request("GET", s3_object_url)
-    
     response = conn.getresponse()
 
 # send JSON object to API-gateway if successfully downloaded
