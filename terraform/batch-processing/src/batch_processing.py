@@ -46,9 +46,6 @@ def lambda_handler(_event, _context):
                     conn.request("POST", "/alli5", body=payload_for_api_gateway, headers=headers)
                     api_response = conn.getresponse()
 
-            # Convert payload to JSON string
-                    payload_json = json.dumps(payload)
-
             # Return status codes depending on api_response
                     if api_response.status == 200:
                         return {
@@ -80,7 +77,7 @@ def lambda_handler(_event, _context):
                         'body': 'Error fetching JSON object from S3.'
                     }
 
-  # Return an error response if the event structure is not as expected
+    # Return an error response if the event structure is not as expected
     return {
         'statusCode': 400,
         'body': 'Invalid _event structure. Make sure the _event contains the expected keys and attributes.'
