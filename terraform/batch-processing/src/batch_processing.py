@@ -22,7 +22,7 @@ def lambda_handler(_event, _context):
                 source_bucket_name = _event.get("Records")[0].get("s3").get("bucket").get("name")
                 dest_bucket_name = source_bucket_name.replace("source", "destination")
                 output_bucket = resource('s3').Bucket(dest_bucket_name)
-                api_gateway_url = os.environ['api_gateway_url']
+                api_gateway_url = os.getenv("SERVICE_DOMAIN_NAME")
 
             # getting JSON object
                 s3_record = _event["Records"][0]["s3"]
