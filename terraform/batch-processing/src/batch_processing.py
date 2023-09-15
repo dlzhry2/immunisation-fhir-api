@@ -1,7 +1,6 @@
 from time import time
 from urllib import request
 from boto3 import resource
-import http.client
 import json
 import uuid
 import os
