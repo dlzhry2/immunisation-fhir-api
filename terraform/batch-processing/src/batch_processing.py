@@ -13,7 +13,7 @@ def lambda_handler(_event, _context):
     if "Records" in _event and isinstance(_event["Records"], list) and len(_event["Records"]) > 0:
         s3_record = _event["Records"][0]["s3"]
         array_path = _event.get("Records").get("key")
-        
+
         # Check if "bucket" key exists and it's a dictionary
         if "bucket" in s3_record and isinstance(s3_record["bucket"], dict):
             source_bucket_name = s3_record["bucket"].get("name")
@@ -24,17 +24,17 @@ def lambda_handler(_event, _context):
                 output_bucket = resource('s3').Bucket(dest_bucket_name)
                 api_gateway_url = os.getenv("SERVICE_DOMAIN_NAME")
                 s3_client = boto3.client('s3')
-                
+
                 try:
                     # Get the array of objects from the S3 bucket
                     response = s3_client.get_object(Bucket=source_bucket_name, Key=array_path)
-                    
+
                     # Read the object's content
                     object_content = response['Body'].read().decode('utf-8')
-                    
+
                     # Parse the JSON content
                     data = json.loads(object_content)
-        
+
                     # Loop through the array of objects
                     for obj in data:
                         # Make a request to the API Gateway for each object
