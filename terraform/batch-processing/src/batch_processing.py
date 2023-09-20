@@ -90,7 +90,7 @@ def lambda_handler(_event, _context):
                     return {
                         'statusCode': 500,
                         'body': 'Error fetching JSON object from S3.'
-                    }  
+                    }
     return {
         'statusCode': 400,
         'body': 'Invalid _event structure. Make sure the _event contains the expected keys and attributes.'
