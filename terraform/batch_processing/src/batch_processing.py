@@ -8,9 +8,8 @@ import os
 
 def lambda_handler(_event, _context):
     if "Records" in _event and isinstance(_event["Records"], list) and len(_event["Records"]) > 0:
-        
         response_list = []
-        
+
         for obj in _event["Records"]:
             s3_record = obj["s3"]
             if "bucket" in s3_record and isinstance(s3_record["bucket"], dict):
@@ -57,7 +56,7 @@ def lambda_handler(_event, _context):
 
                         json_data = json.loads(response.read().decode('utf-8'))
                         connection.close()
-                        
+
                         response_object = {
                             'statusCode': response.status,
                             'json': json_data,
@@ -73,9 +72,9 @@ def lambda_handler(_event, _context):
                                 'body': response.reason
                             })
                             output_bucket.put_object(Body=payload_bytes_output_bucket, Key="body")
-                            
+
                         response_list.append(response_object)
-                            
+
                     except Exception as e:
                         output_bucket.put_object(Body=payload_bytes_output_bucket, Key="body")
                         return {
@@ -83,7 +82,7 @@ def lambda_handler(_event, _context):
                             'body': 'internal server error',
                             'message': e
                         }
-        return response_list                
+        return response_list
     else:
         return {
             'statusCode': 400,
