@@ -5,12 +5,11 @@ import json
 import uuid
 import os
 
-
-def lambda_handler(_event, _context):
-    if "Records" in _event and isinstance(_event["Records"], list) and len(_event["Records"]) > 0:
+def lambda_handler(event, context):
+    if "Records" in event and isinstance(event["Records"], list) and len(event["Records"]) > 0:
         response_list = []
 
-        for obj in _event["Records"]:
+        for obj in event["Records"]:
             s3_record = obj["s3"]
             if "bucket" in s3_record and isinstance(s3_record["bucket"], dict):
                 source_bucket_name = s3_record["bucket"].get("name")
@@ -20,8 +19,6 @@ def lambda_handler(_event, _context):
                     output_bucket = resource('s3').Bucket(dest_bucket_name)
                     api_gateway_url = os.getenv("SERVICE_DOMAIN_NAME")
                     object_path = s3_record["object"]
-
-                    connection = http.client.HTTPSConnection(api_gateway_url)
 
                     try:
                         headers = {
@@ -50,10 +47,10 @@ def lambda_handler(_event, _context):
                         payload_bytes_output_bucket = json.dumps(payload_for_output_bucket).encode('utf-8')
                         payload_bytes_api_gateway = json.dumps(payload_for_api_gateway).encode('utf-8')
 
+                        connection = http.client.HTTPSConnection(api_gateway_url)
                         connection.request("POST", "/", payload_bytes_api_gateway, headers=headers)
 
                         response = connection.getresponse()
-
                         json_data = json.loads(response.read().decode('utf-8'))
                         connection.close()
 
@@ -77,11 +74,11 @@ def lambda_handler(_event, _context):
 
                     except Exception as e:
                         output_bucket.put_object(Body=payload_bytes_output_bucket, Key="body")
-                        return {
+                        response_list.append({
                             'statusCode': 500,
                             'body': 'internal server error',
-                            'message': e
-                        }
+                            'message': str(e)
+                        })
         return response_list
     else:
         return {
