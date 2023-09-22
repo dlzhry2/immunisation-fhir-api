@@ -1,0 +1,172 @@
+{
+    "Records": [
+      {
+        "eventVersion": "2.1",
+        "eventSource": "aws:s3",
+        "awsRegion": "us-east-1",
+        "eventTime": "2023-09-13T12:34:56.789Z",
+        "eventName": "ObjectCreated:Put",
+        "userIdentity": {
+          "principalId": "AWS:123456789012:user/example-user"
+        },
+        "requestParameters": {
+          "sourceIPAddress": "1.2.3.4"
+        },
+        "responseElements": {
+          "x-amz-request-id": "1234567890ABCDEF",
+          "x-amz-id-2": "EXAMPLE123/abcdefghijklmNOPQRSTUVWXYZ1234567890ABCD"
+        },
+        "s3": {
+          "s3SchemaVersion": "1.0",
+          "configurationId": "example-config-id",
+          "bucket": {
+            "name": "immunisation-fhir-api-pr-24-batch-lambda-source",
+            "ownerIdentity": {
+              "principalId": "EXAMPLE"
+            },
+            "arn": "arn:aws:s3:::immunisation-fhir-api-pr-24-batch-lambda-source"
+          },
+          "object": {
+            "resourceType": "Immunization",
+            "status": "ACTION_FLAG or NOT_GIVEN",
+            "patient": {
+              "resourceType": "Patient",
+              "identifier": [
+                {
+                  "system": "https://fhir.nhs.uk/Id/nhs-number",
+                  "value": "NHS_NUMBER"
+                }
+              ],
+              "gender": "PERSON_GENDER_CODE",
+              "birthDate": "PERSON_DOB",
+              "address": [
+                {
+                  "postalCode": "PERSON_POSTCODE"
+                }
+              ]
+            },
+            "occurrenceDateTime": "DATE_AND_TIME",
+            "recorded": "RECORDED_DATE",
+            "primarySource": "PRIMARY_SOURCE",
+            "reportOrigin": {
+              "text": "REPORT_ORIGIN"
+            },
+            "manufacturer": {
+              "resourceType": "Organization",
+              "name": "VACCINATION_MANUFACTURER"
+            },
+            "lotNumber": "BATCH_NUMBER",
+            "expirationDate": "EXPIRY_DATE",
+            "site": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "SITE_OF_VACCINATION_CODE",
+                  "display": "SITE_OF_VACCINATION_TERM"
+                }
+              ]
+            },
+            "route": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "ROUTE_OF_VACCINATION_CODE",
+                  "display": "ROUTE_OF_VACCINATION_TERM"
+                }
+              ]
+            },
+            "doseQuantity": {
+              "value": "DOSE_AMOUNT",
+              "unit": "DOSE_UNIT_TERM",
+              "system": "http://unitsofmeasure.org",
+              "code": "DOSE_UNIT_CODE"
+            }
+          }
+        }
+      },
+      {
+        "eventVersion": "2.1",
+        "eventSource": "aws:s3",
+        "awsRegion": "us-east-1",
+        "eventTime": "2023-09-13T12:34:56.789Z",
+        "eventName": "ObjectCreated:Put",
+        "userIdentity": {
+          "principalId": "AWS:123456789012:user/example-user"
+        },
+        "requestParameters": {
+          "sourceIPAddress": "1.2.3.4"
+        },
+        "responseElements": {
+          "x-amz-request-id": "1234567890ABCDEF",
+          "x-amz-id-2": "EXAMPLE123/abcdefghijklmNOPQRSTUVWXYZ1234567890ABCD"
+        },
+        "s3": {
+          "s3SchemaVersion": "1.0",
+          "configurationId": "example-config-id",
+          "bucket": {
+            "name": "immunisation-fhir-api-pr-24-batch-lambda-source",
+            "ownerIdentity": {
+              "principalId": "EXAMPLE"
+            },
+            "arn": "arn:aws:s3:::immunisation-fhir-api-pr-24-batch-lambda-source"
+          },
+          "object": {
+            "resourceType": "Immunization",
+            "status": "ACTION_FLAG or NOT_GIVEN",
+            "patient": {
+              "resourceType": "Patient",
+              "identifier": [
+                {
+                  "system": "https://fhir.nhs.uk/Id/nhs-number",
+                  "value": "NHS_NUMBER"
+                }
+              ],
+              "gender": "PERSON_GENDER_CODE",
+              "birthDate": "PERSON_DOB",
+              "address": [
+                {
+                  "postalCode": "PERSON_POSTCODE"
+                }
+              ]
+            },
+            "occurrenceDateTime": "DATE_AND_TIME",
+            "recorded": "RECORDED_DATE",
+            "primarySource": "PRIMARY_SOURCE",
+            "reportOrigin": {
+              "text": "REPORT_ORIGIN"
+            },
+            "manufacturer": {
+              "resourceType": "Organization",
+              "name": "VACCINATION_MANUFACTURER"
+            },
+            "lotNumber": "BATCH_NUMBER",
+            "expirationDate": "EXPIRY_DATE",
+            "site": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "SITE_OF_VACCINATION_CODE",
+                  "display": "SITE_OF_VACCINATION_TERM"
+                }
+              ]
+            },
+            "route": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "ROUTE_OF_VACCINATION_CODE",
+                  "display": "ROUTE_OF_VACCINATION_TERM"
+                }
+              ]
+            },
+            "doseQuantity": {
+              "value": "DOSE_AMOUNT",
+              "unit": "DOSE_UNIT_TERM",
+              "system": "http://unitsofmeasure.org",
+              "code": "DOSE_UNIT_CODE"
+            }
+          }
+        }
+      }
+    ]
+  }
