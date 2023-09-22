@@ -5,6 +5,7 @@ import json
 import uuid
 import os
 
+
 def lambda_handler(event, context):
     if "Records" in event and isinstance(event["Records"], list) and len(event["Records"]) > 0:
         response_list = []
