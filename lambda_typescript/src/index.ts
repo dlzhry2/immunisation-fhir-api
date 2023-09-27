@@ -4,8 +4,10 @@ import { DynamoDB } from 'aws-sdk';
 const dynamoDB = new DynamoDB.DocumentClient();
 
 export const handler = async (event: any): Promise<any> => {
+
   const operation = event.httpMethod;
   const dynamoDBTableName = process.env.DYNAMODB_TABLE_NAME || 'DefaultTableName';
+
   if (event.path === '/_status' && operation === 'GET') {
     const statusResponse = {
       status: 'healthy',
@@ -15,15 +17,12 @@ export const handler = async (event: any): Promise<any> => {
       statusCode: 200,
       body: JSON.stringify(statusResponse),
     };
-  }
-  
-  if (operation === 'POST' && event.path === '/event') {
+  } else if (operation === 'POST' && event.path === '/event') {
     // Handle the POST request to create a new item
     const params = {
       TableName: dynamoDBTableName,
       Item: JSON.parse(event.body),
     };
-    
     try {
       await dynamoDB.put(params).promise();
       return {
