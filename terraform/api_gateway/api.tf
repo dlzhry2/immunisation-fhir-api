@@ -22,7 +22,7 @@ resource "aws_apigatewayv2_stage" "default" {
   }
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_access_log.arn
-    format          = "{ \"requestId\":\"$context.requestId\", \"extendedRequestId\":\"$context.extendedRequestId\", \"ip\": \"$context.identity.sourceIp\", \"caller\":\"$context.identity.caller\", \"user\":\"$context.identity.user\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\", \"resourcePath\":\"$context.resourcePath\", \"status\":\"$context.status\", \"protocol\":\"$context.protocol\",  \"responseLength\":\"$context.responseLength\", \"authorizerError\":\"$context.authorizer.error\", \"authorizerStatus\":\"$context.authorizer.status\", \"requestIsValid\":\"$context.authorizer.is_valid\"\"environment\":\"$context.authorizer.environment\"}"
+    format          = "{ \"requestId\":\"$context.requestId\", \"extendedRequestId\":\"$context.extendedRequestId\", \"ip\": \"$context.identity.sourceIp\", \"caller\":\"$context.identity.caller\", \"user\":\"$context.identity.user\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\", \"resourcePath\":\"$context.resourcePath\", \"status\":\"$context.status\", \"protocol\":\"$context.protocol\",  \"responseLength\":\"$context.responseLength\", \"authorizerError\":\"$context.authorizer.error\", \"authorizerStatus\":\"$context.authorizer.status\", \"requestIsValid\":\"$context.authorizer.is_valid\"\"environment\":\"$context.authorizer.environment\" }"
   }
 
   # Bug in terraform-aws-provider with perpetual diff
@@ -38,6 +38,10 @@ resource "aws_apigatewayv2_domain_name" "service_api_domain_name" {
     certificate_arn = aws_acm_certificate.service_certificate.arn
     endpoint_type   = "REGIONAL"
     security_policy = "TLS_1_2"
+  }
+
+   mutual_tls_authentication {
+    truststore_uri = "s3://${aws_s3_bucket.truststore_bucket.bucket}/${local.truststore_file_name}"
   }
 
   tags = {
