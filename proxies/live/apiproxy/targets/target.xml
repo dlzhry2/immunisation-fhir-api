@@ -11,7 +11,7 @@
   </PreFlow>
     <FaultRules>
       <FaultRule name="400_invalid_operation">
-          <Condition>(oauthV2.failed == false)</Condition>
+          <Condition>(oauthV2.failed == false) and (request.verb = "GET")</Condition>
           <Step>
               <Name>AssignMessage.InvalidOperation</Name>
           </Step>
