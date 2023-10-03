@@ -35,7 +35,7 @@ def lambda_crud(url, headers):
         }
     )
     assert_that(200).is_equal_to(delete_response.status_code)
-    
+
 
 @pytest.mark.smoketest
 @pytest.mark.nhsd_apim_authorization(
@@ -51,7 +51,7 @@ def test_lambda_crud_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     """
     lambda_crud(nhsd_apim_proxy_url, nhsd_apim_auth_headers)
 
- 
+
 @pytest.mark.smoketest
 @pytest.mark.nhsd_apim_authorization(
     {
