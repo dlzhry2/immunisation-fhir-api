@@ -66,5 +66,4 @@ def test_lambda_crud_app_restricted(nhsd_apim_proxy_url, nhsd_apim_auth_headers)
     """
     Test for the POST,GET and Delete for Lambda endpoints. Using app-restricted
     """
-    print(nhsd_apim_proxy_url)
     lambda_crud(nhsd_apim_proxy_url, nhsd_apim_auth_headers)
