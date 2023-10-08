@@ -59,17 +59,17 @@ resource "aws_lambda_permission" "api_gw" {
 data "aws_lambda_function" "imms_lambda" {
   function_name = var.lambda_name
 }
-resource "aws_apigatewayv2_integration" "route_integration" {
+resource "aws_apigatewayv2_integration" "event_integration" {
   api_id             = aws_apigatewayv2_api.service_api.id
   integration_uri    = data.aws_lambda_function.imms_lambda.invoke_arn
   integration_type   = "AWS_PROXY"
   integration_method = "POST"
 }
 
-resource "aws_apigatewayv2_route" "root_route" {
+resource "aws_apigatewayv2_route" "event_route" {
   api_id               = aws_apigatewayv2_api.service_api.id
-  route_key            = "ANY /{proxy+}"
-  target               = "integrations/${aws_apigatewayv2_integration.route_integration.id}"
+  route_key            = "ANY /event"
+  target               = "integrations/${aws_apigatewayv2_integration.event_integration.id}"
   authorization_type   = "NONE"
 }
 
@@ -91,6 +91,31 @@ resource "aws_apigatewayv2_integration" "status_integration" {
   integration_uri    = data.aws_lambda_function.status_lambda.invoke_arn
   integration_type   = "AWS_PROXY"
   integration_method = "POST"
+}
+
+resource "aws_lambda_permission" "catch_all_lambda_api_gw" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = var.catch_all_lambda_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn = "${aws_apigatewayv2_api.service_api.execution_arn}/*/*"
+}
+
+data "aws_lambda_function" "catch_all_lambda" {
+  function_name = var.catch_all_lambda_name
+}
+resource "aws_apigatewayv2_integration" "catch_all_route_integration" {
+  api_id             = aws_apigatewayv2_api.service_api.id
+  integration_uri    = data.aws_lambda_function.catch_all_lambda.invoke_arn
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "catch_all_route" {
+  api_id               = aws_apigatewayv2_api.service_api.id
+  route_key            = "ANY /{proxy+}"
+  target               = "integrations/${aws_apigatewayv2_integration.catch_all_route_integration.id}"
+  authorization_type   = "NONE"
 }
 
 output "service_domain_name" {
