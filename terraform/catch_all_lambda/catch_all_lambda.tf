@@ -3,18 +3,10 @@ resource "aws_s3_bucket" "catch_all_lambda_bucket" {
   force_destroy = true
 }
 
-data "archive_file" "lambda_function_code_zip" {
+data "archive_file" "catch_all_lambda_function_code_zip" {
   type        = "zip"
   source_file = "../${path.module}/src/catch_all_lambda.py"
-  output_path = "build/catch_all_lambda_function_code.zip"
-}
-
-output "catch_all_lambda_path_output" {
-  value = "../${path.module}/src"
-}
-
-output "catch_all_lambda_source_file" {
-  value = "../${path.module}/src/catch_all_lambda.py"
+  output_path = "build/${var.catch_all_lambda_zip_name}.zip"
 }
 
 #Upload object for the first time, then it gets updated via local-exec
@@ -34,7 +26,7 @@ resource "aws_lambda_function" "catch_all_lambda" {
 #   source_code_hash = data.aws_s3_object.catch_all_lambda_function_code.etag  # Calculate the hash of the new ZIP file uploaded to s3
   role          = aws_iam_role.catch_all_lambda_role.arn
   handler       = "catch_all_lambda.handler"
-  runtime       = "nodejs18.x"
+  runtime       = "python3.8"
   memory_size   = 1024
 
   environment {
@@ -48,5 +40,13 @@ output "catch_all_lambda_function_name" {
 
 output "catch_all_lambda_zip_name" {
   value = aws_lambda_function.catch_all_lambda.s3_key
+}
+
+output "catch_all_lambda_path_output" {
+  value = "../${path.module}/src"
+}
+
+output "catch_all_lambda_source_file" {
+  value = "../${path.module}/src/catch_all_lambda.py"
 }
 

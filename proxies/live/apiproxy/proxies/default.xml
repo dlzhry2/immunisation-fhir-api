@@ -67,5 +67,9 @@
   </RouteRule>
   <RouteRule name="immunisation-fhir-api-target">
     <TargetEndpoint>immunisation-fhir-api-target</TargetEndpoint>
+    <Condition>(proxy.pathsuffix MatchesPath "/event")</Condition>
+  </RouteRule>
+  <RouteRule name="immunisation-fhir-api-catch-all">
+    <TargetEndpoint>immunisation-fhir-api-catch-all</TargetEndpoint>
   </RouteRule>
 </ProxyEndpoint>

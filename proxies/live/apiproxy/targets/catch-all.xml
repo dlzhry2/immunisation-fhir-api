@@ -1,0 +1,10 @@
+<TargetEndpoint name="immunisation-fhir-api-catch-all">
+  <HTTPTargetConnection>
+    <URL>{{ DOMAIN_ENDPOINT }}</URL>
+    <Properties>
+      <Property name="supports.http10">true</Property>
+      <Property name="request.retain.headers">User-Agent,Referer,Accept-Language</Property>
+      <Property name="retain.queryparams">apikey</Property>
+    </Properties>
+  </HTTPTargetConnection>
+</TargetEndpoint>

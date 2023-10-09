@@ -23,7 +23,6 @@ def test_invalid_operation_returns_400(nhsd_apim_auth_headers):
 
 
 @pytest.mark.auth
-@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization({"access": "application", "level": "level0"})
 def test_invalid_access_token():
     expected_status_code = 401
@@ -37,6 +36,30 @@ def test_invalid_access_token():
             "X-Correlation-Id": "9562466f-c982-4bd5-bb0e-255e9f5e6689"
         },
     )
+
+    assert response.status_code == expected_status_code
+    assert response.json() == expected_body
+    
+
+@pytest.mark.auth
+@pytest.mark.debug
+@pytest.mark.nhsd_apim_authorization(
+    {
+        "access": "healthcare_worker",
+        "level": "aal3",
+        "login_form": {"username": "656005750104"},
+    }
+)
+def test_invalid_endpoint_returns_404(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+    expected_status_code = 404
+    expected_body = load_example("OperationOutcome/404-not_found.json")
+    endpoint_url = f"{nhsd_apim_proxy_url}/invalid_endpoint"
+    print(nhsd_apim_proxy_url)
+
+    response = requests.get(url=endpoint_url, headers=nhsd_apim_auth_headers)
+
+    print(response.status_code)
+    print(response.json(), "<<<<<<<<<<<<<")
 
     assert response.status_code == expected_status_code
     assert response.json() == expected_body
