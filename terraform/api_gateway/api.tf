@@ -30,6 +30,8 @@ resource "aws_apigatewayv2_stage" "default" {
     data_trace_enabled = false
     detailed_metrics_enabled = false
     logging_level = "ERROR"
+    throttling_burst_limit = 100
+    throttling_rate_limit  = 100
   }
 
   # Bug in terraform-aws-provider with perpetual diff
