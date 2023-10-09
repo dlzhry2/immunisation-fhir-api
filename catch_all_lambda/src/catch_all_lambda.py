@@ -1,7 +1,7 @@
 import json
 
 
-def handler(event, context):
+def handler():
     response = {
         "statusCode": 404,  # HTTP status code
         "headers": {

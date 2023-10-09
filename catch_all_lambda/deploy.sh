@@ -1,7 +1,6 @@
     
 
-  # Create a dist folder and copy only the js files to distribution.
-  # AWS Lambda does not have a use for a package.json or typescript files on runtime.
+  # Create a dist folder and copy only the catch_all.py file to dist.
   mkdir -p ../catch_all_lambda/dist &&\
   cp -r ../catch_all_lambda/src/catch_all_lambda.py ../catch_all_lambda/dist &&\
   cd ../catch_all_lambda/dist &&\
