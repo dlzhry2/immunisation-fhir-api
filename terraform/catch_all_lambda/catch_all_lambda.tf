@@ -3,6 +3,12 @@ resource "aws_s3_bucket" "catch_all_lambda_bucket" {
   force_destroy = true
 }
 
+data "archive_file" "lambda_function_code_zip" {
+  type        = "zip"
+  source_file = "../${path.module}/src/catch_all_lambda.py"
+  output_path = "build/batch_processing_lambda.zip"
+}
+
 #Upload object for the first time, then it gets updated via local-exec
 resource "aws_s3_object" "catch_all_lambda_function_code" {
   bucket = aws_s3_bucket.catch_all_lambda_bucket.bucket
