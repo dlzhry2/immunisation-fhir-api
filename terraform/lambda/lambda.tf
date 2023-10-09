@@ -7,7 +7,7 @@ resource "aws_s3_bucket" "lambda_bucket" {
 resource "aws_s3_object" "lambda_function_code" {
   bucket = aws_s3_bucket.lambda_bucket.bucket
   key    = "${var.lambda_zip_name}.zip"
-  source = "zips/lambda_function.zip"  # Local path to your ZIP file
+  source = "${path.root}/zips/${var.lambda_zip_name}.zip"  # Local path to your ZIP file
 }
 
 #Getting latest object that got uploaded via local-exec

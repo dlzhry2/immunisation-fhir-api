@@ -21,7 +21,7 @@ output "catch_all_lambda_source_file" {
 resource "aws_s3_object" "catch_all_lambda_function_code" {
   bucket = aws_s3_bucket.catch_all_lambda_bucket.bucket
   key    = "${var.catch_all_lambda_zip_name}.zip"
-  source = "./zips/catch_all_lambda_function_code.zip"  # Local path to your ZIP file
+  source = "${path.root}/zips/${var.catch_all_lambda_zip_name}.zip"  # Local path to your ZIP file
 }
 
 resource "aws_lambda_function" "catch_all_lambda" {

@@ -55,6 +55,17 @@ steps:
         echo pr_no: $pr_no
 
         cd terraform
+
+        cd ../lambda_typescript && \
+	      chmod +x ./deploy.sh && \
+	      ./deploy.sh
+
+        cd ../catch_all_lambda && \
+	      chmod +x ./deploy.sh && \
+	      ./deploy.sh
+
+        cd ../terraform
+        
         make init
         make apply aws_account_no=${aws_account_no} environment=$workspace 
         
