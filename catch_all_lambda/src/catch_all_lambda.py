@@ -1,5 +1,6 @@
 import json
 
+
 def handler(event, context):
     response = {
         "statusCode": 404,  # HTTP status code
