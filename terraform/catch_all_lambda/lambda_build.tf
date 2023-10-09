@@ -5,6 +5,10 @@ data "archive_file" "catch_all_lambda_archive" {
   output_path = "build/catch_all_lambda_function_code.zip"
 }
 
+output "lambda_build_path_output" {
+  value = "../${path.module}/src"
+}
+
 resource "null_resource" "catch_all_lambda_dist" {
   triggers = {
     token_validator_src = data.archive_file.catch_all_lambda_archive.output_sha

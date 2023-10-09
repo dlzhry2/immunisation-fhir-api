@@ -6,7 +6,15 @@ resource "aws_s3_bucket" "catch_all_lambda_bucket" {
 data "archive_file" "lambda_function_code_zip" {
   type        = "zip"
   source_file = "../${path.module}/src/catch_all_lambda.py"
-  output_path = "build/batch_processing_lambda.zip"
+  output_path = "build/catch_all_lambda_function_code.zip"
+}
+
+output "catch_all_lambda_path_output" {
+  value = "../${path.module}/src"
+}
+
+output "catch_all_lambda_source_file" {
+  value = "../${path.module}/src/catch_all_lambda.py"
 }
 
 #Upload object for the first time, then it gets updated via local-exec
