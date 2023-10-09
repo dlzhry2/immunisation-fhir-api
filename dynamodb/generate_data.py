@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+import random
 import uuid
 from datetime import datetime
 
@@ -10,9 +11,13 @@ def generate(num=10):
         imms = json.loads(template.read())
 
     _events = []
+    nhs_number_pool = ["999999999", "111111111"]
+
     for event in range(num):
         _imms = copy.deepcopy(imms)
         _imms["identifier"][0]["value"] = str(uuid.uuid4())
+        nhs_index = random.randint(0, len(nhs_number_pool) - 1)
+        _imms["patient"]["identifier"][0]["value"] = nhs_number_pool[nhs_index]
 
         _events.append(_imms)
 

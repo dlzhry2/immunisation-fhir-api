@@ -2,10 +2,10 @@ import json
 
 from query import EventTable
 
-SAMPLE_FILE = "sample_data/2023-10-06T15:41:11_10.json"
+SAMPLE_FILE = "sample_data/2023-10-06T16:30:28_10.json"
 
 DYNAMODB_URL = "http://localhost:8000"
-TABLE_NAME = "imms-events"
+TABLE_NAME = "Events"
 
 
 def seed(table, sample_file):

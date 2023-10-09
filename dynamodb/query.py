@@ -19,7 +19,9 @@ class EventTable:
     def put_event(self, event):
         self.table.put_item(Item={
             'Id': event["identifier"][0]["value"],
-            'Event': json.dumps(event)
+            'Event': json.dumps(event),
+            'foo': "some",
+            'NhsNumber': event["patient"]["identifier"][0]["value"],
         })
 
 
@@ -29,5 +31,5 @@ TABLE_NAME = "imms-events"
 if __name__ == '__main__':
     table = EventTable(DYNAMODB_URL, TABLE_NAME)
     event = table.get_event_by_id("9a5448ca-bca4-4815-b3bc-f64fd56f7336")
-    event = table.get_event_by_id("fsdfd")
+    # event = table.get_event_by_id("fsdfd")
     print(event)
