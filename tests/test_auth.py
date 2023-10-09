@@ -39,7 +39,7 @@ def test_invalid_access_token():
 
     assert response.status_code == expected_status_code
     assert response.json() == expected_body
-    
+
 
 @pytest.mark.auth
 @pytest.mark.debug
