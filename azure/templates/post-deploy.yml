@@ -65,10 +65,10 @@ steps:
 	      ./deploy.sh
 
         cd ../terraform
-        
+
         make init
         make apply aws_account_no=${aws_account_no} environment=$workspace 
-        
+
       fi
     displayName: Deploy sandbox
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
