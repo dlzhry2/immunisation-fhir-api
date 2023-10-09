@@ -25,6 +25,13 @@ resource "aws_apigatewayv2_stage" "default" {
     format          = "{ \"requestId\":\"$context.requestId\", \"extendedRequestId\":\"$context.extendedRequestId\", \"ip\": \"$context.identity.sourceIp\", \"caller\":\"$context.identity.caller\", \"user\":\"$context.identity.user\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\", \"resourcePath\":\"$context.resourcePath\", \"status\":\"$context.status\", \"protocol\":\"$context.protocol\",  \"responseLength\":\"$context.responseLength\", \"authorizerError\":\"$context.authorizer.error\", \"authorizerStatus\":\"$context.authorizer.status\", \"requestIsValid\":\"$context.authorizer.is_valid\"\"environment\":\"$context.authorizer.environment\"}"
   }
 
+  route_settings {
+    route_key = "ANY /{proxy+}"
+    data_trace_enabled = false
+    detailed_metrics_enabled = false
+    logging_level = "ERROR"
+  }
+
   # Bug in terraform-aws-provider with perpetual diff
   lifecycle {
     ignore_changes = [deployment_id]
@@ -83,6 +90,7 @@ resource "aws_route53_record" "api_domain" {
     zone_id                = aws_apigatewayv2_domain_name.service_api_domain_name.domain_name_configuration[0].hosted_zone_id
   }
 }
+
 data "aws_lambda_function" "status_lambda" {
   function_name = var.lambda_name
 }
