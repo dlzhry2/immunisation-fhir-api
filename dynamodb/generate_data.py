@@ -5,19 +5,28 @@ import random
 import uuid
 from datetime import datetime
 
+PATIENT_POOL = [
+    {"nhs_number": "9999999999", "dob": "1952-05-06"},
+    {"nhs_number": "1111111111", "dob": "1987-02-23"},
+]
+
 
 def generate(num=10):
     with open("sample_event.json", "r") as template:
         imms = json.loads(template.read())
 
     _events = []
-    nhs_number_pool = ["999999999", "111111111"]
+
+    def pick_rand_patient():
+        nhs_index = random.randint(0, len(PATIENT_POOL) - 1)
+        return PATIENT_POOL[nhs_index]
 
     for event in range(num):
         _imms = copy.deepcopy(imms)
         _imms["identifier"][0]["value"] = str(uuid.uuid4())
-        nhs_index = random.randint(0, len(nhs_number_pool) - 1)
-        _imms["patient"]["identifier"][0]["value"] = nhs_number_pool[nhs_index]
+        patient = pick_rand_patient()
+        _imms["patient"]["identifier"][0]["value"] = patient["nhs_number"]
+        _imms["patient"]["birthDate"] = patient["dob"]
 
         _events.append(_imms)
 
