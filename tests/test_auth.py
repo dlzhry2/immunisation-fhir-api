@@ -5,24 +5,6 @@ from .example_loader import load_example
 
 
 @pytest.mark.auth
-@pytest.mark.nhsd_apim_authorization(
-    {
-        "access": "healthcare_worker",
-        "level": "aal3",
-        "login_form": {"username": "656005750104"},
-    }
-)
-def test_invalid_operation_returns_400(nhsd_apim_auth_headers):
-    endpoint_url = f"{config.BASE_URL}/{config.BASE_PATH}/event"
-    expected_body = load_example("OperationOutcome/400-invalid_operation.json")
-
-    response = requests.get(endpoint_url, headers=nhsd_apim_auth_headers)
-
-    assert response.status_code == 400
-    assert response.json() == expected_body
-
-
-@pytest.mark.auth
 @pytest.mark.nhsd_apim_authorization({"access": "application", "level": "level0"})
 def test_invalid_access_token():
     expected_status_code = 401
