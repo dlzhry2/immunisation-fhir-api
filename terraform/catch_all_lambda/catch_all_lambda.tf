@@ -34,19 +34,6 @@ resource "aws_lambda_function" "catch_all_lambda" {
   }
 }
 
-output "catch_all_lambda_function_name" {
+output "catch_all_lambda_name" {
   value = aws_lambda_function.catch_all_lambda.function_name
 }
-
-output "catch_all_lambda_zip_name" {
-  value = aws_lambda_function.catch_all_lambda.s3_key
-}
-
-output "catch_all_lambda_path_output" {
-  value = "../${path.module}/src"
-}
-
-output "catch_all_lambda_source_file" {
-  value = "../${path.module}/src/catch_all_lambda.py"
-}
-

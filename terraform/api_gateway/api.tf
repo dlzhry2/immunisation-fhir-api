@@ -103,6 +103,13 @@ resource "aws_apigatewayv2_integration" "status_integration" {
   integration_method = "POST"
 }
 
+resource "aws_apigatewayv2_route" "status_route" {
+  api_id               = aws_apigatewayv2_api.service_api.id
+  route_key            = "ANY /_status"
+  target               = "integrations/${aws_apigatewayv2_integration.status_integration.id}"
+  authorization_type   = "NONE"
+}
+
 resource "aws_lambda_permission" "catch_all_lambda_api_gw" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
