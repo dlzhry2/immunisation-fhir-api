@@ -42,6 +42,7 @@ def test_invalid_access_token():
 
 
 @pytest.mark.auth
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
