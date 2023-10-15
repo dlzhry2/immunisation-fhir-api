@@ -16,10 +16,15 @@ class EventTable:
         else:
             return None
 
-    def get_patient(self, nhs_number):
+    def get_patient(self, nhs_number, parameters=None):
+        condition = Key('NhsNumber').eq(nhs_number)
+
+        if parameters and "dateOfBirth" in parameters:
+            condition &= Key('PatientDob').eq(parameters["dateOfBirth"])
+
         response = self.table.query(
             IndexName='NhsNumber',
-            KeyConditionExpression=Key('NhsNumber').eq(nhs_number)
+            KeyConditionExpression=condition
         )
 
         if 'Items' in response:
@@ -28,11 +33,34 @@ class EventTable:
             return None
 
     def put_event(self, event):
+        # TODO: change all explicit array indices to fileter
+        event_id = event["identifier"][0]["value"]
+
+        patient_id = event["patient"]["identifier"][0]["value"]
+        patient_dob = event["patient"]["birthDate"]
+        local_patient_id = event["contained"][0]["item"][3]["answer"][0]["valueCoding"]["code"]
+        local_patient_uri = event["contained"][0]["item"][3]["answer"][0]["valueCoding"]["system"]
+
+        disease_type = event["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"]
+        vaccine_type = event["vaccineCode"]["coding"][0]["code"]
+        vaccine_procedure_code = event["extension"][0]["valueCodeableConcept"]["coding"][0]["code"]
+
+        pk = event_id
+        sk = f""
+        patient_pk = patient_id
+        patient_sk = f"{patient_dob}#{disease_type}#{event_id}"
+
         response = self.table.put_item(Item={
-            'Id': event["identifier"][0]["value"],
+            'PK': pk,
+            'SK': sk,
             'Event': json.dumps(event),
-            'NhsNumber': event["patient"]["identifier"][0]["value"],
-            'PatientDob': event["patient"]["birthDate"]
+            'NhsNumber': patient_pk,
+            'PatientSK': patient_sk,
+            'PatientDob': patient_dob,
+            'LocalPatientId': local_patient_id,
+            'LocalPatientUri': local_patient_uri,
+            'VaccineType': vaccine_type,
+            'VaccineProcedureCode': vaccine_procedure_code,
         })
         return event if response["ResponseMetadata"]["HTTPStatusCode"] == 200 else None
 
