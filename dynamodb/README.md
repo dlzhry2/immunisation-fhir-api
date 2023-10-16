@@ -5,21 +5,39 @@ contain a reference/link to a preexisting resource. For example, a vaccination e
 embedded in it. This means our backend doesn't assume Patient as a separate resource but rather, part of the message
 itself. This is the same for other resources included in the resource like address, location etc.
 
-* **Creating an event:** Add the entire message in an attribute so it can be retrieved. This attribute has the entire
+* **Creating an event:** Add the entire message in an attribute so, it can be retrieved. This attribute has the entire
   original message with no changes. The event-id must be contained in the message itself. Our backend won't create the
-  id.
+  id. **This is our main index.** and it doesn't contain any sort-key
 * **Retrieve an event:** The simplest form is by id; `GET /event/{id}`. This access pattern should always result in
   either one resource or none
-* **Search:** This pattern can be broken down into two main categories. The first pattern assumes a known Patient id
-  and, the second one filters events based on search criteria.
-    * We have a *Global Secondary Index* which has `nhsNumber` and a `sort-key` based on patient's `dateOfBirth`. This
-      means, searching for a specific patient must contain at least the `nhsNumber`. Otherwise, we need to perform a
-      scan which is not ideal. **So, in any search endpoint we always assume `nhsNumber` is a required query-parameter.
-      **
-    * `/event?NhsNumber=1234567,dateOfBirth=01/01/1970,diseaseTypeFilter=covid|flu|mmr|hpv|polio`
-      The NhsNumber in the above endpoint is required. The dateOfBirth has been used as sort-key.
+* **Search:** This pattern can be broken down into two main categories. Queries that retrieve events with a known
+  patient and, queries that retrieve events with particular set of search criteria.
 
-### Field mappings
+### Patient
+
+One index is dedicated to search patient. This will satisfy
+the `/event?NhsNumber=1234567,dateOfBirth=01/01/1970,diseaseTypeFilter=covid|flu|mmr|hpv|polio` endpoint.
+The `NhsNumber` is our PK and the SK has `<dateOfBirth>#<diseaseType>#<eventId>` format. **This means, in order to
+filter based on `diseaseType`, `dateOfBirth` must be known. We can filter based on only `nhsNumber` and `diseaseType`
+but that requires an attribute filter.
+
+**Q:** Do we need to retrieve events based on only NHS number and Disease Type? i.e. is this a valid
+request? `GET /event?NhsNumber=1234567,diseaseTypeFilter=covid`
+**Q:** What is LocalPatient? In our sample data we have both ID and System values, but we don't have any access pattern
+for it.
+
+### Vaccination
+
+The provided object relational model, has a few highlighted fields related to vaccination but, we don't have any search
+criteria for them. We can create one or more indices to address different search requests but, we need to know in
+advance what they are.
+
+For example, one access pattern can be `PK: DiseaseType` and `SK: <vacc_procedure>#<vacc_product>#<event_id>`. This will
+be similar to the patient access pattern.
+
+**Q:** What are search criteria for vaccination related fields?
+
+## Field mappings
 
 Given the relational model (below image) and `sample_event.json` below is our field mappings for highlighted fields:
 ![img](img/relational-model.png)
