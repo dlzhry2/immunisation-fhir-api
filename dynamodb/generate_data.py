@@ -24,53 +24,33 @@ LOCAL_PATIENT_POOL = [
 ACTION_FLAG = ["flagA", "flagB"]
 
 
-def generate(num=10):
+def generate(num):
     with open("sample_event.json", "r") as template:
         imms = json.loads(template.read())
 
     _events = []
 
-    def pick_rand_supplier():
-        sup_index = random.randint(0, len(SUPPLIER) - 1)
-        return SUPPLIER[sup_index]
-
-    def pick_rand_patient():
-        nhs_index = random.randint(0, len(PATIENT_POOL) - 1)
-        return PATIENT_POOL[nhs_index]
-
-    def pick_rand_disease_type():
-        dis_index = random.randint(0, len(DISEASE_TYPE) - 1)
-        return DISEASE_TYPE[dis_index]
-
-    def pick_rand_vaccine_code():
-        vac_index = random.randint(0, len(VACCINE_CODE) - 1)
-        return VACCINE_CODE[vac_index]
-
-    def pick_rand_vaccine_procedure():
-        vac_proc = random.randint(0, len(VACCINE_PROCEDURE) - 1)
-        return VACCINE_PROCEDURE[vac_proc]
-
-    def pick_rand_local_patient():
-        loc_pat = random.randint(0, len(LOCAL_PATIENT_POOL) - 1)
-        return LOCAL_PATIENT_POOL[loc_pat]
+    def pick_rand(pool):
+        idx = random.randint(0, len(pool) - 1)
+        return pool[idx]
 
     for event in range(num):
         _imms = copy.deepcopy(imms)
         # ID
-        _imms["identifier"][0]["system"] = pick_rand_supplier()
+        _imms["identifier"][0]["system"] = pick_rand(SUPPLIER)
         _imms["identifier"][0]["value"] = str(uuid.uuid4())
         # Patient
-        patient = pick_rand_patient()
+        patient = pick_rand(PATIENT_POOL)
         _imms["patient"]["identifier"][0]["value"] = patient["nhs_number"]
         _imms["patient"]["birthDate"] = patient["dob"]
         # LocalPatient
-        local_pat = pick_rand_local_patient()
+        local_pat = pick_rand(LOCAL_PATIENT_POOL)
         _imms["contained"][0]["item"][3]["answer"][0]["valueCoding"]["code"] = local_pat["code"]
         _imms["contained"][0]["item"][3]["answer"][0]["valueCoding"]["system"] = local_pat["system"]
         # Vaccination
-        _imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = pick_rand_disease_type()
-        _imms["vaccineCode"]["coding"][0]["code"] = pick_rand_vaccine_code()
-        _imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = pick_rand_vaccine_procedure()
+        _imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = pick_rand(DISEASE_TYPE)
+        _imms["vaccineCode"]["coding"][0]["code"] = pick_rand(VACCINE_CODE)
+        _imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = pick_rand(VACCINE_PROCEDURE)
 
         _events.append(_imms)
 
@@ -89,5 +69,5 @@ def write(_events):
 
 
 if __name__ == '__main__':
-    events = generate()
+    events = generate(30)
     write(events)

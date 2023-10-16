@@ -9,22 +9,33 @@ class EventTable:
         db = boto3.resource('dynamodb', endpoint_url=endpoint_url)
         self.table = db.Table(table_name)
 
-    def get_event_by_id(self, id):
-        response = self.table.get_item(Key={'Id': id})
-        if 'Item' in response:
-            return json.loads(response['Item']["Event"])
+    def get_event_by_id(self, _id):
+        # TODO: the main index doesn't need sort-key. You can use get_item instead of query
+        # response = self.table.get_item(Key={'PK': id})
+        response = self.table.query(
+            KeyConditionExpression=Key('PK').eq(_id)
+        )
+
+        # if 'Item' in response:
+        if 'Items' in response:
+            # return json.loads(response['Item']["Event"])
+            return json.loads(response['Items'][0]["Event"])
         else:
             return None
 
     def get_patient(self, nhs_number, parameters=None):
-        condition = Key('NhsNumber').eq(nhs_number)
+        condition = Key('PatientPK').eq(nhs_number)
 
         if parameters and "dateOfBirth" in parameters:
-            condition &= Key('PatientDob').eq(parameters["dateOfBirth"])
+            if "diseaseType" in parameters:
+                sort_key = f"{parameters['dateOfBirth']}#{parameters['diseaseType']}"
+                condition &= Key('PatientSK').begins_with(sort_key)
+            else:
+                condition &= Key('PatientSK').begins_with(parameters["dateOfBirth"])
 
         response = self.table.query(
-            IndexName='NhsNumber',
-            KeyConditionExpression=condition
+            IndexName='Patient',
+            KeyConditionExpression=condition,
         )
 
         if 'Items' in response:
@@ -33,7 +44,7 @@ class EventTable:
             return None
 
     def put_event(self, event):
-        # TODO: change all explicit array indices to fileter
+        # TODO: change all explicit array indices to filter
         event_id = event["identifier"][0]["value"]
 
         patient_id = event["patient"]["identifier"][0]["value"]
@@ -46,21 +57,27 @@ class EventTable:
         vaccine_procedure_code = event["extension"][0]["valueCodeableConcept"]["coding"][0]["code"]
 
         pk = event_id
-        sk = f""
+        sk = patient_id
+
         patient_pk = patient_id
         patient_sk = f"{patient_dob}#{disease_type}#{event_id}"
+
+        local_patient_pk = local_patient_id
+        local_patient_sk = f"{local_patient_uri}#{event_id}"
+
+        vacc_pk = disease_type
+        vacc_sk = f"{vaccine_type}#{vaccine_procedure_code}#{event_id}"
 
         response = self.table.put_item(Item={
             'PK': pk,
             'SK': sk,
             'Event': json.dumps(event),
-            'NhsNumber': patient_pk,
+            'PatientPK': patient_pk,
             'PatientSK': patient_sk,
-            'PatientDob': patient_dob,
-            'LocalPatientId': local_patient_id,
-            'LocalPatientUri': local_patient_uri,
-            'VaccineType': vaccine_type,
-            'VaccineProcedureCode': vaccine_procedure_code,
+            'LocalPatientPK': local_patient_pk,
+            'LocalPatientSK': local_patient_sk,
+            'VaccinePK': vacc_pk,
+            'VaccineSK': vacc_sk,
         })
         return event if response["ResponseMetadata"]["HTTPStatusCode"] == 200 else None
 
@@ -70,7 +87,7 @@ class EventTable:
 
 
 DYNAMODB_URL = "http://localhost:8000"
-TABLE_NAME = "Events3"
+TABLE_NAME = "ImmsEvents"
 
 if __name__ == '__main__':
     table = EventTable(DYNAMODB_URL, TABLE_NAME)
