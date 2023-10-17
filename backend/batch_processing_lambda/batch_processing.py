@@ -4,21 +4,27 @@ from boto3 import resource
 import json
 import uuid
 import os
+from icecream import ic
 
 
 def lambda_handler(event, context):
     if "Records" in event and isinstance(event["Records"], list) and len(event["Records"]) > 0:
+        ic(event) #NWTMPXXX
         response_list = []
 
         for obj in event["Records"]:
             s3_record = obj["s3"]
             if "bucket" in s3_record and isinstance(s3_record["bucket"], dict):
                 source_bucket_name = s3_record["bucket"].get("name")
+                ic(source_bucket_name) #NWTMPXXX
 
                 if "object" in s3_record and isinstance(s3_record["object"], dict):
+                    ic(s3_record["object"]) #NWTMPXXX
                     dest_bucket_name = source_bucket_name.replace("source", "destination")
+                    ic(dest_bucket_name) #NWTMPXXX
                     output_bucket = resource('s3').Bucket(dest_bucket_name)
                     api_gateway_url = os.getenv("SERVICE_DOMAIN_NAME")
+                    ic(api_gateway_url) #NWTMPXXX
                     object_path = s3_record["object"]
 
                     try:
@@ -28,6 +34,7 @@ def lambda_handler(event, context):
                         }
 
                         request_body = json.dumps(object_path)
+                        ic(request_body) #NWTMPXXX
                         filename = f"output_report_{time()}.txt"
                         request_id = str(uuid.uuid4())
 
@@ -39,19 +46,24 @@ def lambda_handler(event, context):
                                 "x-correlation-id": request_id
                             }
                         }
+                        ic(payload_for_output_bucket) #NWTMPXXX
 
                         payload_for_api_gateway = {
                             "id": request_id,
                             "message": request_body
                         }
+                        ic(payload_for_api_gateway) #NWTMPXXX
 
                         payload_bytes_output_bucket = json.dumps(payload_for_output_bucket).encode('utf-8')
+                        ic(payload_bytes_output_bucket) #NWTMPXXX
                         payload_bytes_api_gateway = json.dumps(payload_for_api_gateway).encode('utf-8')
+                        ic(payload_bytes_api_gateway) #NWTMPXXX
 
                         connection = http.client.HTTPSConnection(api_gateway_url)
                         connection.request("POST", "/", payload_bytes_api_gateway, headers=headers)
 
                         response = connection.getresponse()
+                        ic(response) #NWTMPXXX
                         json_data = json.loads(response.read().decode('utf-8'))
                         connection.close()
 

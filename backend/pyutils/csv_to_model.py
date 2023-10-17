@@ -1,5 +1,5 @@
 import csv
-from models.immunization import ImmunizationModel
+from backend.models.immunization import ImmunizationModel
 import datetime
 
 

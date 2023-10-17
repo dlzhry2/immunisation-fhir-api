@@ -1,7 +1,7 @@
 data "aws_caller_identity" "current" {}
 data "archive_file" "lambda_typescript_archive" {
   type        = "zip"
-  source_dir  = "${path.root}/../lambda_typescript"
+  source_dir  = "${path.root}/../backend/event_lambda"
   output_path = "build/lambda_typescript.zip"
 }
 

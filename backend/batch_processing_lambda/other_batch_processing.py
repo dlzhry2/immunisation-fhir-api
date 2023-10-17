@@ -2,8 +2,8 @@ import json
 from time import time
 from boto3 import resource
 from boto3 import client
-from lambdas.batch_processing.csv_to_model import read_csv_to_immunizations
-from lambdas.batch_processing.model_to_fhir import convert_to_fhir
+from backend.pyutils.csv_to_model import read_csv_to_immunizations
+from backend.pyutils.model_to_fhir import convert_to_fhir
 
 
 # This is yet to be integrated with main logic
