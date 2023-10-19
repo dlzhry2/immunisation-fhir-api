@@ -1,0 +1,24 @@
+data "aws_s3_object" "lambda_function_code" {
+    bucket = var.source_bucket
+    key    = var.source_key
+}
+
+resource "aws_lambda_function" "lambda" {
+    role          = aws_iam_role.lambda_role.arn
+    timeout       = 300
+    s3_bucket     = var.source_bucket
+    s3_key        = var.source_key
+    function_name = "${var.short_prefix}_${var.function_name}"
+    handler       = "${var.function_name}_handler.${var.function_name}_handler"
+    runtime       = "python3.9"
+
+    source_code_hash = data.aws_s3_object.lambda_function_code.etag
+
+    #    environment {
+    #        variables = {
+    #            "SERVICE_DOMAIN_NAME" : var.service_domain_name
+    #        }
+    #    }
+}
+
+

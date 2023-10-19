@@ -4,7 +4,7 @@ locals {
 
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_file = "${path.root}/../backend/batch_procerssing_lambda/${local.lambda_file_name}"
+    source_file = "${path.root}/../backend/batch_processing_lambda/${local.lambda_file_name}"
   output_path = "build/batch_processing_lambda.zip"
 }
 
