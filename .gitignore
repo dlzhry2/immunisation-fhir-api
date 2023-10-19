@@ -23,3 +23,4 @@ terraform/zips
 .python-version
 **/.terraform/
 sandbox/specification/
+.vscode/
