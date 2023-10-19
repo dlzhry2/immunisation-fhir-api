@@ -1,26 +1,59 @@
 locals {
-    lambda_source_dir    = "${path.root}/../lambda_code"
-    lambda_source_zip    = "build/lambda_source_code.zip"
-    endpoint_policy_path = "${path.root}/policies/lambda_endpoint.json"
+    lambda_source_dir     = "${path.root}/../lambda_code"
+    endpoint_policy_path  = "${path.root}/policies/lambda_endpoint.json"
+    build_dir             = "build"
+    # lambda_source_zip is only used for change detection. lambda_deployment_zip is the final zip file that is getting deployed
+    lambda_source_zip     = "lambda_source_code.zip"
+    lambda_deployment_zip = "lambda_deployment.zip"
 }
 
 data "archive_file" "lambda_source_zip" {
     type        = "zip"
     source_dir  = local.lambda_source_dir
-    output_path = local.lambda_source_zip
+    output_path = "${local.build_dir}/${local.lambda_source_zip}"
 }
 
-resource "aws_s3_bucket" "lambda_source_code" {
+resource "aws_s3_bucket" "lambda_deployment" {
     bucket        = "${local.prefix}-lambda-source-code"
     force_destroy = true
 }
 
-resource "aws_s3_object" "lambda_function_code" {
-    bucket = aws_s3_bucket.lambda_source_code.bucket
-    key    = "lambda_code"
-    source = data.archive_file.lambda_source_zip.output_path
-    etag   = filemd5(data.archive_file.lambda_source_zip.output_path)
+resource "null_resource" "lambda_typescript_dist" {
+    triggers = {
+        lambda_source_code = data.archive_file.lambda_source_zip.output_sha
+        every_time         = uuid()
+    }
+
+    provisioner "local-exec" {
+        interpreter = ["bash", "-c"]
+        command     = <<EOF
+
+cd "${path.root}"
+build_dir="${path.root}/${local.build_dir}/lambda"
+mkdir -p $build_dir
+cd $build_dir
+
+cp -r "${abspath(local.lambda_source_dir)}/" .
+pip install -r requirements.txt --target .
+
+zip -r "../${local.lambda_deployment_zip}" .
+   EOF
+    }
 }
+
+locals {
+    lambda_deployment_path = "${path.root}/${local.build_dir}/${local.lambda_deployment_zip}"
+    lambda_bucket_key      = "package"
+}
+
+resource "aws_s3_object" "lambda_function_code" {
+    bucket     = aws_s3_bucket.lambda_deployment.bucket
+    key        = local.lambda_bucket_key
+    source     = local.lambda_deployment_path
+    etag       = filemd5(local.lambda_deployment_path)
+    depends_on = [null_resource.lambda_typescript_dist]
+}
+
 data "aws_iam_policy_document" "endpoint_policy_document" {
     source_policy_documents = [templatefile(local.endpoint_policy_path, {} )]
 }
@@ -30,8 +63,8 @@ module "get_status" {
     prefix        = local.prefix
     short_prefix  = local.short_prefix
     function_name = "get_status"
-    source_bucket = aws_s3_bucket.lambda_source_code.bucket
-    source_key    = "lambda_code"
+    source_bucket = aws_s3_bucket.lambda_deployment.bucket
+    source_key    = local.lambda_bucket_key
     policy_json   = data.aws_iam_policy_document.endpoint_policy_document.json
 }
 
@@ -40,7 +73,7 @@ module "get_event" {
     prefix        = local.prefix
     short_prefix  = local.short_prefix
     function_name = "get_event"
-    source_bucket = aws_s3_bucket.lambda_source_code.bucket
-    source_key    = "lambda_code"
+    source_bucket = aws_s3_bucket.lambda_deployment.bucket
+    source_key    = local.lambda_bucket_key
     policy_json   = data.aws_iam_policy_document.endpoint_policy_document.json
 }
