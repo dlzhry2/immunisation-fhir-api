@@ -18,10 +18,9 @@ resource "aws_s3_bucket" "lambda_deployment" {
     force_destroy = true
 }
 
-resource "null_resource" "lambda_typescript_dist" {
+resource "null_resource" "lambda_install_dependencies" {
     triggers = {
         lambda_source_code = data.archive_file.lambda_source_zip.output_sha
-        every_time         = uuid()
     }
 
     provisioner "local-exec" {
@@ -46,12 +45,16 @@ locals {
     lambda_bucket_key      = "package"
 }
 
+data "local_file" "deployment_code" {
+    filename   = local.lambda_deployment_path
+    depends_on = [null_resource.lambda_install_dependencies]
+}
+
 resource "aws_s3_object" "lambda_function_code" {
-    bucket     = aws_s3_bucket.lambda_deployment.bucket
-    key        = local.lambda_bucket_key
-    source     = local.lambda_deployment_path
-    etag       = filemd5(local.lambda_deployment_path)
-    depends_on = [null_resource.lambda_typescript_dist]
+    bucket = aws_s3_bucket.lambda_deployment.bucket
+    key    = local.lambda_bucket_key
+    source = local.lambda_deployment_path
+    etag   = data.local_file.deployment_code.content_md5
 }
 
 data "aws_iam_policy_document" "endpoint_policy_document" {
@@ -64,7 +67,8 @@ module "get_status" {
     short_prefix  = local.short_prefix
     function_name = "get_status"
     source_bucket = aws_s3_bucket.lambda_deployment.bucket
-    source_key    = local.lambda_bucket_key
+    source_key    = aws_s3_object.lambda_function_code.key
+    source_etag   = aws_s3_object.lambda_function_code.etag
     policy_json   = data.aws_iam_policy_document.endpoint_policy_document.json
 }
 
@@ -74,6 +78,7 @@ module "get_event" {
     short_prefix  = local.short_prefix
     function_name = "get_event"
     source_bucket = aws_s3_bucket.lambda_deployment.bucket
-    source_key    = local.lambda_bucket_key
+    source_key    = aws_s3_object.lambda_function_code.key
+    source_etag   = aws_s3_object.lambda_function_code.etag
     policy_json   = data.aws_iam_policy_document.endpoint_policy_document.json
 }

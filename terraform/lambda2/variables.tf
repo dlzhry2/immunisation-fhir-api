@@ -3,5 +3,6 @@ variable "short_prefix" {}
 variable "function_name" {}
 variable "source_bucket" {}
 variable "source_key" {}
+variable "source_etag" {}
 
 variable "policy_json" {}

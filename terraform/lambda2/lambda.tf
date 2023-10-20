@@ -1,8 +1,3 @@
-data "aws_s3_object" "lambda_function_code" {
-    bucket = var.source_bucket
-    key    = var.source_key
-}
-
 resource "aws_lambda_function" "lambda" {
     role          = aws_iam_role.lambda_role.arn
     timeout       = 300
@@ -12,7 +7,7 @@ resource "aws_lambda_function" "lambda" {
     handler       = "${var.function_name}_handler.${var.function_name}_handler"
     runtime       = "python3.9"
 
-    source_code_hash = data.aws_s3_object.lambda_function_code.etag
+    source_code_hash = var.source_etag
 
     #    environment {
     #        variables = {
