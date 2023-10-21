@@ -9,11 +9,9 @@ resource "aws_lambda_function" "lambda" {
 
     source_code_hash = var.source_etag
 
-    #    environment {
-    #        variables = {
-    #            "SERVICE_DOMAIN_NAME" : var.service_domain_name
-    #        }
-    #    }
+    environment {
+        variables = var.environments
+    }
 }
 
 

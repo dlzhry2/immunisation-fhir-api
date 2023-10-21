@@ -1,6 +1,5 @@
 locals {
     lambda_source_dir     = "${path.root}/../lambda_code"
-    endpoint_policy_path  = "${path.root}/policies/lambda_endpoint.json"
     build_dir             = "build"
     # lambda_source_zip is only used for change detection. lambda_deployment_zip is the final zip file that is getting deployed
     lambda_source_zip     = "lambda_source_code.zip"
@@ -57,8 +56,17 @@ resource "aws_s3_object" "lambda_function_code" {
     etag   = data.local_file.deployment_code.content_md5
 }
 
-data "aws_iam_policy_document" "endpoint_policy_document" {
-    source_policy_documents = [templatefile(local.endpoint_policy_path, {} )]
+locals {
+    policy_path = "${path.root}/policies"
+}
+
+data "aws_iam_policy_document" "logs_policy_document" {
+    source_policy_documents = [templatefile("${local.policy_path}/log.json", {} )]
+}
+locals {
+    endpoint_dynamodb_env_vars = {
+        "DYNAMODB_TABLE_NAME" = module.dynamodb.dynamodb_table_name
+    }
 }
 
 module "get_status" {
@@ -68,10 +76,18 @@ module "get_status" {
     function_name = "get_status"
     source_bucket = aws_s3_bucket.lambda_deployment.bucket
     source_key    = aws_s3_object.lambda_function_code.key
-    source_etag   = aws_s3_object.lambda_function_code.etag
-    policy_json   = data.aws_iam_policy_document.endpoint_policy_document.json
+    source_etag   = data.archive_file.lambda_source_zip.output_sha
+    policy_json   = data.aws_iam_policy_document.logs_policy_document.json
 }
 
+data "aws_iam_policy_document" "endpoint_policy_document" {
+    source_policy_documents = [
+        templatefile("${local.policy_path}/dynamodb.json", {
+            "dynamodb_table_name" : module.dynamodb.dynamodb_table_name
+        } ),
+        templatefile("${local.policy_path}/log.json", {} ),
+    ]
+}
 module "get_event" {
     source        = "./lambda2"
     prefix        = local.prefix
@@ -79,6 +95,7 @@ module "get_event" {
     function_name = "get_event"
     source_bucket = aws_s3_bucket.lambda_deployment.bucket
     source_key    = aws_s3_object.lambda_function_code.key
-    source_etag   = aws_s3_object.lambda_function_code.etag
+    source_etag   = data.archive_file.lambda_source_zip.output_sha
     policy_json   = data.aws_iam_policy_document.endpoint_policy_document.json
+    environments  = local.endpoint_dynamodb_env_vars
 }
