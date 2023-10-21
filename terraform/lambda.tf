@@ -50,11 +50,6 @@ locals {
 data "aws_iam_policy_document" "logs_policy_document" {
     source_policy_documents = [templatefile("${local.policy_path}/log.json", {} )]
 }
-locals {
-    endpoint_dynamodb_env_vars = {
-        "DYNAMODB_TABLE_NAME" = module.dynamodb.dynamodb_table_name
-    }
-}
 
 module "get_status" {
     source        = "./lambda"
@@ -63,28 +58,7 @@ module "get_status" {
     function_name = "get_status"
     source_bucket = aws_s3_bucket.lambda_source_bucket.bucket
     source_key    = aws_s3_object.lambda_function_code.key
-    #    source_sha    = sha256(aws_s3_object.lambda_function_code.etag)
-    #    source_sha    = local.lambda_code_sha
     source_sha    = aws_s3_object.lambda_function_code.source_hash
     policy_json   = data.aws_iam_policy_document.logs_policy_document.json
 }
 
-data "aws_iam_policy_document" "endpoint_policy_document" {
-    source_policy_documents = [
-        templatefile("${local.policy_path}/dynamodb.json", {
-            "dynamodb_table_name" : module.dynamodb.dynamodb_table_name
-        } ),
-        templatefile("${local.policy_path}/log.json", {} ),
-    ]
-}
-module "get_event" {
-    source        = "./lambda"
-    prefix        = local.prefix
-    short_prefix  = local.short_prefix
-    function_name = "get_event"
-    source_bucket = aws_s3_bucket.lambda_source_bucket.bucket
-    source_key    = aws_s3_object.lambda_function_code.key
-    source_sha    = aws_s3_object.lambda_function_code.source_hash
-    policy_json   = data.aws_iam_policy_document.endpoint_policy_document.json
-    environments  = local.endpoint_dynamodb_env_vars
-}
