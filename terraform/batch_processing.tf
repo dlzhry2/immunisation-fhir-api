@@ -27,13 +27,13 @@ locals {
     batch_processing_lambda_name = "batch_processing"
 }
 module "batch_processing" {
-    source        = "./lambda2"
+    source        = "./lambda"
     prefix        = local.prefix
     short_prefix  = local.short_prefix
     function_name = local.batch_processing_lambda_name
-    source_bucket = aws_s3_bucket.lambda_deployment.bucket
+    source_bucket = aws_s3_bucket.lambda_source_bucket.bucket
     source_key    = aws_s3_object.lambda_function_code.key
-    source_etag   = data.archive_file.lambda_source_zip.output_sha
+    source_sha    = aws_s3_object.lambda_function_code.source_hash
     policy_json   = data.aws_iam_policy_document.batch_processing_policy_document.json
     environments  = {
         "SERVICE_DOMAIN_NAME" = module.api_gateway.service_domain_name
