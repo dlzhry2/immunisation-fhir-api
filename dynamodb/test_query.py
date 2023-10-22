@@ -4,7 +4,7 @@ from dynamodb.generate_data import PATIENT_POOL, DISEASE_TYPE
 from dynamodb.query import EventTable
 
 DYNAMODB_URL = "http://localhost:8000"
-TABLE_NAME = "ImmsEvents"
+TABLE_NAME = "Imms"
 TABLE = EventTable(DYNAMODB_URL, TABLE_NAME)
 
 
@@ -21,9 +21,8 @@ class TestQuery:
         persisted_event = TABLE.get_event_by_id(event_id)
         assert persisted_event["identifier"][0]["value"] == event_id
 
-        # It's not possible to do this without removing the sort-key OR batch write
-        # response = TABLE.delete_event(event_id)
-        # assert response == event_id
+        response = TABLE.delete_event(event_id)
+        assert response == event_id
 
     @staticmethod
     def test_get_by_nhs_number():

@@ -5,7 +5,7 @@ from query import EventTable
 SAMPLE_FILE = "sample_data/2023-10-16T00:38:28_30.json"
 
 DYNAMODB_URL = "http://localhost:8000"
-TABLE_NAME = "ImmsEvents"
+TABLE_NAME = "Imms"
 
 
 def seed(table, sample_file):
