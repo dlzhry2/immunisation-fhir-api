@@ -1,15 +1,16 @@
 import os
 
 import boto3
+import json
+from dynamodb import EventTable
 
 from validation import validate
 
 
 def create_imms_handler(event, context):
-    message = f"from create imms handler {validate()}"
-    client = boto3.client('dynamodb')
-    table_name = os.environ["DYNAMODB_TABLE_NAME"]
-    data = client.scan(
-        TableName=table_name
-    )
-    return {'body': message}
+    print(json.dumps(event))
+
+    dynamo_service = EventTable()
+    message = dynamo_service.put_event(json.loads(event["body"]))
+
+    return {"body": message}

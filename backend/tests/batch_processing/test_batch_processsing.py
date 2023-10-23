@@ -35,7 +35,6 @@ def test_processing_lambda_200():
             ]
         },
         {},
-        local=True,
     )
 
     assert response[0]["statusCode"] == 200
@@ -46,7 +45,7 @@ def test_processing_lambda_200():
 def test_batch_processing_lambda_400():
     """Test that the lambda returns a 400 status code when the event is invalid"""
     # Call lambda with empty event
-    response = lambda_handler({}, {}, local=True)
+    response = lambda_handler({}, {})
     assert response["statusCode"] == 400
 
 
