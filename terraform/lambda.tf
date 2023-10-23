@@ -42,12 +42,3 @@ resource "aws_s3_object" "lambda_function_code" {
     source_hash = local.lambda_code_sha
     depends_on  = [null_resource.lambda_package]
 }
-
-locals {
-    policy_path = "${path.root}/policies"
-}
-
-data "aws_iam_policy_document" "logs_policy_document" {
-    source_policy_documents = [templatefile("${local.policy_path}/log.json", {} )]
-}
-
