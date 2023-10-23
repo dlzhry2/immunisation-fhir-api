@@ -4,13 +4,13 @@ import boto3
 import json
 from dynamodb import EventTable
 
-from validation import validate
-
 
 def create_imms_handler(event, context):
     print(json.dumps(event))
 
+    event_body = json.loads(event["body"])
+    print(event_body)
     dynamo_service = EventTable()
-    message = dynamo_service.put_event(json.loads(event["body"]))
+    message = dynamo_service.put_event(event_body)
 
-    return {"body": message}
+    return message
