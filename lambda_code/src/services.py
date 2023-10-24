@@ -1,5 +1,5 @@
-import os
 import http.client
+import os
 
 
 class ImmunisationAPI:
@@ -14,3 +14,16 @@ class ImmunisationAPI:
         connection.close()
 
         return response
+
+
+class S3Service:
+
+    def __init__(self, source, destination):
+        self.source = source
+        self.destination = destination
+
+    def get_key_data(self, key):
+        return {"patient": 123}
+
+    def write_report(self, report):
+        pass

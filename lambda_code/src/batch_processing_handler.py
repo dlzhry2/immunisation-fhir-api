@@ -1,20 +1,15 @@
-import http.client
 import json
 import os
+import sys
 import uuid
 from time import time
 
 from boto3 import resource
 
-from lambda_code.src.immunisation_api import ImmunisationAPI
+from services import ImmunisationAPI, S3Service
 
 
-def batch_processing_handler3(event, context):
-    print(json.dumps(event))
-    return "batch"
-
-
-def batch_processing_handler(event, context, api):
+def batch_processing_handler3(event, context, api):
     if (
         "Records" in event
         and isinstance(event["Records"], list)
@@ -116,12 +111,33 @@ def batch_processing_handler(event, context, api):
         return {"statusCode": 400, "body": "Invalid event structure."}
 
 
-def batch_processing_handler2(event, context):
+def batch_processing_handler(event, context):
     imms_api = ImmunisationAPI()
-    status = batch_processing(event, context, imms_api)
+    s3_service = S3Service("source", "destination")
+
+    status = batch_processing(event, context, s3_service, imms_api)
     return status
 
 
-def batch_processing(event, context, imms_api):
-    status = imms_api.post_event(None)
-    return status
+def batch_processing(event, context, s3_service, imms_api):
+    imms = {"event": 123}
+    records = event["Records"]
+    for record in records:
+        key = record["s3"]["object"]["key"]
+        scv = s3_service.get_key_data(key)
+        report = []
+        for csv_record in scv:
+            response = imms_api.post_event(csv_record)
+            if response["statusCode"] == 400:
+                report.append("error")
+
+        s3_service.write_report(report)
+
+    return "dfd"
+
+
+if __name__ == '__main__':
+    f = sys.path.append(f"{os.path.dirname(os.path.abspath('__file__'))}/../src")
+    print(f)
+    print(f"{os.path.dirname(os.path.abspath(__file__))}/../test")
+    print(f"{os.path.abspath(__file__)}/../test")
