@@ -9,9 +9,12 @@ from unittest.mock import MagicMock
 import boto3
 from moto import mock_s3
 
-from lambda_code.src.batch_processing_handler import batch_processing_handler, batch_processing
-# from immunisation_api import ImmunisationAPI, S3Service
-from lambda_code.src.services import ImmunisationAPI, S3Service
+from batch_processing_handler import batch_processing_handler, batch_processing
+# from lambda_code.src.batch_processing_handler import batch_processing_handler, batch_processing
+from services import ImmunisationAPI, S3Service
+
+
+# from lambda_code.src.services import ImmunisationAPI, S3Service
 
 
 def nathan():

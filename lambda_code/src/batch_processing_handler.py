@@ -1,12 +1,11 @@
 import json
 import os
-import sys
 import uuid
 from time import time
 
 from boto3 import resource
 
-from services import ImmunisationAPI, S3Service
+from services import ImmunisationApi, S3Service
 
 
 def batch_processing_handler3(event, context, api):
@@ -112,7 +111,7 @@ def batch_processing_handler3(event, context, api):
 
 
 def batch_processing_handler(event, context):
-    imms_api = ImmunisationAPI()
+    imms_api = ImmunisationApi()
     s3_service = S3Service("source", "destination")
 
     status = batch_processing(event, context, s3_service, imms_api)
@@ -120,24 +119,16 @@ def batch_processing_handler(event, context):
 
 
 def batch_processing(event, context, s3_service, imms_api):
-    imms = {"event": 123}
     records = event["Records"]
     for record in records:
         key = record["s3"]["object"]["key"]
-        scv = s3_service.get_key_data(key)
-        report = []
-        for csv_record in scv:
+        csv = s3_service.get_source_data(key)
+        errors = []
+        for csv_record in csv:
             response = imms_api.post_event(csv_record)
             if response["statusCode"] == 400:
-                report.append("error")
+                errors.append("error")
 
-        s3_service.write_report(report)
+        s3_service.write_error_report(errors)
 
     return "dfd"
-
-
-if __name__ == '__main__':
-    f = sys.path.append(f"{os.path.dirname(os.path.abspath('__file__'))}/../src")
-    print(f)
-    print(f"{os.path.dirname(os.path.abspath(__file__))}/../test")
-    print(f"{os.path.abspath(__file__)}/../test")
