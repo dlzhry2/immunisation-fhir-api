@@ -10,6 +10,21 @@ paths:
         uri: "${get_event.lambda_arn}"
         payloadFormatVersion: "1.0"
         passthroughBehavior: "when_no_match"
+        httpMethod: "GET"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      responses:
+        '200':
+          description: An Immunisation event
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      x-amazon-apigateway-integration:
+        uri: "${post_event.lambda_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         timeoutInMillis: 30000
         type: "AWS_PROXY"

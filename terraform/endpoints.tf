@@ -20,7 +20,8 @@ module "get_status" {
 
 locals {
     imms_endpoints = [
-        "get_imms", "create_imms", "search_imms"
+
+        "get_imms", "create_imms", "search_imms", "delete_imms"
     ]
     imms_table_name      = aws_dynamodb_table.test-dynamodb-table.name
     imms_lambda_env_vars = {
@@ -50,19 +51,32 @@ module "imms_event_endpoint_lambdas" {
     environments  = local.imms_lambda_env_vars
 }
 locals {
-    imms_lambdas = {
-        for lambda in module.imms_event_endpoint_lambdas[*] : lambda.function_name =>
-        { invoke_arn : lambda.invoke_arn, lambda_arn : lambda.lambda_arn }
+    # Mapping outputs with each called lambda
+     imms_lambdas = {
+    for lambda in module.imms_event_endpoint_lambdas[*] : lambda.function_name =>
+    {
+      lambda_arn : lambda.lambda_arn
     }
+  }
 
+#Constructing routes for API Gateway
+ routes = [
+    for lambda_name,lambda_attr in local.imms_lambdas : {
+      function_name = lambda_name
+    }
+  ]
 }
 output "debug_lambdas" {
     value = local.imms_lambdas
+}
+output "debug_lambdas2" {
+    value = local.routes
 }
 
 locals {
     oas_parameters = {
         get_event = local.imms_lambdas["${local.short_prefix}_get_imms"]
+        post_event= local.imms_lambdas["${local.short_prefix}_create_imms"]
 
     }
     oas = templatefile("${path.root}/oas.yaml", local.oas_parameters)
@@ -80,15 +94,7 @@ module "api_gateway" {
     api_domain_name = local.service_domain_name
     environment     = local.environment
     oas             = local.oas
+    routes = local.routes
 }
-
-#resource "aws_lambda_permission" "api_gw" {
-#    count         = length(module.imms_event_endpoint_lambdas[*])
-#    statement_id  = "AllowExecutionFromAPIGateway"
-#    action        = "lambda:InvokeFunction"
-#    function_name = var.routes[count.index].function_name
-#    principal     = "apigateway.amazonaws.com"
-#    source_arn    = "${aws_apigatewayv2_api.service_api.execution_arn}/*/*"
-#}
 
 

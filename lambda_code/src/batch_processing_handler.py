@@ -4,6 +4,7 @@ from boto3 import resource
 import json
 import uuid
 import os
+from immunisation_api import ImmunisationAPI
 
 
 def batch_processing_handler(event, context):
@@ -104,3 +105,14 @@ def batch_processing_handler(event, context):
         return response_list
     else:
         return {"statusCode": 400, "body": "Invalid event structure."}
+
+
+def batch_processing_handler2(event, context):
+    imms_api = ImmunisationAPI()
+    status = batch_processing(event, context, imms_api)
+    return status
+
+
+def batch_processing(event, context, imms_api):
+    status = imms_api.post_imms(event)
+    return status

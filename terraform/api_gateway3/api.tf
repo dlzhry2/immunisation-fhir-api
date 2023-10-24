@@ -50,6 +50,16 @@ resource "aws_apigatewayv2_api_mapping" "api_mapping" {
     stage       = aws_apigatewayv2_stage.default.id
 }
 
+resource "aws_lambda_permission" "api_gw" {
+    count         = length(var.routes)
+    statement_id  = "AllowExecutionFromAPIGateway"
+    action        = "lambda:InvokeFunction"
+    function_name = var.routes[count.index].function_name
+    principal     = "apigateway.amazonaws.com"
+    source_arn    = "${aws_apigatewayv2_api.service_api.execution_arn}/*/*"
+}
+
+
 resource "aws_route53_record" "api_domain" {
     zone_id = var.zone_id
     name    = aws_apigatewayv2_domain_name.service_api_domain_name.domain_name
