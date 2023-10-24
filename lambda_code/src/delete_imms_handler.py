@@ -1,5 +1,5 @@
-from dynamodb import EventTable
 import json
+from dynamodb import EventTable
 
 
 def delete_imms_handler(event, context):
