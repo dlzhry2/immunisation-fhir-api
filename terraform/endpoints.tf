@@ -20,7 +20,7 @@ module "get_status" {
 
 locals {
     imms_endpoints = [
-        "get_imms", "create_imms", "search_imms"
+        "get_imms", "create_imms", "search_imms", "delete_imms"
     ]
     imms_table_name      = aws_dynamodb_table.test-dynamodb-table.name
     imms_lambda_env_vars = {
