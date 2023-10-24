@@ -9,12 +9,12 @@ from boto3 import resource
 from lambda_code.src.immunisation_api import ImmunisationAPI
 
 
-def batch_processing_handler(event, context):
+def batch_processing_handler3(event, context):
     print(json.dumps(event))
     return "batch"
 
 
-def batch_processing_handler3(event, context):
+def batch_processing_handler(event, context, api):
     if (
         "Records" in event
         and isinstance(event["Records"], list)
@@ -68,15 +68,17 @@ def batch_processing_handler3(event, context):
                             payload_for_api_gateway
                         ).encode("utf-8")
 
-                        connection = http.client.HTTPSConnection(api_gateway_url)
-                        connection.request(
-                            "POST", "/", payload_bytes_api_gateway, headers=headers
-                        )
+                        # connection = http.client.HTTPSConnection(api_gateway_url)
+                        # connection.request(
+                        #    "POST", "/", payload_bytes_api_gateway, headers=headers
+                        # )
 
-                        response = connection.getresponse()
-                        print(response.status)
+                        response = api.post_event(payload_bytes_api_gateway, headers)
+
+                        # response = connection.getresponse()
+                        # print(response.status)
                         json_data = json.loads(response.read().decode("utf-8"))
-                        connection.close()
+                        # connection.close()
 
                         response_object = {
                             "statusCode": response.status,
