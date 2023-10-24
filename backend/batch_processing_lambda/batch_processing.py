@@ -4,10 +4,9 @@ from boto3 import resource
 import json
 import uuid
 import os
-from icecream import ic  # NWTMPXXX
 
 
-def lambda_handler(event, context, local=False):
+def lambda_handler(event, context):
     if (
         "Records" in event
         and isinstance(event["Records"], list)
@@ -59,43 +58,32 @@ def lambda_handler(event, context, local=False):
                             payload_for_api_gateway
                         ).encode("utf-8")
 
-                        # NWTMPXXX +
-                        if local:
-                            response_object = {
-                                "statusCode": 200,
-                                "json": payload_for_api_gateway,
-                                "file": filename,
-                                "body": "Successfully sent JSON data to the API Gateway.",
-                            }
-                        else:
-                            # NWTMPXXX -
-                            connection = http.client.HTTPSConnection(api_gateway_url)
-                            connection.request(
-                                "POST", "/", payload_bytes_api_gateway, headers=headers
+                        connection = http.client.HTTPSConnection(api_gateway_url)
+                        connection.request(
+                            "POST", "/", payload_bytes_api_gateway, headers=headers
+                        )
+
+                        response = connection.getresponse()
+                        json_data = json.loads(response.read().decode("utf-8"))
+                        connection.close()
+
+                        response_object = {
+                            "statusCode": response.status,
+                            "json": json_data,
+                            "file": filename,
+                        }
+
+                        if response.status in [200, 201]:
+                            response_object.update(
+                                {
+                                    "body": "Successfully sent JSON data to the API Gateway."
+                                }
                             )
-
-                            response = connection.getresponse()
-                            ic(response)  # NWTMPXXX
-                            json_data = json.loads(response.read().decode("utf-8"))
-                            connection.close()
-
-                            response_object = {
-                                "statusCode": response.status,
-                                "json": json_data,
-                                "file": filename,
-                            }
-
-                            if response.status in [200, 201]:
-                                response_object.update(
-                                    {
-                                        "body": "Successfully sent JSON data to the API Gateway."
-                                    }
-                                )
-                            else:
-                                response_object.update({"body": response.reason})
-                                output_bucket.put_object(
-                                    Body=payload_bytes_output_bucket, Key="body"
-                                )
+                        else:
+                            response_object.update({"body": response.reason})
+                            output_bucket.put_object(
+                                Body=payload_bytes_output_bucket, Key="body"
+                            )
 
                         response_list.append(response_object)
 
