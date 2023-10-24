@@ -1,13 +1,20 @@
 import http.client
-from time import time
-from boto3 import resource
 import json
-import uuid
 import os
-from immunisation_api import ImmunisationAPI
+import uuid
+from time import time
+
+from boto3 import resource
+
+from lambda_code.src.immunisation_api import ImmunisationAPI
 
 
 def batch_processing_handler(event, context):
+    print(json.dumps(event))
+    return "batch"
+
+
+def batch_processing_handler3(event, context):
     if (
         "Records" in event
         and isinstance(event["Records"], list)
@@ -114,5 +121,5 @@ def batch_processing_handler2(event, context):
 
 
 def batch_processing(event, context, imms_api):
-    status = imms_api.post_imms(event)
+    status = imms_api.post_event(None)
     return status

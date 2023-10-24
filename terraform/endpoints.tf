@@ -96,5 +96,3 @@ module "api_gateway" {
     oas             = local.oas
     routes = local.routes
 }
-
-

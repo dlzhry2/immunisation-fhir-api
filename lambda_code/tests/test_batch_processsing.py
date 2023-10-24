@@ -1,15 +1,21 @@
 """ Tests for the batch_processing lambda """
 
+from unittest.mock import MagicMock
+
 import boto3
 import pytest
-
 from moto import mock_s3
-from lambda_code.src.batch_processing_handler import batch_processing_handler
+
+from lambda_code.src.batch_processing_handler import batch_processing_handler, batch_processing
+from lambda_code.src.immunisation_api import ImmunisationAPI
 
 
-class MockImmunisationAPI:
-    def post_event(self, event):
-        return 200
+def test_batch_processing():
+    mock_api = ImmunisationAPI()
+    mock_api.post_event = MagicMock(return_value={})
+    batch_processing({}, {}, mock_api)
+
+    mock_api.post_event.assert_called_with(None)
 
 
 # Status code tests
