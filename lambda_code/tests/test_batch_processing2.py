@@ -48,18 +48,18 @@ class TestBatchProcessing(unittest.TestCase):
 
     def test_process_csv(self):
         # Given
-        self.s3_service.get_source_data = MagicMock(return_value=self.sample_csv)
+        self.s3_service.get_s3_object = MagicMock(return_value=self.sample_csv)
         response_ok = {"statusCode": 200}
         self.imms_api.post_event = MagicMock(return_value=response_ok)
         #  When
         batch_processing(self.event, self.context, self.s3_service, self.imms_api)
         # Then
-        self.s3_service.get_source_data.assert_called_once_with(csv_file_name)
+        self.s3_service.get_s3_object.assert_called_once_with(csv_file_name)
         self.imms_api.post_event.assert_has_calls([call("field1"), call("field2")])
 
     def test_create_error_report(self):
         # Given
-        self.s3_service.get_source_data = MagicMock(return_value=self.sample_csv)
+        self.s3_service.get_s3_object = MagicMock(return_value=self.sample_csv)
         self.s3_service.write_error_report = MagicMock()
         response_error = {"statusCode": 400}
         self.imms_api.post_event = MagicMock(return_value=response_error)
