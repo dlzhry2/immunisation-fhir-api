@@ -7,7 +7,7 @@ from moto import mock_s3
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from services import get_s3_object, write_s3_object
+from services import S3Service
 
 
 class TestBatchProcessing(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestBatchProcessing(unittest.TestCase):
         s3_bucket = self.create_s3_bucket()
         s3_bucket.put_object(Body=self.act_body, Key=self.act_key)
 
-        data = get_s3_object(self.bucket_name, self.act_key)
+        data = S3Service.get_s3_object(self.bucket_name, self.act_key)
 
         self.assertEqual(data, self.act_body)
 
@@ -36,7 +36,7 @@ class TestBatchProcessing(unittest.TestCase):
     def test_write_s3_object(self):
         self.create_s3_bucket()
 
-        write_s3_object(self.bucket_name, self.act_key, self.act_body)
-        data = get_s3_object(self.bucket_name, self.act_key)
+        S3Service.write_s3_object(self.bucket_name, self.act_key, self.act_body)
+        data = S3Service.get_s3_object(self.bucket_name, self.act_key)
 
         self.assertEqual(data, self.act_body)

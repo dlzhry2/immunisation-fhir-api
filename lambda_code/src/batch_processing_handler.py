@@ -113,7 +113,7 @@ def batch_processing_handler3(event, context, api):
 def batch_processing_handler(event, context):
     imms_api_url = os.getenv("SERVICE_DOMAIN_NAME")
     imms_api = ImmunisationApi(imms_api_url)
-    s3_service = S3Service("source", "destination")
+    s3_service = S3Service
 
     status = batch_processing(event, context, s3_service, imms_api)
     return status
@@ -122,14 +122,16 @@ def batch_processing_handler(event, context):
 def batch_processing(event, context, s3_service, imms_api):
     records = event["Records"]
     for record in records:
+        bucket = record["s3"]["bucket"]["name"]
         key = record["s3"]["object"]["key"]
-        csv = s3_service.get_s3_object(key)
+        csv = s3_service.get_s3_object(bucket, key)
         errors = []
         for csv_record in csv:
             response = imms_api.post_event(csv_record)
             if response["statusCode"] == 400:
                 errors.append("error")
 
-        s3_service.write_error_report(errors)
+        destination_bucket = bucket.replace("source", "destination")
+        s3_service.write_s3_object(destination_bucket, key, errors)
 
     return "dfd"
