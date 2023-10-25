@@ -16,19 +16,6 @@ class ImmunisationApi:
         return response
 
 
-# def get_s3_object(bucket, key):
-#     client = boto3.client("s3")
-#     resp = client.get_object(Bucket=bucket, Key=key)
-#
-#     return resp["Body"].read().decode("utf-8")
-#
-#
-# def write_s3_object(bucket, key, content):
-#     client = boto3.client("s3")
-#     resp = client.put_object(Bucket=bucket, Key=key, Body=content)
-#     return resp
-
-
 class S3Service:
     @staticmethod
     def get_s3_object(bucket, key):
