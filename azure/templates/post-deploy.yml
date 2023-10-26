@@ -10,7 +10,7 @@ steps:
       parameters:
         role: "auto-ops"
         profile: "apm_ptl"
-    
+
     - template: "azure/components/get-aws-secrets-and-ssm-params.yml@common"
       parameters:
         secret_file_ids:
@@ -26,7 +26,7 @@ steps:
     workingDirectory: $(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)
     displayName: Setup pytests
     condition: always()
-  
+
   - template: "azure/components/aws-assume-role.yml@common"
     parameters:
       role: "auto-ops"
@@ -67,10 +67,10 @@ steps:
         cd ../terraform
 
         make init
-        make apply aws_account_no=${aws_account_no} environment=$workspace 
+          make apply aws_account_no=${aws_account_no} environment=$workspace
 
       fi
-    displayName: Deploy sandbox
+    displayName: Apply Terraform
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
     retryCountOnTaskFailure: 2
 
@@ -93,9 +93,9 @@ steps:
       then
         echo "Int tests to be set as of now"
       fi
-      echo $marker 
+        echo $marker
       poetry run pytest -v -m "$marker" --api-name=immunisation-fhir-api --proxy-name=$PROXY_NAME -o junit_logging=all --junitxml=test-report.xml
-      
+
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/tests"
     displayName: Run full test suite
 
