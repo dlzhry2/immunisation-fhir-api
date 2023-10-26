@@ -59,24 +59,29 @@ locals {
     }
   }
 
-#Constructing routes for API Gateway
- routes = [
-    for lambda_name,lambda_attr in local.imms_lambdas : {
-      function_name = lambda_name
-    }
-  ]
+status_lambda_route = [module.get_status.function_name ]
+#Constructing routes for event lambdas
+endpoint_routes = keys(local.imms_lambdas)
+
+#Concating routes for  status and event lambdas
+routes=concat(local.status_lambda_route,local.endpoint_routes)
+
+
+  
 }
 output "debug_lambdas" {
     value = local.imms_lambdas
 }
-output "debug_lambdas2" {
-    value = local.routes
-}
+
+
 
 locals {
     oas_parameters = {
         get_event = local.imms_lambdas["${local.short_prefix}_get_imms"]
         post_event= local.imms_lambdas["${local.short_prefix}_create_imms"]
+        delete_event= local.imms_lambdas["${local.short_prefix}_delete_imms"]
+        search_event= local.imms_lambdas["${local.short_prefix}_search_imms"]
+        get_status_arn =  module.get_status.lambda_arn
 
     }
     oas = templatefile("${path.root}/oas.yaml", local.oas_parameters)
@@ -84,6 +89,7 @@ locals {
 output "oas" {
     value = local.oas
 }
+
 
 module "api_gateway" {
     source = "./api_gateway3"

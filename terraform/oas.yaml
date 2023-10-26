@@ -4,7 +4,25 @@ info:
   description: Immunisation FHIR API
   version: 0.1.0
 paths:
-  /event:
+  /status:
+    get:
+      x-amazon-apigateway-integration:
+        uri: "${get_status_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "GET"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      
+      responses:
+        '201':
+          description: Get status 
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /event/{id}:
     get:
       x-amazon-apigateway-integration:
         uri: "${get_event.lambda_arn}"
@@ -15,7 +33,49 @@ paths:
         type: "AWS_PROXY"
       responses:
         '200':
-          description: An Immunisation event
+          description: An Immunisation get event
+          content:
+            application/json:
+              schema:
+                type: object
+    delete:
+      x-amazon-apigateway-integration:
+        uri: "${delete_event.lambda_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "DELETE"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      responses:
+        '200':
+          description: An Immunisation delete event
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /event:
+    get:
+      x-amazon-apigateway-integration:
+        uri: "${search_event.lambda_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "GET"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      parameters:
+      - name: NhsNumber
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: diseaseType
+        in: query
+        schema:
+          type: string
+      responses:
+        '201':
+          description: An Immunisation search event
           content:
             application/json:
               schema:
@@ -29,8 +89,8 @@ paths:
         timeoutInMillis: 30000
         type: "AWS_PROXY"
       responses:
-        '200':
-          description: An Immunisation event
+        '201':
+          description: An Immunisation post event
           content:
             application/json:
               schema:

@@ -6,7 +6,5 @@ variable "environment" {}
 variable "oas" {}
 
 variable "routes" {
-    type = list(object({
-        function_name : string
-    }))
+    type = list(string)
 }
