@@ -10,7 +10,7 @@ sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 from services import S3Service
 
 
-class TestBatchProcessing(unittest.TestCase):
+class TestS3Service(unittest.TestCase):
 
     def create_s3_bucket(self):
         self.bucket_name = "my-bucket"

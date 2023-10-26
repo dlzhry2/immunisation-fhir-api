@@ -40,7 +40,7 @@ class TestBatchProcessing(unittest.TestCase):
     def setUp(self):
         self.sample_csv = ["field1", "field2"]
         self.imms_api = ImmunisationApi("https://example.com")
-        self.s3_service = S3Service
+        self.s3_service = S3Service()
         self.event = sample_event
         self.context = {}
 
