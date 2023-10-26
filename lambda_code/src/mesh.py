@@ -89,3 +89,18 @@ class MeshOutputHandler:
         resp = client.put_object(Bucket=self.bucket, Key=self.key, Body=content)
 
         return resp
+
+
+# TODO: This class must be deleted. Use MeshIn/Out instead.
+#  It's still here to make tests and batch_processing_handler happy
+class S3Service:
+    def get_s3_object(self, bucket, key):
+        client = boto3.client("s3")
+        resp = client.get_object(Bucket=bucket, Key=key)
+
+        return resp["Body"].read().decode("utf-8")
+
+    def write_s3_object(self, bucket, key, content):
+        client = boto3.client("s3")
+        resp = client.put_object(Bucket=bucket, Key=key, Body=content)
+        return resp

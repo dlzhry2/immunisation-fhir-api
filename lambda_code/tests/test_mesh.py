@@ -73,6 +73,7 @@ class TestMeshOutputHandler(unittest.TestCase):
 
         self.mesh_output = MeshOutputHandler(self.bucket, self.key)
 
+    @mock_s3
     def test_write_to_s3(self):
         output_bucket = create_a_bucket(self.bucket)
         records = [MeshImmunisationReportEntry("error1"), MeshImmunisationReportEntry("error2"), ]
@@ -90,6 +91,6 @@ class TestMeshCsvParser(unittest.TestCase):
             self.sample_csv = data.read()
 
     def test_parse_csv(self):
-        mesh_csv = MeshCsvParser("data.csv", self.sample_csv)
+        mesh_csv = MeshCsvParser(self.sample_csv)
         records = mesh_csv.parse()
         self.assertEqual(len(records), 2)

@@ -7,7 +7,7 @@ from responses import matchers
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from services import ImmunisationApi
+from immunisation_api import ImmunisationApi
 
 
 class TestImmsApiService(unittest.TestCase):

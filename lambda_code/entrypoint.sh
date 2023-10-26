@@ -1,7 +1,16 @@
-#!/bin/sh
+#!/usr/bin/bash
+set -eo pipefail
 
+cd /lambda_test || exit 2
+echo "Installing dependencies for test..."
+pip install -q -r requirements.txt
+echo "Running unit tests"
+python -m unittest
+
+cd /lambda_package || exit 2
+echo "Installing main dependencies..."
+pip install -q -r requirements.txt --target .
 echo "Building lambda package"
-cd /lambda || exit 2
-pip install -r requirements.txt --target .
 zip -qq -r /build/lambda_package.zip .
+echo "Done!"
 

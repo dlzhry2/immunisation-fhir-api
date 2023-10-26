@@ -5,7 +5,8 @@ from time import time
 
 from boto3 import resource
 
-from immunisation_api import ImmunisationApi, BatchProcessing
+from immunisation_api import ImmunisationApi
+from mesh import S3Service
 
 
 def batch_processing_handler3(event, context, api):
@@ -113,7 +114,7 @@ def batch_processing_handler3(event, context, api):
 def batch_processing_handler(event, context):
     imms_api_url = os.getenv("SERVICE_DOMAIN_NAME")
     imms_api = ImmunisationApi(imms_api_url)
-    s3_service = BatchProcessing
+    s3_service = S3Service
 
     status = batch_processing(event, context, s3_service, imms_api)
     return status
@@ -145,6 +146,6 @@ def batch_processing(event, context, s3_service, imms_api):
                 errors.append("error")
 
         destination_bucket = bucket.replace("source", "destination")
-        s3_service.write_s3_object(destination_bucket, key, errors)
+        s3_service.write_s3_object(destination_bucket, key, "errors list")
 
     return "dfd"

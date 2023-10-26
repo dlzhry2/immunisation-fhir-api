@@ -1,10 +1,16 @@
 steps:
+    -   bash: |
+            docker build -t imms-lambda-build .
+            docker run --rm -v $(shell pwd)/build:/build imms-lambda-build
+
+        displayName: Build and test lambda code
+        workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/lambda_code"
   - bash: |
       mkdir -p build
       npm run publish 2> /dev/null
       cp build/immunisation-fhir-api.json sandbox/
-      
-      cd sandbox
+
+        cd sandbox
       docker build -t sandbox .
     displayName: Build sandbox image
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)"

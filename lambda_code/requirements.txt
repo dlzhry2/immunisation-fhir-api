@@ -1,4 +1,5 @@
-pytest
+fhir.resources==7.0.2
+boto3==1.28.68
 moto
 requests
 responses
