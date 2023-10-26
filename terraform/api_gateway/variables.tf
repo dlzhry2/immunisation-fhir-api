@@ -4,7 +4,3 @@ variable "zone_id" {}
 variable "api_domain_name" {}
 variable "environment" {}
 variable "oas" {}
-
-variable "routes" {
-    type = list(string)
-}

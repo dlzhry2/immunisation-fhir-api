@@ -8,7 +8,6 @@ resource "aws_acm_certificate" "service_certificate" {
     }
 }
 
-
 resource "aws_route53_record" "dns_validation" {
     for_each = {
         for dvo in aws_acm_certificate.service_certificate.domain_validation_options : dvo.domain_name => {

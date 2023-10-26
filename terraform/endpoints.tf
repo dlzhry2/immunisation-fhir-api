@@ -20,7 +20,6 @@ module "get_status" {
 
 locals {
     imms_endpoints = [
-
         "get_imms", "create_imms", "search_imms", "delete_imms"
     ]
     imms_table_name      = aws_dynamodb_table.test-dynamodb-table.name
@@ -52,36 +51,28 @@ module "imms_event_endpoint_lambdas" {
 }
 locals {
     # Mapping outputs with each called lambda
-     imms_lambdas = {
-    for lambda in module.imms_event_endpoint_lambdas[*] : lambda.function_name =>
-    {
-      lambda_arn : lambda.lambda_arn
+    imms_lambdas = {
+        for lambda in module.imms_event_endpoint_lambdas[*] : lambda.function_name =>
+        {
+            lambda_arn : lambda.lambda_arn
+        }
     }
-  }
 
-status_lambda_route = [module.get_status.function_name ]
-#Constructing routes for event lambdas
-endpoint_routes = keys(local.imms_lambdas)
+    status_lambda_route = [module.get_status.function_name]
+    #Constructing routes for event lambdas
+    endpoint_routes     = keys(local.imms_lambdas)
 
-#Concating routes for  status and event lambdas
-routes=concat(local.status_lambda_route,local.endpoint_routes)
-
-
-  
+    #Concating routes for  status and event lambdas
+    routes = concat(local.status_lambda_route, local.endpoint_routes)
 }
-output "debug_lambdas" {
-    value = local.imms_lambdas
-}
-
-
 
 locals {
     oas_parameters = {
-        get_event = local.imms_lambdas["${local.short_prefix}_get_imms"]
-        post_event= local.imms_lambdas["${local.short_prefix}_create_imms"]
-        delete_event= local.imms_lambdas["${local.short_prefix}_delete_imms"]
-        search_event= local.imms_lambdas["${local.short_prefix}_search_imms"]
-        get_status_arn =  module.get_status.lambda_arn
+        get_event      = local.imms_lambdas["${local.short_prefix}_get_imms"]
+        post_event     = local.imms_lambdas["${local.short_prefix}_create_imms"]
+        delete_event   = local.imms_lambdas["${local.short_prefix}_delete_imms"]
+        search_event   = local.imms_lambdas["${local.short_prefix}_search_imms"]
+        get_status_arn = module.get_status.lambda_arn
 
     }
     oas = templatefile("${path.root}/oas.yaml", local.oas_parameters)
@@ -90,9 +81,8 @@ output "oas" {
     value = local.oas
 }
 
-
 module "api_gateway" {
-    source = "./api_gateway3"
+    source = "./api_gateway"
 
     prefix          = local.prefix
     short_prefix    = local.short_prefix
@@ -100,5 +90,13 @@ module "api_gateway" {
     api_domain_name = local.service_domain_name
     environment     = local.environment
     oas             = local.oas
-    routes = local.routes
+}
+
+resource "aws_lambda_permission" "api_gw" {
+    count         = length(local.routes)
+    statement_id  = "AllowExecutionFromAPIGateway"
+    action        = "lambda:InvokeFunction"
+    function_name = local.routes[count.index]
+    principal     = "apigateway.amazonaws.com"
+    source_arn    = "${module.api_gateway.api_execution_arn}/*/*"
 }
