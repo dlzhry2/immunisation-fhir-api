@@ -20,7 +20,7 @@ module "get_status" {
 
 locals {
     imms_endpoints = [
-        "get_imms", "create_imms", "search_imms", "delete_imms"
+        "get_imms", "create_imms", "search_imms", "delete_imms", "not_found"
     ]
     imms_table_name      = aws_dynamodb_table.test-dynamodb-table.name
     imms_lambda_env_vars = {
@@ -72,6 +72,7 @@ locals {
         post_event     = local.imms_lambdas["${local.short_prefix}_create_imms"]
         delete_event   = local.imms_lambdas["${local.short_prefix}_delete_imms"]
         search_event   = local.imms_lambdas["${local.short_prefix}_search_imms"]
+        not_found      = local.imms_lambdas["${local.short_prefix}_not_found"]
         get_status_arn = module.get_status.lambda_arn
 
     }

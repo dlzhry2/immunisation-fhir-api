@@ -1,11 +1,11 @@
 import json
 
 
-def handler():
+def not_found_handler(event, context):
     response = {
-        "statusCode": 404,  # HTTP status code
+        "statusCode": 404,
         "headers": {
-            "Content-Type": "application/json",  # Specify the content type
+            "Content-Type": "application/json",
         },
         "body": json.dumps({
             "resourceType": "OperationOutcome",
