@@ -9,7 +9,7 @@ class ImmunisationApi:
 
     def get_event_by_id(self, event_id):
         # Make your request to our api here and return the response
-        pass
+        return "response"
 
 
 # TODO: send a GET /event/{id} request
@@ -26,6 +26,7 @@ def test_get_event_by_id_not_found_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth
     token = nhsd_apim_auth_headers["access_token"]  # <- not tested
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
     res = imms_api.get_event_by_id("some-id-that-does-not-exist")
+    print(res)
     # Make assertions
 
 
@@ -40,4 +41,5 @@ def test_get_event_by_id_not_found_app_restricted(nhsd_apim_proxy_url, nhsd_apim
     token = nhsd_apim_auth_headers["access_token"]  # <- not tested
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
     res = imms_api.get_event_by_id("some-id-that-does-not-exist")
+    print(res)
     # Make assertions
