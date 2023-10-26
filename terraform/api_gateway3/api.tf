@@ -54,7 +54,7 @@ resource "aws_lambda_permission" "api_gw" {
     count         = length(var.routes)
     statement_id  = "AllowExecutionFromAPIGateway"
     action        = "lambda:InvokeFunction"
-    function_name = var.routes[count.index].function_name
+    function_name = var.routes[count.index]
     principal     = "apigateway.amazonaws.com"
     source_arn    = "${aws_apigatewayv2_api.service_api.execution_arn}/*/*"
 }

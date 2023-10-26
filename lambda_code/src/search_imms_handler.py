@@ -12,5 +12,10 @@ def search_imms_handler(event, context):
     message = dynamo_service.get_patient(
         nhs_number, parameters=event["queryStringParameters"]
     )
-
-    return message
+    response = {
+        "statusCode": 200,  # HTTP status code
+        "body": json.dumps({
+            "message": message  
+        })
+    }
+    return response
