@@ -76,7 +76,7 @@ class TestMeshOutputHandler(unittest.TestCase):
     def test_write_to_s3(self):
         output_bucket = create_a_bucket(self.bucket)
         records = [MeshImmunisationReportEntry("error1"), MeshImmunisationReportEntry("error2"), ]
-
+        # TODO: create a method here to read the object. make this to test if write_report is working.
         self.mesh_output.write_report(records)
 
 
@@ -84,7 +84,7 @@ csv_file_name = "data2.csv"
 csv_file_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/{csv_file_name}"
 
 
-class TestBatchProcessing(unittest.TestCase):
+class TestMeshCsvParser(unittest.TestCase):
     def setUp(self):
         with open(csv_file_path, "r") as data:
             self.sample_csv = data.read()

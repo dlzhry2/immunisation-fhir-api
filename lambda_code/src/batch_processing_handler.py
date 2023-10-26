@@ -120,6 +120,19 @@ def batch_processing_handler(event, context):
 
 
 def batch_processing(event, context, s3_service, imms_api):
+    def todo():
+        # for each record in the lambda event do:
+        #   in = MeshInput(event_record)
+        #   content = in.get_source_content() -> str
+        #   parser = MeshCsvParser
+        #   parser.parse(content) -> (records, validation_errors)
+        #   map(record) -> FHIR object
+        #   imms_api -> for each FHIR object send a request, record api_errors
+        #   out = MeshOutput(dest_bucket, key?)
+        #   report = out.create_report(validation_errors + api_errors) -> [report_entry] # Are api_errors and validation_errors the same object?
+        #   out.write_report(report)
+        pass
+
     records = event["Records"]
     for record in records:
         bucket = record["s3"]["bucket"]["name"]
