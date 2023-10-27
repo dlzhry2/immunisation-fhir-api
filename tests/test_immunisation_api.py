@@ -23,7 +23,8 @@ class ImmunisationApi:
     }
 )
 def test_get_event_by_id_not_found_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
-    token = nhsd_apim_auth_headers["access_token"]  # <- not tested
+    # token = nhsd_apim_auth_headers["access_token"]  # <- not tested
+    token = "token"
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
     res = imms_api.get_event_by_id("some-id-that-does-not-exist")
     print(res)
@@ -38,7 +39,8 @@ def test_get_event_by_id_not_found_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth
     })
 def test_get_event_by_id_not_found_app_restricted(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     # TODO same here but with app restricted, probably refactor both into a function instead of copy paste
-    token = nhsd_apim_auth_headers["access_token"]  # <- not tested
+    # token = nhsd_apim_auth_headers["access_token"]  # <- not tested
+    token = "token"
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
     res = imms_api.get_event_by_id("some-id-that-does-not-exist")
     print(res)
