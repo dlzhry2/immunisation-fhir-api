@@ -1,6 +1,7 @@
 import csv
 from backend.models.immunization import ImmunizationModel
-#THIS main file is temporary, jsut to see if things are working as expected
+# THIS main file is temporary, jsut to see if things are working as expected
+
 
 def read_csv_to_sample(csv_file):
     immunizations = []
