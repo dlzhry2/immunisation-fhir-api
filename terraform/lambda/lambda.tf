@@ -1,41 +1,17 @@
-resource "aws_s3_bucket" "lambda_bucket" {
-  bucket        = "${var.prefix}-lambda-bucket"
-  force_destroy = true
-}
+resource "aws_lambda_function" "lambda" {
+    role          = aws_iam_role.lambda_role.arn
+    timeout       = 300
+    s3_bucket     = var.source_bucket
+    s3_key        = var.source_key
+    function_name = "${var.short_prefix}_${var.function_name}"
+    handler       = "${var.function_name}_handler.${var.function_name}_handler"
+    runtime       = "python3.9"
 
-#Upload object for the first time, then it gets updated via local-exec
-resource "aws_s3_object" "lambda_function_code" {
-  bucket = aws_s3_bucket.lambda_bucket.bucket
-  key    = "${var.lambda_zip_name}.zip"
-  source = "${path.root}/zips/${var.lambda_zip_name}.zip"  # Local path to your ZIP file
-}
+    source_code_hash = var.source_sha
 
-#Getting latest object that got uploaded via local-exec
-data "aws_s3_object" "lambda_function_code" {
-  bucket = aws_s3_bucket.lambda_bucket.bucket
-  key    = "${var.lambda_zip_name}.zip"
-}
-
-resource "aws_lambda_function" "imms_lambda" {
-  depends_on  = [null_resource.lambda_typescript_dist,
-                aws_s3_object.lambda_function_code
-  ]
-  s3_bucket=aws_s3_bucket.lambda_bucket.bucket
-  s3_key  ="${var.lambda_zip_name}.zip"
-  function_name = "${var.prefix}-lambda"
-  source_code_hash = data.aws_s3_object.lambda_function_code.etag  # Calculate the hash of the new ZIP file uploaded to s3
-  role          = aws_iam_role.lambda_role.arn
-  handler       = "index.handler"
-  runtime       = "nodejs18.x"
-  memory_size   = 1024
-
-  environment {
-    variables = {
-      "DYNAMODB_TABLE_NAME" : var.dynamodb_table_name
+    environment {
+        variables = var.environments
     }
-  }
 }
 
-output "lambda_function_name" {
-  value = aws_lambda_function.imms_lambda.function_name
-}
+
