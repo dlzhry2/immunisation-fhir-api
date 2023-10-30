@@ -30,3 +30,5 @@ def test_get_imms_handler_sad_path():
     # Assert
     assert result['statusCode'] == 400
     assert result['body'] == 'ID is not formatted correctly or is missing'
+    
+# Build 404 test
