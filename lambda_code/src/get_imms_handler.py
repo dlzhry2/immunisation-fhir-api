@@ -3,9 +3,15 @@ import json
 import re
 
 def get_imms_handler(event, context):
-    # run get request to API_gateway to see what event object looks like when it comes through
-    event_id = event.get("id")
     dynamo_service = EventTable()
+    return get_imms(event, dynamo_service)
+    # run get request to API_gateway to see what event object looks like when it comes through
+    # Check what the return value of message is when event is not found
+    
+    
+# create function which recieves event and instance of dynamodb
+def get_imms(event, dynamo_service):
+    event_id = event.get("id")
     
     def is_valid_id(event_id):
         pattern = r'^[A-Za-z0-9\-.]{1,64}$'
@@ -18,8 +24,6 @@ def get_imms_handler(event, context):
         }
     
     message = dynamo_service.get_event_by_id(event_id)
-    
-    # Check what the return value of message is when event is not found
     if message is None:
         return {
             'statusCode': 404,
@@ -30,5 +34,3 @@ def get_imms_handler(event, context):
         'statusCode': 200,
         'body': json.dumps({'message': message})
     }
-    
-# create function which recieves event and instance of dynamodb
