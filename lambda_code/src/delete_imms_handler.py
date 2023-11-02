@@ -4,8 +4,11 @@ import re
 
 
 def delete_imms_handler(event, context):
-    event_id = event["pathParameters"]["id"]
     dynamo_service = EventTable()
+    return delete_imms(event, dynamo_service)
+
+def delete_imms(event, dynamo_service):
+    event_id = event["pathParameters"]["id"]
     
     def is_valid_id(event_id):
         pattern = r'^[A-Za-z0-9\-.]{1,64}$'
@@ -46,8 +49,6 @@ def delete_imms_handler(event, context):
     message = dynamo_service.delete_event(event_id)
     response = {
             "statusCode": 200,  # HTTP status code
-            "body": json.dumps({
-                "message": message  
-            })
+            "body": message  
         }
     return response
