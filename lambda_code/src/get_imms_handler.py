@@ -1,11 +1,12 @@
+import json
+import re
 import uuid
 
 from dynamodb import EventTable
-import json
-import re
+from immunisation_api import create_response
 
 
-def create_response(event_id, message, code):
+def create_operation_outcome(event_id, message, code):
     return {
         "resourceType": "OperationOutcome",
         "id": event_id,
@@ -46,32 +47,16 @@ def get_imms(event, dynamo_service):
         return re.match(pattern, _event_id) is not None
 
     if not is_valid_id(event_id) or not event_id:
-        return {
-            "statusCode": 400,
-            "headers": {
-                "Content-Type": "application/fhir+json",
-            },
-            "body": json.dumps(
-                create_response(str(uuid.uuid4()),
-                                "he provided event ID is either missing or not in the expected format.",
-                                "invalid"))
-        }
+        body = json.dumps(
+            create_operation_outcome(str(uuid.uuid4()),
+                                     "he provided event ID is either missing or not in the expected format.",
+                                     "invalid"))
+        return create_response(400, body)
 
-    message = dynamo_service.get_event_by_id(event_id)
-    if message is None:
+    query_result = dynamo_service.get_event_by_id(event_id)
+    if query_result is None:
+        body = json.dumps(
+            create_operation_outcome(str(uuid.uuid4()), "The requested resource was not found.", "not-found"))
+        return create_response(404, body)
 
-        return {
-            "statusCode": 404,
-            "headers": {
-                "Content-Type": "application/fhir+json",
-            },
-            "body": json.dumps(create_response(str(uuid.uuid4()), "The requested resource was not found.", "not-found"))
-        }
-
-    return {
-        'statusCode': 200,
-        "headers": {
-            "Content-Type": "application/fhir+json",
-        },
-        'body': json.dumps(message)
-    }
+    return create_response(200, json.dumps(query_result))

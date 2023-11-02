@@ -9,51 +9,38 @@ class Severity(str, Enum):
 
 
 class Code(str, Enum):
-    not_found = "NOT_FOUND"
+    not_found = "not_found"
 
 
-# @dataclass
-class ApiError(BaseModel):
+class ApiError(BaseModel, use_enum_values=True):
     id: str
     severity: Severity
     code: Code
     diagnostics: str
 
-
-base_model = {
-    "resourceType": "OperationOutcome",
-    "id": None,
-    "meta": {
-        "profile": [
-            "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-        ]
-    },
-    "issue": [
-        {
-            "severity": None,
-            "code": None,
-            "details": {
-                "coding": [
-                    {
-                        "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                        "code": None
-                    }
+    def to_uk_core(self) -> OperationOutcome:
+        model = {
+            "resourceType": "OperationOutcome",
+            "id": self.id,
+            "meta": {
+                "profile": [
+                    "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
                 ]
             },
-            "diagnostics": None
+            "issue": [
+                {
+                    "severity": self.severity,
+                    "code": self.code,
+                    "details": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
+                                "code": self.code.upper()
+                            }
+                        ]
+                    },
+                    "diagnostics": self.diagnostics
+                }
+            ]
         }
-    ]
-}
-
-
-class ApiErrors:
-    @staticmethod
-    def event_not_found(error: ApiError) -> OperationOutcome:
-        op = OperationOutcome.parse_obj(base_model, "fd")
-        # op = OperationOutcome.construct()
-        # op.id = error_id
-        # issue = OperationOutcomeIssue.construct()
-        # issue.severity = "error"
-        # issue.code = "not_found"
-        # op.issue = issue
-        return op
+        return OperationOutcome.parse_obj(model)

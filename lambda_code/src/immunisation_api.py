@@ -1,6 +1,16 @@
 import requests
 
 
+def create_response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "headers": {
+            "Content-Type": "application/fhir+json",
+        },
+        "body": body
+    }
+
+
 class ImmunisationApi:
     def __init__(self, url):
         self.url = url
