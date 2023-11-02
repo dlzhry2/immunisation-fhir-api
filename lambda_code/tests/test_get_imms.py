@@ -28,7 +28,7 @@ class TestGetImms(unittest.TestCase):
         assert result['statusCode'] == 200
         self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
         assert json.loads(result['body']) == {"message": "Mocked event data"}
-
+        
     def test_get_imms_handler_sad_path_400(self):
         unformatted_event = {"pathParameters": {"id": "unexpected_id"}}
 

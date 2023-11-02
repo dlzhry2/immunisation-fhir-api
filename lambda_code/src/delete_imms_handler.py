@@ -1,7 +1,6 @@
 import json
 from dynamodb import EventTable
 import re
-import uuid
 from utilities.create_operation_outcome import create_response
 
 def delete_imms_handler(event, context):
@@ -19,17 +18,23 @@ def delete_imms(event, dynamo_service):
         return {
         "statusCode": 400,
         "headers": {
-            "Content-Type": "application/json",
+            "Content-Type": "application/fhir+json",
         },
-        "body": json.dumps(
-                create_response(str(uuid.uuid4()),
-                                "he provided event ID is either missing or not in the expected format.",
-                                "invalid"))
-        }
+        "body": json.dumps(create_response("The provided event ID is either missing or not in the expected format.", "invalid"))}
     
     message = dynamo_service.delete_event(event_id)
+    
+    if message is None:
+        return {
+            "statusCode": 404,
+            "headers": {
+                "Content-Type": "application/fhir+json",
+            },
+            "body": json.dumps(create_response("The requested resource was not found.", "not-found"))
+        }
+        
     response = {
-            "statusCode": 200,  # HTTP status code
+            "statusCode": 200,
             "body": message  
         }
     return response

@@ -27,8 +27,8 @@ def get_imms(event, dynamo_service):
             }
 
     message = dynamo_service.get_event_by_id(event_id)
+    
     if message is None:
-
         return {
             "statusCode": 404,
             "headers": {

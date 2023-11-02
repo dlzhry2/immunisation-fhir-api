@@ -2,11 +2,12 @@ from unittest.mock import MagicMock
 import unittest
 import sys
 import os
+import json
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from dynamodb import EventTable
-from delete_imms_handler import delete_imms
+from delete_imms_handler import delete_imms, create_response
 
 
 class TestDeleteImms(unittest.TestCase):
@@ -22,40 +23,40 @@ class TestDeleteImms(unittest.TestCase):
         result = delete_imms(formatted_event, self.dynamodb_service)
 
         #Assert
+        # self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
         self.dynamodb_service.delete_event.assert_called_once_with(formatted_event["pathParameters"]["id"])
-        assert result['statusCode'] == 200
-        assert result['body'] == "Item deleted"
+        self.assertEqual(result['statusCode'], 200)
+        self.assertEqual(result['body'], "Item deleted")
         
-    # def test_delete_imms_handler_sad_path_400(self):
-    #     unformatted_event = { "pathParameters" : {"id": "unformatted_id"} }
+    def test_delete_imms_handler_sad_path_400(self):
+        unformatted_event = { "pathParameters" : {"id": "unformatted_id"} }
 
-    #     # Act
-    #     result = delete_imms(unformatted_event, None)
-    #     print(result['body'], "<<<<<<<<<< RESULT")
+        # Act
+        result = delete_imms(unformatted_event, None)
         
-    #     # Assert
-    #     assert result['statusCode'] == 400
-    #     assert result['body'] == {
-    #         "resourceType": "OperationOutcome",
-    #         "id": "a5abca2a-4eda-41da-b2cc-95d48c6b791d",
-    #         "meta": {
-    #             "profile": [
-    #                 "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-    #             ]
-    #         },
-    #         "issue": [
-    #             {
-    #                 "severity": "error",
-    #                 "code": "invalid",
-    #                 "details": {
-    #                     "coding": [
-    #                         {
-    #                             "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-    #                             "code": "INVALID"
-    #                         }
-    #                     ]
-    #                 },
-    #                 "diagnostics": "The provided event ID is either missing or not in the expected format."
-    #             }
-    #         ]
-    #     }
+        # Assert
+        assert result['statusCode'] == 400
+        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
+        act_body = json.loads(result['body'])
+        exp_body = create_response("The provided event ID is either missing or not in the expected format.", "invalid")
+        act_body["id"] = None
+        exp_body["id"] = None
+        self.assertDictEqual(act_body, exp_body)
+        
+    def test_get_imms_handler_sad_path_404(self):
+        # Arrange
+        self.dynamodb_service.delete_event = MagicMock(return_value=None)
+        incorrect_event = {"pathParameters": {"id": "incorrectid"}}
+
+        # Act
+        result = delete_imms(incorrect_event, self.dynamodb_service)
+
+        # Assert
+        assert result['statusCode'] == 404
+        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
+        act_body = json.loads(result['body'])
+        exp_body = create_response("The requested resource was not found.", "not-found")
+        act_body["id"] = None
+        exp_body["id"] = None
+        self.assertDictEqual(act_body, exp_body)
+        
