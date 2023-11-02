@@ -81,4 +81,3 @@ def test_get_event_by_id_happy_path_nhs_login(nhsd_apim_proxy_url, nhsd_apim_aut
     assert result.headers["Content-Type"] == "application/fhir+json"
     assert result.status_code == 200
     assert json_result["identifier"][0]["value"] == id
-
