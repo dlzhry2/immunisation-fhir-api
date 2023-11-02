@@ -3,7 +3,7 @@ import re
 import uuid
 
 from dynamodb import EventTable
-from immunisation_api import create_response
+from fhir_controller import FhirController
 
 
 def create_operation_outcome(event_id, message, code):
@@ -51,12 +51,12 @@ def get_imms(event, dynamo_service):
             create_operation_outcome(str(uuid.uuid4()),
                                      "he provided event ID is either missing or not in the expected format.",
                                      "invalid"))
-        return create_response(400, body)
+        return FhirController._create_response(400, body)
 
     query_result = dynamo_service.get_event_by_id(event_id)
     if query_result is None:
         body = json.dumps(
             create_operation_outcome(str(uuid.uuid4()), "The requested resource was not found.", "not-found"))
-        return create_response(404, body)
+        return FhirController._create_response(404, body)
 
-    return create_response(200, json.dumps(query_result))
+    return FhirController._create_response(200, json.dumps(query_result))

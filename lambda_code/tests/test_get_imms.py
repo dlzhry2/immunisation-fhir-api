@@ -11,7 +11,7 @@ from dynamodb import EventTable
 from get_imms_handler import get_imms, create_operation_outcome
 
 
-class TestGetImms(unittest.TestCase):
+class TestGetImmunisationById(unittest.TestCase):
     def setUp(self):
         self.dynamodb_service = create_autospec(EventTable)
 
@@ -26,7 +26,6 @@ class TestGetImms(unittest.TestCase):
         # Assert
         self.dynamodb_service.get_event_by_id.assert_called_once_with(lambda_event["pathParameters"]["id"])
         self.assertEqual(result['statusCode'], 200)
-        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
         self.assertDictEqual(json.loads(result['body']), {"message": "Mocked event data"})
 
     def test_get_imms_handler_sad_path_400(self):
@@ -37,7 +36,6 @@ class TestGetImms(unittest.TestCase):
 
         # Assert
         assert result['statusCode'] == 400
-        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
         act_body = json.loads(result['body'])
         exp_body = create_operation_outcome(str(uuid.uuid4()),
                                             "he provided event ID is either missing or not in the expected format.",

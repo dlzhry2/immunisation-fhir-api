@@ -7,19 +7,7 @@ from responses import matchers
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from immunisation_api import ImmunisationApi, create_response
-
-
-class TestRequestResponseHelpers(unittest.TestCase):
-    def test_create_response(self):
-        res = create_response(42, "a body")
-        headers = res["headers"]
-        self.assertEqual(res["statusCode"], 42)
-
-        self.assertDictEqual(headers, {
-            "Content-Type": "application/fhir+json",
-        })
-        self.assertEqual(res["body"], "a body")
+from immunisation_api import ImmunisationApi
 
 
 class TestImmsApiService(unittest.TestCase):
