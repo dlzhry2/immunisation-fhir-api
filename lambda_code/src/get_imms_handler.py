@@ -1,35 +1,7 @@
-import uuid
-
 from dynamodb import EventTable
 import json
 import re
-
-
-def create_response(event_id, message, code):
-    return {
-        "resourceType": "OperationOutcome",
-        "id": event_id,
-        "meta": {
-            "profile": [
-                "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-            ]
-        },
-        "issue": [
-            {
-                "severity": "error",
-                "code": code,
-                "details": {
-                    "coding": [
-                        {
-                            "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                            "code": code.upper()
-                        }
-                    ]
-                },
-                "diagnostics": message
-            }
-        ]
-    }
+from utilities.create_operation_outcome import create_response
 
 
 def get_imms_handler(event, context):
@@ -51,11 +23,8 @@ def get_imms(event, dynamo_service):
             "headers": {
                 "Content-Type": "application/fhir+json",
             },
-            "body": json.dumps(
-                create_response(str(uuid.uuid4()),
-                                "he provided event ID is either missing or not in the expected format.",
-                                "invalid"))
-        }
+            "body": json.dumps(create_response("The provided event ID is either missing or not in the expected format.", "invalid"))
+            }
 
     message = dynamo_service.get_event_by_id(event_id)
     if message is None:
@@ -65,7 +34,7 @@ def get_imms(event, dynamo_service):
             "headers": {
                 "Content-Type": "application/fhir+json",
             },
-            "body": json.dumps(create_response(str(uuid.uuid4()), "The requested resource was not found.", "not-found"))
+            "body": json.dumps(create_response("The requested resource was not found.", "not-found"))
         }
 
     return {

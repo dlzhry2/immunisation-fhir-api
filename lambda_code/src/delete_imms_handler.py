@@ -1,7 +1,8 @@
 import json
 from dynamodb import EventTable
 import re
-
+import uuid
+from utilities.create_operation_outcome import create_response
 
 def delete_imms_handler(event, context):
     dynamo_service = EventTable()
@@ -20,31 +21,11 @@ def delete_imms(event, dynamo_service):
         "headers": {
             "Content-Type": "application/json",
         },
-        "body": json.dumps({
-            "resourceType": "OperationOutcome",
-            "id": "a5abca2a-4eda-41da-b2cc-95d48c6b791d",
-            "meta": {
-                "profile": [
-                    "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-                ]
-            },
-            "issue": [
-                {
-                    "severity": "error",
-                    "code": "invalid",
-                    "details": {
-                        "coding": [
-                            {
-                                "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                                "code": "INVALID"
-                            }
-                        ]
-                    },
-                    "diagnostics": "The provided event ID is either missing or not in the expected format."
-                }
-            ]
-        })
-    }
+        "body": json.dumps(
+                create_response(str(uuid.uuid4()),
+                                "he provided event ID is either missing or not in the expected format.",
+                                "invalid"))
+        }
     
     message = dynamo_service.delete_event(event_id)
     response = {

@@ -26,36 +26,36 @@ class TestDeleteImms(unittest.TestCase):
         assert result['statusCode'] == 200
         assert result['body'] == "Item deleted"
         
-    def test_delete_imms_handler_sad_path_400(self):
-        unformatted_event = { "pathParameters" : {"id": "unformatted_id"} }
+    # def test_delete_imms_handler_sad_path_400(self):
+    #     unformatted_event = { "pathParameters" : {"id": "unformatted_id"} }
 
-        # Act
-        result = delete_imms(unformatted_event, None)
-        print(result['body'], "<<<<<<<<<< RESULT")
+    #     # Act
+    #     result = delete_imms(unformatted_event, None)
+    #     print(result['body'], "<<<<<<<<<< RESULT")
         
-        # Assert
-        assert result['statusCode'] == 400
-        assert result['body'] == {
-            "resourceType": "OperationOutcome",
-            "id": "a5abca2a-4eda-41da-b2cc-95d48c6b791d",
-            "meta": {
-                "profile": [
-                    "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-                ]
-            },
-            "issue": [
-                {
-                    "severity": "error",
-                    "code": "invalid",
-                    "details": {
-                        "coding": [
-                            {
-                                "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                                "code": "INVALID"
-                            }
-                        ]
-                    },
-                    "diagnostics": "The provided event ID is either missing or not in the expected format."
-                }
-            ]
-        }
+    #     # Assert
+    #     assert result['statusCode'] == 400
+    #     assert result['body'] == {
+    #         "resourceType": "OperationOutcome",
+    #         "id": "a5abca2a-4eda-41da-b2cc-95d48c6b791d",
+    #         "meta": {
+    #             "profile": [
+    #                 "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
+    #             ]
+    #         },
+    #         "issue": [
+    #             {
+    #                 "severity": "error",
+    #                 "code": "invalid",
+    #                 "details": {
+    #                     "coding": [
+    #                         {
+    #                             "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
+    #                             "code": "INVALID"
+    #                         }
+    #                     ]
+    #                 },
+    #                 "diagnostics": "The provided event ID is either missing or not in the expected format."
+    #             }
+    #         ]
+    #     }

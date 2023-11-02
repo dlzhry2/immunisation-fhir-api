@@ -26,7 +26,7 @@ class TestGetImms(unittest.TestCase):
         # Assert
         self.dynamodb_service.get_event_by_id.assert_called_once_with(formatted_event["pathParameters"]["id"])
         assert result['statusCode'] == 200
-        self.assertEquals(result['headers']['Content-Type'], "application/fhir+json")
+        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
         assert json.loads(result['body']) == {"message": "Mocked event data"}
 
     def test_get_imms_handler_sad_path_400(self):
@@ -37,11 +37,9 @@ class TestGetImms(unittest.TestCase):
 
         # Assert
         assert result['statusCode'] == 400
-        self.assertEquals(result['headers']['Content-Type'], "application/fhir+json")
+        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
         act_body = json.loads(result['body'])
-        exp_body = create_response(str(uuid.uuid4()),
-                                   "he provided event ID is either missing or not in the expected format.",
-                                   "invalid")
+        exp_body = create_response("The provided event ID is either missing or not in the expected format.", "invalid")
         act_body["id"] = None
         exp_body["id"] = None
         self.assertDictEqual(act_body, exp_body)
@@ -56,9 +54,9 @@ class TestGetImms(unittest.TestCase):
 
         # Assert
         assert result['statusCode'] == 404
-        self.assertEquals(result['headers']['Content-Type'], "application/fhir+json")
+        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
         act_body = json.loads(result['body'])
-        exp_body = create_response(str(uuid.uuid4()), "The requested resource was not found.", "not-found")
+        exp_body = create_response("The requested resource was not found.", "not-found")
         act_body["id"] = None
         exp_body["id"] = None
         self.assertDictEqual(act_body, exp_body)
