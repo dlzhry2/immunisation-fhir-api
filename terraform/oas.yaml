@@ -18,7 +18,7 @@ paths:
         '201':
           description: Get status
           content:
-            application/json:
+            application/fhir+json:
               schema:
                 type: object
 
@@ -35,7 +35,7 @@ paths:
         '200':
           description: An Immunisation get event
           content:
-            application/json:
+            application/fhir+json:
               schema:
                 type: object
     delete:
@@ -50,7 +50,7 @@ paths:
         '200':
           description: An Immunisation delete event
           content:
-            application/json:
+            application/fhir+json:
               schema:
                 type: object
 
@@ -77,7 +77,7 @@ paths:
         '201':
           description: An Immunisation search event
           content:
-            application/json:
+            application/fhir+json:
               schema:
                 type: object
     post:
@@ -92,7 +92,7 @@ paths:
         '201':
           description: An Immunisation post event
           content:
-            application/json:
+            application/fhir+json:
               schema:
                 type: object
   /{proxy+}:
@@ -114,6 +114,6 @@ paths:
         '404':
           description: Not Found
           content:
-            application/json:
+            application/fhir+json:
               schema:
                 type: object

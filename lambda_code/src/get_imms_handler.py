@@ -49,7 +49,7 @@ def get_imms(event, dynamo_service):
         return {
             "statusCode": 400,
             "headers": {
-                "Content-Type": "application/json",
+                "Content-Type": "application/fhir+json",
             },
             "body": json.dumps(
                 create_response(str(uuid.uuid4()),
@@ -63,12 +63,15 @@ def get_imms(event, dynamo_service):
         return {
             "statusCode": 404,
             "headers": {
-                "Content-Type": "application/json",
+                "Content-Type": "application/fhir+json",
             },
             "body": json.dumps(create_response(str(uuid.uuid4()), "The requested resource was not found.", "not-found"))
         }
 
     return {
         'statusCode': 200,
+        "headers": {
+            "Content-Type": "application/fhir+json",
+        },
         'body': json.dumps(message)
     }
