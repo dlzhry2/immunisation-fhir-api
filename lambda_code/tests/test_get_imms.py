@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import MagicMock
 import unittest
 import json
@@ -7,7 +8,7 @@ import os
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from dynamodb import EventTable
-from get_imms_handler import get_imms
+from get_imms_handler import get_imms, create_response
 
 
 class TestGetImms(unittest.TestCase):
@@ -15,82 +16,46 @@ class TestGetImms(unittest.TestCase):
         self.dynamodb_service = EventTable()
 
     def test_get_imms_happy_path(self):
-        #Arrange
+        # Arrange
         self.dynamodb_service.get_event_by_id = MagicMock(return_value={"message": "Mocked event data"})
-        formatted_event = { "pathParameters" : {"id": "sampleid"} }
+        formatted_event = {"pathParameters": {"id": "sampleid"}}
 
-        #Act
+        # Act
         result = get_imms(formatted_event, self.dynamodb_service)
 
-        #Assert
+        # Assert
         self.dynamodb_service.get_event_by_id.assert_called_once_with(formatted_event["pathParameters"]["id"])
         assert result['statusCode'] == 200
         assert json.loads(result['body']) == {"message": "Mocked event data"}
 
     def test_get_imms_handler_sad_path_400(self):
-        unformatted_event = { "pathParameters" : {"id": "unexpected_id"} }
+        unformatted_event = {"pathParameters": {"id": "unexpected_id"}}
 
         # Act
         result = get_imms(unformatted_event, None)
 
         # Assert
         assert result['statusCode'] == 400
-        assert result['body'] == json.dumps({
-            "resourceType": "OperationOutcome",
-            "id": "a5abca2a-4eda-41da-b2cc-95d48c6b791d",
-            "meta": {
-                "profile": [
-                    "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-                ]
-            },
-            "issue": [
-                {
-                    "severity": "error",
-                    "code": "invalid",
-                    "details": {
-                        "coding": [
-                            {
-                                "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                                "code": "INVALID"
-                            }
-                        ]
-                    },
-                    "diagnostics": "The provided event ID is either missing or not in the expected format."
-                }
-            ]
-        })
+        act_body = json.loads(result['body'])
+        exp_body = create_response(str(uuid.uuid4()),
+                                   "he provided event ID is either missing or not in the expected format.",
+                                   "invalid")
+        act_body["id"] = None
+        exp_body["id"] = None
+        self.assertDictEqual(act_body, exp_body)
 
     def test_get_imms_handler_sad_path_404(self):
-        #Arrange
+        # Arrange
         self.dynamodb_service.get_event_by_id = MagicMock(return_value=None)
-        incorrect_event = { "pathParameters" : {"id": "incorrectid"} }
+        incorrect_event = {"pathParameters": {"id": "incorrectid"}}
 
         # Act
         result = get_imms(incorrect_event, self.dynamodb_service)
 
         # Assert
         assert result['statusCode'] == 404
-        assert result['body'] == json.dumps({
-            "resourceType": "OperationOutcome",
-            "id": "a5abca2a-4eda-41da-b2cc-95d48c6b791d",
-            "meta": {
-                "profile": [
-                    "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-                ]
-            },
-            "issue": [
-                {
-                    "severity": "error",
-                    "code": "not-found",
-                    "details": {
-                        "coding": [
-                            {
-                                "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                                "code": "NOT_FOUND"
-                            }
-                        ]
-                    },
-                    "diagnostics": "The requested resource was not found."
-                }
-            ]
-        })
+        act_body = json.loads(result['body'])
+        exp_body = create_response(str(uuid.uuid4()), "The requested resource was not found.", "not-found")
+        act_body["id"] = None
+        exp_body["id"] = None
+        self.assertDictEqual(act_body, exp_body)
