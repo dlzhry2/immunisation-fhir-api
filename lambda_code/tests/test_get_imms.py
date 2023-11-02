@@ -1,19 +1,19 @@
-import json
-import os
-import sys
+import uuid
+from unittest.mock import MagicMock
 import unittest
-from unittest.mock import MagicMock, create_autospec
+import json
+import sys
+import os
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from dynamodb import EventTable
-from get_imms_handler import get_imms
+from get_imms_handler import get_imms, create_response
 
 
 class TestGetImms(unittest.TestCase):
     def setUp(self):
-        # self.dynamodb_service = EventTable()
-        self.dynamodb_service = create_autospec(EventTable)
+        self.dynamodb_service = EventTable()
 
     def test_get_imms_happy_path(self):
         # Arrange
@@ -26,6 +26,7 @@ class TestGetImms(unittest.TestCase):
         # Assert
         self.dynamodb_service.get_event_by_id.assert_called_once_with(formatted_event["pathParameters"]["id"])
         assert result['statusCode'] == 200
+        self.assertEquals(result['headers']['Content-Type'], "application/fhir+json")
         assert json.loads(result['body']) == {"message": "Mocked event data"}
 
     def test_get_imms_handler_sad_path_400(self):
@@ -36,30 +37,14 @@ class TestGetImms(unittest.TestCase):
 
         # Assert
         assert result['statusCode'] == 400
-        assert result['body'] == json.dumps({
-            "resourceType": "OperationOutcome",
-            "id": "a5abca2a-4eda-41da-b2cc-95d48c6b791d",
-            "meta": {
-                "profile": [
-                    "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-                ]
-            },
-            "issue": [
-                {
-                    "severity": "error",
-                    "code": "invalid",
-                    "details": {
-                        "coding": [
-                            {
-                                "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                                "code": "INVALID"
-                            }
-                        ]
-                    },
-                    "diagnostics": "The provided event ID is either missing or not in the expected format."
-                }
-            ]
-        })
+        self.assertEquals(result['headers']['Content-Type'], "application/fhir+json")
+        act_body = json.loads(result['body'])
+        exp_body = create_response(str(uuid.uuid4()),
+                                   "he provided event ID is either missing or not in the expected format.",
+                                   "invalid")
+        act_body["id"] = None
+        exp_body["id"] = None
+        self.assertDictEqual(act_body, exp_body)
 
     def test_get_imms_handler_sad_path_404(self):
         # Arrange
@@ -71,27 +56,9 @@ class TestGetImms(unittest.TestCase):
 
         # Assert
         assert result['statusCode'] == 404
-        assert result['body'] == json.dumps({
-            "resourceType": "OperationOutcome",
-            "id": "a5abca2a-4eda-41da-b2cc-95d48c6b791d",
-            "meta": {
-                "profile": [
-                    "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-                ]
-            },
-            "issue": [
-                {
-                    "severity": "error",
-                    "code": "not-found",
-                    "details": {
-                        "coding": [
-                            {
-                                "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                                "code": "NOT_FOUND"
-                            }
-                        ]
-                    },
-                    "diagnostics": "The requested resource was not found."
-                }
-            ]
-        })
+        self.assertEquals(result['headers']['Content-Type'], "application/fhir+json")
+        act_body = json.loads(result['body'])
+        exp_body = create_response(str(uuid.uuid4()), "The requested resource was not found.", "not-found")
+        act_body["id"] = None
+        exp_body["id"] = None
+        self.assertDictEqual(act_body, exp_body)
