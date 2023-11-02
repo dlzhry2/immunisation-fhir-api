@@ -1,9 +1,9 @@
-import uuid
-from unittest.mock import MagicMock
-import unittest
 import json
-import sys
 import os
+import sys
+import unittest
+import uuid
+from unittest.mock import MagicMock, create_autospec
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
@@ -13,7 +13,7 @@ from get_imms_handler import get_imms, create_response
 
 class TestGetImms(unittest.TestCase):
     def setUp(self):
-        self.dynamodb_service = EventTable()
+        self.dynamodb_service = create_autospec(EventTable)
 
     def test_get_imms_happy_path(self):
         # Arrange
@@ -26,7 +26,7 @@ class TestGetImms(unittest.TestCase):
         # Assert
         self.dynamodb_service.get_event_by_id.assert_called_once_with(formatted_event["pathParameters"]["id"])
         assert result['statusCode'] == 200
-        self.assertEquals(result['headers']['Content-Type'], "application/fhir+json")
+        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
         assert json.loads(result['body']) == {"message": "Mocked event data"}
 
     def test_get_imms_handler_sad_path_400(self):
@@ -37,7 +37,7 @@ class TestGetImms(unittest.TestCase):
 
         # Assert
         assert result['statusCode'] == 400
-        self.assertEquals(result['headers']['Content-Type'], "application/fhir+json")
+        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
         act_body = json.loads(result['body'])
         exp_body = create_response(str(uuid.uuid4()),
                                    "he provided event ID is either missing or not in the expected format.",
@@ -56,7 +56,7 @@ class TestGetImms(unittest.TestCase):
 
         # Assert
         assert result['statusCode'] == 404
-        self.assertEquals(result['headers']['Content-Type'], "application/fhir+json")
+        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
         act_body = json.loads(result['body'])
         exp_body = create_response(str(uuid.uuid4()), "The requested resource was not found.", "not-found")
         act_body["id"] = None
