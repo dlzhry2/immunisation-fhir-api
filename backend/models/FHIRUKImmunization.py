@@ -1,49 +1,38 @@
 from fhir.resources.immunization import Immunization as FHIRImmunization
-from fhir.resources.patient import Patient as FHIRPatient
-from fhir.resources.organization import Organization as FHIROrganization
-from fhir.resources.codeableconcept import CodeableConcept
-from fhir.resources.practitioner import Practitioner as FHIRPractitioner
-import datetime
-import json
+from fhir.resources.bundle import Bundle
 
 
 class UKFHIRImmunization:
     def __init__(self, *args, **kwargs):
 
         self.immunization: FHIRImmunization = None
-        self.patient: FHIRPatient = None
-        self.recorded: datetime.date = None
-        self.reportOrigin: CodeableConcept = None
-        self.reasonCode: CodeableConcept = []
-        self.manufacturer: FHIROrganization = None
-        self.actor: FHIRPractitioner = None
+        self.bundle = Bundle(
+            resource_type="Bundle",
+            type="transaction",  # Adjust the type as needed (e.g., "transaction", "batch", etc.)
+            entry=[],
+        )
 
-    def get_immunization(self):
-        return self.immunization.json()
+    def get_bundle(self):
+        return self.bundle.json()
+    
+    def add_patient_to_bundle(self, entry):
+        self.bundle.entry.append({"patient": entry})
 
-    def get_patient(self):
-        return self.patient.json()
+    def add_performer_to_bundle(self, entry):
+        self.bundle.entry.append({"performer": {"actor": entry}})
 
-    def get_manufacturer(self):
-        return self.manufacturer.json()
+    def add_manufacturer_to_bundle(self, entry):
+        self.bundle.entry.append({"manufacturer": entry})
 
-    def get_actor(self):
-        return {
-            "actor": json.loads(self.actor.json())
-        }  # Matching representation to that of Expected JSON
+    def add_report_origin_to_bundle(self, entry):
+        self.bundle.entry.append({"reportOrigin": entry})
 
-    def get_report_origin(self):
-        return self.reportOrigin.json()
+    def add_reason_code_to_bundle(self, entry):
+        self.bundle.entry.append({"reasonCode": entry})
 
-    def get_reason_code(self):
-        if not self.reasonCode:
-            return []  # Return an empty list if self.reasonCode is empty
+    def add_recorded_to_bundle(self, entry):
+        recorded = {"recorded": entry}
+        self.bundle.entry.append(recorded)
 
-        # Serialize each CodeableConcept object in the list to JSON
-        reason_code_json_list = [
-            json.loads(reason_code.json()) for reason_code in self.reasonCode
-        ]
-        return json.dumps(reason_code_json_list)
-
-    def get_recorded(self):
-        return self.recorded.isoformat() if self.recorded else None
+    def add_immunization_to_bundle(self, entry):
+        self.bundle.entry.append(entry)

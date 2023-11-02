@@ -89,8 +89,8 @@ class ImmunizationModel(BaseModel, Constants):
     REASON_NOT_GIVEN_CODE: str = None
     REASON_NOT_GIVEN_TERM: str = None
     DOSE_SEQUENCE: int = None
-    VACCINE_PRODUCT_CODE: str = None
     VACCINE_PRODUCT_TERM: str = None
+    VACCINE_PRODUCT_CODE: str = None
     VACCINE_MANUFACTURER: str = None
     BATCH_NUMBER: str = None
     EXPIRY_DATE: Optional[date]
@@ -116,7 +116,7 @@ class ImmunizationModel(BaseModel, Constants):
     USER_ID: str = None
     USER_NAME: str = None
     USER_EMAIL: str = None
-    SUBMITTED_TIMESTAMP: Optional[datetime]  # YYYY-MM-DDThh:mm:ss+zz
+    SUBMITTED_TIMESTAMP: str = None  # YYYY-MM-DDThh:mm:ss+zz
     LOCATION_CODE: str = None
     LOCATION_CODE_TYPE_URI: str = None
     VACCINE_CUSTOM_LIST: str = None
@@ -127,7 +127,9 @@ class ImmunizationModel(BaseModel, Constants):
 
     @validator("NHS_NUMBER")
     def validate_nhs_number(cls, value):
-        if value:
+        if not value:
+            raise ValueError("NHS_NUMBER is a mandatory field.")
+        else:
             value = value.replace(" ", "")  # Removing any spaces
             if len(value) != 10:
                 raise ValueError("NHS_NUMBER must consist of 10 digits.")
@@ -252,6 +254,8 @@ class ImmunizationModel(BaseModel, Constants):
                     raise ValueError(
                         "VACCINATION_PROCEDURE_CODE is a mandatory field, when NOT_GIVEN=FALSE"
                     )
+            else:
+                return None
         return v
 
     @validator("VACCINATION_SITUATION_CODE", pre=True, always=True)
@@ -283,7 +287,7 @@ class ImmunizationModel(BaseModel, Constants):
                         "DOSE_SEQUENCE is a mandatory field, when NOT_GIVEN=FALSE"
                     )
             else:
-                return 1
+                return 1  #  if VACCINE WAS NOT GIVEN, it returns constant value of 1
         return v
 
     @validator("VACCINE_PRODUCT_CODE", pre=True, always=True)
@@ -294,9 +298,13 @@ class ImmunizationModel(BaseModel, Constants):
                     raise ValueError(
                         "VACCINE_PRODUCT_CODE is a mandatory field, when NOT_GIVEN=FALSE"
                     )
-            else:
-                return 1
-        return v
+                else:
+                    return v
+
+    @validator("VACCINE_PRODUCT_TERM", pre=True, always=True)
+    def validate_vaccine_product_term(cls, value):
+        if value:
+            return value
 
     @validator("VACCINE_MANUFACTURER", pre=True, always=True)
     def validate_vaccine_manufacturer(cls, v, values):
@@ -306,7 +314,8 @@ class ImmunizationModel(BaseModel, Constants):
                     raise ValueError(
                         "VACCINE_MANUFACTURER is a mandatory field, when NOT_GIVEN=FALSE"
                     )
-        return v
+                else:
+                    return v
 
     @validator("BATCH_NUMBER", pre=True, always=True)
     def validate_batch_number(cls, v, values):
@@ -395,7 +404,8 @@ class ImmunizationModel(BaseModel, Constants):
     def validate_submitted_timestamp(cls, value):
         if value:
             parsed_datetime = Constants.convert_iso8601_to_datetime(value)
-            return parsed_datetime
+            if parsed_datetime:
+                return value
 
     @validator("LOCATION_CODE", pre=True, always=True)
     def validate_location_code(cls, value):
@@ -406,6 +416,11 @@ class ImmunizationModel(BaseModel, Constants):
             return value
         else:
             return "X99999"
+
+    @validator("REDUCE_VALIDATION_REASON", pre=True, always=True)
+    def validate_reduce_validation_reason(cls, value):
+        if value:
+            return value
 
     @validator("REDUCE_VALIDATION_CODE", pre=True, always=True)
     def validate_reduce_validation_code(cls, v, values):
@@ -418,3 +433,51 @@ class ImmunizationModel(BaseModel, Constants):
             return True
         else:
             return False
+
+    # returning None if empty string was given
+    @validator("NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION", pre=True, always=True)
+    def validate_nhs_status_indicator_description(cls, value):
+        if value:
+            return value
+
+    # returning None if empty string was given
+    @validator("CARE_SETTING_TYPE_CODE", pre=True, always=True)
+    def validate_care_setting_type_code(cls, value):
+        if value:
+            return value
+
+    # returning None if empty string was given
+    @validator("CARE_SETTING_TYPE_DESCRIPTION", pre=True, always=True)
+    def validate_care_setting_type_description(cls, value):
+        if value:
+            return value
+
+    # returning None if empty string was given
+    @validator("IP_ADDRESS", pre=True, always=True)
+    def validate_ip_address(cls, value):
+        if value:
+            return value
+
+    # returning None if empty string was given
+    @validator("USER_ID", pre=True, always=True)
+    def validate_user_id(cls, value):
+        if value:
+            return value
+
+    # returning None if empty string was given
+    @validator("USER_NAME", pre=True, always=True)
+    def validate_user_name(cls, value):
+        if value:
+            return value
+
+    # returning None if empty string was given
+    @validator("USER_EMAIL", pre=True, always=True)
+    def validate_user_email(cls, value):
+        if value:
+            return value
+
+    # returning None if empty string was given
+    @validator("LOCATION_CODE_TYPE_URI", pre=True, always=True)
+    def validate_location_code_type_uri(cls, value):
+        if value:
+            return value
