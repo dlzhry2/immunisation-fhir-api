@@ -1,8 +1,8 @@
-from unittest.mock import MagicMock
-import unittest
 import json
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, create_autospec
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
@@ -12,23 +12,24 @@ from get_imms_handler import get_imms
 
 class TestGetImms(unittest.TestCase):
     def setUp(self):
-        self.dynamodb_service = EventTable()
+        # self.dynamodb_service = EventTable()
+        self.dynamodb_service = create_autospec(EventTable)
 
     def test_get_imms_happy_path(self):
-        #Arrange
+        # Arrange
         self.dynamodb_service.get_event_by_id = MagicMock(return_value={"message": "Mocked event data"})
-        formatted_event = { "pathParameters" : {"id": "sampleid"} }
+        formatted_event = {"pathParameters": {"id": "sampleid"}}
 
-        #Act
+        # Act
         result = get_imms(formatted_event, self.dynamodb_service)
 
-        #Assert
+        # Assert
         self.dynamodb_service.get_event_by_id.assert_called_once_with(formatted_event["pathParameters"]["id"])
         assert result['statusCode'] == 200
         assert json.loads(result['body']) == {"message": "Mocked event data"}
 
     def test_get_imms_handler_sad_path_400(self):
-        unformatted_event = { "pathParameters" : {"id": "unexpected_id"} }
+        unformatted_event = {"pathParameters": {"id": "unexpected_id"}}
 
         # Act
         result = get_imms(unformatted_event, None)
@@ -61,9 +62,9 @@ class TestGetImms(unittest.TestCase):
         })
 
     def test_get_imms_handler_sad_path_404(self):
-        #Arrange
+        # Arrange
         self.dynamodb_service.get_event_by_id = MagicMock(return_value=None)
-        incorrect_event = { "pathParameters" : {"id": "incorrectid"} }
+        incorrect_event = {"pathParameters": {"id": "incorrectid"}}
 
         # Act
         result = get_imms(incorrect_event, self.dynamodb_service)
