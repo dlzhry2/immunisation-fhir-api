@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-
+from csv_to_model import read_csv_to_model
+from models.immunization import ImmunizationModel
+from models.failures import ImmunizationErrorModel
 import boto3
 
 
@@ -42,19 +44,20 @@ class MeshImmunisationError:
 
 
 class MeshCsvParser:
+    """Parse a CSV file and return a list of ImmunisationModel and ImmunisationErrorModel"""
 
     def __init__(self, content):
         self.content = content
 
-    def parse(self) -> ([MeshImmunisationRecord], [MeshImmunisationError]):
+    def parse(self) -> ([ImmunizationModel], [ImmunizationErrorModel]):
         """Parse every CSV record and return a tuple
         first item is a list of successful records and second one is a list of errors
         """
-        # TODO: parse the content line-by-line and generate two lists. One list is the record and one list is the error
-        # For example 20 lines of CSV will produce 15 MeshImmunisationRecord and 4 MeshImmunisationError + 1 field row
-        # For now assume every record is ok and return an empty list for errors
-        return ([MeshImmunisationRecord("", "", ""), MeshImmunisationRecord("", "", "")],
-                [MeshImmunisationError("error1"), MeshImmunisationError("error2")])
+        immunisation_records, failed_records = read_csv_to_model(self.content)
+        return (
+            immunisation_records,
+            failed_records,
+        )
 
 
 class MeshInputHandler:
@@ -76,7 +79,6 @@ class MeshInputHandler:
 
 
 class MeshOutputHandler:
-
     def __init__(self, bucket, key):
         self.bucket = bucket
         self.key = key
