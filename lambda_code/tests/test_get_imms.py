@@ -3,60 +3,51 @@ import os
 import sys
 import unittest
 import uuid
-from unittest.mock import MagicMock, create_autospec
+from unittest.mock import create_autospec
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from dynamodb import EventTable
-from get_imms_handler import get_imms, create_operation_outcome
+from get_imms_handler import get_immunisation_by_id
+from fhir_controller import FhirController
+from models.errors import Severity, Code, create_operation_outcome
 
 
 class TestGetImmunisationById(unittest.TestCase):
     def setUp(self):
-        self.dynamodb_service = create_autospec(EventTable)
+        self.controller = create_autospec(FhirController)
 
-    def test_get_imms_happy_path(self):
-        # Arrange
-        self.dynamodb_service.get_event_by_id = MagicMock(return_value={"message": "Mocked event data"})
-        lambda_event = {"pathParameters": {"id": "sample-id"}}
+    def test_get_immunisation_by_id(self):
+        """it should return immunisation by id"""
+        lambda_event = {"pathParameters": {"id": "an-id"}}
+        exp_res = {"a-key": "a-value"}
 
-        # Act
-        result = get_imms(lambda_event, self.dynamodb_service)
+        self.controller.get_immunisation_by_id.return_value = exp_res
 
-        # Assert
-        self.dynamodb_service.get_event_by_id.assert_called_once_with(lambda_event["pathParameters"]["id"])
-        self.assertEqual(result['statusCode'], 200)
-        self.assertDictEqual(json.loads(result['body']), {"message": "Mocked event data"})
+        # When
+        act_res = get_immunisation_by_id(lambda_event, self.controller)
 
-    def test_get_imms_handler_sad_path_400(self):
-        unformatted_event = {"pathParameters": {"id": "unexpected_id"}}
+        # Then
+        self.controller.get_immunisation_by_id.assert_called_once_with(lambda_event)
+        self.assertDictEqual(exp_res, act_res)
 
-        # Act
-        result = get_imms(unformatted_event, None)
+    def test_handle_exception(self):
+        """unhandled exceptions should result in 500"""
+        lambda_event = {"pathParameters": {"id": "an-id"}}
+        error_msg = "an unhandled error"
+        self.controller.get_immunisation_by_id.side_effect = Exception(error_msg)
 
-        # Assert
-        assert result['statusCode'] == 400
-        act_body = json.loads(result['body'])
-        exp_body = create_operation_outcome(str(uuid.uuid4()),
-                                            "he provided event ID is either missing or not in the expected format.",
-                                            "invalid")
+        exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                             code=Code.not_found,
+                                             diagnostics=error_msg)
+
+        # When
+        act_res = get_immunisation_by_id(lambda_event, self.controller)
+
+        # Then
+        act_body = json.loads(act_res["body"])
         act_body["id"] = None
+        exp_body = json.loads(exp_error.json())  # to and from json so, we get from OrderedDict to Dict
         exp_body["id"] = None
+
         self.assertDictEqual(act_body, exp_body)
-
-    def test_get_imms_handler_sad_path_404(self):
-        # Arrange
-        self.dynamodb_service.get_event_by_id = MagicMock(return_value=None)
-        incorrect_event = {"pathParameters": {"id": "incorrectid"}}
-
-        # Act
-        result = get_imms(incorrect_event, self.dynamodb_service)
-
-        # Assert
-        assert result['statusCode'] == 404
-        self.assertEqual(result['headers']['Content-Type'], "application/fhir+json")
-        act_body = json.loads(result['body'])
-        exp_body = create_operation_outcome(str(uuid.uuid4()), "The requested resource was not found.", "not-found")
-        act_body["id"] = None
-        exp_body["id"] = None
-        self.assertDictEqual(act_body, exp_body)
+        self.assertEqual(act_res["statusCode"], 500)
