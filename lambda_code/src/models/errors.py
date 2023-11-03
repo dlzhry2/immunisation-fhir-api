@@ -9,7 +9,8 @@ class Severity(str, Enum):
 
 
 class Code(str, Enum):
-    not_found = "not_found"
+    not_found = "not-found"
+    invalid = "invalid"
 
 
 class ApiError(BaseModel, use_enum_values=True):

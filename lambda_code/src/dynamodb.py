@@ -13,7 +13,6 @@ class EventTable:
         self.table = db.Table(table_name)
 
     def get_event_by_id(self, event_id):
-        # TODO: the main index doesn't need sort-key. You can use get_item instead of query
         response = self.table.get_item(Key={"PK": event_id})
 
         if "Item" in response:

@@ -49,7 +49,7 @@ def get_imms(event, dynamo_service):
     if not is_valid_id(event_id) or not event_id:
         body = json.dumps(
             create_operation_outcome(str(uuid.uuid4()),
-                                     "he provided event ID is either missing or not in the expected format.",
+                                     "the provided event ID is either missing or not in the expected format.",
                                      "invalid"))
         return FhirController._create_response(400, body)
 

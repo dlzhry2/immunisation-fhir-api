@@ -4,7 +4,7 @@ import unittest
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from models.errors import  ApiError, Severity, Code
+from models.errors import ApiError, Severity, Code
 
 
 class TestApiErrors(unittest.TestCase):
@@ -23,5 +23,3 @@ class TestApiErrors(unittest.TestCase):
         self.assertEqual(issue["severity"], "error")
         self.assertEqual(issue["diagnostics"], diag)
         self.assertEqual(issue["details"]["coding"][0]["code"], "NOT_FOUND")
-
-
