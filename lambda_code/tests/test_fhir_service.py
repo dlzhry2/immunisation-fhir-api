@@ -29,6 +29,19 @@ class TestFhirService(unittest.TestCase):
         self.imms_repo.get_immunisation_by_id.assert_called_once_with(imms_id)
         self.assertEqual(act_imms.id, imms_id)
 
+    def test_immunisation_not_found(self):
+        """it should return None if immunisation doesn't exist"""
+        imms_id = "none-existent-id"
+
+        self.imms_repo.get_immunisation_by_id.return_value = None
+
+        # When
+        act_imms = self.fhir_service.get_immunisation_by_id(imms_id)
+
+        # Then
+        self.imms_repo.get_immunisation_by_id.assert_called_once_with(imms_id)
+        self.assertEqual(act_imms, None)
+
     @staticmethod
     def _create_an_immunisation_obj(imms_id) -> Immunization:
         base_imms = {
