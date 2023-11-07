@@ -38,4 +38,129 @@ servers:
     description: Integration test environment.
   - url: 'https://api.service.nhs.uk/immunisation-fhir-api'
     description: Production environment.
-paths: {}
+paths:
+  /immunisation/{id}:
+    get:
+      summary: Get Immunisation record event by ID
+      description: Retrieves immunisation record event details by ID.
+      parameters:
+        - name: id
+          description: ID of the immunisation
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: c3f6145e-1a26-4345-b3f2-dccbcba62049
+        - name: X-Correlation-Id
+          description: ID of the immunisation
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: c3f6145e-1a26-4345-b3f2-dccbcba62049
+        - name: X-Request-Id
+          description: ID of the immunisation
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: c3f6145e-1a26-4345-b3f2-dccbcba62049
+      responses:
+        '200':
+          description: Success
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+              example:
+                $ref: examples/id/GET-success.json
+          headers:
+            X-Correlation-Id:
+              description: 'The X-Correlation-Id from the request header, if supplied, mirrored back.'
+              schema:
+                type: string
+                format: uuid
+                example: 9562466f-c982-4bd5-bb0e-255e9f5e6689
+            X-Request-Id:
+              description: 'The X-Request-Id from the request header, if supplied, mirrored back.'
+              schema:
+                type: string
+                format: uuid
+                example: c1ab3fba-6bae-4ba4-b257-5a87c44d4a91
+        4XX:
+          $ref: '#/components/responses/4XX-imms'  
+components:
+  parameters:
+    ID:
+      name: immunisation-record
+      description: |
+        A unique immunisation record ID.
+      required: True
+      in: path
+      schema:
+        type: string
+        example: "http://example.com/immunisation/{id}"
+  responses:
+    4XX-imms:
+      description: |
+        Below are examples of potential HTTP status codes and their associated error codes, which could be returned in the event of a fault. 
+
+        | HTTP status | Error code                 | Description |
+        | ----------- | -------------------------- | --------------------------------------------- |
+        | 400         | INVALID                    | The provided event ID is either missing or not in the expected format. |
+        | 404         | NOT-FOUND                  | The requested resource was not found. |
+
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          example:
+            {
+  "resourceType": "OperationOutcome",
+  "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx",
+  "meta": {
+    "profile": [
+      "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
+    ]
+  },
+  "issue": [
+    {
+      "severity": "error",
+      "code": "invalid",
+      "details": {
+        "coding": [
+          {
+            "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
+            "code": "INVALID"
+          }
+        ]
+      },
+      "diagnostics": "The provided event ID is either missing or not in the expected format."
+    }
+  ]
+}
+      headers:
+        ID:
+          description: 'The immunisation record Id from the request header, if supplied, mirrored back.'
+          schema:
+            type: string
+            format: uuid
+            example: 7364896f-h736-7ju8-fr0e-576r585f1083
+        X-Correlation-Id:
+          description: 'The X-Correlation-Id from the request header, if supplied, mirrored back.'
+          schema:
+            type: string
+            format: uuid
+            example: 9562466f-c982-4bd5-bb0e-255e9f5e6689
+        X-Request-Id:
+          description: 'The X-Request-Id from the request header, if supplied, mirrored back.'
+          schema:
+            type: string
+            format: uuid
+            example: c1ab3fba-6bae-4ba4-b257-5a87c44d4a91       
+  schemas:
+    OperationOutcome:
+      $ref: schemas/OperationOutcome.yaml

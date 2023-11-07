@@ -1,6 +1,6 @@
 {
   "resourceType": "OperationOutcome",
-  "id": "62e42a21-c76a-4dbd-9e03-0effbcba4162",
+  "id": "3d64df5a-b753-49ec-b3df-f45c157941eb",
   "meta": {
     "profile": [
       "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
@@ -9,16 +9,16 @@
   "issue": [
     {
       "severity": "error",
-      "code": "not-found",
+      "code": "invalid",
       "details": {
         "coding": [
           {
             "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-            "code": "NOT-FOUND"
+            "code": "INVALID"
           }
         ]
       },
-      "diagnostics": "The requested resource was not found."
+      "diagnostics": "The provided event ID is either missing or not in the expected format."
     }
   ]
 }
