@@ -107,8 +107,8 @@ class TestMeshCsvParser(unittest.TestCase):
             f"{self.data_path}/{self.failed_happy_output_file_name}"
         )
 
-        # with open(self.csv_file_path, "r", encoding="utf-8") as data:
-        #    self.sample_csv = data.read()
+        with open(self.csv_file_path, "r", encoding="utf-8") as data:
+            self.sample_csv = data.read()
 
         self.successful_happy_output_file_path = (
             f"{self.data_path}/{self.successful_happy_output_file_name}"
@@ -126,26 +126,29 @@ class TestMeshCsvParser(unittest.TestCase):
         Test that we get a ImmunizationModel object and a ImmunizationErrorModel from parsing
         the CSV
         """
-        mesh_csv = MeshCsvParser(self.csv_file_path)
+        mesh_csv = MeshCsvParser(self.sample_csv)
         records = mesh_csv.parse()
         self.assertEqual(len(records), 2)
 
     def test_successful_immunizations_happy_output(self):
         """Test that the successful immunization record is formatted correctly"""
-        mesh_csv = MeshCsvParser(self.csv_file_path)
+        mesh_csv = MeshCsvParser(self.sample_csv)
         immunisation_records, _ = mesh_csv.parse()
         immunisation_record_json = json.dumps(
             immunisation_records[0].dict(), indent=4, default=str
         )
 
-        assert json.loads(immunisation_record_json) == json.loads(
-            self.successful_happy_output
+        self.assertDictEqual(
+            json.loads(immunisation_record_json),
+            json.loads(self.successful_happy_output),
         )
 
     def test_failed_immunizations_happy_output(self):
         """Test that the failed immunization record is formatted correctly"""
-        mesh_csv = MeshCsvParser(self.csv_file_path)
+        mesh_csv = MeshCsvParser(self.sample_csv)
         _, failed_records = mesh_csv.parse()
         failed_record_json = json.dumps(failed_records[0].dict(), indent=4, default=str)
 
-        assert json.loads(failed_record_json) == json.loads(self.failed_happy_output)
+        self.assertDictEqual(
+            json.loads(failed_record_json), json.loads(self.failed_happy_output)
+        )
