@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from csv_to_model import read_csv_to_model
-from models.immunization import ImmunizationModel
-from models.failures import ImmunizationErrorModel
+from models.immunization import CsvImmunizationModel
+from models.failures import CsvImmunizationErrorModel
 import boto3
 
 
@@ -17,39 +17,13 @@ class MeshImmunisationReportEntry:
         pass
 
 
-# TODO: This is just a POC. See if you can bring logic from previous work. It doesn't have to be a dataclass.
-# As long as we convert csv into some object (dataclass/dic/etc) we're good.
-@dataclass
-class MeshImmunisationRecord:
-    nhs_number: str
-    person_forename: str
-    person_surname: str
-
-    # TODO: This class should have a to_immunisation_fhir() method. So we can convert a csv record into Fhir object
-    # convert it to Almas's FHIR object or fhir.resource. For now anything that makes the POST call happy will do.
-    def to_immunisation_fhir(self):
-        pass
-
-
-# This object captures any kind of error. Either validation of API call errors. This means at end of batch processing
-# we will end up with a list of errors. We don't write this error directly into destination bucket because,
-# the destination bucket i.e. MESH report has its own mapping requirement.
-# So, this class has to have a to_mesh_immunisation_report_entry() method
-@dataclass
-class MeshImmunisationError:
-    message: str
-
-    def to_mesh_immunisation_report_entry(self) -> MeshImmunisationReportEntry:
-        pass
-
-
 class MeshCsvParser:
     """Parse a CSV file and return a list of ImmunisationModel and ImmunisationErrorModel"""
 
     def __init__(self, content):
         self.content = content
 
-    def parse(self) -> ([ImmunizationModel], [ImmunizationErrorModel]):
+    def parse(self) -> ([CsvImmunizationModel], [CsvImmunizationErrorModel]):
         """Parse every CSV record and return a tuple
         first item is a list of successful records and second one is a list of errors
         """

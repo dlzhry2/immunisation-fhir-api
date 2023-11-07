@@ -8,11 +8,11 @@ from pydantic import ValidationError
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../")
 
 
-from models.immunization import ImmunizationModel
-from models.failures import ImmunizationErrorModel
+from models.immunization import CsvImmunizationModel
+from models.failures import CsvImmunizationErrorModel
 
 
-def generate_failed_record(row: dict, reasons: str) -> ImmunizationErrorModel:
+def generate_failed_record(row: dict, reasons: str) -> CsvImmunizationErrorModel:
     """Format an exception into a record"""
     failed_record = {
         "nhs_number": row.get("NHS_NUMBER", None),
@@ -20,41 +20,40 @@ def generate_failed_record(row: dict, reasons: str) -> ImmunizationErrorModel:
         "failure_reasons": reasons,
     }
 
-    immunisation_failure = ImmunizationErrorModel(**failed_record)
+    immunisation_failure = CsvImmunizationErrorModel(**failed_record)
 
     return immunisation_failure
 
 
 def read_csv_to_model(
-    csv_file,
-) -> Union[list[ImmunizationModel], list[ImmunizationErrorModel]]:
+    csv_data: str,
+) -> Union[list[CsvImmunizationModel], list[CsvImmunizationErrorModel]]:
     """Read a CSV file and return a list of ImmunizationModel objects"""
     immunizations = []
     failures = []
 
-    with open(csv_file, newline="", encoding="utf-8") as csvfile:
-        csv_reader = csv.DictReader(csvfile)
-        for row in csv_reader:
-            try:
-                # Filter out unwanted fields
-                imms = ImmunizationModel(**row)
-                immunizations.append(imms)
-            except ValidationError as failure:
-                # ValidationError's errors() method returns a list of errors
-                reasons = failure.errors()
-                immunisation_failure = generate_failed_record(row, reasons)
-                failures.append(immunisation_failure)
+    csv_reader = csv.DictReader(csv_data.splitlines())
+    for row in csv_reader:
+        try:
+            # Filter out unwanted fields
+            imms = CsvImmunizationModel(**row)
+            immunizations.append(imms)
+        except ValidationError as failure:
+            # ValidationError's errors() method returns a list of errors
+            reasons = failure.errors()
+            immunisation_failure = generate_failed_record(row, reasons)
+            failures.append(immunisation_failure)
 
-            except ValueError as failure:
-                # ValueError just returns a string for the error so we'll add it to a list
-                reasons = [str(failure)]
-                immunisation_failure = generate_failed_record(row, reasons)
-                failures.append(immunisation_failure)
+        except ValueError as failure:
+            # ValueError just returns a string for the error so we'll add it to a list
+            reasons = [str(failure)]
+            immunisation_failure = generate_failed_record(row, reasons)
+            failures.append(immunisation_failure)
 
-            except Exception as failure:
-                # A catch all for anything else that might go wrong
-                reasons = [str(failure)]
-                immunisation_failure = generate_failed_record(row, reasons)
-                failures.append(immunisation_failure)
+        except Exception as failure:
+            # A catch all for anything else that might go wrong
+            reasons = [str(failure)]
+            immunisation_failure = generate_failed_record(row, reasons)
+            failures.append(immunisation_failure)
 
     return immunizations, failures
