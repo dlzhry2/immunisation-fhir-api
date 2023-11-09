@@ -59,7 +59,7 @@ properties:
             - throttled
             - informational
         details:
-          $ref: 'ErrorCode.yaml'
+          $ref: ErrorCode.yaml
         diagnostics:
           type: string
           description: Additional diagnostic information about the issue. This information is subject to change.
