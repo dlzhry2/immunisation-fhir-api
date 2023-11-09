@@ -62,7 +62,6 @@ properties:
           type: object
           description: Internal error code.
   properties:
-    coding:
       type: array
       items:
         type: object

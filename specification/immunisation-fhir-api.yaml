@@ -4,6 +4,9 @@ openapi: '3.0.0'
 info:
   title: 'immunisation-fhir-api'
   version: 'Computed and injected at build time by `scripts/set_version.py`'
+  license:
+    name: 'License Name'
+    url: 'URL'
   description: |
     ## Overview
     Use this API to access the Immunisation Fhir service.
@@ -73,6 +76,7 @@ paths:
   /immunisation:
     post:
       summary: Create Immunisation record event
+      operationId: createImmunisationRecord
       description: Creates a single immunisation record event.
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
@@ -100,7 +104,32 @@ paths:
           $ref: '#/components/responses/4XX-imms'
     get:
       summary: Search for an immunisation record event.
+      operationId: searchImmunisationRecord
       description: Clients perform searches via HTTP GET by making an HTTP GET request to the appropriate context, with search parameters included as HTTP Query Parameters.
+      parameters:
+        - $ref: '#/components/parameters/CorrelationID'
+        - $ref: '#/components/parameters/RequestID'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+              example:
+                $ref: components/OperationOutcome/200_get-success.json
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/Correlation-Id'
+            X-Request-ID:
+              $ref: '#/components/headers/Request-Id'
+        4XX:
+          $ref: '#/components/responses/4XX-imms'
+  /immunisation/{Id}:
+    get:
+      summary: Get an Immunisation record event by ID
+      operationId: getImmunisationRecordById
+      description: Retrieves immunisation record event details by ID.
       parameters:
         - $ref: '#/components/parameters/ImmunisationEventID'
         - $ref: '#/components/parameters/CorrelationID'
@@ -121,32 +150,9 @@ paths:
               $ref: '#/components/headers/Request-Id'
         4XX:
           $ref: '#/components/responses/4XX-imms'
-  /immunisation/{id}:
-    get:
-      summary: Get an Immunisation record event by ID
-      description: Retrieves immunisation record event details by ID.
-      parameters:
-        - $ref: '#/components/parameters/ImmunisationEventID'
-        - $ref: '#/components/parameters/CorrelationID'
-        - $ref: '#/components/parameters/RequestID'
-      responses:
-        '200':
-          description: Success
-          content:
-            application/fhir+json:
-              schema:
-                $ref: '#/components/schemas/OperationOutcome'
-              example:
-                $ref: examples/OperationOutcome/200_get-success.json
-          headers:
-            X-Correlation-ID:
-              $ref: '#/components/headers/Correlation-Id'
-            X-Request-ID:
-              $ref: '#/components/headers/Request-Id'
-        4XX:
-          $ref: '#/components/responses/4XX-imms'
     delete:
       summary: Delete an Immunisation record event by ID
+      operationId: deleteImmunisationRecordById
       description: Logical deletion of an immunisation record event specified by ID. A delete interaction means that the resource can no longer found through a search interaction.
       parameters:
         - $ref: '#/components/parameters/ImmunisationEventID'
@@ -170,6 +176,7 @@ paths:
           $ref: '#/components/responses/4XX-imms'
     put:
       summary: Update an Immunisation record event by ID
+      operationId: updateImmunisationRecordById
       description: The update interaction creates a new current version for an existing resource or creates an initial version if no resource already exists for the given id.
       parameters:
         - $ref: '#/components/parameters/ImmunisationEventID'
