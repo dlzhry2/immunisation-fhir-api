@@ -11,7 +11,7 @@ terraform {
 }
 
 provider "aws" {
-    region                 = "localhost"
+    region = "us-east-1"
     skip_region_validation = true
 
     endpoints {
@@ -21,7 +21,7 @@ provider "aws" {
 }
 
 locals {
-    short_prefix = "jaho3"
+    short_prefix = "local"
 }
 
 resource "aws_dynamodb_table" "test-dynamodb-table" {
@@ -33,21 +33,6 @@ resource "aws_dynamodb_table" "test-dynamodb-table" {
         name = "PK"
         type = "S"
     }
-    attribute {
-        name = "PatientPK"
-        type = "S"
-    }
-    attribute {
-        name = "PatientSK"
-        type = "S"
-    }
 
-    global_secondary_index {
-        name               = "PatientGSI"
-        hash_key           = "PatientPK"
-        range_key          = "PatientSK"
-        projection_type    = "INCLUDE"
-        non_key_attributes = ["Event"]
-    }
 }
 

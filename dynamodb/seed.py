@@ -2,22 +2,22 @@ import json
 
 from query import EventTable
 
-SAMPLE_FILE = "sample_data/2023-10-16T00:38:28_30.json"
+sample_file = "sample_data/2023-11-09T19:09:23_immunisation-30.json"
 
-DYNAMODB_URL = "http://localhost:8000"
-TABLE_NAME = "Imms"
+dynamodb_url = "http://localhost:4566"
+table_name = "local-imms-events"
 
 
-def seed(table, sample_file):
-    with open(sample_file, "r") as raw_events:
-        events = json.loads(raw_events.read())
+def seed_immunisation(table, sample_file):
+    with open(sample_file, "r") as raw_data:
+        imms_list = json.loads(raw_data.read())
 
-    for event in events:
-        table.put_event(event)
+    for imms in imms_list:
+        table.create_immunisation(imms)
 
-    print(f"{len(events)} events added successfully")
+    print(f"{len(imms_list)} events added successfully")
 
 
 if __name__ == '__main__':
-    _table = EventTable(DYNAMODB_URL, TABLE_NAME)
-    seed(_table, SAMPLE_FILE)
+    _table = EventTable(dynamodb_url, table_name)
+    seed_immunisation(_table, sample_file)

@@ -1,17 +1,22 @@
 import json
+import time
 
 import boto3
-from boto3.dynamodb.conditions import Key
+import botocore.exceptions
+from boto3.dynamodb.conditions import Key, Attr
 
 
 class EventTable:
     def __init__(self, endpoint_url, table_name):
-        db = boto3.resource('dynamodb', endpoint_url=endpoint_url)
+        db = boto3.resource('dynamodb', endpoint_url=endpoint_url, region_name="us-east-1")
         self.table = db.Table(table_name)
 
     def get_event_by_id(self, event_id):
         # TODO: the main index doesn't need sort-key. You can use get_item instead of query
-        response = self.table.get_item(Key={'PK': event_id})
+        response = self.table.get_item(
+            Key={'PK': event_id},
+            ConditionExpression=Attr("DeletedAt").not_exists()
+        )
 
         if 'Item' in response:
             return json.loads(response['Item']["Event"])
@@ -37,6 +42,45 @@ class EventTable:
             return response['Items']
         else:
             return None
+
+    def get_immunisation_by_id(self, imms_id):
+        response = self.table.get_item(
+            Key={'PK': f"Immunisation#{imms_id}"},
+        )
+
+        if 'Item' in response:
+            return None if response['Item'].get("DeletedAt", False) else json.loads(response['Item']["Resource"])
+        else:
+            return None
+
+    def create_immunisation(self, imms):
+        imms_id = imms["id"]
+        pk = f"Immunisation#{imms_id}"
+
+        response = self.table.put_item(Item={
+            'PK': pk,
+            'Resource': json.dumps(imms),
+        })
+        return imms if response["ResponseMetadata"]["HTTPStatusCode"] == 200 else None
+
+    def delete_immunisation(self, imms_id: str):
+        epoch_time = int(time.time())
+        try:
+            response = self.table.update_item(
+                Key={'PK': f"Immunisation#{imms_id}"},
+                UpdateExpression='SET DeletedAt = :timestamp',
+                ExpressionAttributeValues={
+                    ':timestamp': epoch_time,
+                },
+                ConditionExpression=Attr("DeletedAt").not_exists()
+            )
+            return imms_id if response["ResponseMetadata"]["HTTPStatusCode"] == 200 else None
+
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] != 'ConditionalCheckFailedException':
+                raise
+            else:
+                return imms_id
 
     def put_event(self, event):
         # TODO: change all explicit array indices to filter

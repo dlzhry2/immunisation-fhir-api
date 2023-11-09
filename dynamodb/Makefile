@@ -1,5 +1,5 @@
 test:
-	./.venv/bin/pytest -s -v --color=yes
+	python -m unittest
 
 test-debug:
 	./.venv/bin/pytest -s -v --color=yes -m debug
@@ -9,4 +9,8 @@ init:
 apply:
 	terraform apply -auto-approve
 
-.PHONY: test test-debug
+
+localstack:
+	docker run --rm -it -p 4566:4566 -p 4510-4559:4510-4559 localstack/localstack:latest
+
+.PHONY: test test-debug localstack apply init
