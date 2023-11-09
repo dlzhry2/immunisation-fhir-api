@@ -39,70 +39,143 @@ servers:
   - url: 'https://api.service.nhs.uk/immunisation-fhir-api'
     description: Production environment.
 paths:
-  /immunisation/{id}:
-    get:
-      summary: Get Immunisation record event by ID
-      description: Retrieves immunisation record event details by ID.
+  /immunisation:
+    post:
+      summary: Create Immunisation record event
+      description: Creates a single immunisation record event.
       parameters:
-        - name: id
-          description: ID of the immunisation
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: c3f6145e-1a26-4345-b3f2-dccbcba62049
-        - name: X-Correlation-Id
-          description: ID of the immunisation
-          in: header
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: c3f6145e-1a26-4345-b3f2-dccbcba62049
-        - name: X-Request-Id
-          description: ID of the immunisation
-          in: header
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: c3f6145e-1a26-4345-b3f2-dccbcba62049
+        - $ref: '#/components/parameters/CorrelationID'
+        - $ref: '#/components/parameters/RequestID'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/201_OperationOutcome'
+              example:
+                $ref: components/OperationOutcome/201_create-success.json
+          headers:
+            Location:
+              description: 'A Location header which contains the new Logical Id and Version Id of the created resource version. If the server understands versioning, the version is included. If a server does not track versions, the Location header will just contain [base]/[type]/[id].'
+              schema:
+                type: string
+                example: "/immunisation/c3f6145e-1a26-4345-b3f2-dccbcba62049/_history/versionId" 
+            X-Correlation-ID:
+              $ref: '#/components/headers/Correlation-Id'
+            X-Request-ID:
+              $ref: '#/components/headers/Request-Id'
+        4XX:
+          $ref: '#/components/responses/4XX-imms'
+    get:
+      summary: Search for an immunisation record event.
+      description: Clients perform searches via HTTP GET by making an HTTP GET request to the appropriate context, with search parameters included as HTTP Query Parameters.
+      parameters:
+        - $ref: '#/components/parameters/ImmunisationEventID'
+        - $ref: '#/components/parameters/CorrelationID'
+        - $ref: '#/components/parameters/RequestID'
       responses:
         '200':
           description: Success
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/OperationOutcome'
+                $ref: '#/components/schemas/200_OperationOutcome'
               example:
-                $ref: examples/id/GET-success.json
+                $ref: components/OperationOutcome/200_get-success.json
           headers:
-            X-Correlation-Id:
-              description: 'The X-Correlation-Id from the request header, if supplied, mirrored back.'
-              schema:
-                type: string
-                format: uuid
-                example: 9562466f-c982-4bd5-bb0e-255e9f5e6689
-            X-Request-Id:
-              description: 'The X-Request-Id from the request header, if supplied, mirrored back.'
-              schema:
-                type: string
-                format: uuid
-                example: c1ab3fba-6bae-4ba4-b257-5a87c44d4a91
+            X-Correlation-ID:
+              $ref: '#/components/headers/Correlation-Id'
+            X-Request-ID:
+              $ref: '#/components/headers/Request-Id'
         4XX:
-          $ref: '#/components/responses/4XX-imms'  
+          $ref: '#/components/responses/4XX-imms'
+  /immunisation/{id}:
+    get:
+      summary: Get an Immunisation record event by ID
+      description: Retrieves immunisation record event details by ID.
+      parameters:
+        - $ref: '#/components/parameters/ImmunisationEventID'
+        - $ref: '#/components/parameters/CorrelationID'
+        - $ref: '#/components/parameters/RequestID'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/200_OperationOutcome'
+              example:
+                $ref: examples/OperationOutcome/200_get-success.json
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/Correlation-Id'
+            X-Request-ID:
+              $ref: '#/components/headers/Request-Id'
+        4XX:
+          $ref: '#/components/responses/4XX-imms'
+    delete:
+      summary: Delete an Immunisation record event by ID
+      description: Logical deletion of an immunisation record event specified by ID. A delete interaction means that the resource can no longer found through a search interaction.
+      parameters:
+        - $ref: '#/components/parameters/ImmunisationEventID'
+        - $ref: '#/components/parameters/CorrelationID'
+        - $ref: '#/components/parameters/RequestID'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/200_OperationOutcome'
+              example:
+                $ref: components/OperationOutcome/200_get-success.json
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/Correlation-Id'
+            X-Request-ID:
+              $ref: '#/components/headers/Request-Id'
+        4XX:
+          $ref: '#/components/responses/4XX-imms'
+    put:
+      summary: Update an Immunisation record event by ID
+      description: The update interaction creates a new current version for an existing resource or creates an initial version if no resource already exists for the given id.
+      parameters:
+        - $ref: '#/components/parameters/ImmunisationEventID'
+        - $ref: '#/components/parameters/CorrelationID'
+        - $ref: '#/components/parameters/RequestID'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/200_OperationOutcome'
+              example:
+                $ref: components/OperationOutcome/200_get-success.json
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/Correlation-Id'
+            X-Request-ID:
+              $ref: '#/components/headers/Request-Id'
+        '201':
+          description: Created
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/201_OperationOutcome'
+              example:
+                $ref: components/OperationOutcome/201_create-success.json
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/Correlation-Id'
+            X-Request-ID:
+              $ref: '#/components/headers/Request-Id'
+        4XX:
+          $ref: '#/components/responses/4XX-imms'
+
 components:
-  parameters:
-    ID:
-      name: immunisation-record
-      description: |
-        A unique immunisation record ID.
-      required: True
-      in: path
-      schema:
-        type: string
-        example: "http://example.com/immunisation/{id}"
+
   responses:
     4XX-imms:
       description: |
@@ -111,56 +184,73 @@ components:
         | HTTP status | Error code                 | Description |
         | ----------- | -------------------------- | --------------------------------------------- |
         | 400         | INVALID                    | The provided event ID is either missing or not in the expected format. |
-        | 404         | NOT-FOUND                  | The requested resource was not found. |
+        | 400         | BAD_REQUEST                | Search could not be processed or failed basic FHIR validation rules  |
+        | 401         | UNAUTHORISED               | Authorization is required for the interaction that was attempted  |
+        | 400         | BAD_REQUEST                | The resource could not be parsed or failed basic FHIR validation rules  |
+        | 404         | NOT_FOUND                  | The requested resource was not found. |
+        | 405         | NOT_ALLOWED                | The requested method is not allowed  |
+        | 422         | UNPROCESSABLE_ENTITY       | The proposed resource violated applicable FHIR profiles or server business rules. This should be accompanied by an OperationOutcome resource providing additional detail  |
 
-      content:
-        application/fhir+json:
-          schema:
-            $ref: '#/components/schemas/OperationOutcome'
-          example:
-            {
-  "resourceType": "OperationOutcome",
-  "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx",
-  "meta": {
-    "profile": [
-      "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-    ]
-  },
-  "issue": [
-    {
-      "severity": "error",
-      "code": "invalid",
-      "details": {
-        "coding": [
-          {
-            "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-            "code": "INVALID"
-          }
-        ]
-      },
-      "diagnostics": "The provided event ID is either missing or not in the expected format."
-    }
-  ]
-}
-      headers:
-        ID:
-          description: 'The immunisation record Id from the request header, if supplied, mirrored back.'
-          schema:
-            type: string
-            format: uuid
-            example: 7364896f-h736-7ju8-fr0e-576r585f1083
-        X-Correlation-Id:
-          description: 'The X-Correlation-Id from the request header, if supplied, mirrored back.'
-          schema:
-            type: string
-            format: uuid
-            example: 9562466f-c982-4bd5-bb0e-255e9f5e6689
-        X-Request-Id:
-          description: 'The X-Request-Id from the request header, if supplied, mirrored back.'
-          schema:
-            type: string
-            format: uuid
-            example: c1ab3fba-6bae-4ba4-b257-5a87c44d4a91       
   schemas:
-    OperationOutcome:
-      $ref: schemas/OperationOutcome.yaml
+    200_OperationOutcome:
+      $ref: components/schemas/200_OperationOutcome.yaml
+    201_OperationOutcome:
+      $ref: components/schemas/201_OperationOutcome.yaml
+    400_OperationOutcome:
+      $ref: components/schemas/400_OperationOutcome.yaml
+    404_OperationOutcome:
+      $ref: components/schemas/404_OperationOutcome.yaml
+
+  parameters:
+    ImmunisationEventID:
+      in: path
+      name: Id
+      required: true
+      description: |
+        A required ID which you can use to identify and immunisation event object.
+        
+        Mirrored back in a response header. 
+      schema:
+        type: string
+        example: 29dc4e84-7e72-11ee-b962-0242ac120002
+    CorrelationID:
+      in: header
+      name: X-Correlation-ID
+      required: false
+      description: |
+        An optional ID which you can use to track transactions across multiple systems. It can take any value, but we recommend avoiding `.` characters.
+        
+        Mirrored back in a response header.
+      schema:
+        type: string
+        example: 11C46F5F-CDEF-4865-94B2-0EE0EDCC26DA
+    RequestID:
+      in: header
+      name: X-Request-ID
+      required: false
+      description: |
+        A globally unique identifier (GUID) for the request, which we use to de-duplicate repeated requests and to trace the request if you contact our helpdesk.
+        
+        Must be a universally unique identifier (UUID) (ideally version 4).
+
+        Mirrored back in a response header.
+
+        If you re-send a failed request, use the same value in this header.
+      schema:
+        type: string
+        pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+        example: 60E0B220-8136-4CA5-AE46-1D97EF59D068
+
+  headers:
+    Correlation-Id:
+     description: 'The X-Correlation-Id from the request header, if supplied, mirrored back.'
+     schema:
+       type: string
+       format: uuid
+       example: 9562466f-c982-4bd5-bb0e-255e9f5e6689
+    Request-Id:
+     description: 'The X-Request-Id from the request header, if supplied, mirrored back.'
+     schema:
+       type: string
+       format: uuid
+       example: c1ab3fba-6bae-4ba4-b257-5a87c44d
