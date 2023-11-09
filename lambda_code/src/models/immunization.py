@@ -9,6 +9,7 @@ class Constants:
     vaccination_not_given_flag: str = "not-done"
     vaccination_given_flag: str = "empty"
 
+    @staticmethod
     def convert_iso8601_to_datetime(iso_datetime_str):
         try:
             time_str = "T00:00:00+00:00"
@@ -34,16 +35,19 @@ class Constants:
         except ValueError:
             raise ValueError("Invalid datetime format. Use YYYY-MM-DDThh:mm:ss+zz.")
 
+    @staticmethod
     def convert_to_date(value):
         try:
             return datetime.strptime(value, "%Y-%m-%d").date()
         except ValueError:
             raise ValueError("Invalid date format. Use YYYY-MM-DD.")
 
+    @staticmethod
     def is_urn_resource(s):
         # Check if the lowercase version of the string starts with "urn"
         return s.lower().startswith("urn")
 
+    @staticmethod
     def if_vaccine_not_give(not_given_flag):
         if not not_given_flag or not_given_flag == Constants.vaccination_given_flag:
             return False
@@ -51,6 +55,7 @@ class Constants:
             if not_given_flag == Constants.vaccination_not_given_flag:
                 return True
 
+    @staticmethod
     def has_max_decimal_places(input_string, max_places=4):
         # Define a regular expression pattern for matching up to four decimal places
         pattern = r"^\d+(\.\d{1,4})?$"
@@ -60,7 +65,7 @@ class Constants:
 
 
 # > This class represents a simple immunization
-class ImmunizationModel(BaseModel, Constants):
+class CsvImmunizationModel(BaseModel, Constants):
     NHS_NUMBER: str = None
     PERSON_FORENAME: str = None
     PERSON_SURNAME: str = None
@@ -332,7 +337,6 @@ class ImmunizationModel(BaseModel, Constants):
 
     @validator("ROUTE_OF_VACCINATION_CODE", pre=True, always=True)
     def validate_route_of_vaccination_code(cls, v, values):
-
         if "NOT_GIVEN" in values:
             if not Constants.if_vaccine_not_give(values["NOT_GIVEN"]):
                 if not v:
@@ -343,7 +347,6 @@ class ImmunizationModel(BaseModel, Constants):
 
     @validator("DOSE_AMOUNT", pre=True, always=True)
     def validate_dose_amount(cls, v, values):
-
         if "NOT_GIVEN" in values:
             if not Constants.if_vaccine_not_give(values["NOT_GIVEN"]):
                 if not v:
@@ -360,7 +363,6 @@ class ImmunizationModel(BaseModel, Constants):
 
     @validator("DOSE_UNIT_CODE", pre=True, always=True)
     def validate_dose_unit_code(cls, v, values):
-
         if "NOT_GIVEN" in values:
             if not Constants.if_vaccine_not_give(values["NOT_GIVEN"]):
                 if not v:
@@ -371,7 +373,6 @@ class ImmunizationModel(BaseModel, Constants):
 
     @validator("INDICATION_CODE", pre=True, always=True)
     def validate_indication_code(cls, v, values):
-
         if "NOT_GIVEN" in values:
             if not Constants.if_vaccine_not_give(values["NOT_GIVEN"]):
                 if not v:
@@ -382,7 +383,6 @@ class ImmunizationModel(BaseModel, Constants):
 
     @validator("CONSENT_FOR_TREATMENT_CODE", pre=True, always=True)
     def validate_consent_for_treatment_code(cls, v, values):
-
         if "NOT_GIVEN" in values:
             if not Constants.if_vaccine_not_give(values["NOT_GIVEN"]):
                 if not v:
