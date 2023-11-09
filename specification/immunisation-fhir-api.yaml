@@ -6,25 +6,56 @@ info:
   version: 'Computed and injected at build time by `scripts/set_version.py`'
   description: |
     ## Overview
-    Add a fully fledged description here with markdown syntax.
-    For help completing the content of your API spec, see our guidance on the minimum standard (bronze) details 
-    to include [here](https://nhsd-confluence.digital.nhs.uk/display/APM/Writing+a+bronze+API+cover+page). You should also base your content on our exemplar API - [PDS FHIR](https://digital.nhs.uk/developer/api-catalogue/personal-demographics-service-fhir).
+    Use this API to access the Immunisation Fhir service.
     ## Who can use this API
-    To be completed.
+    Health and care organisations in England and the Isle of Man can access Immunisation fhir records. Legitimate direct care examples include NHS organisations delivering healthcare, local authorities delivering care, third sector and private sector health and care organisations, and developers delivering systems to health and care organisations. 
+    Patients who receive health and social care or make use of NHS services in England, Wales, the Isle of Man, Scotland, Northern Ireland and the Channel Islands.
     ## Related APIs
-    To be completed.
+    Immunisation History API
     ## API status and roadmap
-    To be completed.
+    This API is in development.
     ## Service level
     To be completed.
     ## Technology
-    To be completed.
+    This API is [RESTful](https://digital.nhs.uk/developer/guides-and-documentation/our-api-technologies#basic-rest).
+
+    It conforms to the [FHIR](https://digital.nhs.uk/developer/guides-and-documentation/our-api-technologies#fhir) global standard for health care data exchange, specifically to [FHIR R4 (v4.0.1)](https://hl7.org/fhir/r4/), except that it does not support the [capabilities](http://hl7.org/fhir/R4/http.html#capabilities) interaction.
+    
+    You do not need to know much about FHIR to use this API - FHIR APIs are just RESTful APIs that follow specific rules.
+    In particular:
+    - resource names are capitalised and singular, for example `/Patient` not `/patients`
+    - array names are singular, for example `line` not `lines` for address lines
+    - data items that are country-specific and thus not included in the FHIR global base resources are usually wrapped in an `extension` object
+
+    There are [libraries and SDKs available](https://digital.nhs.uk/developer/guides-and-documentation/api-technologies-at-nhs-digital#fhir-libraries-and-sdks) to help with FHIR API integration.
     ## Network access
     To be completed.
     ## Security and authorisation
-    To be completed.
+    This API has three access modes:
+    - application-restricted access
+    - healthcare worker access
+    - patient access
+
+    The end user could be:
+    * a healthcare worker - in which case you must ensure they are authenticated and suitably authorised locally
+    * a patient - in which case you must ensure they are authenticated locally
+    * not present at all - for example as part of a back end process to check NHS numbers for data flowing from one system to another
+    
+    ## Errors
+    We use standard HTTP status codes to show whether an API request succeeded or not. They are usually in the range:
+
+    * 200 to 299 if it succeeded, including code 202 if it was accepted by an API that needs to wait for further action
+    * 400 to 499 if it failed because of a client error by your application
+    * 500 to 599 if it failed because of an error on our server
+    
+    Errors specific to each API are shown in the Endpoints section, under Response. See our [reference guide](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#http-status-codes) for more on errors.
+    
     ## Environments and testing
-    To be completed.
+    | Environment       | Base URL                                                               |
+    | ----------------- | ---------------------------------------------------------------------- |
+    | Sandbox           | `https://sandbox.api.service.nhs.uk/immunisation-fhir-api`    |
+    | Integration test  | `https://int.api.service.nhs.uk/immunisation-fhir-api`        |
+
     ## Onboarding
     To be completed.
   contact:
@@ -52,7 +83,7 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/201_OperationOutcome'
+                $ref: '#/components/schemas/OperationOutcome'
               example:
                 $ref: components/OperationOutcome/201_create-success.json
           headers:
@@ -80,7 +111,7 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/200_OperationOutcome'
+                $ref: '#/components/schemas/OperationOutcome'
               example:
                 $ref: components/OperationOutcome/200_get-success.json
           headers:
@@ -104,7 +135,7 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/200_OperationOutcome'
+                $ref: '#/components/schemas/OperationOutcome'
               example:
                 $ref: examples/OperationOutcome/200_get-success.json
           headers:
@@ -127,7 +158,7 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/200_OperationOutcome'
+                $ref: '#/components/schemas/OperationOutcome'
               example:
                 $ref: components/OperationOutcome/200_get-success.json
           headers:
@@ -150,7 +181,7 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/200_OperationOutcome'
+                $ref: '#/components/schemas/OperationOutcome'
               example:
                 $ref: components/OperationOutcome/200_get-success.json
           headers:
@@ -163,7 +194,7 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/201_OperationOutcome'
+                $ref: '#/components/schemas/OperationOutcome'
               example:
                 $ref: components/OperationOutcome/201_create-success.json
           headers:
@@ -192,14 +223,8 @@ components:
         | 422         | UNPROCESSABLE_ENTITY       | The proposed resource violated applicable FHIR profiles or server business rules. This should be accompanied by an OperationOutcome resource providing additional detail  |
 
   schemas:
-    200_OperationOutcome:
-      $ref: components/schemas/200_OperationOutcome.yaml
-    201_OperationOutcome:
-      $ref: components/schemas/201_OperationOutcome.yaml
-    400_OperationOutcome:
-      $ref: components/schemas/400_OperationOutcome.yaml
-    404_OperationOutcome:
-      $ref: components/schemas/404_OperationOutcome.yaml
+    OperationOutcome:
+      $ref: components/schemas/OperationOutcome.yaml
 
   parameters:
     ImmunisationEventID:
