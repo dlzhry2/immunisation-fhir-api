@@ -12,8 +12,16 @@ class FhirResourceError:
 
 
 @dataclass
-class ResourceNotFoundError(FhirResourceError):
+class ResourceNotFoundError(FhirResourceError, RuntimeError):
+    """Return this error when the requested FHIR resource from client does not exist"""
     pass
+
+
+@dataclass
+class UnhandledResponseError(RuntimeError):
+    """Use this error when the response from an external service (ex dynamodb) can't be handled"""
+    message: str
+    response: dict
 
 
 class Severity(str, Enum):

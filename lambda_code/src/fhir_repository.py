@@ -1,13 +1,13 @@
 import json
 import os
 import time
-from typing import Optional, Union
+from typing import Optional
 
 import boto3
 import botocore.exceptions
 from boto3.dynamodb.conditions import Attr
 
-from models.errors import ResourceNotFoundError
+from models.errors import ResourceNotFoundError, UnhandledResponseError
 
 
 def create_table(table_name=None, endpoint_url=None):
@@ -39,14 +39,14 @@ class ImmunisationRepository:
 
         return immunization if response["ResponseMetadata"]["HTTPStatusCode"] == 200 else None
 
-    def delete_immunization(self, imms_id: str) -> Optional[Union[dict, ResourceNotFoundError]]:
-        epoch_time = int(time.time())
+    def delete_immunization(self, imms_id: str) -> dict:
+        now_timestamp = int(time.time())
         try:
             response = self.table.update_item(
                 Key={'PK': self._make_id(imms_id)},
                 UpdateExpression='SET DeletedAt = :timestamp',
                 ExpressionAttributeValues={
-                    ':timestamp': epoch_time,
+                    ':timestamp': now_timestamp,
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(self._make_id(imms_id)) & Attr("DeletedAt").not_exists()
@@ -54,15 +54,17 @@ class ImmunisationRepository:
             if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
                 return response["Attributes"]["Resource"]
             else:
-                return None
+                raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
 
         except botocore.exceptions.ClientError as e:
+            # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
             if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-                return ResourceNotFoundError(
+                raise ResourceNotFoundError(
                     resource_type="Immunization", resource_id=imms_id
                     , message="Requested Immunization resource didn't exist or has been deleted")
             else:
-                raise
+                raise UnhandledResponseError(message=f"Unhandled error from dynamodb: {e.response['Error']['Code']}",
+                                             response=e.response)
 
     @staticmethod
     def _make_id(_id):

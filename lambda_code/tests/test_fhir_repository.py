@@ -10,7 +10,7 @@ from boto3.dynamodb.conditions import Attr
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunisationRepository
-from models.errors import ResourceNotFoundError
+from models.errors import ResourceNotFoundError, UnhandledResponseError
 
 
 class TestImmunisationRepository(unittest.TestCase):
@@ -115,23 +115,29 @@ class TestImmunisationRepository(unittest.TestCase):
             error_response=error_res,
             operation_name="an-op")
 
-        res = self.repository.delete_immunization(imms_id)
+        with self.assertRaises(ResourceNotFoundError) as e:
+            self.repository.delete_immunization(imms_id)
 
         # Then
         self.table.update_item.assert_called_once_with(
             Key=ANY, UpdateExpression=ANY, ExpressionAttributeValues=ANY, ReturnValues=ANY,
             ConditionExpression=Attr("PK").eq(self._make_id(imms_id)) & Attr("DeletedAt").not_exists()
         )
-        self.assertIsInstance(res, ResourceNotFoundError)
-        self.assertEqual(res.resource_id, imms_id)
-        self.assertEqual(res.resource_type, "Immunization")
 
-    def test_delete_returns_none_when_imms_not_found(self):
-        """it should return None if Immunization doesn't exist"""
-        imms_id = "a-non-existent-id"
-        not_found = 404
-        self.table.update_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": not_found}})
+        self.assertIsInstance(e.exception, ResourceNotFoundError)
+        self.assertEqual(e.exception.resource_id, imms_id)
+        self.assertEqual(e.exception.resource_type, "Immunization")
 
-        _id = self.repository.delete_immunization(imms_id)
+    def test_delete_throws_error_when_response_can_not_be_handled(self):
+        """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+        imms_id = "an-id"
+        bad_request = 400
+        response = {"ResponseMetadata": {"HTTPStatusCode": bad_request}}
+        self.table.update_item = MagicMock(return_value=response)
 
-        self.assertIsNone(_id)
+        with self.assertRaises(UnhandledResponseError) as e:
+            # When
+            self.repository.delete_immunization(imms_id)
+
+        # Then
+        self.assertDictEqual(e.exception.response, response)
