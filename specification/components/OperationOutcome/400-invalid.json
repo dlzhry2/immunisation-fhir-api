@@ -1,6 +1,4 @@
 {
-  "statusCode": 400,
-  "body": {
     "resourceType": "OperationOutcome",
     "id": "3d64df5a-b753-49ec-b3df-f45c157941eb",
     "meta": {
@@ -24,5 +22,3 @@
       }
     ]
   }
-}
-

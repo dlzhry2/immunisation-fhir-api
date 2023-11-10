@@ -1,6 +1,3 @@
-{ 
-    "statusCode": 201,
-    "body":
     {
         "resourceType": "Immunization",
         "contained": [
@@ -307,4 +304,3 @@
             }
         }
     }
-  }
