@@ -1,6 +1,19 @@
+from dataclasses import dataclass
 from enum import Enum
 
 from fhir.resources.operationoutcome import OperationOutcome
+
+
+@dataclass
+class FhirResourceError:
+    resource_type: str
+    resource_id: str
+    message: str
+
+
+@dataclass
+class ResourceNotFoundError(FhirResourceError):
+    pass
 
 
 class Severity(str, Enum):

@@ -10,6 +10,7 @@ from boto3.dynamodb.conditions import Attr
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunisationRepository
+from models.errors import ResourceNotFoundError
 
 
 class TestImmunisationRepository(unittest.TestCase):
@@ -63,14 +64,14 @@ class TestImmunisationRepository(unittest.TestCase):
         self.assertIsNone(res_imms)
 
     def test_delete_immunization(self):
-        """it should return passed id if logical delete is successful"""
+        """it should logical delete Immunization by setting DeletedAt attribute"""
         imms_id = "an-id"
-        self.table.update_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Attributes": {"Resource": {}}}
+        self.table.update_item = MagicMock(return_value=dynamo_response)
 
         now_epoch = 123456
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
-
             # When
             _id = self.repository.delete_immunization(imms_id)
 
@@ -81,30 +82,49 @@ class TestImmunisationRepository(unittest.TestCase):
             ExpressionAttributeValues={
                 ':timestamp': now_epoch,
             },
-            ConditionExpression=ANY
+            ReturnValues=ANY, ConditionExpression=ANY
         )
-        self.assertEqual(_id, imms_id)
+
+    def test_delete_returns_old_resource(self):
+        """it should return existing Immunization when delete is successful"""
+
+        imms_id = "an-id"
+        resource = {"foo": "bar"}
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Attributes": {"Resource": resource}}
+        self.table.update_item = MagicMock(return_value=dynamo_response)
+
+        now_epoch = 123456
+        with patch("time.time") as mock_time:
+            mock_time.return_value = now_epoch
+            # When
+            act_resource = self.repository.delete_immunization(imms_id)
+
+        # Then
+        self.table.update_item.assert_called_once_with(
+            Key=ANY, UpdateExpression=ANY, ExpressionAttributeValues=ANY, ConditionExpression=ANY,
+            ReturnValues="ALL_NEW",
+        )
+        self.assertDictEqual(act_resource, resource)
 
     def test_multiple_delete_should_not_update_timestamp(self):
-        """when delete is called multiple times, it should not update DeletedAt,
-        and it should let the Service make the decision"""
+        """when delete is called multiple times, or when it doesn't exist, it should not update DeletedAt,
+        and it should return Error"""
         imms_id = "an-id"
         error_res = {"Error": {"Code": "ConditionalCheckFailedException"}}
         self.table.update_item.side_effect = botocore.exceptions.ClientError(
             error_response=error_res,
             operation_name="an-op")
 
-        # When
-        with self.assertRaises(Exception):
-            self.repository.delete_immunization(imms_id)
+        res = self.repository.delete_immunization(imms_id)
 
         # Then
         self.table.update_item.assert_called_once_with(
-            Key=ANY,
-            UpdateExpression=ANY,
-            ExpressionAttributeValues=ANY,
-            ConditionExpression=Attr("DeletedAt").not_exists()
+            Key=ANY, UpdateExpression=ANY, ExpressionAttributeValues=ANY, ReturnValues=ANY,
+            ConditionExpression=Attr("PK").eq(self._make_id(imms_id)) & Attr("DeletedAt").not_exists()
         )
+        self.assertIsInstance(res, ResourceNotFoundError)
+        self.assertEqual(res.resource_id, imms_id)
+        self.assertEqual(res.resource_type, "Immunization")
 
     def test_delete_returns_none_when_imms_not_found(self):
         """it should return None if Immunization doesn't exist"""

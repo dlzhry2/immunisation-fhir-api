@@ -39,6 +39,8 @@ class FhirController:
                                                  diagnostics=msg)
             return FhirController.create_response(404, json.dumps(api_error.dict()))
 
+    def delete_immunization(self):
+        pass
     @staticmethod
     def create_response(status_code, body):
         return {

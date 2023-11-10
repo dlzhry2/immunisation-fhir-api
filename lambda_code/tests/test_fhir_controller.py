@@ -79,3 +79,20 @@ class TestFhirControllerGetImmunisationById(unittest.TestCase):
         self.assertEqual(response["statusCode"], 400)
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
+
+
+class TestDeleteImmunization(unittest.TestCase):
+    def setUp(self):
+        self.service = create_autospec(FhirService)
+        self.controller = FhirController(self.service)
+
+    def test_validate_imms_id(self):
+        """it should validate lambda's immunisation id"""
+        invalid_id = {"pathParameters": {"id": "invalid %$ id"}}
+
+        response = self.controller.delete_immunization(invalid_id)
+
+        self.assertEqual(self.service.get_immunisation_by_id.call_count, 0)
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")

@@ -72,7 +72,8 @@ class EventTable:
                 ExpressionAttributeValues={
                     ':timestamp': epoch_time,
                 },
-                ConditionExpression=Attr("DeletedAt").not_exists()
+                ReturnValues="ALL_NEW",
+                ConditionExpression=Attr("PK").eq(f"Immunisation#{imms_id}") & Attr("DeletedAt").not_exists()
             )
             return imms_id if response["ResponseMetadata"]["HTTPStatusCode"] == 200 else None
 

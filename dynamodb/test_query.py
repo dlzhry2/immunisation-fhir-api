@@ -37,6 +37,9 @@ class TestRepository(unittest.TestCase):
         response = table.delete_immunisation(imms_id)
         assert response == imms_id
 
+    def test_delete_non_existent(self):
+        response = table.delete_immunisation("a25b59fd-92e8-e269-d12e-cbc40b9475b1")
+
     def test_multiple_delete_should_not_update_timestamp(self):
         pass
 
