@@ -17,17 +17,20 @@ class TestImmunisationRepository(unittest.TestCase):
         self.table = MagicMock()
         self.repository = ImmunisationRepository(table=self.table)
 
+    @staticmethod
+    def _make_id(_id):
+        return f"Immunization#{_id}"
+
     def test_get_immunisation_by_id(self):
         """it should find an Immunization by id"""
         imms_id = "an-id"
         resource = {"foo": "bar"}
         self.table.get_item = MagicMock(return_value={"Item": {"Resource": json.dumps(resource)}})
-        res_id = f"Immunization#{imms_id}"
 
         imms = self.repository.get_immunisation_by_id(imms_id)
 
         self.assertDictEqual(resource, imms)
-        self.table.get_item.assert_called_once_with(Key={"PK": res_id})
+        self.table.get_item.assert_called_once_with(Key={"PK": self._make_id(imms_id)})
 
     def test_immunisation_not_found(self):
         """it should return None if Immunization doesn't exist"""
@@ -37,11 +40,32 @@ class TestImmunisationRepository(unittest.TestCase):
         imms = self.repository.get_immunisation_by_id(imms_id)
         self.assertIsNone(imms)
 
+    def test_create_immunisation(self):
+        """it should create immunisation, and return created object"""
+        imms_id = "an-id"
+        imms = {"id": imms_id}
+        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+
+        res_imms = self.repository.create_immunisation(imms)
+
+        self.assertDictEqual(res_imms, imms)
+        self.table.put_item.assert_called_once_with(
+            Item={"PK": self._make_id(imms_id),
+                  "Resource": json.dumps(imms)})
+
+    def test_create_unsuccessful(self):
+        """it should return None if response is non-200"""
+        bad_req = 400
+        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": bad_req}})
+
+        res_imms = self.repository.create_immunisation({"id": "an-id"})
+
+        self.assertIsNone(res_imms)
+
     def test_delete_immunisation(self):
         """it should return passed id if logical delete is successful"""
         imms_id = "an-id"
         self.table.update_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
-        res_id = f"Immunization#{imms_id}"
 
         now_epoch = 123456
         with patch("time.time") as mock_time:
@@ -52,7 +76,7 @@ class TestImmunisationRepository(unittest.TestCase):
 
         # Then
         self.table.update_item.assert_called_once_with(
-            Key={"PK": res_id},
+            Key={"PK": self._make_id(imms_id)},
             UpdateExpression='SET DeletedAt = :timestamp',
             ExpressionAttributeValues={
                 ':timestamp': now_epoch,
@@ -62,7 +86,8 @@ class TestImmunisationRepository(unittest.TestCase):
         self.assertEqual(_id, imms_id)
 
     def test_multiple_delete_should_not_update_timestamp(self):
-        """when delete is called multiple times, it should not update DeletedAt"""
+        """when delete is called multiple times, it should not update DeletedAt,
+         and should return id as it was successful"""
         imms_id = "an-id"
         error_res = {"Error": {"Code": "ConditionalCheckFailedException"}}
         self.table.update_item.side_effect = botocore.exceptions.ClientError(
@@ -79,7 +104,7 @@ class TestImmunisationRepository(unittest.TestCase):
             ExpressionAttributeValues=ANY,
             ConditionExpression=Attr("DeletedAt").not_exists()
         )
-        self.assertIsNone(_id)
+        self.assertEqual(_id, imms_id)
 
     def test_delete_returns_none_when_imms_not_found(self):
         """it should return None if Immunization doesn't exist"""

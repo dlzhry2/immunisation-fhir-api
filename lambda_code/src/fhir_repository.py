@@ -27,6 +27,16 @@ class ImmunisationRepository:
         else:
             return None
 
+    def create_immunisation(self, imms):
+        pk = self._make_id(imms["id"])
+
+        response = self.table.put_item(Item={
+            'PK': pk,
+            'Resource': json.dumps(imms),
+        })
+
+        return imms if response["ResponseMetadata"]["HTTPStatusCode"] == 200 else None
+
     def delete_immunisation(self, imms_id: str) -> Optional[str]:
         epoch_time = int(time.time())
         try:

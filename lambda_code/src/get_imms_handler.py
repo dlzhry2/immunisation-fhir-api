@@ -1,17 +1,11 @@
 import uuid
 
-from fhir_controller import FhirController
-from fhir_repository import create_table, ImmunisationRepository
-from fhir_service import FhirService
+from fhir_controller import FhirController, make_controller
 from models.errors import Severity, Code, create_operation_outcome
 
 
 def get_imms_handler(event, context):
-    imms_repo = ImmunisationRepository(create_table())
-    service = FhirService(imms_repo=imms_repo)
-    controller = FhirController(fhir_service=service)
-
-    return get_immunisation_by_id(event, controller)
+    return get_immunisation_by_id(event, make_controller())
 
 
 def get_immunisation_by_id(event, controller: FhirController):

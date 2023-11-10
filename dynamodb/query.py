@@ -65,7 +65,6 @@ class EventTable:
 
     def delete_immunisation(self, imms_id: str):
         epoch_time = int(time.time())
-        print("yooo")
         try:
             response = self.table.update_item(
                 Key={'PK': f"Immunisation#{imms_id}"},

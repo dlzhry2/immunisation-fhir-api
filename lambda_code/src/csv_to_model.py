@@ -2,7 +2,8 @@
 import csv
 import os
 import sys
-from typing import Union
+from typing import Union, List
+
 from pydantic import ValidationError
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../")
@@ -27,7 +28,7 @@ def generate_failed_record(row: dict, reasons: str) -> CsvImmunizationErrorModel
 
 def read_csv_to_model(
     csv_data: str,
-) -> Union[list[CsvImmunizationModel], list[CsvImmunizationErrorModel]]:
+) -> Union[List[CsvImmunizationModel], List[CsvImmunizationErrorModel]]:
     """Read a CSV file and return a list of ImmunizationModel objects"""
     immunizations = []
     failures = []

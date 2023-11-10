@@ -2,8 +2,15 @@ import json
 import re
 import uuid
 
+from fhir_repository import ImmunisationRepository, create_table
 from fhir_service import FhirService
 from models.errors import Severity, Code, create_operation_outcome
+
+
+def make_controller():
+    imms_repo = ImmunisationRepository(create_table())
+    service = FhirService(imms_repo=imms_repo)
+    return FhirController(fhir_service=service)
 
 
 class FhirController:
