@@ -1,7 +1,10 @@
 type: object
-description: |
-  Outcome of an operation that does not result in a resource or bundle being returned, for example an error or an async/batch submission.
-  There are a number of possible error codes that can be returned along with a more detailed description in the `display` field.
+description: >
+  Outcome of an operation that does not result in a resource or bundle being
+  returned, for example an error or an async/batch submission.
+
+  There are a number of possible error codes that can be returned along with a
+  more detailed description in the `display` field.
 properties:
   resourceType:
     type: string
@@ -19,7 +22,11 @@ properties:
       properties:
         severity:
           type: string
-          enum: [fatal, error, warning, information]
+          enum:
+            - fatal
+            - error
+            - warning
+            - information
           description: Severity of the error.
           example: error
         code:
@@ -62,31 +69,33 @@ properties:
           type: object
           description: Internal error code.
   properties:
-      type: array
-      items:
-        type: object
-        properties:
-          system:
-            type: string
-            description: URI of the coding system specification.
-            example: https://fhir.nhs.uk/R4/CodeSystem/Spine-ErrorOrWarningCode
-          version:
-            type: string
-            description: Version of the coding system in use.
-            example: '1'
-          code:
-            type: string
-            description: Symbol in syntax defined by the system.
-            example: INVALID_VALUE
-          display:
-            type: string
-            description: Representation defined by the system.
-            example: Provided value is invalid
-          diagnostics:
-            type: string
-            description: Additional diagnostic information about the issue. This information is subject to change.
-            example: Invalid value - 2019-01 in field 'birthDate'
-          expression:
-            type: string
-            description: FHIRPath of element(s) related to the error.
-            example: Patient.name.given
+    type: array
+    items:
+      type: object
+      properties:
+        system:
+          type: string
+          description: URI of the coding system specification.
+          example: 'https://fhir.nhs.uk/R4/CodeSystem/Spine-ErrorOrWarningCode'
+        version:
+          type: string
+          description: Version of the coding system in use.
+          example: '1'
+        code:
+          type: string
+          description: Symbol in syntax defined by the system.
+          example: INVALID_VALUE
+        display:
+          type: string
+          description: Representation defined by the system.
+          example: Provided value is invalid
+        diagnostics:
+          type: string
+          description: >-
+            Additional diagnostic information about the issue. This information
+            is subject to change.
+          example: Invalid value - 2019-01 in field 'birthDate'
+        expression:
+          type: string
+          description: FHIRPath of element(s) related to the error.
+          example: Patient.name.given

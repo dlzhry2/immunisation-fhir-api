@@ -2,11 +2,11 @@
 # for immunisation-fhir-api owned by NHS Digital (https://digital.nhs.uk/)
 openapi: '3.0.0'
 info:
-  title: 'immunisation-fhir-api'
-  version: 'Computed and injected at build time by `scripts/set_version.py`'
+  title: immunisation-fhir-api
+  version: Computed and injected at build time by `scripts/set_version.py`
   license:
-    name: 'License Name'
-    url: 'URL'
+    name: License Name
+    url: URL
   description: |
     ## Overview
     Use this API to access the Immunisation Fhir service.
@@ -56,21 +56,21 @@ info:
     ## Environments and testing
     | Environment       | Base URL                                                               |
     | ----------------- | ---------------------------------------------------------------------- |
-    | Sandbox           | `https://sandbox.api.service.nhs.uk/immunisation-fhir-api`    |
-    | Integration test  | `https://int.api.service.nhs.uk/immunisation-fhir-api`        |
+    | Sandbox           | https://sandbox.api.service.nhs.uk/immunisation-fhir-api    |
+    | Integration test  | https://int.api.service.nhs.uk/immunisation-fhir-api        |
 
     ## Onboarding
     To be completed.
   contact:
-    name: 'immunisation-fhir-api API Support'
-    url: 'https://digital.nhs.uk/developer/help-and-support'
+    name: immunisation-fhir-api API Support
+    url: https://digital.nhs.uk/developer/help-and-support
     email: api.management@nhs.net
 servers:
-  - url: 'https://sandbox.api.service.nhs.uk/immunisation-fhir-api'
+  - url: https://sandbox.api.service.nhs.uk/immunisation-fhir-api
     description: Sandbox environment.
-  - url: 'https://int.api.service.nhs.uk/immunisation-fhir-api'
+  - url: https://int.api.service.nhs.uk/immunisation-fhir-api
     description: Integration test environment.
-  - url: 'https://api.service.nhs.uk/immunisation-fhir-api'
+  - url: https://api.service.nhs.uk/immunisation-fhir-api
     description: Production environment.
 paths:
   /immunisation:
@@ -82,7 +82,7 @@ paths:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
       responses:
-        '201':
+        201:
           description: Created
           content:
             application/fhir+json:
@@ -92,7 +92,7 @@ paths:
                 $ref: components/OperationOutcome/201_create-success.json
           headers:
             Location:
-              description: 'A Location header which contains the new Logical Id and Version Id of the created resource version. If the server understands versioning, the version is included. If a server does not track versions, the Location header will just contain [base]/[type]/[id].'
+              description: A Location header which contains the new Logical Id and Version Id of the created resource version. If the server understands versioning, the version is included. If a server does not track versions, the Location header will just contain [base]/[type]/[id].
               schema:
                 type: string
                 example: "/immunisation/c3f6145e-1a26-4345-b3f2-dccbcba62049/_history/versionId" 
@@ -110,7 +110,7 @@ paths:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
       responses:
-        '200':
+        200:
           description: Success
           content:
             application/fhir+json:
@@ -135,7 +135,7 @@ paths:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
       responses:
-        '200':
+        200:
           description: Success
           content:
             application/fhir+json:
@@ -159,7 +159,7 @@ paths:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
       responses:
-        '200':
+        200:
           description: Ok
           content:
             application/fhir+json:
@@ -183,7 +183,7 @@ paths:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
       responses:
-        '200':
+        200:
           description: Ok
           content:
             application/fhir+json:
@@ -196,7 +196,7 @@ paths:
               $ref: '#/components/headers/Correlation-Id'
             X-Request-ID:
               $ref: '#/components/headers/Request-Id'
-        '201':
+        201:
           description: Created
           content:
             application/fhir+json:
@@ -270,12 +270,12 @@ components:
         If you re-send a failed request, use the same value in this header.
       schema:
         type: string
-        pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+        pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
         example: 60E0B220-8136-4CA5-AE46-1D97EF59D068
 
   headers:
     Correlation-Id:
-     description: 'The X-Correlation-Id from the request header, if supplied, mirrored back.'
+     description: The X-Correlation-Id from the request header, if supplied, mirrored back.
      schema:
        type: string
        format: uuid
