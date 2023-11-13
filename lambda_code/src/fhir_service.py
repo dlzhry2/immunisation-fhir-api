@@ -19,10 +19,15 @@ class FhirService:
         else:
             return None
 
-    def delete_immunization(self, imms_id) -> Immunization:
+    def delete_immunization(self, imms_id) -> Optional[Immunization]:
         """Delete an Immunization if it exits and return the ID back if successful.
         If the resource doesn't exit then, None will be returned. Multiple calls to this method won't change the
         record in the database.
         """
         imms = self.immunisation_repo.delete_immunization(imms_id)
-        return Immunization.parse_obj(imms)
+        if imms:
+            # TODO: This shouldn't raise an exception since, we validate the message before storing it,
+            #  but what if the stored message is different from the requested FHIR version?
+            return Immunization.parse_obj(imms)
+        else:
+            return None

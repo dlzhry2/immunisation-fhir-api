@@ -10,6 +10,7 @@ sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_controller import FhirController
 from fhir_service import FhirService
+from models.errors import ResourceNotFoundError, UnhandledResponseError
 
 
 class TestFhirController(unittest.TestCase):
@@ -113,7 +114,7 @@ class TestDeleteImmunization(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Immunization")
 
-    def test_not_found(self):
+    def test_immunization_not_found(self):
         """it should return not-found OperationOutcome if it doesn't exist"""
         # Given
         imms_id = "a-non-existing-id"
@@ -130,3 +131,35 @@ class TestDeleteImmunization(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
         self.assertEqual(body["issue"][0]["code"], "not-found")
+
+    def test_immunization_exception_not_found(self):
+        """it should return not-found OperationOutcome if service throws ResourceNotFoundError"""
+        # Given
+        error = ResourceNotFoundError(resource_type="Immunization", resource_id="an-error-id", message="a message")
+        self.service.delete_immunization.side_effect = error
+        lambda_event = {"pathParameters": {"id": "a-non-existing-id"}}
+
+        # When
+        response = self.controller.delete_immunization(lambda_event)
+
+        # Then
+        self.assertEqual(response["statusCode"], 404)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertEqual(body["issue"][0]["code"], "not-found")
+
+    def test_immunization_unhandled_error(self):
+        """it should return server-error OperationOutcome if service throws UnhandledResponseError"""
+        # Given
+        error = UnhandledResponseError(message="a message", response={})
+        self.service.delete_immunization.side_effect = error
+        lambda_event = {"pathParameters": {"id": "a-non-existing-id"}}
+
+        # When
+        response = self.controller.delete_immunization(lambda_event)
+
+        # Then
+        self.assertEqual(response["statusCode"], 500)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
