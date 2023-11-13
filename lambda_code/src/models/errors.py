@@ -1,7 +1,18 @@
+import uuid
 from dataclasses import dataclass
 from enum import Enum
 
 from fhir.resources.operationoutcome import OperationOutcome
+
+
+class Severity(str, Enum):
+    error = "error"
+
+
+class Code(str, Enum):
+    not_found = "not-found"
+    invalid = "invalid"
+    server_error = "internal-server-error"
 
 
 @dataclass
@@ -13,24 +24,22 @@ class FhirResourceError:
 
 @dataclass
 class ResourceNotFoundError(FhirResourceError, RuntimeError):
-    """Return this error when the requested FHIR resource from client does not exist"""
-    pass
+    """Return this error when the requested FHIR resource does not exist"""
+
+    def to_operation_outcome(self) -> OperationOutcome:
+        return create_operation_outcome(
+            resource_id=self.resource_id, severity=Severity.error, code=Code.not_found, diagnostics=self.message)
 
 
 @dataclass
 class UnhandledResponseError(RuntimeError):
-    """Use this error when the response from an external service (ex dynamodb) can't be handled"""
+    """Use this error when the response from an external service (ex: dynamodb) can't be handled"""
     message: str
     response: dict
 
-
-class Severity(str, Enum):
-    error = "error"
-
-
-class Code(str, Enum):
-    not_found = "not-found"
-    invalid = "invalid"
+    def to_operation_outcome(self) -> OperationOutcome:
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=self.message)
 
 
 def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> OperationOutcome:

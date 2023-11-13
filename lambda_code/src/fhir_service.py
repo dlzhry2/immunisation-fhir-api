@@ -19,14 +19,10 @@ class FhirService:
         else:
             return None
 
-    def delete_immunization(self, imms_id) -> Optional[str]:
+    def delete_immunization(self, imms_id) -> Immunization:
         """Delete an Immunization if it exits and return the ID back if successful.
         If the resource doesn't exit then, None will be returned. Multiple calls to this method won't change the
         record in the database.
         """
-        return self.immunisation_repo.delete_immunization(imms_id)
-        # except botocore.exceptions.ClientError as e:
-        #     if e.response['Error']['Code'] != 'ConditionalCheckFailedException':
-        #         raise
-        #     else:
-        #         return imms_id
+        imms = self.immunisation_repo.delete_immunization(imms_id)
+        return Immunization.parse_obj(imms)

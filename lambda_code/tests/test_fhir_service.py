@@ -9,6 +9,7 @@ sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunisationRepository
 from fhir_service import FhirService
+from models.errors import ResourceNotFoundError
 
 
 class TestFhirService(unittest.TestCase):
@@ -44,19 +45,21 @@ class TestFhirService(unittest.TestCase):
     def test_delete_immunization(self):
         """it should delete Immunization record"""
         imms_id = "an-id"
-        self.imms_repo.delete_immunization.return_value = imms_id
+        imms = {"id": imms_id}
+        self.imms_repo.delete_immunization.return_value = imms
 
         # When
         act_imms = self.fhir_service.delete_immunization(imms_id)
 
         # Then
         self.imms_repo.delete_immunization.assert_called_once_with(imms_id)
-        self.assertEqual(act_imms, imms_id)
+        self.assertEqual(act_imms, imms)
 
     def test_delete_immunization_not_found(self):
         """it should return None when the ID doesn't exist"""
         imms_id = "a-non-existent-id"
-        self.imms_repo.delete_immunization.return_value = None
+        repo_res = ResourceNotFoundError(message="a msg", resource_id=imms_id, resource_type="Immunization")
+        self.imms_repo.delete_immunization.side_effects = repo_res
 
         # When
         act_imms = self.fhir_service.delete_immunization(imms_id)

@@ -1,6 +1,9 @@
 import json
 import re
 import uuid
+from typing import Optional
+
+from fhir.resources.operationoutcome import OperationOutcome
 
 from fhir_repository import ImmunisationRepository, create_table
 from fhir_service import FhirService
@@ -14,33 +17,51 @@ def make_controller():
 
 
 class FhirController:
-    immunisation_id_pattern = r"^[A-Za-z0-9\-.]{1,64}$"
+    immunization_id_pattern = r"^[A-Za-z0-9\-.]{1,64}$"
 
     def __init__(self, fhir_service: FhirService):
         self.fhir_service = fhir_service
 
-    def get_immunisation_by_id(self, aws_event) -> dict:
+    def get_immunization_by_id(self, aws_event) -> dict:
         imms_id = aws_event["pathParameters"]["id"]
 
-        if not re.match(self.immunisation_id_pattern, imms_id):
-            msg = "the provided event ID is either missing or not in the expected format."
-            api_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                                 code=Code.invalid,
-                                                 diagnostics=msg)
-            return FhirController.create_response(400, json.dumps(api_error.dict()))
+        id_error = self._validate_id(imms_id)
+        if id_error:
+            return self.create_response(400, json.dumps(id_error.dict()))
 
-        resource = self.fhir_service.get_immunisation_by_id(imms_id)
+        resource = self.fhir_service.get_immunization_by_id(imms_id)
+        return self._resource_or_not_found(resource)
+
+    def delete_immunization(self, aws_event):
+        imms_id = aws_event["pathParameters"]["id"]
+
+        id_error = self._validate_id(imms_id)
+        if id_error:
+            return FhirController.create_response(400, json.dumps(id_error.dict()))
+
+        resource = self.fhir_service.delete_immunization(imms_id)
+        return self._resource_or_not_found(resource)
+
+    def _validate_id(self, _id: str) -> Optional[OperationOutcome]:
+        if not re.match(self.immunization_id_pattern, _id):
+            msg = "the provided event ID is either missing or not in the expected format."
+            return create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                            code=Code.invalid,
+                                            diagnostics=msg)
+        else:
+            return None
+
+    @staticmethod
+    def _resource_or_not_found(resource):
         if resource:
             return FhirController.create_response(200, resource.json())
         else:
             msg = "The requested resource was not found."
-            api_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                                 code=Code.not_found,
-                                                 diagnostics=msg)
-            return FhirController.create_response(404, json.dumps(api_error.dict()))
+            id_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                                code=Code.not_found,
+                                                diagnostics=msg)
+            return FhirController.create_response(404, json.dumps(id_error.dict()))
 
-    def delete_immunization(self):
-        pass
     @staticmethod
     def create_response(status_code, body):
         return {
