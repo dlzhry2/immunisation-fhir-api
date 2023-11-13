@@ -1,7 +1,7 @@
-import json
-import re
+import uuid
 
 from fhir_controller import FhirController, make_controller
+from models.errors import Severity, Code, create_operation_outcome
 
 
 def delete_imms_handler(event, context):
@@ -9,34 +9,10 @@ def delete_imms_handler(event, context):
 
 
 def delete_immunization(event, controller: FhirController):
-    event_id = event["pathParameters"]["id"]
-
-    def is_valid_id(event_id):
-        pattern = r'^[A-Za-z0-9\-.]{1,64}$'
-        return re.match(pattern, event_id) is not None
-
-    if not is_valid_id(event_id) or not event_id:
-        return {
-            "statusCode": 400,
-            "headers": {
-                "Content-Type": "application/fhir+json",
-            },
-            "body": json.dumps(
-                create_response("The provided event ID is either missing or not in the expected format.", "invalid"))}
-
-    message = dynamo_service.delete_event(event_id)
-
-    if message is None:
-        return {
-            "statusCode": 404,
-            "headers": {
-                "Content-Type": "application/fhir+json",
-            },
-            "body": json.dumps(create_response("The requested resource was not found.", "not-found"))
-        }
-
-    response = {
-        "statusCode": 200,
-        "body": message
-    }
-    return response
+    try:
+        return controller.delete_immunization(event)
+    except Exception as e:
+        exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                             code=Code.server_error,
+                                             diagnostics=str(e))
+        return FhirController.create_response(500, exp_error.json())
