@@ -159,9 +159,14 @@ properties:
     default: AAJN11K                  
   patient:
     type: object
-    description: List of patient details.
-    minItems: 1
-    items:
+    required:
+     - resourceType
+     - identifier
+     - name
+     - gender
+     - birthDate
+     - address
+    properties:
       resourceType:
         type: string
         default: Patient
@@ -212,38 +217,30 @@ properties:
             postalCode:
               type: string
               default: LS1 5HT
-      occurrenceDateTime:      
-        type: string
-        default: 2020-12-14T10:08:15+00:00
-      site:
-        type: object
-        required:
-          - coding
-        properties:
-          coding:
-            type: array
-            minItems: 1
-            items:
-              type: object
-              required:
-                - coding
-              properties:
-                coding:
-                  type: array
-                  minItems: 1
-                  items:
-                    type: object
-                    required:
-                     - system
-                     - code
-                     - display
-                    properties:
-                      system:
-                        type: string
-                        default: https//fhir.nhs.uk/Id/nhs-number
-                      code:
-                        type: string
-                        default: 1234567891
-                      display:
-                        type: string
-                        default: 1234567891
+  occurrenceDateTime:      
+    type: string
+    default: 2020-12-14T10:08:15+00:00
+  site:
+    type: object
+    required:
+      - coding
+    properties:
+      coding:
+        type: array
+        minItems: 1
+        items:
+           type: object
+           required:
+            - system
+            - display
+            - code
+           properties:
+            code:
+              type: string
+              default: LA
+            system:
+              type: string
+              default: http://snomed.info/sct
+            display:
+              type: string
+              default: left arm

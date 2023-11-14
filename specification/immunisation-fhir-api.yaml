@@ -131,7 +131,7 @@ paths:
       operationId: getImmunisationRecordById
       description: Retrieves Immunization record event details by ID.
       parameters:
-        - $ref: '#/components/parameters/ImmunisationEventID'
+        - $ref: '#/components/parameters/Id'
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
       responses:
@@ -168,7 +168,7 @@ paths:
       operationId: deleteImmunisationRecordById
       description: Logical deletion of an Immunization record event specified by ID. A delete interaction means that the resource can no longer found through a search interaction.
       parameters:
-        - $ref: '#/components/parameters/ImmunisationEventID'
+        - $ref: '#/components/parameters/Id'
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
       responses:
@@ -192,7 +192,7 @@ paths:
       operationId: updateImmunisationRecordById
       description: The update interaction creates a new current version for an existing resource or creates an initial version if no resource already exists for the given id.
       parameters:
-        - $ref: '#/components/parameters/ImmunisationEventID'
+        - $ref: '#/components/parameters/Id'
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
       responses:
@@ -249,12 +249,12 @@ components:
       $ref: components/schemas/GetResponse.yaml
 
   parameters:
-    ImmunisationEventID:
+    Id:
       in: path
       name: Id
       required: true
       description: |
-        A required ID which you can use to identify and Immunization event object.
+        A required ID which you can use to identify an Immunization event object.
         
         Mirrored back in a response header. 
       schema:
