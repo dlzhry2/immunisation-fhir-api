@@ -36,7 +36,7 @@
     "type": "Patient",
     "identifier": {
       "system": "https://fhir.nhs.uk/Id/nhs-number",
-      "value": "BAD_NHS_NUMBER"
+      "value": "9000000009"
     }
   },
   "occurrenceDateTime": "2020-12-10T13:00:08.476+00:00",

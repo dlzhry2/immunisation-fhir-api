@@ -33,7 +33,7 @@ class ImmunizationValidator:
 
     # TODO: Can't validate yet as gender code is not in the sample data
     @classmethod
-    def validate_person_postcode(self, values):
+    def validate_person_postcode(cls, values):
         """Validate Person Postcode"""
         postcode = values["patient"].dict()["address"][0]["postalCode"]
         NHSValidators.validate_person_postcode(postcode)
@@ -79,10 +79,11 @@ class ImmunizationValidator:
     @classmethod
     def validate_performing_professional_body_reg_code(cls, values):
         """Validate Performing Professional Body Reg Code"""
-        performing_professional_body_reg_code = values["performer"][0]["actor"][
+        ic(values)
+        performing_professional_body_reg_code = values["performer"][0].dict()["actor"][
             "identifier"
         ]["value"]
-        performing_professional_body_reg_uri = values["performer"][0]["actor"][
+        performing_professional_body_reg_uri = values["performer"][0].dict()["actor"][
             "identifier"
         ]["system"]
         NHSValidators.validate_performing_professional_body_reg_code(
@@ -116,7 +117,7 @@ class ImmunizationValidator:
     @classmethod
     def validate_vaccination_procedure_code(cls, values):
         """Validate Vaccination Procedure Code"""
-        for record in values["extension"]:
+        for record in values["extension"][0].dict():
             if (
                 record["url"]
                 == "https://fhir.hl7.org.uk/StructureDefinition/Extension\
@@ -124,7 +125,7 @@ class ImmunizationValidator:
             ):
                 vaccination_procedure_code = record["valueCodeableConcept"]["coding"][
                     0
-                ]["code"]
+                ].dict()["code"]
 
         not_given = values["status"]
 
@@ -137,7 +138,7 @@ class ImmunizationValidator:
     @classmethod
     def validate_vaccination_situation_code(cls, values):
         """Validate Vaccination Procedure Code"""
-        for record in values["extension"]:
+        for record in values["extension"][0].dict():
             if (
                 record["url"]
                 == "https://fhir.hl7.org.uk/StructureDefinition/Extension\
@@ -169,7 +170,7 @@ class ImmunizationValidator:
     @classmethod
     def validate_dose_sequence(cls, values):
         """Validate Dose Sequence"""
-        dose_sequence = values["protocolApplied"][0]["doseNumberPositiveInt"]
+        dose_sequence = values["protocolApplied"][0].dict()["doseNumberPositiveInt"]
         not_given = values["status"]
         NHSValidators.validate_dose_sequence(dose_sequence, not_given)
         return values
@@ -224,7 +225,7 @@ class ImmunizationValidator:
     @classmethod
     def validate_dose_amount(cls, values):
         """Validate Dose Amount"""
-        dose_amount = values["doseQuantity"]["value"]
+        dose_amount = values["doseQuantity"].dict()["value"]
         not_given = values["status"]
         NHSValidators.validate_dose_amount(dose_amount, not_given)
         return values
@@ -232,9 +233,59 @@ class ImmunizationValidator:
     @classmethod
     def validate_dose_unit_code(cls, values):
         """Validate Dose Unit Code"""
-        dose_unit_code = values["doseQuantity"]["code"]
+        dose_unit_code = values["doseQuantity"].dict()["code"]
         not_given = values["status"]
         NHSValidators.validate_dose_unit_code(dose_unit_code, not_given)
+        return values
+
+    @classmethod
+    def validate_indication_code(cls, values):
+        """Validate Indication Code"""
+        indication_code = values["reasonCode"][0].dict()["coding"][0]["code"]
+        not_given = values["status"]
+        NHSValidators.validate_indication_code(indication_code, not_given)
+        return values
+
+    # TODO: Can't validate yet as consent for treatment code is not in the sample data
+    @classmethod
+    def validate_consent_for_treatment_code(cls, values):
+        """Validate Consent for Treatment Code"""
+        for record in values["contained"][0]["item"]:
+            if record["linkId"] == "Consent":
+                consent_for_treatment_code = record["answer"][0]["valueCoding"]["code"]
+        not_given = values["status"]
+        NHSValidators.validate_consent_for_treatment_code(consent_for_treatment_code, not_given)
+        return values
+
+    # TODO: Can't validate yet as submitted timestamp is not in the sample data
+    @classmethod
+    def validate_submitted_timestamp(cls, values):
+        """Validate Submitted Timestamp"""
+        for record in values["contained"][0]["item"]:
+            if record["linkId"] == "SubmittedTimeStamp":
+                submitted_timestamp = record["answer"][0]["valueCoding"]["code"]
+        NHSValidators.validate_submitted_timestamp(submitted_timestamp)
+        return values
+
+    # TODO: Can't validate yet as location code is not in the sample data
+    @classmethod
+    def validate_location_code(cls, values):
+        """Validate Location Code"""
+        location_code = values["location"]["identifier"]["value"]
+        NHSValidators.validate_location_code(location_code)
+        return values
+
+    # TODO: Can't validate yet as reduce validation code is not in the sample data
+    @classmethod
+    def validate_reduce_validation_code(cls, values):
+        """Validate Reduce Validation Code"""
+        for record in values["contained"][0]["item"]:
+            if record["linkId"] == "ReduceValidation":
+                reduce_validation_code = record["answer"][0]["valueCoding"]["code"]
+                reduce_validation_reason = record["answer"][0]["valueCoding"]["display"]
+        NHSValidators.validate_reduce_validation_code(
+            reduce_validation_code, reduce_validation_reason
+        )
         return values
 
     def validate(self):
@@ -251,7 +302,7 @@ class ImmunizationValidator:
         )
         Immunization.add_root_validator(self.validate_recorded_date)
         # Immunization.add_root_validator(self.validate_report_origin)
-        Immunization.add_root_validator(self.validate_not_given)
+        # Immunization.add_root_validator(self.validate_not_given)
         Immunization.add_root_validator(self.validate_vaccination_procedure_code)
         # Immunization.add_root_validator(self.validate_vaccination_situation_code)
         # Immunization.add_root_validator(self.validate_reason_not_given_code)
@@ -263,6 +314,11 @@ class ImmunizationValidator:
         Immunization.add_root_validator(self.validate_route_of_vaccination_code)
         Immunization.add_root_validator(self.validate_dose_amount)
         Immunization.add_root_validator(self.validate_dose_unit_code)
+        Immunization.add_root_validator(self.validate_indication_code)
+        # Immunization.add_root_validator(self.validate_consent_for_treatment_code)
+        # Immunization.add_root_validator(self.validate_submitted_timestamp)
+        # Immunization.add_root_validator(self.validate_location_code)
+        # Immunization.add_root_validator(self.validate_reduce_validation_code)
 
         immunization = Immunization.parse_obj(self.json_data)
         ic(immunization.dict())
