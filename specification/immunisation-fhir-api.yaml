@@ -1,20 +1,20 @@
 # This is an OpenAPI Specification (https://swagger.io/specification/)
-# for immunisation-fhir-api owned by NHS Digital (https://digital.nhs.uk/)
+# for Immunization-fhir-api owned by NHS Digital (https://digital.nhs.uk/)
 openapi: '3.0.0'
 info:
-  title: immunisation-fhir-api
+  title: Immunization-fhir-api
   version: Computed and injected at build time by `scripts/set_version.py`
   license:
     name: License Name
     url: URL
   description: |
     ## Overview
-    Use this API to access the Immunisation Fhir service.
+    Use this API to access the Immunization Fhir service.
     ## Who can use this API
-    Health and care organisations in England and the Isle of Man can access Immunisation fhir records. Legitimate direct care examples include NHS organisations delivering healthcare, local authorities delivering care, third sector and private sector health and care organisations, and developers delivering systems to health and care organisations. 
+    Health and care organisations in England and the Isle of Man can access Immunization fhir records. Legitimate direct care examples include NHS organisations delivering healthcare, local authorities delivering care, third sector and private sector health and care organisations, and developers delivering systems to health and care organisations. 
     Patients who receive health and social care or make use of NHS services in England, Wales, the Isle of Man, Scotland, Northern Ireland and the Channel Islands.
     ## Related APIs
-    Immunisation History API
+    Immunization History API
     ## API status and roadmap
     This API is in development.
     ## Service level
@@ -56,28 +56,28 @@ info:
     ## Environments and testing
     | Environment       | Base URL                                                               |
     | ----------------- | ---------------------------------------------------------------------- |
-    | Sandbox           | https://sandbox.api.service.nhs.uk/immunisation-fhir-api    |
-    | Integration test  | https://int.api.service.nhs.uk/immunisation-fhir-api        |
+    | Sandbox           | https://sandbox.api.service.nhs.uk/Immunisation-fhir-api    |
+    | Integration test  | https://int.api.service.nhs.uk/Immunisation-fhir-api        |
 
     ## Onboarding
     To be completed.
   contact:
-    name: immunisation-fhir-api API Support
+    name: Immunization-fhir-api API Support
     url: https://digital.nhs.uk/developer/help-and-support
     email: api.management@nhs.net
 servers:
-  - url: https://sandbox.api.service.nhs.uk/immunisation-fhir-api
+  - url: https://sandbox.api.service.nhs.uk/Immunisation-fhir-api
     description: Sandbox environment.
-  - url: https://int.api.service.nhs.uk/immunisation-fhir-api
+  - url: https://int.api.service.nhs.uk/Immunisation-fhir-api
     description: Integration test environment.
-  - url: https://api.service.nhs.uk/immunisation-fhir-api
+  - url: https://api.service.nhs.uk/Immunisation-fhir-api
     description: Production environment.
 paths:
-  /immunisation:
+  /Immunization:
     post:
-      summary: Create Immunisation record event
+      summary: Create Immunization record event
       operationId: createImmunisationRecord
-      description: Creates a single immunisation record event.
+      description: Creates a single Immunization record event.
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
@@ -87,15 +87,15 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/OperationOutcome'
+                $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/OperationOutcome/201_create-success.json
+                $ref: components/examples/get_response.json
           headers:
             Location:
               description: A Location header which contains the new Logical Id and Version Id of the created resource version. If the server understands versioning, the version is included. If a server does not track versions, the Location header will just contain [base]/[type]/[id].
               schema:
                 type: string
-                example: "/immunisation/c3f6145e-1a26-4345-b3f2-dccbcba62049/_history/versionId" 
+                example: "/Immunization/c3f6145e-1a26-4345-b3f2-dccbcba62049/_history/versionId" 
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
             X-Request-ID:
@@ -103,7 +103,7 @@ paths:
         4XX:
           $ref: '#/components/responses/4XX-imms'
     get:
-      summary: Search for an immunisation record event.
+      summary: Search for an Immunization record event.
       operationId: searchImmunisationRecord
       description: Clients perform searches via HTTP GET by making an HTTP GET request to the appropriate context, with search parameters included as HTTP Query Parameters.
       parameters:
@@ -115,9 +115,9 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/OperationOutcome'
+                $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/OperationOutcome/200_get-success.json
+                $ref: components/examples/get_response.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
@@ -125,11 +125,11 @@ paths:
               $ref: '#/components/headers/Request-Id'
         4XX:
           $ref: '#/components/responses/4XX-imms'
-  /immunisation/{Id}:
+  /Immunization/{Id}:
     get:
-      summary: Get an Immunisation record event by ID
+      summary: Get an Immunization record event by ID
       operationId: getImmunisationRecordById
-      description: Retrieves immunisation record event details by ID.
+      description: Retrieves Immunization record event details by ID.
       parameters:
         - $ref: '#/components/parameters/ImmunisationEventID'
         - $ref: '#/components/parameters/CorrelationID'
@@ -140,9 +140,22 @@ paths:
           content:
             application/fhir+json:
               schema:
+                $ref: '#/components/schemas/GetResponse'
+              example:
+                $ref: components/examples/get_response.json
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/Correlation-Id'
+            X-Request-ID:
+              $ref: '#/components/headers/Request-Id'
+        400:
+          description: invalid
+          content:
+            application/fhir+json:
+              schema:
                 $ref: '#/components/schemas/OperationOutcome'
               example:
-                $ref: components/OperationOutcome/200_get-success.json
+                $ref: components/OperationOutcome/400-invalid.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
@@ -151,9 +164,9 @@ paths:
         4XX:
           $ref: '#/components/responses/4XX-imms'
     delete:
-      summary: Delete an Immunisation record event by ID
+      summary: Delete an Immunization record event by ID
       operationId: deleteImmunisationRecordById
-      description: Logical deletion of an immunisation record event specified by ID. A delete interaction means that the resource can no longer found through a search interaction.
+      description: Logical deletion of an Immunization record event specified by ID. A delete interaction means that the resource can no longer found through a search interaction.
       parameters:
         - $ref: '#/components/parameters/ImmunisationEventID'
         - $ref: '#/components/parameters/CorrelationID'
@@ -164,9 +177,9 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/OperationOutcome'
+                $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/OperationOutcome/200_get-success.json
+                $ref: components/examples/get_response.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
@@ -175,7 +188,7 @@ paths:
         4XX:
           $ref: '#/components/responses/4XX-imms'
     put:
-      summary: Update an Immunisation record event by ID
+      summary: Update an Immunization record event by ID
       operationId: updateImmunisationRecordById
       description: The update interaction creates a new current version for an existing resource or creates an initial version if no resource already exists for the given id.
       parameters:
@@ -188,9 +201,9 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/OperationOutcome'
+                $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/OperationOutcome/200_get-success.json
+                $ref: components/examples/get_response.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
@@ -201,9 +214,9 @@ paths:
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/OperationOutcome'
+                $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/OperationOutcome/201_create-success.json
+                $ref: components/examples/get_response.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
@@ -232,6 +245,8 @@ components:
   schemas:
     OperationOutcome:
       $ref: components/schemas/OperationOutcome.yaml
+    GetResponse:
+      $ref: components/schemas/GetResponse.yaml
 
   parameters:
     ImmunisationEventID:
@@ -239,7 +254,7 @@ components:
       name: Id
       required: true
       description: |
-        A required ID which you can use to identify and immunisation event object.
+        A required ID which you can use to identify and Immunization event object.
         
         Mirrored back in a response header. 
       schema:
