@@ -114,28 +114,10 @@ class TestDeleteImmunization(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Immunization")
 
-    def test_immunization_not_found(self):
-        """it should return not-found OperationOutcome if it doesn't exist"""
-        # Given
-        imms_id = "a-non-existing-id"
-        self.service.delete_immunization.return_value = None
-        lambda_event = {"pathParameters": {"id": imms_id}}
-
-        # When
-        response = self.controller.delete_immunization(lambda_event)
-
-        # Then
-        self.service.delete_immunization.assert_called_once_with(imms_id)
-
-        self.assertEqual(response["statusCode"], 404)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "not-found")
-
     def test_immunization_exception_not_found(self):
         """it should return not-found OperationOutcome if service throws ResourceNotFoundError"""
         # Given
-        error = ResourceNotFoundError(resource_type="Immunization", resource_id="an-error-id", message="a message")
+        error = ResourceNotFoundError(resource_type="Immunization", resource_id="an-error-id")
         self.service.delete_immunization.side_effect = error
         lambda_event = {"pathParameters": {"id": "a-non-existing-id"}}
 

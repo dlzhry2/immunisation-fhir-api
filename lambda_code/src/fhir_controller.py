@@ -30,7 +30,14 @@ class FhirController:
             return self.create_response(400, json.dumps(id_error.dict()))
 
         resource = self.fhir_service.get_immunization_by_id(imms_id)
-        return self._resource_or_not_found(resource)
+        if resource:
+            return FhirController.create_response(200, resource.json())
+        else:
+            msg = "The requested resource was not found."
+            id_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                                code=Code.not_found,
+                                                diagnostics=msg)
+            return FhirController.create_response(404, json.dumps(id_error.dict()))
 
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]
@@ -41,11 +48,11 @@ class FhirController:
 
         try:
             resource = self.fhir_service.delete_immunization(imms_id)
-            return self._resource_or_not_found(resource)
+            return self.create_response(200, resource.json())
         except ResourceNotFoundError as not_found:
-            return self._create_not_found_response(not_found)
+            return self.create_response(404, not_found.to_operation_outcome().json())
         except UnhandledResponseError as unhandled_error:
-            return self._create_server_error_response(unhandled_error)
+            return self.create_response(500, unhandled_error.to_operation_outcome().json())
 
     def _validate_id(self, _id: str) -> Optional[OperationOutcome]:
         if not re.match(self.immunization_id_pattern, _id):
@@ -55,33 +62,6 @@ class FhirController:
                                             diagnostics=msg)
         else:
             return None
-
-    @staticmethod
-    def _resource_or_not_found(resource):
-        if resource:
-            return FhirController.create_response(200, resource.json())
-        else:
-            msg = "The requested resource was not found."
-            id_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                                code=Code.not_found,
-                                                diagnostics=msg)
-            return FhirController.create_response(404, json.dumps(id_error.dict()))
-
-    @staticmethod
-    def _create_not_found_response(error: ResourceNotFoundError):
-        msg = f"The requested {error.resource_type}.id: {error.resource_id} was not found."
-        id_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                            code=Code.not_found,
-                                            diagnostics=msg)
-        return FhirController.create_response(404, json.dumps(id_error.dict()))
-
-    @staticmethod
-    def _create_server_error_response(error: UnhandledResponseError):
-        msg = f"internal-server-error"
-        id_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                            code=Code.server_error,
-                                            diagnostics=error.message)
-        return FhirController.create_response(500, json.dumps(id_error.dict()))
 
     @staticmethod
     def create_response(status_code, body):

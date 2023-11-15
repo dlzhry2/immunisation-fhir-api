@@ -16,30 +16,27 @@ class Code(str, Enum):
 
 
 @dataclass
-class FhirResourceError:
+class ResourceNotFoundError(RuntimeError):
+    """Return this error when the requested FHIR resource does not exist"""
     resource_type: str
     resource_id: str
-    message: str
-
-
-@dataclass
-class ResourceNotFoundError(FhirResourceError, RuntimeError):
-    """Return this error when the requested FHIR resource does not exist"""
 
     def to_operation_outcome(self) -> OperationOutcome:
+        msg = f"{self.resource_type} resource does not exit. ID: {self.resource_id}"
         return create_operation_outcome(
-            resource_id=self.resource_id, severity=Severity.error, code=Code.not_found, diagnostics=self.message)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.not_found, diagnostics=msg)
 
 
 @dataclass
 class UnhandledResponseError(RuntimeError):
     """Use this error when the response from an external service (ex: dynamodb) can't be handled"""
-    message: str
     response: dict
+    message: str
 
     def to_operation_outcome(self) -> OperationOutcome:
+        msg = f"Internal Server Error - {self.message}\n{self.response}"
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=self.message)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
 
 
 def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> OperationOutcome:

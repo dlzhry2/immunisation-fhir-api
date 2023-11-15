@@ -25,7 +25,7 @@ class ImmunisationRepository:
         response = self.table.get_item(Key={"PK": self._make_id(imms_id)})
 
         if "Item" in response:
-            return json.loads(response["Item"]["Resource"])
+            return None if "DeletedAt" in response["Item"] else json.loads(response["Item"]["Resource"])
         else:
             return None
 
@@ -52,16 +52,14 @@ class ImmunisationRepository:
                 ConditionExpression=Attr("PK").eq(self._make_id(imms_id)) & Attr("DeletedAt").not_exists()
             )
             if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                return response["Attributes"]["Resource"]
+                return json.loads(response["Attributes"]["Resource"])
             else:
                 raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
 
         except botocore.exceptions.ClientError as e:
             # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
             if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-                raise ResourceNotFoundError(
-                    resource_type="Immunization", resource_id=imms_id
-                    , message="Requested Immunization resource didn't exist or has been deleted")
+                raise ResourceNotFoundError(resource_type="Immunization", resource_id=imms_id)
             else:
                 raise UnhandledResponseError(message=f"Unhandled error from dynamodb: {e.response['Error']['Code']}",
                                              response=e.response)

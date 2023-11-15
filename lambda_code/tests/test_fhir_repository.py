@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import time
 import unittest
 from unittest.mock import MagicMock, patch, ANY
 
@@ -41,6 +42,14 @@ class TestImmunisationRepository(unittest.TestCase):
         imms = self.repository.get_immunization_by_id(imms_id)
         self.assertIsNone(imms)
 
+    def test_get_deleted_immunization(self):
+        """it should return None if Immunization is logically deleted"""
+        imms_id = "a-deleted-id"
+        self.table.get_item = MagicMock(return_value={"Item": {"Resource": "{}", "DeletedAt": time.time()}})
+
+        imms = self.repository.get_immunization_by_id(imms_id)
+        self.assertIsNone(imms)
+
     def test_create_immunization(self):
         """it should create Immunization, and return created object"""
         imms_id = "an-id"
@@ -66,7 +75,7 @@ class TestImmunisationRepository(unittest.TestCase):
     def test_delete_immunization(self):
         """it should logical delete Immunization by setting DeletedAt attribute"""
         imms_id = "an-id"
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Attributes": {"Resource": {}}}
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Attributes": {"Resource": "{}"}}
         self.table.update_item = MagicMock(return_value=dynamo_response)
 
         now_epoch = 123456
@@ -90,7 +99,8 @@ class TestImmunisationRepository(unittest.TestCase):
 
         imms_id = "an-id"
         resource = {"foo": "bar"}
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Attributes": {"Resource": resource}}
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200},
+                           "Attributes": {"Resource": json.dumps(resource)}}
         self.table.update_item = MagicMock(return_value=dynamo_response)
 
         now_epoch = 123456

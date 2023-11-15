@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import unittest
@@ -81,7 +82,7 @@ class TestDeleteImmunization(unittest.TestCase):
     def test_delete_immunization(self):
         """it should delete Immunization record"""
         imms_id = "an-id"
-        imms = _create_an_immunization_obj(imms_id).dict()
+        imms = json.loads(_create_an_immunization_obj(imms_id).json())
         self.imms_repo.delete_immunization.return_value = imms
 
         # When
@@ -89,16 +90,5 @@ class TestDeleteImmunization(unittest.TestCase):
 
         # Then
         self.imms_repo.delete_immunization.assert_called_once_with(imms_id)
-        self.assertEqual(act_imms, imms)
-
-    def test_delete_immunization_not_found(self):
-        """it should return None when the ID doesn't exist"""
-        imms_id = "a-non-existent-id"
-        self.imms_repo.delete_immunization.return_value = None
-
-        # When
-        act_imms = self.fhir_service.delete_immunization(imms_id)
-
-        # Then
-        self.imms_repo.delete_immunization.assert_called_once_with(imms_id)
-        self.assertIsNone(act_imms)
+        self.assertIsInstance(act_imms, Immunization)
+        self.assertEqual(act_imms.id, imms_id)
