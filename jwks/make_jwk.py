@@ -46,7 +46,7 @@ def generate_jwk(public_key, key_id):
         "kty": "RSA",
         "kid": key_id,
         "use": "sig",
-        "alg": "RS256",  # Change this according to your needs
+        "alg": "RS512",  # Change this according to your needs
         "n": numbers.n,
         "e": numbers.e,
     }
