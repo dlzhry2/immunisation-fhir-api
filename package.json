@@ -11,6 +11,7 @@
   "license": "MIT",
   "homepage": "https://github.com/NHSDigital/immunisation-fhir-api",
   "dependencies": {
+    "cryptography": "^1.2.3",
     "newman-reporter-htmlextra": "^1.20.1"
   },
   "devDependencies": {
