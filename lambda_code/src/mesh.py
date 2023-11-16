@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from csv_to_model import read_csv_to_model
-from models.immunization import CsvImmunizationModel
+from models.csv_immunization import CsvImmunizationModel
 from models.failures import CsvImmunizationErrorModel
 import boto3
 
