@@ -10,7 +10,7 @@ class NHSValidators:
         if nhs_number:
             nhs_number = nhs_number.replace(" ", "")
             if len(nhs_number) != 10:
-                raise ValueError("NHS Number must be 10 digits long")
+                raise ValueError("NHS_NUMBER must consist of 10 digits.")
 
         return nhs_number
 

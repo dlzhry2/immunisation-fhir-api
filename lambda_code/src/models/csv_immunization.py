@@ -74,49 +74,41 @@ class CsvImmunizationModel(BaseModel):
         None  # Use Any to allow any type, including bool or None
     )
 
-    @classmethod
     @validator("NHS_NUMBER")
     def validate_nhs_number(cls, value):
         """Validate NHS Number"""
         return NHSValidators.validate_nhs_number(value)
 
-    @classmethod
     @validator("PERSON_DOB", pre=True, always=True)
     def validate_person_dob(cls, value):
         """Validate Person DOB"""
         return NHSValidators.validate_person_dob(value)
 
-    @classmethod
     @validator("PERSON_GENDER_CODE", pre=True, always=True)
     def validate_person_gender_code(cls, value):
         """Validate person gender code"""
         return NHSValidators.validate_person_gender_code(value)
 
-    @classmethod
     @validator("PERSON_POSTCODE", pre=True, always=True)
     def validate_person_postcode(cls, value):
         """Validate person postcode"""
         return NHSValidators.validate_person_postcode(value)
 
-    @classmethod
     @validator("DATE_AND_TIME", pre=True, always=True)
     def validate_date_and_time(cls, value):
         """Validate date and time"""
         return NHSValidators.validate_date_and_time(value)
 
-    @classmethod
     @validator("SITE_CODE", pre=True, always=True)
     def validate_site_code(cls, value):
         """Validate site code"""
         return NHSValidators.validate_site_code(value)
 
-    @classmethod
     @validator("ACTION_FLAG", pre=True, always=True)
     def validate_action_flag(cls, value):
         """Validate action flag"""
         return NHSValidators.validate_action_flag(value)
 
-    @classmethod
     @validator("PERFORMING_PROFESSIONAL_FORENAME", pre=True, always=True)
     def validate_professional_forename(cls, v, values):
         """Validate performing professional forename"""
@@ -124,7 +116,6 @@ class CsvImmunizationModel(BaseModel):
             v, values.get("PERFORMING_PROFESSIONAL_SURNAME", None)
         )
 
-    @classmethod
     @validator("PERFORMING_PROFESSIONAL_BODY_REG_CODE", pre=True, always=True)
     def validate_professional_reg_code(cls, v, values):
         """Validate performing professional body reg code"""
@@ -132,26 +123,22 @@ class CsvImmunizationModel(BaseModel):
             v, values.get("PERFORMING_PROFESSIONAL_BODY_REG_URI", None)
         )
 
-    @classmethod
     @validator("RECORDED_DATE", pre=True, always=True)
     def validate_recorded_date(cls, value):
         """Validate recorded date"""
         return NHSValidators.validate_recorded_date(value)
 
-    @classmethod
     @validator("REPORT_ORIGIN", pre=True, always=True)
     def validate_report_origin(cls, v, values):
         """Validate report origin"""
         primary_source = values["PRIMARY_SOURCE"]
         return NHSValidators.validate_report_origin(v, primary_source)
 
-    @classmethod
     @validator("NOT_GIVEN", pre=True, always=True)
-    def validate_not_given_flag(cls, value, values):
+    def validate_not_given_flag(cls, value):
         """Validate not given flag"""
-        return NHSValidators.validate_not_given(value, values)
+        return NHSValidators.validate_not_given(value)
 
-    @classmethod
     @validator("VACCINATION_PROCEDURE_CODE", pre=True, always=True)
     def validate_vaccination_procedure_code(cls, v, values):
         """Validate vaccination procedure code"""
@@ -159,7 +146,6 @@ class CsvImmunizationModel(BaseModel):
             v, values.get("NOT_GIVEN", None)
         )
 
-    @classmethod
     @validator("VACCINATION_SITUATION_CODE", pre=True, always=True)
     def validate_vaccination_situatuion_code(cls, v, values):
         """Validate vaccination situation code"""
@@ -167,7 +153,6 @@ class CsvImmunizationModel(BaseModel):
             v, values.get("NOT_GIVEN", None)
         )
 
-    @classmethod
     @validator("REASON_NOT_GIVEN_CODE", pre=True, always=True)
     def validate_reason_not_given_code(cls, v, values):
         """Validate reason not given code"""
@@ -175,13 +160,11 @@ class CsvImmunizationModel(BaseModel):
             v, values.get("NOT_GIVEN", None)
         )
 
-    @classmethod
     @validator("DOSE_SEQUENCE", pre=True, always=True)
     def validate_dose_sequence(cls, v, values):
         """Validate dose sequence"""
         return NHSValidators.validate_dose_sequence(v, values.get("NOT_GIVEN", None))
 
-    @classmethod
     @validator("VACCINE_PRODUCT_CODE", pre=True, always=True)
     def validate_vaccine_product_code(cls, v, values):
         """Validate vaccine product code"""
@@ -189,7 +172,6 @@ class CsvImmunizationModel(BaseModel):
             v, values.get("NOT_GIVEN", None)
         )
 
-    @classmethod
     @validator("VACCINE_MANUFACTURER", pre=True, always=True)
     def validate_vaccine_manufacturer(cls, v, values):
         """Validate vaccine manufacturer"""
@@ -197,19 +179,16 @@ class CsvImmunizationModel(BaseModel):
             v, values.get("NOT_GIVEN", None)
         )
 
-    @classmethod
     @validator("BATCH_NUMBER", pre=True, always=True)
     def validate_batch_number(cls, v, values):
         """Validate batch number"""
         return NHSValidators.validate_batch_number(v, values.get("NOT_GIVEN", None))
 
-    @classmethod
     @validator("EXPIRY_DATE", pre=True, always=True)
     def validate_expiry_date(cls, v, values):
         """Validate expiry date"""
         return NHSValidators.validate_expiry_date(v, values.get("NOT_GIVEN", None))
 
-    @classmethod
     @validator("ROUTE_OF_VACCINATION_CODE", pre=True, always=True)
     def validate_route_of_vaccination_code(cls, v, values):
         """Validate route of vaccination code"""
@@ -217,25 +196,21 @@ class CsvImmunizationModel(BaseModel):
             v, values.get("NOT_GIVEN", None)
         )
 
-    @classmethod
     @validator("DOSE_AMOUNT", pre=True, always=True)
     def validate_dose_amount(cls, v, values):
         """Validate dose amount"""
         return NHSValidators.validate_dose_amount(v, values.get("NOT_GIVEN", None))
 
-    @classmethod
     @validator("DOSE_UNIT_CODE", pre=True, always=True)
     def validate_dose_unit_code(cls, v, values):
         """Validate dose unit code"""
         return NHSValidators.validate_dose_unit_code(v, values.get("NOT_GIVEN", None))
 
-    @classmethod
     @validator("INDICATION_CODE", pre=True, always=True)
     def validate_indication_code(cls, v, values):
         """Validate indication code"""
         return NHSValidators.validate_indication_code(v, values.get("NOT_GIVEN", None))
 
-    @classmethod
     @validator("CONSENT_FOR_TREATMENT_CODE", pre=True, always=True)
     def validate_consent_for_treatment_code(cls, v, values):
         """Validate consent for treatment code"""
@@ -243,19 +218,16 @@ class CsvImmunizationModel(BaseModel):
             v, values.get("NOT_GIVEN", None)
         )
 
-    @classmethod
     @validator("SUBMITTED_TIMESTAMP", pre=True, always=True)
     def validate_submitted_timestamp(cls, value):
         """Validate submitted timestamp"""
         return NHSValidators.validate_submitted_timestamp(value)
 
-    @classmethod
     @validator("LOCATION_CODE", pre=True, always=True)
     def validate_location_code(cls, value):
         """Validate location code"""
         return NHSValidators.validate_location_code(value)
 
-    @classmethod
     @validator("REDUCE_VALIDATION_CODE", pre=True, always=True)
     def validate_reduce_validation_code(cls, v, values):
         """Validate reduce validation code"""
