@@ -12,7 +12,7 @@ from models.fhir_patient import PatientValidator
 from models.fhir_practitioner import PractitionerValidator
 
 
-class TestImmsValidator(unittest.TestCase):
+class TestValidators(unittest.TestCase):
     """Basic tests for the validators. In depth tests TBA"""
 
     def setUp(self) -> None:
@@ -32,14 +32,14 @@ class TestImmsValidator(unittest.TestCase):
     def test_immunization_validator(self):
         """Test the ImmunizationValidator""" ""
         immunization_validator = ImmunizationValidator(self.immunization_json_data)
-        immunization_validator.validate()
+        self.assertTrue(immunization_validator.validate())
 
     def test_patient_validator(self):
         """Test the PatientValidator"""
         patient_validator = PatientValidator(self.patient_json_data)
-        patient_validator.validate()
+        self.assertTrue(patient_validator.validate())
 
     def test_practitioner_validator(self):
         """Test the PractitionerValidator"""
         practitioner_validator = PractitionerValidator(self.practitioner_json_data)
-        practitioner_validator.validate()
+        self.assertTrue(practitioner_validator.validate())
