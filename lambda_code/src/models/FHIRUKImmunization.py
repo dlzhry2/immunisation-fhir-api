@@ -1,15 +1,14 @@
+import datetime
+import json
 from fhir.resources.immunization import Immunization as FHIRImmunization
 from fhir.resources.patient import Patient as FHIRPatient
 from fhir.resources.organization import Organization as FHIROrganization
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.practitioner import Practitioner as FHIRPractitioner
-import datetime
-import json
 
 
 class UKFHIRImmunization:
     def __init__(self, *args, **kwargs):
-
         self.immunization: FHIRImmunization = None
         self.patient: FHIRPatient = None
         self.recorded: datetime.date = None
