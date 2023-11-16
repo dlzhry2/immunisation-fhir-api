@@ -189,23 +189,10 @@
   "lotNumber": "AAJN11K",
   "expirationDate": "2020-05-06",
   "patient": {
-    "reference": "Patient/1",
-    "type": "Patient",
     "identifier": {
       "system": "https//fhir.nhs.uk/Id/nhs-number",
       "value": "1234567891"
-    },
-    "name": {
-      "family": "test",
-      "given": ["test"]
-    },
-    "gender": "1",
-    "birthDate": "1999-10-03",
-    "address": [
-      {
-        "postalCode": "LS1 5HT"
-      }
-    ]
+    }
   },
   "occurrenceDateTime": "2020-12-14T10:08:15+00:00",
   "primarySource": true,
@@ -213,9 +200,7 @@
     "identifier": {
       "system": "https://fhir.nhs.uk/Id/ods-organization-code",
       "value": "B0C4P"
-    },
-    "reference": "Location/1",
-    "type": "Location"
+    }
   },
   "site": {
     "coding": [
@@ -252,7 +237,7 @@
           ]
         }
       ],
-      "doseNumberPositiveInt": "5"
+      "doseNumberPositiveInt": 5
     }
   ],
   "reportOrigin": {
@@ -270,27 +255,16 @@
   ],
   "recorded": "2010-05-06",
   "manufacturer": {
-    "display": "org"
+    "display": "test"
   },
   "performer": [
     {
       "actor": {
         "reference": "Practitioner/1",
         "type": "Practitioner",
-        "name": {
-          "family": "test",
-          "given": ["test"]
-        },
         "identifier": {
-          "type": {
-            "coding": [
-              {
-                "display": "GP"
-              }
-            ]
-          },
-          "system": "https://fhir.hl7.org.uk/Id/gmc-number",
-          "value": "OP"
+          "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+          "value": "B0C4P"
         }
       }
     }
