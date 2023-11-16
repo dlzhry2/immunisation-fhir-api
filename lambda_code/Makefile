@@ -6,6 +6,6 @@ package: build
 	docker run --rm -v $(shell pwd)/build:/build imms-lambda-build
 
 test:
-	DYNAMODB_TABLE_NAME=example-table python -m unittest
+	python -m unittest
 
 .PHONY: build package test
