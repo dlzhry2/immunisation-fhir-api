@@ -8,7 +8,7 @@ from pydantic import ValidationError
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../")
 
 
-from lambda_code.src.models.csv_immunization import CsvImmunizationModel
+from models.csv_immunization import CsvImmunizationModel
 from models.failures import CsvImmunizationErrorModel
 
 
