@@ -6,12 +6,13 @@ from boto3.dynamodb.conditions import Key
 
 
 class EventTable:
-    def __init__(self, table_name=os.environ["DYNAMODB_TABLE_NAME"], endpoint_url=None):
+    def __init__(self, table_name=None, endpoint_url=None):
+        if not table_name:
+            table_name = os.environ["DYNAMODB_TABLE_NAME"]
         db = boto3.resource("dynamodb", endpoint_url=endpoint_url, region_name='eu-west-2')
         self.table = db.Table(table_name)
 
     def get_event_by_id(self, event_id):
-        # TODO: the main index doesn't need sort-key. You can use get_item instead of query
         response = self.table.get_item(Key={"PK": event_id})
 
         if "Item" in response:
