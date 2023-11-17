@@ -1,7 +1,6 @@
 import json
 import os
 from typing import Optional
-
 import boto3
 
 
