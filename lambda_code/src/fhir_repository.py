@@ -29,7 +29,7 @@ class ImmunisationRepository:
         else:
             return None
 
-    def create_immunization(self, immunization: dict) -> Optional[dict]:
+    def create_immunization(self, immunization: dict) -> dict:
         pk = self._make_id(immunization["id"])
 
         response = self.table.put_item(Item={
