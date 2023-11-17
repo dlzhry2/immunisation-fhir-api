@@ -39,6 +39,18 @@ class FhirController:
                                                 diagnostics=msg)
             return FhirController.create_response(404, json.dumps(id_error.dict()))
 
+    def create_immunization(self, aws_event):
+        try:
+            imms = json.loads(aws_event["body"])
+        except json.decoder.JSONDecodeError:
+            body = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                            code=Code.invalid,
+                                            diagnostics="Request's body contains malformed JSON")
+            return self.create_response(400, body.json())
+
+        resource = self.fhir_service.create_immunization(imms)
+        return self.create_response(200, resource.json())
+
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]
 
@@ -62,6 +74,13 @@ class FhirController:
                                             diagnostics=msg)
         else:
             return None
+
+    @staticmethod
+    def _create_bad_request(self, message):
+        return self.create_response(400,
+                                    create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                                             code=Code.invalid,
+                                                             diagnostics=message))
 
     @staticmethod
     def create_response(status_code, body):
