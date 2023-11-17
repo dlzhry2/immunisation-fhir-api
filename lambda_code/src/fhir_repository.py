@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import uuid
 from typing import Optional
 
 import boto3
@@ -30,14 +31,17 @@ class ImmunisationRepository:
             return None
 
     def create_immunization(self, immunization: dict) -> dict:
-        pk = self._make_id(immunization["id"])
+        new_id = self._make_id(uuid.uuid4())
 
         response = self.table.put_item(Item={
-            'PK': pk,
+            'PK': new_id,
             'Resource': json.dumps(immunization),
         })
 
-        return immunization if response["ResponseMetadata"]["HTTPStatusCode"] == 200 else None
+        if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+            return immunization
+        else:
+            raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
 
     def delete_immunization(self, imms_id: str) -> dict:
         now_timestamp = int(time.time())
