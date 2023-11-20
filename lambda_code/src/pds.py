@@ -1,8 +1,9 @@
+#!/Users/ewan.childs/Desktop/NHS/Bebop/immunisation-fhir-api/.venv/bin/python3.9
 import uuid
 import time
 import requests
-import jwt
 import os
+import jwt
 
 class PdsService:
     def __init__(self):
@@ -13,7 +14,7 @@ class PdsService:
             self.private_key = key_file.read()
         self.api_key = "3fZXYrsp9zvwDqayTrsAeH39pSWrmGwX"
         self.kid = "test_1"
-
+        
     def get_access_token(self):
         current_timestamp = int(time.time())
         claims = {
@@ -50,3 +51,9 @@ class PdsService:
         response = requests.get(f"https://{self.ENV}.api.service.nhs.uk/personal-demographics/FHIR/R4/Patient/{patient_id}",
                                 headers=request_headers)
         return response
+
+# Usage example:
+pds_service = PdsService()
+patient_id = 9693632109
+response = pds_service.get_patient_details(patient_id)
+print(response.status_code)
