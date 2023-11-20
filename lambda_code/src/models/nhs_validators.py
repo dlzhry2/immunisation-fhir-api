@@ -1,4 +1,5 @@
 from models.constants import Constants
+from datetime import datetime
 
 
 class NHSValidators:
@@ -13,34 +14,52 @@ class NHSValidators:
                 raise ValueError("NHS_NUMBER must consist of 10 digits.")
 
         return nhs_number
+    
+    @staticmethod
+    def validate_person_forename(person_forename):
+        """Validate Person Forename"""
+        if not person_forename:
+            raise ValueError("PERSON_FORENAME is a manadatory field")
+        
+        return person_forename
+    
+    @staticmethod
+    def validate_person_surname(person_surname):
+        """Validate Person surname"""
+        if not person_surname:
+            raise ValueError("PERSON_SURNAME is a manadatory field")
+        
+        return person_surname
 
     @staticmethod
     def validate_person_dob(person_dob):
         """Validate Person DOB"""
-        if person_dob:
-            parsed_date = Constants.convert_to_date(person_dob)
-            return parsed_date
-        return None
+        if not person_dob:
+            raise ValueError("PERSON_DOB is a mandatory field")
+
+        parsed_date = Constants.convert_to_date(person_dob)
+        return parsed_date
 
     @staticmethod
     def validate_person_gender_code(person_gender_code):
         """Validate Person Gender Code"""
+        if not person_gender_code:
+            raise ValueError("PERSON_GENDER_CODE is a mandatory field")
 
-        if person_gender_code:
-            if person_gender_code not in Constants.person_gender_codes:
-                raise ValueError(
-                    "Invalid value for PERSON_GENDER_CODE. It must be 0, 1, 2, or 9."
-                )
-            return person_gender_code
-        return None
+        if person_gender_code not in Constants.person_gender_codes:
+            raise ValueError(
+                "Invalid value for PERSON_GENDER_CODE. It must be 0, 1, 2, or 9."
+            )
+        return person_gender_code
 
     @staticmethod
     def validate_person_postcode(person_postcode):
         """Validate Person Postcode"""
-        if person_postcode:
-            postcode = person_postcode.replace(" ", "")
-            if len(postcode) > 8:
-                raise ValueError("PERSON_POSTCODE must be less that 8 characters.")
+        if not person_postcode:
+            raise ValueError("PERSON_POSTCODE is a mandatory field")
+        postcode = person_postcode.replace(" ", "")
+        if len(postcode) > 8:
+            raise ValueError("PERSON_POSTCODE must be less that 8 characters.")
         return person_postcode
 
     @staticmethod
@@ -48,8 +67,11 @@ class NHSValidators:
         """Validate Date and Time"""
         if not date_and_time:
             raise ValueError("DATE_AND_TIME is a mandatory field.")
-        parsed_datetime = Constants.convert_iso8601_to_datetime(date_and_time)
-        return parsed_datetime
+        try: 
+            return datetime.strptime(date_and_time, "%Y-%m-%dT%H:%M:%S%z")
+        except ValueError: 
+            parsed_datetime = Constants.convert_iso8601_to_datetime(date_and_time)
+            return parsed_datetime    
 
     @staticmethod
     def validate_site_code(site_code):
@@ -57,10 +79,17 @@ class NHSValidators:
         if not site_code:
             raise ValueError("SITE_CODE is a mandatory field.")
 
-        if Constants.is_urn_resource(site_code):
+        if Constants.is_urn_resource(site_code) or site_code.isnumeric():
             raise ValueError("SITE_CODE must not be a urn code")
 
         return site_code
+    
+    @staticmethod
+    def validate_unique_id(unique_id):
+        if not unique_id:
+            raise ValueError("UNIQUE_ID is a mandatory field")
+        # TODO: Confirm which IDs are acceptable and validate for them
+        return unique_id
 
     @staticmethod
     def validate_action_flag(action_flag):

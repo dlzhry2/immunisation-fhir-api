@@ -11,26 +11,13 @@ class Constants:
     @staticmethod
     def convert_iso8601_to_datetime(iso_datetime_str):
         try:
-            time_str = "T00:00:00+00:00"
-            # Check if time information is present
-            if "T" in iso_datetime_str:
-                # Check if timezone information is present
-                if "+" in iso_datetime_str:
-                    # Add the colon (:00) in the timezone offset
-                    timestamp_str_with_colon = iso_datetime_str + ":00"
-                    dt_obj = datetime.strptime(
-                        timestamp_str_with_colon, "%Y-%m-%dT%H:%M:%S%z"
-                    )
-                else:
-                    dt_obj = datetime.strptime(iso_datetime_str, "%Y-%m-%dT%H:%M:%S")
-            else:
-                # Add the the timezone offset
-                timestamp_str_with_colon = iso_datetime_str + time_str
-                dt_obj = datetime.strptime(
-                    timestamp_str_with_colon, "%Y-%m-%dT%H:%M:%S%z"
-                )
-
-            return dt_obj
+            # If doesn't contain time then add time
+            if "T" not in iso_datetime_str:
+                iso_datetime_str += "T00:00:00"
+            # If doesn't contain timezone then add timezone
+            iso_datetime_str += "+00:00"
+            date_obj = datetime.strptime(iso_datetime_str, "%Y-%m-%dT%H:%M:%S%z")
+            return date_obj
         except ValueError:
             raise ValueError("Invalid datetime format. Use YYYY-MM-DDThh:mm:ss+zz.")
 
