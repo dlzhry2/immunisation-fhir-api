@@ -10,12 +10,14 @@ sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_controller import FhirController
 from fhir_service import FhirService
+from pds import PdsService
 
 
 class TestFhirController(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
-        self.controller = FhirController(self.service)
+        self.pds_service = create_autospec(PdsService)
+        self.controller = FhirController(self.service, self.pds_service)
 
     def test_create_response(self):
         """it should return application/fhir+json with correct status code"""
@@ -32,7 +34,8 @@ class TestFhirController(unittest.TestCase):
 class TestFhirControllerGetImmunisationById(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
-        self.controller = FhirController(self.service)
+        self.pds_service = create_autospec(PdsService)
+        self.controller = FhirController(self.service, self.pds_service)
 
     def test_get_imms_by_id(self):
         """it should return Immunization resource if it exists"""

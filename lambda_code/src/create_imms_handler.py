@@ -9,7 +9,7 @@ def create_imms_handler(event, context):
     dynamo_service = EventTable()
     message = dynamo_service.put_event(event_body)
     response = {
-        "statusCode": 201,  # HTTP status code
+        "statusCode": 201,
         "body": json.dumps({
             "message": message  
         })

@@ -1,5 +1,4 @@
 import uuid
-
 from fhir_controller import FhirController
 from fhir_repository import ImmunisationRepository
 from fhir_service import FhirService

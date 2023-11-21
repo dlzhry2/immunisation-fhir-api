@@ -9,17 +9,18 @@ sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunisationRepository
 from fhir_service import FhirService
+from pds import PdsService
 
 
 class TestFhirService(unittest.TestCase):
     def setUp(self):
         self.imms_repo = create_autospec(ImmunisationRepository)
-        self.fhir_service = FhirService(self.imms_repo)
+        self.pds_service = create_autospec(PdsService)
+        self.fhir_service = FhirService(self.imms_repo, self.pds_service)
 
     def test_get_immunisation_by_id(self):
         """it should find an Immunization by id"""
         imms_id = "a-id"
-
         self.imms_repo.get_immunisation_by_id.return_value = self._create_an_immunisation_obj(imms_id).dict()
 
         # When
@@ -32,7 +33,6 @@ class TestFhirService(unittest.TestCase):
     def test_immunisation_not_found(self):
         """it should return None if immunisation doesn't exist"""
         imms_id = "none-existent-id"
-
         self.imms_repo.get_immunisation_by_id.return_value = None
 
         # When

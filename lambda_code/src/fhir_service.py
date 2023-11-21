@@ -1,14 +1,15 @@
 from typing import Optional
-
 from fhir.resources.immunization import Immunization
-
 from fhir_repository import ImmunisationRepository
+from pds import PdsService
 
 
 class FhirService:
 
-    def __init__(self, imms_repo: ImmunisationRepository):
+    def __init__(self, imms_repo: ImmunisationRepository, pds_service: PdsService):
         self.immunisation_repo = imms_repo
+        self.pds_service = pds_service
+        
 
     def get_immunisation_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunisation_repo.get_immunisation_by_id(imms_id)
