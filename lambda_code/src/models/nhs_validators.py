@@ -57,6 +57,8 @@ class NHSValidators:
         """Validate Person Postcode"""
         if not person_postcode:
             raise ValueError("PERSON_POSTCODE is a mandatory field")
+        if len(person_postcode.split(" ")) != 2:
+            raise ValueError("PERSON_POSTCODE must be divided into two parts by a single space")
         postcode = person_postcode.replace(" ", "")
         if len(postcode) > 8:
             raise ValueError("PERSON_POSTCODE must be less that 8 characters.")
@@ -67,11 +69,15 @@ class NHSValidators:
         """Validate Date and Time"""
         if not date_and_time:
             raise ValueError("DATE_AND_TIME is a mandatory field.")
-        try: 
-            return datetime.strptime(date_and_time, "%Y-%m-%dT%H:%M:%S%z")
-        except ValueError: 
+        try:
+            parsed_datetime = datetime.strptime(date_and_time, "%Y-%m-%dT%H:%M:%S%z")
+        except ValueError:
             parsed_datetime = Constants.convert_iso8601_to_datetime(date_and_time)
-            return parsed_datetime    
+
+        if parsed_datetime.date() > datetime.now().date():
+            raise ValueError("DATE_AND_TIME must not be in the future.")
+
+        return parsed_datetime
 
     @staticmethod
     def validate_site_code(site_code):

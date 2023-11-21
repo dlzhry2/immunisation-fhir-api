@@ -57,8 +57,9 @@ class TestNHSValidationRules(unittest.TestCase):
 
     def test_valid_nhs_number(self):
         """Test nhs_number validator accepts valid nhs number"""
-        valid_nhs_number = "1234567890"
-        self.assertTrue(NHSValidators.validate_nhs_number(valid_nhs_number))
+        valid_nhs_numbers = ["1234567890", " 12345 67890 "]
+        for valid_nhs_number in valid_nhs_numbers:
+            self.assertTrue(NHSValidators.validate_nhs_number(valid_nhs_number))
 
 
     def test_invalid_nhs_number(self):
@@ -104,7 +105,7 @@ class TestNHSValidationRules(unittest.TestCase):
 
     def test_invalid_person_dob(self):
         """Test person_dob rejects invalid person DOB"""
-        invalid_person_dobs = ["2000-13-01", None, ""]
+        invalid_person_dobs = ["2000-13-01", "20001201", None, ""]
         for invalid_person_dob in invalid_person_dobs:
             with self.assertRaises(ValueError):
                 NHSValidators.validate_person_dob(invalid_person_dob)
@@ -120,21 +121,22 @@ class TestNHSValidationRules(unittest.TestCase):
     def test_invalid_person_gender_code(self):
         """Test person_gender_code validator rejects invalid person gender codes"""
         invalid_person_gender_codes = [-1, 10, "-1", "10", "invalid_CODE", None, ""]
-        for invalid_person_gender_codes in invalid_person_gender_codes:
+        for invalid_person_gender_code in invalid_person_gender_codes:
             with self.assertRaises(ValueError):
-                NHSValidators.validate_person_gender_code(invalid_person_gender_codes)
+                NHSValidators.validate_person_gender_code(invalid_person_gender_code)
 
 
     def test_person_postcode(self):
         """Test person_postcode validator accepts valid person postcode"""
-        valid_person_postcodes = ["AA00 00AA", "SW1A1AA"]
+        valid_person_postcodes = ["AA00 00AA", "A0 0AA"]
         for valid_person_postcode in valid_person_postcodes:
             self.assertTrue(NHSValidators.validate_person_postcode(valid_person_postcode))
 
 
     def test_invalid_person_postcode(self):
         """Test person_postcode validator rejects invalid person postcode"""
-        invalid_person_postcodes = ["AA000 00AA", "AAA0000AA", None, ""]
+        invalid_person_postcodes = ["AA000 00AA", "SW1  1AA", "SW 1 1A",
+                                     "AAA0000AA", "SW11AA", None, ""]
         for invalid_person_postcode in invalid_person_postcodes:
             with self.assertRaises(ValueError):
                 NHSValidators.validate_person_postcode(invalid_person_postcode)
@@ -146,22 +148,22 @@ class TestNHSValidationRules(unittest.TestCase):
         expected_date_and_time = datetime.strptime("2021-01-01T00:00:00+00:00",
                                                    "%Y-%m-%dT%H:%M:%S%z")
         for valid_date_and_time in valid_date_and_times:
-            validated_date_and_time = NHSValidators.validate_date_and_time(valid_date_and_time)
-            self.assertEqual(validated_date_and_time, expected_date_and_time)
+            returned_date_and_time = NHSValidators.validate_date_and_time(valid_date_and_time)
+            self.assertEqual(returned_date_and_time, expected_date_and_time)
 
         # Test unusual timezone
         valid_date_and_time = "2022-04-05T13:42:11+12:45"
         expected_date_and_time = datetime.strptime("2022-04-05T13:42:11+12:45",
                                                     "%Y-%m-%dT%H:%M:%S%z")
-        validated_date_and_time = NHSValidators.validate_date_and_time(valid_date_and_time)
-        self.assertEqual(validated_date_and_time, expected_date_and_time)
+        returned_date_and_time = NHSValidators.validate_date_and_time(valid_date_and_time)
+        self.assertEqual(returned_date_and_time, expected_date_and_time)
 
 
     def test_invalid_date_and_time(self):
         """Test date_and_time validator rejects invalid date and time"""
         invalid_date_and_times = ["2021-13-01T00:00:00+00:00", "2021-12-01T25:00:00+00:00",
-                                  "2021-12-01T00:00:00+30:00", "Invalid_date_and_time", None, ""]
-        # TODO: Add future date
+                                  "2021-12-01T00:00:00+30:00", "3021-12-01T00:00:00+00:00",
+                                    "Invalid_date_and_time", None, ""]
         for invalid_date_and_time in invalid_date_and_times:
             with self.assertRaises(ValueError):
                 NHSValidators.validate_date_and_time(invalid_date_and_time)
