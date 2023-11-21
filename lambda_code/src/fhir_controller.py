@@ -2,16 +2,15 @@ import json
 import re
 import uuid
 from fhir_service import FhirService
-from models.errors import Severity, Code, create_operation_outcome
 from pds import PdsService
+from models.errors import Severity, Code, create_operation_outcome
 
 
 class FhirController:
     immunisation_id_pattern = r"^[A-Za-z0-9\-.]{1,64}$"
 
-    def __init__(self, fhir_service: FhirService, pds_service: PdsService):
+    def __init__(self, fhir_service: FhirService):
         self.fhir_service = fhir_service
-        self.pds_service = pds_service
 
     def get_immunisation_by_id(self, aws_event) -> dict:
         imms_id = aws_event["pathParameters"]["id"]
@@ -22,11 +21,6 @@ class FhirController:
                                                  code=Code.invalid,
                                                  diagnostics=msg)
             return FhirController.create_response(400, json.dumps(api_error.dict()))
-
-        patient_details = self.pds_service.get_patient_details(imms_id)
-
-        if patient_details.status_code == 200:
-            print(patient_details)
             
         resource = self.fhir_service.get_immunisation_by_id(imms_id)
         

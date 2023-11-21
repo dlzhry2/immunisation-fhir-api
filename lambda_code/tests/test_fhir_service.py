@@ -9,14 +9,12 @@ sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunisationRepository
 from fhir_service import FhirService
-from pds import PdsService
 
 
 class TestFhirService(unittest.TestCase):
     def setUp(self):
         self.imms_repo = create_autospec(ImmunisationRepository)
-        self.pds_service = create_autospec(PdsService)
-        self.fhir_service = FhirService(self.imms_repo, self.pds_service)
+        self.fhir_service = FhirService(self.imms_repo)
 
     def test_get_immunisation_by_id(self):
         """it should find an Immunization by id"""

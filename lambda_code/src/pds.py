@@ -56,10 +56,11 @@ class PdsService:
             return None
 
 # Usage example:
-# pds_service = PdsService()
-# access_token = pds_service.get_access_token()
-# print(access_token)
+pds_service = PdsService()
+access_token = pds_service.get_access_token()
+print(access_token)
 
-# patient_id = 9693632109
-# response = pds_service.get_patient_details(patient_id)
-# print(response)
+patient_id = 9693632109
+response = pds_service.get_patient_details(patient_id)
+print(response)
+# !/Users/ewan.childs/Desktop/NHS/Bebop/immunisation-fhir-api/.venv/bin/python3.9
