@@ -26,15 +26,18 @@ class FhirController:
         patient_details = self.pds_service.get_patient_details(imms_id)
 
         if patient_details.status_code == 200:
-            resource = self.fhir_service.get_immunisation_by_id(imms_id)
-            if resource:
-                return FhirController.create_response(200, resource.json())
-            else:
-                msg = "The requested resource was not found."
-                api_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                                     code=Code.not_found,
-                                                     diagnostics=msg)
-                return FhirController.create_response(404, json.dumps(api_error.dict()))
+            print(patient_details)
+            
+        resource = self.fhir_service.get_immunisation_by_id(imms_id)
+        
+        if resource:
+            return FhirController.create_response(200, resource.json())
+        else:
+            msg = "The requested resource was not found."
+            api_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                                    code=Code.not_found,
+                                                    diagnostics=msg)
+            return FhirController.create_response(404, json.dumps(api_error.dict()))
 
     @staticmethod
     def create_response(status_code, body):

@@ -51,16 +51,16 @@ class PdsService:
         }
         response = requests.get(f"https://{self.ENV}.api.service.nhs.uk/personal-demographics/FHIR/R4/Patient/{patient_id}",
                                 headers=request_headers)
-        # if response.status_code == 200:
-        return response
-        # else:
-        #     return None
+        if response.status_code == 200:
+            return response
+        else:
+            return None
 
 # Usage example:
-pds_service = PdsService()
-access_token = pds_service.get_access_token()
-print(access_token)
+# pds_service = PdsService()
+# access_token = pds_service.get_access_token()
+# print(access_token)
 
-patient_id = 9693632109
-response = pds_service.get_patient_details(patient_id)
-print(response)
+# patient_id = 9693632109
+# response = pds_service.get_patient_details(patient_id)
+# print(response)

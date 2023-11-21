@@ -53,6 +53,7 @@ class TestPdsService(unittest.TestCase):
         #Then
         self.assertEqual(self.pds_service.get_patient_details.call_count, 1)
         self.assertEqual(resourceType, "OperationOutcome")
+        
 
 if __name__ == '__main__':
     unittest.main()
