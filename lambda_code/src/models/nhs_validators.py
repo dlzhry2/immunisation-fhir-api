@@ -1,9 +1,10 @@
+"""NHS Validator methods"""
+from datetime import datetime, timezone
 from models.constants import Constants
-from datetime import datetime
 
 
-class NHSValidators:
-    """NHS specific validator methods"""
+class NHSImmunizationValidators:
+    """NHS Immunization specific validator methods"""
 
     @staticmethod
     def validate_nhs_number(nhs_number):
@@ -14,70 +15,22 @@ class NHSValidators:
                 raise ValueError("NHS_NUMBER must consist of 10 digits.")
 
         return nhs_number
-    
-    @staticmethod
-    def validate_person_forename(person_forename):
-        """Validate Person Forename"""
-        if not person_forename:
-            raise ValueError("PERSON_FORENAME is a manadatory field")
-        
-        return person_forename
-    
-    @staticmethod
-    def validate_person_surname(person_surname):
-        """Validate Person surname"""
-        if not person_surname:
-            raise ValueError("PERSON_SURNAME is a manadatory field")
-        
-        return person_surname
 
     @staticmethod
-    def validate_person_dob(person_dob):
-        """Validate Person DOB"""
-        if not person_dob:
-            raise ValueError("PERSON_DOB is a mandatory field")
-
-        parsed_date = Constants.convert_to_date(person_dob)
-        return parsed_date
-
-    @staticmethod
-    def validate_person_gender_code(person_gender_code):
-        """Validate Person Gender Code"""
-        if not person_gender_code:
-            raise ValueError("PERSON_GENDER_CODE is a mandatory field")
-
-        if person_gender_code not in Constants.person_gender_codes:
-            raise ValueError(
-                "Invalid value for PERSON_GENDER_CODE. It must be 0, 1, 2, or 9."
-            )
-        return person_gender_code
-
-    @staticmethod
-    def validate_person_postcode(person_postcode):
-        """Validate Person Postcode"""
-        if not person_postcode:
-            raise ValueError("PERSON_POSTCODE is a mandatory field")
-        if len(person_postcode.split(" ")) != 2:
-            raise ValueError("PERSON_POSTCODE must be divided into two parts by a single space")
-        postcode = person_postcode.replace(" ", "")
-        if len(postcode) > 8:
-            raise ValueError("PERSON_POSTCODE must be less that 8 characters.")
-        return person_postcode
-
-    @staticmethod
-    def validate_date_and_time(date_and_time):
+    def validate_date_and_time(date_and_time: datetime):
         """Validate Date and Time"""
         if not date_and_time:
             raise ValueError("DATE_AND_TIME is a mandatory field.")
-        try:
-            parsed_datetime = datetime.strptime(date_and_time, "%Y-%m-%dT%H:%M:%S%z")
-        except ValueError:
-            parsed_datetime = Constants.convert_iso8601_to_datetime(date_and_time)
 
-        if parsed_datetime.date() > datetime.now().date():
+        if date_and_time.time() is None:
+            date_and_time = date_and_time.replace(hour=0, minute=0, second=0)
+        if date_and_time.tzinfo is None:
+            date_and_time = date_and_time.replace(tzinfo=timezone.utc)
+
+        if date_and_time.date() > datetime.now().date():
             raise ValueError("DATE_AND_TIME must not be in the future.")
 
-        return parsed_datetime
+        return date_and_time.isoformat()
 
     @staticmethod
     def validate_site_code(site_code):
@@ -89,9 +42,10 @@ class NHSValidators:
             raise ValueError("SITE_CODE must not be a urn code")
 
         return site_code
-    
+
     @staticmethod
     def validate_unique_id(unique_id):
+        """Validate Unique ID"""
         if not unique_id:
             raise ValueError("UNIQUE_ID is a mandatory field")
         # TODO: Confirm which IDs are acceptable and validate for them
@@ -107,38 +61,6 @@ class NHSValidators:
             raise ValueError("ACTION_FLAG should be completed or entered-in-error")
 
         return action_flag
-
-    @staticmethod
-    def validate_performing_professional_forename(
-        performing_professional_forename, performing_professional_surname
-    ):
-        """Validate performing professional forename"""
-        if performing_professional_forename:
-            if not performing_professional_surname:
-                raise ValueError(
-                    "If PERFORMING_PROFESSIONAL_FORENAME is given, \
-                        PERFORMING_PROFESSIONAL_SURNAME must also be given"
-                )
-            return performing_professional_forename
-        if performing_professional_surname:
-            raise ValueError(
-                "If PERFORMING_PROFESSIONAL_SURNAME is given, \
-                    PERFORMING_PROFESSIONAL_FORENAME must also be given"
-            )
-
-    @staticmethod
-    def validate_performing_professional_body_reg_code(
-        performing_professional_body_reg_code, performing_professional_body_reg_uri
-    ):
-        """Validate performing professional body reg code"""
-        if performing_professional_body_reg_code:
-            if not performing_professional_body_reg_uri:
-                raise ValueError(
-                    "If PERFORMING_PROFESSIONAL_BODY_REG_CODE is given, \
-                        PERFORMING_PROFESSIONAL_BODY_REG_URI must also be given"
-                )
-
-            return performing_professional_body_reg_code
 
     @staticmethod
     def validate_recorded_date(recorded_date):
@@ -350,3 +272,94 @@ class NHSValidators:
                 )
             return True
         return False
+
+
+class NHSPatientValidators:
+    """NHS Patient specific validator methods"""
+
+    @staticmethod
+    def validate_person_forename(person_forename):
+        """Validate Person Forename"""
+        if not person_forename:
+            raise ValueError("PERSON_FORENAME is a manadatory field")
+
+        return person_forename
+
+    @staticmethod
+    def validate_person_surname(person_surname):
+        """Validate Person surname"""
+        if not person_surname:
+            raise ValueError("PERSON_SURNAME is a manadatory field")
+
+        return person_surname
+
+    @staticmethod
+    def validate_person_dob(person_dob):
+        """Validate Person DOB"""
+        if not person_dob:
+            raise ValueError("PERSON_DOB is a mandatory field")
+
+        parsed_date = Constants.convert_to_date(person_dob)
+        return parsed_date
+
+    @staticmethod
+    def validate_person_gender_code(person_gender_code):
+        """Validate Person Gender Code"""
+        if not person_gender_code:
+            raise ValueError("PERSON_GENDER_CODE is a mandatory field")
+
+        if person_gender_code not in Constants.person_gender_codes:
+            raise ValueError(
+                "Invalid value for PERSON_GENDER_CODE. It must be 0, 1, 2, or 9."
+            )
+        return person_gender_code
+
+    @staticmethod
+    def validate_person_postcode(person_postcode):
+        """Validate Person Postcode"""
+        if not person_postcode:
+            raise ValueError("PERSON_POSTCODE is a mandatory field")
+        if len(person_postcode.split(" ")) != 2:
+            raise ValueError(
+                "PERSON_POSTCODE must be divided into two parts by a single space"
+            )
+        postcode = person_postcode.replace(" ", "")
+        if len(postcode) > 8:
+            raise ValueError("PERSON_POSTCODE must be less that 8 characters.")
+        return person_postcode
+
+
+class NHSPractitionerValidators:
+    """NHS Practitioner specific validator methods"""
+
+    @staticmethod
+    def validate_performing_professional_forename(
+        performing_professional_forename, performing_professional_surname
+    ):
+        """Validate performing professional forename"""
+        if performing_professional_forename:
+            if not performing_professional_surname:
+                raise ValueError(
+                    "If PERFORMING_PROFESSIONAL_FORENAME is given, \
+                        PERFORMING_PROFESSIONAL_SURNAME must also be given"
+                )
+            return performing_professional_forename
+        if performing_professional_surname:
+            raise ValueError(
+                "If PERFORMING_PROFESSIONAL_SURNAME is given, \
+                    PERFORMING_PROFESSIONAL_FORENAME must also be given"
+            )
+
+    @staticmethod
+    def validate_performing_professional_body_reg_code(
+        performing_professional_body_reg_code, performing_professional_body_reg_uri
+    ):
+        """Validate performing professional body reg code"""
+        if performing_professional_body_reg_code:
+            if not performing_professional_body_reg_uri:
+                raise ValueError(
+                    "If PERFORMING_PROFESSIONAL_BODY_REG_CODE is given, \
+                        PERFORMING_PROFESSIONAL_BODY_REG_URI must also be given"
+                )
+
+            return performing_professional_body_reg_code

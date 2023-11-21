@@ -1,6 +1,6 @@
 """Practitioner FHIR R4B validator"""
 from fhir.resources.R4B.practitioner import Practitioner
-from models.nhs_validators import NHSValidators
+from models.nhs_validators import NHSPractitionerValidators
 
 
 class PractitionerValidator:
@@ -17,7 +17,7 @@ class PractitionerValidator:
         """Validate Performing Professional Forename"""
         performing_professional_forename = values.get("name")[0].given[0]
         performing_professional_surname = values.get("name")[0].family
-        NHSValidators.validate_performing_professional_forename(
+        NHSPractitionerValidators.validate_performing_professional_forename(
             performing_professional_forename, performing_professional_surname
         )
         return values
@@ -27,7 +27,7 @@ class PractitionerValidator:
         """Validate Performing Professional Body Reg Code"""
         performing_professional_body_reg_code = values.get("identifier")[0].value
         performing_professional_body_reg_uri = values.get("identifier")[0].system
-        NHSValidators.validate_performing_professional_body_reg_code(
+        NHSPractitionerValidators.validate_performing_professional_body_reg_code(
             performing_professional_body_reg_code, performing_professional_body_reg_uri
         )
         return values

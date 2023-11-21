@@ -1,6 +1,6 @@
 """Patient FHIR R4B validator"""
 from fhir.resources.R4B.patient import Patient
-from models.nhs_validators import NHSValidators
+from models.nhs_validators import NHSPatientValidators
 
 
 class PatientValidator:
@@ -16,21 +16,21 @@ class PatientValidator:
     def validate_person_dob(cls, values: dict) -> dict:
         """Validate Person DOB"""
         dob = values.get("birthDate")
-        NHSValidators.validate_person_dob(str(dob))
+        NHSPatientValidators.validate_person_dob(str(dob))
         return values
 
     @classmethod
     def validate_person_gender_code(cls, values: dict) -> dict:
         """Validate Person Gender Code"""
         gender_code = values.get("gender")
-        NHSValidators.validate_person_gender_code(gender_code)
+        NHSPatientValidators.validate_person_gender_code(gender_code)
         return values
 
     @classmethod
     def validate_person_postcode(cls, values: dict) -> dict:
         """Validate Person Postcode"""
         postcode = values.get("address")[0].postalCode
-        NHSValidators.validate_person_postcode(postcode)
+        NHSPatientValidators.validate_person_postcode(postcode)
         return values
 
     def validate(self) -> Patient:
