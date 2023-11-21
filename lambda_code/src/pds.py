@@ -1,4 +1,3 @@
-#!/Users/ewan.childs/Desktop/NHS/Bebop/immunisation-fhir-api/.venv/bin/python3.9
 import uuid
 import time
 import requests

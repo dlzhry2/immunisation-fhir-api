@@ -28,6 +28,7 @@ class ImmunisationApi:
         return {**updated, **headers}
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -43,12 +44,14 @@ def test_get_event_by_id_not_found_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth
     # Act
     result = imms_api.get_event_by_id("some-id-that-does-not-exist")
     res_body = result.json()
+    print(res_body)
 
     # Assert
     assert result.status_code == 404
     assert res_body["resourceType"] == "OperationOutcome"
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -64,12 +67,14 @@ def test_get_event_by_id_invalid_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_h
     # Act
     result = imms_api.get_event_by_id("some_id_that_is_malformed")
     res_body = result.json()
+    print(res_body)
 
     # Assert
     assert result.status_code == 400
     assert res_body["resourceType"] == "OperationOutcome"
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -86,6 +91,7 @@ def test_get_event_by_id_happy_path_nhs_login(nhsd_apim_proxy_url, nhsd_apim_aut
     imms_id = "e045626e-4dc5-4df3-bc35-da25263f901e"
     result = imms_api.get_event_by_id(imms_id)
     json_result = result.json()
+    print(json_result)
 
     # Assert
     assert result.status_code == 200
