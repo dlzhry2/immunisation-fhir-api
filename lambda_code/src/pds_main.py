@@ -1,9 +1,10 @@
 #!/Users/ewan.childs/Desktop/NHS/Bebop/immunisation-fhir-api/.venv/bin/python3.9
 from pds_controller import PdsController
+from pds_service import PdsService
 
 def main():
-    pds_controller = PdsController()
-    patient_id = 9693632109  # Replace this with a valid patient ID
+    pds_controller = PdsController(PdsService)
+    patient_id = 9693632109
     response = pds_controller.get_patient_details(patient_id)
     
     if response.status_code == 200:

@@ -7,7 +7,7 @@ import os
 class PdsService:
     def __init__(self):
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.key_file_path = os.path.join(self.script_dir, "../../jwks/private_test_1.key")
+        self.key_file_path = os.path.join(self.script_dir, "./private_test_1.key")
         self.ENV = "internal-dev"
         with open(self.key_file_path, "rb") as key_file:
             self.private_key = key_file.read()

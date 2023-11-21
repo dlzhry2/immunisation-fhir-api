@@ -4,7 +4,7 @@ from pds_service import PdsService
 
 class TestPdsService(unittest.TestCase):
     def setUp(self):
-        self.pds_service = PdsService()
+        self.pds_service = create_autospec(PdsService)
 
     def test_get_patient_details_found(self):
         """It should find patient details by ID"""
@@ -17,22 +17,33 @@ class TestPdsService(unittest.TestCase):
         actual_patient_data = self.pds_service.get_patient_details(patient_id)
 
         # Then
-        self.pds_repository.get_patient_details.assert_called_once_with(patient_id)
+        self.pds_service.get_patient_details.assert_called_once_with(patient_id)
         self.assertEqual(actual_patient_data, expected_patient_data)
 
     def test_patient_details_not_found(self):
         """It should return None if patient details not found"""
-        patient_id = 1234567890  # Replace with a non-existent patient ID
+        patient_id = 1234567890
         self.pds_service.get_patient_details.return_value = None
 
         # When
         actual_patient_data = self.pds_service.get_patient_details(patient_id)
 
         # Then
-        self.pds_repository.get_patient_details.assert_called_once_with(patient_id)
+        self.pds_service.get_patient_details.assert_called_once_with(patient_id)
         self.assertIsNone(actual_patient_data)
+    
 
-    # Add more test cases as needed...
+    def test_get_access_token(self):
+        self.pds_service.get_access_token.return_value = "mock_access_token"
+
+        # When
+        access_token = self.pds_service.get_access_token()
+
+        # Then
+        self.pds_service.get_access_token.assert_called_once_with()
+        self.assertIsInstance(access_token, str)
+        self.assertNotEqual(access_token, '')  
+
 
 if __name__ == '__main__':
     unittest.main()

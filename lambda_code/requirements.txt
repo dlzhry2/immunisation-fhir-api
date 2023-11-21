@@ -4,4 +4,4 @@ moto
 requests
 responses
 pydantic
-jwt
+PyJWT

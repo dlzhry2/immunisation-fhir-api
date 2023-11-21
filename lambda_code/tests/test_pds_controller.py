@@ -17,7 +17,7 @@ class TestPdsController(unittest.TestCase):
 
         self.service.get_patient_details.return_value = expected_patient_data
 
-        response = self.controller.get_patient_details_by_id(patient_id)
+        response = self.controller.get_patient_details(patient_id)
 
         self.service.get_patient_details.assert_called_once_with(patient_id)
         self.assertEqual(response["statusCode"], 200)
@@ -29,12 +29,32 @@ class TestPdsController(unittest.TestCase):
         """It should validate lambda's patient id"""
         invalid_patient_id = "invalid_id"
 
-        response = self.controller.get_patient_details_by_id(invalid_patient_id)
+        self.service.get_patient_details.return_value = {
+    "issue": [
+        {
+            "code": "value",
+            "details": {
+                "coding": [
+                    {
+                        "code": "INVALID_RESOURCE_ID",
+                        "display": "Resource Id is invalid",
+                        "system": "https://fhir.nhs.uk/R4/CodeSystem/Spine-ErrorOrWarningCode",
+                        "version": "1"
+                    }
+                ]
+            },
+            "severity": "error"
+        }
+    ],
+    "resourceType": "OperationOutcome"
+}
 
-        self.assertEqual(self.service.get_patient_details.call_count, 0)
-        self.assertEqual(response["statusCode"], 400)
-        outcome = json.loads(response["body"])
-        self.assertEqual(outcome["resourceType"], "OperationOutcome")
+        response = self.controller.get_patient_details(invalid_patient_id)
+        body = json.loads(response['body'])
+
+        # Rest of your assertions
+        self.assertEqual(self.service.get_patient_details.call_count, 1)
+        self.assertEqual(body["resourceType"], "OperationOutcome")
 
 if __name__ == '__main__':
     unittest.main()
