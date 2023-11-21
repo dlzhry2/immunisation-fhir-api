@@ -2,7 +2,6 @@ import json
 import re
 import uuid
 from fhir_service import FhirService
-from pds import PdsService
 from models.errors import Severity, Code, create_operation_outcome
 
 
