@@ -18,6 +18,9 @@ class ImmunisationApi:
     def get_event_by_id(self, event_id):
         return requests.get(f"{self.url}/event/{event_id}", headers=self._update_headers())
 
+    def create_immunization(self, imms):
+        return requests.post("{self.url}/event", headers=self._update_headers(), json=imms)
+
     def delete_immunization(self, imms_id):
         return requests.delete(f"{self.url}/event/{imms_id}", headers=self._update_headers())
 
