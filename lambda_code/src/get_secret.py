@@ -6,7 +6,7 @@ class SecretsManagerSecret:
         :param secretsmanager_client: A Boto3 Secrets Manager client.
         """
         self.secretsmanager_client = secretsmanager_client
-        self.name = None
+        self.name = 'imms/pds_private_key'
 
 
     def get_value(self, stage=None):
@@ -27,11 +27,17 @@ class SecretsManagerSecret:
             if stage is not None:
                 kwargs["VersionStage"] = stage
             response = self.secretsmanager_client.get_secret_value(**kwargs)
-            logger.info("Got value for secret %s.", self.name)
-        except ClientError:
-            logger.exception("Couldn't get value for secret %s.", self.name)
+            print("Got value for secret %s.", self.name)
+        except:
+            print("Couldn't get value for secret %s.", self.name)
             raise
         else:
             return response
 
 
+# class SecretsManagerCache:
+#     client = botocore.session.get_session().create_client('secretsmanager')
+#     cache_config = SecretCacheConfig()
+#     cache = SecretCache( config = cache_config, client = client)
+
+#     secret = cache.get_secret_string('imms/pds_private_key')

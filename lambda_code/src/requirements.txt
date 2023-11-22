@@ -4,3 +4,4 @@ requests
 pydantic
 PyJWT
 cryptography==37.0.4
+aws-secretsmanager-caching

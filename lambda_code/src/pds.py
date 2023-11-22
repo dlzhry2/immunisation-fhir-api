@@ -1,17 +1,17 @@
 import uuid
 import time
 import requests
-import os
 import jwt
+from get_secret import SecretsManagerSecret
+import boto3
 
 
 class PdsService:
     def __init__(self):
-        self.script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.key_file_path = os.path.join(self.script_dir, "./private_test_1.key")
+        secrets_manager_client = boto3.client('secretsmanager')
+        secret_service = SecretsManagerSecret(secrets_manager_client)
         self.ENV = "internal-dev"
-        with open(self.key_file_path, "rb") as key_file:
-            self.private_key = key_file.read()
+        self.private_key = secret_service.get_value()
         self.api_key = "3fZXYrsp9zvwDqayTrsAeH39pSWrmGwX"
         self.kid = "test_1"
         
@@ -56,11 +56,10 @@ class PdsService:
             return None
 
 # Usage example:
-pds_service = PdsService()
-access_token = pds_service.get_access_token()
-print(access_token)
+# pds_service = PdsService()
+# access_token = pds_service.get_access_token()
+# print(access_token)
 
-patient_id = 9693632109
-response = pds_service.get_patient_details(patient_id)
-print(response)
-# !/Users/ewan.childs/Desktop/NHS/Bebop/immunisation-fhir-api/.venv/bin/python3.9
+# patient_id = 9693632109
+# response = pds_service.get_patient_details(patient_id)
+# print(response)
