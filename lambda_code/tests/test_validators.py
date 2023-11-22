@@ -214,19 +214,21 @@ class TestNHSValidationRules(unittest.TestCase):
                     questionnaire_site_code_code
                 )
 
-    def test_valid_unique_id(self):
-        """Test unique_id validator accepts valid unique id"""
-        unique_ids = [
+    def test_valid_identifier_value(self):
+        """Test immunization identifier_value validator accepts valid identifier value"""
+        identifier_values = [
             "e045626e-4dc5-4df3-bc35-da25263f901e",
             "ACME-vacc123456",
             "ACME-CUSTOMER1-vacc123456",
         ]
-        for unique_id in unique_ids:
-            self.assertTrue(NHSImmunizationValidators.validate_unique_id(unique_id))
+        for identifier_value in identifier_values:
+            self.assertTrue(
+                NHSImmunizationValidators.validate_identifier_value(identifier_value)
+            )
 
-    def test_invalid_unique_id(self):
-        """Test unique_id validator rejects invalid unique id"""
-        invalid_unique_ids = [None, ""]
-        for unique_id in invalid_unique_ids:
+    def test_invalid_identifier_value(self):
+        """Test immunization identifier_value validator rejects invalid identifier value"""
+        invalid_identifier_values = [None, ""]
+        for identifier_value in invalid_identifier_values:
             with self.assertRaises(ValueError):
-                NHSImmunizationValidators.validate_unique_id(unique_id)
+                NHSImmunizationValidators.validate_identifier_value(identifier_value)
