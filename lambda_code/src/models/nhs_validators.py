@@ -7,41 +7,51 @@ class NHSImmunizationValidators:
     """NHS Immunization specific validator methods"""
 
     @staticmethod
-    def validate_nhs_number(nhs_number):
-        """Validate NHS Number"""
-        if nhs_number:
-            nhs_number = nhs_number.replace(" ", "")
-            if len(nhs_number) != 10:
-                raise ValueError("NHS_NUMBER must consist of 10 digits.")
+    def validate_patient_identifier_value(patient_identifier_value):
+        """Validate patient identifier value (NHS number)"""
+        if patient_identifier_value:
+            patient_identifier_value = patient_identifier_value.replace(" ", "")
+            if len(patient_identifier_value) != 10:
+                raise ValueError(
+                    "PATIENT_IDENTIFIER_VALUE (NHS number) must consist of 10 digits."
+                )
 
-        return nhs_number
-
-    @staticmethod
-    def validate_date_and_time(date_and_time: datetime):
-        """Validate Date and Time"""
-        if not date_and_time:
-            raise ValueError("DATE_AND_TIME is a mandatory field.")
-
-        if date_and_time.time() is None:
-            date_and_time = date_and_time.replace(hour=0, minute=0, second=0)
-        if date_and_time.tzinfo is None:
-            date_and_time = date_and_time.replace(tzinfo=timezone.utc)
-
-        if date_and_time.date() > datetime.now().date():
-            raise ValueError("DATE_AND_TIME must not be in the future.")
-
-        return date_and_time.isoformat()
+        return patient_identifier_value
 
     @staticmethod
-    def validate_site_code(site_code):
-        """Validate Site Code"""
-        if not site_code:
-            raise ValueError("SITE_CODE is a mandatory field.")
+    def validate_occurrence_date_time(occurrence_date_time: datetime):
+        """Validate occurrence date and time"""
+        if not occurrence_date_time:
+            raise ValueError("OCCURRENCE_DATE_TIME is a mandatory field.")
 
-        if Constants.is_urn_resource(site_code) or site_code.isnumeric():
-            raise ValueError("SITE_CODE must not be a urn code")
+        if occurrence_date_time.time() is None:
+            occurrence_date_time = occurrence_date_time.replace(
+                hour=0, minute=0, second=0
+            )
+        if occurrence_date_time.tzinfo is None:
+            occurrence_date_time = occurrence_date_time.replace(tzinfo=timezone.utc)
 
-        return site_code
+        if occurrence_date_time.date() > datetime.now().date():
+            raise ValueError("OCCURRENCE_DATE_TIME must not be in the future.")
+
+        return occurrence_date_time.isoformat()
+
+    @staticmethod
+    def validate_questionnaire_site_code_code(questionnaire_site_code_code):
+        """
+        Validate questionnaire site code (code of the Commissioned Healthcare Provider who has
+        administered the vaccination)
+        """
+        if not questionnaire_site_code_code:
+            raise ValueError("QUESTIONNAIRE_SITE_CODE_CODE is a mandatory field.")
+
+        if (
+            Constants.is_urn_resource(questionnaire_site_code_code)
+            or questionnaire_site_code_code.isnumeric()
+        ):
+            raise ValueError("QUESTIONNAIRE_SITE_CODE_CODE must not be a urn code")
+
+        return questionnaire_site_code_code
 
     @staticmethod
     def validate_unique_id(unique_id):
@@ -278,55 +288,53 @@ class NHSPatientValidators:
     """NHS Patient specific validator methods"""
 
     @staticmethod
-    def validate_person_forename(person_forename):
-        """Validate Person Forename"""
-        if not person_forename:
-            raise ValueError("PERSON_FORENAME is a manadatory field")
+    def validate_name_given(name_given):
+        """Validate given name (forename)"""
+        if not name_given:
+            raise ValueError("NAME_GIVEN (forename) is a manadatory field")
 
-        return person_forename
-
-    @staticmethod
-    def validate_person_surname(person_surname):
-        """Validate Person surname"""
-        if not person_surname:
-            raise ValueError("PERSON_SURNAME is a manadatory field")
-
-        return person_surname
+        return name_given
 
     @staticmethod
-    def validate_person_dob(person_dob):
-        """Validate Person DOB"""
-        if not person_dob:
-            raise ValueError("PERSON_DOB is a mandatory field")
+    def validate_name_family(name_family):
+        """Validate family name (surname)"""
+        if not name_family:
+            raise ValueError("NAME_FAMILY (surname) is a manadatory field")
 
-        parsed_date = Constants.convert_to_date(person_dob)
+        return name_family
+
+    @staticmethod
+    def validate_birth_date(birth_date):
+        """Validate birth date"""
+        if not birth_date:
+            raise ValueError("BIRTH_DATE is a mandatory field")
+
+        parsed_date = Constants.convert_to_date(birth_date)
         return parsed_date
 
     @staticmethod
-    def validate_person_gender_code(person_gender_code):
+    def validate_gender(gender):
         """Validate Person Gender Code"""
-        if not person_gender_code:
-            raise ValueError("PERSON_GENDER_CODE is a mandatory field")
+        if not gender:
+            raise ValueError("GENDER is a mandatory field")
 
-        if person_gender_code not in Constants.person_gender_codes:
-            raise ValueError(
-                "Invalid value for PERSON_GENDER_CODE. It must be 0, 1, 2, or 9."
-            )
-        return person_gender_code
+        if gender not in Constants.genders:
+            raise ValueError("Invalid value for GENDER. It must be 0, 1, 2, or 9.")
+        return gender
 
     @staticmethod
-    def validate_person_postcode(person_postcode):
-        """Validate Person Postcode"""
-        if not person_postcode:
-            raise ValueError("PERSON_POSTCODE is a mandatory field")
-        if len(person_postcode.split(" ")) != 2:
+    def validate_address_postal_code(address_postal_code):
+        """Validate adress postal code"""
+        if not address_postal_code:
+            raise ValueError("ADDRESS_POSTAL_CODE is a mandatory field")
+        if len(address_postal_code.split(" ")) != 2:
             raise ValueError(
-                "PERSON_POSTCODE must be divided into two parts by a single space"
+                "ADDRESS_POSTAL_CODE must be divided into two parts by a single space"
             )
-        postcode = person_postcode.replace(" ", "")
-        if len(postcode) > 8:
-            raise ValueError("PERSON_POSTCODE must be less that 8 characters.")
-        return person_postcode
+        postal_code = address_postal_code.replace(" ", "")
+        if len(postal_code) > 8:
+            raise ValueError("ADDRESS_POSTAL_CODE must be less that 8 characters.")
+        return address_postal_code
 
 
 class NHSPractitionerValidators:

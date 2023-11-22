@@ -13,24 +13,35 @@ class ImmunizationValidator:
         self.json_data = json_data
 
     @classmethod
-    def validate_nhs_number(cls, values: dict) -> dict:
-        """Validate NHS Number"""
-        nhs_number = values.get("patient").identifier.value
-        NHSImmunizationValidators.validate_nhs_number(nhs_number)
+    def validate_patient_identifier_value(cls, values: dict) -> dict:
+        """Validate patient identifier value (NHS number)"""
+        patient_identifier_value = values.get("patient").identifier.value
+        NHSImmunizationValidators.validate_patient_identifier_value(
+            patient_identifier_value
+        )
         return values
 
     @classmethod
-    def validate_date_and_time(cls, values: dict) -> dict:
-        """Validate Date and Time"""
-        date_and_time = values.get("occurrenceDateTime", None)
-        NHSImmunizationValidators.validate_date_and_time(date_and_time)
+    def validate_occurrence_date_time(cls, values: dict) -> dict:
+        """Validate occurrence date time"""
+        occurrence_date_time = values.get("occurrenceDateTime", None)
+        NHSImmunizationValidators.validate_occurrence_date_time(occurrence_date_time)
         return values
 
     @classmethod
-    def validate_site_code(cls, values: dict) -> dict:
-        """Validate Site Code"""
-        site_code = values.get("location").identifier.value
-        NHSImmunizationValidators.validate_site_code(site_code)
+    def validate_questionnaire_site_code_code(cls, values: dict) -> dict:
+        """
+        Validate questionnaire site code (code of the Commissioned Healthcare Provider who has
+        administered the vaccination)
+        """
+        for record in values.get("contained"):
+            if record.resource_type == "QuestionnaireResponse":
+                for item in record.item:
+                    if item.linkId == "SiteCode":
+                        questionnaire_site_code_code = item.answer[0].valueCoding.code
+        NHSImmunizationValidators.validate_questionnaire_site_code_code(
+            questionnaire_site_code_code
+        )
         return values
 
     @classmethod
@@ -221,9 +232,9 @@ class ImmunizationValidator:
         from the JSON data
         """
         # Custom NHS validators
-        Immunization.add_root_validator(self.validate_nhs_number)
-        Immunization.add_root_validator(self.validate_date_and_time)
-        Immunization.add_root_validator(self.validate_site_code)
+        Immunization.add_root_validator(self.validate_patient_identifier_value)
+        Immunization.add_root_validator(self.validate_occurrence_date_time)
+        Immunization.add_root_validator(self.validate_questionnaire_site_code_code)
         Immunization.add_root_validator(self.validate_action_flag)
         Immunization.add_root_validator(self.validate_recorded_date)
         Immunization.add_root_validator(self.validate_report_origin)

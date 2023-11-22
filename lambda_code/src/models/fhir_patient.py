@@ -13,24 +13,38 @@ class PatientValidator:
         self.json_data = json_data
 
     @classmethod
-    def validate_person_dob(cls, values: dict) -> dict:
-        """Validate Person DOB"""
-        dob = values.get("birthDate")
-        NHSPatientValidators.validate_person_dob(str(dob))
+    def validate_name_given(cls, values: dict) -> dict:
+        """Validate given name (forename)"""
+        name_given = values.get("name")[0].given[0]
+        NHSPatientValidators.validate_name_given(name_given)
         return values
 
     @classmethod
-    def validate_person_gender_code(cls, values: dict) -> dict:
-        """Validate Person Gender Code"""
-        gender_code = values.get("gender")
-        NHSPatientValidators.validate_person_gender_code(gender_code)
+    def validate_name_family(cls, values: dict) -> dict:
+        """Validate family name (surname)"""
+        name_family = values.get("name")[0].family
+        NHSPatientValidators.validate_name_family(name_family)
         return values
 
     @classmethod
-    def validate_person_postcode(cls, values: dict) -> dict:
-        """Validate Person Postcode"""
-        postcode = values.get("address")[0].postalCode
-        NHSPatientValidators.validate_person_postcode(postcode)
+    def validate_birth_date(cls, values: dict) -> dict:
+        """Validate birth date"""
+        birth_date = values.get("birthDate")
+        NHSPatientValidators.validate_birth_date(str(birth_date))
+        return values
+
+    @classmethod
+    def validate_gender(cls, values: dict) -> dict:
+        """Validate gender"""
+        gender = values.get("gender")
+        NHSPatientValidators.validate_gender(gender)
+        return values
+
+    @classmethod
+    def validate_address_postal_code(cls, values: dict) -> dict:
+        """Validate address postal code"""
+        address_postal_code = values.get("address")[0].postalCode
+        NHSPatientValidators.validate_address_postal_code(address_postal_code)
         return values
 
     def validate(self) -> Patient:
@@ -39,9 +53,9 @@ class PatientValidator:
         from the JSON data
         """
         # Custom NHS validators
-        Patient.add_root_validator(self.validate_person_dob)
-        Patient.add_root_validator(self.validate_person_gender_code)
-        Patient.add_root_validator(self.validate_person_postcode)
+        Patient.add_root_validator(self.validate_birth_date)
+        Patient.add_root_validator(self.validate_gender)
+        Patient.add_root_validator(self.validate_address_postal_code)
 
         # Generate the Patient model from the JSON data
         patient = Patient.parse_obj(self.json_data)

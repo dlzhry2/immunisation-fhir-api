@@ -57,90 +57,86 @@ class TestNHSValidationRules(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_valid_nhs_number(self):
-        """Test nhs_number validator accepts valid nhs number"""
-        valid_nhs_numbers = ["1234567890", " 12345 67890 "]
-        for valid_nhs_number in valid_nhs_numbers:
+    def test_valid_patient_identifier_value(self):
+        """Test patient_identifier_value (NHS number) validator accepts valid number"""
+        valid_patient_identifier_values = ["1234567890", " 12345 67890 "]
+        for valid_patient_identifier_value in valid_patient_identifier_values:
             self.assertTrue(
-                NHSImmunizationValidators.validate_nhs_number(valid_nhs_number)
+                NHSImmunizationValidators.validate_patient_identifier_value(
+                    valid_patient_identifier_value
+                )
             )
 
-    def test_invalid_nhs_number(self):
-        """Test nhs_number validator rejects invalid nhs number"""
-        invalid_nhs_number = "123456789"
+    def test_invalid_patient_identifier_value(self):
+        """Test patient_identifier_value (NHS number) validator rejects invalid number"""
+        invalid_patient_identifier_value = "123456789"
         with self.assertRaises(ValueError):
-            NHSImmunizationValidators.validate_nhs_number(invalid_nhs_number)
+            NHSImmunizationValidators.validate_patient_identifier_value(
+                invalid_patient_identifier_value
+            )
 
-    def test_valid_person_forename(self):
-        """Test person_forename validator accepts valid person forename"""
-        valid_person_forename = "Valid_forename"
-        self.assertTrue(
-            NHSPatientValidators.validate_person_forename(valid_person_forename)
-        )
+    def test_valid_name_given(self):
+        """Test name_given (forename) accepts valid name"""
+        valid_name_given = "Valid_name_given"
+        self.assertTrue(NHSPatientValidators.validate_name_given(valid_name_given))
 
-    def test_invalid_person_forename(self):
-        """Test person_forname validator rejects invalid person forename"""
-        invalid_person_forenames = [None, ""]
-        for invalid_person_forename in invalid_person_forenames:
+    def test_invalid_name_given(self):
+        """Test name_given (forename) validator rejects invalid name"""
+        invalid_names_given = [None, ""]
+        for invalid_name_given in invalid_names_given:
             with self.assertRaises(ValueError):
-                NHSPatientValidators.validate_person_forename(invalid_person_forename)
+                NHSPatientValidators.validate_name_given(invalid_name_given)
 
-    def test_valid_person_surname(self):
-        """Test person_surname validator accepts valid person surname"""
-        valid_person_surname = "Valid_surname"
-        self.assertTrue(
-            NHSPatientValidators.validate_person_surname(valid_person_surname)
-        )
+    def test_valid_name_family(self):
+        """Test name_family (surname) validator accepts valid name"""
+        valid_name_family = "Valid_name_family"
+        self.assertTrue(NHSPatientValidators.validate_name_family(valid_name_family))
 
-    def test_invalid_person_surname(self):
-        """Test person_forname validator rejects invalid patient surname"""
-        invalid_person_surnames = [None, ""]
-        for invalid_person_surname in invalid_person_surnames:
+    def test_invalid_name_family(self):
+        """Test name_family (surname) validator rejects invalid name"""
+        invalid_names_family = [None, ""]
+        for invalid_name_family in invalid_names_family:
             with self.assertRaises(ValueError):
-                NHSPatientValidators.validate_person_surname(invalid_person_surname)
+                NHSPatientValidators.validate_name_family(invalid_name_family)
 
-    def test_person_dob(self):
-        """Test person_dob accepts valid person DOB"""
-        valid_person_dob = "2000-01-01"
-        self.assertTrue(NHSPatientValidators.validate_person_dob(valid_person_dob))
+    def test_valid_birth_date(self):
+        """Test birth_date accepts valid birth date"""
+        valid_birth_date = "2000-01-01"
+        self.assertTrue(NHSPatientValidators.validate_birth_date(valid_birth_date))
 
-    def test_invalid_person_dob(self):
-        """Test person_dob rejects invalid person DOB"""
-        invalid_person_dobs = ["2000-13-01", "20001201", None, ""]
-        for invalid_person_dob in invalid_person_dobs:
+    def test_invalid_birth_date(self):
+        """Test birth_date rejects invalid birth_date"""
+        invalid_birth_dates = ["2000-13-01", "20001201", None, ""]
+        for invalid_birth_date in invalid_birth_dates:
             with self.assertRaises(ValueError):
-                NHSPatientValidators.validate_person_dob(invalid_person_dob)
+                NHSPatientValidators.validate_birth_date(invalid_birth_date)
 
-    def test_person_gender_code(self):
-        """Test person_gender_code validator accepts valid person gender code"""
-        valid_person_gender_codes = ["0", "1", "2", "9"]
-        for valid_person_gender_code in valid_person_gender_codes:
+    def test_valid_gender(self):
+        """Test gender validator accepts valid gender"""
+        valid_genders = ["0", "1", "2", "9"]
+        for valid_gender in valid_genders:
+            self.assertTrue(NHSPatientValidators.validate_gender(valid_gender))
+
+    def test_invalid_gender(self):
+        """Test gender validator rejects invalid gender"""
+        invalid_genders = [-1, 10, "-1", "10", "Male", "Unknown", None, ""]
+        for invalid_gender in invalid_genders:
+            with self.assertRaises(ValueError):
+                NHSPatientValidators.validate_gender(invalid_gender)
+
+    def test_valid_address_postal_code(self):
+        """Test address_postal_code validator accepts valid address_postal_code"""
+        valid_address_postal_codes = ["AA00 00AA", "A0 0AA"]
+        for valid_address_postal_code in valid_address_postal_codes:
             self.assertTrue(
-                NHSPatientValidators.validate_person_gender_code(
-                    valid_person_gender_code
+                NHSPatientValidators.validate_address_postal_code(
+                    valid_address_postal_code
                 )
             )
 
-    def test_invalid_person_gender_code(self):
-        """Test person_gender_code validator rejects invalid person gender codes"""
-        invalid_person_gender_codes = [-1, 10, "-1", "10", "invalid_CODE", None, ""]
-        for invalid_person_gender_code in invalid_person_gender_codes:
-            with self.assertRaises(ValueError):
-                NHSPatientValidators.validate_person_gender_code(
-                    invalid_person_gender_code
-                )
-
-    def test_person_postcode(self):
-        """Test person_postcode validator accepts valid person postcode"""
-        valid_person_postcodes = ["AA00 00AA", "A0 0AA"]
-        for valid_person_postcode in valid_person_postcodes:
-            self.assertTrue(
-                NHSPatientValidators.validate_person_postcode(valid_person_postcode)
-            )
-
-    def test_invalid_person_postcode(self):
+    def test_invalid_address_postal_code(self):
         """Test person_postcode validator rejects invalid person postcode"""
-        invalid_person_postcodes = [
+        invalid_address_postal_codes = [
             "AA000 00AA",
             "SW1  1AA",
             "SW 1 1A",
@@ -149,55 +145,76 @@ class TestNHSValidationRules(unittest.TestCase):
             None,
             "",
         ]
-        for invalid_person_postcode in invalid_person_postcodes:
+        for invalid_address_postal_code in invalid_address_postal_codes:
             with self.assertRaises(ValueError):
-                NHSPatientValidators.validate_person_postcode(invalid_person_postcode)
+                NHSPatientValidators.validate_address_postal_code(
+                    invalid_address_postal_code
+                )
 
-    def test_date_and_time(self):
-        """ "Test date_and_time validator returns valid date and time in correct datetime format"""
-        valid_date_and_times = [
+    def test_valid_occurrence_date_time(self):
+        """ "Test occurrence_date_time validator returns valid occurrence date and time in correct datetime format"""
+        valid_occurrence_date_times = [
             datetime.strptime("2021-01-01", "%Y-%m-%d"),
             datetime.strptime("2021-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"),
             datetime.strptime("2021-01-01T00:00:00+00:00", "%Y-%m-%dT%H:%M:%S%z"),
         ]
-        expected_date_and_time = "2021-01-01T00:00:00+00:00"
+        expected_occurrence_date_time = "2021-01-01T00:00:00+00:00"
 
-        for valid_date_and_time in valid_date_and_times:
-            returned_date_and_time = NHSImmunizationValidators.validate_date_and_time(
-                valid_date_and_time
+        for valid_occurrence_date_time in valid_occurrence_date_times:
+            returned_occurrence_date_time = (
+                NHSImmunizationValidators.validate_occurrence_date_time(
+                    valid_occurrence_date_time
+                )
             )
-            self.assertEqual(returned_date_and_time, expected_date_and_time)
+            self.assertEqual(
+                returned_occurrence_date_time, expected_occurrence_date_time
+            )
 
         # Test unusual timezone
-        valid_date_and_time = datetime.strptime(
+        valid_occurrence_date_time = datetime.strptime(
             "2022-04-05T13:42:11+12:45", "%Y-%m-%dT%H:%M:%S%z"
         )
-        expected_date_and_time = "2022-04-05T13:42:11+12:45"
-        returned_date_and_time = NHSImmunizationValidators.validate_date_and_time(
-            valid_date_and_time
+        expected_occurrence_date_time = "2022-04-05T13:42:11+12:45"
+        returned_occurrence_date_time = (
+            NHSImmunizationValidators.validate_occurrence_date_time(
+                valid_occurrence_date_time
+            )
         )
-        self.assertEqual(returned_date_and_time, expected_date_and_time)
+        self.assertEqual(returned_occurrence_date_time, expected_occurrence_date_time)
 
-    def test_invalid_date_and_time(self):
-        """Test date_and_time validator rejects invalid date and time"""
-        invalid_date_and_times = [None, ""]
-        for invalid_date_and_time in invalid_date_and_times:
+    def test_invalid_occurrence_date_time(self):
+        """Test occurrence_date_and_time validator rejects invalid occurrence date and time"""
+        invalid_occurrence_date_times = [None, ""]
+        for invalid_occurrence_date_time in invalid_occurrence_date_times:
             with self.assertRaises(ValueError):
-                NHSImmunizationValidators.validate_date_and_time(invalid_date_and_time)
+                NHSImmunizationValidators.validate_occurrence_date_time(
+                    invalid_occurrence_date_time
+                )
 
-    def test_site_code(self):
-        """Test site_code validator accepts valid site code"""
-        site_code = "B0C4P"
-        self.assertTrue(NHSImmunizationValidators.validate_site_code(site_code))
+    def test_valid_questionnaire_site_code_code(self):
+        """
+        Test questionnaire_site_code_code validator (code of the Commissioned Healthcare Provider
+        who has administered the vaccination) accepts valid site code
+        """
+        questionnaire_site_code_code = "B0C4P"
+        self.assertTrue(
+            NHSImmunizationValidators.validate_questionnaire_site_code_code(
+                questionnaire_site_code_code
+            )
+        )
 
-    def test_invalid_site_code(self):
-        """Test site_code validator rejects invalid site code"""
-        invalid_site_codes = ["urn:12345", "12345", None, ""]
-        for site_code in invalid_site_codes:
+    def test_invalid_questionnaire_site_code_code(self):
+        """Test questionnaire_site_code_code validator (code of the Commissioned Healthcare
+        Provider who has administered the vaccination) rejects invalid site code
+        """
+        invalid_questionnaire_site_code_codes = ["urn:12345", "12345", None, ""]
+        for questionnaire_site_code_code in invalid_questionnaire_site_code_codes:
             with self.assertRaises(ValueError):
-                NHSImmunizationValidators.validate_site_code(site_code)
+                NHSImmunizationValidators.validate_questionnaire_site_code_code(
+                    questionnaire_site_code_code
+                )
 
-    def test_unique_id(self):
+    def test_valid_unique_id(self):
         """Test unique_id validator accepts valid unique id"""
         unique_ids = [
             "e045626e-4dc5-4df3-bc35-da25263f901e",
@@ -209,8 +226,7 @@ class TestNHSValidationRules(unittest.TestCase):
 
     def test_invalid_unique_id(self):
         """Test unique_id validator rejects invalid unique id"""
-        # TODO: Confirm which ids are acceptable
-        invalid_unique_ids = ["invalid_unique_id", None, ""]
+        invalid_unique_ids = [None, ""]
         for unique_id in invalid_unique_ids:
             with self.assertRaises(ValueError):
                 NHSImmunizationValidators.validate_unique_id(unique_id)
