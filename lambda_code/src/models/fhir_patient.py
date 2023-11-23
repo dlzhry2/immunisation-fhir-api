@@ -5,12 +5,12 @@ from models.nhs_validators import NHSPatientValidators
 
 class PatientValidator:
     """
-    Validate the patient record against the NHS specific validators and Immunization
+    Validate the patient record against the NHS specific validators and Patient
     FHIR profile
     """
 
-    def __init__(self, json_data) -> None:
-        self.json_data = json_data
+    def __init__(self) -> None:
+        pass
 
     @classmethod
     def validate_name_given(cls, values: dict) -> dict:
@@ -47,17 +47,14 @@ class PatientValidator:
         NHSPatientValidators.validate_address_postal_code(address_postal_code)
         return values
 
-    def validate(self) -> Patient:
-        """
-        Add custom NHS validators to the Immunization model then generate the Immunization model
-        from the JSON data
-        """
-        # Custom NHS validators
+    def add_custom_root_validators(self):
+        """Add custom NHS validators to the model"""
+        Patient.add_root_validator(self.validate_name_given)
+        Patient.add_root_validator(self.validate_name_family)
+        Patient.add_root_validator(self.validate_address_postal_code)
         Patient.add_root_validator(self.validate_birth_date)
         Patient.add_root_validator(self.validate_gender)
-        Patient.add_root_validator(self.validate_address_postal_code)
 
-        # Generate the Patient model from the JSON data
-        patient = Patient.parse_obj(self.json_data)
-
-        return patient
+    def validate(self, json_data) -> Patient:
+        """Generate the Patient model from the JSON data"""
+        return Patient.parse_obj(json_data)

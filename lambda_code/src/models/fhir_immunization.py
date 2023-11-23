@@ -9,8 +9,8 @@ class ImmunizationValidator:
     FHIR profile
     """
 
-    def __init__(self, json_data) -> None:
-        self.json_data = json_data
+    def __init__(self) -> None:
+        pass
 
     @classmethod
     def validate_patient_identifier_value(cls, values: dict) -> dict:
@@ -42,6 +42,14 @@ class ImmunizationValidator:
         NHSImmunizationValidators.validate_questionnaire_site_code_code(
             questionnaire_site_code_code
         )
+        return values
+
+    @classmethod
+    def validate_identifier_value(cls, values: dict) -> dict:
+        """Validate immunization identifier value"""
+        # TODO: Confirm if can assume extraction of element 0 of identifier list
+        identifier_value = values.get("identifier")[0].value
+        NHSImmunizationValidators.validate_identifier_value(identifier_value)
         return values
 
     @classmethod
@@ -226,15 +234,12 @@ class ImmunizationValidator:
         )
         return values
 
-    def validate(self) -> Immunization:
-        """
-        Add custom NHS validators to the Immunization model then generate the Immunization model
-        from the JSON data
-        """
-        # Custom NHS validators
+    def add_custom_root_validators(self):
+        """Add custom NHS validators to the model"""
         Immunization.add_root_validator(self.validate_patient_identifier_value)
         Immunization.add_root_validator(self.validate_occurrence_date_time)
         Immunization.add_root_validator(self.validate_questionnaire_site_code_code)
+        Immunization.add_root_validator(self.validate_identifier_value)
         Immunization.add_root_validator(self.validate_action_flag)
         Immunization.add_root_validator(self.validate_recorded_date)
         Immunization.add_root_validator(self.validate_report_origin)
@@ -255,7 +260,6 @@ class ImmunizationValidator:
         Immunization.add_root_validator(self.validate_location_code)
         Immunization.add_root_validator(self.validate_reduce_validation_code)
 
-        # Generate the Immunization model from the JSON data
-        immunization = Immunization.parse_obj(self.json_data)
-
-        return immunization
+    def validate(self, json_data) -> Immunization:
+        """Generate the Immunization model"""
+        return Immunization.parse_obj(json_data)

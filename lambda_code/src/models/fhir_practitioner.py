@@ -9,8 +9,8 @@ class PractitionerValidator:
     FHIR profile
     """
 
-    def __init__(self, json_data) -> None:
-        self.json_data = json_data
+    def __init__(self) -> None:
+        pass
 
     @classmethod
     def validate_performing_professional_forename(cls, values: dict) -> dict:
@@ -32,18 +32,13 @@ class PractitionerValidator:
         )
         return values
 
-    def validate(self) -> Practitioner:
-        """
-        Add custom NHS validators to the Practitioner model then generate the Practitioner model
-        from the JSON data
-        """
-        # Custom NHS validators
+    def add_custom_root_validators(self):
+        """Add custom NHS validators to the model"""
         Practitioner.add_root_validator(self.validate_performing_professional_forename)
         Practitioner.add_root_validator(
             self.validate_performing_professional_body_reg_code
         )
 
-        # Generate the Practitioner model from the JSON data
-        practitioner = Practitioner.parse_obj(self.json_data)
-
-        return practitioner
+    def validate(self, json_data) -> Practitioner:
+        """Generate the Practitioner model from the JSON data"""
+        return Practitioner.parse_obj(json_data)

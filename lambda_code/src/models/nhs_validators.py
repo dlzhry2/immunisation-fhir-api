@@ -54,12 +54,11 @@ class NHSImmunizationValidators:
         return questionnaire_site_code_code
 
     @staticmethod
-    def validate_unique_id(unique_id):
-        """Validate Unique ID"""
-        if not unique_id:
-            raise ValueError("UNIQUE_ID is a mandatory field")
-        # TODO: Confirm which IDs are acceptable and validate for them
-        return unique_id
+    def validate_identifier_value(identifier_value):
+        """Validate immunization identifier value"""
+        if not identifier_value:
+            raise ValueError("IDENTIFIER_VALUE is a mandatory field")
+        return identifier_value
 
     @staticmethod
     def validate_action_flag(action_flag):
