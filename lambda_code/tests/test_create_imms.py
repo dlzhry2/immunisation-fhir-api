@@ -12,13 +12,13 @@ from fhir_controller import FhirController
 from models.errors import Severity, Code, create_operation_outcome
 
 
-class TestDeleteImmunizationById(unittest.TestCase):
+class TestCreateImmunizationById(unittest.TestCase):
     def setUp(self):
         self.controller = create_autospec(FhirController)
 
     def test_create_immunization(self):
         """it should create Immunization"""
-        lambda_event = {"pathParameters": {"id": "an-id"}}
+        lambda_event = {"aws": "event"}
         exp_res = {"a-key": "a-value"}
 
         self.controller.create_immunization.return_value = exp_res
@@ -32,7 +32,7 @@ class TestDeleteImmunizationById(unittest.TestCase):
 
     def test_handle_exception(self):
         """unhandled exceptions should result in 500"""
-        lambda_event = {"pathParameters": {"id": "an-id"}}
+        lambda_event = {"aws": "event"}
         error_msg = "an unhandled error"
         self.controller.create_immunization.side_effect = Exception(error_msg)
 

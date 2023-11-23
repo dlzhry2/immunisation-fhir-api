@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import unittest
+import uuid
 from unittest.mock import create_autospec
 
 from fhir.resources.immunization import Immunization
@@ -86,7 +87,7 @@ class TestCreateImmunization(unittest.TestCase):
 
     def test_create_immunization(self):
         """it should create Immunization"""
-        imms_id = "an-id"
+        imms_id = str(uuid.uuid4())
         self.imms_repo.create_immunization.return_value = _create_an_immunization_dict(imms_id)
         req_imms = _create_an_immunization_dict(imms_id)
 

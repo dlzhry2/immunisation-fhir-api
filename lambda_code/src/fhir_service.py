@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from fhir.resources.immunization import Immunization
@@ -22,6 +23,7 @@ class FhirService:
     def create_immunization(self, immunization: dict) -> Immunization:
         # TODO: do the PDS lookup
         imms = self.immunisation_repo.create_immunization(immunization)
+        print(json.dumps(imms))
         return Immunization.parse_obj(imms)
 
     def delete_immunization(self, imms_id) -> Immunization:

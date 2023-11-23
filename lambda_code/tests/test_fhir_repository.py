@@ -73,6 +73,15 @@ class TestCreateImmunization(unittest.TestCase):
         self.assertTrue(item["PK"].startswith("Immunization#"))
         self.assertNotEqual(item["PK"], "Immunization#original-id-from-request")
 
+    def test_create_immunization_returns_new_id(self):
+        """create should return the persisted object i.e. with new id"""
+        imms_id = "original-id-from-request"
+        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+
+        response = self.repository.create_immunization({"id": imms_id})
+
+        self.assertNotEqual(response["id"], imms_id)
+
     def test_create_should_catch_dynamo_error(self):
         """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
         bad_request = 400

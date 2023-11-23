@@ -49,7 +49,7 @@ class FhirController:
             return self.create_response(400, body.json())
 
         resource = self.fhir_service.create_immunization(imms)
-        return self.create_response(200, resource.json())
+        return self.create_response(201, resource.json())
 
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]

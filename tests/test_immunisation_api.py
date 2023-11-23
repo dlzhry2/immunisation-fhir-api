@@ -1,7 +1,10 @@
+import copy
 import uuid
 
 import pytest
 import requests
+
+from .example_loader import load_example
 
 
 class ImmunisationApi:
@@ -15,11 +18,11 @@ class ImmunisationApi:
             "Accept": "application/fhir+json",
         }
 
-    def get_event_by_id(self, event_id):
+    def get_immunization_by_id(self, event_id):
         return requests.get(f"{self.url}/event/{event_id}", headers=self._update_headers())
 
     def create_immunization(self, imms):
-        return requests.post("{self.url}/event", headers=self._update_headers(), json=imms)
+        return requests.post(f"{self.url}/event", headers=self._update_headers(), json=imms)
 
     def delete_immunization(self, imms_id):
         return requests.delete(f"{self.url}/event/{imms_id}", headers=self._update_headers())
@@ -34,6 +37,24 @@ class ImmunisationApi:
         return {**updated, **headers}
 
 
+def create_an_imms_obj(imms_id: str = str(uuid.uuid4())) -> dict:
+    imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
+    imms["id"] = imms_id
+
+    return imms
+
+
+def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> dict:
+    imms = create_an_imms_obj()
+
+    stored_imms = imms_api.create_immunization(imms).json()
+    imms_id = stored_imms["id"]
+    res = imms_api.delete_immunization(imms_id)
+    assert res.status_code == 200
+
+    return res.json()
+
+
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -41,16 +62,31 @@ class ImmunisationApi:
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
-    imms_id = str(uuid.uuid4())
 
-    # Act
-    result = imms_api.create_immunization(imms_id)
+    imms = create_an_imms_obj()
+
+    # CREATE
+    result = imms_api.create_immunization(imms)
     res_body = result.json()
-    print(res_body)
+
+    assert result.status_code == 201
+    assert res_body["resourceType"] == "Immunization"
+
+    # READ
+    imms_id = res_body["id"]
+
+    result = imms_api.get_immunization_by_id(imms_id)
+
+    assert result.status_code == 200
+    assert res_body["id"] == imms_id
+
+    # DELETE
+    result = imms_api.delete_immunization(imms_id)
+
+    assert result.status_code == 200
 
 
 @pytest.mark.nhsd_apim_authorization(
@@ -66,7 +102,7 @@ def test_get_event_by_id_not_found_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
     # Act
-    result = imms_api.get_event_by_id("some-id-that-does-not-exist")
+    result = imms_api.get_immunization_by_id("some-id-that-does-not-exist")
     res_body = result.json()
 
     # Assert
@@ -87,7 +123,7 @@ def test_get_event_by_id_invalid_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_h
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
     # Act
-    result = imms_api.get_event_by_id("some_id_that_is_malformed")
+    result = imms_api.get_immunization_by_id("some_id_that_is_malformed")
     res_body = result.json()
 
     # Assert
@@ -102,59 +138,13 @@ def test_get_event_by_id_invalid_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_h
         "login_form": {"username": "656005750104"},
     }
 )
-def test_get_event_by_id_happy_path_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
-    # Arrange
-    token = nhsd_apim_auth_headers["Authorization"]
-    imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
-
-    # Act
-    imms_id = "e045626e-4dc5-4df3-bc35-da25263f901e"
-    result = imms_api.get_event_by_id(imms_id)
-    json_result = result.json()
-
-    # Assert
-    assert result.status_code == 200
-    assert json_result["identifier"][0]["value"] == imms_id
-
-
-@pytest.mark.nhsd_apim_authorization(
-    {
-        "access": "healthcare_worker",
-        "level": "aal3",
-        "login_form": {"username": "656005750104"},
-    }
-)
-@pytest.mark.skip(reason="Enable this after POST/create method implementation. Test manually for the time being.")
-def test_delete_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
-    # Arrange
-    token = nhsd_apim_auth_headers["Authorization"]
-    imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
-
-    # Act
-    imms_id = "delete-me"
-    result = imms_api.delete_immunization(imms_id)
-    json_result = result.json()
-
-    # Assert
-    assert result.status_code == 200
-    assert json_result["id"] == imms_id
-
-
-@pytest.mark.nhsd_apim_authorization(
-    {
-        "access": "healthcare_worker",
-        "level": "aal3",
-        "login_form": {"username": "656005750104"},
-    }
-)
-@pytest.mark.skip(reason="Enable this after POST/create method implementation. Test manually for the time being.")
 def test_delete_immunization_already_deleted(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     # Arrange
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
-    imms_id = "delete-me"
-    imms_api.delete_immunization(imms_id)
+    imms = create_a_deleted_imms_resource(imms_api)
+    imms_id = imms["id"]
 
     # Act
     result = imms_api.delete_immunization(imms_id)
@@ -172,17 +162,16 @@ def test_delete_immunization_already_deleted(nhsd_apim_proxy_url, nhsd_apim_auth
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.skip(reason="Enable this after POST/create method implementation. Test manually for the time being.")
-def test_get_deleted_immunization_(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+def test_get_deleted_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     # Arrange
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
-    imms_id = "delete-me"
-    imms_api.delete_immunization(imms_id)
+    imms = create_a_deleted_imms_resource(imms_api)
+    imms_id = imms["id"]
 
     # Act
-    result = imms_api.delete_immunization(imms_id)
+    result = imms_api.get_immunization_by_id(imms_id)
     json_result = result.json()
 
     # Assert

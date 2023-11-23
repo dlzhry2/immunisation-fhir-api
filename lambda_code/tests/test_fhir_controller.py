@@ -114,7 +114,7 @@ class TestCreateImmunization(unittest.TestCase):
         response = self.controller.create_immunization(aws_event)
 
         self.service.create_immunization.assert_called_once_with(imms)
-        self.assertEqual(response["statusCode"], 200)
+        self.assertEqual(response["statusCode"], 201)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Immunization")
 
