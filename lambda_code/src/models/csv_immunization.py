@@ -1,5 +1,6 @@
 """CSV Immunization Model"""
 
+import dateutil.parser
 from datetime import date
 from datetime import datetime
 from typing import Optional, Any
@@ -101,6 +102,7 @@ class CsvImmunizationModel(BaseModel):
     @validator("DATE_AND_TIME", pre=True, always=True)
     def validate_date_and_time(cls, value):
         """Validate date and time"""
+        value = dateutil.parser.parse(value)
         return NHSImmunizationValidators.validate_occurrence_date_time(value)
 
     @validator("SITE_CODE", pre=True, always=True)

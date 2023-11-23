@@ -2,7 +2,7 @@
   "failure_reasons": [
     {
       "loc": ["NHS_NUMBER"],
-      "msg": "NHS_NUMBER must consist of 10 digits.",
+      "msg": "PATIENT_IDENTIFIER_VALUE (NHS number) must consist of 10 digits.",
       "type": "value_error"
     }
   ],
