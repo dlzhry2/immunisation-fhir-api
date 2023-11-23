@@ -41,6 +41,24 @@ class ImmunisationApi:
         "login_form": {"username": "656005750104"},
     }
 )
+@pytest.mark.debug
+def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+    token = nhsd_apim_auth_headers["Authorization"]
+    imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
+    imms_id = str(uuid.uuid4())
+
+    # Act
+    result = imms_api.create_immunization(imms_id)
+    res_body = result.json()
+
+
+@pytest.mark.nhsd_apim_authorization(
+    {
+        "access": "healthcare_worker",
+        "level": "aal3",
+        "login_form": {"username": "656005750104"},
+    }
+)
 def test_get_event_by_id_not_found_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     # Arrange
     token = nhsd_apim_auth_headers["Authorization"]
