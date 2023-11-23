@@ -50,6 +50,7 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     # Act
     result = imms_api.create_immunization(imms_id)
     res_body = result.json()
+    print(res_body)
 
 
 @pytest.mark.nhsd_apim_authorization(
