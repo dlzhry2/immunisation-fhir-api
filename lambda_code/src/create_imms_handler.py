@@ -9,8 +9,7 @@ def create_imms_handler(event, context):
     secrets_manager_client = boto3.client('secretsmanager')
     secret_service = SecretsManagerSecret(secrets_manager_client)
     secret = secret_service.get_value()
-    print(event_body)
-    print(secret)
+    print(event_body, "<<<<<<<<<<<< EVENT_BODY")
     dynamo_service = EventTable()
     message = dynamo_service.put_event(event_body)
     response = {
