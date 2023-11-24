@@ -5,11 +5,14 @@ import random
 import uuid
 from datetime import datetime
 
-# we want to generate random UUIDs but, we want to make them reproducible
-# see: https://stackoverflow.com/a/56757552/3943054
+# generate reproducible random UUIDs
 rd = random.Random()
 rd.seed(0)
-uuid.uuid4 = lambda: uuid.UUID(int=rd.getrandbits(128))
+
+
+def make_rand_id():
+    return uuid.UUID(int=rd.getrandbits(128))
+
 
 patient_pool = [
     {"nhs_number": "9999999999", "dob": "1952-05-06"},
@@ -43,9 +46,9 @@ def generate_immunisation(num):
     for _ in range(num):
         _imms = copy.deepcopy(imms)
         # ID
-        _imms["id"] = str(uuid.uuid4())
+        _imms["id"] = str(make_rand_id())
         _imms["identifier"][0]["system"] = pick_rand(suppliers)
-        _imms["identifier"][0]["value"] = str(uuid.uuid4())
+        _imms["identifier"][0]["value"] = str(make_rand_id())
 
         all_imms.append(_imms)
 
