@@ -72,6 +72,16 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
                     invalid_patient_identifier_value
                 )
 
+    def test_model_valid_patient_identifier_value(self):
+        """Test validator model accepts all acceptable patient_identifier_value formats"""
+        valid_patient_identifier_values = ["1234567890", None]
+        valid_json_data = deepcopy(self.immunization_json_data)
+        for valid_patient_identifier_value in valid_patient_identifier_values:
+            valid_json_data["patient"]["identifier"][
+                "value"
+            ] = valid_patient_identifier_value
+            self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
     def test_model_invalid_patient_identifier_value(self):
         """Test validator model rejects invalid patient_identifier_value"""
         invalid_json_data = deepcopy(self.immunization_json_data)
@@ -79,6 +89,7 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
             "123456789",
             " 123 5678 ",
             "123 456 789 0 ",
+            ["1234567890"],
         ]
         for invalid_patient_identifier_value in invalid_patient_identifier_values:
             invalid_json_data["patient"]["identifier"][
@@ -144,7 +155,7 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
 
     def test_model_invalid_occurrence_date_time(self):
         """Test validator model rejects invalid occurrence_date_time"""
-        invalid_occurrence_date_times = [None, ""]
+        invalid_occurrence_date_times = [None, "", 123456, "20000101"]
         invalid_json_data = deepcopy(self.immunization_json_data)
         for invalid_occurrence_date_time in invalid_occurrence_date_times:
             invalid_json_data["occurrenceDateTime"] = invalid_occurrence_date_time

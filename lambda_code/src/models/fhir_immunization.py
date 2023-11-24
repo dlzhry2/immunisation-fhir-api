@@ -15,10 +15,25 @@ class ImmunizationValidator:
     @classmethod
     def validate_patient_identifier_value(cls, values: dict) -> dict:
         """Validate patient identifier value (NHS number)"""
-        patient_identifier_value = values.get("patient").identifier.value
-        NHSImmunizationValidators.validate_patient_identifier_value(
-            patient_identifier_value
-        )
+        if values.get("patient"):
+            patient_identifier_value = values.get("patient").identifier.value
+            NHSImmunizationValidators.validate_patient_identifier_value(
+                patient_identifier_value
+            )
+        return values
+
+    @classmethod
+    def pre_validate_occurrence_date_time(cls, values: dict) -> dict:
+        """Pre-validate occurrence date time"""
+        occurrence_date_time = values.get("occurrenceDateTime", None)
+        if not isinstance(occurrence_date_time, str):
+            raise ValueError("occurrenceDateTime must be a string")
+
+        if occurrence_date_time.isnumeric():
+            raise ValueError(
+                "occurrenceDateTime must be in the format YYYY-MM-DDThh:mm:ss+00:00"
+            )
+
         return values
 
     @classmethod
@@ -240,6 +255,9 @@ class ImmunizationValidator:
     def add_custom_root_validators(self):
         """Add custom NHS validators to the model"""
         Immunization.add_root_validator(self.validate_patient_identifier_value)
+        Immunization.add_root_validator(
+            self.pre_validate_occurrence_date_time, pre=True
+        )
         Immunization.add_root_validator(self.validate_occurrence_date_time)
         Immunization.add_root_validator(self.validate_questionnaire_site_code_code)
         Immunization.add_root_validator(self.validate_identifier_value)
@@ -265,4 +283,5 @@ class ImmunizationValidator:
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
-        return Immunization.parse_obj(json_data)
+        immunization = Immunization.parse_obj(json_data)
+        return immunization
