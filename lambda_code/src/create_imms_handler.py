@@ -1,7 +1,5 @@
 import json
 from dynamodb import EventTable
-from get_secret import SecretsManagerSecret
-import boto3
 
 
 def create_imms_handler(event, context):
