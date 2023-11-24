@@ -25,6 +25,16 @@ class TestNHSPatientValidationRules(unittest.TestCase):
             cls.untouched_json_data = json.load(f)
         cls.patient_validator = PatientValidator()
         cls.patient_validator.add_custom_root_validators()
+        cls.invalid_data_types_for_mandatory_strings = [
+            None,
+            "",
+            {},
+            [],
+            (),
+            {"InvalidKey": "InvalidValue"},
+            ["Invalid"],
+            ("Invalid1", "Invalid2"),
+        ]
 
     def setUp(self):
         """Ensure that good data is not inadvertently amended by the tests"""
@@ -48,7 +58,7 @@ class TestNHSPatientValidationRules(unittest.TestCase):
 
     def test_model_name_given(self):
         """Test validator model rejects invalid name_given"""
-        invalid_names_given = [None, ""]
+        invalid_names_given = self.invalid_data_types_for_mandatory_strings
         invalid_json_data = deepcopy(self.patient_json_data)
         for invalid_name_given in invalid_names_given:
             invalid_json_data["name"][0]["given"][0] = invalid_name_given
@@ -69,7 +79,7 @@ class TestNHSPatientValidationRules(unittest.TestCase):
 
     def test_model_name_family(self):
         """Test validator model rejects invalid name_family"""
-        invalid_names_family = [None, ""]
+        invalid_names_family = self.invalid_data_types_for_mandatory_strings
         invalid_json_data = deepcopy(self.patient_json_data)
         for invalid_name_family in invalid_names_family:
             invalid_json_data["name"][0]["family"] = invalid_name_family
@@ -90,7 +100,8 @@ class TestNHSPatientValidationRules(unittest.TestCase):
 
     def test_model_birth_date(self):
         """Test validator model rejects invalid birth_date"""
-        invalid_birth_dates = ["2000-13-01", None, ""]
+        invalid_birth_dates = ["2000-13-01"]
+        invalid_birth_dates += self.invalid_data_types_for_mandatory_strings
         invalid_json_data = deepcopy(self.patient_json_data)
         for invalid_birth_date in invalid_birth_dates:
             invalid_json_data["birthDate"] = invalid_birth_date
@@ -112,7 +123,8 @@ class TestNHSPatientValidationRules(unittest.TestCase):
 
     def test_model_gender(self):
         """Test validator model rejects invalid gender"""
-        invalid_genders = [-1, 10, "-1", "10", "Male", "Unknown", None, ""]
+        invalid_genders = [-1, 10, "-1", "10", "Male", "Unknown"]
+        invalid_genders += self.invalid_data_types_for_mandatory_strings
         invalid_json_data = deepcopy(self.patient_json_data)
         for invalid_gender in invalid_genders:
             invalid_json_data["gender"] = invalid_gender
@@ -154,9 +166,8 @@ class TestNHSPatientValidationRules(unittest.TestCase):
             "SW 1 1A",
             "AAA0000AA",
             "SW11AA",
-            None,
-            "",
         ]
+        address_postal_codes += self.invalid_data_types_for_mandatory_strings
         invalid_json_data = deepcopy(self.patient_json_data)
         for address_postal_code in address_postal_codes:
             invalid_json_data["address"][0]["postalCode"] = address_postal_code

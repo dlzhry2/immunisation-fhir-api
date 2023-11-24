@@ -10,7 +10,8 @@ class NHSImmunizationValidators:
     def validate_patient_identifier_value(patient_identifier_value):
         """Validate patient identifier value (NHS number)"""
         if patient_identifier_value:
-            patient_identifier_value = patient_identifier_value.replace(" ", "")
+            if " " in patient_identifier_value:
+                raise ValueError("PATIENT_IDENTIFIER_VALUE MUST NOT CONTAIN SPACES")
             if len(patient_identifier_value) != 10:
                 raise ValueError(
                     "PATIENT_IDENTIFIER_VALUE (NHS number) must consist of 10 digits."
@@ -24,10 +25,15 @@ class NHSImmunizationValidators:
         if not occurrence_date_time:
             raise ValueError("OCCURRENCE_DATE_TIME is a mandatory field.")
 
-        if occurrence_date_time.time() is None:
+        if not hasattr(occurrence_date_time, "time"):
+            occurrence_date_time = datetime.combine(
+                occurrence_date_time, datetime.min.time()
+            )
+        elif occurrence_date_time.time() is None:
             occurrence_date_time = occurrence_date_time.replace(
                 hour=0, minute=0, second=0
             )
+
         if occurrence_date_time.tzinfo is None:
             occurrence_date_time = occurrence_date_time.replace(tzinfo=timezone.utc)
 

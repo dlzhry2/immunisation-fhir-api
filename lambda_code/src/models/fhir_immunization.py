@@ -25,7 +25,11 @@ class ImmunizationValidator:
     def validate_occurrence_date_time(cls, values: dict) -> dict:
         """Validate occurrence date time"""
         occurrence_date_time = values.get("occurrenceDateTime", None)
-        NHSImmunizationValidators.validate_occurrence_date_time(occurrence_date_time)
+        values[
+            "occurrenceDateTime"
+        ] = NHSImmunizationValidators.validate_occurrence_date_time(
+            occurrence_date_time
+        )
         return values
 
     @classmethod
@@ -47,7 +51,6 @@ class ImmunizationValidator:
     @classmethod
     def validate_identifier_value(cls, values: dict) -> dict:
         """Validate immunization identifier value"""
-        # TODO: Confirm if can assume extraction of element 0 of identifier list
         identifier_value = values.get("identifier")[0].value
         NHSImmunizationValidators.validate_identifier_value(identifier_value)
         return values

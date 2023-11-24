@@ -4,8 +4,9 @@ import unittest
 import sys
 import os
 import json
-from datetime import datetime
 from copy import deepcopy
+import dateutil.parser
+
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
@@ -26,6 +27,16 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
             cls.untouched_immunization_json_data = json.load(f)
         cls.immunization_validator = ImmunizationValidator()
         cls.immunization_validator.add_custom_root_validators()
+        cls.invalid_data_types_for_mandatory_strings = [
+            None,
+            "",
+            {},
+            [],
+            (),
+            {"InvalidKey": "InvalidValue"},
+            ["Invalid"],
+            ("Invalid1", "Invalid2"),
+        ]
 
     def setUp(self):
         """Ensure that good data is not inadvertently amended by the tests"""
@@ -41,42 +52,58 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
 
     def test_valid_patient_identifier_value(self):
         """Test patient_identifier_value (NHS number) validator accepts valid number"""
-        valid_patient_identifier_values = ["1234567890", " 12345 67890 "]
-        for valid_patient_identifier_value in valid_patient_identifier_values:
-            self.assertTrue(
-                NHSImmunizationValidators.validate_patient_identifier_value(
-                    valid_patient_identifier_value
-                )
+        valid_patient_identifier_value = "1234567890"
+        self.assertTrue(
+            NHSImmunizationValidators.validate_patient_identifier_value(
+                valid_patient_identifier_value
             )
+        )
 
     def test_invalid_patient_identifier_value(self):
         """Test patient_identifier_value (NHS number) validator rejects invalid number"""
-        invalid_patient_identifier_value = "123456789"
-        with self.assertRaises(ValueError):
-            NHSImmunizationValidators.validate_patient_identifier_value(
-                invalid_patient_identifier_value
-            )
+        invalid_patient_identifier_values = [
+            "123456789",
+            " 123 5678 ",
+            "123 456 789 0 ",
+        ]
+        for invalid_patient_identifier_value in invalid_patient_identifier_values:
+            with self.assertRaises(ValueError):
+                NHSImmunizationValidators.validate_patient_identifier_value(
+                    invalid_patient_identifier_value
+                )
 
     def test_model_invalid_patient_identifier_value(self):
         """Test validator model rejects invalid patient_identifier_value"""
         invalid_json_data = deepcopy(self.immunization_json_data)
-        invalid_json_data["patient"]["identifier"]["value"] = "123456789"
-        with self.assertRaises(ValueError):
-            self.immunization_validator.validate(invalid_json_data)
+        invalid_patient_identifier_values = [
+            "123456789",
+            " 123 5678 ",
+            "123 456 789 0 ",
+        ]
+        for invalid_patient_identifier_value in invalid_patient_identifier_values:
+            invalid_json_data["patient"]["identifier"][
+                "value"
+            ] = invalid_patient_identifier_value
+            print(invalid_patient_identifier_value)
+            with self.assertRaises(ValueError):
+                self.immunization_validator.validate(invalid_json_data)
 
     def test_valid_occurrence_date_time(self):
-        """ "Test occurrence_date_time validator returns valid occurrence date and time in correct datetime format"""
+        """
+        Test occurrence_date_time validator returns valid occurrence date and time in correct
+        datetime format
+        """
         valid_occurrence_date_times = [
-            datetime.strptime("2021-01-01", "%Y-%m-%d"),
-            datetime.strptime("2021-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"),
-            datetime.strptime("2021-01-01T00:00:00+00:00", "%Y-%m-%dT%H:%M:%S%z"),
+            "2021-01-01",
+            "2021-01-01T00:00:00",
+            "2021-01-01T00:00:00+00:00",
         ]
         expected_occurrence_date_time = "2021-01-01T00:00:00+00:00"
 
         for valid_occurrence_date_time in valid_occurrence_date_times:
             returned_occurrence_date_time = (
                 NHSImmunizationValidators.validate_occurrence_date_time(
-                    valid_occurrence_date_time
+                    dateutil.parser.parse(valid_occurrence_date_time)
                 )
             )
             self.assertEqual(
@@ -84,9 +111,7 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
             )
 
         # Test unusual timezone
-        valid_occurrence_date_time = datetime.strptime(
-            "2022-04-05T13:42:11+12:45", "%Y-%m-%dT%H:%M:%S%z"
-        )
+        valid_occurrence_date_time = dateutil.parser.parse("2022-04-05T13:42:11+12:45")
         expected_occurrence_date_time = "2022-04-05T13:42:11+12:45"
         returned_occurrence_date_time = (
             NHSImmunizationValidators.validate_occurrence_date_time(
@@ -104,7 +129,20 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
                     invalid_occurrence_date_time
                 )
 
-    def test_model_occurrence_date_time(self):
+    def test_model_valid_occurence_date_time(self):
+        """Test validator model accepts all acceptable occurence_date_time formats"""
+        valid_occurrence_date_times = [
+            "2021-01-01",
+            "2021-01-01T00:00:00",
+            "2021-01-01T00:00:00+00:00",
+            "2022-04-05T13:42:11+12:45",
+        ]
+        valid_json_data = deepcopy(self.immunization_json_data)
+        for valid_occurrence_date_time in valid_occurrence_date_times:
+            valid_json_data["occurrenceDateTime"] = valid_occurrence_date_time
+            self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+    def test_model_invalid_occurrence_date_time(self):
         """Test validator model rejects invalid occurrence_date_time"""
         invalid_occurrence_date_times = [None, ""]
         invalid_json_data = deepcopy(self.immunization_json_data)
@@ -138,7 +176,10 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
 
     def test_model_invalid_questionnaire_site_code_code(self):
         """Test validator model rejects invalid questionnaire_site_code_code"""
-        invalid_questionnaire_site_code_codes = ["urn:12345", "12345", None, ""]
+        invalid_questionnaire_site_code_codes = ["urn:12345", "12345"]
+        invalid_questionnaire_site_code_codes += (
+            self.invalid_data_types_for_mandatory_strings
+        )
         invalid_json_data = deepcopy(self.immunization_json_data)
         for (
             invalid_questionnaire_site_code_code
@@ -170,7 +211,7 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
 
     def test_model_invalid_identifier_value(self):
         """Test validator model rejects invalid identifier_value"""
-        invalid_identifier_values = [None, ""]
+        invalid_identifier_values = self.invalid_data_types_for_mandatory_strings
         invalid_json_data = deepcopy(self.immunization_json_data)
         for invalid_identifier_value in invalid_identifier_values:
             invalid_json_data["identifier"][0]["value"] = invalid_identifier_value
