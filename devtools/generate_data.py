@@ -5,11 +5,14 @@ import random
 import uuid
 from datetime import datetime
 
-# we want to generate random UUIDs but, we want to make them reproducible
-# see: https://stackoverflow.com/a/56757552/3943054
+# generate reproducible random UUIDs
 rd = random.Random()
 rd.seed(0)
-uuid.uuid4 = lambda: uuid.UUID(int=rd.getrandbits(128))
+
+
+def make_rand_id():
+    return uuid.UUID(int=rd.getrandbits(128))
+
 
 patient_pool = [
     {"nhs_number": "9999999999", "dob": "1952-05-06"},
@@ -35,40 +38,6 @@ def pick_rand(pool):
     return pool[idx]
 
 
-# Deprecated: Use per-resource generator instead
-def generate(num):
-    with open("sample_event.json", "r") as template:
-        imms = json.loads(template.read())
-
-    _events = []
-
-    def _pick_rand(pool):
-        idx = random.randint(0, len(pool) - 1)
-        return pool[idx]
-
-    for event in range(num):
-        _imms = copy.deepcopy(imms)
-        # ID
-        _imms["identifier"][0]["system"] = _pick_rand(suppliers)
-        _imms["identifier"][0]["value"] = str(uuid.uuid4())
-        # Patient
-        patient = _pick_rand(patient_pool)
-        _imms["patient"]["identifier"][0]["value"] = patient["nhs_number"]
-        _imms["patient"]["birthDate"] = patient["dob"]
-        # LocalPatient
-        local_pat = _pick_rand(local_patient_pool)
-        _imms["contained"][0]["item"][3]["answer"][0]["valueCoding"]["code"] = local_pat["code"]
-        _imms["contained"][0]["item"][3]["answer"][0]["valueCoding"]["system"] = local_pat["system"]
-        # Vaccination
-        _imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = _pick_rand(disease_type)
-        _imms["vaccineCode"]["coding"][0]["code"] = _pick_rand(vaccine_code)
-        _imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = _pick_rand(vaccine_procedure)
-
-        _events.append(_imms)
-
-    return _events
-
-
 def generate_immunisation(num):
     with open("sample_imms.json", "r") as template:
         imms = json.loads(template.read())
@@ -77,9 +46,9 @@ def generate_immunisation(num):
     for _ in range(num):
         _imms = copy.deepcopy(imms)
         # ID
-        _imms["id"] = str(uuid.uuid4())
+        _imms["id"] = str(make_rand_id())
         _imms["identifier"][0]["system"] = pick_rand(suppliers)
-        _imms["identifier"][0]["value"] = str(uuid.uuid4())
+        _imms["identifier"][0]["value"] = str(make_rand_id())
 
         all_imms.append(_imms)
 
