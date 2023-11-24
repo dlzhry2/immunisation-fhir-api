@@ -5,15 +5,11 @@ import boto3
 
 
 def create_imms_handler(event, context):
-    event_body = event["body"]
-    secrets_manager_client = boto3.client('secretsmanager')
-    secret_service = SecretsManagerSecret(secrets_manager_client)
-    secret = secret_service.get_value()
-    print(event_body, "<<<<<<<<<<<< EVENT_BODY")
+    event_body = json.loads(event["body"])
     dynamo_service = EventTable()
     message = dynamo_service.put_event(event_body)
     response = {
-        "statusCode": 201,
+        "statusCode": 201,  # HTTP status code
         "body": json.dumps({
             "message": message  
         })
