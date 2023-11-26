@@ -5,3 +5,4 @@ requests
 responses
 pydantic
 PyJWT
+cryptography==38.0.3
