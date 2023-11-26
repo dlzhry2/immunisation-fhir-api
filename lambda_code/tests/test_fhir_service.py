@@ -51,12 +51,7 @@ class TestGetImmunization(unittest.TestCase):
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
         imms_id = "a-id"
-<<<<<<< HEAD
         self.imms_repo.get_immunisation_by_id.return_value = self._create_an_immunisation_obj(imms_id).dict()
-=======
-
-        self.imms_repo.get_immunization_by_id.return_value = _create_an_immunization_obj(imms_id).dict()
->>>>>>> master
 
         # When
         act_imms = self.fhir_service.get_immunization_by_id(imms_id)
