@@ -64,7 +64,7 @@ class TestGetImmunization(unittest.TestCase):
     def test_immunization_not_found(self):
         """it should return None if Immunization doesn't exist"""
         imms_id = "none-existent-id"
-        self.imms_repo.get_immunisation_by_id.return_value = None
+        self.imms_repo.get_immunization_by_id.return_value = None
 
         # When
         act_imms = self.fhir_service.get_immunization_by_id(imms_id)
