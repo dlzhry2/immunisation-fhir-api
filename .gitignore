@@ -9,6 +9,7 @@ newman/
 .idea
 .DS_Store
 .#*
+**/*.iml
 
 __pycache__/
 .envrc

@@ -10,8 +10,15 @@ from boto3.dynamodb.conditions import Attr
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from fhir_repository import ImmunisationRepository
+from fhir_repository import ImmunisationRepository, create_table
 from models.errors import ResourceNotFoundError, UnhandledResponseError
+
+
+def local_test():
+    table = create_table("local-imms-events", "http://localhost:4566", "us-east-1")
+    repository = ImmunisationRepository(table=table)
+    res = repository.get_immunization_by_id("5a921187-19c7-8df4-8f4f-f31e78de5857")
+    print(res)
 
 
 def _make_id(_id):
@@ -22,6 +29,9 @@ class TestGetImmunization(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
         self.repository = ImmunisationRepository(table=self.table)
+
+    def test_local(self):
+        local_test()
 
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
@@ -94,6 +104,16 @@ class TestCreateImmunization(unittest.TestCase):
 
         # Then
         self.assertDictEqual(e.exception.response, response)
+
+
+class TestCreatePatient(unittest.TestCase):
+    def setUp(self):
+        self.table = MagicMock()
+        self.repository = ImmunisationRepository(table=self.table)
+
+    def test_create_patient_gsi(self):
+        """create should populate Patient GSI attributes"""
+
 
 
 class TestDeleteImmunization(unittest.TestCase):
