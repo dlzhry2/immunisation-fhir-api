@@ -98,7 +98,7 @@ class TestCreateImmunization(unittest.TestCase):
 
     def test_lookup_nhs_number(self):
         """it should use PDS to lookup NHS number"""
-        # TODO: add test for PDS integration
+        # TODO: AMB-1730 - add test for PDS integration
 
 
 class TestDeleteImmunization(unittest.TestCase):

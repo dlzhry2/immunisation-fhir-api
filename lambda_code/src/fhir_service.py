@@ -21,7 +21,7 @@ class FhirService:
             return None
 
     def create_immunization(self, immunization: dict) -> Immunization:
-        # TODO: do the PDS lookup
+        # TODO: AMB-1730 - do the PDS lookup
         imms = self.immunisation_repo.create_immunization(immunization)
         print(json.dumps(imms))
         return Immunization.parse_obj(imms)
