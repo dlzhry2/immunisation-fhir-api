@@ -7,41 +7,41 @@ from unittest.mock import create_autospec
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from get_imms_handler import get_immunization_by_id
+from delete_imms_handler import delete_immunization
 from fhir_controller import FhirController
 from models.errors import Severity, Code, create_operation_outcome
 
 
-class TestGetImmunisationById(unittest.TestCase):
+class TestDeleteImmunizationById(unittest.TestCase):
     def setUp(self):
         self.controller = create_autospec(FhirController)
 
-    def test_get_immunisation_by_id(self):
-        """it should return immunisation by id"""
+    def test_delete_immunization(self):
+        """it should delete Immunization"""
         lambda_event = {"pathParameters": {"id": "an-id"}}
         exp_res = {"a-key": "a-value"}
 
-        self.controller.get_immunization_by_id.return_value = exp_res
+        self.controller.delete_immunization.return_value = exp_res
 
         # When
-        act_res = get_immunization_by_id(lambda_event, self.controller)
+        act_res = delete_immunization(lambda_event, self.controller)
 
         # Then
-        self.controller.get_immunization_by_id.assert_called_once_with(lambda_event)
+        self.controller.delete_immunization.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
 
     def test_handle_exception(self):
         """unhandled exceptions should result in 500"""
         lambda_event = {"pathParameters": {"id": "an-id"}}
         error_msg = "an unhandled error"
-        self.controller.get_immunization_by_id.side_effect = Exception(error_msg)
+        self.controller.delete_immunization.side_effect = Exception(error_msg)
 
         exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
                                              code=Code.server_error,
                                              diagnostics=error_msg)
 
         # When
-        act_res = get_immunization_by_id(lambda_event, self.controller)
+        act_res = delete_immunization(lambda_event, self.controller)
 
         # Then
         act_body = json.loads(act_res["body"])
