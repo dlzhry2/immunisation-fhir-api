@@ -27,6 +27,17 @@ class PatientValidator:
         return values
 
     @classmethod
+    def pre_validate_birth_date(cls, values: dict) -> dict:
+        """Validate birth date"""
+        birth_date = values.get("birthDate", None)
+        if not isinstance(birth_date, str):
+            raise ValueError("birthDate must be a string")
+        if birth_date.isnumeric():
+            raise ValueError("birthDate must be in the format YYYY-MM-DD")
+
+        return values
+
+    @classmethod
     def validate_birth_date(cls, values: dict) -> dict:
         """Validate birth date"""
         birth_date = values.get("birthDate")
@@ -52,6 +63,7 @@ class PatientValidator:
         Patient.add_root_validator(self.validate_name_given)
         Patient.add_root_validator(self.validate_name_family)
         Patient.add_root_validator(self.validate_address_postal_code)
+        Patient.add_root_validator(self.pre_validate_birth_date, pre=True)
         Patient.add_root_validator(self.validate_birth_date)
         Patient.add_root_validator(self.validate_gender)
 

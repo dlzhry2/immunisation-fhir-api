@@ -8,9 +8,8 @@ from copy import deepcopy
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from models.fhir_patient import PatientValidator
 from models.nhs_validators import NHSPatientValidators
-
+from models.fhir_patient import PatientValidator
 
 class TestNHSPatientValidationRules(unittest.TestCase):
     """Test NHS specific patient validation rules"""
@@ -100,7 +99,7 @@ class TestNHSPatientValidationRules(unittest.TestCase):
 
     def test_model_birth_date(self):
         """Test validator model rejects invalid birth_date"""
-        invalid_birth_dates = ["2000-13-01"]
+        invalid_birth_dates = ["2000-13-01", "20010101", 20010101]
         invalid_birth_dates += self.invalid_data_types_for_mandatory_strings
         invalid_json_data = deepcopy(self.patient_json_data)
         for invalid_birth_date in invalid_birth_dates:
