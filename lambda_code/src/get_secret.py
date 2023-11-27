@@ -34,7 +34,7 @@ class SecretsManagerSecret:
         else:
             return response
 
-
+# Usage example for SecretsManagerCache. For future use (if needed)
 # class SecretsManagerCache:
 #     client = botocore.session.get_session().create_client('secretsmanager')
 #     cache_config = SecretCacheConfig()
