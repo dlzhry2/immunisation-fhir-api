@@ -34,7 +34,7 @@ class UnhandledResponseError(RuntimeError):
     message: str
 
     def to_operation_outcome(self) -> OperationOutcome:
-        msg = f"Internal Server Error - {self.message}\n{self.response}"
+        msg = f"{self.message}\n{self.response}"
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
 
