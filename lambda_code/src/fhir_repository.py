@@ -2,7 +2,6 @@ import json
 import os
 import time
 from typing import Optional
-
 import boto3
 import botocore.exceptions
 from boto3.dynamodb.conditions import Attr
