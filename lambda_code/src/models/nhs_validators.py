@@ -324,7 +324,9 @@ class NHSPatientValidators:
             raise ValueError("GENDER is a mandatory field")
 
         if gender not in Constants.genders:
-            raise ValueError("Invalid value for GENDER. It must be 0, 1, 2, or 9.")
+            raise ValueError(
+                "Invalid value for GENDER. It must be male, female, other, or unknown."
+            )
         return gender
 
     @staticmethod
