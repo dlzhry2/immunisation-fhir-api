@@ -53,11 +53,16 @@ class ImmunizationValidator:
         Validate questionnaire site code (code of the Commissioned Healthcare Provider who has
         administered the vaccination)
         """
+        questionnaire_site_code_code = None
         for record in values.get("contained"):
-            if record.resource_type == "QuestionnaireResponse":
+            if (
+                record.resource_type == "QuestionnaireResponse"
+                and record.item is not None
+            ):
                 for item in record.item:
                     if item.linkId == "SiteCode":
                         questionnaire_site_code_code = item.answer[0].valueCoding.code
+
         NHSImmunizationValidators.validate_questionnaire_site_code_code(
             questionnaire_site_code_code
         )
