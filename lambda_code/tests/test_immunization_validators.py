@@ -352,7 +352,7 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
     def test_invalid_report_origin_text(self):
         """Test report origin text validator rejects invalid report origin text"""
         invalid_report_origin_texts = [
-            """This invalid report origin text is invalid because it has more than 100 characters 
+            """This invalid report origin text is invalid because it has more than 100 characters
             in it, but the maximum number allowed is 100""",
         ]
 
@@ -378,7 +378,6 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
         valid_combinations = [
             {"primary_source": False, "report_origin_text": "Valid text"},
             {"primary_source": True, "report_origin_text": "Valid text"},
-            {"primary_source": True, "report_origin_text": None},
         ]
         valid_json_data = deepcopy(self.immunization_json_data)
         for valid_combination in valid_combinations:
@@ -387,3 +386,45 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
                 "report_origin_text"
             ]
             self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+        # It is valid, when primary source is true, for report origin text field to be absent
+        valid_json_data["primarySource"] = True
+        valid_json_data["reportOrigin"].pop("text")
+        self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+    def test_model_invalid_report_origin_text(self):
+        """Test validator model rejects all invalid combinations of report_origin_text
+        and primary_source"""
+        invalid_json_data = deepcopy(self.immunization_json_data)
+
+        # When primary source is true, report origin text is not mandatory unless
+        # vaccination was administered in a Primary Care Network
+        invalid_json_data["primarySource"] = True
+        invalid_report_origin_texts = [
+            """This invalid report origin text is invalid because it has more than 100 characters
+            in it, but the maximum number allowed is 100""",
+        ]
+        invalid_json_data = deepcopy(self.immunization_json_data)
+        for invalid_report_origin_text in invalid_report_origin_texts:
+            invalid_json_data["reportOrigin"]["text"] = invalid_report_origin_text
+            with self.assertRaises(ValueError):
+                self.immunization_validator.validate(invalid_json_data)
+
+        # When primary source is false, report origin text is mandatory
+        invalid_json_data["primarySource"] = False
+        invalid_report_origin_texts = [
+            """This invalid report origin text is invalid because it has more than 100 characters
+            in it, but the maximum number allowed is 100""",
+            "",
+        ]
+        for invalid_report_origin_text in invalid_report_origin_texts:
+            invalid_json_data["reportOrigin"]["text"] = invalid_report_origin_text
+            with self.assertRaises(ValueError):
+                self.immunization_validator.validate(invalid_json_data)
+
+        invalid_json_data["reportOrigin"].pop("text")
+        with self.assertRaisesRegex(
+            ValueError,
+            "REPORT_ORIGIN_TEXT is a mandatory field when PRIMARY_SOURCE is false",
+        ):
+            self.immunization_validator.validate(invalid_json_data)
