@@ -4,6 +4,9 @@ test:
 test-debug:
 	./.venv/bin/pytest -s -v --color=yes -m debug
 
+delete-table:
+	aws dynamodb delete-table --table-name local-imms-events --region us-east-1 --endpoint-url http://localhost:4566
+
 init:
 	terraform init
 apply:

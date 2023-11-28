@@ -15,9 +15,9 @@ def make_rand_id():
 
 
 patient_pool = [
-    {"nhs_number": "9999999999", "dob": "1952-05-06"},
-    {"nhs_number": "1111111111", "dob": "1987-02-23"},
-    {"nhs_number": "1212233445", "dob": "1990-11-15"},
+    {"nhs_number": "9999999999"},
+    {"nhs_number": "1111111111"},
+    {"nhs_number": "1212233445"},
 ]
 suppliers = [
     "https://supplierABC/ODSCode145", "https://supplierSDF/ODSCode123", "https://supplierXYZ/ODSCode735"
@@ -50,6 +50,13 @@ def generate_immunisation(num):
         _imms["identifier"][0]["system"] = pick_rand(suppliers)
         _imms["identifier"][0]["value"] = str(make_rand_id())
 
+        # Patient
+        patient = pick_rand(patient_pool)
+        _imms["patient"]["identifier"]["value"] = patient["nhs_number"]
+        # Vaccination
+        _imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = pick_rand(disease_type)
+        _imms["vaccineCode"]["coding"][0]["code"] = pick_rand(vaccine_code)
+        # _imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = pick_rand(vaccine_procedure)
         all_imms.append(_imms)
 
     return all_imms

@@ -23,7 +23,7 @@ class ImmunisationRepository:
         self.table = table
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[dict]:
-        response = self.table.get_item(Key={"PK": self._make_pk(imms_id)})
+        response = self.table.get_item(Key={"PK": self._make_immunization_pk(imms_id)})
 
         if "Item" in response:
             return None if "DeletedAt" in response["Item"] else json.loads(response["Item"]["Resource"])
@@ -34,9 +34,16 @@ class ImmunisationRepository:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
 
+        patient_id = immunization["patient"]["identifier"][0]["value"]
+        disease_type = immunization["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"]
+
+        patient_sk = f"{disease_type}#{new_id}"
+
         response = self.table.put_item(Item={
-            'PK': self._make_pk(new_id),
+            'PK': self._make_immunization_pk(new_id),
             'Resource': json.dumps(immunization),
+            'PatientPK': self._make_patient_pk(patient_id),
+            'PatientSK': patient_sk,
         })
 
         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
@@ -48,13 +55,13 @@ class ImmunisationRepository:
         now_timestamp = int(time.time())
         try:
             response = self.table.update_item(
-                Key={'PK': self._make_pk(imms_id)},
+                Key={'PK': self._make_immunization_pk(imms_id)},
                 UpdateExpression='SET DeletedAt = :timestamp',
                 ExpressionAttributeValues={
                     ':timestamp': now_timestamp,
                 },
                 ReturnValues="ALL_NEW",
-                ConditionExpression=Attr("PK").eq(self._make_pk(imms_id)) & Attr("DeletedAt").not_exists()
+                ConditionExpression=Attr("PK").eq(self._make_immunization_pk(imms_id)) & Attr("DeletedAt").not_exists()
             )
             if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
                 return json.loads(response["Attributes"]["Resource"])
@@ -70,5 +77,9 @@ class ImmunisationRepository:
                                              response=e.response)
 
     @staticmethod
-    def _make_pk(_id: str):
+    def _make_immunization_pk(_id: str):
         return f"Immunization#{_id}"
+
+    @staticmethod
+    def _make_patient_pk(_id: str):
+        return f"Patient#{_id}"

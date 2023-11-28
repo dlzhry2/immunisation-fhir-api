@@ -25,6 +25,8 @@ def _make_id(_id):
     return f"Immunization#{_id}"
 
 
+# def make_a_patient
+
 class TestGetImmunization(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
@@ -106,14 +108,42 @@ class TestCreateImmunization(unittest.TestCase):
         self.assertDictEqual(e.exception.response, response)
 
 
-class TestCreatePatient(unittest.TestCase):
+class TestQueryPatient(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
         self.repository = ImmunisationRepository(table=self.table)
 
     def test_create_patient_gsi(self):
-        """create should populate Patient GSI attributes"""
+        """create Immunization method should create Patient index with nhs-number as ID and no system"""
+        nhs_number = "1234567890"
+        patient_id = {"system": "a-system", "value": nhs_number}
 
+        imms = {"id": "an-id", "patient": {"identifier": [patient_id]},
+                "protocolApplied": [{"targetDisease": [{"coding": [{"code": "a-disease-code"}]}]}]}
+        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+
+        # When
+        _ = self.repository.create_immunization(imms)
+
+        # Then
+        item = self.table.put_item.call_args.kwargs["Item"]
+        self.assertEqual(item["PatientPK"], f"Patient#{nhs_number}")
+
+    def test_create_patient_with_disease_type(self):
+        """Patient record should have a sort-key based on disease-type"""
+        disease_code = "a-disease-code"
+        disease = {"targetDisease": [{"coding": [{"code": disease_code}]}]}
+
+        imms = {"id": "an-id", "patient": {"identifier": [{"system": "a-system", "value": "a-nhs-number"}]},
+                "protocolApplied": [disease]}
+        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+
+        # When
+        _ = self.repository.create_immunization(imms)
+
+        # Then
+        item = self.table.put_item.call_args.kwargs["Item"]
+        self.assertTrue(item["PatientSK"].startswith(f"{disease_code}#"))
 
 
 class TestDeleteImmunization(unittest.TestCase):

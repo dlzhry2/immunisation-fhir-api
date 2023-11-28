@@ -2,7 +2,7 @@ import json
 
 import boto3
 
-sample_file = "sample_data/2023-11-09T19:09:23_immunisation-30.json"
+sample_file = "sample_data/2023-11-28T21:09:52_immunisation-30.json"
 
 dynamodb_url = "http://localhost:4566"
 table_name = "local-imms-events"
@@ -13,15 +13,33 @@ class DynamoTable:
         db = boto3.resource('dynamodb', endpoint_url=endpoint_url, region_name="us-east-1")
         self.table = db.Table(_table_name)
 
-    def create_immunization(self, imms):
-        imms_id = imms["id"]
-        pk = f"Immunization#{imms_id}"
+    def create_immunization(self, immunization):
+        # When seeding, we preserve the original ID, instead of creating new one
+        new_id = immunization["id"]
+        patient_id = immunization["patient"]["identifier"]["value"]
+        disease_type = immunization["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"]
+
+        patient_sk = f"{disease_type}#{new_id}"
 
         response = self.table.put_item(Item={
-            'PK': pk,
-            'Resource': json.dumps(imms),
+            'PK': self._make_immunization_pk(new_id),
+            'Resource': json.dumps(immunization),
+            'PatientPK': self._make_patient_pk(patient_id),
+            'PatientSK': patient_sk,
         })
-        return imms if response["ResponseMetadata"]["HTTPStatusCode"] == 200 else None
+
+        if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+            return immunization
+        else:
+            raise Exception("Non-200 response from dynamodb")
+
+    @staticmethod
+    def _make_immunization_pk(_id: str):
+        return f"Immunization#{_id}"
+
+    @staticmethod
+    def _make_patient_pk(_id: str):
+        return f"Patient#{_id}"
 
 
 def seed_immunization(table, _sample_file):
