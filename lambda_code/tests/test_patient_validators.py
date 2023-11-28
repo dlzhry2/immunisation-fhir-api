@@ -140,7 +140,6 @@ class TestNHSPatientValidationRules(unittest.TestCase):
 
     def test_model_gender(self):
         """Test validator model rejects invalid gender"""
-        invalid_genders = [-1, 10, "-1", "10", "Male", "Unknown"]
         invalid_genders = [
             "0",
             "1",
