@@ -67,32 +67,59 @@ class NHSImmunizationValidators:
         return identifier_value
 
     @staticmethod
-    def validate_action_flag(action_flag):
-        """Validate Action Flag"""
-        if not action_flag:
-            raise ValueError("ACTION_FLAG is a mandatory field.")
-
-        if action_flag not in Constants.action_flags:
-            raise ValueError("ACTION_FLAG should be completed or entered-in-error")
-
-        return action_flag
+    def validate_identifier_system(identifier_system):
+        """Validate immunization identifier system"""
+        if not identifier_system:
+            raise ValueError("IDENTIFIER_SYSTEM is a mandatory field")
+        return identifier_system
 
     @staticmethod
-    def validate_recorded_date(recorded_date):
-        """Validate recorded date"""
-        if recorded_date:
-            parsed_date = Constants.convert_to_date(recorded_date)
-            return parsed_date
-        return None
+    def validate_status(status):
+        """Validate status (action flag)"""
+        if not status:
+            raise ValueError("STATUS is a mandatory field.")
 
-    @staticmethod
-    def validate_report_origin(report_origin, primary_source):
-        """Validate report origin"""
-        if primary_source and not report_origin:
+        if status not in Constants.action_flags:
             raise ValueError(
-                "REPORT_ORIGIN is a mandatory field, when PRIMARY_SOURCE is given"
+                'STATUS should be "completed", "entered-in-error"or "not-done"'
             )
-        return report_origin
+
+        return status
+
+    @staticmethod
+    def validate_recorded(recorded):
+        """Validate recorded (recorded date)"""
+        if not recorded:
+            raise ValueError("RECORDED is a mandatory field")
+
+        parsed_date = Constants.convert_to_date(recorded)
+        return parsed_date
+
+    @staticmethod
+    def validate_primary_source(primary_source):
+        """Validate primary source"""
+        if not primary_source and primary_source is not False:
+            raise ValueError("PRIMARY_SOURCE is a mandatory field.")
+        if primary_source not in Constants.primary_source:
+            raise ValueError(
+                "PRIMARY_SOURCE should be boolean true or false (case-sensitive)"
+            )
+
+        return primary_source
+
+    @staticmethod
+    def validate_report_origin_text(report_origin_text, primary_source):
+        """Validate report origin text"""
+        if not primary_source and not report_origin_text:
+            raise ValueError(
+                "REPORT_ORIGIN_TEXT is a mandatory field when PRIMARY_SOURCE is false"
+            )
+        if report_origin_text:
+            if len(report_origin_text) > 100:
+                raise ValueError(
+                    "REPORT_ORIGIN_TEXT has maximum length of 100 characters"
+                )
+        return report_origin_text
 
     @staticmethod
     def validate_not_given(not_given):

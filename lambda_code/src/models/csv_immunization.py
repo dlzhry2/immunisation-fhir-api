@@ -113,7 +113,7 @@ class CsvImmunizationModel(BaseModel):
     @validator("ACTION_FLAG", pre=True, always=True)
     def validate_action_flag(cls, value):
         """Validate action flag"""
-        return NHSImmunizationValidators.validate_action_flag(value)
+        return NHSImmunizationValidators.validate_status(value)
 
     @validator("PERFORMING_PROFESSIONAL_FORENAME", pre=True, always=True)
     def validate_professional_forename(cls, v, values):
@@ -138,7 +138,7 @@ class CsvImmunizationModel(BaseModel):
     def validate_report_origin(cls, v, values):
         """Validate report origin"""
         primary_source = values["PRIMARY_SOURCE"]
-        return NHSImmunizationValidators.validate_report_origin(v, primary_source)
+        return NHSImmunizationValidators.validate_report_origin_text(v, primary_source)
 
     @validator("NOT_GIVEN", pre=True, always=True)
     def validate_not_given_flag(cls, value):

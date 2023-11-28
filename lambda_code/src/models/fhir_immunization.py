@@ -71,25 +71,41 @@ class ImmunizationValidator:
         return values
 
     @classmethod
-    def validate_action_flag(cls, values) -> dict:
-        """Validate Action Flag"""
-        action_flag = values.get("status")
-        NHSImmunizationValidators.validate_action_flag(action_flag)
+    def validate_identifier_system(cls, values: dict) -> dict:
+        """Validate immunization identifier system"""
+        identifier_system = values.get("identifier")[0].system
+        NHSImmunizationValidators.validate_identifier_value(identifier_system)
         return values
 
     @classmethod
-    def validate_recorded_date(cls, values: dict) -> dict:
-        """Validate Recorded Date"""
-        recorded_date = str(values.get("recorded"))
-        NHSImmunizationValidators.validate_recorded_date(recorded_date)
+    def validate_status(cls, values) -> dict:
+        """Validate status (Action Flag)"""
+        status = values.get("status")
+        NHSImmunizationValidators.validate_status(status)
         return values
 
     @classmethod
-    def validate_report_origin(cls, values) -> dict:
-        """Validate Report Origin"""
-        report_origin = values.get("reportOrigin").text
+    def validate_recorded(cls, values: dict) -> dict:
+        """Validate Recorded (recorded date)"""
+        recorded = str(values.get("recorded"))
+        NHSImmunizationValidators.validate_recorded(recorded)
+        return values
+
+    @classmethod
+    def validate_primary_source(cls, values: dict) -> dict:
+        """Validate primary source"""
         primary_source = values.get("primarySource")
-        NHSImmunizationValidators.validate_report_origin(report_origin, primary_source)
+        NHSImmunizationValidators.validate_primary_source(primary_source)
+        return values
+
+    @classmethod
+    def validate_report_origin_text(cls, values) -> dict:
+        """Validate Report Origin text"""
+        report_origin_text = values.get("reportOrigin").text
+        primary_source = values.get("primarySource")
+        NHSImmunizationValidators.validate_report_origin_text(
+            report_origin_text, primary_source
+        )
         return values
 
     @classmethod
@@ -261,9 +277,11 @@ class ImmunizationValidator:
         Immunization.add_root_validator(self.validate_occurrence_date_time)
         Immunization.add_root_validator(self.validate_questionnaire_site_code_code)
         Immunization.add_root_validator(self.validate_identifier_value)
-        Immunization.add_root_validator(self.validate_action_flag)
-        Immunization.add_root_validator(self.validate_recorded_date)
-        Immunization.add_root_validator(self.validate_report_origin)
+        Immunization.add_root_validator(self.validate_identifier_system)
+        Immunization.add_root_validator(self.validate_status)
+        Immunization.add_root_validator(self.validate_recorded)
+        Immunization.add_root_validator(self.validate_primary_source)
+        Immunization.add_root_validator(self.validate_report_origin_text)
         Immunization.add_root_validator(self.validate_vaccination_procedure_code)
         Immunization.add_root_validator(self.validate_vaccination_situation_code)
         Immunization.add_root_validator(self.validate_reason_not_given_code)

@@ -37,6 +37,11 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
             ["Invalid"],
             ("Invalid1", "Invalid2"),
         ]
+        cls.invalid_data_types_for_optional_strings = [
+            {"InvalidKey": "InvalidValue"},
+            ["Invalid"],
+            ("Invalid1", "Invalid2"),
+        ]
 
     def setUp(self):
         """Ensure that good data is not inadvertently amended by the tests"""
@@ -95,7 +100,6 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
             invalid_json_data["patient"]["identifier"][
                 "value"
             ] = invalid_patient_identifier_value
-            print(invalid_patient_identifier_value)
             with self.assertRaises(ValueError):
                 self.immunization_validator.validate(invalid_json_data)
 
@@ -228,3 +232,158 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
             invalid_json_data["identifier"][0]["value"] = invalid_identifier_value
             with self.assertRaises(ValueError):
                 self.immunization_validator.validate(invalid_json_data)
+
+    def test_valid_identifier_system(self):
+        """Test immunization identifier_system validator accepts valid identifier system"""
+        identifier_systems = [
+            "https://supplierABC/identifiers/vacc",
+            "https://supplierABC/ODSCode_ NKO41/identifiers/vacc",
+        ]
+        for identifier_system in identifier_systems:
+            self.assertTrue(
+                NHSImmunizationValidators.validate_identifier_system(identifier_system)
+            )
+
+    def test_invalid_identifier_system(self):
+        """Test immunization identifier_system validator rejects invalid identifier system"""
+        invalid_identifier_systems = [None, ""]
+        for identifier_system in invalid_identifier_systems:
+            with self.assertRaises(ValueError):
+                NHSImmunizationValidators.validate_identifier_system(identifier_system)
+
+    def test_model_invalid_identifier_system(self):
+        """Test validator model rejects invalid identifier_system"""
+        invalid_identifier_systems = self.invalid_data_types_for_mandatory_strings
+        invalid_json_data = deepcopy(self.immunization_json_data)
+        for invalid_identifier_system in invalid_identifier_systems:
+            invalid_json_data["identifier"][0]["system"] = invalid_identifier_system
+            with self.assertRaises(ValueError):
+                self.immunization_validator.validate(invalid_json_data)
+
+    def test_valid_recorded(self):
+        """Test recorded accepts valid recorded (recorded date)"""
+        valid_recorded = "2000-01-01"
+        self.assertTrue(NHSImmunizationValidators.validate_recorded(valid_recorded))
+
+    def test_invalid_recorded(self):
+        """Test recorded rejects invalid recorded (recorded date)"""
+        invalid_recordeds = ["2000-13-01", "20001201", None, ""]
+        for invalid_recorded in invalid_recordeds:
+            with self.assertRaises(ValueError):
+                NHSImmunizationValidators.validate_recorded(invalid_recorded)
+
+    def test_model_recorded(self):
+        """Test validator model rejects invalid recorded (recorded date)"""
+        invalid_recordeds = ["2000-13-01", "20010101", 20010101]
+        invalid_recordeds += self.invalid_data_types_for_mandatory_strings
+        invalid_json_data = deepcopy(self.immunization_json_data)
+        for invalid_recorded in invalid_recordeds:
+            invalid_json_data["birthDate"] = invalid_recorded
+            with self.assertRaises(ValueError):
+                self.immunization_validator.validate(invalid_json_data)
+
+    def test_valid_primary_source(self):
+        """Test primary_source validator accepts valid primary_source"""
+        valid_primary_sources = [True, False]
+        for valid_primary_source in valid_primary_sources:
+            self.assertEqual(
+                NHSImmunizationValidators.validate_primary_source(valid_primary_source),
+                valid_primary_source,
+            )
+
+    def test_invalid_primary_source(self):
+        """Test primary_source validator rejects invalid primary_source"""
+        invalid_primary_sources = [-1, 10, "true", "FALSE", None, ""]
+        for invalid_primary_source in invalid_primary_sources:
+            with self.assertRaises(ValueError):
+                NHSImmunizationValidators.validate_primary_source(
+                    invalid_primary_source
+                )
+
+    def test_model_primary_source(self):
+        """Test validator model rejects invalid primary_source"""
+        invalid_primary_sources = [-1, 10, "True", "FALSE"]
+        invalid_primary_sources += self.invalid_data_types_for_mandatory_strings
+        invalid_json_data = deepcopy(self.immunization_json_data)
+        for invalid_primary_source in invalid_primary_sources:
+            invalid_json_data["primary_source"] = invalid_primary_source
+            with self.assertRaises(ValueError):
+                self.immunization_validator.validate(invalid_json_data)
+
+    def test_valid_status(self):
+        """Test status validator accepts valid status"""
+        valid_statuses = ["completed", "entered-in-error", "not-done"]
+        for valid_status in valid_statuses:
+            self.assertTrue(NHSImmunizationValidators.validate_status(valid_status))
+
+    def test_invalid_status(self):
+        """Test status validator rejects invalid status"""
+        invalid_statuses = [-1, 10, "Invalid Status", None, ""]
+        for invalid_status in invalid_statuses:
+            with self.assertRaises(ValueError):
+                NHSImmunizationValidators.validate_status(invalid_status)
+
+    def test_model_status(self):
+        """Test validator model rejects invalid status"""
+        invalid_statuses = [-1, 10, "Invalid Status"]
+        invalid_statuses += self.invalid_data_types_for_mandatory_strings
+        invalid_json_data = deepcopy(self.immunization_json_data)
+        for invalid_status in invalid_statuses:
+            invalid_json_data["status"] = invalid_status
+            with self.assertRaises(ValueError):
+                self.immunization_validator.validate(invalid_json_data)
+
+    def test_valid_report_origin_text(self):
+        """Test report origin text validator accepts valid report origin text"""
+        valid_combinations = [
+            {"primary_source": "False", "report_origin_text": "Valid text"},
+            {"primary_source": "True", "report_origin_text": "Valid text"},
+            {"primary_source": "True", "report_origin_text": None},
+        ]
+        for valid_combination in valid_combinations:
+            self.assertEqual(
+                NHSImmunizationValidators.validate_report_origin_text(
+                    valid_combination["report_origin_text"],
+                    valid_combination["primary_source"],
+                ),
+                valid_combination["report_origin_text"],
+            )
+
+    def test_invalid_report_origin_text(self):
+        """Test report origin text validator rejects invalid report origin text"""
+        invalid_report_origin_texts = [
+            """This invalid report origin text is invalid because it has more than 100 characters 
+            in it, but the maximum number allowed is 100""",
+        ]
+
+        # When primary source is true, report origin text is not mandatory unless
+        # vaccination was administered in a Primary Care Network
+        for invalid_report_origin_text in invalid_report_origin_texts:
+            with self.assertRaises(ValueError):
+                NHSImmunizationValidators.validate_report_origin_text(
+                    invalid_report_origin_text, primary_source=True
+                )
+
+        # When primary source is false, report origin text is mandatory
+        invalid_report_origin_texts += [None, ""]
+        for invalid_report_origin_text in invalid_report_origin_texts:
+            with self.assertRaises(ValueError):
+                NHSImmunizationValidators.validate_report_origin_text(
+                    invalid_report_origin_text, primary_source=False
+                )
+
+    def test_model_valid_report_origin_text(self):
+        """Test validator model accepts all valid combinations of report_origin_text
+        and primary_source"""
+        valid_combinations = [
+            {"primary_source": False, "report_origin_text": "Valid text"},
+            {"primary_source": True, "report_origin_text": "Valid text"},
+            {"primary_source": True, "report_origin_text": None},
+        ]
+        valid_json_data = deepcopy(self.immunization_json_data)
+        for valid_combination in valid_combinations:
+            valid_json_data["primarySource"] = valid_combination["primary_source"]
+            valid_json_data["reportOrigin"]["text"] = valid_combination[
+                "report_origin_text"
+            ]
+            self.assertTrue(self.immunization_validator.validate(valid_json_data))
