@@ -232,7 +232,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/OperationOutcome'
               example:
-                $ref: components/OperationOutcome/400-invalid.json
+                $ref: components/examples/OperationOutcome/400-invalid.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
