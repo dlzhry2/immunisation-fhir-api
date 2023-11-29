@@ -21,13 +21,13 @@ class TestSearchImmunizations(unittest.TestCase):
         lambda_event = {"pathParameters": {"id": "an-id"}}
         exp_res = {"a-key": "a-value"}
 
-        self.controller.get_immunization_by_id.return_value = exp_res
+        self.controller.search_immunizations.return_value = exp_res
 
         # When
-        act_res = get_immunization_by_id(lambda_event, self.controller)
+        act_res = search_imms(lambda_event, self.controller)
 
         # Then
-        self.controller.get_immunization_by_id.assert_called_once_with(lambda_event)
+        self.controller.search_immunizations.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
 
     def test_handle_exception(self):

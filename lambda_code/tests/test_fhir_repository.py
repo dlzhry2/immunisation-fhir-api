@@ -18,14 +18,13 @@ def local_test():
     table = create_table("local-imms-events", "http://localhost:4566", "us-east-1")
     repository = ImmunisationRepository(table=table)
     res = repository.get_immunization_by_id("5a921187-19c7-8df4-8f4f-f31e78de5857")
-    print(res)
+    _ = res
+    # print(res)
 
 
 def _make_id(_id):
     return f"Immunization#{_id}"
 
-
-# def make_a_patient
 
 class TestGetImmunization(unittest.TestCase):
     def setUp(self):
@@ -55,28 +54,34 @@ class TestGetImmunization(unittest.TestCase):
         self.assertIsNone(imms)
 
 
-class TestCreateImmunization(unittest.TestCase):
+def _make_an_immunization(imms_id="an-id") -> dict:
+    """create the minimum required object. Caller should override relevant fields explicitly"""
+    return {"id": imms_id,
+            "patient": {"identifier": {"system": "a-system", "value": "a-patient-id"}},
+            "protocolApplied": [{"targetDisease": [{"coding": [{"code": "a-disease-code"}]}]}]}
+
+
+class TestCreateImmunizationMainIndex(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
         self.repository = ImmunisationRepository(table=self.table)
 
     def test_create_immunization(self):
         """it should create Immunization, and return created object"""
-        imms_id = "an-id"
-        imms = {"id": imms_id}
+        imms = _make_an_immunization("an-id")
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
 
         res_imms = self.repository.create_immunization(imms)
 
         self.assertDictEqual(res_imms, imms)
         self.table.put_item.assert_called_once_with(
-            Item={"PK": ANY,
-                  "Resource": json.dumps(imms)})
+            Item={"Resource": json.dumps(imms),
+                  "PK": ANY, "PatientPK": ANY, "PatientSK": ANY})
 
     def test_create_immunization_makes_new_id(self):
         """create should create new Logical ID even if one is already provided"""
         imms_id = "original-id-from-request"
-        imms = {"id": imms_id}
+        imms = _make_an_immunization(imms_id)
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
 
         _ = self.repository.create_immunization(imms)
@@ -88,9 +93,10 @@ class TestCreateImmunization(unittest.TestCase):
     def test_create_immunization_returns_new_id(self):
         """create should return the persisted object i.e. with new id"""
         imms_id = "original-id-from-request"
+        imms = _make_an_immunization(imms_id)
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
 
-        response = self.repository.create_immunization({"id": imms_id})
+        response = self.repository.create_immunization(imms)
 
         self.assertNotEqual(response["id"], imms_id)
 
@@ -102,24 +108,27 @@ class TestCreateImmunization(unittest.TestCase):
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.create_immunization({"id": "an-id"})
+            self.repository.create_immunization(_make_an_immunization())
 
         # Then
         self.assertDictEqual(e.exception.response, response)
 
 
-class TestQueryPatient(unittest.TestCase):
+class TestCreateImmunizationPatientIndex(unittest.TestCase):
+    """create_immunization should create a patient record with vaccine code"""
+
     def setUp(self):
         self.table = MagicMock()
         self.repository = ImmunisationRepository(table=self.table)
 
     def test_create_patient_gsi(self):
         """create Immunization method should create Patient index with nhs-number as ID and no system"""
-        nhs_number = "1234567890"
-        patient_id = {"system": "a-system", "value": nhs_number}
+        imms = _make_an_immunization()
 
-        imms = {"id": "an-id", "patient": {"identifier": [patient_id]},
-                "protocolApplied": [{"targetDisease": [{"coding": [{"code": "a-disease-code"}]}]}]}
+        nhs_number = "1234567890"
+        patient_id = {"identifier": {"system": "a-system", "value": nhs_number}}
+        imms["patient"] = patient_id
+
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
 
         # When
@@ -131,11 +140,12 @@ class TestQueryPatient(unittest.TestCase):
 
     def test_create_patient_with_disease_type(self):
         """Patient record should have a sort-key based on disease-type"""
+        imms = _make_an_immunization()
+
         disease_code = "a-disease-code"
         disease = {"targetDisease": [{"coding": [{"code": disease_code}]}]}
+        imms["protocolApplied"] = [disease]
 
-        imms = {"id": "an-id", "patient": {"identifier": [{"system": "a-system", "value": "a-nhs-number"}]},
-                "protocolApplied": [disease]}
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
 
         # When

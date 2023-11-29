@@ -3,6 +3,7 @@ import os
 import time
 import uuid
 from typing import Optional
+
 import boto3
 import botocore.exceptions
 from boto3.dynamodb.conditions import Attr
@@ -33,7 +34,7 @@ class ImmunisationRepository:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
 
-        patient_id = immunization["patient"]["identifier"][0]["value"]
+        patient_id = immunization["patient"]["identifier"]["value"]
         disease_type = immunization["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"]
 
         patient_sk = f"{disease_type}#{new_id}"

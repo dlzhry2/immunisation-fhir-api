@@ -1,9 +1,11 @@
-import uuid
 import time
-import requests
-import jwt
-from get_secret import SecretsManagerSecret
+import uuid
+
 import boto3
+import jwt
+import requests
+
+from get_secret import SecretsManagerSecret
 
 
 class PdsService:
@@ -14,7 +16,7 @@ class PdsService:
         self.private_key = secret_service.get_value()
         self.api_key = "3fZXYrsp9zvwDqayTrsAeH39pSWrmGwX"
         self.kid = "test_1"
-        
+
     def get_access_token(self):
         current_timestamp = int(time.time())
         claims = {
@@ -54,12 +56,3 @@ class PdsService:
             return response
         else:
             return None
-
-# Usage example:
-# pds_service = PdsService()
-# access_token = pds_service.get_access_token()
-# print(access_token)
-
-# patient_id = 9693632109
-# response = pds_service.get_patient_details(patient_id)
-# print(response)
