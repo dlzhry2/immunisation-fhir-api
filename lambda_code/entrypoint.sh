@@ -11,14 +11,14 @@ python -m unittest
 cd /lambda_package || exit 2
 echo "Installing main dependencies..."
 pip install -q -r requirements.txt --target .
-echo "Building cryptography layer"
+echo "Installing binary dependencies"
 pip install \
 --platform manylinux2014_x86_64 \
 --target=. \
 --implementation cp \
 --python-version 3.10 \
 --only-binary=:all: --upgrade \
-'cryptography==36.0.1'
+-q -r requirements_binary.txt
 echo "Building lambda package"
 zip -qq -r /build/lambda_package.zip .
 echo "Done!"
