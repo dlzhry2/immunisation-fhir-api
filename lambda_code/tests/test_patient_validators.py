@@ -11,6 +11,7 @@ sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 from models.nhs_validators import NHSPatientValidators
 from models.fhir_patient import PatientValidator
 
+
 class TestNHSPatientValidationRules(unittest.TestCase):
     """Test NHS specific patient validation rules"""
 
@@ -109,20 +110,52 @@ class TestNHSPatientValidationRules(unittest.TestCase):
 
     def test_valid_gender(self):
         """Test gender validator accepts valid gender"""
-        valid_genders = ["0", "1", "2", "9"]
+        valid_genders = ["male", "female", "other", "unknown"]
         for valid_gender in valid_genders:
             self.assertTrue(NHSPatientValidators.validate_gender(valid_gender))
 
     def test_invalid_gender(self):
         """Test gender validator rejects invalid gender"""
-        invalid_genders = [-1, 10, "-1", "10", "Male", "Unknown", None, ""]
+        invalid_genders = [
+            "0",
+            "1",
+            "2",
+            "9",
+            "10",
+            0,
+            1,
+            2,
+            9,
+            10,
+            "Male",
+            "Female",
+            "Unknown",
+            "Other",
+            None,
+            "",
+        ]
         for invalid_gender in invalid_genders:
             with self.assertRaises(ValueError):
                 NHSPatientValidators.validate_gender(invalid_gender)
 
     def test_model_gender(self):
         """Test validator model rejects invalid gender"""
-        invalid_genders = [-1, 10, "-1", "10", "Male", "Unknown"]
+        invalid_genders = [
+            "0",
+            "1",
+            "2",
+            "9",
+            "10",
+            0,
+            1,
+            2,
+            9,
+            10,
+            "Male",
+            "Female",
+            "Unknown",
+            "Other",
+        ]
         invalid_genders += self.invalid_data_types_for_mandatory_strings
         invalid_json_data = deepcopy(self.patient_json_data)
         for invalid_gender in invalid_genders:

@@ -3,9 +3,9 @@ from datetime import datetime
 
 
 class Constants:
-    genders = {"0", "1", "2", "9"}
     action_flags = {"completed", "entered-in-error", "not-done"}
     primary_source = {True, False}
+    genders = {"male", "female", "other", "unknown"}
     vaccination_not_given_flag: str = "not-done"
     vaccination_given_flag: str = "empty"
 
