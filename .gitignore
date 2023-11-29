@@ -25,3 +25,4 @@ terraform/zips
 **/.terraform/
 sandbox/specification/
 .vscode/
+openapi.json

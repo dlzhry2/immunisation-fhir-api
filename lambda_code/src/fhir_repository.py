@@ -3,7 +3,6 @@ import os
 import time
 import uuid
 from typing import Optional
-
 import boto3
 import botocore.exceptions
 from boto3.dynamodb.conditions import Attr
