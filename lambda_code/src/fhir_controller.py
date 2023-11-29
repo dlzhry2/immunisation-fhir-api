@@ -66,6 +66,9 @@ class FhirController:
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome().json())
 
+    def search_immunizations(self, aws_event):
+        pass
+
     def _validate_id(self, _id: str) -> Optional[OperationOutcome]:
         if not re.match(self.immunization_id_pattern, _id):
             msg = "the provided event ID is either missing or not in the expected format."

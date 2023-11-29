@@ -23,7 +23,11 @@ suppliers = [
     "https://supplierABC/ODSCode145", "https://supplierSDF/ODSCode123", "https://supplierXYZ/ODSCode735"
 ]
 disease_type = ["covid", "flu", "mmr", "hpv", "polio"]
-vaccine_code = ["covidVaccine", "fluVaccine", "mmrVaccine", "hpvVaccine", "polioVaccine"]
+vaccine_code = ["covidCode1", "covidCode2", "fluCode1",
+                "fluCode2", "fluCode3",
+                "mmrCode1", "mmrCode2",
+                "hpvCode1",
+                "polioCode1"]
 vaccine_procedure = ["vac_procedure-oral", "vac_procedure-injection", "vac_procedure-123"]
 local_patient_pool = [
     {"code": "ACME-Patient12345", "system": "https://supplierABC/identifiers/patient"},
@@ -49,14 +53,13 @@ def generate_immunisation(num):
         _imms["id"] = str(make_rand_id())
         _imms["identifier"][0]["system"] = pick_rand(suppliers)
         _imms["identifier"][0]["value"] = str(make_rand_id())
-
         # Patient
         patient = pick_rand(patient_pool)
         _imms["patient"]["identifier"]["value"] = patient["nhs_number"]
         # Vaccination
-        _imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = pick_rand(disease_type)
+        _imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = pick_rand(vaccine_code)
         _imms["vaccineCode"]["coding"][0]["code"] = pick_rand(vaccine_code)
-        # _imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = pick_rand(vaccine_procedure)
+
         all_imms.append(_imms)
 
     return all_imms

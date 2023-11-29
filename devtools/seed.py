@@ -1,8 +1,9 @@
 import json
+import sys
 
 import boto3
 
-sample_file = "sample_data/2023-11-28T21:09:52_immunisation-30.json"
+sample_file = "sample_data/2023-11-29T19:04:37_immunisation-30.json"
 
 dynamodb_url = "http://localhost:4566"
 table_name = "local-imms-events"
@@ -54,4 +55,9 @@ def seed_immunization(table, _sample_file):
 
 if __name__ == '__main__':
     _table = DynamoTable(dynamodb_url, table_name)
-    seed_immunization(_table, sample_file)
+
+    seed_file = sample_file
+    if len(sys.argv) > 1:
+        seed_file = sys.argv[1]
+
+    seed_immunization(_table, seed_file)
