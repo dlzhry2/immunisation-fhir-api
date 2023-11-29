@@ -1,6 +1,6 @@
 """Immunization FHIR R4B validator"""
 from fhir.resources.R4B.immunization import Immunization
-from models.nhs_validators import NHSValidators
+from models.nhs_validators import NHSImmunizationValidators
 
 
 class ImmunizationValidator:
@@ -9,46 +9,84 @@ class ImmunizationValidator:
     FHIR profile
     """
 
-    def __init__(self, json_data) -> None:
-        self.json_data = json_data
+    def __init__(self) -> None:
+        pass
 
     @classmethod
-    def validate_nhs_number(cls, values: dict) -> dict:
-        """Validate NHS Number"""
-        nhs_number = values.get("patient").identifier.value
-        NHSValidators.validate_nhs_number(nhs_number)
+    def validate_patient_identifier_value(cls, values: dict) -> dict:
+        """Validate patient identifier value (NHS number)"""
+        if values.get("patient"):
+            patient_identifier_value = values.get("patient").identifier.value
+            NHSImmunizationValidators.validate_patient_identifier_value(
+                patient_identifier_value
+            )
         return values
 
     @classmethod
-    def validate_date_and_time(cls, values: dict) -> dict:
-        """Validate Date and Time"""
-        milli_secs = values.get("occurrenceDateTime").strftime("%z")
-        milli_secs = milli_secs[:3] + ":" + milli_secs[3:]
-        date_and_time = (
-            f"{values['occurrenceDateTime'].strftime('%Y-%m-%dT%H:%M:%S')}{milli_secs}"
+    def pre_validate_occurrence_date_time(cls, values: dict) -> dict:
+        """Pre-validate occurrence date time"""
+        occurrence_date_time = values.get("occurrenceDateTime", None)
+        if not isinstance(occurrence_date_time, str):
+            raise ValueError("occurrenceDateTime must be a string")
+
+        if occurrence_date_time.isnumeric():
+            raise ValueError(
+                "occurrenceDateTime must be in the format YYYY-MM-DDThh:mm:ss+00:00"
+            )
+
+        return values
+
+    @classmethod
+    def validate_occurrence_date_time(cls, values: dict) -> dict:
+        """Validate occurrence date time"""
+        occurrence_date_time = values.get("occurrenceDateTime", None)
+        values[
+            "occurrenceDateTime"
+        ] = NHSImmunizationValidators.validate_occurrence_date_time(
+            occurrence_date_time
         )
-        NHSValidators.validate_date_and_time(date_and_time)
         return values
 
     @classmethod
-    def validate_site_code(cls, values: dict) -> dict:
-        """Validate Site Code"""
-        site_code = values.get("location").identifier.value
-        NHSValidators.validate_site_code(site_code)
+    def validate_questionnaire_site_code_code(cls, values: dict) -> dict:
+        """
+        Validate questionnaire site code (code of the Commissioned Healthcare Provider who has
+        administered the vaccination)
+        """
+        questionnaire_site_code_code = None
+        for record in values.get("contained"):
+            if (
+                record.resource_type == "QuestionnaireResponse"
+                and record.item is not None
+            ):
+                for item in record.item:
+                    if item.linkId == "SiteCode":
+                        questionnaire_site_code_code = item.answer[0].valueCoding.code
+
+        NHSImmunizationValidators.validate_questionnaire_site_code_code(
+            questionnaire_site_code_code
+        )
+        return values
+
+    @classmethod
+    def validate_identifier_value(cls, values: dict) -> dict:
+        """Validate immunization identifier value"""
+        identifier_value = values.get("identifier")[0].value
+        NHSImmunizationValidators.validate_identifier_value(identifier_value)
         return values
 
     @classmethod
     def validate_action_flag(cls, values) -> dict:
         """Validate Action Flag"""
         action_flag = values.get("status")
-        NHSValidators.validate_action_flag(action_flag)
+        NHSImmunizationValidators.validate_action_flag(action_flag)
         return values
 
     @classmethod
     def validate_recorded_date(cls, values: dict) -> dict:
         """Validate Recorded Date"""
         recorded_date = str(values.get("recorded"))
-        NHSValidators.validate_recorded_date(recorded_date)
+        NHSImmunizationValidators.validate_recorded_date(recorded_date)
         return values
 
     @classmethod
@@ -56,7 +94,7 @@ class ImmunizationValidator:
         """Validate Report Origin"""
         report_origin = values.get("reportOrigin").text
         primary_source = values.get("primarySource")
-        NHSValidators.validate_report_origin(report_origin, primary_source)
+        NHSImmunizationValidators.validate_report_origin(report_origin, primary_source)
         return values
 
     @classmethod
@@ -68,7 +106,7 @@ class ImmunizationValidator:
                 vaccination_procedure_code = record.valueCodeableConcept.coding[0].code
         not_given = values.get("status")
 
-        NHSValidators.validate_vaccination_procedure_code(
+        NHSImmunizationValidators.validate_vaccination_procedure_code(
             vaccination_procedure_code, not_given
         )
         return values
@@ -82,7 +120,7 @@ class ImmunizationValidator:
                 vaccination_situation_code = record.valueCodeableConcept.coding[0].code
         not_given = values.get("status")
 
-        NHSValidators.validate_vaccination_procedure_code(
+        NHSImmunizationValidators.validate_vaccination_procedure_code(
             vaccination_situation_code, not_given
         )
         return values
@@ -92,7 +130,7 @@ class ImmunizationValidator:
         """Validate Reason Not Given Code"""
         reason_not_given_code = values.get("statusReason").coding[0].code
         not_given = values.get("status")
-        NHSValidators.validate_vaccination_procedure_code(
+        NHSImmunizationValidators.validate_vaccination_procedure_code(
             reason_not_given_code, not_given
         )
         return values
@@ -102,7 +140,7 @@ class ImmunizationValidator:
         """Validate Dose Sequence"""
         dose_sequence = values.get("protocolApplied")[0].doseNumberPositiveInt
         not_given = values.get("status")
-        NHSValidators.validate_dose_sequence(dose_sequence, not_given)
+        NHSImmunizationValidators.validate_dose_sequence(dose_sequence, not_given)
         return values
 
     @classmethod
@@ -112,7 +150,9 @@ class ImmunizationValidator:
             if record.system == "http://snomed.info/sct":
                 vaccine_product_code = record.code
         not_given = values.get("status")
-        NHSValidators.validate_vaccine_product_code(vaccine_product_code, not_given)
+        NHSImmunizationValidators.validate_vaccine_product_code(
+            vaccine_product_code, not_given
+        )
         return values
 
     @classmethod
@@ -120,7 +160,9 @@ class ImmunizationValidator:
         """Validate Vaccine Manufacturer"""
         vaccine_manufacturer = values.get("manufacturer").display
         not_given = values.get("status")
-        NHSValidators.validate_vaccine_manufacturer(vaccine_manufacturer, not_given)
+        NHSImmunizationValidators.validate_vaccine_manufacturer(
+            vaccine_manufacturer, not_given
+        )
         return values
 
     @classmethod
@@ -128,7 +170,7 @@ class ImmunizationValidator:
         """Validate Batch Number"""
         batch_number = values.get("lotNumber")
         not_given = values.get("status")
-        NHSValidators.validate_batch_number(batch_number, not_given)
+        NHSImmunizationValidators.validate_batch_number(batch_number, not_given)
         return values
 
     @classmethod
@@ -136,7 +178,7 @@ class ImmunizationValidator:
         """Validate Expiry Date"""
         expiry_date = str(values.get("expirationDate"))
         not_given = values.get("status")
-        NHSValidators.validate_expiry_date(expiry_date, not_given)
+        NHSImmunizationValidators.validate_expiry_date(expiry_date, not_given)
         return values
 
     @classmethod
@@ -146,7 +188,7 @@ class ImmunizationValidator:
             if record.system == "http://snomed.info/sct":
                 route_of_vaccination_code = record.code
         not_given = values.get("status")
-        NHSValidators.validate_route_of_vaccination_code(
+        NHSImmunizationValidators.validate_route_of_vaccination_code(
             route_of_vaccination_code, not_given
         )
         return values
@@ -156,7 +198,7 @@ class ImmunizationValidator:
         """Validate Dose Amount"""
         dose_amount = values.get("doseQuantity").value
         not_given = values.get("status")
-        NHSValidators.validate_dose_amount(str(dose_amount), not_given)
+        NHSImmunizationValidators.validate_dose_amount(str(dose_amount), not_given)
         return values
 
     @classmethod
@@ -164,7 +206,7 @@ class ImmunizationValidator:
         """Validate Dose Unit Code"""
         dose_unit_code = values.get("doseQuantity").code
         not_given = values.get("status")
-        NHSValidators.validate_dose_unit_code(dose_unit_code, not_given)
+        NHSImmunizationValidators.validate_dose_unit_code(dose_unit_code, not_given)
         return values
 
     @classmethod
@@ -172,7 +214,7 @@ class ImmunizationValidator:
         """Validate Indication Code"""
         indication_code = values.get("reasonCode")[0].coding[0].code
         not_given = values.get("status")
-        NHSValidators.validate_indication_code(indication_code, not_given)
+        NHSImmunizationValidators.validate_indication_code(indication_code, not_given)
         return values
 
     @classmethod
@@ -182,7 +224,7 @@ class ImmunizationValidator:
             if record.linkId == "Consent":
                 consent_for_treatment_code = record.answer[0].valueCoding.code
         not_given = values.get("status")
-        NHSValidators.validate_consent_for_treatment_code(
+        NHSImmunizationValidators.validate_consent_for_treatment_code(
             consent_for_treatment_code, not_given
         )
         return values
@@ -193,14 +235,14 @@ class ImmunizationValidator:
         for record in values.get("contained")[0].item:
             if record.linkId == "SubmittedTimeStamp":
                 submitted_timestamp = record.answer[0].valueCoding.code
-        NHSValidators.validate_submitted_timestamp(submitted_timestamp)
+        NHSImmunizationValidators.validate_submitted_timestamp(submitted_timestamp)
         return values
 
     @classmethod
     def validate_location_code(cls, values) -> dict:
         """Validate Location Code"""
         location_code = values.get("location").identifier.value
-        NHSValidators.validate_location_code(location_code)
+        NHSImmunizationValidators.validate_location_code(location_code)
         return values
 
     @classmethod
@@ -210,20 +252,20 @@ class ImmunizationValidator:
             if record.linkId == "ReduceValidation":
                 reduce_validation_code = record.answer[0].valueCoding.code
                 reduce_validation_reason = record.answer[0].valueCoding.display
-        NHSValidators.validate_reduce_validation_code(
+        NHSImmunizationValidators.validate_reduce_validation_code(
             reduce_validation_code, reduce_validation_reason
         )
         return values
 
-    def validate(self) -> Immunization:
-        """
-        Add custom NHS validators to the Immunization model then generate the Immunization model
-        from the JSON data
-        """
-        # Custom NHS validators
-        Immunization.add_root_validator(self.validate_nhs_number)
-        Immunization.add_root_validator(self.validate_date_and_time)
-        Immunization.add_root_validator(self.validate_site_code)
+    def add_custom_root_validators(self):
+        """Add custom NHS validators to the model"""
+        Immunization.add_root_validator(self.validate_patient_identifier_value)
+        Immunization.add_root_validator(
+            self.pre_validate_occurrence_date_time, pre=True
+        )
+        Immunization.add_root_validator(self.validate_occurrence_date_time)
+        Immunization.add_root_validator(self.validate_questionnaire_site_code_code)
+        Immunization.add_root_validator(self.validate_identifier_value)
         Immunization.add_root_validator(self.validate_action_flag)
         Immunization.add_root_validator(self.validate_recorded_date)
         Immunization.add_root_validator(self.validate_report_origin)
@@ -244,7 +286,7 @@ class ImmunizationValidator:
         Immunization.add_root_validator(self.validate_location_code)
         Immunization.add_root_validator(self.validate_reduce_validation_code)
 
-        # Generate the Immunization model from the JSON data
-        immunization = Immunization.parse_obj(self.json_data)
-
+    def validate(self, json_data) -> Immunization:
+        """Generate the Immunization model"""
+        immunization = Immunization.parse_obj(json_data)
         return immunization
