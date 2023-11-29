@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 class Constants:
-    person_gender_codes = {"0", "1", "2", "9"}
+    genders = {"male", "female", "other", "unknown"}
     action_flags = {"completed", "entered-in-error"}
     vaccination_not_given_flag: str = "not-done"
     vaccination_given_flag: str = "empty"
