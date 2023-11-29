@@ -1,4 +1,4 @@
-"""Tests for the NHS Practitioner validators"""
+"""Tests for the NHS Practitioner model validators"""
 
 import unittest
 import sys
@@ -9,11 +9,10 @@ from copy import deepcopy
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from models.fhir_practitioner import PractitionerValidator
-from models.nhs_validators import NHSPractitionerValidators
 
 
-class TestNHSPractitionerValidationRules(unittest.TestCase):
-    """Test NHS specific practitioner validation rules"""
+class TestNHSPractitionerModelValidationRules(unittest.TestCase):
+    """Test NHS specific practitioner validation rules on the model"""
 
     @classmethod
     def setUpClass(cls):
@@ -47,13 +46,13 @@ class TestNHSPractitionerValidationRules(unittest.TestCase):
             self.untouched_practitioner_json_data, self.practitioner_json_data
         )
 
-    def test_practitioner_validator(self):
+    def test_model_practitioner_validator(self):
         """Test validator model accepts valid data"""
         self.assertTrue(
             self.practitioner_validator.validate(self.practitioner_json_data)
         )
 
-    def test_model_name_given(self):
+    def test_model_invalid_name_given(self):
         """Test validator model rejects invalid name_given"""
         invalid_names_given = self.invalid_data_types_for_optional_strings
         invalid_json_data = deepcopy(self.practitioner_json_data)
