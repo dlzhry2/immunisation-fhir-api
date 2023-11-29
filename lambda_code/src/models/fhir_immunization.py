@@ -1,6 +1,7 @@
 """Immunization FHIR R4B validator"""
 from fhir.resources.R4B.immunization import Immunization
 from models.nhs_validators import NHSImmunizationValidators
+from models.constants import Constants
 
 
 class ImmunizationValidator:
@@ -273,12 +274,27 @@ class ImmunizationValidator:
         )
         return values
 
+    @classmethod
+    def pre_validate_target_disease_codes(cls, values) -> dict:
+        """Validate target disease codes"""
+        protocol_applied = values.get("protocolApplied")
+        for item in protocol_applied[0]["targetDisease"]:
+            for disease in item["coding"]:
+                disease_type = Constants.convert_snomed_code_to_target_disease_type(
+                    disease["code"]
+                )
+                NHSImmunizationValidators.validate_target_disease_type(disease_type)
+        return values
+
     def add_custom_root_validators(self):
         """Add custom NHS validators to the model"""
-        Immunization.add_root_validator(self.validate_patient_identifier_value)
+        Immunization.add_root_validator(
+            self.pre_validate_target_disease_codes, pre=True
+        )
         Immunization.add_root_validator(
             self.pre_validate_occurrence_date_time, pre=True
         )
+        Immunization.add_root_validator(self.validate_patient_identifier_value)
         Immunization.add_root_validator(self.validate_occurrence_date_time)
         Immunization.add_root_validator(self.validate_questionnaire_site_code_code)
         Immunization.add_root_validator(self.validate_identifier_value)

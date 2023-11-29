@@ -7,6 +7,13 @@ class NHSImmunizationValidators:
     """NHS Immunization specific validator methods"""
 
     @staticmethod
+    def validate_target_disease_type(disease_type: str):
+        """Validate disease type"""
+        if disease_type not in Constants.valid_disease_types:
+            raise ValueError("TARGET_DISEASE_CODE must be for valid disease type")
+        return disease_type
+
+    @staticmethod
     def validate_patient_identifier_value(patient_identifier_value):
         """Validate patient identifier value (NHS number)"""
         if patient_identifier_value:
