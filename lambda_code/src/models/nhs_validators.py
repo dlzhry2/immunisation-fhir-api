@@ -118,9 +118,11 @@ class NHSImmunizationValidators:
     def validate_report_origin_text(report_origin_text, primary_source):
         """Validate report origin text"""
         if not primary_source and not report_origin_text:
-            raise ValueError(
-                "REPORT_ORIGIN_TEXT is a mandatory field when PRIMARY_SOURCE is false"
+            error = (
+                "REPORT_ORIGIN_TEXT is a mandatory field, and must be a non-empty string,",
+                "when PRIMARY_SOURCE is false",
             )
+            raise ValueError(" ".join(error))
         if report_origin_text:
             if len(report_origin_text) > 100:
                 raise ValueError(

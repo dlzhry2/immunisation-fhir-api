@@ -218,8 +218,12 @@ class TestNHSImmunizationModelValidationRules(unittest.TestCase):
                 self.immunization_validator.validate(invalid_json_data)
 
         invalid_json_data["reportOrigin"].pop("text")
+        error = (
+            "REPORT_ORIGIN_TEXT is a mandatory field, and must be a non-empty string,",
+            "when PRIMARY_SOURCE is false",
+        )
         with self.assertRaisesRegex(
             ValueError,
-            "REPORT_ORIGIN_TEXT is a mandatory field when PRIMARY_SOURCE is false",
+            " ".join(error),
         ):
             self.immunization_validator.validate(invalid_json_data)
