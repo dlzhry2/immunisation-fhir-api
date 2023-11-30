@@ -1,1 +1,2 @@
-cryptography==36.0.1
+cryptography==38.0.3
+cffi>=1.12

@@ -11,7 +11,7 @@ class PdsService:
         secrets_manager_client = boto3.client('secretsmanager')
         secret_service = SecretsManagerSecret(secrets_manager_client)
         self.ENV = "internal-dev"
-        self.private_key = secret_service.get_value()
+        self.private_key_object = secret_service.get_value()
         self.api_key = "3fZXYrsp9zvwDqayTrsAeH39pSWrmGwX"
         self.kid = "test_1"
         
@@ -22,10 +22,10 @@ class PdsService:
             "sub": self.api_key,
             "aud": f"https://{self.ENV}.api.service.nhs.uk/oauth2/token",
             "iat": current_timestamp,
-            "exp": current_timestamp + 30,  # 30 seconds expiry
+            "exp": current_timestamp + 30,
             "jti": str(uuid.uuid4())
         }
-        jwt_token = jwt.encode(claims, self.private_key, algorithm='RS512', headers={"kid": self.kid})
+        jwt_token = jwt.encode(claims, self.private_key_object["SecretString"], algorithm='RS512', headers={"kid": self.kid})
         token_headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
@@ -51,7 +51,7 @@ class PdsService:
         response = requests.get(f"https://{self.ENV}.api.service.nhs.uk/personal-demographics/FHIR/R4/Patient/{patient_id}",
                                 headers=request_headers)
         if response.status_code == 200:
-            return response
+            return response.json()
         else:
             return None
 
