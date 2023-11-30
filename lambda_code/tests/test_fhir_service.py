@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import unittest
+import uuid
 from unittest.mock import create_autospec
 
 from fhir.resources.immunization import Immunization
@@ -12,7 +13,7 @@ from fhir_repository import ImmunisationRepository
 from fhir_service import FhirService
 
 
-def _create_an_immunization_obj(imms_id) -> Immunization:
+def _create_an_immunization(imms_id) -> Immunization:
     base_imms = {
         "resourceType": "Immunization",
         "id": imms_id,
@@ -43,6 +44,12 @@ def _create_an_immunization_obj(imms_id) -> Immunization:
     return Immunization.parse_obj(base_imms)
 
 
+def _create_an_immunization_dict(imms_id):
+    imms = _create_an_immunization(imms_id)
+    # Convert FHIR OrderedDict to Dict by first converting it to json and then load it again
+    return json.loads(imms.json())
+
+
 class TestGetImmunization(unittest.TestCase):
     def setUp(self):
         self.imms_repo = create_autospec(ImmunisationRepository)
@@ -50,9 +57,8 @@ class TestGetImmunization(unittest.TestCase):
 
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
-        imms_id = "a-id"
-
-        self.imms_repo.get_immunization_by_id.return_value = _create_an_immunization_obj(imms_id).dict()
+        imms_id = "an-id"
+        self.imms_repo.get_immunization_by_id.return_value = _create_an_immunization(imms_id).dict()
 
         # When
         act_imms = self.fhir_service.get_immunization_by_id(imms_id)
@@ -74,6 +80,27 @@ class TestGetImmunization(unittest.TestCase):
         self.assertEqual(act_imms, None)
 
 
+class TestCreateImmunization(unittest.TestCase):
+    def setUp(self):
+        self.imms_repo = create_autospec(ImmunisationRepository)
+        self.fhir_service = FhirService(self.imms_repo)
+
+    def test_create_immunization(self):
+        """it should create Immunization"""
+        imms_id = str(uuid.uuid4())
+        self.imms_repo.create_immunization.return_value = _create_an_immunization_dict(imms_id)
+        req_imms = _create_an_immunization_dict(imms_id)
+
+        stored_imms = self.fhir_service.create_immunization(req_imms)
+
+        self.imms_repo.create_immunization.assert_called_once_with(req_imms)
+        self.assertIsInstance(stored_imms, Immunization)
+
+    def test_lookup_nhs_number(self):
+        """it should use PDS to lookup NHS number"""
+        # TODO: AMB-1730 - add test for PDS integration
+
+
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
         self.imms_repo = create_autospec(ImmunisationRepository)
@@ -82,7 +109,7 @@ class TestDeleteImmunization(unittest.TestCase):
     def test_delete_immunization(self):
         """it should delete Immunization record"""
         imms_id = "an-id"
-        imms = json.loads(_create_an_immunization_obj(imms_id).json())
+        imms = json.loads(_create_an_immunization(imms_id).json())
         self.imms_repo.delete_immunization.return_value = imms
 
         # When

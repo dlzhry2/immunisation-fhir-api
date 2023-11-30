@@ -1,49 +1,72 @@
 """Patient FHIR R4B validator"""
 from fhir.resources.R4B.patient import Patient
-from models.nhs_validators import NHSValidators
+from models.nhs_validators import NHSPatientValidators
 
 
 class PatientValidator:
     """
-    Validate the patient record against the NHS specific validators and Immunization
+    Validate the patient record against the NHS specific validators and Patient
     FHIR profile
     """
 
-    def __init__(self, json_data) -> None:
-        self.json_data = json_data
+    def __init__(self) -> None:
+        pass
 
     @classmethod
-    def validate_person_dob(cls, values: dict) -> dict:
-        """Validate Person DOB"""
-        dob = values.get("birthDate")
-        NHSValidators.validate_person_dob(str(dob))
+    def validate_name_given(cls, values: dict) -> dict:
+        """Validate given name (forename)"""
+        name_given = values.get("name")[0].given[0]
+        NHSPatientValidators.validate_name_given(name_given)
         return values
 
     @classmethod
-    def validate_person_gender_code(cls, values: dict) -> dict:
-        """Validate Person Gender Code"""
-        gender_code = values.get("gender")
-        NHSValidators.validate_person_gender_code(gender_code)
+    def validate_name_family(cls, values: dict) -> dict:
+        """Validate family name (surname)"""
+        name_family = values.get("name")[0].family
+        NHSPatientValidators.validate_name_family(name_family)
         return values
 
     @classmethod
-    def validate_person_postcode(cls, values: dict) -> dict:
-        """Validate Person Postcode"""
-        postcode = values.get("address")[0].postalCode
-        NHSValidators.validate_person_postcode(postcode)
+    def pre_validate_birth_date(cls, values: dict) -> dict:
+        """Validate birth date"""
+        birth_date = values.get("birthDate", None)
+        if not isinstance(birth_date, str):
+            raise ValueError("birthDate must be a string")
+        if birth_date.isnumeric():
+            raise ValueError("birthDate must be in the format YYYY-MM-DD")
+
         return values
 
-    def validate(self) -> Patient:
-        """
-        Add custom NHS validators to the Immunization model then generate the Immunization model
-        from the JSON data
-        """
-        # Custom NHS validators
-        Patient.add_root_validator(self.validate_person_dob)
-        Patient.add_root_validator(self.validate_person_gender_code)
-        Patient.add_root_validator(self.validate_person_postcode)
+    @classmethod
+    def validate_birth_date(cls, values: dict) -> dict:
+        """Validate birth date"""
+        birth_date = values.get("birthDate")
+        NHSPatientValidators.validate_birth_date(str(birth_date))
+        return values
 
-        # Generate the Patient model from the JSON data
-        patient = Patient.parse_obj(self.json_data)
+    @classmethod
+    def validate_gender(cls, values: dict) -> dict:
+        """Validate gender"""
+        gender = values.get("gender")
+        NHSPatientValidators.validate_gender(gender)
+        return values
 
-        return patient
+    @classmethod
+    def validate_address_postal_code(cls, values: dict) -> dict:
+        """Validate address postal code"""
+        address_postal_code = values.get("address")[0].postalCode
+        NHSPatientValidators.validate_address_postal_code(address_postal_code)
+        return values
+
+    def add_custom_root_validators(self):
+        """Add custom NHS validators to the model"""
+        Patient.add_root_validator(self.validate_name_given)
+        Patient.add_root_validator(self.validate_name_family)
+        Patient.add_root_validator(self.validate_address_postal_code)
+        Patient.add_root_validator(self.pre_validate_birth_date, pre=True)
+        Patient.add_root_validator(self.validate_birth_date)
+        Patient.add_root_validator(self.validate_gender)
+
+    def validate(self, json_data) -> Patient:
+        """Generate the Patient model from the JSON data"""
+        return Patient.parse_obj(json_data)
