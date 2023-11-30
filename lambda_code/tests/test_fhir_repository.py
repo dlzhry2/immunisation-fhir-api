@@ -31,9 +31,6 @@ class TestGetImmunization(unittest.TestCase):
         self.table = MagicMock()
         self.repository = ImmunisationRepository(table=self.table)
 
-    def test_local(self):
-        local_test()
-
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
         imms_id = "an-id"
