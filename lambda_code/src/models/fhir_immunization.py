@@ -107,7 +107,9 @@ class ImmunizationValidator:
     @classmethod
     def validate_report_origin_text(cls, values) -> dict:
         """Validate Report Origin text"""
-        report_origin_text = values.get("reportOrigin").text
+        report_origin_text = None
+        if values.get("reportOrigin") is not None:
+            report_origin_text = values.get("reportOrigin").text
         primary_source = values.get("primarySource")
         NHSImmunizationValidators.validate_report_origin_text(
             report_origin_text, primary_source
