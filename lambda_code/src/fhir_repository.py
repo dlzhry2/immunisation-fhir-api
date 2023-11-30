@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import uuid
 from typing import Optional
 import boto3
 import botocore.exceptions
@@ -21,34 +22,38 @@ class ImmunisationRepository:
         self.table = table
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[dict]:
-        response = self.table.get_item(Key={"PK": self._make_id(imms_id)})
+        response = self.table.get_item(Key={"PK": self._make_pk(imms_id)})
 
         if "Item" in response:
             return None if "DeletedAt" in response["Item"] else json.loads(response["Item"]["Resource"])
         else:
             return None
 
-    def create_immunization(self, immunization: dict) -> Optional[dict]:
-        pk = self._make_id(immunization["id"])
+    def create_immunization(self, immunization: dict) -> dict:
+        new_id = str(uuid.uuid4())
+        immunization["id"] = new_id
 
         response = self.table.put_item(Item={
-            'PK': pk,
+            'PK': self._make_pk(new_id),
             'Resource': json.dumps(immunization),
         })
 
-        return immunization if response["ResponseMetadata"]["HTTPStatusCode"] == 200 else None
+        if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+            return immunization
+        else:
+            raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
 
     def delete_immunization(self, imms_id: str) -> dict:
         now_timestamp = int(time.time())
         try:
             response = self.table.update_item(
-                Key={'PK': self._make_id(imms_id)},
+                Key={'PK': self._make_pk(imms_id)},
                 UpdateExpression='SET DeletedAt = :timestamp',
                 ExpressionAttributeValues={
                     ':timestamp': now_timestamp,
                 },
                 ReturnValues="ALL_NEW",
-                ConditionExpression=Attr("PK").eq(self._make_id(imms_id)) & Attr("DeletedAt").not_exists()
+                ConditionExpression=Attr("PK").eq(self._make_pk(imms_id)) & Attr("DeletedAt").not_exists()
             )
             if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
                 return json.loads(response["Attributes"]["Resource"])
@@ -64,5 +69,5 @@ class ImmunisationRepository:
                                              response=e.response)
 
     @staticmethod
-    def _make_id(_id):
+    def _make_pk(_id: str):
         return f"Immunization#{_id}"
