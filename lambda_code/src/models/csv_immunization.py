@@ -132,7 +132,7 @@ class CsvImmunizationModel(BaseModel):
     @validator("RECORDED_DATE", pre=True, always=True)
     def validate_recorded_date(cls, value):
         """Validate recorded date"""
-        return NHSImmunizationValidators.validate_recorded_date(value)
+        return NHSImmunizationValidators.validate_recorded(value)
 
     @validator("REPORT_ORIGIN", pre=True, always=True)
     def validate_report_origin(cls, v, values):
