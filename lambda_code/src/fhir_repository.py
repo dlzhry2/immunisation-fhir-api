@@ -35,6 +35,7 @@ class ImmunisationRepository:
         immunization["id"] = new_id
 
         patient_id = immunization["patient"]["identifier"]["value"]
+        # TODO: protocolApplied is not in imms-history example. Is it CSV specific?
         disease_type = immunization["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"]
 
         # TODO: if imms can only have one disease type then do we need to append id at the end?
