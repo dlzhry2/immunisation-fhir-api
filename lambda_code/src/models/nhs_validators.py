@@ -1,6 +1,7 @@
 """NHS Validator methods"""
 from datetime import datetime, timezone
 from models.constants import Constants
+from icecream import ic
 
 
 class NHSImmunizationValidators:
@@ -385,21 +386,55 @@ class NHSPractitionerValidators:
 
     @staticmethod
     def validate_performing_professional_forename(
-        performing_professional_forename, performing_professional_surname
+        disease_type, performing_professional_forename, performing_professional_surname
     ):
         """Validate performing professional forename"""
-        if performing_professional_forename:
-            if not performing_professional_surname:
-                raise ValueError(
-                    "If PERFORMING_PROFESSIONAL_FORENAME is given, \
-                        PERFORMING_PROFESSIONAL_SURNAME must also be given"
-                )
-            return performing_professional_forename
-        if performing_professional_surname:
+        excluded_disease_types = ("HPV", "MMR")
+        if disease_type in excluded_disease_types and performing_professional_forename:
             raise ValueError(
-                "If PERFORMING_PROFESSIONAL_SURNAME is given, \
-                    PERFORMING_PROFESSIONAL_FORENAME must also be given"
+                " ".join(
+                    (
+                        "PERFORMING_PROFESSIONAL_FORENAME",
+                        f"is not allowed for: {str(excluded_disease_types)}",
+                    )
+                )
             )
+        if performing_professional_surname and not performing_professional_forename:
+            raise ValueError(
+                " ".join(
+                    (
+                        "If PERFORMING_PROFESSIONAL_SURNAME is given,",
+                        "PERFORMING_PROFESSIONAL_FORENAME must also be given",
+                    )
+                )
+            )
+        return performing_professional_forename
+
+    @staticmethod
+    def validate_performing_professional_surname(
+        disease_type, performing_professional_surname, performing_professional_forename
+    ):
+        """Validate performing professional surname"""
+        excluded_disease_types = ("HPV", "MMR")
+        if disease_type in excluded_disease_types and performing_professional_surname:
+            raise ValueError(
+                " ".join(
+                    (
+                        "PERFORMING_PROFESSIONAL_SURNAME",
+                        f"is not allowed for: {str(excluded_disease_types)}",
+                    )
+                )
+            )
+        if performing_professional_forename and not performing_professional_surname:
+            raise ValueError(
+                " ".join(
+                    (
+                        "If PERFORMING_PROFESSIONAL_FORENAME is given,",
+                        "PERFORMING_PROFESSIONAL_SURNAME must also be given",
+                    )
+                )
+            )
+        return performing_professional_surname
 
     @staticmethod
     def validate_performing_professional_body_reg_code(
