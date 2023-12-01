@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import MagicMock, patch, ANY
 
 import botocore.exceptions
-from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Attr, Key
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
@@ -22,8 +22,12 @@ def local_test():
     # print(res)
 
 
-def _make_id(_id):
+def _make_immunization_pk(_id):
     return f"Immunization#{_id}"
+
+
+def _make_patient_pk(_id):
+    return f"Patient#{_id}"
 
 
 class TestGetImmunization(unittest.TestCase):
@@ -40,7 +44,7 @@ class TestGetImmunization(unittest.TestCase):
         imms = self.repository.get_immunization_by_id(imms_id)
 
         self.assertDictEqual(resource, imms)
-        self.table.get_item.assert_called_once_with(Key={"PK": _make_id(imms_id)})
+        self.table.get_item.assert_called_once_with(Key={"PK": _make_immunization_pk(imms_id)})
 
     def test_immunization_not_found(self):
         """it should return None if Immunization doesn't exist"""
@@ -180,7 +184,7 @@ class TestDeleteImmunization(unittest.TestCase):
 
         # Then
         self.table.update_item.assert_called_once_with(
-            Key={"PK": _make_id(imms_id)},
+            Key={"PK": _make_immunization_pk(imms_id)},
             UpdateExpression='SET DeletedAt = :timestamp',
             ExpressionAttributeValues={
                 ':timestamp': now_epoch,
@@ -225,7 +229,7 @@ class TestDeleteImmunization(unittest.TestCase):
         # Then
         self.table.update_item.assert_called_once_with(
             Key=ANY, UpdateExpression=ANY, ExpressionAttributeValues=ANY, ReturnValues=ANY,
-            ConditionExpression=Attr("PK").eq(_make_id(imms_id)) & Attr("DeletedAt").not_exists()
+            ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id)) & Attr("DeletedAt").not_exists()
         )
 
         self.assertIsInstance(e.exception, ResourceNotFoundError)
@@ -242,6 +246,61 @@ class TestDeleteImmunization(unittest.TestCase):
         with self.assertRaises(UnhandledResponseError) as e:
             # When
             self.repository.delete_immunization(imms_id)
+
+        # Then
+        self.assertDictEqual(e.exception.response, response)
+
+
+class TestFindImmunizations(unittest.TestCase):
+    def setUp(self):
+        self.table = MagicMock()
+        self.repository = ImmunisationRepository(table=self.table)
+
+    def test_find_immunizations(self):
+        """it should find events with nhsNumber and diseaseCode(like snomed)"""
+        nhs_number = "a-patient-id"
+        disease_code = "a-snomed-code-for-disease"
+        # dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": [{"Resource": "{}"}]}
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": []}
+        self.table.query = MagicMock(return_value=dynamo_response)
+
+        condition = Key("PatientPK").eq(_make_patient_pk(nhs_number))
+        sort_key = f"{disease_code}#"
+        condition &= Key("PatientSK").begins_with(sort_key)
+
+        # When
+        _ = self.repository.find_immunizations(nhs_number, disease_code)
+
+        # Then
+        self.table.query.assert_called_once_with(
+            IndexName="PatientGSI",
+            KeyConditionExpression=condition
+        )
+
+    def test_map_results_to_immunizations(self):
+        """it should map Resource list into a list of Immunizations"""
+        imms1 = {"id": 1}
+        imms2 = {"id": 2}
+        items = [{"Resource": json.dumps(imms1)}, {"Resource": json.dumps(imms2)}]
+
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": items}
+        self.table.query = MagicMock(return_value=dynamo_response)
+
+        # When
+        results = self.repository.find_immunizations("an-id", "a-code")
+
+        # Then
+        self.assertListEqual(results, [imms1, imms2])
+
+    def test_bad_response_from_dynamo(self):
+        """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+        bad_request = 400
+        response = {"ResponseMetadata": {"HTTPStatusCode": bad_request}}
+        self.table.query = MagicMock(return_value=response)
+
+        with self.assertRaises(UnhandledResponseError) as e:
+            # When
+            self.repository.find_immunizations("an-id", "a-code")
 
         # Then
         self.assertDictEqual(e.exception.response, response)
