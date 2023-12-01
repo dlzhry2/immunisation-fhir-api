@@ -1,14 +1,11 @@
 """Tests for the NHS Immunization validators"""
 
 import unittest
-import sys
 import os
 import json
 from copy import deepcopy
 import dateutil.parser
 
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from models.fhir_immunization import ImmunizationValidator
 from models.nhs_validators import NHSImmunizationValidators

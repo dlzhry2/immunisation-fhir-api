@@ -1,12 +1,8 @@
 """ Convert Immunisation CSV data to Immunization Model """
 import csv
-import os
-import sys
 from typing import Union, List
 
 from pydantic import ValidationError
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../")
 
 
 from models.csv_immunization import CsvImmunizationModel

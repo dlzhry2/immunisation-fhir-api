@@ -1,11 +1,8 @@
 """Tests for the NHS Practitioner validators"""
 
 import unittest
-import sys
 import os
 import json
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from models.fhir_practitioner import PractitionerValidator
 from models.nhs_validators import NHSPractitionerValidators

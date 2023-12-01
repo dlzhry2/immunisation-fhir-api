@@ -25,3 +25,5 @@ terraform/zips
 sandbox/specification/
 .vscode/
 openapi.json
+
+.direnv/

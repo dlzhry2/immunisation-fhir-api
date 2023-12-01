@@ -1,13 +1,9 @@
 import json
-import os
-import sys
 import unittest
 import uuid
 from unittest.mock import create_autospec
 
 from fhir.resources.immunization import Immunization
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunisationRepository
 from fhir_service import FhirService
