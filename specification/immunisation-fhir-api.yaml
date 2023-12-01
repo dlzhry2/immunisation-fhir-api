@@ -157,7 +157,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/examples/get_response.json
+                $ref: components/examples/Immunization/GET-Immunization.json
           headers:
             Location:
               description: >-
@@ -194,7 +194,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/examples/get_response.json
+                $ref: components/examples/Immunization/GET-Immunization.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
@@ -219,7 +219,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/examples/get_response.json
+                $ref: components/examples/Immunization/GET-Immunization.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
@@ -232,7 +232,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/OperationOutcome'
               example:
-                $ref: components/OperationOutcome/400-invalid.json
+                $ref: components/examples/OperationOutcome/400-invalid.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
@@ -259,7 +259,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/examples/get_response.json
+                $ref: components/examples/Immunization/GET-Immunization.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
@@ -286,7 +286,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/examples/get_response.json
+                $ref: components/examples/Immunization/GET-Immunization.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
@@ -299,7 +299,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetResponse'
               example:
-                $ref: components/examples/get_response.json
+                $ref: components/examples/Immunization/GET-Immunization.json
           headers:
             X-Correlation-ID:
               $ref: '#/components/headers/Correlation-Id'
