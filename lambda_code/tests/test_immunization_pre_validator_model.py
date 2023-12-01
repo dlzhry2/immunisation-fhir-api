@@ -75,22 +75,8 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_invalid_patient_identifier_value(self):
         """Test pre_validate_patient_identifier_value rejects invalid values when in a model"""
-        # Test strings of the wrong length
-        invalid_patient_identifier_values = ["123456789", "12345678901", ""]
+
         invalid_json_data = deepcopy(self.immunization_json_data)
-        for invalid_patient_identifier_value in invalid_patient_identifier_values:
-            invalid_json_data["patient"]["identifier"][
-                "value"
-            ] = invalid_patient_identifier_value
-
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.immunization_validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "patient -> identifier -> Value must be 10 characters (type=value_error)"
-                in str(error.exception)
-            )
 
         # Test invalid data types
         for invalid_data_type_for_string in self.invalid_data_types_for_strings:
@@ -104,5 +90,21 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
             self.assertTrue(
                 "patient -> identifier -> value must be a string (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test invalid string lengths
+        invalid_patient_identifier_values = ["123456789", "12345678901", ""]
+        for invalid_patient_identifier_value in invalid_patient_identifier_values:
+            invalid_json_data["patient"]["identifier"][
+                "value"
+            ] = invalid_patient_identifier_value
+
+            # Check that we get the correct error message and that it contains type=value_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "patient -> identifier -> Value must be 10 characters (type=value_error)"
                 in str(error.exception)
             )

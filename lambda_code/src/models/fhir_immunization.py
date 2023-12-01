@@ -17,7 +17,7 @@ class ImmunizationValidator:
 
     @classmethod
     def pre_validate_patient_identifier_value(cls, values: dict) -> dict:
-        """Pre-validate patient identifier value"""
+        """Pre-validate patient identifier value (if it exists)"""
         try:
             patient_identifier_value = values["patient"]["identifier"]["value"]
             ImmunizationPreValidators.pre_patient_identifier_value(

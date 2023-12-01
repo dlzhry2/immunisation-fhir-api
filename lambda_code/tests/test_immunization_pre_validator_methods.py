@@ -42,6 +42,20 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
 
     def test_pre_patient_identifier_value_invalid(self):
         """Test pre_patient_identifier_value"""
+
+        # Test invalid data types
+        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
+            with self.assertRaises(TypeError) as error:
+                ImmunizationPreValidators.pre_patient_identifier_value(
+                    invalid_data_type_for_string
+                )
+
+            self.assertEqual(
+                str(error.exception),
+                "patient -> identifier -> value must be a string",
+            )
+
+        # Test invalid string lengths
         invalid_patient_identifier_values = ["123456789", "12345678901", ""]
         for invalid_patient_identifier_value in invalid_patient_identifier_values:
             with self.assertRaises(ValueError) as error:
@@ -52,15 +66,4 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             self.assertEqual(
                 str(error.exception),
                 "patient -> identifier -> Value must be 10 characters",
-            )
-
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            with self.assertRaises(TypeError) as error:
-                ImmunizationPreValidators.pre_patient_identifier_value(
-                    invalid_data_type_for_string
-                )
-
-            self.assertEqual(
-                str(error.exception),
-                "patient -> identifier -> value must be a string",
             )

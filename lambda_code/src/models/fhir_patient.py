@@ -14,7 +14,7 @@ class PatientValidator:
 
     @classmethod
     def pre_validate_name(cls, values: dict) -> dict:
-        """Pre-validate name"""
+        """Pre-validate name (if it exists)"""
         try:
             name = values["name"]
             PatientPreValidators.name(name)
@@ -23,9 +23,21 @@ class PatientValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_name_given(cls, values: dict) -> dict:
+        """Pre-validate name given (if it exists)"""
+        try:
+            name_given = values["name"][0]["given"]
+            PatientPreValidators.name_given(name_given)
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """Add custom NHS validators to the model"""
         Patient.add_root_validator(self.pre_validate_name, pre=True)
+        Patient.add_root_validator(self.pre_validate_name_given, pre=True)
 
     def validate(self, json_data) -> Patient:
         """Generate the Patient model from the JSON data"""
