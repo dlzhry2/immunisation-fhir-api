@@ -1,5 +1,5 @@
+import json
 from typing import Optional
-
 from fhir.resources.immunization import Immunization
 from fhir.resources.list import List as FhirList
 
@@ -20,7 +20,7 @@ class FhirService:
             return None
 
     def create_immunization(self, immunization: dict) -> Immunization:
-        # TODO: do the PDS lookup
+        # TODO: AMB-1730 - do the PDS lookup
         imms = self.immunisation_repo.create_immunization(immunization)
         return Immunization.parse_obj(imms)
 
