@@ -1,7 +1,5 @@
 from typing import Optional
-
 from fhir.resources.immunization import Immunization
-
 from fhir_repository import ImmunisationRepository
 
 
@@ -20,6 +18,10 @@ class FhirService:
 
     def create_immunization(self, immunization: dict) -> Immunization:
         # TODO: AMB-1730 - do the PDS lookup
+        # event_object = json.loads(event)
+        # secrets_manager_client = boto3.client('secretsmanager') 
+        # pds_service = PdsService(Authenticator(secrets_manager_client, "internal-dev"), "internal-dev")
+        # is_valid_patient = pds_service.get_patient_details(event_object['nhs_number'])
         imms = self.immunisation_repo.create_immunization(immunization)
         return Immunization.parse_obj(imms)
 
