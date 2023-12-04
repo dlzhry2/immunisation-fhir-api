@@ -1,12 +1,10 @@
 """Test immunization pre validation rules on the model"""
 import unittest
-import sys
 import os
 import json
 from copy import deepcopy
 from pydantic import ValidationError
 
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from models.fhir_immunization import ImmunizationValidator
 
@@ -105,6 +103,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 self.immunization_validator.validate(invalid_json_data)
 
             self.assertTrue(
-                "patient -> identifier -> Value must be 10 characters (type=value_error)"
+                "patient -> identifier -> value must be 10 characters (type=value_error)"
                 in str(error.exception)
             )

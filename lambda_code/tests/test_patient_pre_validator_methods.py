@@ -1,10 +1,6 @@
 """Test patient pre-validation methods"""
 
 import unittest
-import sys
-import os
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from models.patient_pre_validators import PatientPreValidators
 
@@ -140,3 +136,94 @@ class TestPrePatientMethodValidators(unittest.TestCase):
             str(error.exception),
             "name -> given must be an array of non-empty strings",
         )
+
+    def test_pre_name_family_valid(self):
+        """Test PatientPreValidators.name_family"""
+
+        # Test valid data
+        valid_name_family = "test"
+        self.assertEqual(
+            PatientPreValidators.name_family(valid_name_family),
+            valid_name_family,
+        )
+
+    def test_pre_name_family_invalid(self):
+        """Test PatientPreValidators.name_family"""
+
+        # Test invalid data types
+        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
+            with self.assertRaises(TypeError) as error:
+                PatientPreValidators.name_family(invalid_data_type_for_string)
+
+            self.assertEqual(
+                str(error.exception),
+                "name -> family must be a string",
+            )
+
+        # Test empty string is invalid
+        with self.assertRaises(ValueError) as error:
+            PatientPreValidators.name_family("")
+        self.assertEqual(
+            str(error.exception),
+            "name -> family must be a non-empty string",
+        )
+
+    def test_pre_birth_date_valid(self):
+        """Test PatientPreValidators.birth_date"""
+
+        # Test valid data
+        valid_birth_dates = ["2000-01-01", "1933-12-31"]
+        for valid_birth_date in valid_birth_dates:
+            self.assertEqual(
+                PatientPreValidators.birth_date(valid_birth_date),
+                valid_birth_date,
+            )
+
+    def test_pre_birth_date_invalid(self):
+        """Test PatientPreValidators.birth_date"""
+
+        # Test invalid data types
+        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
+            with self.assertRaises(TypeError) as error:
+                PatientPreValidators.birth_date(invalid_data_type_for_string)
+
+            self.assertEqual(
+                str(error.exception),
+                "birthDate must be a string",
+            )
+
+        # Test invalid date string formats
+        invalid_birth_dates = [
+            "",
+            "invalid",
+            "20000101",
+            "2000-01-011",
+            "12000-01-01",
+            "12000-01-021",
+            "99-01-01",
+            "01-01-99",
+            "01-01-1999",
+        ]
+        for invalid_birth_date in invalid_birth_dates:
+            with self.assertRaises(ValueError) as error:
+                PatientPreValidators.birth_date(invalid_birth_date)
+            self.assertEqual(
+                str(error.exception),
+                'birthDate must be a string in the format "YYYY-MM-DD"',
+            )
+
+        # Test invalid dates
+        invalid_birth_dates = [
+            "2000-00-01",
+            "2000-13-01",
+            "2000-01-00",
+            "2000-01-32",
+            "2000-02-30",
+        ]
+        for invalid_birth_date in invalid_birth_dates:
+            with self.assertRaises(ValueError) as error:
+                PatientPreValidators.birth_date(invalid_birth_date)
+            self.assertEqual(
+                str(error.exception),
+                "birthDate must be a valid date",
+            )

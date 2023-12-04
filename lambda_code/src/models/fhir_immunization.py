@@ -17,7 +17,10 @@ class ImmunizationValidator:
 
     @classmethod
     def pre_validate_patient_identifier_value(cls, values: dict) -> dict:
-        """Pre-validate patient identifier value (if it exists)"""
+        """
+        Pre-validate that patient -> identifier -> value (NHS number) is a string
+        of 10 characters (if it exists)
+        """
         try:
             patient_identifier_value = values["patient"]["identifier"]["value"]
             ImmunizationPreValidators.pre_patient_identifier_value(

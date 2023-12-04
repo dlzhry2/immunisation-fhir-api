@@ -14,7 +14,7 @@ class PatientValidator:
 
     @classmethod
     def pre_validate_name(cls, values: dict) -> dict:
-        """Pre-validate name (if it exists)"""
+        """Pre-validate that name is an array of length 1 (if it exists)"""
         try:
             name = values["name"]
             PatientPreValidators.name(name)
@@ -25,10 +25,40 @@ class PatientValidator:
 
     @classmethod
     def pre_validate_name_given(cls, values: dict) -> dict:
-        """Pre-validate name given (if it exists)"""
+        """
+        Pre-validate that name -> given (patient forename) is a non-empty array of non-empty
+        strings (if it exists)
+        """
         try:
             name_given = values["name"][0]["given"]
             PatientPreValidators.name_given(name_given)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_name_family(cls, values: dict) -> dict:
+        """Pre-validate that name -> family is a non-empty string (if it exists)"""
+
+        try:
+            name_family = values["name"][0]["family"]
+            PatientPreValidators.name_family(name_family)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_birth_date(cls, values: dict) -> dict:
+        """
+        Pre-validate that birthDate (person DOB) is a string in the format YYYY-MM-DD, where MM
+        represents a number between from 01 to 12, and DD respresents a number from 01 to 31
+        """
+
+        try:
+            birth_date = values["birthDate"]
+            PatientPreValidators.birth_date(birth_date)
         except KeyError:
             pass
 
@@ -38,6 +68,8 @@ class PatientValidator:
         """Add custom NHS validators to the model"""
         Patient.add_root_validator(self.pre_validate_name, pre=True)
         Patient.add_root_validator(self.pre_validate_name_given, pre=True)
+        Patient.add_root_validator(self.pre_validate_name_family, pre=True)
+        Patient.add_root_validator(self.pre_validate_birth_date, pre=True)
 
     def validate(self, json_data) -> Patient:
         """Generate the Patient model from the JSON data"""

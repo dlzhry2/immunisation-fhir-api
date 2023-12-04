@@ -1,15 +1,11 @@
 """Test practitioner pre-validation methods"""
 
 import unittest
-import sys
-import os
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from models.practitioner_pre_validators import PractitionerPreValidators
 
 
-class TestPreractitionerMethodValidators(unittest.TestCase):
+class TestPractitionerMethodValidators(unittest.TestCase):
     """Test practitioner pre-validation methods"""
 
     @classmethod

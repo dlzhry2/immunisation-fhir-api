@@ -1,4 +1,5 @@
 """Immunization pre-validators"""
+from models.utils import generic_string_validation
 
 
 class ImmunizationPreValidators:
@@ -6,10 +7,10 @@ class ImmunizationPreValidators:
     def pre_patient_identifier_value(patient_identifier_value: str) -> str:
         """Pre-validate patient identifier value"""
 
-        if not isinstance(patient_identifier_value, str):
-            raise TypeError("patient -> identifier -> value must be a string")
-
-        if len(patient_identifier_value) != 10:
-            raise ValueError("patient -> identifier -> Value must be 10 characters")
+        generic_string_validation(
+            patient_identifier_value,
+            "patient -> identifier -> value",
+            defined_length=10,
+        )
 
         return patient_identifier_value

@@ -1,10 +1,6 @@
 """Test immunization pre-validation methods"""
 
 import unittest
-import sys
-import os
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from models.immunization_pre_validators import ImmunizationPreValidators
 
@@ -65,5 +61,5 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
 
             self.assertEqual(
                 str(error.exception),
-                "patient -> identifier -> Value must be 10 characters",
+                "patient -> identifier -> value must be 10 characters",
             )

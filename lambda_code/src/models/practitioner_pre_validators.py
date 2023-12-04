@@ -1,5 +1,5 @@
 """Pre-validators for Practitioner model"""
 
 
-class PatientPreValidators:
+class PractitionerPreValidators:
     """Pre-validators for Practitioner model"""

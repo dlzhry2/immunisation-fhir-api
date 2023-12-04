@@ -1,11 +1,9 @@
 """Test practitioner pre validation rules on the model"""
 import unittest
-import sys
 import os
 import json
 from copy import deepcopy
 
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from models.fhir_practitioner import PractitionerValidator
 
