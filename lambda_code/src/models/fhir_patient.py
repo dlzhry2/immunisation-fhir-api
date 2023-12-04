@@ -14,7 +14,7 @@ class PatientValidator:
 
     @classmethod
     def pre_validate_name(cls, values: dict) -> dict:
-        """Pre-validate that name is an array of length 1 (if it exists)"""
+        """Pre-validate that, if name exists, then it is an array of length 1"""
         try:
             name = values["name"]
             PatientPreValidators.name(name)
@@ -26,8 +26,8 @@ class PatientValidator:
     @classmethod
     def pre_validate_name_given(cls, values: dict) -> dict:
         """
-        Pre-validate that name -> given (patient forename) is a non-empty array of non-empty
-        strings (if it exists)
+        Pre-validate that, if name -> given (patient forename) exists, then it is a
+        non-empty array of non-empty strings
         """
         try:
             name_given = values["name"][0]["given"]
@@ -39,7 +39,7 @@ class PatientValidator:
 
     @classmethod
     def pre_validate_name_family(cls, values: dict) -> dict:
-        """Pre-validate that name -> family is a non-empty string (if it exists)"""
+        """Pre-validate that, if name -> family exists, then it is a non-empty string"""
 
         try:
             name_family = values["name"][0]["family"]
@@ -52,13 +52,55 @@ class PatientValidator:
     @classmethod
     def pre_validate_birth_date(cls, values: dict) -> dict:
         """
-        Pre-validate that birthDate (person DOB) is a string in the format YYYY-MM-DD, where MM
-        represents a number between from 01 to 12, and DD respresents a number from 01 to 31
+        Pre-validate that, if birthDate (person DOB) exists, then it is a string in the format
+        YYYY-MM-DD, where MM represents a number between from 01 to 12, and DD respresents a
+        number from 01 to 31
         """
 
         try:
             birth_date = values["birthDate"]
             PatientPreValidators.birth_date(birth_date)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_gender(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if gender (person gender) exists, then it is a string, which is one
+        of the following: male, female, other, unknown
+        """
+
+        try:
+            gender = values["gender"]
+            PatientPreValidators.gender(gender)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_address(cls, values: dict) -> dict:
+        """Pre-validate that, if address exists, then it is an array of length 1 (if it exists)"""
+        try:
+            address = values["address"]
+            PatientPreValidators.address(address)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_address_postal_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that address -> postalCode, if it exists, is a non-empty string,
+        separated into two parts by a single space
+        """
+
+        try:
+            address_postal_code = values["address"][0]["postalCode"]
+            PatientPreValidators.address_postal_code(address_postal_code)
         except KeyError:
             pass
 
@@ -70,6 +112,9 @@ class PatientValidator:
         Patient.add_root_validator(self.pre_validate_name_given, pre=True)
         Patient.add_root_validator(self.pre_validate_name_family, pre=True)
         Patient.add_root_validator(self.pre_validate_birth_date, pre=True)
+        Patient.add_root_validator(self.pre_validate_gender, pre=True)
+        Patient.add_root_validator(self.pre_validate_address, pre=True)
+        Patient.add_root_validator(self.pre_validate_address_postal_code, pre=True)
 
     def validate(self, json_data) -> Patient:
         """Generate the Patient model from the JSON data"""

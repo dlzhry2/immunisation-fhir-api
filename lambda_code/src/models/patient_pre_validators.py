@@ -5,8 +5,7 @@ from models.utils import (
     generic_string_validation,
     generic_date_validation,
 )
-import re
-from datetime import datetime
+from models.constants import Constants
 
 
 class PatientPreValidators:
@@ -50,3 +49,37 @@ class PatientPreValidators:
         generic_date_validation(birth_date, "birthDate")
 
         return birth_date
+
+    @staticmethod
+    def gender(gender: str) -> str:
+        """Pre-validate gender (person gender)"""
+
+        generic_string_validation(gender, "gender", predefined_values=Constants.genders)
+
+        return gender
+
+    @staticmethod
+    def address(address: list[dict]) -> list[dict]:
+        """Pre-validate address"""
+
+        generic_list_validation(address, "address", defined_length=1)
+
+        return address
+
+    @staticmethod
+    def address_postal_code(address_postal_code: str) -> str:
+        """Pre-validate postalCode (person postcode)"""
+
+        generic_string_validation(address_postal_code, "address -> postalCode")
+
+        if len(address_postal_code.split(" ")) != 2:
+            raise ValueError(
+                "address -> postalCode must be divided into two parts by a single space"
+            )
+
+        if len(address_postal_code.replace(" ", "")) > 8:
+            raise ValueError(
+                "address -> postalCode must be 8 or fewer characters (excluding spaces)"
+            )
+
+        return address_postal_code

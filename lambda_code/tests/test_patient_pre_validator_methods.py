@@ -227,3 +227,141 @@ class TestPrePatientMethodValidators(unittest.TestCase):
                 str(error.exception),
                 "birthDate must be a valid date",
             )
+
+    def test_pre_gender_valid(self):
+        """Test PatientPreValidators.gender"""
+
+        # Test valid data
+        valid_genders = ["male", "female", "other", "unknown"]
+        for valid_gender in valid_genders:
+            self.assertEqual(
+                PatientPreValidators.gender(valid_gender),
+                valid_gender,
+            )
+
+    def test_pre_gender_invalid(self):
+        """Test PatientPreValidators.gender"""
+
+        # Test invalid data types
+        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
+            with self.assertRaises(TypeError) as error:
+                PatientPreValidators.gender(invalid_data_type_for_string)
+
+            self.assertEqual(
+                str(error.exception),
+                "gender must be a string",
+            )
+
+        # Test empty string
+        with self.assertRaises(ValueError) as error:
+            PatientPreValidators.gender("")
+        self.assertEqual(str(error.exception), "gender must be a non-empty string")
+
+        # Test invalid gender formats
+        invalid_genders = [
+            "0",
+            "1",
+            "2",
+            "9",
+            "Male",
+            "Female",
+            "Unknown",
+            "Other",
+        ]
+        for invalid_gender in invalid_genders:
+            with self.assertRaises(ValueError) as error:
+                PatientPreValidators.gender(invalid_gender)
+            self.assertEqual(
+                str(error.exception),
+                "gender must be one of the following: male, female, other, unknown",
+            )
+
+    def test_pre_address_valid(self):
+        """Test PatientPreValidators.address"""
+        # Test valid data
+        valid_address = [{"postalCode": "AA0 0AA"}]
+        self.assertEqual(
+            PatientPreValidators.address(valid_address),
+            valid_address,
+        )
+
+    def test_pre_address_invalid(self):
+        """Test PatientPreValidators.address"""
+
+        # Test invalid data types
+        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
+            with self.assertRaises(TypeError) as error:
+                PatientPreValidators.address(invalid_data_type_for_list)
+
+            self.assertEqual(
+                str(error.exception),
+                "address must be an array",
+            )
+
+        # Test invalid list length
+        invalid_addresses = [
+            [],
+            [{"postalCode": "AA0 0AA"}, {"postalCode": "AA0 0AA"}],
+        ]
+        for invalid_address in invalid_addresses:
+            with self.assertRaises(ValueError) as error:
+                PatientPreValidators.address(invalid_address)
+
+            self.assertEqual(
+                str(error.exception),
+                "address must be an array of length 1",
+            )
+
+    def test_pre_address_postal_code_valid(self):
+        """Test PatientPreValidators.address_postal_code"""
+
+        # Test valid data
+        valid_address_postal_codes = ["AA00 00AA", "A0 0AA"]
+        for valid_address_postal_code in valid_address_postal_codes:
+            self.assertEqual(
+                PatientPreValidators.address_postal_code(valid_address_postal_code),
+                valid_address_postal_code,
+            )
+
+    def test_pre_address_postal_code_invalid(self):
+        """Test PatientPreValidators.address_postal_code"""
+
+        # Test invalid data types
+        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
+            with self.assertRaises(TypeError) as error:
+                PatientPreValidators.address_postal_code(invalid_data_type_for_string)
+
+            self.assertEqual(
+                str(error.exception),
+                "address -> postalCode must be a string",
+            )
+
+        # Test empty string
+        with self.assertRaises(ValueError) as error:
+            PatientPreValidators.address_postal_code("")
+        self.assertEqual(
+            str(error.exception), "address -> postalCode must be a non-empty string"
+        )
+
+        # Test address_postal_code which are not separated into the two parts by a single space
+        invalid_address_postal_codes = [
+            "SW1  1AA",
+            "SW 1 1A",
+            "AAA0000AA",
+            "SW11AA",
+        ]
+        for invalid_address_postal_code in invalid_address_postal_codes:
+            with self.assertRaises(ValueError) as error:
+                PatientPreValidators.address_postal_code(invalid_address_postal_code)
+            self.assertEqual(
+                str(error.exception),
+                "address -> postalCode must be divided into two parts by a single space",
+            )
+
+        # Test invalid address_postal_code length
+        with self.assertRaises(ValueError) as error:
+            PatientPreValidators.address_postal_code("AA000 00AA")
+        self.assertEqual(
+            str(error.exception),
+            "address -> postalCode must be 8 or fewer characters (excluding spaces)",
+        )

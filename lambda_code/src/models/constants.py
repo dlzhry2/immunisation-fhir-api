@@ -6,7 +6,7 @@ from typing import Union
 class Constants:
     action_flags = {"completed", "entered-in-error", "not-done"}
     primary_source = {True, False}
-    genders = {"male", "female", "other", "unknown"}
+    genders = ("male", "female", "other", "unknown")
     vaccination_not_given_flag: str = "not-done"
     vaccination_given_flag: str = "empty"
     # TODO: valid_disease_types needs updated to reprent agreed list (needs to consider the

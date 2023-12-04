@@ -5,7 +5,11 @@ from datetime import datetime
 
 
 def generic_string_validation(
-    field_value: str, field_location: str, defined_length: int = 0, max_length: int = 0
+    field_value: str,
+    field_location: str,
+    defined_length: int = 0,
+    max_length: int = 0,
+    predefined_values: set = None,
 ):
     """
     Apply generic validation to a string field to ensure it is a non-empty string which meets
@@ -25,6 +29,13 @@ def generic_string_validation(
         if len(field_value) > max_length:
             raise ValueError(
                 f"{field_location} must be {max_length} or fewer characters"
+            )
+
+    if predefined_values:
+        if field_value not in predefined_values:
+            raise ValueError(
+                f"{field_location} must be one of the following: "
+                + str(", ".join(predefined_values))
             )
 
 
