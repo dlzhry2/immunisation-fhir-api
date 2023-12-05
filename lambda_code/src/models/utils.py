@@ -2,6 +2,7 @@
 
 import re
 from datetime import datetime
+from typing import Literal, Union
 
 
 def generic_string_validation(
@@ -112,3 +113,22 @@ def generic_date_time_validation(field_value: str, field_location: str):
             f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss" '
             + 'or "YYYY-MM-DDThh:mm:ss+zz"'
         )
+
+
+def get_generic_questionnaire_response_value(
+    json_data: dict, link_id: str, field_type: Literal["code", "value"]
+) -> Union[str, None]:
+    """
+    Get the value of a QuestionnaireResponse field, given its linkId
+    """
+
+    for record in json_data["contained"]:
+        if record["resourceType"] == "QuestionnaireResponse":
+            for item in record["item"]:
+                if item["linkId"] == link_id:
+                    return item["answer"][0]["valueCoding"][field_type]
+
+    raise KeyError(
+        "contained[0] -> resourceType[QuestionnaireResponse]: "
+        + f"item[*] -> linkId[{link_id}]: answer[0] -> valueCoding -> {field_type} does not exist"
+    )

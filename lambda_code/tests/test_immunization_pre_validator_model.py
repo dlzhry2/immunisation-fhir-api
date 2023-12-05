@@ -4,6 +4,7 @@ import os
 import json
 from copy import deepcopy
 from pydantic import ValidationError
+from icecream import ic
 
 
 from models.fhir_immunization import ImmunizationValidator
@@ -52,6 +53,19 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             {"InvalidKey": "InvalidValue"},
             ["Invalid"],
             ("Invalid1", "Invalid2"),
+        ]
+        # set up invalid data types for lists
+        cls.invalid_data_types_for_lists = [
+            # None,
+            -1,
+            0,
+            0.0,
+            1,
+            True,
+            {},
+            "",
+            {"InvalidKey": "InvalidValue"},
+            "Invalid",
         ]
 
     def setUp(self):
@@ -209,3 +223,335 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 "occurrenceDateTime must be a valid datetime (type=value_error)"
                 in str(error.exception)
             )
+
+    def test_model_pre_validate_valid_contained(self):
+        """Test pre_validate_contained accepts valid values when in a model"""
+        valid_contained = [
+            {"resourceType": "QuestionnaireResponse", "status": "completed"}
+        ]
+        valid_json_data = deepcopy(self.immunization_json_data)
+        valid_json_data["contained"] = valid_contained
+
+        self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+    def test_model_pre_validate_invalid_contained(self):
+        """Test pre_validate_contained rejects invalid values when in a model"""
+
+        invalid_json_data = deepcopy(self.immunization_json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
+            invalid_json_data["contained"] = invalid_data_type_for_list
+
+            # Check that we get the correct error message and that it contains type=value_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "contained must be an array (type=type_error)" in str(error.exception)
+            )
+
+        # Test invalid list length
+        invalid_contained_items = [
+            [],
+            [
+                {"resourceType": "QuestionnaireResponse", "status": "completed"},
+                {"resourceType": "QuestionnaireResponse", "status": "completed"},
+            ],
+        ]
+        for invalid_contained in invalid_contained_items:
+            invalid_json_data["contained"] = invalid_contained
+            with self.assertRaises(ValueError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "contained must be an array of length 1 (type=value_error)"
+                in str(error.exception)
+            )
+
+    def test_model_pre_validate_valid_questionnaire_answers(self):
+        """Test pre_validate_questionnaire_answers accepts valid values when in a model"""
+        valid_questionnaire_answers = [{"valueCoding": {"code": "B0C4P"}}]
+        valid_json_data = deepcopy(self.immunization_json_data)
+        valid_json_data["contained"][0]["item"][0][
+            "answer"
+        ] = valid_questionnaire_answers
+
+        self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+    def test_model_pre_validate_invalid_questionnaire_answers(self):
+        """Test pre_validate_quesionnaire_answers rejects invalid values when in a model"""
+
+        invalid_json_data = deepcopy(self.immunization_json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
+            invalid_json_data["contained"][0]["item"][0][
+                "answer"
+            ] = invalid_data_type_for_list
+
+            # Check that we get the correct error message and that it contains type=value_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "contained[0] -> resourceType[QuestionnaireResponse]: "
+                + "item[*] -> linkId[*]: answer must be an array (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test invalid list length
+        invalid_questionnaire_answers = [
+            [],
+            [
+                {"valueCoding": {"code": "B0C4P"}},
+                {"valueCoding": {"code": "B0C4P"}},
+            ],
+        ]
+        for invalid_questionnaire_answer in invalid_questionnaire_answers:
+            invalid_json_data["contained"][0]["item"][0][
+                "answer"
+            ] = invalid_questionnaire_answer
+            with self.assertRaises(ValueError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "contained[0] -> resourceType[QuestionnaireResponse]: "
+                + "item[*] -> linkId[*]: answer must be an array of length 1 (type=value_error)"
+                in str(error.exception)
+            )
+
+    def test_model_pre_validate_valid_questionnaire_site_code_code(self):
+        """Test pre_validate_questionnaire_site_code_code accepts valid values when in a model"""
+        valid_questionnaire_site_code_code = "B0C4P"
+        valid_json_data = deepcopy(self.immunization_json_data)
+
+        valid_json_data["contained"][0]["item"][0]["answer"][0]["valueCoding"][
+            "code"
+        ] = valid_questionnaire_site_code_code
+
+        self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+    def test_model_pre_validate_invalid_questionnaire_site_code_code(self):
+        """Test pre_validate_questionnaire_site_code_code rejects invalid values when in a model"""
+
+        invalid_json_data = deepcopy(self.immunization_json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
+            invalid_json_data["contained"][0]["item"][0]["answer"][0]["valueCoding"][
+                "code"
+            ] = invalid_data_type_for_string
+
+            # Check that we get the correct error message and that it contains type=type_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "contained[0] -> resourceType[QuestionnaireResponse]: "
+                + "item[*] -> linkId[SiteCode]: answer[0] -> valueCoding -> code must be a string "
+                + "(type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test empty string
+        invalid_json_data["contained"][0]["item"][0]["answer"][0]["valueCoding"][
+            "code"
+        ] = ""
+        # Check that we get the correct error message and that it contains type=type_error
+        with self.assertRaises(ValidationError) as error:
+            self.immunization_validator.validate(invalid_json_data)
+
+        self.assertTrue(
+            "contained[0] -> resourceType[QuestionnaireResponse]: "
+            + "item[*] -> linkId[SiteCode]: "
+            + "answer[0] -> valueCoding -> code must be a non-empty string "
+            + "(type=value_error)"
+            in str(error.exception)
+        )
+
+    def test_model_pre_validate_valid_questionnaire_site_name_code(self):
+        """Test pre_validate_questionnaire_site_name_code accepts valid values when in a model"""
+        valid_questionnaire_site_name_code = "dummy"
+        valid_json_data = deepcopy(self.immunization_json_data)
+
+        valid_json_data["contained"][0]["item"][1]["answer"][0]["valueCoding"][
+            "code"
+        ] = valid_questionnaire_site_name_code
+
+        self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+    def test_model_pre_validate_invalid_questionnaire_site_name_code(self):
+        """Test pre_validate_questionnaire_site_code_code rejects invalid values when in a model"""
+
+        invalid_json_data = deepcopy(self.immunization_json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
+            invalid_json_data["contained"][0]["item"][1]["answer"][0]["valueCoding"][
+                "code"
+            ] = invalid_data_type_for_string
+
+            # Check that we get the correct error message and that it contains type=type_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "contained[0] -> resourceType[QuestionnaireResponse]: "
+                + "item[*] -> linkId[SiteName]: answer[0] -> valueCoding -> code must be a string "
+                + "(type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test empty string
+        invalid_json_data["contained"][0]["item"][1]["answer"][0]["valueCoding"][
+            "code"
+        ] = ""
+        # Check that we get the correct error message and that it contains type=type_error
+        with self.assertRaises(ValidationError) as error:
+            self.immunization_validator.validate(invalid_json_data)
+
+        self.assertTrue(
+            "contained[0] -> resourceType[QuestionnaireResponse]: "
+            + "item[*] -> linkId[SiteName]: "
+            + "answer[0] -> valueCoding -> code must be a non-empty string "
+            + "(type=value_error)"
+            in str(error.exception)
+        )
+
+    def test_model_pre_validate_valid_identifier(self):
+        """Test pre_validate_identifier accepts valid values when in a model"""
+        valid_identifier = [
+            {
+                "system": "https://supplierABC/identifiers/vacc",
+                "value": "ACME-vacc123456",
+            }
+        ]
+        valid_json_data = deepcopy(self.immunization_json_data)
+        valid_json_data["identifier"] = valid_identifier
+
+        self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+    def test_model_pre_validate_invalid_identifier(self):
+        """Test pre_validate_identifier rejects invalid values when in a model"""
+
+        invalid_json_data = deepcopy(self.immunization_json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
+            invalid_json_data["identifier"] = invalid_data_type_for_list
+
+            # Check that we get the correct error message and that it contains type=value_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+            ic(error.exception)
+            self.assertTrue(
+                "identifier must be an array (type=type_error)" in str(error.exception)
+            )
+
+        # Test invalid list length
+        invalid_identifier_items = [
+            [],
+            [
+                {
+                    "system": "https://supplierABC/identifiers/vacc",
+                    "value": "ACME-vacc123456",
+                },
+                {
+                    "system": "https://supplierABC/identifiers/vacc",
+                    "value": "ACME-vacc123456",
+                },
+            ],
+        ]
+        for invalid_identifier in invalid_identifier_items:
+            invalid_json_data["identifier"] = invalid_identifier
+            with self.assertRaises(ValueError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "identifier must be an array of length 1 (type=value_error)"
+                in str(error.exception)
+            )
+
+    def test_model_pre_validate_valid_identifier_value(self):
+        """Test pre_validate_identifier_value accepts valid values when in a model"""
+        valid_identifier_values = [
+            "e045626e-4dc5-4df3-bc35-da25263f901e",
+            "ACME-vacc123456",
+            "ACME-CUSTOMER1-vacc123456",
+        ]
+        for valid_identifier_value in valid_identifier_values:
+            valid_json_data = deepcopy(self.immunization_json_data)
+            valid_json_data["identifier"][0]["value"] = valid_identifier_value
+
+            self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+    def test_model_pre_validate_invalid_identifier_value(self):
+        """Test pre_validate_identifier_value rejects invalid values when in a model"""
+
+        invalid_json_data = deepcopy(self.immunization_json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
+            invalid_json_data["identifier"][0]["value"] = invalid_data_type_for_string
+
+            # Check that we get the correct error message and that it contains type=type_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "identifier[0] -> value must be a string (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test empty string
+        invalid_json_data["identifier"][0]["value"] = ""
+        # Check that we get the correct error message and that it contains type=type_error
+        with self.assertRaises(ValidationError) as error:
+            self.immunization_validator.validate(invalid_json_data)
+
+        self.assertTrue(
+            "identifier[0] -> value must be a non-empty string (type=value_error)"
+            in str(error.exception)
+        )
+
+    def test_model_pre_validate_valid_identifier_system(self):
+        """Test pre_validate_identifier_system accepts valid values when in a model"""
+        valid_identifier_systems = [
+            "https://supplierABC/identifiers/vacc",
+            "https://supplierABC/ODSCode_NKO41/identifiers/vacc",
+        ]
+        for valid_identifier_system in valid_identifier_systems:
+            valid_json_data = deepcopy(self.immunization_json_data)
+            valid_json_data["identifier"][0]["system"] = valid_identifier_system
+
+            self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+    def test_model_pre_validate_invalid_identifier_system(self):
+        """Test pre_validate_identifier_system rejects invalid values when in a model"""
+
+        invalid_json_data = deepcopy(self.immunization_json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
+            invalid_json_data["identifier"][0]["system"] = invalid_data_type_for_string
+
+            # Check that we get the correct error message and that it contains type=type_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "identifier[0] -> system must be a string (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test empty string
+        invalid_json_data["identifier"][0]["system"] = ""
+        # Check that we get the correct error message and that it contains type=type_error
+        with self.assertRaises(ValidationError) as error:
+            self.immunization_validator.validate(invalid_json_data)
+
+        self.assertTrue(
+            "identifier[0] -> system must be a non-empty string (type=value_error)"
+            in str(error.exception)
+        )
