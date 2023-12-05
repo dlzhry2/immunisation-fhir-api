@@ -3,6 +3,12 @@
 import unittest
 
 from models.immunization_pre_validators import ImmunizationPreValidators
+from ..tests.utils import (
+    invalid_data_types_for_strings,
+    invalid_data_types_for_lists,
+    generic_string_validator_valid_tests,
+    generic_string_validator_invalid_tests,
+)
 
 
 class TestPreImmunizationMethodValidators(unittest.TestCase):
@@ -11,70 +17,25 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # set up invalid data types for strings
-        cls.invalid_data_types_for_strings = [
-            None,
-            -1,
-            0,
-            0.0,
-            1,
-            True,
-            {},
-            [],
-            (),
-            {"InvalidKey": "InvalidValue"},
-            ["Invalid"],
-            ("Invalid1", "Invalid2"),
-        ]
-        cls.invalid_data_types_for_lists = [
-            None,
-            -1,
-            0,
-            0.0,
-            1,
-            True,
-            {},
-            "",
-            {"InvalidKey": "InvalidValue"},
-            "Invalid",
-        ]
+        cls.invalid_data_types_for_strings = invalid_data_types_for_strings
+        cls.invalid_data_types_for_lists = invalid_data_types_for_lists
 
     def test_patient_identifier_value_valid(self):
         """Test patient_identifier_value"""
-        valid_patient_identifier_value = "1234567890"
-        self.assertEqual(
-            ImmunizationPreValidators.patient_identifier_value(
-                valid_patient_identifier_value
-            ),
-            "1234567890",
+        generic_string_validator_valid_tests(
+            self, ImmunizationPreValidators.patient_identifier_value, ["1234567890"]
         )
 
     def test_patient_identifier_value_invalid(self):
         """Test patient_identifier_value"""
 
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            with self.assertRaises(TypeError) as error:
-                ImmunizationPreValidators.patient_identifier_value(
-                    invalid_data_type_for_string
-                )
-
-            self.assertEqual(
-                str(error.exception),
-                "patient -> identifier -> value must be a string",
-            )
-
-        # Test invalid string lengths
-        invalid_patient_identifier_values = ["123456789", "12345678901", ""]
-        for invalid_patient_identifier_value in invalid_patient_identifier_values:
-            with self.assertRaises(ValueError) as error:
-                ImmunizationPreValidators.patient_identifier_value(
-                    invalid_patient_identifier_value
-                )
-
-            self.assertEqual(
-                str(error.exception),
-                "patient -> identifier -> value must be 10 characters",
-            )
+        generic_string_validator_invalid_tests(
+            self,
+            validator=ImmunizationPreValidators.patient_identifier_value,
+            field_location="patient -> identifier -> value",
+            predefined_string_length=10,
+            invalid_length_strings_to_test=["123456789", "12345678901", ""],
+        )
 
     def test_pre_occurrence_date_time_valid(self):
         """Test ImmunizationPreValidators.occurrence_date_time"""
@@ -254,77 +215,39 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_questionnaire_site_code_code_valid(self):
         """Test ImmunizationPreValidators.questionnaire_site_code_code"""
 
-        # Test valid data
-        valid_questionnaire_site_code_code = "B0C4P"
-        self.assertEqual(
-            ImmunizationPreValidators.questionnaire_site_code_code(
-                valid_questionnaire_site_code_code
-            ),
-            valid_questionnaire_site_code_code,
+        generic_string_validator_valid_tests(
+            self,
+            validator=ImmunizationPreValidators.questionnaire_site_code_code,
+            valid_strings_to_test=["B0C4P"],
         )
 
     def test_pre_questionnaire_site_code_code_invalid(self):
         """Test ImmunizationPreValidators.questionnaire_site_code_code"""
 
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            with self.assertRaises(TypeError) as error:
-                ImmunizationPreValidators.questionnaire_site_code_code(
-                    invalid_data_type_for_string
-                )
-
-            self.assertEqual(
-                str(error.exception),
-                "contained[0] -> resourceType[QuestionnaireResponse]: "
-                + "item[*] -> linkId[SiteCode]: answer[0] -> valueCoding -> code must be a string",
-            )
-
-        # Test invalid string (empty) in list
-        with self.assertRaises(ValueError) as error:
-            ImmunizationPreValidators.questionnaire_site_code_code("")
-        self.assertEqual(
-            str(error.exception),
-            "contained[0] -> resourceType[QuestionnaireResponse]: "
-            + "item[*] -> linkId[SiteCode]: "
-            + "answer[0] -> valueCoding -> code must be a non-empty string",
+        generic_string_validator_invalid_tests(
+            self,
+            validator=ImmunizationPreValidators.questionnaire_site_code_code,
+            field_location="contained[0] -> resourceType[QuestionnaireResponse]: "
+            + "item[*] -> linkId[SiteCode]: answer[0] -> valueCoding -> code",
         )
 
     def test_pre_questionnaire_site_name_code_valid(self):
         """Test ImmunizationPreValidators.questionnaire_site_name_code"""
 
-        # Test valid data
-        valid_questionnaire_site_name_code = "dummy"
-        self.assertEqual(
-            ImmunizationPreValidators.questionnaire_site_name_code(
-                valid_questionnaire_site_name_code
-            ),
-            valid_questionnaire_site_name_code,
+        generic_string_validator_valid_tests(
+            self,
+            validator=ImmunizationPreValidators.questionnaire_site_name_code,
+            valid_strings_to_test=["dummy"],
         )
 
     def test_pre_questionnaire_site_name_code_invalid(self):
         """Test ImmunizationPreValidators.questionnaire_site_name_code"""
 
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            with self.assertRaises(TypeError) as error:
-                ImmunizationPreValidators.questionnaire_site_name_code(
-                    invalid_data_type_for_string
-                )
-
-            self.assertEqual(
-                str(error.exception),
-                "contained[0] -> resourceType[QuestionnaireResponse]: "
-                + "item[*] -> linkId[SiteName]: answer[0] -> valueCoding -> code must be a string",
-            )
-
-        # Test invalid string (empty) in list
-        with self.assertRaises(ValueError) as error:
-            ImmunizationPreValidators.questionnaire_site_name_code("")
-        self.assertEqual(
-            str(error.exception),
-            "contained[0] -> resourceType[QuestionnaireResponse]: "
-            + "item[*] -> linkId[SiteName]: "
-            + "answer[0] -> valueCoding -> code must be a non-empty string",
+        generic_string_validator_invalid_tests(
+            self,
+            validator=ImmunizationPreValidators.questionnaire_site_name_code,
+            field_location="contained[0] -> resourceType[QuestionnaireResponse]: "
+            + "item[*] -> linkId[SiteName]: answer[0] -> valueCoding -> code",
         )
 
     def test_pre_identifier_valid(self):
@@ -378,73 +301,45 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
                 "identifier must be an array of length 1",
             )
 
-    def test_pre_identifier_system_valid(self):
-        """Test ImmunizationPreValidators.identifier_system"""
-
-        # Test valid data
-        valid_identifier_systems = [
-            "https://supplierABC/identifiers/vacc",
-            "https://supplierABC/ODSCode_NKO41/identifiers/vacc",
-        ]
-        for valid_identifier_system in valid_identifier_systems:
-            self.assertEqual(
-                ImmunizationPreValidators.identifier_value(valid_identifier_system),
-                valid_identifier_system,
-            )
-
-    def test_pre_identifier_system_invalid(self):
-        """Test ImmunizationPreValidators.identifier_system"""
-
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            with self.assertRaises(TypeError) as error:
-                ImmunizationPreValidators.identifier_value(invalid_data_type_for_string)
-
-            self.assertEqual(
-                str(error.exception),
-                "identifier[0] -> system must be a string",
-            )
-
-        # Test invalid string (empty) in list
-        with self.assertRaises(ValueError) as error:
-            ImmunizationPreValidators.identifier_value("")
-        self.assertEqual(
-            str(error.exception),
-            "identifier[0] -> system must be a non-empty string",
-        )
-
     def test_pre_identifier_value_valid(self):
         """Test ImmunizationPreValidators.identifier_value"""
 
-        # Test valid data
-        valid_identifier_values = [
-            "e045626e-4dc5-4df3-bc35-da25263f901e",
-            "ACME-vacc123456",
-            "ACME-CUSTOMER1-vacc123456",
-        ]
-        for valid_identifier_value in valid_identifier_values:
-            self.assertEqual(
-                ImmunizationPreValidators.identifier_value(valid_identifier_value),
-                valid_identifier_value,
-            )
+        generic_string_validator_valid_tests(
+            self,
+            validator=ImmunizationPreValidators.identifier_value,
+            valid_strings_to_test=[
+                "e045626e-4dc5-4df3-bc35-da25263f901e",
+                "ACME-vacc123456",
+                "ACME-CUSTOMER1-vacc123456",
+            ],
+        )
 
     def test_pre_identifier_value_invalid(self):
         """Test ImmunizationPreValidators.identifier_value"""
 
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            with self.assertRaises(TypeError) as error:
-                ImmunizationPreValidators.identifier_value(invalid_data_type_for_string)
+        generic_string_validator_invalid_tests(
+            self,
+            validator=ImmunizationPreValidators.identifier_value,
+            field_location="identifier[0] -> value",
+        )
 
-            self.assertEqual(
-                str(error.exception),
-                "identifier[0] -> value must be a string",
-            )
+    def test_pre_identifier_system_valid(self):
+        """Test ImmunizationPreValidators.identifier_system"""
 
-        # Test invalid string (empty) in list
-        with self.assertRaises(ValueError) as error:
-            ImmunizationPreValidators.identifier_value("")
-        self.assertEqual(
-            str(error.exception),
-            "identifier[0] -> value must be a non-empty string",
+        generic_string_validator_valid_tests(
+            self,
+            validator=ImmunizationPreValidators.identifier_system,
+            valid_strings_to_test=[
+                "https://supplierABC/identifiers/vacc",
+                "https://supplierABC/ODSCode_NKO41/identifiers/vacc",
+            ],
+        )
+
+    def test_pre_identifier_system_invalid(self):
+        """Test ImmunizationPreValidators.identifier_system"""
+
+        generic_string_validator_invalid_tests(
+            self,
+            validator=ImmunizationPreValidators.identifier_system,
+            field_location="identifier[0] -> system",
         )

@@ -444,7 +444,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             # Check that we get the correct error message and that it contains type=value_error
             with self.assertRaises(ValidationError) as error:
                 self.immunization_validator.validate(invalid_json_data)
-            ic(error.exception)
+
             self.assertTrue(
                 "identifier must be an array (type=type_error)" in str(error.exception)
             )
