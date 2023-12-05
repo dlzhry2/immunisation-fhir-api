@@ -60,6 +60,10 @@ def generic_list_validation(
 
 
 def generic_date_validation(field_value: str, field_location: str):
+    """
+    Apply generic validation to a date field to ensure that it is a string (JSON dates must be
+    written as strings) containing a valid date in the format "YYYY-MM-DD"
+    """
     if not isinstance(field_value, str):
         raise TypeError(f"{field_location} must be a string")
 
@@ -74,3 +78,37 @@ def generic_date_validation(field_value: str, field_location: str):
         datetime.strptime(field_value, "%Y-%m-%d").date()
     except ValueError as value_error:
         raise ValueError(f"{field_location} must be a valid date") from value_error
+
+
+def generic_date_time_validation(field_value: str, field_location: str):
+    """
+    Apply generic validation to a datetime field to ensure that it is a string (JSON dates must be
+    written as strings) containing a valid datetime in the format "YYYY-MM-DDThh:mm:ss"
+    """
+    if not isinstance(field_value, str):
+        raise TypeError(f"{field_location} must be a string")
+
+    date_pattern_without_timezone = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
+    date_pattern_with_timezone = re.compile(
+        r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}"
+    )
+
+    if date_pattern_without_timezone.fullmatch(field_value):
+        try:
+            datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S")
+        except ValueError as value_error:
+            raise ValueError(
+                f"{field_location} must be a valid datetime"
+            ) from value_error
+    elif date_pattern_with_timezone.fullmatch(field_value):
+        try:
+            datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S%z")
+        except ValueError as value_error:
+            raise ValueError(
+                f"{field_location} must be a valid datetime"
+            ) from value_error
+    else:
+        raise ValueError(
+            f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss" '
+            + 'or "YYYY-MM-DDThh:mm:ss+zz"'
+        )

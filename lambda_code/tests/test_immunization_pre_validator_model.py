@@ -106,3 +106,106 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 "patient -> identifier -> value must be 10 characters (type=value_error)"
                 in str(error.exception)
             )
+
+    def test_model_pre_validate_valid_occurrence_date_time(self):
+        """Test pre_validate_occurrence_date_time accepts valid values when in a model"""
+        valid_occurrence_date_times = [
+            "2000-01-01T00:00:00",
+            "2000-01-01T22:22:22",
+            "1933-12-31T11:11:11+12:45",
+        ]
+        valid_json_data = deepcopy(self.immunization_json_data)
+        for valid_occurrence_date_time in valid_occurrence_date_times:
+            valid_json_data["occurrenceDateTime"] = valid_occurrence_date_time
+            self.assertTrue(self.immunization_validator.validate(valid_json_data))
+
+    def test_model_pre_validate_invalid_occurrence_date_time(self):
+        """Test pre_validate_occurrence_date_time rejects invalid values when in a model"""
+
+        invalid_json_data = deepcopy(self.immunization_json_data)
+
+        # Test none (this should be rejected by the model prior to the pre-validate function
+        # running as FHIR cardinality is 1..1)
+        invalid_json_data["occurrenceDateTime"] = None
+        # Check that we get the correct error message and that it contains type=type_error
+        with self.assertRaises(ValidationError) as error:
+            self.immunization_validator.validate(invalid_json_data)
+
+        self.assertTrue(
+            "Expect any of field value from this list "
+            + "['occurrenceDateTime', 'occurrenceString']. (type=value_error)"
+            in str(error.exception)
+        )
+
+        # Test invalid data types (other than none)
+        for invalid_data_type_for_string in filter(
+            None, self.invalid_data_types_for_strings
+        ):
+            invalid_json_data["occurrenceDateTime"] = invalid_data_type_for_string
+            # Check that we get the correct error message and that it contains type=type_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "occurrenceDateTime must be a string (type=type_error)"
+                in str(error.exception)
+            )
+
+        invalid_occurrence_date_times = [
+            "",
+            "invalid",
+            "20000101",
+            "20000101000000",
+            "200001010000000000",
+            "2000-01-01",
+            "2000-01-01T00:00:001",
+            "12000-01-01T00:00:00+00:00",
+            "12000-01-02T00:00:001",
+            "12000-01-02T00:00:00+00:001",
+            "2000-01-0122:22:22",
+            "2000-01-0122:22:22+00:00",
+            "2000-01-01T22:22:2200:00",
+            "2000-01-01T22:22:22+0000",
+            "99-01-01T00:00:00",
+            "01-01-99T00:00:00",
+            "01-01-1999T00:00:00",
+        ]
+
+        for invalid_occurrence_date_time in invalid_occurrence_date_times:
+            invalid_json_data["occurrenceDateTime"] = invalid_occurrence_date_time
+
+            # Check that we get the correct error message and that it contains type=value_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                'occurrenceDateTime must be a string in the format "YYYY-MM-DDThh:mm:ss" '
+                + 'or "YYYY-MM-DDThh:mm:ss+zz" (type=value_error)'
+                in str(error.exception)
+            )
+
+        # Test invalid dates
+        invalid_occurrence_date_times = [
+            "2000-00-01T00:00:00",
+            "2000-13-01T00:00:00",
+            "2000-01-00T00:00:00",
+            "2000-01-32T00:00:00",
+            "2000-02-30T00:00:00",
+            "2000-01-01T24:00:00",
+            "2000-01-01T00:60:00",
+            "2000-01-01T00:00:60",
+            "2000-01-01T00:00:00+24:00",
+            "2000-01-01T00:00:00+00:60",
+        ]
+
+        for invalid_occurrence_date_time in invalid_occurrence_date_times:
+            invalid_json_data["occurrenceDateTime"] = invalid_occurrence_date_time
+
+            # Check that we get the correct error message and that it contains type=value_error
+            with self.assertRaises(ValidationError) as error:
+                self.immunization_validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "occurrenceDateTime must be a valid datetime (type=value_error)"
+                in str(error.exception)
+            )

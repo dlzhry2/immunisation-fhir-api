@@ -21,7 +21,7 @@ class PatientPreValidators:
 
     @staticmethod
     def name_given(name_given: list[str]) -> list[str]:
-        """Pre-validate name -> given (person forename(s))"""
+        """Pre-validate name -> given (person_forename(s))"""
 
         generic_list_validation(name_given, "name -> given")
 
@@ -36,7 +36,7 @@ class PatientPreValidators:
 
     @staticmethod
     def name_family(name_family: str) -> str:
-        """Pre_validate name -> family (person surname)"""
+        """Pre_validate name -> family (person_surname)"""
 
         generic_string_validation(name_family, "name -> family")
 
@@ -44,7 +44,7 @@ class PatientPreValidators:
 
     @staticmethod
     def birth_date(birth_date: str) -> str:
-        """Pre_validate birthDate (person DOB)"""
+        """Pre_validate birthDate (person_DOB)"""
 
         generic_date_validation(birth_date, "birthDate")
 
@@ -52,7 +52,7 @@ class PatientPreValidators:
 
     @staticmethod
     def gender(gender: str) -> str:
-        """Pre-validate gender (person gender)"""
+        """Pre-validate gender (person_gender)"""
 
         generic_string_validation(gender, "gender", predefined_values=Constants.genders)
 
@@ -68,7 +68,7 @@ class PatientPreValidators:
 
     @staticmethod
     def address_postal_code(address_postal_code: str) -> str:
-        """Pre-validate postalCode (person postcode)"""
+        """Pre-validate address -> postalCode (person_postcode)"""
 
         generic_string_validation(address_postal_code, "address -> postalCode")
 

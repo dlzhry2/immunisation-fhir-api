@@ -53,8 +53,7 @@ class PatientValidator:
     def pre_validate_birth_date(cls, values: dict) -> dict:
         """
         Pre-validate that, if birthDate (person DOB) exists, then it is a string in the format
-        YYYY-MM-DD, where MM represents a number between from 01 to 12, and DD respresents a
-        number from 01 to 31
+        YYYY-MM-DD, representing a valid date
         """
 
         try:

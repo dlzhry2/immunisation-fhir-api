@@ -31,24 +31,27 @@ class ImmunizationValidator:
 
         return values
 
-    # @classmethod
-    # def pre_validate_occurrence_date_time(cls, values: dict) -> dict:
-    #    """Pre-validate occurrence date time"""
-    #    occurrence_date_time = values.get("occurrenceDateTime", None)
-    #    if not isinstance(occurrence_date_time, str):
-    #        raise ValueError("occurrenceDateTime must be a string")
+    @classmethod
+    def pre_validate_occurrence_date_time(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if occurrenceDateTime exists (date_and_time), then it is a string in the
+        format YYYY-MM-DDThh:mm:ss, representing a valid datetime
+        """
+        try:
+            occurrence_date_time = values["occurrenceDateTime"]
+            ImmunizationPreValidators.occurrence_date_time(occurrence_date_time)
+        except KeyError:
+            pass
 
-    #    if occurrence_date_time.isnumeric():
-    #        raise ValueError(
-    #            "occurrenceDateTime must be in the format YYYY-MM-DDThh:mm:ss+00:00"
-    #        )
-
-    #    return values
+        return values
 
     def add_custom_root_validators(self):
         """Add custom NHS validators to the model"""
         Immunization.add_root_validator(
             self.pre_validate_patient_identifier_value, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_occurrence_date_time, pre=True
         )
 
     def validate(self, json_data) -> Immunization:
