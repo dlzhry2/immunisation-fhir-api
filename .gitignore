@@ -1,18 +1,17 @@
 **/.terraform
-.direnv
+.direnv/
 node_modules/
 bin/
 dist/
 build/
 public/
 newman/
-.idea
+.idea/
 .DS_Store
 .#*
 
 __pycache__/
 .envrc
-.idea/
 .venv/
 .env
 smoketest-report.xml
@@ -25,5 +24,3 @@ terraform/zips
 sandbox/specification/
 .vscode/
 openapi.json
-
-.direnv/
