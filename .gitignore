@@ -22,5 +22,7 @@ terraform/zips
 .python-version
 **/.terraform/
 sandbox/specification/
-.vscode/
 openapi.json
+
+.vscode/**/*
+!.vscode/settings.json.default

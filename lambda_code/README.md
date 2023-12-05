@@ -15,11 +15,6 @@ The tests are in a separate module so in order for them to see each other we nee
 
 ### VS Code
 
-- Add the `src` directory as an additional analysis path.  
-  `.vscode/settings.json`:  
-    ```
-    "python.analysis.extraPaths": [
-        "./lambda_code/src"
-    ]
-    ```
+- Open the root repo directory in VS Code.
+- Copy `.vscode/settings.json.default` to `.vscode/settings.json`, or integrate the contents with your existing file.
 - Run the `Python: Configure Tests` command and when it asks for a directory give it `lambda_code`.
