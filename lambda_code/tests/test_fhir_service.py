@@ -3,16 +3,14 @@ import os
 import sys
 import unittest
 import uuid
-from unittest.mock import create_autospec, MagicMock, ANY, patch
-from src.models.errors import UnhandledResponseError
+from unittest.mock import create_autospec, MagicMock
 from fhir.resources.immunization import Immunization
-from fhir.resources.patient import Patient
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunisationRepository
 from fhir_service import FhirService
-from pds import PdsService, Authenticator
+from pds import PdsService
 
 
 def _create_an_immunization(imms_id) -> Immunization:
@@ -116,15 +114,6 @@ class TestCreateImmunization(unittest.TestCase):
         
         self.assertIn('nhs_number is not provided or is invalid', str(context.exception))
         self.fhir_service.pds_service.get_patient_details.assert_not_called()
-        
-        # confirm error raised
-        # assert self.fhir_service.pds_service.get_patient_details was not called if passed incorrect ID
-        
-        
-    # sad path 
-    # self.fhir_service.pds_service.get_patient_details.assert_called_once_with(req_imms['patient']['identifier']['value']) = null instead
-    # first assertion = raised errror
-    # second assertion = patient id = null then assert call never happened
 
 
 class TestDeleteImmunization(unittest.TestCase):

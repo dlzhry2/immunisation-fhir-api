@@ -51,7 +51,7 @@ class FhirController:
         try: 
             resource = self.fhir_service.create_immunization(imms)
             return self.create_response(201, resource.json())
-        except UnhandledResponseError as error:
+        except Exception as error:
             body = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
                                             code=Code.invalid,
                                             diagnostics=str(error))

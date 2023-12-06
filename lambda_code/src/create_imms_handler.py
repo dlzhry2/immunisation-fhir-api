@@ -1,11 +1,9 @@
 import uuid
-import json
 from fhir_controller import FhirController, make_controller
 from models.errors import Severity, Code, create_operation_outcome
 
 
 def create_imms_handler(event, context):
-    print(event)
     return create_immunization(event, make_controller())
 
 

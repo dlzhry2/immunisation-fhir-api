@@ -47,7 +47,7 @@ class TestAuthenticator(unittest.TestCase):
         self.secret_manager_client.get_secret_value.return_value = {"SecretString": json.dumps(self.secret_response)}
         self.authenticator = Authenticator(self.secret_manager_client, "int")
         self.url = "https://int.api.service.nhs.uk/oauth2/token"
-    
+
     @responses.activate
     def test_get_access_token(self):
         jwt_secret = "secret"
@@ -64,7 +64,7 @@ class TestAuthenticator(unittest.TestCase):
             act_access_token = self.authenticator.get_access_token()
             mock_jwt.assert_called_once_with(ANY, ANY, algorithm="RS512", headers={"kid": ANY})
             self.assertEqual(act_access_token, access_token)
-    
+
     @responses.activate
     def test_jwt_values(self):
         claims = {
@@ -82,8 +82,8 @@ class TestAuthenticator(unittest.TestCase):
             mock_jwt.return_value = jwt_secret
             self.authenticator.get_access_token()
             mock_jwt.assert_called_once_with(claims, self.private_key, algorithm="RS512", headers={"kid": self.kid})
-            
-        
+
+
 
 if __name__ == '__main__':
     unittest.main()

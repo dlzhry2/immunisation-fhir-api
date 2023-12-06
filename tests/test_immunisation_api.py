@@ -40,6 +40,7 @@ class ImmunisationApi:
 def create_an_imms_obj(imms_id: str = str(uuid.uuid4())) -> dict:
     imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
     imms["id"] = imms_id
+    imms["patient"]["identifier"]["value"] = "9693632109"
 
     return imms
 
@@ -55,7 +56,6 @@ def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> dict:
     return res.json()
 
 
-@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -73,6 +73,7 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     # CREATE
     result = imms_api.create_immunization(imms)
     res_body = result.json()
+    print(res_body)
 
     assert result.status_code == 201
     assert res_body["resourceType"] == "Immunization"
