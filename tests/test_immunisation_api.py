@@ -68,12 +68,10 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
     imms = create_an_imms_obj()
-    print(imms)
 
     # CREATE
     result = imms_api.create_immunization(imms)
     res_body = result.json()
-    print(res_body)
 
     assert result.status_code == 201
     assert res_body["resourceType"] == "Immunization"
