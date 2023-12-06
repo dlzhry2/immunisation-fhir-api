@@ -54,7 +54,7 @@ class FhirController:
         except Exception as error:
             body = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
                                             code=Code.invalid,
-                                            diagnostics=str(error))
+                                            diagnostics=f"nhs number is not provided or is invalid\n{error}")
             return self.create_response(400, body.json())
 
     def delete_immunization(self, aws_event):
