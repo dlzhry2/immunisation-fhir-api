@@ -1,11 +1,18 @@
 from typing import Optional
 from fhir.resources.immunization import Immunization
 from fhir_repository import ImmunisationRepository
+from models.errors import UnhandledResponseError
+import boto3
+from botocore.config import Config
+from pds import PdsService, Authenticator
 
 
 class FhirService:
     def __init__(self, imms_repo: ImmunisationRepository):
         self.immunisation_repo = imms_repo
+        env = "internal-dev"
+        my_config = Config(region_name = 'eu-west-2')
+        self.pds_service = PdsService(Authenticator(boto3.client('secretsmanager', config=my_config), env), env)
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunisation_repo.get_immunization_by_id(imms_id)
@@ -15,15 +22,20 @@ class FhirService:
             return Immunization.parse_obj(imms)
         else:
             return None
+        
+    def lookup_nhs_number(self, immunization: dict):
+        is_valid_patient = self.pds_service.get_patient_details(immunization['patient']['identifier']['value'])
+        if is_valid_patient:
+            return is_valid_patient
+        return None
 
     def create_immunization(self, immunization: dict) -> Immunization:
-        # TODO: AMB-1730 - do the PDS lookup
-        # event_object = json.loads(event)
-        # secrets_manager_client = boto3.client('secretsmanager') 
-        # pds_service = PdsService(Authenticator(secrets_manager_client, "internal-dev"), "internal-dev")
-        # is_valid_patient = pds_service.get_patient_details(event_object['nhs_number'])
-        imms = self.immunisation_repo.create_immunization(immunization)
-        return Immunization.parse_obj(imms)
+        is_valid_patient = self.lookup_nhs_number(immunization)
+        if is_valid_patient:
+            imms = self.immunisation_repo.create_immunization(immunization)
+            return Immunization.parse_obj(imms)
+        else:
+            raise Exception('nhs_number is not provided or is invalid')
 
     def delete_immunization(self, imms_id) -> Immunization:
         """Delete an Immunization if it exits and return the ID back if successful.

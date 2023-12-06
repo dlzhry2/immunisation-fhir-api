@@ -3,14 +3,16 @@ import os
 import sys
 import unittest
 import uuid
-from unittest.mock import create_autospec
-
+from unittest.mock import create_autospec, MagicMock, ANY, patch
+from src.models.errors import UnhandledResponseError
 from fhir.resources.immunization import Immunization
+from fhir.resources.patient import Patient
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunisationRepository
 from fhir_service import FhirService
+from pds import PdsService, Authenticator
 
 
 def _create_an_immunization(imms_id) -> Immunization:
@@ -84,21 +86,45 @@ class TestCreateImmunization(unittest.TestCase):
     def setUp(self):
         self.imms_repo = create_autospec(ImmunisationRepository)
         self.fhir_service = FhirService(self.imms_repo)
+        self.fhir_service.pds_service = create_autospec(PdsService)
+        self.imms_id = str(uuid.uuid4())
+        self.req_imms = _create_an_immunization_dict(self.imms_id)
 
     def test_create_immunization(self):
-        """it should create Immunization"""
-        imms_id = str(uuid.uuid4())
-        self.imms_repo.create_immunization.return_value = _create_an_immunization_dict(imms_id)
-        req_imms = _create_an_immunization_dict(imms_id)
+        """it should create Immunization""" 
+        self.imms_repo.create_immunization.return_value = self.req_imms
+        self.fhir_service.lookup_nhs_number = MagicMock(return_value=self.req_imms)
 
-        stored_imms = self.fhir_service.create_immunization(req_imms)
+        stored_imms = self.fhir_service.create_immunization(self.req_imms)
 
-        self.imms_repo.create_immunization.assert_called_once_with(req_imms)
+        self.imms_repo.create_immunization.assert_called_once_with(self.req_imms)
         self.assertIsInstance(stored_imms, Immunization)
 
     def test_lookup_nhs_number(self):
         """it should use PDS to lookup NHS number"""
-        # TODO: AMB-1730 - add test for PDS integration
+        self.imms_repo.create_immunization.return_value = self.req_imms
+        
+        self.fhir_service.create_immunization(self.req_imms)
+        
+        self.fhir_service.pds_service.get_patient_details.assert_called_once_with(self.req_imms['patient']['identifier']['value'])
+
+    def test_lookup_nhs_number_not_found(self):
+        self.fhir_service.lookup_nhs_number = MagicMock(return_value=None)
+        
+        with self.assertRaises(Exception) as context:
+            self.fhir_service.create_immunization(self.req_imms)
+        
+        self.assertIn('nhs_number is not provided or is invalid', str(context.exception))
+        self.fhir_service.pds_service.get_patient_details.assert_not_called()
+        
+        # confirm error raised
+        # assert self.fhir_service.pds_service.get_patient_details was not called if passed incorrect ID
+        
+        
+    # sad path 
+    # self.fhir_service.pds_service.get_patient_details.assert_called_once_with(req_imms['patient']['identifier']['value']) = null instead
+    # first assertion = raised errror
+    # second assertion = patient id = null then assert call never happened
 
 
 class TestDeleteImmunization(unittest.TestCase):

@@ -48,8 +48,14 @@ class FhirController:
                                             diagnostics=f"Request's body contains malformed JSON\n{error}")
             return self.create_response(400, body.json())
 
-        resource = self.fhir_service.create_immunization(imms)
-        return self.create_response(201, resource.json())
+        try: 
+            resource = self.fhir_service.create_immunization(imms)
+            return self.create_response(201, resource.json())
+        except UnhandledResponseError as error:
+            body = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                            code=Code.invalid,
+                                            diagnostics=str(error))
+            return self.create_response(400, body.json())
 
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]

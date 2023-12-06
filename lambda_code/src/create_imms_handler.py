@@ -10,7 +10,6 @@ def create_imms_handler(event, context):
 
 
 def create_immunization(event, controller: FhirController):
-    print(event)
     try:
         return controller.create_immunization(event)
     except Exception as e:
