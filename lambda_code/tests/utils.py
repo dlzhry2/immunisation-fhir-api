@@ -130,7 +130,7 @@ class GenericValidatorMethodTests:
         Test that a validator method rejects the following invalid strings:
         * All invalid data types
         * If there is a predefined string length: Strings of invalid length (defined by the argument
-            invalid_length_strings_to_test - this should include an empty string)
+            invalid_length_strings_to_test), plus the empty string
         * If there is no predfined string length: Empty strings
         * If there are predefined values: Invalid strings (i.e. not one of the predefined values)
         """
@@ -144,9 +144,10 @@ class GenericValidatorMethodTests:
                 f"{field_location} must be a string",
             )
 
-        # If there is a predefined string length, then test invalid string lengths,
-        # otherwise check the empty string only
+        # If there is a predefined string length, then test invalid string lengths, plus the
+        # empty string, otherwise check the empty string only
         if defined_length:
+            invalid_length_strings_to_test += [""]
             for invalid_length_string in invalid_length_strings_to_test:
                 with test_instance.assertRaises(ValueError) as error:
                     validator(invalid_length_string)
@@ -186,10 +187,10 @@ class GenericValidatorMethodTests:
         Test that a validator method rejects the following invalid lists:
         * All invalid data types
         * If there is a predefined list length: Strings of invalid length (defined by the argument
-            invalid_length_lists_to_test - this should include an empty list)
-        * If there is no predfined list length: Empty lists
+            invalid_length_lists_to_test), plus the empty list
+        * If there is no predfined list length: Empty list
         * If there is a list of invalid_lists_with_non_string_data_types_to_test: Each of the
-            items in the list, plus a
+            items in the list, plus a list containing an empty string
         """
         # Test invalid data types
         for invalid_data_type_for_list in InvalidDataTypes.for_lists:
@@ -201,9 +202,10 @@ class GenericValidatorMethodTests:
                 f"{field_location} must be an array",
             )
 
-        # If there is a predefined list length, then test invalid list lengths,
-        # otherwise check the empty list only
+        # If there is a predefined list length, then test invalid list lengths, plus the empty
+        # list, otherwise check the empty list only
         if predefined_list_length:
+            invalid_length_lists_to_test.append([])
             for invalid_length_list in invalid_length_lists_to_test:
                 with test_instance.assertRaises(ValueError) as error:
                     validator(invalid_length_list)

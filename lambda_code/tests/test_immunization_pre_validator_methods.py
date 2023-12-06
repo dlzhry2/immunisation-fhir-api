@@ -27,7 +27,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             validator=ImmunizationPreValidators.patient_identifier_value,
             field_location="patient -> identifier -> value",
             defined_length=10,
-            invalid_length_strings_to_test=["123456789", "12345678901", ""],
+            invalid_length_strings_to_test=["123456789", "12345678901"],
         )
 
     def test_pre_occurrence_date_time_valid(self):
@@ -128,16 +128,11 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
 
     def test_pre_contained_invalid(self):
         """Test ImmunizationPreValidators.contained"""
-
-        invalid_length_lists_to_test = (
-            [
-                [],
-                [
-                    {"resourceType": "QuestionnaireResponse", "status": "completed"},
-                    {"resourceType": "QuestionnaireResponse", "status": "completed"},
-                ],
-            ],
-        )
+        valid_list_element = {
+            "resourceType": "QuestionnaireResponse",
+            "status": "completed",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
         GenericValidatorMethodTests.list_invalid(
             self,
@@ -161,16 +156,8 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
 
     def test_pre_questionnaire_answer_invalid(self):
         """Test ImmunizationPreValidators.questionnaire_answer"""
-
-        invalid_length_lists_to_test = (
-            [
-                [],
-                [
-                    {"valueCoding": {"code": "B0C4P"}},
-                    {"valueCoding": {"code": "B0C4P"}},
-                ],
-            ],
-        )
+        valid_list_element = {"valueCoding": {"code": "B0C4P"}}
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
         GenericValidatorMethodTests.list_invalid(
             self,
@@ -242,19 +229,11 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_identifier_invalid(self):
         """Test ImmunizationPreValidators.identifier"""
 
-        invalid_length_lists_to_test = [
-            [],
-            [
-                {
-                    "system": "https://supplierABC/identifiers/vacc",
-                    "value": "e045626e-4dc5-4df3-bc35-da25263f901e",
-                },
-                {
-                    "system": "https://supplierABC/identifiers/vacc",
-                    "value": "e045626e-4dc5-4df3-bc35-da25263f901e",
-                },
-            ],
-        ]
+        valid_list_element = {
+            "system": "https://supplierABC/identifiers/vacc",
+            "value": "e045626e-4dc5-4df3-bc35-da25263f901e",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
         GenericValidatorMethodTests.list_invalid(
             self,

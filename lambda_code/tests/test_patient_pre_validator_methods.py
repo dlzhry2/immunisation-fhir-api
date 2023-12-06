@@ -26,7 +26,7 @@ class TestPrePatientMethodValidators(unittest.TestCase):
             validator=PatientPreValidators.name,
             field_location="name",
             predefined_list_length=1,
-            invalid_length_lists_to_test=[[], [{"family": "Test"}, {"family": "Test"}]],
+            invalid_length_lists_to_test=[[{"family": "Test"}, {"family": "Test"}]],
         )
 
     def test_pre_name_given_valid(self):
@@ -126,10 +126,8 @@ class TestPrePatientMethodValidators(unittest.TestCase):
 
     def test_pre_address_invalid(self):
         """Test PatientPreValidators.address"""
-        invalid_length_lists_to_test = [
-            [],
-            [{"postalCode": "AA0 0AA"}, {"postalCode": "AA0 0AA"}],
-        ]
+        valid_list_element = {"postalCode": "AA0 0AA"}
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
         GenericValidatorMethodTests.list_invalid(
             self,
