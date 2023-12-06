@@ -1,6 +1,7 @@
 import json
 import re
 import uuid
+import traceback
 from typing import Optional
 
 from fhir.resources.operationoutcome import OperationOutcome
@@ -52,9 +53,10 @@ class FhirController:
             resource = self.fhir_service.create_immunization(imms)
             return self.create_response(201, resource.json())
         except Exception as error:
+            traceback_call = traceback.format_exception(type(error), error, error.__traceback__)
             body = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
                                             code=Code.invalid,
-                                            diagnostics=str(error))
+                                            diagnostics=str(traceback_call))
             return self.create_response(400, body.json())
 
     def delete_immunization(self, aws_event):

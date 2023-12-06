@@ -56,6 +56,7 @@ def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> dict:
     return res.json()
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -72,6 +73,7 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     # CREATE
     result = imms_api.create_immunization(imms)
     res_body = result.json()
+    print(res_body, "<<<<<< RESULT")
 
     assert result.status_code == 201
     assert res_body["resourceType"] == "Immunization"

@@ -1,5 +1,4 @@
 import uuid
-
 from fhir_controller import FhirController, make_controller
 from models.errors import Severity, Code, create_operation_outcome
 
