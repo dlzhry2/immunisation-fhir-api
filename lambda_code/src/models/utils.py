@@ -10,7 +10,7 @@ def generic_string_validation(
     field_location: str,
     defined_length: int = 0,
     max_length: int = 0,
-    predefined_values: set = None,
+    predefined_values: tuple = None,
 ):
     """
     Apply generic validation to a string field to ensure it is a non-empty string which meets

@@ -72,11 +72,19 @@ class PatientPreValidators:
 
         generic_string_validation(address_postal_code, "address -> postalCode")
 
-        if len(address_postal_code.split(" ")) != 2:
+        # Validate that address_postal_code contains a single space which divides the two parts
+        # of the postal code
+        if (
+            address_postal_code.count(" ") != 1
+            or address_postal_code.startswith(" ")
+            or address_postal_code.endswith(" ")
+        ):
             raise ValueError(
-                "address -> postalCode must be divided into two parts by a single space"
+                "address -> postalCode must contain a single space, "
+                + "which divides the two parts of the postal code"
             )
 
+        # Validate that max length is 8 (excluding the space)
         if len(address_postal_code.replace(" ", "")) > 8:
             raise ValueError(
                 "address -> postalCode must be 8 or fewer characters (excluding spaces)"

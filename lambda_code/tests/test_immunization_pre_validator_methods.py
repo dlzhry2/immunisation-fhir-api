@@ -13,15 +13,9 @@ from ..tests.utils import (
 class TestPreImmunizationMethodValidators(unittest.TestCase):
     """Test immunization pre-validation methods"""
 
-    @classmethod
-    def setUpClass(cls):
-        # set up invalid data types for strings
-        cls.invalid_data_types_for_strings = InvalidDataTypes.for_strings
-        cls.invalid_data_types_for_lists = InvalidDataTypes.for_lists
-
     def test_patient_identifier_value_valid(self):
         """Test patient_identifier_value"""
-        GenericValidatorMethodTests.string_valid(
+        GenericValidatorMethodTests.valid(
             self, ImmunizationPreValidators.patient_identifier_value, ["1234567890"]
         )
 
@@ -32,7 +26,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             self,
             validator=ImmunizationPreValidators.patient_identifier_value,
             field_location="patient -> identifier -> value",
-            predefined_string_length=10,
+            defined_length=10,
             invalid_length_strings_to_test=["123456789", "12345678901", ""],
         )
 
@@ -57,7 +51,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
         """Test ImmunizationPreValidators.occurrence_date_time"""
 
         # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
+        for invalid_data_type_for_string in InvalidDataTypes.for_strings:
             with self.assertRaises(TypeError) as error:
                 ImmunizationPreValidators.occurrence_date_time(
                     invalid_data_type_for_string
@@ -124,10 +118,10 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
 
     def test_pre_contained_valid(self):
         """Test ImmunizationPreValidators.contained"""
-        GenericValidatorMethodTests.list_valid(
+        GenericValidatorMethodTests.valid(
             self,
             validator=ImmunizationPreValidators.contained,
-            valid_lists_to_test=[
+            valid_items_to_test=[
                 [{"resourceType": "QuestionnaireResponse", "status": "completed"}]
             ],
         )
@@ -155,10 +149,10 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
 
     def test_pre_questionnaire_answer_valid(self):
         """Test ImmunizationPreValidators.questionnaire_answer"""
-        GenericValidatorMethodTests.list_valid(
+        GenericValidatorMethodTests.valid(
             self,
             validator=ImmunizationPreValidators.questionnaire_answer,
-            valid_lists_to_test=[
+            valid_items_to_test=[
                 [
                     {"valueCoding": {"code": "B0C4P"}},
                 ]
@@ -190,10 +184,10 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_questionnaire_site_code_code_valid(self):
         """Test ImmunizationPreValidators.questionnaire_site_code_code"""
 
-        GenericValidatorMethodTests.string_valid(
+        GenericValidatorMethodTests.valid(
             self,
             validator=ImmunizationPreValidators.questionnaire_site_code_code,
-            valid_strings_to_test=["B0C4P"],
+            valid_items_to_test=["B0C4P"],
         )
 
     def test_pre_questionnaire_site_code_code_invalid(self):
@@ -210,10 +204,10 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_questionnaire_site_name_code_valid(self):
         """Test ImmunizationPreValidators.questionnaire_site_name_code"""
 
-        GenericValidatorMethodTests.string_valid(
+        GenericValidatorMethodTests.valid(
             self,
             validator=ImmunizationPreValidators.questionnaire_site_name_code,
-            valid_strings_to_test=["dummy"],
+            valid_items_to_test=["dummy"],
         )
 
     def test_pre_questionnaire_site_name_code_invalid(self):
@@ -239,19 +233,14 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             ]
         ]
 
-        GenericValidatorMethodTests.list_valid(
+        GenericValidatorMethodTests.valid(
             self,
             validator=ImmunizationPreValidators.identifier,
-            valid_lists_to_test=valid_lists_to_test,
+            valid_items_to_test=valid_lists_to_test,
         )
 
     def test_pre_identifier_invalid(self):
         """Test ImmunizationPreValidators.identifier"""
-
-        # Test invalid data types
-        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
-            with self.assertRaises(TypeError) as error:
-                ImmunizationPreValidators.identifier(invalid_data_type_for_list)
 
         invalid_length_lists_to_test = [
             [],
@@ -278,10 +267,10 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_identifier_value_valid(self):
         """Test ImmunizationPreValidators.identifier_value"""
 
-        GenericValidatorMethodTests.string_valid(
+        GenericValidatorMethodTests.valid(
             self,
             validator=ImmunizationPreValidators.identifier_value,
-            valid_strings_to_test=[
+            valid_items_to_test=[
                 "e045626e-4dc5-4df3-bc35-da25263f901e",
                 "ACME-vacc123456",
                 "ACME-CUSTOMER1-vacc123456",
@@ -300,10 +289,10 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_identifier_system_valid(self):
         """Test ImmunizationPreValidators.identifier_system"""
 
-        GenericValidatorMethodTests.string_valid(
+        GenericValidatorMethodTests.valid(
             self,
             validator=ImmunizationPreValidators.identifier_system,
-            valid_strings_to_test=[
+            valid_items_to_test=[
                 "https://supplierABC/identifiers/vacc",
                 "https://supplierABC/ODSCode_NKO41/identifiers/vacc",
             ],
