@@ -4,10 +4,9 @@ import unittest
 
 from models.immunization_pre_validators import ImmunizationPreValidators
 from ..tests.utils import (
-    invalid_data_types_for_strings,
-    invalid_data_types_for_lists,
-    generic_string_validator_valid_tests,
-    generic_string_validator_invalid_tests,
+    InvalidDataTypes,
+    GenericValidatorMethodTests,
+    generate_field_location_for_questionnnaire_response,
 )
 
 
@@ -17,19 +16,19 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # set up invalid data types for strings
-        cls.invalid_data_types_for_strings = invalid_data_types_for_strings
-        cls.invalid_data_types_for_lists = invalid_data_types_for_lists
+        cls.invalid_data_types_for_strings = InvalidDataTypes.for_strings
+        cls.invalid_data_types_for_lists = InvalidDataTypes.for_lists
 
     def test_patient_identifier_value_valid(self):
         """Test patient_identifier_value"""
-        generic_string_validator_valid_tests(
+        GenericValidatorMethodTests.string_valid(
             self, ImmunizationPreValidators.patient_identifier_value, ["1234567890"]
         )
 
     def test_patient_identifier_value_invalid(self):
         """Test patient_identifier_value"""
 
-        generic_string_validator_invalid_tests(
+        GenericValidatorMethodTests.string_invalid(
             self,
             validator=ImmunizationPreValidators.patient_identifier_value,
             field_location="patient -> identifier -> value",
@@ -125,97 +124,73 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
 
     def test_pre_contained_valid(self):
         """Test ImmunizationPreValidators.contained"""
-        # Test valid data
-        valid_contained = [
-            {"resourceType": "QuestionnaireResponse", "status": "completed"}
-        ]
-        self.assertEqual(
-            ImmunizationPreValidators.contained(valid_contained),
-            valid_contained,
+        GenericValidatorMethodTests.list_valid(
+            self,
+            validator=ImmunizationPreValidators.contained,
+            valid_lists_to_test=[
+                [{"resourceType": "QuestionnaireResponse", "status": "completed"}]
+            ],
         )
 
     def test_pre_contained_invalid(self):
         """Test ImmunizationPreValidators.contained"""
 
-        # Test invalid data types
-        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
-            with self.assertRaises(TypeError) as error:
-                ImmunizationPreValidators.contained(invalid_data_type_for_list)
-
-            self.assertEqual(
-                str(error.exception),
-                "contained must be an array",
-            )
-
-        # Test invalid list length
-        invalid_contained_items = [
-            [],
+        invalid_length_lists_to_test = (
             [
-                {"resourceType": "QuestionnaireResponse", "status": "completed"},
-                {"resourceType": "QuestionnaireResponse", "status": "completed"},
+                [],
+                [
+                    {"resourceType": "QuestionnaireResponse", "status": "completed"},
+                    {"resourceType": "QuestionnaireResponse", "status": "completed"},
+                ],
             ],
-        ]
-        for invalid_contained in invalid_contained_items:
-            with self.assertRaises(ValueError) as error:
-                ImmunizationPreValidators.contained(invalid_contained)
+        )
 
-            self.assertEqual(
-                str(error.exception),
-                "contained must be an array of length 1",
-            )
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=ImmunizationPreValidators.contained,
+            field_location="contained",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
 
     def test_pre_questionnaire_answer_valid(self):
         """Test ImmunizationPreValidators.questionnaire_answer"""
-
-        # Test valid data
-        valid_questionnaire_answer = [
-            {"valueCoding": {"code": "B0C4P"}},
-        ]
-        self.assertEqual(
-            ImmunizationPreValidators.questionnaire_answer(valid_questionnaire_answer),
-            valid_questionnaire_answer,
+        GenericValidatorMethodTests.list_valid(
+            self,
+            validator=ImmunizationPreValidators.questionnaire_answer,
+            valid_lists_to_test=[
+                [
+                    {"valueCoding": {"code": "B0C4P"}},
+                ]
+            ],
         )
 
     def test_pre_questionnaire_answer_invalid(self):
         """Test ImmunizationPreValidators.questionnaire_answer"""
 
-        # Test invalid data types
-        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
-            with self.assertRaises(TypeError) as error:
-                ImmunizationPreValidators.questionnaire_answer(
-                    invalid_data_type_for_list
-                )
-
-            self.assertEqual(
-                str(error.exception),
-                "contained[0] -> resourceType[QuestionnaireResponse]: "
-                + "item[*] -> linkId[*]: answer must be an array",
-            )
-
-        # Test invalid list length
-        invalid_questionnaire_answers = [
-            [],
+        invalid_length_lists_to_test = (
             [
-                {"valueCoding": {"code": "B0C4P"}},
-                {"valueCoding": {"code": "B0C4P"}},
+                [],
+                [
+                    {"valueCoding": {"code": "B0C4P"}},
+                    {"valueCoding": {"code": "B0C4P"}},
+                ],
             ],
-        ]
-        for invalid_questionnaire_answer in invalid_questionnaire_answers:
-            with self.assertRaises(ValueError) as error:
-                ImmunizationPreValidators.questionnaire_answer(
-                    invalid_questionnaire_answer
-                )
+        )
 
-            self.assertEqual(
-                str(error.exception),
-                "contained[0] -> resourceType[QuestionnaireResponse]: "
-                + "item[*] -> linkId[*]: answer must be an array of length 1",
-            )
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=ImmunizationPreValidators.questionnaire_answer,
+            field_location="contained[0] -> resourceType[QuestionnaireResponse]: "
+            + "item[*] -> linkId[*]: answer",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
 
     def test_pre_questionnaire_site_code_code_valid(self):
         """Test ImmunizationPreValidators.questionnaire_site_code_code"""
 
-        generic_string_validator_valid_tests(
+        GenericValidatorMethodTests.string_valid(
             self,
             validator=ImmunizationPreValidators.questionnaire_site_code_code,
             valid_strings_to_test=["B0C4P"],
@@ -224,17 +199,18 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_questionnaire_site_code_code_invalid(self):
         """Test ImmunizationPreValidators.questionnaire_site_code_code"""
 
-        generic_string_validator_invalid_tests(
+        GenericValidatorMethodTests.string_invalid(
             self,
             validator=ImmunizationPreValidators.questionnaire_site_code_code,
-            field_location="contained[0] -> resourceType[QuestionnaireResponse]: "
-            + "item[*] -> linkId[SiteCode]: answer[0] -> valueCoding -> code",
+            field_location=generate_field_location_for_questionnnaire_response(
+                "SiteCode", "code"
+            ),
         )
 
     def test_pre_questionnaire_site_name_code_valid(self):
         """Test ImmunizationPreValidators.questionnaire_site_name_code"""
 
-        generic_string_validator_valid_tests(
+        GenericValidatorMethodTests.string_valid(
             self,
             validator=ImmunizationPreValidators.questionnaire_site_name_code,
             valid_strings_to_test=["dummy"],
@@ -243,26 +219,30 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_questionnaire_site_name_code_invalid(self):
         """Test ImmunizationPreValidators.questionnaire_site_name_code"""
 
-        generic_string_validator_invalid_tests(
+        GenericValidatorMethodTests.string_invalid(
             self,
             validator=ImmunizationPreValidators.questionnaire_site_name_code,
-            field_location="contained[0] -> resourceType[QuestionnaireResponse]: "
-            + "item[*] -> linkId[SiteName]: answer[0] -> valueCoding -> code",
+            field_location=generate_field_location_for_questionnnaire_response(
+                "SiteName", "code"
+            ),
         )
 
     def test_pre_identifier_valid(self):
         """Test ImmunizationPreValidators.identifier"""
 
-        # Test valid data
-        valid_identifier = [
-            {
-                "system": "https://supplierABC/identifiers/vacc",
-                "value": "e045626e-4dc5-4df3-bc35-da25263f901e",
-            }
+        valid_lists_to_test = [
+            [
+                {
+                    "system": "https://supplierABC/identifiers/vacc",
+                    "value": "e045626e-4dc5-4df3-bc35-da25263f901e",
+                }
+            ]
         ]
-        self.assertEqual(
-            ImmunizationPreValidators.identifier(valid_identifier),
-            valid_identifier,
+
+        GenericValidatorMethodTests.list_valid(
+            self,
+            validator=ImmunizationPreValidators.identifier,
+            valid_lists_to_test=valid_lists_to_test,
         )
 
     def test_pre_identifier_invalid(self):
@@ -273,13 +253,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             with self.assertRaises(TypeError) as error:
                 ImmunizationPreValidators.identifier(invalid_data_type_for_list)
 
-            self.assertEqual(
-                str(error.exception),
-                "identifier must be an array",
-            )
-
-        # Test invalid list length
-        invalid_identifiers = [
+        invalid_length_lists_to_test = [
             [],
             [
                 {
@@ -292,19 +266,19 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
                 },
             ],
         ]
-        for invalid_identifier in invalid_identifiers:
-            with self.assertRaises(ValueError) as error:
-                ImmunizationPreValidators.identifier(invalid_identifier)
 
-            self.assertEqual(
-                str(error.exception),
-                "identifier must be an array of length 1",
-            )
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=ImmunizationPreValidators.identifier,
+            field_location="identifier",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
 
     def test_pre_identifier_value_valid(self):
         """Test ImmunizationPreValidators.identifier_value"""
 
-        generic_string_validator_valid_tests(
+        GenericValidatorMethodTests.string_valid(
             self,
             validator=ImmunizationPreValidators.identifier_value,
             valid_strings_to_test=[
@@ -317,7 +291,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_identifier_value_invalid(self):
         """Test ImmunizationPreValidators.identifier_value"""
 
-        generic_string_validator_invalid_tests(
+        GenericValidatorMethodTests.string_invalid(
             self,
             validator=ImmunizationPreValidators.identifier_value,
             field_location="identifier[0] -> value",
@@ -326,7 +300,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_identifier_system_valid(self):
         """Test ImmunizationPreValidators.identifier_system"""
 
-        generic_string_validator_valid_tests(
+        GenericValidatorMethodTests.string_valid(
             self,
             validator=ImmunizationPreValidators.identifier_system,
             valid_strings_to_test=[
@@ -338,7 +312,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_identifier_system_invalid(self):
         """Test ImmunizationPreValidators.identifier_system"""
 
-        generic_string_validator_invalid_tests(
+        GenericValidatorMethodTests.string_invalid(
             self,
             validator=ImmunizationPreValidators.identifier_system,
             field_location="identifier[0] -> system",

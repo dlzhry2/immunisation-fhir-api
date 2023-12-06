@@ -116,7 +116,7 @@ def generic_date_time_validation(field_value: str, field_location: str):
 
 
 def get_generic_questionnaire_response_value(
-    json_data: dict, link_id: str, field_type: Literal["code", "value"]
+    json_data: dict, link_id: str, field_type: Literal["code", "display", "system"]
 ) -> Union[str, None]:
     """
     Get the value of a QuestionnaireResponse field, given its linkId
