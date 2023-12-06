@@ -1,7 +1,12 @@
 "Utils for tests"
 
+from copy import deepcopy
+from functools import reduce
 from typing import Callable, Literal
+from pydantic import ValidationError
+import operator
 import unittest
+from icecream import ic
 
 
 def generate_field_location_for_questionnnaire_response(
@@ -12,6 +17,16 @@ def generate_field_location_for_questionnnaire_response(
         "contained[0] -> resourceType[QuestionnaireResponse]: "
         + f"item[*] -> linkId[{link_id}]: answer[0] -> valueCoding -> {field_type}"
     )
+
+
+def get_from_dict(data_dict, map_list):
+    """takes a list of keys and returns the value in a nested dictionary"""
+    return reduce(operator.getitem, map_list, data_dict)
+
+
+def set_in_dict(data_dict, map_list, value):
+    """takes a list of keys and sets the value in a nested dictionary"""
+    get_from_dict(data_dict, map_list[:-1])[map_list[-1]] = value
 
 
 class InvalidDataTypes:
@@ -279,4 +294,119 @@ class GenericValidatorMethodTests:
             test_instance.assertEqual(
                 str(error.exception),
                 f"{field_location} must be a valid date",
+            )
+
+
+class GenericValidatorModelTests:
+    """Generic tests for model validators"""
+
+    @staticmethod
+    def valid(
+        test_instance: unittest.TestCase,
+        keys_to_access_value: list,
+        valid_items_to_test: list,
+    ):
+        """Test that a validator method accepts valid data when in a model"""
+        valid_json_data = deepcopy(test_instance.json_data)
+        for valid_item in valid_items_to_test:
+            set_in_dict(valid_json_data, keys_to_access_value, valid_item)
+            test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+
+    @staticmethod
+    def string_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        keys_to_access_value: list,
+        defined_length: int = None,
+        invalid_length_strings_to_test: list = None,
+        predefined_values: tuple = None,
+        invalid_strings_to_test: list = None,
+    ):
+        """Test that a validator method rejects invalid data when in a model"""
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_string in InvalidDataTypes.for_strings:
+            set_in_dict(
+                invalid_json_data, keys_to_access_value, invalid_data_type_for_string
+            )
+
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a string (type=type_error)"
+                in str(error.exception)
+            )
+
+        # If there is a predefined string length, then test invalid string lengths,
+        # otherwise check the empty string only
+        if defined_length:
+            for invalid_length_string in invalid_length_strings_to_test:
+                set_in_dict(
+                    invalid_json_data, keys_to_access_value, invalid_length_string
+                )
+                with test_instance.assertRaises(ValidationError) as error:
+                    test_instance.validator.validate(invalid_json_data)
+
+                test_instance.assertTrue(
+                    f"{field_location} must be 10 characters (type=value_error)"
+                    in str(error.exception)
+                )
+        else:
+            set_in_dict(invalid_json_data, keys_to_access_value, "")
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a non-empty string (type=value_error)"
+                in str(error.exception)
+            )
+
+        if predefined_values:
+            for invalid_string in invalid_strings_to_test:
+                set_in_dict(invalid_json_data, keys_to_access_value, invalid_string)
+                with test_instance.assertRaises(ValidationError) as error:
+                    test_instance.validator.validate(invalid_json_data)
+                test_instance.assertTrue(
+                    f"{field_location} must be one of the following: "
+                    + str(", ".join(predefined_values))
+                    + " (type=value_error)"
+                    in str(error.exception)
+                )
+
+    @staticmethod
+    def list_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        keys_to_access_value: list,
+        predefined_list_length: int = None,
+        invalid_length_lists_to_test: list = None,
+    ):
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_list in InvalidDataTypes.for_lists:
+            set_in_dict(
+                invalid_json_data, keys_to_access_value, invalid_data_type_for_list
+            )
+
+            # Check that we get the correct error message and that it contains type=value_error
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be an array (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test invalid list length
+        for invalid_length_list in invalid_length_lists_to_test:
+            set_in_dict(invalid_json_data, keys_to_access_value, invalid_length_list)
+            with test_instance.assertRaises(ValueError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be an array of length 1 (type=value_error)"
+                in str(error.exception)
             )
