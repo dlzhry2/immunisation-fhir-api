@@ -35,7 +35,7 @@ class FhirService:
             imms = self.immunisation_repo.create_immunization(immunization)
             return Immunization.parse_obj(imms)
         else:
-            raise Exception('nhs_number is not provided or is invalid')
+            raise Exception('nhs number is not provided or is invalid')
 
     def delete_immunization(self, imms_id) -> Immunization:
         """Delete an Immunization if it exits and return the ID back if successful.
