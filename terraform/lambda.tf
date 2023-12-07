@@ -14,7 +14,7 @@ data "archive_file" "lambda_source_zip" {
 locals {
     lambda_code_sha = data.archive_file.lambda_source_zip.output_base64sha256
 }
-
+/*
 resource "aws_s3_bucket" "lambda_source_bucket" {
     bucket        = "${local.prefix}-lambda-source-code"
     force_destroy = true
@@ -41,4 +41,51 @@ resource "aws_s3_object" "lambda_function_code" {
     source      = local.lambda_package_zip
     source_hash = local.lambda_code_sha
     depends_on  = [null_resource.lambda_package]
+}*/
+
+#resource "docker_image" "lambda_function_docker" {
+module "docker_image" {
+    source = "terraform-aws-modules/lambda/aws//modules/docker-build"
+
+    create_ecr_repo = true
+    ecr_repo        = "${local.prefix}-lambda-repo"
+    ecr_repo_lifecycle_policy = jsonencode({
+        "rules" : [
+            {
+                "rulePriority" : 1,
+                "description" : "Keep only the last 2 images",
+                "selection" : {
+                    "tagStatus" : "any",
+                    "countType" : "imageCountMoreThan",
+                    "countNumber" : 2
+                },
+                "action" : {
+                    "type" : "expire"
+                }
+            }
+        ]
+    })
+
+    use_image_tag = false
+    #image_tag     = "1.0"
+
+    source_path      = local.lambda_dir
+    docker_file_path = "Dockerfile-poetry"
+
+    triggers = {
+        lambda_source_code = local.lambda_code_sha
+        docker_file        = filemd5("${local.lambda_dir}/Dockerfile-poetry")
+    }
+}
+
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+data "aws_ecr_authorization_token" "token" {}
+
+provider "docker" {
+    registry_auth  {
+        address  = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com"
+        username = data.aws_ecr_authorization_token.token.user_name
+        password = data.aws_ecr_authorization_token.token.password
+    }
 }

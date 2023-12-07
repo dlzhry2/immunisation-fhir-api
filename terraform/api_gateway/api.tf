@@ -43,6 +43,8 @@ resource "aws_apigatewayv2_domain_name" "service_api_domain_name" {
     tags = {
         Name = "${var.prefix}-api-domain-name"
     }
+
+    depends_on = [aws_acm_certificate.service_certificate]
 }
 resource "aws_apigatewayv2_api_mapping" "api_mapping" {
     api_id      = aws_apigatewayv2_api.service_api.id
