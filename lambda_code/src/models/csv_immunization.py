@@ -119,7 +119,9 @@ class CsvImmunizationModel(BaseModel):
     def validate_professional_forename(cls, v, values):
         """Validate performing professional forename"""
         return NHSPractitionerValidators.validate_performing_professional_forename(
-            v, values.get("PERFORMING_PROFESSIONAL_SURNAME", None)
+            "FLU",  # TODO: This is hardcoded for now. We need to get this from the CSV
+            values.get("PERFORMING_PROFESSIONAL_SURNAME"),
+            values.get("PERFORMING_PROFESSIONAL_FORENAME"),
         )
 
     @validator("PERFORMING_PROFESSIONAL_BODY_REG_CODE", pre=True, always=True)
