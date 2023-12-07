@@ -83,15 +83,17 @@ class ImmunisationRepository:
         # TODO:
         #  Q- Can multiple disease codes be in one Immunizations event? i.e. should disease_code be a list?
         #     A- From word doc it seems all vaccine related info is 0..1 or 1..1 so, I think we can assume it's single
-        #  Q- If an event can have multiple diseases then how to we search for a subset of of it?
+        #  Q- If an event can have multiple diseases then how to search for a subset of it?
         #  NOTE: FileterExpression is a good candidate for this since there won't be many imms events
         #  NOTE: Should we store based on diseaseCode or the mapped diseaseType?
-        #    I stored it based on the code because, it's what we get in the data
+        #    I stored it based on the code because, mapping snomed doesn't exist yet
         #    Q- Is it possible for a snomed code to become invalid? If this happens, then storing based on code
         #        instead of diseaseType will result in a record that can never be retrieved via query
         #  FIXME: We know multiple codes can map to a single diseaseType so
         #   1- either we should store the mapped disease type as an attribute and query based on that
         #   2- or, modify the query condition with an OR operation (is it even possible using sort-key?)
+        #   ^ CURRENT IMPL: we use diseaseCode as sort key and later replace with code (when mapping is done). This
+        #        still doesn't solve the problem with multiple diseaseTypes in one single imms event
         condition = Key("PatientPK").eq(self._make_patient_pk(nhs_number))
         sort_key = f"{disease_code}#"
         condition &= Key("PatientSK").begins_with(sort_key)
@@ -115,14 +117,3 @@ class ImmunisationRepository:
     @staticmethod
     def _make_patient_pk(_id: str):
         return f"Patient#{_id}"
-
-
-# TODO: delete me
-if __name__ == '__main__':
-    table = create_table("local-imms-events", "http://localhost:4566", region_name="us-east-1")
-    repo = ImmunisationRepository(table)
-    # resp = repo.find_immunizations("dfd", "sdfd")
-    resp = repo.find_immunizations("9999999999", "covidCode2")
-    # resp = repo.get_immunization_by_id("5a921187-19c7-8df4-8f4f-f31e78de5857")
-    print(len(resp))
-    print(resp)

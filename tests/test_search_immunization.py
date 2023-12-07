@@ -5,7 +5,7 @@ from time import sleep
 import pytest
 
 from .example_loader import load_example
-from .test_crud_immunisation_api import ImmunisationApi
+from .immunization_api import ImmunisationApi
 
 
 def create_immunization(imms_id, nhs_number, disease_code):
@@ -96,7 +96,6 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_search_immunization_ignore_deleted(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     """it should filter out deleted items"""
     token = nhsd_apim_auth_headers["Authorization"]
