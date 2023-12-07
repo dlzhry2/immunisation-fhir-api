@@ -34,18 +34,17 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
         """Test ImmunizationPreValidators.occurrence_date_time"""
 
         # Test valid data
-        valid_occurrence_date_times = [
+        valid_items_to_test = [
             "2000-01-01T00:00:00",
             "2000-01-01T22:22:22",
             "1933-12-31T11:11:11+12:45",
         ]
-        for valid_occurrence_date_time in valid_occurrence_date_times:
-            self.assertEqual(
-                ImmunizationPreValidators.occurrence_date_time(
-                    valid_occurrence_date_time
-                ),
-                valid_occurrence_date_time,
-            )
+
+        GenericValidatorMethodTests.valid(
+            self,
+            ImmunizationPreValidators.occurrence_date_time,
+            valid_items_to_test=valid_items_to_test,
+        )
 
     def test_pre_occurrence_date_time_invalid(self):
         """Test ImmunizationPreValidators.occurrence_date_time"""

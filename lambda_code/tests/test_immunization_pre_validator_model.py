@@ -76,15 +76,17 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_valid_occurrence_date_time(self):
         """Test pre_validate_occurrence_date_time accepts valid values when in a model"""
-        valid_occurrence_date_times = [
+        valid_items_to_test = [
             "2000-01-01T00:00:00",
             "2000-01-01T22:22:22",
             "1933-12-31T11:11:11+12:45",
         ]
-        valid_json_data = deepcopy(self.json_data)
-        for valid_occurrence_date_time in valid_occurrence_date_times:
-            valid_json_data["occurrenceDateTime"] = valid_occurrence_date_time
-            self.assertTrue(self.validator.validate(valid_json_data))
+
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["occurrenceDateTime"],
+            valid_items_to_test=valid_items_to_test,
+        )
 
     def test_model_pre_validate_invalid_occurrence_date_time(self):
         """Test pre_validate_occurrence_date_time rejects invalid values when in a model"""
@@ -190,14 +192,12 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_invalid_contained(self):
         """Test pre_validate_contained rejects invalid values when in a model"""
+        valid_list_element = {
+            "resourceType": "QuestionnaireResponse",
+            "status": "completed",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
-        invalid_length_lists_to_test = [
-            [],
-            [
-                {"resourceType": "QuestionnaireResponse", "status": "completed"},
-                {"resourceType": "QuestionnaireResponse", "status": "completed"},
-            ],
-        ]
         GenericValidatorModelTests.list_invalid(
             self,
             field_location="contained",
@@ -207,66 +207,46 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_valid_questionnaire_answers(self):
         """Test pre_validate_questionnaire_answers accepts valid values when in a model"""
-        valid_questionnaire_answers = [{"valueCoding": {"code": "B0C4P"}}]
-        valid_json_data = deepcopy(self.json_data)
-        valid_json_data["contained"][0]["item"][0][
-            "answer"
-        ] = valid_questionnaire_answers
+        valid_items_to_test = [[{"valueCoding": {"code": "B0C4P"}}]]
 
-        self.assertTrue(self.validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["contained", 0, "item", 0, "answer"],
+            valid_items_to_test=valid_items_to_test,
+        )
 
     def test_model_pre_validate_invalid_questionnaire_answers(self):
         """Test pre_validate_quesionnaire_answers rejects invalid values when in a model"""
 
-        invalid_json_data = deepcopy(self.json_data)
+        # TODO: Check this test covers all answers (if necessary)
+        valid_list_element = {"valueCoding": {"code": "B0C4P"}}
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
-        # Test invalid data types
-        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
-            invalid_json_data["contained"][0]["item"][0][
-                "answer"
-            ] = invalid_data_type_for_list
-
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "contained[0] -> resourceType[QuestionnaireResponse]: "
-                + "item[*] -> linkId[*]: answer must be an array (type=type_error)"
-                in str(error.exception)
-            )
-
-        # Test invalid list length
-        invalid_questionnaire_answers = [
-            [],
-            [
-                {"valueCoding": {"code": "B0C4P"}},
-                {"valueCoding": {"code": "B0C4P"}},
-            ],
-        ]
-        for invalid_questionnaire_answer in invalid_questionnaire_answers:
-            invalid_json_data["contained"][0]["item"][0][
-                "answer"
-            ] = invalid_questionnaire_answer
-            with self.assertRaises(ValueError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "contained[0] -> resourceType[QuestionnaireResponse]: "
-                + "item[*] -> linkId[*]: answer must be an array of length 1 (type=value_error)"
-                in str(error.exception)
-            )
+        GenericValidatorModelTests.list_invalid(
+            self,
+            field_location="contained[0] -> resourceType[QuestionnaireResponse]: "
+            + "item[*] -> linkId[*]: answer",
+            keys_to_access_value=["contained", 0, "item", 0, "answer"],
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
 
     def test_model_pre_validate_valid_questionnaire_site_code_code(self):
         """Test pre_validate_questionnaire_site_code_code accepts valid values when in a model"""
-        valid_questionnaire_site_code_code = "B0C4P"
-        valid_json_data = deepcopy(self.json_data)
-
-        valid_json_data["contained"][0]["item"][0]["answer"][0]["valueCoding"][
-            "code"
-        ] = valid_questionnaire_site_code_code
-
-        self.assertTrue(self.validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=[
+                "contained",
+                0,
+                "item",
+                0,
+                "answer",
+                0,
+                "valueCoding",
+                "code",
+            ],
+            valid_items_to_test=["B0C4P"],
+        )
 
     def test_model_pre_validate_invalid_questionnaire_site_code_code(self):
         """Test pre_validate_questionnaire_site_code_code rejects invalid values when in a model"""
@@ -305,6 +285,25 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + "(type=value_error)"
             in str(error.exception)
         )
+
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id="SiteCode", field_type="Code"
+        )
+        # GenericValidatorModelTests.list_invalid(
+        #     self,
+        #     field_location=field_location,
+        #     keys_to_access_value=[
+        #         "contained",
+        #         0,
+        #         "item",
+        #         0,
+        #         "answer",
+        #         0,
+        #         "valueCoding",
+        #         "code",
+        #     ],
+        # )
+        # TODO: Fix generic test here
 
     def test_model_pre_validate_valid_questionnaire_site_name_code(self):
         """Test pre_validate_questionnaire_site_name_code accepts valid values when in a model"""

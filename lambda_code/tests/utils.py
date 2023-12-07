@@ -402,13 +402,27 @@ class GenericValidatorModelTests:
                 in str(error.exception)
             )
 
-        # Test invalid list length
-        for invalid_length_list in invalid_length_lists_to_test:
-            set_in_dict(invalid_json_data, keys_to_access_value, invalid_length_list)
+        # If there is a predefined list length, then test invalid list lengths, plus the empty
+        # list, otherwise check the empty list only
+        if predefined_list_length:
+            invalid_length_lists_to_test.append([])
+            for invalid_length_list in invalid_length_lists_to_test:
+                set_in_dict(
+                    invalid_json_data, keys_to_access_value, invalid_length_list
+                )
+                with test_instance.assertRaises(ValueError) as error:
+                    test_instance.validator.validate(invalid_json_data)
+
+                test_instance.assertTrue(
+                    f"{field_location} must be an array of length 1 (type=value_error)"
+                    in str(error.exception)
+                )
+        else:
+            set_in_dict(invalid_json_data, keys_to_access_value, [])
             with test_instance.assertRaises(ValueError) as error:
                 test_instance.validator.validate(invalid_json_data)
 
             test_instance.assertTrue(
-                f"{field_location} must be an array of length 1 (type=value_error)"
+                f"{field_location} must be a non-empty array (type=value_error)"
                 in str(error.exception)
             )
