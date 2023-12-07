@@ -65,6 +65,7 @@ class FhirController:
 
     def search_immunizations(self, aws_event) -> dict:
         params = aws_event["queryStringParameters"]
+        print(aws_event)
 
         if "nhsNumber" not in params:
             return self._create_bad_request("Query parameter 'nhsNumber' is mandatory")

@@ -27,6 +27,10 @@ class ImmunisationApi:
     def delete_immunization(self, imms_id):
         return requests.delete(f"{self.url}/event/{imms_id}", headers=self._update_headers())
 
+    def search_immunizations(self, nhs_number, disease_type):
+        return requests.get(f"{self.url}/event?nhsNumber={nhs_number}&diseaseType={disease_type}",
+                            headers=self._update_headers())
+
     def _update_headers(self, headers=None):
         if headers is None:
             headers = {}
