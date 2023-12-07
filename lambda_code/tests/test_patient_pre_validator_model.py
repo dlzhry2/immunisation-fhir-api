@@ -434,18 +434,18 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
                 self.patient_validator.validate(invalid_json_data)
 
             self.assertTrue(
-                "address -> postalCode must be divided into two parts by a single space"
+                "address -> postalCode must contain a single space, which divides the two parts of the postal code (type=value_error)"
                 in str(error.exception)
             )
 
         # Test invalid address_postal_code length
-        invalid_json_data["address_postal_code"] = "AA000 00AA"
+        invalid_json_data["address"][0]["postalCode"] = "AA000 00AA"
 
         # Check that we get the correct error message and that it contains type=value_error
         with self.assertRaises(ValidationError) as error:
             self.patient_validator.validate(invalid_json_data)
 
         self.assertTrue(
-            "address -> postalCode must be divided into two parts by a single space"
+            "address -> postalCode must be 8 or fewer characters (excluding spaces) (type=value_error)"
             in str(error.exception)
         )
