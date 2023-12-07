@@ -114,111 +114,29 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_valid_birth_date(self):
         """Test pre_validate_birth_date accepts valid values when in a model"""
-        valid_birth_dates = ["2000-01-01", "1933-12-31"]
-        valid_json_data = deepcopy(self.json_data)
-        for valid_birth_date in valid_birth_dates:
-            valid_json_data["birthDate"] = valid_birth_date
-            self.assertTrue(self.validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["birthDate"],
+            valid_items_to_test=["2000-01-01", "1933-12-31"],
+        )
 
     def test_model_pre_validate_invalid_birth_date(self):
         """Test pre_validate_birth_date rejects invalid values when in a model"""
-
-        invalid_json_data = deepcopy(self.json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            invalid_json_data["birthDate"] = invalid_data_type_for_string
-            # Check that we get the correct error message and that it contains type=type_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "birthDate must be a string (type=type_error)" in str(error.exception)
-            )
-
-        # Test invalid string formats
-        invalid_birth_dates = [
-            "",
-            "invalid",
-            "20000101",
-            "2000-01-011",
-            "12000-01-01",
-            "12000-01-021",
-            "99-01-01",
-            "01-01-99",
-            "01-01-2000",
-        ]
-
-        for invalid_birth_date in invalid_birth_dates:
-            invalid_json_data["birthDate"] = invalid_birth_date
-
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                'birthDate must be a string in the format "YYYY-MM-DD" (type=value_error)'
-                in str(error.exception)
-            )
-
-        # Test invalid dates
-        invalid_birth_dates = [
-            "2000-00-01",
-            "2000-13-01",
-            "2000-01-00",
-            "2000-01-32",
-            "2000-02-30",
-        ]
-
-        for invalid_birth_date in invalid_birth_dates:
-            invalid_json_data["birthDate"] = invalid_birth_date
-
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "birthDate must be a valid date (type=value_error)"
-                in str(error.exception)
-            )
+        GenericValidatorModelTests.date_invalid(
+            self, field_location="birthDate", keys_to_access_value=["birthDate"]
+        )
 
     def test_model_pre_validate_valid_gender(self):
         """Test pre_validate_gender accepts valid values when in a model"""
-        valid_genders = ["male", "female", "other", "unknown"]
-        valid_json_data = deepcopy(self.json_data)
-        for valid_gender in valid_genders:
-            valid_json_data["gender"] = valid_gender
-            self.assertTrue(self.validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["gender"],
+            valid_items_to_test=["male", "female", "other", "unknown"],
+        )
 
     def test_model_pre_validate_invalid_gender(self):
         """Test pre_validate_gender rejects invalid values when in a model"""
-
-        invalid_json_data = deepcopy(self.json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            invalid_json_data["gender"] = invalid_data_type_for_string
-            # Check that we get the correct error message and that it contains type=type_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "gender must be a string (type=type_error)" in str(error.exception)
-            )
-
-        # Test empty string
-        invalid_json_data["gender"] = ""
-        # Check that we get the correct error message and that it contains type=value_error
-        with self.assertRaises(ValidationError) as error:
-            self.validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            "gender must be a non-empty string (type=value_error)"
-            in str(error.exception)
-        )
-
-        # Test invalid string formats
-        invalid_genders = [
+        invalid_strings_to_test = [
             "0",
             "1",
             "2",
@@ -229,101 +147,61 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
             "Other",
         ]
 
-        for invalid_gender in invalid_genders:
-            invalid_json_data["gender"] = invalid_gender
-
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "gender must be one of the following: "
-                + "male, female, other, unknown (type=value_error)"
-                in str(error.exception)
-            )
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="gender",
+            keys_to_access_value=["gender"],
+            predefined_values=("male", "female", "other", "unknown"),
+            invalid_strings_to_test=invalid_strings_to_test,
+        )
 
     def test_model_pre_validate_valid_address(self):
         """Test pre_validate_address accepts valid values when in a model"""
-        valid_address = [{"postalCode": "AA1 1AA"}]
-        valid_json_data = deepcopy(self.json_data)
-        valid_json_data["address"] = valid_address
-
-        self.assertTrue(self.validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["address"],
+            valid_items_to_test=[[{"postalCode": "AA1 1AA"}]],
+        )
 
     def test_model_pre_validate_invalid_address(self):
         """Test pre_validate_address rejects invalid values when in a model"""
-
-        invalid_json_data = deepcopy(self.json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
-            invalid_json_data["address"] = invalid_data_type_for_list
-
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "address must be an array (type=type_error)" in str(error.exception)
-            )
-
-        # Test invalid list lengths
-        invalid_addresses = [[], [{"family": "Test"}, {"family": "Test"}]]
-        for invalid_address in invalid_addresses:
-            invalid_json_data["address"] = invalid_address
-
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "address must be an array of length 1 (type=value_error)"
-                in str(error.exception)
-            )
+        GenericValidatorModelTests.list_invalid(
+            self,
+            field_location="address",
+            keys_to_access_value=["address"],
+            predefined_list_length=1,
+            invalid_length_lists_to_test=[[{"family": "Test"}, {"family": "Test"}]],
+        )
 
     def test_model_pre_validate_valid_address_postal_code(self):
         """Test pre_validate_address_postal_code accepts valid values when in a model"""
-        valid_address_postal_codes = ["AA00 00AA", "A0 0AA"]
-        valid_json_data = deepcopy(self.json_data)
-        for valid_address_postal_code in valid_address_postal_codes:
-            valid_json_data["address"][0]["postalCode"] = valid_address_postal_code
-            self.assertTrue(self.validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["address", 0, "postalCode"],
+            valid_items_to_test=["AA00 00AA", "A0 0AA"],
+        )
 
     def test_model_pre_validate_invalid_address_postal_code(self):
         """Test pre_validate_address_postal_code rejects invalid values when in a model"""
-
-        invalid_json_data = deepcopy(self.json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            invalid_json_data["address"][0]["postalCode"] = invalid_data_type_for_string
-            # Check that we get the correct error message and that it contains type=type_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "address -> postalCode must be a string (type=type_error)"
-                in str(error.exception)
-            )
-
-        # Test empty string
-        invalid_json_data["address"][0]["postalCode"] = ""
-        # Check that we get the correct error message and that it contains type=value_error
-        with self.assertRaises(ValidationError) as error:
-            self.validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            "address -> postalCode must be a non-empty string (type=value_error)"
-            in str(error.exception)
+        # Test invalid data types and empty string
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="address -> postalCode",
+            keys_to_access_value=["address", 0, "postalCode"],
         )
 
-        # Test address_postal_code which are not separated into the two parts by a single space
+        # Test address_postal_codes which are not separated into the two parts by a single space
         invalid_address_postal_codes = [
-            "SW1  1AA",
-            "SW 1 1A",
-            "AAA0000AA",
-            "SW11AA",
+            "SW1  1AA",  # Too many spaces in divider
+            "SW 1 1A",  # Too many space dividers
+            "AAA0000AA",  # Too few space dividers
+            " AA00 00AA",  # Invalid additional space at start
+            "AA00 00AA ",  # Invalid additional space at end
+            " AA0000AA",  # Space is incorrectly at start
+            "AA0000AA ",  # Space is incorrectly at end
         ]
+
+        invalid_json_data = deepcopy(self.json_data)
 
         for invalid_address_postal_code in invalid_address_postal_codes:
             invalid_json_data["address"][0]["postalCode"] = invalid_address_postal_code
@@ -333,7 +211,8 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
                 self.validator.validate(invalid_json_data)
 
             self.assertTrue(
-                "address -> postalCode must contain a single space, which divides the two parts of the postal code (type=value_error)"
+                "address -> postalCode must contain a single space, "
+                + "which divides the two parts of the postal code (type=value_error)"
                 in str(error.exception)
             )
 
@@ -345,6 +224,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
             self.validator.validate(invalid_json_data)
 
         self.assertTrue(
-            "address -> postalCode must be 8 or fewer characters (excluding spaces) (type=value_error)"
+            "address -> postalCode must be 8 or fewer characters "
+            + "(excluding spaces) (type=value_error)"
             in str(error.exception)
         )

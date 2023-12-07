@@ -450,3 +450,72 @@ class GenericValidatorModelTests:
                 f"{field_location} must be an array of non-empty strings (type=value_error)"
                 in str(error.exception)
             )
+
+    @staticmethod
+    def date_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        keys_to_access_value: list,
+    ):
+        """
+        Test that a validator method rejects the following when in a model:
+        * All invalid data types
+        * Invalid date formats
+        * Invalid dates
+        """
+
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_string in InvalidDataTypes.for_strings:
+            set_in_dict(
+                invalid_json_data, keys_to_access_value, invalid_data_type_for_string
+            )
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a string (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test invalid date string formats
+        invalid_date_formats = [
+            "",  # Empty
+            "invalid",  # With letters
+            "20000101",  # Without dashes
+            "2000-01-011",  # Extra digit at end
+            "12000-01-01",  # Extra digit at start
+            "12000-01-021",  # Extra digit at start and end
+            "99-01-01",  # Year represented without century (i.e. 2 digits instead of 4)
+            "01-01-1999",  # DD-MM-YYYY format
+            "01-01-99",  # DD-MM-YY format
+        ]
+        for invalid_date_format in invalid_date_formats:
+            set_in_dict(invalid_json_data, keys_to_access_value, invalid_date_format)
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f'{field_location} must be a string in the format "YYYY-MM-DD" (type=value_error)'
+                in str(error.exception)
+            )
+
+        # Test invalid dates
+        invalid_dates = [
+            "2000-00-01",  # Month 0
+            "2000-13-01",  # Month 13
+            "2000-01-00",  # Day 0
+            "2000-01-32",  # Day 13
+            "2000-02-30",  # Invalid combnation of month and day
+        ]
+
+        for invalid_date in invalid_dates:
+            set_in_dict(invalid_json_data, keys_to_access_value, invalid_date)
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a valid date (type=value_error)"
+                in str(error.exception)
+            )
