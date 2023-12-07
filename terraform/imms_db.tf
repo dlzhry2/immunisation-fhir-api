@@ -20,8 +20,6 @@ resource "aws_dynamodb_table" "test-dynamodb-table" {
         name               = "PatientGSI"
         hash_key           = "PatientPK"
         range_key          = "PatientSK"
-        projection_type    = "INCLUDE"
-        non_key_attributes = ["Resource"]
+        projection_type    = "ALL"
     }
 }
-

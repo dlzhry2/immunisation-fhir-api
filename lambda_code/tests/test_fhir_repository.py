@@ -116,7 +116,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
 
 
 class TestCreateImmunizationPatientIndex(unittest.TestCase):
-    """create_immunization should create a patient record with vaccine code"""
+    """create_immunization should create a patient record with vaccine type"""
 
     def setUp(self):
         self.table = MagicMock()
@@ -260,7 +260,6 @@ class TestFindImmunizations(unittest.TestCase):
         """it should find events with nhsNumber and diseaseCode(like snomed)"""
         nhs_number = "a-patient-id"
         disease_code = "a-snomed-code-for-disease"
-        # dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": [{"Resource": "{}"}]}
         dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": []}
         self.table.query = MagicMock(return_value=dynamo_response)
 
@@ -274,7 +273,25 @@ class TestFindImmunizations(unittest.TestCase):
         # Then
         self.table.query.assert_called_once_with(
             IndexName="PatientGSI",
-            KeyConditionExpression=condition
+            KeyConditionExpression=condition,
+            FilterExpression=ANY,
+        )
+
+    def test_exclude_deleted(self):
+        """it should exclude records with DeletedAt attribute"""
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": []}
+        self.table.query = MagicMock(return_value=dynamo_response)
+
+        is_ = Attr("DeletedAt").not_exists()
+
+        # When
+        _ = self.repository.find_immunizations("an-id", "a-code")
+
+        # Then
+        self.table.query.assert_called_once_with(
+            IndexName="PatientGSI",
+            KeyConditionExpression=ANY,
+            FilterExpression=is_,
         )
 
     def test_map_results_to_immunizations(self):
@@ -292,6 +309,22 @@ class TestFindImmunizations(unittest.TestCase):
         # Then
         self.assertListEqual(results, [imms1, imms2])
 
+    # def test_filter_deleted_immunizations(self):
+    #     """it should filter out items with DeletedAt attribute"""
+    #     imms1 = {"id": 1}
+    #     imms2 = {"id": 2}
+    #     items = [{"Resource": json.dumps(imms1), "DeletedAt": "a-timestamp"},
+    #              {"Resource": json.dumps(imms2)}]
+    #
+    #     dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": items}
+    #     self.table.query = MagicMock(return_value=dynamo_response)
+    #
+    #     # When
+    #     results = self.repository.find_immunizations("an-id", "a-code")
+    #
+    #     # Then
+    #     self.assertListEqual(results, [imms2])
+    #
     def test_bad_response_from_dynamo(self):
         """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
         bad_request = 400

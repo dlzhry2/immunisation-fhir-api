@@ -95,10 +95,12 @@ class ImmunisationRepository:
         condition = Key("PatientPK").eq(self._make_patient_pk(nhs_number))
         sort_key = f"{disease_code}#"
         condition &= Key("PatientSK").begins_with(sort_key)
+        is_not_deleted = Attr("DeletedAt").not_exists()
 
         response = self.table.query(
             IndexName="PatientGSI",
             KeyConditionExpression=condition,
+            FilterExpression=is_not_deleted
         )
 
         if "Items" in response:
