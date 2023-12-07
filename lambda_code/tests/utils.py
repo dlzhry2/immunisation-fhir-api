@@ -384,6 +384,7 @@ class GenericValidatorModelTests:
         keys_to_access_value: list,
         predefined_list_length: int = None,
         invalid_length_lists_to_test: list = None,
+        invalid_lists_with_non_string_data_types_to_test: list = None,
     ):
         invalid_json_data = deepcopy(test_instance.json_data)
 
@@ -419,10 +420,33 @@ class GenericValidatorModelTests:
                 )
         else:
             set_in_dict(invalid_json_data, keys_to_access_value, [])
-            with test_instance.assertRaises(ValueError) as error:
+            with test_instance.assertRaises(ValidationError) as error:
                 test_instance.validator.validate(invalid_json_data)
 
             test_instance.assertTrue(
                 f"{field_location} must be a non-empty array (type=value_error)"
+                in str(error.exception)
+            )
+
+        # Tests invalid_lists_with_non_string_data_types_to_test (if provided)
+        if invalid_lists_with_non_string_data_types_to_test:
+            # Test each invalid list
+            for invalid_list in invalid_lists_with_non_string_data_types_to_test:
+                set_in_dict(invalid_json_data, keys_to_access_value, invalid_list)
+                with test_instance.assertRaises(ValidationError) as error:
+                    test_instance.validator.validate(invalid_json_data)
+
+                test_instance.assertTrue(
+                    f"{field_location} must be an array of strings (type=type_error)"
+                    in str(error.exception)
+                )
+
+            # Test empty string in list
+            set_in_dict(invalid_json_data, keys_to_access_value, [""])
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be an array of non-empty strings (type=value_error)"
                 in str(error.exception)
             )

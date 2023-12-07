@@ -21,24 +21,26 @@ class PatientPreValidators:
 
     @staticmethod
     def name_given(name_given: list[str]) -> list[str]:
-        """Pre-validate name -> given (person_forename(s))"""
+        """Pre-validate name[0] -> given (person_forename(s))"""
 
-        generic_list_validation(name_given, "name -> given")
+        generic_list_validation(name_given, "name[0] -> given")
 
         for name in name_given:
             if not isinstance(name, str):
-                raise TypeError("name -> given must be an array of strings")
+                raise TypeError("name[0] -> given must be an array of strings")
 
             if len(name) == 0:
-                raise ValueError("name -> given must be an array of non-empty strings")
+                raise ValueError(
+                    "name[0] -> given must be an array of non-empty strings"
+                )
 
         return name_given
 
     @staticmethod
     def name_family(name_family: str) -> str:
-        """Pre_validate name -> family (person_surname)"""
+        """Pre_validate name[0] -> family (person_surname)"""
 
-        generic_string_validation(name_family, "name -> family")
+        generic_string_validation(name_family, "name[0] -> family")
 
         return name_family
 

@@ -26,7 +26,7 @@ class PatientValidator:
     @classmethod
     def pre_validate_name_given(cls, values: dict) -> dict:
         """
-        Pre-validate that, if name -> given (patient forename) exists, then it is a
+        Pre-validate that, if name[0] -> given (patient forename) exists, then it is a
         non-empty array of non-empty strings
         """
         try:
@@ -39,7 +39,7 @@ class PatientValidator:
 
     @classmethod
     def pre_validate_name_family(cls, values: dict) -> dict:
-        """Pre-validate that, if name -> family exists, then it is a non-empty string"""
+        """Pre-validate that, if name[0] -> family exists, then it is a non-empty string"""
 
         try:
             name_family = values["name"][0]["family"]

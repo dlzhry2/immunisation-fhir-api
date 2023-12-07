@@ -202,6 +202,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="contained",
             keys_to_access_value=["contained"],
+            predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
         )
 
@@ -209,284 +210,189 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         """Test pre_validate_questionnaire_answers accepts valid values when in a model"""
         valid_items_to_test = [[{"valueCoding": {"code": "B0C4P"}}]]
 
-        GenericValidatorModelTests.valid(
-            self,
-            keys_to_access_value=["contained", 0, "item", 0, "answer"],
-            valid_items_to_test=valid_items_to_test,
-        )
+        # Check that all of the 12 answer fields in the sample data are accepted when valid
+        for i in range(12):
+            GenericValidatorModelTests.valid(
+                self,
+                keys_to_access_value=["contained", 0, "item", i, "answer"],
+                valid_items_to_test=valid_items_to_test,
+            )
 
     def test_model_pre_validate_invalid_questionnaire_answers(self):
         """Test pre_validate_quesionnaire_answers rejects invalid values when in a model"""
 
-        # TODO: Check this test covers all answers (if necessary)
         valid_list_element = {"valueCoding": {"code": "B0C4P"}}
         invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
-        GenericValidatorModelTests.list_invalid(
-            self,
-            field_location="contained[0] -> resourceType[QuestionnaireResponse]: "
-            + "item[*] -> linkId[*]: answer",
-            keys_to_access_value=["contained", 0, "item", 0, "answer"],
-            predefined_list_length=1,
-            invalid_length_lists_to_test=invalid_length_lists_to_test,
-        )
+        # Check that any of the 12 answer fields in the sample data are rejected when invalid
+        for i in range(12):
+            GenericValidatorModelTests.list_invalid(
+                self,
+                field_location="contained[0] -> resourceType[QuestionnaireResponse]: "
+                + "item[*] -> linkId[*]: answer",
+                keys_to_access_value=["contained", 0, "item", i, "answer"],
+                predefined_list_length=1,
+                invalid_length_lists_to_test=invalid_length_lists_to_test,
+            )
 
     def test_model_pre_validate_valid_questionnaire_site_code_code(self):
         """Test pre_validate_questionnaire_site_code_code accepts valid values when in a model"""
+        keys_to_access_value = [
+            "contained",
+            0,
+            "item",
+            0,
+            "answer",
+            0,
+            "valueCoding",
+            "code",
+        ]
+
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=[
-                "contained",
-                0,
-                "item",
-                0,
-                "answer",
-                0,
-                "valueCoding",
-                "code",
-            ],
+            keys_to_access_value=keys_to_access_value,
             valid_items_to_test=["B0C4P"],
         )
 
     def test_model_pre_validate_invalid_questionnaire_site_code_code(self):
         """Test pre_validate_questionnaire_site_code_code rejects invalid values when in a model"""
 
-        invalid_json_data = deepcopy(self.json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            invalid_json_data["contained"][0]["item"][0]["answer"][0]["valueCoding"][
-                "code"
-            ] = invalid_data_type_for_string
-
-            # Check that we get the correct error message and that it contains type=type_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "contained[0] -> resourceType[QuestionnaireResponse]: "
-                + "item[*] -> linkId[SiteCode]: answer[0] -> valueCoding -> code must be a string "
-                + "(type=type_error)"
-                in str(error.exception)
-            )
-
-        # Test empty string
-        invalid_json_data["contained"][0]["item"][0]["answer"][0]["valueCoding"][
-            "code"
-        ] = ""
-        # Check that we get the correct error message and that it contains type=type_error
-        with self.assertRaises(ValidationError) as error:
-            self.validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            "contained[0] -> resourceType[QuestionnaireResponse]: "
-            + "item[*] -> linkId[SiteCode]: "
-            + "answer[0] -> valueCoding -> code must be a non-empty string "
-            + "(type=value_error)"
-            in str(error.exception)
-        )
-
         field_location = generate_field_location_for_questionnnaire_response(
-            link_id="SiteCode", field_type="Code"
+            link_id="SiteCode", field_type="code"
         )
-        # GenericValidatorModelTests.list_invalid(
-        #     self,
-        #     field_location=field_location,
-        #     keys_to_access_value=[
-        #         "contained",
-        #         0,
-        #         "item",
-        #         0,
-        #         "answer",
-        #         0,
-        #         "valueCoding",
-        #         "code",
-        #     ],
-        # )
-        # TODO: Fix generic test here
+
+        keys_to_access_value = [
+            "contained",
+            0,
+            "item",
+            0,
+            "answer",
+            0,
+            "valueCoding",
+            "code",
+        ]
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location=field_location,
+            keys_to_access_value=keys_to_access_value,
+        )
 
     def test_model_pre_validate_valid_questionnaire_site_name_code(self):
         """Test pre_validate_questionnaire_site_name_code accepts valid values when in a model"""
-        valid_questionnaire_site_name_code = "dummy"
-        valid_json_data = deepcopy(self.json_data)
 
-        valid_json_data["contained"][0]["item"][1]["answer"][0]["valueCoding"][
-            "code"
-        ] = valid_questionnaire_site_name_code
+        keys_to_access_value = [
+            "contained",
+            0,
+            "item",
+            1,
+            "answer",
+            0,
+            "valueCoding",
+            "code",
+        ]
 
-        self.assertTrue(self.validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=keys_to_access_value,
+            valid_items_to_test=["dummy"],
+        )
 
     def test_model_pre_validate_invalid_questionnaire_site_name_code(self):
         """Test pre_validate_questionnaire_site_code_code rejects invalid values when in a model"""
 
-        invalid_json_data = deepcopy(self.json_data)
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id="SiteName", field_type="code"
+        )
 
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            invalid_json_data["contained"][0]["item"][1]["answer"][0]["valueCoding"][
-                "code"
-            ] = invalid_data_type_for_string
-
-            # Check that we get the correct error message and that it contains type=type_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "contained[0] -> resourceType[QuestionnaireResponse]: "
-                + "item[*] -> linkId[SiteName]: answer[0] -> valueCoding -> code must be a string "
-                + "(type=type_error)"
-                in str(error.exception)
-            )
-
-        # Test empty string
-        invalid_json_data["contained"][0]["item"][1]["answer"][0]["valueCoding"][
-            "code"
-        ] = ""
-        # Check that we get the correct error message and that it contains type=type_error
-        with self.assertRaises(ValidationError) as error:
-            self.validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            "contained[0] -> resourceType[QuestionnaireResponse]: "
-            + "item[*] -> linkId[SiteName]: "
-            + "answer[0] -> valueCoding -> code must be a non-empty string "
-            + "(type=value_error)"
-            in str(error.exception)
+        keys_to_access_value = [
+            "contained",
+            0,
+            "item",
+            1,
+            "answer",
+            0,
+            "valueCoding",
+            "code",
+        ]
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location=field_location,
+            keys_to_access_value=keys_to_access_value,
         )
 
     def test_model_pre_validate_valid_identifier(self):
         """Test pre_validate_identifier accepts valid values when in a model"""
-        valid_identifier = [
-            {
-                "system": "https://supplierABC/identifiers/vacc",
-                "value": "ACME-vacc123456",
-            }
-        ]
-        valid_json_data = deepcopy(self.json_data)
-        valid_json_data["identifier"] = valid_identifier
-
-        self.assertTrue(self.validator.validate(valid_json_data))
-
-    def test_model_pre_validate_invalid_identifier(self):
-        """Test pre_validate_identifier rejects invalid values when in a model"""
-
-        invalid_json_data = deepcopy(self.json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
-            invalid_json_data["identifier"] = invalid_data_type_for_list
-
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "identifier must be an array (type=type_error)" in str(error.exception)
-            )
-
-        # Test invalid list length
-        invalid_identifier_items = [
-            [],
+        valid_items_to_test = [
             [
                 {
                     "system": "https://supplierABC/identifiers/vacc",
                     "value": "ACME-vacc123456",
-                },
-                {
-                    "system": "https://supplierABC/identifiers/vacc",
-                    "value": "ACME-vacc123456",
-                },
-            ],
+                }
+            ]
         ]
-        for invalid_identifier in invalid_identifier_items:
-            invalid_json_data["identifier"] = invalid_identifier
-            with self.assertRaises(ValueError) as error:
-                self.validator.validate(invalid_json_data)
 
-            self.assertTrue(
-                "identifier must be an array of length 1 (type=value_error)"
-                in str(error.exception)
-            )
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["identifier"],
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_model_pre_validate_invalid_identifier(self):
+        """Test pre_validate_identifier rejects invalid values when in a model"""
+
+        valid_list_element = {
+            "system": "https://supplierABC/identifiers/vacc",
+            "value": "ACME-vacc123456",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+        GenericValidatorModelTests.list_invalid(
+            self,
+            field_location="identifier",
+            keys_to_access_value=["identifier"],
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
 
     def test_model_pre_validate_valid_identifier_value(self):
         """Test pre_validate_identifier_value accepts valid values when in a model"""
-        valid_identifier_values = [
+        valid_items_to_test = [
             "e045626e-4dc5-4df3-bc35-da25263f901e",
             "ACME-vacc123456",
             "ACME-CUSTOMER1-vacc123456",
         ]
-        for valid_identifier_value in valid_identifier_values:
-            valid_json_data = deepcopy(self.json_data)
-            valid_json_data["identifier"][0]["value"] = valid_identifier_value
 
-            self.assertTrue(self.validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["identifier", 0, "value"],
+            valid_items_to_test=valid_items_to_test,
+        )
 
     def test_model_pre_validate_invalid_identifier_value(self):
         """Test pre_validate_identifier_value rejects invalid values when in a model"""
 
-        invalid_json_data = deepcopy(self.json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            invalid_json_data["identifier"][0]["value"] = invalid_data_type_for_string
-
-            # Check that we get the correct error message and that it contains type=type_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "identifier[0] -> value must be a string (type=type_error)"
-                in str(error.exception)
-            )
-
-        # Test empty string
-        invalid_json_data["identifier"][0]["value"] = ""
-        # Check that we get the correct error message and that it contains type=type_error
-        with self.assertRaises(ValidationError) as error:
-            self.validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            "identifier[0] -> value must be a non-empty string (type=value_error)"
-            in str(error.exception)
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="identifier[0] -> value",
+            keys_to_access_value=["identifier", 0, "value"],
         )
 
     def test_model_pre_validate_valid_identifier_system(self):
         """Test pre_validate_identifier_system accepts valid values when in a model"""
-        valid_identifier_systems = [
+        valid_items_to_test = [
             "https://supplierABC/identifiers/vacc",
             "https://supplierABC/ODSCode_NKO41/identifiers/vacc",
         ]
-        for valid_identifier_system in valid_identifier_systems:
-            valid_json_data = deepcopy(self.json_data)
-            valid_json_data["identifier"][0]["system"] = valid_identifier_system
 
-            self.assertTrue(self.validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["identifier", 0, "system"],
+            valid_items_to_test=valid_items_to_test,
+        )
 
     def test_model_pre_validate_invalid_identifier_system(self):
         """Test pre_validate_identifier_system rejects invalid values when in a model"""
-
-        invalid_json_data = deepcopy(self.json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            invalid_json_data["identifier"][0]["system"] = invalid_data_type_for_string
-
-            # Check that we get the correct error message and that it contains type=type_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "identifier[0] -> system must be a string (type=type_error)"
-                in str(error.exception)
-            )
-
-        # Test empty string
-        invalid_json_data["identifier"][0]["system"] = ""
-        # Check that we get the correct error message and that it contains type=type_error
-        with self.assertRaises(ValidationError) as error:
-            self.validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            "identifier[0] -> system must be a non-empty string (type=value_error)"
-            in str(error.exception)
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="identifier[0] -> system",
+            keys_to_access_value=["identifier", 0, "system"],
         )

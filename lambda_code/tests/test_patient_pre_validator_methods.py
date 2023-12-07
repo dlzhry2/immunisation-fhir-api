@@ -51,7 +51,7 @@ class TestPrePatientMethodValidators(unittest.TestCase):
         GenericValidatorMethodTests.list_invalid(
             self,
             PatientPreValidators.name_given,
-            field_location="name -> given",
+            field_location="name[0] -> given",
             invalid_lists_with_non_string_data_types_to_test=invalid_lists,
         )
 
@@ -68,7 +68,7 @@ class TestPrePatientMethodValidators(unittest.TestCase):
         GenericValidatorMethodTests.string_invalid(
             self,
             validator=PatientPreValidators.name_family,
-            field_location="name -> family",
+            field_location="name[0] -> family",
         )
 
     def test_pre_birth_date_valid(self):

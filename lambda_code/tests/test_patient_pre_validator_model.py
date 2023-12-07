@@ -7,6 +7,10 @@ from pydantic import ValidationError
 
 
 from models.fhir_patient import PatientValidator
+from ..tests.utils import (
+    InvalidDataTypes,
+    GenericValidatorModelTests,
+)
 
 
 class TestPatientModelPreValidationRules(unittest.TestCase):
@@ -29,209 +33,104 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         # set up the sample patient event JSON data
         cls.patient_file_path = f"{cls.data_path}/sample_patient_event.json"
         with open(cls.patient_file_path, "r", encoding="utf-8") as f:
-            cls.patient_json_data = json.load(f)
+            cls.json_data = json.load(f)
 
         # set up the untouched sample patient event JSON data
-        cls.untouched_patient_json_data = deepcopy(cls.patient_json_data)
+        cls.untouched_patient_json_data = deepcopy(cls.json_data)
 
         # set up the validator and add custom root validators
-        cls.patient_validator = PatientValidator()
-        cls.patient_validator.add_custom_root_validators()
+        cls.validator = PatientValidator()
+        cls.validator.add_custom_root_validators()
 
         # set up invalid data types for strings
-        cls.invalid_data_types_for_strings = [
-            None,
-            -1,
-            0,
-            0.0,
-            1,
-            True,
-            {},
-            [],
-            (),
-            {"InvalidKey": "InvalidValue"},
-            ["Invalid"],
-            ("Invalid1", "Invalid2"),
-        ]
+        cls.invalid_data_types_for_strings = InvalidDataTypes.for_strings
 
         # set up invalid data types for lists
-        cls.invalid_data_types_for_lists = [
-            None,
-            -1,
-            0,
-            0.0,
-            1,
-            True,
-            {},
-            "",
-            {"InvalidKey": "InvalidValue"},
-            "Invalid",
-        ]
+        cls.invalid_data_types_for_lists = InvalidDataTypes.for_lists
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
         # Ensure that good data is not inadvertently amended by the tests
-        self.assertEqual(self.untouched_patient_json_data, self.patient_json_data)
+        self.assertEqual(self.untouched_patient_json_data, self.json_data)
 
     def test_model_pre_validate_valid_name(self):
         """Test pre_validate_name accepts valid values when in a model"""
-        valid_name = [{"family": "Test"}]
-        valid_json_data = deepcopy(self.patient_json_data)
-        valid_json_data["name"] = valid_name
-
-        self.assertTrue(self.patient_validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["name"],
+            valid_items_to_test=[[{"family": "Test"}]],
+        )
 
     def test_model_pre_validate_invalid_name(self):
         """Test pre_validate_name rejects invalid values when in a model"""
+        invalid_list_lengths_to_test = [[{"family": "Test"}, {"family": "Test"}]]
 
-        invalid_json_data = deepcopy(self.patient_json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
-            invalid_json_data["name"] = invalid_data_type_for_list
-
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "name must be an array (type=type_error)" in str(error.exception)
-            )
-
-        # Test invalid list lengths
-        invalid_names = [[], [{"family": "Test"}, {"family": "Test"}]]
-        for invalid_name in invalid_names:
-            invalid_json_data["name"] = invalid_name
-
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "name must be an array of length 1 (type=value_error)"
-                in str(error.exception)
-            )
+        GenericValidatorModelTests.list_invalid(
+            self,
+            field_location="name",
+            keys_to_access_value=["name"],
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_list_lengths_to_test,
+        )
 
     def test_model_pre_validate_valid_name_given(self):
         """Test pre_validate_name_given accepts valid values when in a model"""
-        valid_names_given = [["Test"], ["Test1", "Test2"]]
-        valid_json_data = deepcopy(self.patient_json_data)
-        for valid_name_given in valid_names_given:
-            valid_json_data["name"][0]["given"] = valid_name_given
-            self.assertTrue(self.patient_validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["name", 0, "given"],
+            valid_items_to_test=[["Test"], ["Test1", "Test2"]],
+        )
 
     def test_model_pre_validate_invalid_name_given(self):
         """Test pre_validate_name_given rejects invalid values when in a model"""
+        invalid_lists = [
+            [1, "test"],
+            ["test", False],
+            [["Test1"]],
+        ]
 
-        invalid_json_data = deepcopy(self.patient_json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_list in self.invalid_data_types_for_lists:
-            invalid_json_data["name"][0]["given"] = invalid_data_type_for_list
-
-            # Check that we get the correct error message and that it contains type=type_error
-            with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "name -> given must be an array (type=type_error)"
-                in str(error.exception)
-            )
-
-        # Test empty list is invalid
-        invalid_json_data["name"][0]["given"] = []
-
-        # Check that we get the correct error message and that it contains type=value_error
-        with self.assertRaises(ValidationError) as error:
-            self.patient_validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            "name -> given must be a non-empty array (type=value_error)"
-            in str(error.exception)
-        )
-
-        # Test invalid data types for list items
-        invalid_names_given = [[1, "test"], ["test", False], [["Test1"]]]
-        for invalid_name_given in invalid_names_given:
-            invalid_json_data["name"][0]["given"] = invalid_name_given
-
-            # Check that we get the correct error message and that it contains type=type_error
-            with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "name -> given must be an array of strings (type=type_error)"
-                in str(error.exception)
-            )
-
-        # Test invalid string (empty) in list
-        invalid_json_data["name"][0]["given"] = [""]
-
-        # Check that we get the correct error message and that it contains type=value_error
-        with self.assertRaises(ValidationError) as error:
-            self.patient_validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            "name -> given must be an array of non-empty strings (type=value_error)"
-            in str(error.exception)
+        GenericValidatorModelTests.list_invalid(
+            self,
+            field_location="name[0] -> given",
+            keys_to_access_value=["name", 0, "given"],
+            invalid_lists_with_non_string_data_types_to_test=invalid_lists,
         )
 
     def test_model_pre_validate_valid_name_family(self):
         """Test pre_validate_name_family accepts valid values when in a model"""
-        valid_name_family = "test"
-        valid_json_data = deepcopy(self.patient_json_data)
-        valid_json_data["name"][0]["family"] = valid_name_family
-        self.assertTrue(self.patient_validator.validate(valid_json_data))
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["name", 0, "family"],
+            valid_items_to_test=["test"],
+        )
 
     def test_model_pre_validate_invalid_name_family(self):
         """Test pre_validate_name_family rejects invalid values when in a model"""
-
-        invalid_json_data = deepcopy(self.patient_json_data)
-
-        # Test invalid data types
-        for invalid_data_type_for_string in self.invalid_data_types_for_strings:
-            invalid_json_data["name"][0]["family"] = invalid_data_type_for_string
-
-            # Check that we get the correct error message and that it contains type=type_error
-            with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "name -> family must be a string (type=type_error)"
-                in str(error.exception)
-            )
-
-        # Test empty string is invalid
-        invalid_json_data["name"][0]["family"] = ""
-
-        # Check that we get the correct error message and that it contains type=value_error
-        with self.assertRaises(ValidationError) as error:
-            self.patient_validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            "name -> family must be a non-empty string (type=value_error)"
-            in str(error.exception)
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="name[0] -> family",
+            keys_to_access_value=["name", 0, "family"],
         )
 
     def test_model_pre_validate_valid_birth_date(self):
         """Test pre_validate_birth_date accepts valid values when in a model"""
         valid_birth_dates = ["2000-01-01", "1933-12-31"]
-        valid_json_data = deepcopy(self.patient_json_data)
+        valid_json_data = deepcopy(self.json_data)
         for valid_birth_date in valid_birth_dates:
             valid_json_data["birthDate"] = valid_birth_date
-            self.assertTrue(self.patient_validator.validate(valid_json_data))
+            self.assertTrue(self.validator.validate(valid_json_data))
 
     def test_model_pre_validate_invalid_birth_date(self):
         """Test pre_validate_birth_date rejects invalid values when in a model"""
 
-        invalid_json_data = deepcopy(self.patient_json_data)
+        invalid_json_data = deepcopy(self.json_data)
 
         # Test invalid data types
         for invalid_data_type_for_string in self.invalid_data_types_for_strings:
             invalid_json_data["birthDate"] = invalid_data_type_for_string
             # Check that we get the correct error message and that it contains type=type_error
             with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
+                self.validator.validate(invalid_json_data)
 
             self.assertTrue(
                 "birthDate must be a string (type=type_error)" in str(error.exception)
@@ -255,7 +154,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
             # Check that we get the correct error message and that it contains type=value_error
             with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
+                self.validator.validate(invalid_json_data)
 
             self.assertTrue(
                 'birthDate must be a string in the format "YYYY-MM-DD" (type=value_error)'
@@ -276,7 +175,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
             # Check that we get the correct error message and that it contains type=value_error
             with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
+                self.validator.validate(invalid_json_data)
 
             self.assertTrue(
                 "birthDate must be a valid date (type=value_error)"
@@ -286,22 +185,22 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
     def test_model_pre_validate_valid_gender(self):
         """Test pre_validate_gender accepts valid values when in a model"""
         valid_genders = ["male", "female", "other", "unknown"]
-        valid_json_data = deepcopy(self.patient_json_data)
+        valid_json_data = deepcopy(self.json_data)
         for valid_gender in valid_genders:
             valid_json_data["gender"] = valid_gender
-            self.assertTrue(self.patient_validator.validate(valid_json_data))
+            self.assertTrue(self.validator.validate(valid_json_data))
 
     def test_model_pre_validate_invalid_gender(self):
         """Test pre_validate_gender rejects invalid values when in a model"""
 
-        invalid_json_data = deepcopy(self.patient_json_data)
+        invalid_json_data = deepcopy(self.json_data)
 
         # Test invalid data types
         for invalid_data_type_for_string in self.invalid_data_types_for_strings:
             invalid_json_data["gender"] = invalid_data_type_for_string
             # Check that we get the correct error message and that it contains type=type_error
             with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
+                self.validator.validate(invalid_json_data)
 
             self.assertTrue(
                 "gender must be a string (type=type_error)" in str(error.exception)
@@ -311,7 +210,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         invalid_json_data["gender"] = ""
         # Check that we get the correct error message and that it contains type=value_error
         with self.assertRaises(ValidationError) as error:
-            self.patient_validator.validate(invalid_json_data)
+            self.validator.validate(invalid_json_data)
 
         self.assertTrue(
             "gender must be a non-empty string (type=value_error)"
@@ -335,7 +234,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
             # Check that we get the correct error message and that it contains type=value_error
             with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
+                self.validator.validate(invalid_json_data)
 
             self.assertTrue(
                 "gender must be one of the following: "
@@ -346,15 +245,15 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
     def test_model_pre_validate_valid_address(self):
         """Test pre_validate_address accepts valid values when in a model"""
         valid_address = [{"postalCode": "AA1 1AA"}]
-        valid_json_data = deepcopy(self.patient_json_data)
+        valid_json_data = deepcopy(self.json_data)
         valid_json_data["address"] = valid_address
 
-        self.assertTrue(self.patient_validator.validate(valid_json_data))
+        self.assertTrue(self.validator.validate(valid_json_data))
 
     def test_model_pre_validate_invalid_address(self):
         """Test pre_validate_address rejects invalid values when in a model"""
 
-        invalid_json_data = deepcopy(self.patient_json_data)
+        invalid_json_data = deepcopy(self.json_data)
 
         # Test invalid data types
         for invalid_data_type_for_list in self.invalid_data_types_for_lists:
@@ -362,7 +261,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
             # Check that we get the correct error message and that it contains type=value_error
             with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
+                self.validator.validate(invalid_json_data)
 
             self.assertTrue(
                 "address must be an array (type=type_error)" in str(error.exception)
@@ -375,7 +274,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
             # Check that we get the correct error message and that it contains type=value_error
             with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
+                self.validator.validate(invalid_json_data)
 
             self.assertTrue(
                 "address must be an array of length 1 (type=value_error)"
@@ -385,22 +284,22 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
     def test_model_pre_validate_valid_address_postal_code(self):
         """Test pre_validate_address_postal_code accepts valid values when in a model"""
         valid_address_postal_codes = ["AA00 00AA", "A0 0AA"]
-        valid_json_data = deepcopy(self.patient_json_data)
+        valid_json_data = deepcopy(self.json_data)
         for valid_address_postal_code in valid_address_postal_codes:
             valid_json_data["address"][0]["postalCode"] = valid_address_postal_code
-            self.assertTrue(self.patient_validator.validate(valid_json_data))
+            self.assertTrue(self.validator.validate(valid_json_data))
 
     def test_model_pre_validate_invalid_address_postal_code(self):
         """Test pre_validate_address_postal_code rejects invalid values when in a model"""
 
-        invalid_json_data = deepcopy(self.patient_json_data)
+        invalid_json_data = deepcopy(self.json_data)
 
         # Test invalid data types
         for invalid_data_type_for_string in self.invalid_data_types_for_strings:
             invalid_json_data["address"][0]["postalCode"] = invalid_data_type_for_string
             # Check that we get the correct error message and that it contains type=type_error
             with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
+                self.validator.validate(invalid_json_data)
 
             self.assertTrue(
                 "address -> postalCode must be a string (type=type_error)"
@@ -411,7 +310,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         invalid_json_data["address"][0]["postalCode"] = ""
         # Check that we get the correct error message and that it contains type=value_error
         with self.assertRaises(ValidationError) as error:
-            self.patient_validator.validate(invalid_json_data)
+            self.validator.validate(invalid_json_data)
 
         self.assertTrue(
             "address -> postalCode must be a non-empty string (type=value_error)"
@@ -431,7 +330,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
             # Check that we get the correct error message and that it contains type=value_error
             with self.assertRaises(ValidationError) as error:
-                self.patient_validator.validate(invalid_json_data)
+                self.validator.validate(invalid_json_data)
 
             self.assertTrue(
                 "address -> postalCode must contain a single space, which divides the two parts of the postal code (type=value_error)"
@@ -443,7 +342,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
         # Check that we get the correct error message and that it contains type=value_error
         with self.assertRaises(ValidationError) as error:
-            self.patient_validator.validate(invalid_json_data)
+            self.validator.validate(invalid_json_data)
 
         self.assertTrue(
             "address -> postalCode must be 8 or fewer characters (excluding spaces) (type=value_error)"
