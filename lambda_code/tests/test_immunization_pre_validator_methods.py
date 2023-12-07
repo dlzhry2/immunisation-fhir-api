@@ -303,3 +303,20 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             predefined_values=("completed", "entered-in-error", "not-done"),
             invalid_strings_to_test=["1", "complete", "enteredinerror"],
         )
+
+    def test_pre_recorded_valid(self):
+        """Test ImmunizationPreValidators.recorded"""
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.recorded,
+            valid_items_to_test=["2000-01-01", "1933-12-31"],
+        )
+
+    def test_pre_recorded_invalid(self):
+        """Test ImmunizationPreValidators.recorded"""
+
+        GenericValidatorMethodTests.date_invalid(
+            self,
+            validator=ImmunizationPreValidators.recorded,
+            field_location="recorded",
+        )

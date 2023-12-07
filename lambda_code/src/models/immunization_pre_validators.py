@@ -3,6 +3,7 @@ from models.utils import (
     generic_string_validation,
     generic_date_time_validation,
     generic_list_validation,
+    generic_date_validation,
 )
 
 from models.constants import Constants
@@ -117,3 +118,11 @@ class ImmunizationPreValidators:
         )
 
         return status
+
+    @staticmethod
+    def recorded(recorded: str) -> str:
+        """Pre_validate recorded (recorded_date)"""
+
+        generic_date_validation(recorded, "recorded")
+
+        return recorded

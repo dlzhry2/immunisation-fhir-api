@@ -164,6 +164,8 @@ class GenericValidatorMethodTests:
                 f"{field_location} must be a non-empty string",
             )
 
+        # If there are predefined values, then test strings which are
+        # not in the set of predefined values
         if predefined_values:
             for invalid_string in invalid_strings_to_test:
                 with test_instance.assertRaises(ValueError) as error:

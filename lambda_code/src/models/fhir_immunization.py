@@ -157,11 +157,26 @@ class ImmunizationValidator:
 
     @classmethod
     def pre_validate_status(cls, values: dict) -> dict:
-        """Pre-validate that, if status exists, then it is a non-empty string"""
+        """Pre-validate that, if status (action_flag) exists, then it is a non-empty string"""
 
         try:
             status = values["status"]
             ImmunizationPreValidators.status(status)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_recorded(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if recorded (recorded_date) exists, then it is a string in the format
+        YYYY-MM-DD, representing a valid date
+        """
+
+        try:
+            recorded = values["recorded"]
+            ImmunizationPreValidators.recorded(recorded)
         except KeyError:
             pass
 
@@ -187,6 +202,7 @@ class ImmunizationValidator:
         Immunization.add_root_validator(self.pre_validate_identifier_value, pre=True)
         Immunization.add_root_validator(self.pre_validate_identifier_system, pre=True)
         Immunization.add_root_validator(self.pre_validate_status, pre=True)
+        Immunization.add_root_validator(self.pre_validate_recorded, pre=True)
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""

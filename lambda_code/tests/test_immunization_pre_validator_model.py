@@ -415,3 +415,17 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             invalid_strings_to_test=["1", "complete", "enteredinerror"],
             is_mandatory_FHIR=True,
         )
+
+    def test_model_pre_validate_valid_recorded(self):
+        """Test pre_validate_recorded accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["recorded"],
+            valid_items_to_test=["2000-01-01", "1933-12-31"],
+        )
+
+    def test_model_pre_validate_invalid_recorded(self):
+        """Test pre_validate_recorded rejects invalid values when in a model"""
+        GenericValidatorModelTests.date_invalid(
+            self, field_location="recorded", keys_to_access_value=["recorded"]
+        )
