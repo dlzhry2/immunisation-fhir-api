@@ -284,3 +284,22 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             validator=ImmunizationPreValidators.identifier_system,
             field_location="identifier[0] -> system",
         )
+
+    def test_pre_status_valid(self):
+        """Test ImmunizationPreValidators.status"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.status,
+            valid_items_to_test=["completed", "entered-in-error", "not-done"],
+        )
+
+    def test_pre_status_invalid(self):
+        """Test ImmunizationPreValidators.status"""
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.status,
+            field_location="status",
+            predefined_values=("completed", "entered-in-error", "not-done"),
+            invalid_strings_to_test=["1", "complete", "enteredinerror"],
+        )

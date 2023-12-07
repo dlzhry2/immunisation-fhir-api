@@ -4,7 +4,7 @@ from typing import Union
 
 
 class Constants:
-    action_flags = {"completed", "entered-in-error", "not-done"}
+    statuses = ("completed", "entered-in-error", "not-done")
     primary_source = {True, False}
     genders = ("male", "female", "other", "unknown")
     vaccination_not_given_flag: str = "not-done"

@@ -323,12 +323,33 @@ class GenericValidatorModelTests:
         invalid_length_strings_to_test: list = None,
         predefined_values: tuple = None,
         invalid_strings_to_test: list = None,
+        is_mandatory_FHIR: bool = False,
     ):
         """Test that a validator method rejects invalid data when in a model"""
         invalid_json_data = deepcopy(test_instance.json_data)
 
+        # If is mandatory FHIR, then for none type the model raises an
+        # exception prior to running NHS pre-validators
+        if is_mandatory_FHIR:
+            set_in_dict(invalid_json_data, keys_to_access_value, None)
+
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                "none is not an allowed value (type=type_error.none.not_allowed)"
+                in str(error.exception)
+            )
+
+        # Set list of invalid data types to test
+        invalid_data_types_for_strings = InvalidDataTypes.for_strings
+        if is_mandatory_FHIR:
+            invalid_data_types_for_strings = filter(
+                None, invalid_data_types_for_strings
+            )
+
         # Test invalid data types
-        for invalid_data_type_for_string in InvalidDataTypes.for_strings:
+        for invalid_data_type_for_string in invalid_data_types_for_strings:
             set_in_dict(
                 invalid_json_data, keys_to_access_value, invalid_data_type_for_string
             )

@@ -396,3 +396,22 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location="identifier[0] -> system",
             keys_to_access_value=["identifier", 0, "system"],
         )
+
+    def test_model_pre_validate_valid_status(self):
+        """Test pre_validate_status accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["status"],
+            valid_items_to_test=["completed", "entered-in-error", "not-done"],
+        )
+
+    def test_model_pre_validate_invalid_status(self):
+        """Test pre_validate_status rejects invalid values when in a model"""
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="status",
+            keys_to_access_value=["status"],
+            predefined_values=("completed", "entered-in-error", "not-done"),
+            invalid_strings_to_test=["1", "complete", "enteredinerror"],
+            is_mandatory_FHIR=True,
+        )

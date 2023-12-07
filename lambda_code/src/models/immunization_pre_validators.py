@@ -5,6 +5,8 @@ from models.utils import (
     generic_list_validation,
 )
 
+from models.constants import Constants
+
 
 class ImmunizationPreValidators:
     @staticmethod
@@ -105,3 +107,13 @@ class ImmunizationPreValidators:
         generic_string_validation(identifier_system, "identifier[0] -> system")
 
         return identifier_system
+
+    @staticmethod
+    def status(status: str) -> str:
+        """Pre-validate status (action_flag)"""
+
+        generic_string_validation(
+            status, "status", predefined_values=Constants.statuses
+        )
+
+        return status
