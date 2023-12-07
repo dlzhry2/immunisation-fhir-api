@@ -15,10 +15,13 @@ class PractitionerValidator:
     @classmethod
     def validate_performing_professional_forename(cls, values: dict) -> dict:
         """Validate Performing Professional Forename"""
+        disease_type = "FLU"  # TODO: Need a way to get this
         performing_professional_forename = values.get("name")[0].given[0]
         performing_professional_surname = values.get("name")[0].family
         NHSPractitionerValidators.validate_performing_professional_forename(
-            performing_professional_forename, performing_professional_surname
+            disease_type,
+            performing_professional_forename,
+            performing_professional_surname,
         )
         return values
 
