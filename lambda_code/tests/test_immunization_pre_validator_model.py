@@ -412,7 +412,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             keys_to_access_value=["status"],
             predefined_values=("completed", "entered-in-error", "not-done"),
             invalid_strings_to_test=["1", "complete", "enteredinerror"],
-            is_mandatory_FHIR=True,
+            is_mandatory_fhir=True,
         )
 
     def test_model_pre_validate_valid_recorded(self):

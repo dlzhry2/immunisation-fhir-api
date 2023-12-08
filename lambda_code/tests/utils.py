@@ -1,12 +1,11 @@
 "Utils for tests"
 
+import operator
+import unittest
 from copy import deepcopy
 from functools import reduce
 from typing import Callable, Literal
 from pydantic import ValidationError
-import operator
-import unittest
-from icecream import ic
 
 
 def generate_field_location_for_questionnnaire_response(
@@ -112,7 +111,7 @@ class GenericValidatorMethodTests:
         validator: Callable,
         valid_items_to_test: list,
     ):
-        """Test that a validator method accepts valid strings"""
+        """Test that a validator method accepts valid values"""
         for valid_item in valid_items_to_test:
             test_instance.assertEqual(validator(valid_item), valid_item)
 
@@ -130,11 +129,20 @@ class GenericValidatorMethodTests:
         """
         Test that a validator method rejects the following invalid strings:
         * All invalid data types
-        * If there is a predefined string length: Strings of invalid length (defined by the argument
+        * If there is a defined_string_length: Strings of invalid length (defined by the argument
             invalid_length_strings_to_test), plus the empty string
-        * If there is no predfined string length: Empty strings
-        * If there is a max length: Strings longer than max length
-        * If there are predefined values: Invalid strings (i.e. not one of the predefined values)
+        * If there is no defined_string_length: Empty strings
+        * If there is a max length: Strings longer than max length (defined by the argument
+            invalid_length_strings_to_test)
+        * If there are predefined values: Invalid strings (i.e. not one of the predefined values) as
+            defined by the argument invalid_strings_to_test
+
+        NOTE: No validation of optional arguments will occur if the method is not given a list of
+        values to test. This means that:
+        * When optional arguments defined_length and max_length are given, the optional argument
+            invalid_length_strings_to_test MUST also be given
+        * When  optional argument predefined_lines is given, the optional argument
+            invalid_strings_to_test MUST also be given.
         """
         # Test invalid data types
         for invalid_data_type_for_string in InvalidDataTypes.for_strings:
@@ -166,6 +174,7 @@ class GenericValidatorMethodTests:
                 f"{field_location} must be a non-empty string",
             )
 
+        # If there is a max length, test strings which exceed that length
         if max_length:
             for invalid_length_string in invalid_length_strings_to_test:
                 with test_instance.assertRaises(ValueError) as error:
@@ -205,6 +214,11 @@ class GenericValidatorMethodTests:
         * If there is no predfined list length: Empty list
         * If there is a list of invalid_lists_with_non_string_data_types_to_test: Each of the
             items in the list, plus a list containing an empty string
+
+        NOTE: No validation of optional arguments will occur if the method is not given a list of
+        values to test. This means that:
+        * When optional arguments predefined_list_length is given, the optional argument
+            invalid_length_lists_to_test MUST also be given
         """
         # Test invalid data types
         for invalid_data_type_for_list in InvalidDataTypes.for_lists:
@@ -316,7 +330,10 @@ class GenericValidatorMethodTests:
     def boolean_invalid(
         test_instance: unittest.TestCase, validator: Callable, field_location: str
     ):
-        """Test that a validator method rejects the following any non-boolean values"""
+        """
+        Test that a validator method rejects the following:
+        * Non-boolean values
+        """
         for invalid_data_type_for_boolean in InvalidDataTypes.for_booleans:
             with test_instance.assertRaises(TypeError) as error:
                 validator(invalid_data_type_for_boolean)
@@ -328,13 +345,13 @@ class GenericValidatorMethodTests:
 
 
 class GenericValidatorModelTests:
-    """Generic tests for model validators
+    """
+    Generic tests for model validators
 
-    Notes:-
+    NOTE:
     TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
     this happens, the error message is suffixed with the type of error e.g. type_error or
     value_error. This is why the tests check for the type of error in the error message.
-
     """
 
     @staticmethod
@@ -360,14 +377,32 @@ class GenericValidatorModelTests:
         invalid_length_strings_to_test: list = None,
         predefined_values: tuple = None,
         invalid_strings_to_test: list = None,
-        is_mandatory_FHIR: bool = False,
+        is_mandatory_fhir: bool = False,
     ):
-        """Test that a validator method rejects invalid data when in a model"""
+        """
+        Test that a validator rejects the following invalid strings when in a model:
+        * All invalid data types
+        * If there is a defined_string_length: Strings of invalid length (defined by the argument
+            invalid_length_strings_to_test), plus the empty string
+        * If there is no defined_string_length: Empty strings
+        * If there is a max_length: Strings longer than max length (defined by the argument
+            invalid_length_strings_to_test)
+        * If there are predefined values: Invalid strings (i.e. not one of the predefined values) as
+            defined by the argument invalid_strings_to_test
+        * If is_mandatory_fhir is true: Value of None
+
+        NOTE: No validation of optional arguments will occur if the method is not given a list of
+        values to test. This means that:
+        * When optional arguments defined_length and max_length are given, the optional argument
+            invalid_length_strings_to_test MUST also be given
+        * When optional argument predefined_lines is given, the optional argument
+            invalid_strings_to_test MUST also be given.
+        """
         invalid_json_data = deepcopy(test_instance.json_data)
 
         # If is mandatory FHIR, then for none type the model raises an
         # exception prior to running NHS pre-validators
-        if is_mandatory_FHIR:
+        if is_mandatory_fhir:
             set_in_dict(invalid_json_data, keys_to_access_value, None)
 
             with test_instance.assertRaises(ValidationError) as error:
@@ -380,7 +415,7 @@ class GenericValidatorModelTests:
 
         # Set list of invalid data types to test
         invalid_data_types_for_strings = InvalidDataTypes.for_strings
-        if is_mandatory_FHIR:
+        if is_mandatory_fhir:
             invalid_data_types_for_strings = filter(
                 None, invalid_data_types_for_strings
             )
@@ -423,6 +458,7 @@ class GenericValidatorModelTests:
                 in str(error.exception)
             )
 
+        # If there is a max_length, test strings which exceed that length
         if max_length:
             for invalid_length_string in invalid_length_strings_to_test:
                 set_in_dict(
@@ -436,6 +472,8 @@ class GenericValidatorModelTests:
                     in str(error.exception)
                 )
 
+        # If there are predefined values, then test strings which are
+        # not in the set of predefined values
         if predefined_values:
             for invalid_string in invalid_strings_to_test:
                 set_in_dict(invalid_json_data, keys_to_access_value, invalid_string)
@@ -457,6 +495,20 @@ class GenericValidatorModelTests:
         invalid_length_lists_to_test: list = None,
         invalid_lists_with_non_string_data_types_to_test: list = None,
     ):
+        """
+        Test that a validator rejects the following invalid lists when in a model:
+        * All invalid data types
+        * If there is a predefined list length: Strings of invalid length (defined by the argument
+            invalid_length_lists_to_test), plus the empty list
+        * If there is no predfined list length: Empty list
+        * If there is a list of invalid_lists_with_non_string_data_types_to_test: Each of the
+            items in the list, plus a list containing an empty string
+
+        NOTE: No validation of optional arguments will occur if the method is not given a list of
+        values to test. This means that:
+        * When optional arguments predefined_list_length is given, the optional argument
+            invalid_length_lists_to_test MUST also be given
+        """
         invalid_json_data = deepcopy(test_instance.json_data)
 
         # Test invalid data types

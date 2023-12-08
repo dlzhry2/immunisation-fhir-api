@@ -88,6 +88,7 @@ def generic_date_time_validation(field_value: str, field_location: str):
     "YYYY-MM-DDThh:mm:ss" (i.e. datetime without timezone) or
     "YYYY-MM-DDThh:mm:ss+zz:zz" (i.e. datetime with timezone)
     """
+    # TODO: Handle the case where timezone is preceeded by minus
     if not isinstance(field_value, str):
         raise TypeError(f"{field_location} must be a string")
 

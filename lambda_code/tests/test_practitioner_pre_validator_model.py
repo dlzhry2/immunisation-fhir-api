@@ -197,7 +197,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         )
 
     def test_model_pre_validate_invalid_identifier_type_coding(self):
-        """Test pre_validate_identifier rejects invalid values when in a model"""
+        """Test pre_validate_identifier_type_coding rejects invalid values when in a model"""
 
         valid_list_element = {"display": "test_display"}
         invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
@@ -218,7 +218,9 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         )
 
     def test_model_pre_validate_invalid_identifier_type_coding_display(self):
-        """Test pre_validate_identifier_type_coding_display rejects invalid values when in a model"""
+        """
+        Test pre_validate_identifier_type_coding_display rejects invalid values when in a model
+        """
         GenericValidatorModelTests.string_invalid(
             self,
             field_location="identifier[0] -> type -> coding[0] -> display",
