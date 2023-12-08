@@ -1,17 +1,22 @@
+"""Constants"""
+
 import re
 from datetime import datetime
 from typing import Union
 
 
 class Constants:
-    statuses = ("completed", "entered-in-error", "not-done")
-    primary_source = {True, False}
-    genders = ("male", "female", "other", "unknown")
-    vaccination_not_given_flag: str = "not-done"
-    vaccination_given_flag: str = "empty"
+    """ "Constants used for the models"""
+
+    # Constants
+    STATUSES = ("completed", "entered-in-error", "not-done")
+    PRIMARY_SOURCE = {True, False}
+    GENDERS = ("male", "female", "other", "unknown")
+    VACCINATION_NOT_GIVEN_FLAG: str = "not-done"
+    VACCINATION_GIVEN_FLAG: str = "empty"
     # TODO: valid_disease_types needs updated to reprent agreed list (needs to consider the
     # mapping used for converting snomed code to disease type)
-    valid_disease_types = {"COVID-19", "FLU"}
+    VALID_DISEASE_TYPES = {"COVID-19", "FLU"}
 
     @staticmethod
     def convert_snomed_code_to_target_disease_type(
@@ -67,10 +72,10 @@ class Constants:
 
     @staticmethod
     def if_vaccine_not_give(not_given_flag):
-        if not not_given_flag or not_given_flag == Constants.vaccination_given_flag:
+        if not not_given_flag or not_given_flag == Constants.VACCINATION_GIVEN_FLAG:
             return False
         else:
-            if not_given_flag == Constants.vaccination_not_given_flag:
+            if not_given_flag == Constants.VACCINATION_NOT_GIVEN_FLAG:
                 return True
 
     @staticmethod

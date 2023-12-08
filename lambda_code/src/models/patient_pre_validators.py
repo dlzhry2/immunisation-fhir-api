@@ -56,7 +56,7 @@ class PatientPreValidators:
     def gender(gender: str) -> str:
         """Pre-validate gender (person_gender)"""
 
-        generic_string_validation(gender, "gender", predefined_values=Constants.genders)
+        generic_string_validation(gender, "gender", predefined_values=Constants.GENDERS)
 
         return gender
 

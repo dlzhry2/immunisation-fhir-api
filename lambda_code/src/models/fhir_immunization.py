@@ -1,10 +1,9 @@
 """Immunization FHIR R4B validator"""
 from fhir.resources.R4B.immunization import Immunization
+from models.utils import get_generic_questionnaire_response_value
 from lambda_code.src.models.immunization_pre_validators import (
     ImmunizationPreValidators,
 )
-from models.constants import Constants
-from models.utils import get_generic_questionnaire_response_value
 
 
 class ImmunizationValidator:
@@ -80,7 +79,7 @@ class ImmunizationValidator:
     def pre_validate_questionnaire_site_code_code(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[0] -> resourceType[QuestionnaireResponse]:
-        item[*] -> linkId[SiteCode]: answer[0] -> valueCoding -> code exists,
+        item[*] -> linkId[SiteCode]: answer[0] -> valueCoding -> code (site_code) exists,
         then it is a string
         """
         try:
@@ -99,7 +98,7 @@ class ImmunizationValidator:
     def pre_validate_site_name_code(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[0] -> resourceType[QuestionnaireResponse]:
-        item[*] -> linkId[SiteName]: answer[0] -> valueCoding -> code exists,
+        item[*] -> linkId[SiteName]: answer[0] -> valueCoding -> code (site_name) exists,
         then it is a string
         """
         try:

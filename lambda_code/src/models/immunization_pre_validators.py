@@ -11,6 +11,8 @@ from models.constants import Constants
 
 
 class ImmunizationPreValidators:
+    """Pre-validators for Immunization model"""
+
     @staticmethod
     def patient_identifier_value(patient_identifier_value: str) -> str:
         """Pre-validate patient -> identifier value (NHS_number)"""
@@ -115,7 +117,7 @@ class ImmunizationPreValidators:
         """Pre-validate status (action_flag)"""
 
         generic_string_validation(
-            status, "status", predefined_values=Constants.statuses
+            status, "status", predefined_values=Constants.STATUSES
         )
 
         return status
