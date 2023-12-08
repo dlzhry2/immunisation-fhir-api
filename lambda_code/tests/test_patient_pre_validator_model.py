@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 
 from models.fhir_patient import PatientValidator
-from ..tests.utils import (
+from lambda_code.tests.utils import (
     InvalidDataTypes,
     GenericValidatorModelTests,
 )

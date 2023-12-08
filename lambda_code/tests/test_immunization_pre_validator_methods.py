@@ -3,7 +3,7 @@
 import unittest
 
 from models.immunization_pre_validators import ImmunizationPreValidators
-from ..tests.utils import (
+from lambda_code.tests.utils import (
     InvalidDataTypes,
     GenericValidatorMethodTests,
     generate_field_location_for_questionnnaire_response,
