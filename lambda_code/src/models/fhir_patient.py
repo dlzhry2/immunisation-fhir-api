@@ -84,7 +84,7 @@ class PatientValidator:
 
     @classmethod
     def pre_validate_address(cls, values: dict) -> dict:
-        """Pre-validate that, if address exists, then it is an array of length 1 (if it exists)"""
+        """Pre-validate that, if address exists, then it is an array of length 1"""
         try:
             address = values["address"]
             PatientPreValidators.address(address)

@@ -80,7 +80,7 @@ class ImmunizationValidator:
         """
         Pre-validate that, if contained[0] -> resourceType[QuestionnaireResponse]:
         item[*] -> linkId[SiteCode]: answer[0] -> valueCoding -> code (site_code) exists,
-        then it is a string
+        then it is a non-empty string
         """
         try:
             questionnaire_site_code_code = get_generic_questionnaire_response_value(
@@ -99,7 +99,7 @@ class ImmunizationValidator:
         """
         Pre-validate that, if contained[0] -> resourceType[QuestionnaireResponse]:
         item[*] -> linkId[SiteName]: answer[0] -> valueCoding -> code (site_name) exists,
-        then it is a string
+        then it is a non-empty string
         """
         try:
             questionnaire_site_name_code = get_generic_questionnaire_response_value(
@@ -156,7 +156,10 @@ class ImmunizationValidator:
 
     @classmethod
     def pre_validate_status(cls, values: dict) -> dict:
-        """Pre-validate that, if status (action_flag) exists, then it is a non-empty string"""
+        """
+        Pre-validate that, if status (action_flag) exists, then it is a non-empty string which is
+        one of the following: completed, entered-in-error, not-done
+        """
 
         try:
             status = values["status"]
