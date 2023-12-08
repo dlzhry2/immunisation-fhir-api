@@ -1,19 +1,28 @@
 locals {
     lambda_dir         = abspath("${path.root}/../lambda_code")
-    build_dir          = abspath("${path.root}/build")
+    #build_dir          = abspath("${path.root}/build")
     # lambda_source_zip is only used for change detection. lambda_deployment_zip is the final zip file that is getting deployed
-    lambda_source_zip  = "lambda_source_code.zip"
-    lambda_package_zip = "${local.build_dir}/lambda_package.zip"
+    #lambda_source_zip  = "lambda_source_code.zip"
+    #lambda_package_zip = "${local.build_dir}/lambda_package.zip"
+
+    source_path   = local.lambda_dir
+    path_include  = ["**"]
+    path_exclude  = ["**/__pycache__/**"]
+    files_include = setunion([for f in local.path_include : fileset(local.source_path, f)]...)
+    files_exclude = setunion([for f in local.path_exclude : fileset(local.source_path, f)]...)
+    files         = sort(setsubtract(local.files_include, local.files_exclude))
+
+    dir_sha = sha1(join("", [for f in local.files : filesha1("${local.source_path}/${f}")]))
 }
 
-data "archive_file" "lambda_source_zip" {
+/*data "archive_file" "lambda_source_zip" {
     type        = "zip"
     source_dir  = "${local.lambda_dir}/src"
     output_path = "${local.build_dir}/${local.lambda_source_zip}"
 }
 locals {
     lambda_code_sha = data.archive_file.lambda_source_zip.output_base64sha256
-}
+}*/
 /*
 resource "aws_s3_bucket" "lambda_source_bucket" {
     bucket        = "${local.prefix}-lambda-source-code"
@@ -70,11 +79,12 @@ module "docker_image" {
     #image_tag     = "1.0"
 
     source_path      = local.lambda_dir
-    docker_file_path = "Dockerfile-poetry"
 
     triggers = {
-        lambda_source_code = local.lambda_code_sha
+/*        lambda_source_code = local.lambda_code_sha
         docker_file        = filemd5("${local.lambda_dir}/Dockerfile-poetry")
+        dir_sha1           = sha1(join("", [for f in fileset(path.module, "src*//*") : filesha1(f)]))*/
+        dir_sha = local.dir_sha
     }
 }
 

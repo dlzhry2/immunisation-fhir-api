@@ -1,11 +1,26 @@
-FROM python:3.10
+FROM public.ecr.aws/lambda/python:3.9 as base
 
-RUN apt update && apt upgrade -y && apt install -y zip
+RUN pip install "poetry==1.5.*"
 
-RUN mkdir -p /lambda_package && mkdir -p /lambda_test && mkdir -p /build
-COPY ./src/ /lambda_package/
-COPY ./ /lambda_test/
-COPY entrypoint.sh /usr/bin/entrypoint.sh
-RUN chmod +x /usr/bin/entrypoint.sh
+COPY poetry.lock pyproject.toml README.md ./
+RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi --no-root --no-dev
 
-ENTRYPOINT ["entrypoint.sh"]
+
+# -----------------------------
+FROM base as test
+
+RUN poetry install --no-interaction --no-ansi --no-root
+
+COPY src src
+COPY tests tests
+
+ENV DYNAMODB_TABLE_NAME=example_table
+RUN python -m unittest
+
+
+# -----------------------------
+FROM base as build
+
+COPY src .
+RUN chmod 644 $(find . -type f)
+RUN chmod 755 $(find . -type d)

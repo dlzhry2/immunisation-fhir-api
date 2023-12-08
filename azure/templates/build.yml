@@ -1,6 +1,6 @@
 steps:
   - bash: |
-      docker build -t imms-lambda-build .
+      BUILDKIT_PROGRESS=plain docker build -t imms-lambda-build .
       docker run --rm -v $(shell pwd)/build:/build imms-lambda-build
 
     displayName: Build and test lambda code
