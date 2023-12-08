@@ -1,7 +1,7 @@
 """Immunization FHIR R4B validator"""
 from fhir.resources.R4B.immunization import Immunization
 from models.utils import get_generic_questionnaire_response_value
-from lambda_code.src.models.immunization_pre_validators import (
+from models.immunization_pre_validators import (
     ImmunizationPreValidators,
 )
 
