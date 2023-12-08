@@ -3,7 +3,7 @@
 import unittest
 
 from models.patient_pre_validators import PatientPreValidators
-from tests.utils import (
+from .utils import (
     GenericValidatorMethodTests,
 )
 

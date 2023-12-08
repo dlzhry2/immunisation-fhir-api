@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 
 from models.fhir_immunization import ImmunizationValidator
-from tests.utils import (
+from .utils import (
     InvalidDataTypes,
     GenericValidatorModelTests,
     generate_field_location_for_questionnnaire_response,
