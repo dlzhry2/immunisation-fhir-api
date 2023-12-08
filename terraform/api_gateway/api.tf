@@ -36,16 +36,15 @@ resource "aws_apigatewayv2_domain_name" "service_api_domain_name" {
     domain_name = var.api_domain_name
 
     domain_name_configuration {
-        certificate_arn = aws_acm_certificate.service_certificate.arn
+        certificate_arn = aws_acm_certificate_validation.service_certificate.certificate_arn
         endpoint_type   = "REGIONAL"
         security_policy = "TLS_1_2"
     }
     tags = {
         Name = "${var.prefix}-api-domain-name"
     }
-
-    depends_on = [aws_acm_certificate.service_certificate]
 }
+
 resource "aws_apigatewayv2_api_mapping" "api_mapping" {
     api_id      = aws_apigatewayv2_api.service_api.id
     domain_name = aws_apigatewayv2_domain_name.service_api_domain_name.id
