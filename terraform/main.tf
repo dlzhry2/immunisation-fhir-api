@@ -13,6 +13,7 @@ terraform {
     region = "eu-west-2"
     key    = "state"
   }
+  required_version = "1.6.4"
 }
 
 provider "aws" {
