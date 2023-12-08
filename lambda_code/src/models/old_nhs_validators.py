@@ -1,7 +1,6 @@
 """NHS Validator methods"""
 from datetime import datetime, timezone
 from models.constants import Constants
-from icecream import ic
 
 
 class NHSImmunizationValidators:
