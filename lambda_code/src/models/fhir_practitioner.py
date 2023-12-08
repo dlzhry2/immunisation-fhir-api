@@ -26,8 +26,8 @@ class PractitionerValidator:
     @classmethod
     def pre_validate_name_given(cls, values: dict) -> dict:
         """
-        Pre-validate that, if name[0] -> given (practitioner forename) exists, then it is a
-        non-empty array of non-empty strings
+        Pre-validate that, if name[0] -> given (performing_professional_forename) exists,
+        then it is a non-empty array of non-empty strings
         """
         try:
             name_given = values["name"][0]["given"]
@@ -39,7 +39,10 @@ class PractitionerValidator:
 
     @classmethod
     def pre_validate_name_family(cls, values: dict) -> dict:
-        """Pre-validate that, if name[0] -> family exists, then it is a non-empty string"""
+        """
+        Pre-validate that, if name[0] -> family (performing_professional_surname) exists,
+        then it is a non-empty string
+        """
 
         try:
             name_family = values["name"][0]["family"]
@@ -65,7 +68,7 @@ class PractitionerValidator:
     @classmethod
     def pre_validate_identifier_value(cls, values: dict) -> dict:
         """
-        Pre-validate that, if identifier[0] -> value (unique_id) exists,
+        Pre-validate that, if identifier[0] -> value (performing_professional_body_reg_code) exists,
         then it is a non-empty string
         """
         try:
@@ -79,7 +82,7 @@ class PractitionerValidator:
     @classmethod
     def pre_validate_identifier_system(cls, values: dict) -> dict:
         """
-        Pre-validate that, if identifier[0] -> system (unique_id_uri) exists,
+        Pre-validate that, if identifier[0] -> system (performing_professional_body_reg_uri) exists,
         then it is a non-empty string
         """
         try:
@@ -106,7 +109,7 @@ class PractitionerValidator:
     @classmethod
     def pre_validate_identifier_type_coding_display(cls, values: dict) -> dict:
         """
-        Pre-validate that, if identifier[0] -> type -> coding -> display exists,
+        Pre-validate that, if identifier[0] -> type -> coding -> display (sds_job_role_name) exists,
         then it is a non-empty string
         """
         try:

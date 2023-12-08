@@ -328,7 +328,14 @@ class GenericValidatorMethodTests:
 
 
 class GenericValidatorModelTests:
-    """Generic tests for model validators"""
+    """Generic tests for model validators
+
+    Notes:-
+    TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
+    this happens, the error message is suffixed with the type of error e.g. type_error or
+    value_error. This is why the tests check for the type of error in the error message.
+
+    """
 
     @staticmethod
     def valid(

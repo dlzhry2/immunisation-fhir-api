@@ -14,7 +14,7 @@ def generic_string_validation(
 ):
     """
     Apply generic validation to a string field to ensure it is a non-empty string which meets
-    the length requirements
+    the length requirements and predefined values requirements
     """
     if not isinstance(field_value, str):
         raise TypeError(f"{field_location} must be a string")
@@ -84,7 +84,9 @@ def generic_date_validation(field_value: str, field_location: str):
 def generic_date_time_validation(field_value: str, field_location: str):
     """
     Apply generic validation to a datetime field to ensure that it is a string (JSON dates must be
-    written as strings) containing a valid datetime in the format "YYYY-MM-DDThh:mm:ss"
+    written as strings) containing a valid datetime in the format
+    "YYYY-MM-DDThh:mm:ss" (i.e. datetime without timezone) or
+    "YYYY-MM-DDThh:mm:ss+zz:zz" (i.e. datetime with timezone)
     """
     if not isinstance(field_value, str):
         raise TypeError(f"{field_location} must be a string")
@@ -111,7 +113,7 @@ def generic_date_time_validation(field_value: str, field_location: str):
     else:
         raise ValueError(
             f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss" '
-            + 'or "YYYY-MM-DDThh:mm:ss+zz"'
+            + 'or "YYYY-MM-DDThh:mm:ss+zz:zz"'
         )
 
 

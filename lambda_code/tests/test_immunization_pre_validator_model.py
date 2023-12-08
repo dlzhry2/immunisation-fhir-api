@@ -4,7 +4,6 @@ import os
 import json
 from copy import deepcopy
 from pydantic import ValidationError
-from icecream import ic
 
 
 from models.fhir_immunization import ImmunizationValidator
@@ -149,7 +148,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
             self.assertTrue(
                 'occurrenceDateTime must be a string in the format "YYYY-MM-DDThh:mm:ss" '
-                + 'or "YYYY-MM-DDThh:mm:ss+zz" (type=value_error)'
+                + 'or "YYYY-MM-DDThh:mm:ss+zz:zz" (type=value_error)'
                 in str(error.exception)
             )
 

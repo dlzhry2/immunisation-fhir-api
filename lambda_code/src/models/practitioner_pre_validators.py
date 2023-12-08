@@ -78,7 +78,7 @@ class PractitionerPreValidators:
 
     @staticmethod
     def identifier_type_coding_display(identifier_type_coding_display: list) -> list:
-        "Pre-validate identifier[0] -> type -> coding[0] -> display"
+        "Pre-validate identifier[0] -> type -> coding[0] -> display (sds_job_role_name)"
 
         generic_string_validation(
             identifier_type_coding_display,

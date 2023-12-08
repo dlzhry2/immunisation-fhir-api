@@ -62,6 +62,7 @@ class ImmunizationPreValidators:
         Pre-validate contained[0] -> resourceType[QuestionnaireResponse]:
         item[*] -> linkId[SiteCode]:
         answer[0] -> valueCoding -> code
+        (site_code)
         """
 
         generic_string_validation(
@@ -78,6 +79,7 @@ class ImmunizationPreValidators:
         Pre-validate contained[0] -> resourceType[QuestionnaireResponse]:
         item[*] -> linkId[SiteName]:
         answer[0] -> valueCoding -> code
+        (site_name)
         """
 
         generic_string_validation(

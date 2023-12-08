@@ -26,7 +26,7 @@ class PatientValidator:
     @classmethod
     def pre_validate_name_given(cls, values: dict) -> dict:
         """
-        Pre-validate that, if name[0] -> given (patient forename) exists, then it is a
+        Pre-validate that, if name[0] -> given (person_forename) exists, then it is a
         non-empty array of non-empty strings
         """
         try:
@@ -39,7 +39,10 @@ class PatientValidator:
 
     @classmethod
     def pre_validate_name_family(cls, values: dict) -> dict:
-        """Pre-validate that, if name[0] -> family exists, then it is a non-empty string"""
+        """
+        Pre-validate that, if name[0] -> family (person_surname) exists,
+        then it is a non-empty string
+        """
 
         try:
             name_family = values["name"][0]["family"]
@@ -52,7 +55,7 @@ class PatientValidator:
     @classmethod
     def pre_validate_birth_date(cls, values: dict) -> dict:
         """
-        Pre-validate that, if birthDate (person DOB) exists, then it is a string in the format
+        Pre-validate that, if birthDate (person_DOB) exists, then it is a string in the format
         YYYY-MM-DD, representing a valid date
         """
 
@@ -67,7 +70,7 @@ class PatientValidator:
     @classmethod
     def pre_validate_gender(cls, values: dict) -> dict:
         """
-        Pre-validate that, if gender (person gender) exists, then it is a string, which is one
+        Pre-validate that, if gender (person_gender_code) exists, then it is a string, which is one
         of the following: male, female, other, unknown
         """
 
@@ -93,8 +96,8 @@ class PatientValidator:
     @classmethod
     def pre_validate_address_postal_code(cls, values: dict) -> dict:
         """
-        Pre-validate that address -> postalCode, if it exists, is a non-empty string,
-        separated into two parts by a single space
+        Pre-validate that, if  address -> postalCode  (person_postcode) exists, is a non-empty
+        string, separated into two parts by a single space
         """
 
         try:

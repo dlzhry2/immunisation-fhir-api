@@ -89,7 +89,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             self.assertEqual(
                 str(error.exception),
                 'occurrenceDateTime must be a string in the format "YYYY-MM-DDThh:mm:ss" '
-                + 'or "YYYY-MM-DDThh:mm:ss+zz"',
+                + 'or "YYYY-MM-DDThh:mm:ss+zz:zz"',
             )
 
         # Test invalid dates
