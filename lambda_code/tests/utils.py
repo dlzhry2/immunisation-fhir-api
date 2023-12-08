@@ -169,6 +169,7 @@ class GenericValidatorMethodTests:
         else:
             with test_instance.assertRaises(ValueError) as error:
                 validator("")
+
             test_instance.assertEqual(
                 str(error.exception),
                 f"{field_location} must be a non-empty string",

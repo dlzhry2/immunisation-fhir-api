@@ -79,6 +79,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             "2000-01-01T00:00:00",
             "2000-01-01T22:22:22",
             "1933-12-31T11:11:11+12:45",
+            "1933-12-31T11:11:11-05:00",
         ]
 
         GenericValidatorModelTests.valid(
@@ -148,7 +149,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
             self.assertTrue(
                 'occurrenceDateTime must be a string in the format "YYYY-MM-DDThh:mm:ss" '
-                + 'or "YYYY-MM-DDThh:mm:ss+zz:zz" (type=value_error)'
+                + 'or "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz" (type=value_error)'
                 in str(error.exception)
             )
 

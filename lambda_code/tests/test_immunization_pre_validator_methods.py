@@ -38,6 +38,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             "2000-01-01T00:00:00",
             "2000-01-01T22:22:22",
             "1933-12-31T11:11:11+12:45",
+            "1933-12-31T11:11:11-05:00",
         ]
 
         GenericValidatorMethodTests.valid(
@@ -89,7 +90,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             self.assertEqual(
                 str(error.exception),
                 'occurrenceDateTime must be a string in the format "YYYY-MM-DDThh:mm:ss" '
-                + 'or "YYYY-MM-DDThh:mm:ss+zz:zz"',
+                + 'or "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz"',
             )
 
         # Test invalid dates
