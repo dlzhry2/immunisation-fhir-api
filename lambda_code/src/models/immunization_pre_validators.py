@@ -4,6 +4,7 @@ from models.utils import (
     generic_date_time_validation,
     generic_list_validation,
     generic_date_validation,
+    generic_boolean_validation,
 )
 
 from models.constants import Constants
@@ -126,3 +127,21 @@ class ImmunizationPreValidators:
         generic_date_validation(recorded, "recorded")
 
         return recorded
+
+    @staticmethod
+    def primary_source(primary_source: bool) -> bool:
+        """Pre_validate primarySource (primary_source)"""
+
+        generic_boolean_validation(primary_source, "primarySource")
+
+        return primary_source
+
+    @staticmethod
+    def report_origin_text(report_origin_text: str) -> str:
+        """Pre_validate reportOrigin -> text (report_origin)"""
+
+        generic_string_validation(
+            report_origin_text, "reportOrigin -> text", max_length=100
+        )
+
+        return report_origin_text

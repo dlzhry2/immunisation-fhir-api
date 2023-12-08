@@ -1,6 +1,6 @@
 """Patient FHIR R4B validator"""
 from fhir.resources.R4B.patient import Patient
-from models.nhs_validators import NHSPatientValidators
+from models.old_nhs_validators import NHSPatientValidators
 
 
 class PatientValidator:

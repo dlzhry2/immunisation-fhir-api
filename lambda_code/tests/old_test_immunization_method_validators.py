@@ -8,7 +8,7 @@ import dateutil.parser
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from models.nhs_validators import NHSImmunizationValidators
+from models.old_nhs_validators import NHSImmunizationValidators
 from models.constants import Constants
 
 

@@ -65,3 +65,24 @@ class PractitionerPreValidators:
         generic_string_validation(identifier_system, "identifier[0] -> system")
 
         return identifier_system
+
+    @staticmethod
+    def identifier_type_coding(identifier_type_coding: list) -> list:
+        "Pre-validate identifier[0] -> type -> coding"
+
+        generic_list_validation(
+            identifier_type_coding, "identifier[0] -> type -> coding", defined_length=1
+        )
+
+        return identifier_type_coding
+
+    @staticmethod
+    def identifier_type_coding_display(identifier_type_coding_display: list) -> list:
+        "Pre-validate identifier[0] -> type -> coding[0] -> display"
+
+        generic_string_validation(
+            identifier_type_coding_display,
+            "identifier[0] -> type -> coding[0] -> display",
+        )
+
+        return identifier_type_coding_display

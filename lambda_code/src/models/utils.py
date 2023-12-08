@@ -115,6 +115,12 @@ def generic_date_time_validation(field_value: str, field_location: str):
         )
 
 
+def generic_boolean_validation(field_value: str, field_location: str):
+    """Apply generic vlaidation to a boolean field to ensure that it is a boolean"""
+    if not isinstance(field_value, bool):
+        raise TypeError(f"{field_location} must be a boolean")
+
+
 def get_generic_questionnaire_response_value(
     json_data: dict, link_id: str, field_type: Literal["code", "display", "system"]
 ) -> Union[str, None]:

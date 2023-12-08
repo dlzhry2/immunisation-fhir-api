@@ -320,3 +320,46 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             validator=ImmunizationPreValidators.recorded,
             field_location="recorded",
         )
+
+    def test_pre_primary_source_valid(self):
+        """Test ImmunizationPreValidators.primary_source"""
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.primary_source,
+            valid_items_to_test=[True, False],
+        )
+
+    def test_pre_primary_source_invalid(self):
+        """Test ImmunizationPreValidators.primary_source"""
+        GenericValidatorMethodTests.boolean_invalid(
+            self,
+            validator=ImmunizationPreValidators.primary_source,
+            field_location="primarySource",
+        )
+
+    def test_pre_report_origin_text_valid(self):
+        """Test ImmunizationPreValidators.report_origin_text"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.report_origin_text,
+            valid_items_to_test=[
+                "sample",
+                "Free text description of organisation recording the event",
+            ],
+        )
+
+    def test_pre_report_origin_text_invalid(self):
+        """Test ImmunizationPreValidators.report_origin_text"""
+
+        invalid_length_strings_to_test = [
+            "This is a really long string with more than 100 "
+            + "characters to test whether the validator is working well"
+        ]
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.report_origin_text,
+            field_location="reportOrigin -> text",
+            max_length=100,
+            invalid_length_strings_to_test=invalid_length_strings_to_test,
+        )

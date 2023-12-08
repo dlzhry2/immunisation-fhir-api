@@ -7,7 +7,7 @@ from icecream import ic
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from models.nhs_validators import NHSPractitionerValidators
+from models.old_nhs_validators import NHSPractitionerValidators
 
 
 class TestNHSPractitionerValidationRules(unittest.TestCase):

@@ -1,6 +1,6 @@
 """Immunization FHIR R4B validator"""
 from fhir.resources.R4B.immunization import Immunization
-from models.nhs_validators import NHSImmunizationValidators
+from models.old_nhs_validators import NHSImmunizationValidators
 from models.constants import Constants
 
 

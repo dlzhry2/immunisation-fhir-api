@@ -6,7 +6,7 @@ import os
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from models.nhs_validators import NHSPatientValidators
+from models.old_nhs_validators import NHSPatientValidators
 
 
 class TestNHSPatientMethodValidationRules(unittest.TestCase):

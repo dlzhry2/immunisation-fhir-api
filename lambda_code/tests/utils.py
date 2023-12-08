@@ -122,6 +122,7 @@ class GenericValidatorMethodTests:
         validator: Callable,
         field_location: str,
         defined_length: int = None,
+        max_length: int = 0,
         invalid_length_strings_to_test: list = None,
         predefined_values: tuple = None,
         invalid_strings_to_test: list = None,
@@ -132,6 +133,7 @@ class GenericValidatorMethodTests:
         * If there is a predefined string length: Strings of invalid length (defined by the argument
             invalid_length_strings_to_test), plus the empty string
         * If there is no predfined string length: Empty strings
+        * If there is a max length: Strings longer than max length
         * If there are predefined values: Invalid strings (i.e. not one of the predefined values)
         """
         # Test invalid data types
@@ -163,6 +165,16 @@ class GenericValidatorMethodTests:
                 str(error.exception),
                 f"{field_location} must be a non-empty string",
             )
+
+        if max_length:
+            for invalid_length_string in invalid_length_strings_to_test:
+                with test_instance.assertRaises(ValueError) as error:
+                    validator(invalid_length_string)
+
+                test_instance.assertEqual(
+                    str(error.exception),
+                    f"{field_location} must be {max_length} or fewer characters",
+                )
 
         # If there are predefined values, then test strings which are
         # not in the set of predefined values
@@ -300,6 +312,20 @@ class GenericValidatorMethodTests:
                 f"{field_location} must be a valid date",
             )
 
+    @staticmethod
+    def boolean_invalid(
+        test_instance: unittest.TestCase, validator: Callable, field_location: str
+    ):
+        """Test that a validator method rejects the following any non-boolean values"""
+        for invalid_data_type_for_boolean in InvalidDataTypes.for_booleans:
+            with test_instance.assertRaises(TypeError) as error:
+                validator(invalid_data_type_for_boolean)
+
+            test_instance.assertEqual(
+                str(error.exception),
+                f"{field_location} must be a boolean",
+            )
+
 
 class GenericValidatorModelTests:
     """Generic tests for model validators"""
@@ -314,6 +340,7 @@ class GenericValidatorModelTests:
         valid_json_data = deepcopy(test_instance.json_data)
         for valid_item in valid_items_to_test:
             set_in_dict(valid_json_data, keys_to_access_value, valid_item)
+
             test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
 
     @staticmethod
@@ -322,6 +349,7 @@ class GenericValidatorModelTests:
         field_location: str,
         keys_to_access_value: list,
         defined_length: int = None,
+        max_length: int = None,
         invalid_length_strings_to_test: list = None,
         predefined_values: tuple = None,
         invalid_strings_to_test: list = None,
@@ -387,6 +415,19 @@ class GenericValidatorModelTests:
                 f"{field_location} must be a non-empty string (type=value_error)"
                 in str(error.exception)
             )
+
+        if max_length:
+            for invalid_length_string in invalid_length_strings_to_test:
+                set_in_dict(
+                    invalid_json_data, keys_to_access_value, invalid_length_string
+                )
+                with test_instance.assertRaises(ValidationError) as error:
+                    test_instance.validator.validate(invalid_json_data)
+
+                test_instance.assertTrue(
+                    f"{field_location} must be {max_length} or fewer characters (type=value_error)"
+                    in str(error.exception)
+                )
 
         if predefined_values:
             for invalid_string in invalid_strings_to_test:
@@ -540,5 +581,28 @@ class GenericValidatorModelTests:
 
             test_instance.assertTrue(
                 f"{field_location} must be a valid date (type=value_error)"
+                in str(error.exception)
+            )
+
+    @staticmethod
+    def boolean_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        keys_to_access_value: list,
+    ):
+        """Test that a validator rejects any non-boolean value when in a model"""
+
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_boolean in InvalidDataTypes.for_booleans:
+            set_in_dict(
+                invalid_json_data, keys_to_access_value, invalid_data_type_for_boolean
+            )
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a boolean (type=type_error)"
                 in str(error.exception)
             )

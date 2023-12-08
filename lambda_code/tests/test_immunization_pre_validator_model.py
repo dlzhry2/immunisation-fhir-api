@@ -429,3 +429,43 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         GenericValidatorModelTests.date_invalid(
             self, field_location="recorded", keys_to_access_value=["recorded"]
         )
+
+    def test_model_pre_validate_valid_primary_source(self):
+        """Test pre_validate_primary_source accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["primarySource"],
+            valid_items_to_test=[True, False],
+        )
+
+    def test_model_pre_validate_invalid_primary_source(self):
+        """Test pre_validate_primary_source rejects invalid values when in a model"""
+        GenericValidatorModelTests.boolean_invalid(
+            self, field_location="primarySource", keys_to_access_value=["primarySource"]
+        )
+
+    def test_model_pre_validate_valid_report_origin_text(self):
+        """Test pre_validate_report_origin_text accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["reportOrigin", "text"],
+            valid_items_to_test=[
+                "sample",
+                "Free text description of organisation recording the event",
+            ],
+        )
+
+    def test_model_pre_validate_invalid_report_origin_text(self):
+        """Test pre_validate_report_origin_text rejects invalid values when in a model"""
+        invalid_length_strings_to_test = [
+            "This is a really long string with more than 100 "
+            + "characters to test whether the validator is working well"
+        ]
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="reportOrigin -> text",
+            keys_to_access_value=["reportOrigin", "text"],
+            max_length=100,
+            invalid_length_strings_to_test=invalid_length_strings_to_test,
+        )

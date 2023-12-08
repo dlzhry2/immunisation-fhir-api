@@ -90,6 +90,37 @@ class PractitionerValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_identifier_type_coding(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if identifier[0] -> type -> coding exists, then it is a list of length 1
+        """
+        try:
+            identifier_type_coding = values["identifier"][0]["type"]["coding"]
+            PractitionerPreValidators.identifier_type_coding(identifier_type_coding)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_identifier_type_coding_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if identifier[0] -> type -> coding -> display exists,
+        then it is a non-empty string
+        """
+        try:
+            identifier_type_coding_display = values["identifier"][0]["type"]["coding"][
+                0
+            ]["display"]
+            PractitionerPreValidators.identifier_type_coding_display(
+                identifier_type_coding_display
+            )
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """Add custom NHS validators to the model"""
         Practitioner.add_root_validator(self.pre_validate_name, pre=True)
@@ -98,6 +129,12 @@ class PractitionerValidator:
         Practitioner.add_root_validator(self.pre_validate_identifier, pre=True)
         Practitioner.add_root_validator(self.pre_validate_identifier_value, pre=True)
         Practitioner.add_root_validator(self.pre_validate_identifier_system, pre=True)
+        Practitioner.add_root_validator(
+            self.pre_validate_identifier_type_coding, pre=True
+        )
+        Practitioner.add_root_validator(
+            self.pre_validate_identifier_type_coding_display, pre=True
+        )
 
     def validate(self, json_data) -> Practitioner:
         """Generate the Practitioner model from the JSON data"""

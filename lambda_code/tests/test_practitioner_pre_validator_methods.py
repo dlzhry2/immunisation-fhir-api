@@ -148,3 +148,44 @@ class TestPrePractitionerMethodValidators(unittest.TestCase):
             validator=PractitionerPreValidators.identifier_system,
             field_location="identifier[0] -> system",
         )
+
+    def test_pre_identifier_type_coding_valid(self):
+        """Test PractitionerPreValidators.identifier_type_coding"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=PractitionerPreValidators.identifier_type_coding,
+            valid_items_to_test=[[{"display": "test"}]],
+        )
+
+    def test_pre_identifier_type_coding_invalid(self):
+        """Test PractitionerPreValidators.identifier_type_coding"""
+
+        valid_list_element = {"display": "test"}
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=PractitionerPreValidators.identifier_type_coding,
+            field_location="identifier[0] -> type -> coding",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_pre_identifier_type_coding_display_valid(self):
+        """Test PractitionerPreValidators.identifier_type_coding_display"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=PractitionerPreValidators.identifier_type_coding_display,
+            valid_items_to_test=["test"],
+        )
+
+    def test_pre_identifier_type_coding_display_invalid(self):
+        """Test PractitionerPreValidators.identifier_type_coding_display"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=PractitionerPreValidators.identifier_type_coding_display,
+            field_location="identifier[0] -> type -> coding[0] -> display",
+        )

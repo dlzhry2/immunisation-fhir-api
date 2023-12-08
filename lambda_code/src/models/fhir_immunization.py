@@ -182,6 +182,34 @@ class ImmunizationValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_primary_source(cls, values: dict) -> dict:
+        """Pre-validate that, if primarySource (primary_source) exists, then it is a boolean"""
+
+        try:
+            primary_source = values["primarySource"]
+            ImmunizationPreValidators.primary_source(primary_source)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_report_origin_text(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if reportOrigin -> text (report_origin_text)
+        exists, then it is a non-empty string with maximum length 100 characters
+        """
+
+        try:
+            report_origin_text = values["reportOrigin"]["text"]
+
+            ImmunizationPreValidators.report_origin_text(report_origin_text)
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """Add custom NHS validators to the model"""
         Immunization.add_root_validator(
@@ -203,6 +231,8 @@ class ImmunizationValidator:
         Immunization.add_root_validator(self.pre_validate_identifier_system, pre=True)
         Immunization.add_root_validator(self.pre_validate_status, pre=True)
         Immunization.add_root_validator(self.pre_validate_recorded, pre=True)
+        Immunization.add_root_validator(self.pre_validate_primary_source, pre=True)
+        Immunization.add_root_validator(self.pre_validate_report_origin_text, pre=True)
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
