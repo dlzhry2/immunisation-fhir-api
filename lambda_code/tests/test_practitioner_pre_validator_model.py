@@ -6,7 +6,7 @@ from copy import deepcopy
 
 
 from models.fhir_practitioner import PractitionerValidator
-from lambda_code.tests.utils import (
+from tests.utils import (
     InvalidDataTypes,
     GenericValidatorModelTests,
 )
