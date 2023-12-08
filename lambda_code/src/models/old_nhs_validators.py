@@ -10,7 +10,7 @@ class NHSImmunizationValidators:
     @staticmethod
     def validate_target_disease_type(disease_type: str):
         """Validate disease type"""
-        if disease_type not in Constants.valid_disease_types:
+        if disease_type not in Constants.VALID_DISEASE_TYPES:
             raise ValueError("TARGET_DISEASE_CODE must be for valid disease type")
         return disease_type
 
@@ -87,9 +87,9 @@ class NHSImmunizationValidators:
         if not status:
             raise ValueError("STATUS is a mandatory field.")
 
-        if status not in Constants.action_flags:
+        if status not in Constants.STATUSES:
             raise ValueError(
-                'STATUS should be "completed", "entered-in-error"or "not-done"'
+                'STATUS should be "completed", "entered-in-error" or "not-done"'
             )
 
         return status
@@ -108,7 +108,7 @@ class NHSImmunizationValidators:
         """Validate primary source"""
         if not primary_source and primary_source is not False:
             raise ValueError("PRIMARY_SOURCE is a mandatory field.")
-        if primary_source not in Constants.primary_source:
+        if primary_source not in Constants.PRIMARY_SOURCE:
             raise ValueError(
                 "PRIMARY_SOURCE should be boolean true or false (case-sensitive)"
             )
@@ -136,8 +136,8 @@ class NHSImmunizationValidators:
         """Validate not given flag"""
         if not_given:
             if not (
-                not_given == Constants.vaccination_not_given_flag
-                or not_given == Constants.vaccination_given_flag
+                not_given == Constants.VACCINATION_NOT_GIVEN_FLAG
+                or not_given == Constants.VACCINATION_GIVEN_FLAG
             ):
                 raise ValueError("NOT_GIVEN flag should be 'empty' or 'not-done'")
         return not_given
@@ -360,7 +360,7 @@ class NHSPatientValidators:
         if not gender:
             raise ValueError("GENDER is a mandatory field")
 
-        if gender not in Constants.genders:
+        if gender not in Constants.GENDERS:
             raise ValueError(
                 "Invalid value for GENDER. It must be male, female, other, or unknown."
             )
