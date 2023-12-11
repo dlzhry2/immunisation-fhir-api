@@ -88,7 +88,7 @@ def generic_date_time_validation(field_value: str, field_location: str):
     "YYYY-MM-DDThh:mm:ss" (i.e. datetime without timezone) or
     "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz" (i.e. datetime with timezone)
     """
-    # TODO: Handle the case where timezone is preceeded by minus
+
     if not isinstance(field_value, str):
         raise TypeError(f"{field_location} must be a string")
 
@@ -98,24 +98,19 @@ def generic_date_time_validation(field_value: str, field_location: str):
     )
 
     if date_pattern_without_timezone.fullmatch(field_value):
-        try:
-            datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S")
-        except ValueError as value_error:
-            raise ValueError(
-                f"{field_location} must be a valid datetime"
-            ) from value_error
+        date_time_format = "%Y-%m-%dT%H:%M:%S"
     elif date_pattern_with_timezone.fullmatch(field_value):
-        try:
-            datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S%z")
-        except ValueError as value_error:
-            raise ValueError(
-                f"{field_location} must be a valid datetime"
-            ) from value_error
+        date_time_format = "%Y-%m-%dT%H:%M:%S%z"
     else:
         raise ValueError(
             f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss" '
             + 'or "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz"'
         )
+
+    try:
+        datetime.strptime(field_value, date_time_format)
+    except ValueError as value_error:
+        raise ValueError(f"{field_location} must be a valid datetime") from value_error
 
 
 def generic_boolean_validation(field_value: str, field_location: str):

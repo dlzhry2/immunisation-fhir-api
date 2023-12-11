@@ -29,7 +29,7 @@ def set_in_dict(data_dict, map_list, value):
 
 
 class InvalidDataTypes:
-    """ "Store lists of  invalid data types for tests"""
+    """Store lists of  invalid data types for tests"""
 
     for_strings = [
         None,
@@ -99,6 +99,66 @@ class InvalidDataTypes:
         {"InvalidKey": "InvalidValue"},
         ["Invalid"],
         ("Invalid1", "Invalid2"),
+    ]
+
+
+class InvalidValues:
+    """Store lists of invalid values for tests"""
+
+    # Strings which are not in acceptable date format
+    for_date_string_formats = [
+        "",  # Empty
+        "invalid",  # With letters
+        "20000101",  # Without dashes
+        "2000-01-011",  # Extra digit at end
+        "12000-01-01",  # Extra digit at start
+        "12000-01-021",  # Extra digit at start and end
+        "99-01-01",  # Year represented without century (i.e. 2 digits instead of 4)
+        "01-01-1999",  # DD-MM-YYYY format
+        "01-01-99",  # DD-MM-YY format
+    ]
+
+    # Strings which are in acceptable date format, but are invalid dates
+    for_dates = [
+        "2000-00-01",  # Month 0
+        "2000-13-01",  # Month 13
+        "2000-01-00",  # Day 0
+        "2000-01-32",  # Day 13
+        "2000-02-30",  # Invalid combnation of month and day
+    ]
+
+    # Strings which are not in acceptable date time format
+    for_date_time_string_formats = [
+        "",  # Empty string
+        "invalid",  # Invalid format
+        "20000101",  # Date without hypens
+        "20000101000000",  # Date and time without hypens
+        "200001010000000000",  # Date, time and timezone without hypens
+        "2000-01-01",  # Date only
+        "12000-01-01T00:00:00+00:00",  # Extra character at start of string
+        "2000-01-01T00:00:001",  # Extra character at end of string
+        "12000-01-02T00:00:00-01:001",  # Extra characters at start and end of string
+        "2000-01-0122:22:22",  # Missing T from date and time
+        "2000-01-0122:22:22+00:00",  # Missing T from date, time and timezone
+        "2000-01-01T22:22:2200:00",  # Missing timezone indicator
+        "2000-01-01T22:22:22-0100",  # Missing timezone colon
+        "99-01-01T00:00:00",  # Missing century (i.e. only 2 digits for year)
+        "01-01-2000T00:00:00",  # Date in wrong order (DD-MM-YYYY)
+    ]
+
+    # Strings which are in acceptable date time format, but are invalid dates, times or timezones
+    for_date_times = [
+        "2000-00-01T00:00:00",  # Month 00
+        "2000-13-01T00:00:00",  # Month 13
+        "2000-01-00T00:00:00",  # Day 00
+        "2000-01-32T00:00:00",  # Day 32
+        "2000-02-30T00:00:00",  # Invalid month and day combination (30th February)
+        "2000-01-01T24:00:00",  # Hour 24
+        "2000-01-01T00:60:00",  # Minute 60
+        "2000-01-01T00:00:60",  # Second 60
+        "2000-01-01T00:00:00+24:00",  # Timezone hour +15 (Max acceptable is 14)
+        "2000-01-01T00:00:00-24:00",  # Timezone hour -12 (Max acceptable is -11)
+        "2000-01-01T00:00:00+00:60",  # Timezone minute 60
     ]
 
 
@@ -292,39 +352,61 @@ class GenericValidatorMethodTests:
             )
 
         # Test invalid date string formats
-        invalid_date_formats = [
-            "",  # Empty
-            "invalid",  # With letters
-            "20000101",  # Without dashes
-            "2000-01-011",  # Extra digit at end
-            "12000-01-01",  # Extra digit at start
-            "12000-01-021",  # Extra digit at start and end
-            "99-01-01",  # Year represented without century (i.e. 2 digits instead of 4)
-            "01-01-1999",  # DD-MM-YYYY format
-            "01-01-99",  # DD-MM-YY format
-        ]
-        for invalid_date_format in invalid_date_formats:
+        for invalid_date_format in InvalidValues.for_date_string_formats:
             with test_instance.assertRaises(ValueError) as error:
                 validator(invalid_date_format)
+
             test_instance.assertEqual(
                 str(error.exception),
                 f'{field_location} must be a string in the format "YYYY-MM-DD"',
             )
 
-        # Test invalid dates
-        invalid_dates = [
-            "2000-00-01",  # Month 0
-            "2000-13-01",  # Month 13
-            "2000-01-00",  # Day 0
-            "2000-01-32",  # Day 13
-            "2000-02-30",  # Invalid combnation of month and day
-        ]
-        for invalid_date in invalid_dates:
+        for invalid_date in InvalidValues.for_dates:
             with test_instance.assertRaises(ValueError) as error:
                 validator(invalid_date)
+
             test_instance.assertEqual(
                 str(error.exception),
                 f"{field_location} must be a valid date",
+            )
+
+    @staticmethod
+    def date_time_invalid(
+        test_instance: unittest.TestCase, validator: Callable, field_location: str
+    ):
+        """
+        Test that a validator method rejects the following:
+        * All invalid data types
+        * Invalid date time string formats
+        * Invalid date-times
+        """
+        # Test invalid data types
+        for invalid_data_type_for_string in InvalidDataTypes.for_strings:
+            with test_instance.assertRaises(TypeError) as error:
+                validator(invalid_data_type_for_string)
+
+            test_instance.assertEqual(
+                str(error.exception),
+                f"{field_location} must be a string",
+            )
+
+        # Test invalid date time string formats
+        for invalid_occurrence_date_time in InvalidValues.for_date_time_string_formats:
+            with test_instance.assertRaises(ValueError) as error:
+                validator(invalid_occurrence_date_time)
+            test_instance.assertEqual(
+                str(error.exception),
+                f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss" '
+                + 'or "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz"',
+            )
+
+        # Test invalid date times
+        for invalid_occurrence_date_time in InvalidValues.for_date_times:
+            with test_instance.assertRaises(ValueError) as error:
+                validator(invalid_occurrence_date_time)
+            test_instance.assertEqual(
+                str(error.exception),
+                f"{field_location} must be a valid datetime",
             )
 
     @staticmethod
@@ -604,18 +686,7 @@ class GenericValidatorModelTests:
             )
 
         # Test invalid date string formats
-        invalid_date_formats = [
-            "",  # Empty
-            "invalid",  # With letters
-            "20000101",  # Without dashes
-            "2000-01-011",  # Extra digit at end
-            "12000-01-01",  # Extra digit at start
-            "12000-01-021",  # Extra digit at start and end
-            "99-01-01",  # Year represented without century (i.e. 2 digits instead of 4)
-            "01-01-1999",  # DD-MM-YYYY format
-            "01-01-99",  # DD-MM-YY format
-        ]
-        for invalid_date_format in invalid_date_formats:
+        for invalid_date_format in InvalidValues.for_date_string_formats:
             set_in_dict(invalid_json_data, keys_to_access_value, invalid_date_format)
             with test_instance.assertRaises(ValidationError) as error:
                 test_instance.validator.validate(invalid_json_data)
@@ -625,22 +696,95 @@ class GenericValidatorModelTests:
                 in str(error.exception)
             )
 
-        # Test invalid dates
-        invalid_dates = [
-            "2000-00-01",  # Month 0
-            "2000-13-01",  # Month 13
-            "2000-01-00",  # Day 0
-            "2000-01-32",  # Day 13
-            "2000-02-30",  # Invalid combnation of month and day
-        ]
-
-        for invalid_date in invalid_dates:
+        for invalid_date in InvalidValues.for_dates:
             set_in_dict(invalid_json_data, keys_to_access_value, invalid_date)
             with test_instance.assertRaises(ValidationError) as error:
                 test_instance.validator.validate(invalid_json_data)
 
             test_instance.assertTrue(
                 f"{field_location} must be a valid date (type=value_error)"
+                in str(error.exception)
+            )
+
+    @staticmethod
+    def date_time_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        keys_to_access_value: list,
+        is_mandatory_fhir: bool = False,
+    ):
+        """
+        Test that a validator method rejects the following when in a model:
+        * All invalid data types
+        * Invalid date time string formats
+        * Invalid date-times
+        """
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # If is mandatory FHIR, then for none type the model raises an
+        # exception prior to running NHS pre-validators
+        if is_mandatory_fhir:
+            set_in_dict(invalid_json_data, keys_to_access_value, None)
+
+            # Check that we get the correct error message and that it contains type=type_error
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                "Expect any of field value from this list "
+                + "['occurrenceDateTime', 'occurrenceString']. (type=value_error)"
+                in str(error.exception)
+            )
+
+        # Set list of invalid data types to test
+        invalid_data_types_for_strings = InvalidDataTypes.for_strings
+        if is_mandatory_fhir:
+            invalid_data_types_for_strings = filter(
+                None, invalid_data_types_for_strings
+            )
+
+        # Test invalid data types
+        for invalid_data_type_for_string in invalid_data_types_for_strings:
+            set_in_dict(
+                invalid_json_data, keys_to_access_value, invalid_data_type_for_string
+            )
+            # Check that we get the correct error message and that it contains type=type_error
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a string (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test invalid date time string formats
+        for invalid_occurrence_date_time in InvalidValues.for_date_time_string_formats:
+            set_in_dict(
+                invalid_json_data, keys_to_access_value, invalid_occurrence_date_time
+            )
+
+            # Check that we get the correct error message and that it contains type=value_error
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss" '
+                + 'or "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz" (type=value_error)'
+                in str(error.exception)
+            )
+
+        # Test invalid date times
+        for invalid_occurrence_date_time in InvalidValues.for_date_times:
+            set_in_dict(
+                invalid_json_data, keys_to_access_value, invalid_occurrence_date_time
+            )
+
+            # Check that we get the correct error message and that it contains type=value_error
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a valid datetime (type=value_error)"
                 in str(error.exception)
             )
 
