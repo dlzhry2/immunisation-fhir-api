@@ -3,7 +3,7 @@
   "name": [
     {
       "family": "test_family_name",
-      "given": ["test_given_name_first", "test_given_name_middle"]
+      "given": ["test_given_name_first"]
     }
   ],
   "id": "9000000009",
