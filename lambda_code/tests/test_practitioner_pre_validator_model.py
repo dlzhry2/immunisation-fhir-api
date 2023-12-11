@@ -6,10 +6,7 @@ from copy import deepcopy
 
 
 from models.fhir_practitioner import PractitionerValidator
-from .utils import (
-    InvalidDataTypes,
-    GenericValidatorModelTests,
-)
+from .utils import GenericValidatorModelTests
 
 
 class TestPractitionerModelPreValidationRules(unittest.TestCase):
@@ -40,12 +37,6 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         # set up the validator and add custom root validators
         cls.validator = PractitionerValidator()
         cls.validator.add_custom_root_validators()
-
-        # set up invalid data types for strings
-        cls.invalid_data_types_for_strings = InvalidDataTypes.for_strings
-
-        # set up invalid data types for lists
-        cls.invalid_data_types_for_lists = InvalidDataTypes.for_lists
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
