@@ -711,7 +711,7 @@ class GenericValidatorModelTests:
         test_instance: unittest.TestCase,
         field_location: str,
         keys_to_access_value: list,
-        is_mandatory_fhir: bool = False,
+        is_occurrence_date_time: bool = False,
     ):
         """
         Test that a validator method rejects the following when in a model:
@@ -721,9 +721,9 @@ class GenericValidatorModelTests:
         """
         invalid_json_data = deepcopy(test_instance.json_data)
 
-        # If is mandatory FHIR, then for none type the model raises an
-        # exception prior to running NHS pre-validators
-        if is_mandatory_fhir:
+        # If is occurrenceDateTime, then for none type the model raises an exception prior to
+        # running NHS pre-validators, because occurrenceDateTime is a mandatory FHIR field
+        if is_occurrence_date_time:
             set_in_dict(invalid_json_data, keys_to_access_value, None)
 
             # Check that we get the correct error message and that it contains type=type_error
@@ -738,7 +738,7 @@ class GenericValidatorModelTests:
 
         # Set list of invalid data types to test
         invalid_data_types_for_strings = InvalidDataTypes.for_strings
-        if is_mandatory_fhir:
+        if is_occurrence_date_time:
             invalid_data_types_for_strings = filter(
                 None, invalid_data_types_for_strings
             )

@@ -93,7 +93,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="occurrenceDateTime",
             keys_to_access_value=["occurrenceDateTime"],
-            is_mandatory_fhir=True,
+            is_occurrence_date_time=True,
         )
 
     def test_model_pre_validate_valid_contained(self):
