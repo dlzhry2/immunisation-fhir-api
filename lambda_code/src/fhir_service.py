@@ -4,7 +4,7 @@ from fhir.resources.immunization import Immunization
 
 from fhir_repository import ImmunisationRepository
 from models.errors import InvalidPatientId
-from pds import PdsService
+from pds_service import PdsService
 
 
 class FhirService:

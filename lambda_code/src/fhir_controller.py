@@ -10,7 +10,7 @@ from fhir.resources.operationoutcome import OperationOutcome
 from fhir_repository import ImmunisationRepository, create_table
 from fhir_service import FhirService
 from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError
-from pds import PdsService, Authenticator
+from pds_service import PdsService, Authenticator
 
 
 def make_controller():

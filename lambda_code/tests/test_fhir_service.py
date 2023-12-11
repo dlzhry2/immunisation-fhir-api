@@ -10,7 +10,7 @@ sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunisationRepository
 from fhir_service import FhirService
-from pds import PdsService
+from pds_service import PdsService
 from models.errors import InvalidPatientId
 
 valid_nhs_number = "2374658346"
