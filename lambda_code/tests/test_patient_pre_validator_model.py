@@ -69,14 +69,14 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         GenericValidatorModelTests.valid(
             self,
             keys_to_access_value=["name", 0, "given"],
-            valid_items_to_test=[["Test"], ["Test1", "Test2"]],
+            valid_items_to_test=[["Test"], ["Test test"]],
         )
 
     def test_model_pre_validate_invalid_name_given(self):
         """Test pre_validate_name_given rejects invalid values when in a model"""
         invalid_lists = [
-            [1, "test"],
-            ["test", False],
+            [1],
+            [False],
             [["Test1"]],
         ]
 
@@ -84,6 +84,8 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
             self,
             field_location="name[0] -> given",
             keys_to_access_value=["name", 0, "given"],
+            predefined_list_length=1,
+            invalid_length_lists_to_test=[["Test1", "Test2"]],
             invalid_lists_with_non_string_data_types_to_test=invalid_lists,
         )
 

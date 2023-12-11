@@ -23,16 +23,13 @@ class PatientPreValidators:
     def name_given(name_given: list[str]) -> list[str]:
         """Pre-validate name[0] -> given (person_forename(s))"""
 
-        generic_list_validation(name_given, "name[0] -> given")
+        generic_list_validation(name_given, "name[0] -> given", defined_length=1)
 
-        for name in name_given:
-            if not isinstance(name, str):
-                raise TypeError("name[0] -> given must be an array of strings")
+        if not isinstance(name_given[0], str):
+            raise TypeError("name[0] -> given must be an array of strings")
 
-            if len(name) == 0:
-                raise ValueError(
-                    "name[0] -> given must be an array of non-empty strings"
-                )
+        if len(name_given[0]) == 0:
+            raise ValueError("name[0] -> given must be an array of non-empty strings")
 
         return name_given
 
