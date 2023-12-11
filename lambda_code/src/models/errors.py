@@ -39,9 +39,14 @@ class UnhandledResponseError(RuntimeError):
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
 
 
+class ValidationError(RuntimeError):
+    def to_operation_outcome(self) -> OperationOutcome:
+        pass
+
+
 @dataclass
-class InvalidPatientId(RuntimeError):
-    """Use this when NHS Number is invalid or doesn't exits"""
+class InvalidPatientId(ValidationError):
+    """Use this when NHS Number is invalid or doesn't exist"""
     nhs_number: str
 
     def to_operation_outcome(self) -> OperationOutcome:

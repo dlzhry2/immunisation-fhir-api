@@ -37,10 +37,13 @@ class ImmunisationApi:
         return {**updated, **headers}
 
 
-def create_an_imms_obj(imms_id: str = str(uuid.uuid4())) -> dict:
+valid_nhs_number = "9693632109"
+
+
+def create_an_imms_obj(imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number) -> dict:
     imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
     imms["id"] = imms_id
-    imms["patient"]["identifier"]["value"] = "9693632109"
+    imms["patient"]["identifier"]["value"] = nhs_number
 
     return imms
 
@@ -178,3 +181,24 @@ def test_get_deleted_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     # Assert
     assert result.status_code == 404
     assert json_result["resourceType"] == "OperationOutcome"
+
+
+@pytest.mark.nhsd_apim_authorization(
+    {
+        "access": "healthcare_worker",
+        "level": "aal3",
+        "login_form": {"username": "656005750104"},
+    }
+)
+def test_bad_nhs_number_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+    token = nhsd_apim_auth_headers["Authorization"]
+    imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
+
+    imms = create_an_imms_obj(nhs_number="7463384756")
+
+    # CREATE
+    result = imms_api.create_immunization(imms)
+    res_body = result.json()
+
+    assert result.status_code == 400
+    assert res_body["resourceType"] == "OperationOutcome"

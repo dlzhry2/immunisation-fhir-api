@@ -9,7 +9,8 @@ from fhir.resources.operationoutcome import OperationOutcome
 
 from fhir_repository import ImmunisationRepository, create_table
 from fhir_service import FhirService
-from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError
+from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError, \
+    ValidationError
 from pds_service import PdsService, Authenticator
 
 
@@ -57,11 +58,8 @@ class FhirController:
         try:
             resource = self.fhir_service.create_immunization(imms)
             return self.create_response(201, resource.json())
-        except Exception as error:
-            body = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                            code=Code.invalid,
-                                            diagnostics=f"nhs number is not provided or is invalid\n{error}")
-            return self.create_response(400, body.json())
+        except ValidationError as error:
+            return self.create_response(400, error.to_operation_outcome().json())
 
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]
