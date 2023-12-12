@@ -69,10 +69,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
     def test_model_pre_validate_valid_occurrence_date_time(self):
         """Test pre_validate_occurrence_date_time accepts valid values when in a model"""
         valid_items_to_test = [
-            "2000-01-01T00:00:00",
-            "2000-01-01T22:22:22",
-            "1933-12-31T11:11:11+12:45",
-            "1933-12-31T11:11:11-05:00",
+            "2000-01-01T00:00:00+00:00",  # Time and offset all zeroes
+            "1933-12-31T11:11:11+12:45",  # Positive offset (with hours and minutes not 0)
+            "1933-12-31T11:11:11-05:00",  # Negative offset
         ]
 
         GenericValidatorModelTests.valid(

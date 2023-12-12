@@ -33,7 +33,11 @@ class ImmunizationValidator:
     def pre_validate_occurrence_date_time(cls, values: dict) -> dict:
         """
         Pre-validate that, if occurrenceDateTime exists (date_and_time), then it is a string in the
-        format YYYY-MM-DDThh:mm:ss, representing a valid datetime
+        format "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz" (i.e. date and time,
+        including timezone offset in hours and minutes), representing a valid datetime
+
+        NOTE: occurrenceDateTime is a mandatory FHIR field. A value of None will be rejected by the
+        FHIR model before pre-validators are run.
         """
         try:
             occurrence_date_time = values["occurrenceDateTime"]
@@ -157,8 +161,19 @@ class ImmunizationValidator:
     @classmethod
     def pre_validate_status(cls, values: dict) -> dict:
         """
-        Pre-validate that, if status (action_flag) exists, then it is a non-empty string which is
-        one of the following: completed, entered-in-error, not-done
+        Pre-validate that, if status (action_flag or not_given) exists, then it is a non-empty
+        string which is one of the following: completed, entered-in-error, not-done.
+
+        NOTE 1: action_flag and not_given are mutually exclusive i.e. if action_flag is present then
+        not_given will be absent and vice versa. The action_flags are 'completed' and 'not-done'.
+        The following 1-to-1 mapping applies:
+        * not_given is True <---> Status will be set to 'not-done' (and therefore action_flag is
+            absent)
+        * not_given is False <---> Status will be set to 'completed' or 'entered-in-error' (and
+            therefore action_flag is present)
+
+        NOTE 2: Status is a mandatory FHIR field. A value of None will be rejected by the
+        FHIR model before pre-validators are run.
         """
 
         try:

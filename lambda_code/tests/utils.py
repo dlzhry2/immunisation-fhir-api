@@ -131,31 +131,34 @@ class InvalidValues:
     for_date_time_string_formats = [
         "",  # Empty string
         "invalid",  # Invalid format
-        "20000101",  # Date without hypens
-        "20000101000000",  # Date and time without hypens
-        "200001010000000000",  # Date, time and timezone without hypens
+        "20000101",  # Date digits only (i.e. without hypens)
+        "20000101000000",  # Date and time digits only
+        "200001010000000000",  # Date, time and timezone digits only
         "2000-01-01",  # Date only
+        "2000-01-01T00:00:00",  # Date and time only
+        "2000-01-01T00:00:00+00",  # Date and time with GMT timezone offset only in hours
+        "2000-01-01T00:00:00+01",  # Date and time with BST timezone offset only in hours
         "12000-01-01T00:00:00+00:00",  # Extra character at start of string
-        "2000-01-01T00:00:001",  # Extra character at end of string
+        "2000-01-01T00:00:00+00:001",  # Extra character at end of string
         "12000-01-02T00:00:00-01:001",  # Extra characters at start and end of string
-        "2000-01-0122:22:22",  # Missing T from date and time
-        "2000-01-0122:22:22+00:00",  # Missing T from date, time and timezone
+        "2000-01-0122:22:22+00:00",  # Missing T
+        "2000-01-01T222222+00:00",  # Missing time colons
         "2000-01-01T22:22:2200:00",  # Missing timezone indicator
         "2000-01-01T22:22:22-0100",  # Missing timezone colon
-        "99-01-01T00:00:00",  # Missing century (i.e. only 2 digits for year)
-        "01-01-2000T00:00:00",  # Date in wrong order (DD-MM-YYYY)
+        "99-01-01T00:00:00+00:00",  # Missing century (i.e. only 2 digits for year)
+        "01-01-2000T00:00:00+00:00",  # Date in wrong order (DD-MM-YYYY)
     ]
 
     # Strings which are in acceptable date time format, but are invalid dates, times or timezones
     for_date_times = [
-        "2000-00-01T00:00:00",  # Month 00
-        "2000-13-01T00:00:00",  # Month 13
-        "2000-01-00T00:00:00",  # Day 00
-        "2000-01-32T00:00:00",  # Day 32
-        "2000-02-30T00:00:00",  # Invalid month and day combination (30th February)
-        "2000-01-01T24:00:00",  # Hour 24
-        "2000-01-01T00:60:00",  # Minute 60
-        "2000-01-01T00:00:60",  # Second 60
+        "2000-00-01T00:00:00+00:00",  # Month 00
+        "2000-13-01T00:00:00+00:00",  # Month 13
+        "2000-01-00T00:00:00+00:00",  # Day 00
+        "2000-01-32T00:00:00+00:00",  # Day 32
+        "2000-02-30T00:00:00+00:00",  # Invalid month and day combination (30th February)
+        "2000-01-01T24:00:00+00:00",  # Hour 24
+        "2000-01-01T00:60:00+00:00",  # Minute 60
+        "2000-01-01T00:00:60+00:00",  # Second 60
         "2000-01-01T00:00:00+24:00",  # Timezone hour +24
         "2000-01-01T00:00:00-24:00",  # Timezone hour -24
         "2000-01-01T00:00:00+00:60",  # Timezone minute 60
@@ -396,8 +399,9 @@ class GenericValidatorMethodTests:
                 validator(invalid_occurrence_date_time)
             test_instance.assertEqual(
                 str(error.exception),
-                f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss" '
-                + 'or "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz"',
+                f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or'
+                + '"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, including timezone offset in '
+                + "hours and minutes)",
             )
 
         # Test invalid date times
@@ -768,8 +772,9 @@ class GenericValidatorModelTests:
                 test_instance.validator.validate(invalid_json_data)
 
             test_instance.assertTrue(
-                f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss" '
-                + 'or "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz" (type=value_error)'
+                f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or'
+                + '"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, including timezone offset in '
+                + "hours and minutes)"
                 in str(error.exception)
             )
 
