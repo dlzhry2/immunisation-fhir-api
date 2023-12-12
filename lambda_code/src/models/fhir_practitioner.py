@@ -27,7 +27,7 @@ class PractitionerValidator:
     def pre_validate_name_given(cls, values: dict) -> dict:
         """
         Pre-validate that, if name[0] -> given (performing_professional_forename) exists,
-        then it is a non-empty array of non-empty strings
+        then it is an array contianing a single non-empty string
         """
         try:
             name_given = values["name"][0]["given"]

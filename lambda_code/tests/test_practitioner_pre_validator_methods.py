@@ -32,24 +32,24 @@ class TestPrePractitionerMethodValidators(unittest.TestCase):
         GenericValidatorMethodTests.valid(
             self,
             validator=PractitionerPreValidators.name_given,
-            valid_items_to_test=[["Test"], ["Test1", "Test2"]],
+            valid_items_to_test=[["Test"], ["Test test"]],
         )
 
     def test_pre_name_given_invalid(self):
         """Test PractitionerPreValidators.name_given"""
 
-        invalid_lists = (
-            [
-                [1, "test"],
-                ["test", False],
-                [["Test1"]],
-            ],
-        )
+        invalid_lists = [
+            [1],
+            [False],
+            [["Test1"]],
+        ]
 
         GenericValidatorMethodTests.list_invalid(
             self,
             PractitionerPreValidators.name_given,
             field_location="name[0] -> given",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=[["Test1", "Test2"]],
             invalid_lists_with_non_string_data_types_to_test=invalid_lists,
         )
 

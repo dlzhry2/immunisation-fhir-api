@@ -27,7 +27,7 @@ class PatientValidator:
     def pre_validate_name_given(cls, values: dict) -> dict:
         """
         Pre-validate that, if name[0] -> given (person_forename) exists, then it is a
-        non-empty array of non-empty strings
+        an array containing a single non-empty string
         """
         try:
             name_given = values["name"][0]["given"]

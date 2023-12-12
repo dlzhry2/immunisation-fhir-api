@@ -21,7 +21,7 @@ class PatientPreValidators:
 
     @staticmethod
     def name_given(name_given: list[str]) -> list[str]:
-        """Pre-validate name[0] -> given (person_forename(s))"""
+        """Pre-validate name[0] -> given (person_forename)"""
 
         generic_list_validation(name_given, "name[0] -> given", defined_length=1)
 
