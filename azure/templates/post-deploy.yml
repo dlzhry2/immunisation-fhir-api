@@ -66,9 +66,10 @@ steps:
 
         cd ../terraform
 
+        tfenv use 1.6.4
         make init
           make apply aws_account_no=${aws_account_no} environment=$workspace
-
+        tfenv use 0.14.6
       fi
     displayName: Apply Terraform
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
