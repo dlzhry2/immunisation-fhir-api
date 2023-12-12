@@ -29,7 +29,7 @@ def set_in_dict(data_dict, map_list, value):
 
 
 class InvalidDataTypes:
-    """Store lists of  invalid data types for tests"""
+    """Store lists of invalid data types for tests"""
 
     for_strings = [
         None,
@@ -156,8 +156,8 @@ class InvalidValues:
         "2000-01-01T24:00:00",  # Hour 24
         "2000-01-01T00:60:00",  # Minute 60
         "2000-01-01T00:00:60",  # Second 60
-        "2000-01-01T00:00:00+24:00",  # Timezone hour +15 (Max acceptable is 14)
-        "2000-01-01T00:00:00-24:00",  # Timezone hour -12 (Max acceptable is -11)
+        "2000-01-01T00:00:00+24:00",  # Timezone hour +24
+        "2000-01-01T00:00:00-24:00",  # Timezone hour -24
         "2000-01-01T00:00:00+00:60",  # Timezone minute 60
     ]
 

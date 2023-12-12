@@ -3,9 +3,7 @@
 import unittest
 
 from models.practitioner_pre_validators import PractitionerPreValidators
-from .utils import (
-    GenericValidatorMethodTests,
-)
+from .utils import GenericValidatorMethodTests
 
 
 class TestPrePractitionerMethodValidators(unittest.TestCase):
