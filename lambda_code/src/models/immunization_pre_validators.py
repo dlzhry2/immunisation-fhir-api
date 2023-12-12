@@ -23,6 +23,9 @@ class ImmunizationPreValidators:
             defined_length=10,
         )
 
+        if not patient_identifier_value.isdigit():
+            raise ValueError("patient -> identifier -> value must only contain digits")
+
         return patient_identifier_value
 
     @staticmethod

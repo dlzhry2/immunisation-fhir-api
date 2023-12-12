@@ -21,6 +21,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_patient_identifier_value_invalid(self):
         """Test patient_identifier_value"""
 
+        # Test is string of length 10
         GenericValidatorMethodTests.string_invalid(
             self,
             validator=ImmunizationPreValidators.patient_identifier_value,
@@ -28,6 +29,17 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             defined_length=10,
             invalid_length_strings_to_test=["123456789", "12345678901"],
         )
+
+        # Test is a string containing only digits
+        invalid_values = ["12345 7890", "a123456789", "1234567!90"]
+        for invalid_value in invalid_values:
+            with self.assertRaises(ValueError) as error:
+                ImmunizationPreValidators.patient_identifier_value(invalid_value)
+
+            self.assertEqual(
+                str(error.exception),
+                "patient -> identifier -> value must only contain digits",
+            )
 
     def test_pre_occurrence_date_time_valid(self):
         """Test ImmunizationPreValidators.occurrence_date_time"""

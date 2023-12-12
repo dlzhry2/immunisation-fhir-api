@@ -3,6 +3,7 @@ import unittest
 import os
 import json
 from copy import deepcopy
+from pydantic import ValidationError
 
 
 from models.fhir_immunization import ImmunizationValidator
@@ -58,6 +59,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
     def test_model_pre_validate_invalid_patient_identifier_value(self):
         """Test pre_validate_patient_identifier_value rejects invalid values when in a model"""
 
+        # Test invalid data types and invalid length strings
         GenericValidatorModelTests.string_invalid(
             self,
             field_location="patient -> identifier -> value",
@@ -65,6 +67,21 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             defined_length=10,
             invalid_length_strings_to_test=["123456789", "12345678901", ""],
         )
+
+        # Test strings which contain spaces or non-digit characters
+        invalid_values = ["12345 7890", "a123456789", "1234567!90"]
+
+        invalid_json_data = deepcopy(self.json_data)
+
+        for invalid_value in invalid_values:
+            invalid_json_data["patient"]["identifier"]["value"] = invalid_value
+            with self.assertRaises(ValidationError) as error:
+                self.validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "patient -> identifier -> value must only contain digits (type=value_error)"
+                in str(error.exception)
+            )
 
     def test_model_pre_validate_valid_occurrence_date_time(self):
         """Test pre_validate_occurrence_date_time accepts valid values when in a model"""
