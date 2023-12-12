@@ -23,8 +23,8 @@ class ImmunizationPreValidators:
             defined_length=10,
         )
 
-        if not patient_identifier_value.isdigit():
-            raise ValueError("patient -> identifier -> value must only contain digits")
+        if " " in patient_identifier_value:
+            raise ValueError("patient -> identifier -> value must not contain spaces")
 
         return patient_identifier_value
 

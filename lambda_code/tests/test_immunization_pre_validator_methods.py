@@ -31,14 +31,14 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
         )
 
         # Test is a string containing only digits
-        invalid_values = ["12345 7890", "a123456789", "1234567!90"]
+        invalid_values = ["12345 7890", " 123456789", "123456799 ", "1234  7890"]
         for invalid_value in invalid_values:
             with self.assertRaises(ValueError) as error:
                 ImmunizationPreValidators.patient_identifier_value(invalid_value)
 
             self.assertEqual(
                 str(error.exception),
-                "patient -> identifier -> value must only contain digits",
+                "patient -> identifier -> value must not contain spaces",
             )
 
     def test_pre_occurrence_date_time_valid(self):

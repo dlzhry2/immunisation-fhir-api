@@ -69,7 +69,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         )
 
         # Test strings which contain spaces or non-digit characters
-        invalid_values = ["12345 7890", "a123456789", "1234567!90"]
+        invalid_values = ["12345 7890", " 123456789", "123456789 ", "1234  7890"]
 
         invalid_json_data = deepcopy(self.json_data)
 
@@ -79,7 +79,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 self.validator.validate(invalid_json_data)
 
             self.assertTrue(
-                "patient -> identifier -> value must only contain digits (type=value_error)"
+                "patient -> identifier -> value must not contain spaces (type=value_error)"
                 in str(error.exception)
             )
 
