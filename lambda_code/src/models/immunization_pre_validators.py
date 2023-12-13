@@ -268,3 +268,36 @@ class ImmunizationPreValidators:
             )
 
         return protocol_applied_dose_number_positive_int
+
+    @staticmethod
+    def vaccine_code_coding(vaccine_code_coding: list) -> list:
+        """
+        Pre-validate vaccineCode -> coding
+        """
+        generic_list_validation(
+            vaccine_code_coding,
+            "vaccineCode -> coding",
+            defined_length=1,
+        )
+
+        return vaccine_code_coding
+
+    @staticmethod
+    def vaccine_code_coding_code(vaccine_code_coding_code: str) -> str:
+        """Pre-validate vaccineCode -> coding[0] -> code (vaccine_product_code)"""
+
+        generic_string_validation(
+            vaccine_code_coding_code, "vaccineCode -> coding[0] -> code"
+        )
+
+        return vaccine_code_coding_code
+
+    @staticmethod
+    def vaccine_code_coding_display(vaccine_code_coding_display: str) -> str:
+        """Pre_validate vaccineCode -> coding[0] -> display (vaccine_product_term)"""
+
+        generic_string_validation(
+            vaccine_code_coding_display, "vaccineCode -> coding[0] -> display"
+        )
+
+        return vaccine_code_coding_display

@@ -524,5 +524,77 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
 
             self.assertEqual(
                 str(error.exception),
-                "protocolApplied[0] -> doseNumberPositiveInt must be an integer in the range 1 to 9",
+                "protocolApplied[0] -> doseNumberPositiveInt must be an integer in "
+                + "the range 1 to 9",
             )
+
+    def test_pre_vaccine_code_coding_valid(self):
+        """Test ImmunizationPreValidators.vaccine_code_coding"""
+        valid_items_to_test = [
+            [
+                {
+                    "system": "http://snomed.info/sct",
+                    "code": "ABC123",
+                    "display": "test",
+                }
+            ]
+        ]
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.vaccine_code_coding,
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_pre_status_vaccine_code_coding_invalid(self):
+        """Test ImmunizationPreValidators.vaccine_code_coding"""
+        valid_list_element = {
+            "system": "http://snomed.info/sct",
+            "code": "ABC123",
+            "display": "test",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=ImmunizationPreValidators.vaccine_code_coding,
+            field_location="vaccineCode -> coding",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_pre_vaccine_code_coding_code_valid(self):
+        """Test ImmunizationPreValidators.vaccine_code_coding_code"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.vaccine_code_coding_code,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_vaccine_code_coding_code_invalid(self):
+        """Test ImmunizationPreValidators.vaccine_code_coding_code"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.vaccine_code_coding_code,
+            field_location="vaccineCode -> coding[0] -> code",
+        )
+
+    def test_pre_vaccine_code_coding_display_valid(self):
+        """Test ImmunizationPreValidators.vaccine_code_coding_display"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.vaccine_code_coding_display,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_vaccine_code_coding_display_invalid(self):
+        """Test ImmunizationPreValidators.vaccine_code_coding_display"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.vaccine_code_coding_display,
+            field_location="vaccineCode -> coding[0] -> display",
+        )

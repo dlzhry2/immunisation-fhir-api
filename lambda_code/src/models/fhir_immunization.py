@@ -346,6 +346,17 @@ class ImmunizationValidator:
         return values
 
     @classmethod
+    def pre_validate_protocol_applied(cls, values: dict) -> dict:
+        """Pre-validate that, if protocolApplied exists, then it is a list of length 1"""
+        try:
+            protocol_applied = values["protocolApplied"]
+            ImmunizationPreValidators.protocol_applied(protocol_applied)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
     def pre_validate_protocol_applied_dose_number_positive_int(
         cls, values: dict
     ) -> dict:
@@ -366,11 +377,41 @@ class ImmunizationValidator:
         return values
 
     @classmethod
-    def pre_validate_protocol_applied(cls, values: dict) -> dict:
-        """Pre-validate that, if protocolApplied exists, then it is a list of length 1"""
+    def pre_validate_vaccine_code_coding(cls, values: dict) -> dict:
+        """Pre-validate that, if vaccineCodeCoding exists, then it is a list of length 1"""
         try:
-            protocol_applied = values["protocolApplied"]
-            ImmunizationPreValidators.protocol_applied(protocol_applied)
+            vaccine_code_coding = values["vaccineCode"]["coding"]
+            ImmunizationPreValidators.vaccine_code_coding(vaccine_code_coding)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_vaccine_code_coding_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if vaccineCode -> coding[0] -> code (vaccine_product_code) exists,
+        then it is a non-empty string
+        """
+        try:
+            vaccine_code_coding_code = values["vaccineCode"]["coding"][0]["code"]
+            ImmunizationPreValidators.vaccine_code_coding_code(vaccine_code_coding_code)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_vaccine_code_coding_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if vaccineCode -> coding[0] -> display (vaccine_product_term) exists,
+        then it is a non-empty string
+        """
+        try:
+            vaccine_code_coding_display = values["vaccineCode"]["coding"][0]["display"]
+            ImmunizationPreValidators.vaccine_code_coding_display(
+                vaccine_code_coding_display
+            )
         except KeyError:
             pass
 
@@ -426,6 +467,13 @@ class ImmunizationValidator:
         Immunization.add_root_validator(self.pre_validate_protocol_applied, pre=True)
         Immunization.add_root_validator(
             self.pre_validate_protocol_applied_dose_number_positive_int, pre=True
+        )
+        Immunization.add_root_validator(self.pre_validate_vaccine_code_coding, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_vaccine_code_coding_code, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_vaccine_code_coding_display, pre=True
         )
 
     def validate(self, json_data) -> Immunization:

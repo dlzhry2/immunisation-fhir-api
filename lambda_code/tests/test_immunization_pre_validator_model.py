@@ -673,3 +673,71 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 + "9 (type=value_error)"
                 in str(error.exception)
             )
+
+    def test_model_pre_validate_valid_vaccine_code_coding(self):
+        """Test pre_validate_vaccine_code_coding accepts valid values when in a model"""
+        valid_items_to_test = [
+            [
+                {
+                    "system": "http://snomed.info/sct",
+                    "code": "ABC123",
+                    "display": "test",
+                }
+            ]
+        ]
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["vaccineCode", "coding"],
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_model_pre_validate_invalid_vaccine_code_coding(self):
+        """Test pre_validate_vaccine_code_coding rejects invalid values when in a model"""
+        valid_list_element = {
+            "system": "http://snomed.info/sct",
+            "code": "ABC123",
+            "display": "test",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorModelTests.list_invalid(
+            self,
+            field_location="vaccineCode -> coding",
+            keys_to_access_value=["vaccineCode", "coding"],
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_model_pre_validate_valid_vaccine_code_coding_code(self):
+        """Test pre_validate_vaccine_code_coding_code accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["vaccineCode", "coding", 0, "code"],
+            valid_items_to_test="dummy",
+        )
+
+    def test_model_pre_validate_invalid_vaccine_code_coding_code(self):
+        """Test pre_validate_vaccine_code_coding_code rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="vaccineCode -> coding[0] -> code",
+            keys_to_access_value=["vaccineCode", "coding", 0, "code"],
+        )
+
+    def test_model_pre_validate_valid_vaccine_code_coding_display(self):
+        """Test pre_validate_vaccine_code_coding_display accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["vaccineCode", "coding", 0, "display"],
+            valid_items_to_test="dummy",
+        )
+
+    def test_model_pre_validate_invalid_vaccine_code_coding_display(self):
+        """Test pre_validate_vaccine_code_coding_display rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="vaccineCode -> coding[0] -> display",
+            keys_to_access_value=["vaccineCode", "coding", 0, "display"],
+        )
