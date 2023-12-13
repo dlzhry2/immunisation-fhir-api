@@ -1,6 +1,7 @@
 """Test immunization pre-validation methods"""
 
 import unittest
+from decimal import Decimal
 
 from models.immunization_pre_validators import ImmunizationPreValidators
 from .utils import (
@@ -726,7 +727,7 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             valid_items_to_test=valid_items_to_test,
         )
 
-    def test_pre_status_route_coding_invalid(self):
+    def test_pre_route_coding_invalid(self):
         """Test ImmunizationPreValidators.route_coding"""
         valid_list_element = {
             "system": "http://snomed.info/sct",
@@ -783,12 +784,13 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
         """Test ImmunizationPreValidators.dose_quantity_value"""
 
         valid_items_to_test = [
-            "1",  # small integer
-            "100",  # larger integer
-            "0.1",  # 1 decimal place
-            "100.52",  # 2 decimal places
-            "32.430",  # 3 decimal places
-            "1.1234",  # 4 decimal places
+            1,  # small integer
+            100,  # larger integer
+            Decimal("1.0"),  # Only 0s after decimal point
+            Decimal("0.1"),  # 1 decimal place
+            Decimal("100.52"),  # 2 decimal places
+            Decimal("32.430"),  # 3 decimal places
+            Decimal("1.1234"),  # 4 decimal places
         ]
 
         GenericValidatorMethodTests.valid(
@@ -800,24 +802,33 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
     def test_pre_dose_quantity_value_invalid(self):
         """Test ImmunizationPreValidators.dose_quantity_value"""
 
-        # Test invalid data types and the empty string
-        GenericValidatorMethodTests.string_invalid(
-            self,
-            validator=ImmunizationPreValidators.dose_quantity_value,
-            field_location="doseQuantity -> value",
-        )
-
-        # TODO: handle 0s (i.e. 0, 0.0 etc)
-        # TODO: Check if should be float, not string
-        invalid_items_to_test = [
-            "1a"  # string with non-digit/decimal point characters
-            " 1.1"  # leading whitespace
-            " 1"  # trailing whitespace
-            "1. 2"  # whitespace in middle of string
-            "1.1.1"  # more than 1 decimal point
-            ".1"  # no digit before decimal point
-            "1."  # no digit after decimal point
+        # Test invalid data types
+        invalid_data_types_to_test = [
+            None,
+            True,
+            False,
+            "",
+            {},
+            [],
+            (),
+            "1.2",
+            {"InvalidKey": "InvalidValue"},
+            ["Invalid"],
+            ("Invalid1", "Invalid2"),
+            1.2,  # Validator accepts Decimals, not floats
         ]
+
+        for invalid_data_type_to_test in invalid_data_types_to_test:
+            with self.assertRaises(TypeError) as error:
+                ImmunizationPreValidators.dose_quantity_value(invalid_data_type_to_test)
+
+            self.assertEqual(
+                str(error.exception),
+                "doseQuantity -> value must be a number",
+            )
+
+        # Test Decimals with more than FOUR decimal places
+        invalid_items_to_test = [Decimal("1.12345")]
 
         for invalid_item_to_test in invalid_items_to_test:
             with self.assertRaises(ValueError) as error:
@@ -825,6 +836,102 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
 
             self.assertEqual(
                 str(error.exception),
-                "doseQuantity -> value must be a string representing an integer or decimal number "
-                + "with maximum FOUR decimal places",
+                "doseQuantity -> value must be a number with a maximum of FOUR decimal places",
             )
+
+    def test_pre_dose_quantity_code_valid(self):
+        """Test ImmunizationPreValidators.dose_quantity_code"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.dose_quantity_code,
+            valid_items_to_test=["ABC123"],
+        )
+
+    def test_pre_dose_quantity_code_invalid(self):
+        """Test ImmunizationPreValidators.dose_quantity_code"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.dose_quantity_code,
+            field_location="doseQuantity -> code",
+        )
+
+    def test_pre_dose_quantity_unit_valid(self):
+        """Test ImmunizationPreValidators.dose_quantity_unit"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.dose_quantity_unit,
+            valid_items_to_test=["ABC123"],
+        )
+
+    def test_pre_dose_quantity_unit_invalid(self):
+        """Test ImmunizationPreValidators.dose_quantity_unit"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.dose_quantity_unit,
+            field_location="doseQuantity -> unit",
+        )
+
+    def test_pre_reason_code_coding_valid(self):
+        """Test ImmunizationPreValidators.reason_code_coding"""
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.reason_code_coding,
+            valid_items_to_test=[
+                [
+                    {"code": "ABC123", "display": "test"},
+                ]
+            ],
+        )
+
+    def test_pre_reason_code_coding_invalid(self):
+        """Test ImmunizationPreValidators.reason_code_coding"""
+        valid_list_element = {"code": "ABC123", "display": "test"}
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=ImmunizationPreValidators.reason_code_coding,
+            field_location="reasonCode[*] -> coding",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_pre_reason_code_coding_code_valid(self):
+        """Test ImmunizationPreValidators.reason_code_coding_code"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.reason_code_coding_code,
+            valid_items_to_test=["ABC123"],
+        )
+
+    def test_pre_reason_code_coding_code_invalid(self):
+        """Test ImmunizationPreValidators.reason_code_coding_code"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.reason_code_coding_code,
+            field_location="reasonCode[*] -> coding[0] -> code",
+        )
+
+    def test_pre_reason_code_coding_display_valid(self):
+        """Test ImmunizationPreValidators.reason_code_coding_display"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.reason_code_coding_display,
+            valid_items_to_test=["ABC123"],
+        )
+
+    def test_pre_reason_code_coding_display_invalid(self):
+        """Test ImmunizationPreValidators.reason_code_coding_display"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.reason_code_coding_display,
+            field_location="reasonCode[*] -> coding[0] -> display",
+        )

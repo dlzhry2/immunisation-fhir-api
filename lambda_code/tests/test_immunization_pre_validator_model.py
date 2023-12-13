@@ -3,6 +3,7 @@ import unittest
 import os
 import json
 from copy import deepcopy
+from decimal import Decimal
 from pydantic import ValidationError
 
 
@@ -11,6 +12,7 @@ from .utils import (
     GenericValidatorModelTests,
     generate_field_location_for_questionnnaire_response,
     generate_field_location_for_extension,
+    set_in_dict,
 )
 
 
@@ -34,7 +36,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         # set up the sample immunization event JSON data
         cls.immunization_file_path = f"{cls.data_path}/sample_immunization_event.json"
         with open(cls.immunization_file_path, "r", encoding="utf-8") as f:
-            cls.json_data = json.load(f)
+            cls.json_data = json.load(f, parse_float=Decimal)
 
         # set up the untouched sample immunization event JSON data
         cls.untouched_json_data = deepcopy(cls.json_data)
@@ -859,7 +861,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ]
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["vaccineCode", "coding"],
+            keys_to_access_value=["route", "coding"],
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -914,5 +916,157 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             keys_to_access_value=["route", "coding", 0, "display"],
         )
 
+    def test_model_pre_validate_valid_dose_quantity_value(self):
+        """Test pre_validate_dose_quantity_value accepts valid values when in a model"""
+        valid_items_to_test = [
+            1,  # small integer
+            100,  # larger integer
+            Decimal("1.0"),  # Only 0s after decimal point
+            Decimal("0.1"),  # 1 decimal place
+            Decimal("100.52"),  # 2 decimal places
+            Decimal("32.430"),  # 3 decimal places
+            Decimal("1.1234"),  # 4 decimal places
+        ]
 
-# TODO: dose_quantity_value tests
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["doseQuantity", "value"],
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_model_pre_validate_invalid_dose_quantity_value(self):
+        """Test pre_validate_dose_quantity_value rejects invalid values when in a model"""
+
+        invalid_json_data = deepcopy(self.json_data)
+
+        # Test invalid data types
+        invalid_data_types_to_test = [
+            None,
+            True,
+            False,
+            "",
+            {},
+            [],
+            (),
+            "1.2",
+            {"InvalidKey": "InvalidValue"},
+            ["Invalid"],
+            ("Invalid1", "Invalid2"),
+            1.2,  # Validator accepts Decimals, not floats
+        ]
+
+        for invalid_data_type in invalid_data_types_to_test:
+            set_in_dict(invalid_json_data, ["doseQuantity", "value"], invalid_data_type)
+            with self.assertRaises(ValidationError) as error:
+                self.validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "doseQuantity -> value must be a number (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test Decimals with more than FOUR decimal places
+        set_in_dict(invalid_json_data, ["doseQuantity", "value"], Decimal("1.12345"))
+        with self.assertRaises(ValidationError) as error:
+            self.validator.validate(invalid_json_data)
+
+        self.assertTrue(
+            "doseQuantity -> value must be a number with a maximum of FOUR decimal places "
+            + "(type=value_error)"
+            in str(error.exception)
+        )
+
+    def test_model_pre_validate_valid_dose_quantity_code(self):
+        """Test pre_validate_dose_quantity_code accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["doseQuantity", "code"],
+            valid_items_to_test="ABC123",
+        )
+
+    def test_model_pre_validate_invalid_dose_quantity_code(self):
+        """Test pre_validate_dose_quantity_code rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="doseQuantity -> code",
+            keys_to_access_value=["doseQuantity", "code"],
+        )
+
+    def test_model_pre_validate_valid_reason_code_codings(self):
+        """Test pre_validate_reason_code_codings accepts valid values when in a model"""
+        valid_items_to_test = [[{"code": "ABC123", "display": "test"}]]
+
+        # Check that both of the reasonCode[*] -> coding fields in the sample data are accepted when
+        #  valid
+        for i in range(2):
+            GenericValidatorModelTests.valid(
+                self,
+                keys_to_access_value=["reasonCode", i, "coding"],
+                valid_items_to_test=valid_items_to_test,
+            )
+
+    def test_model_pre_validate_invalid_reason_code_codings(self):
+        """Test pre_validate_reason_code_codings rejects invalid values when in a model"""
+
+        valid_list_element = {"code": "ABC123", "display": "test"}
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        # Check that both of the 2 reasonCode[*] -> coding fields in the sample data are rejected
+        # when invalid
+        for i in range(2):
+            GenericValidatorModelTests.list_invalid(
+                self,
+                field_location="reasonCode[*] -> coding",
+                keys_to_access_value=["reasonCode", i, "coding"],
+                predefined_list_length=1,
+                invalid_length_lists_to_test=invalid_length_lists_to_test,
+            )
+
+    def test_model_pre_validate_valid_reason_code_coding_code(self):
+        """Test pre_validate_reason_code_coding_code accepts valid values when in a model"""
+
+        # Check that both of the reasonCode[*] -> coding -> code fields in the sample data are
+        # accepted when valid
+        for i in range(2):
+            GenericValidatorModelTests.valid(
+                self,
+                keys_to_access_value=["reasonCode", i, "coding", 0, "code"],
+                valid_items_to_test="ABC123",
+            )
+
+    def test_model_pre_validate_invalid_reason_code_coding_code(self):
+        """Test pre_validate_reason_code_coding_code rejects invalid values when in a model"""
+
+        # Check that both of the reasonCode[*] -> coding -> code fields in the sample data are
+        # rejected when invalid
+        for i in range(2):
+            GenericValidatorModelTests.string_invalid(
+                self,
+                field_location="reasonCode[*] -> coding[0] -> code",
+                keys_to_access_value=["reasonCode", i, "coding", 0, "code"],
+            )
+
+    def test_model_pre_validate_valid_reason_code_coding_display(self):
+        """Test pre_validate_reason_code_coding_display accepts valid values when in a model"""
+
+        # Check that both of the reasonCode[*] -> coding -> display fields in the sample data are
+        # accepted when valid
+        for i in range(2):
+            GenericValidatorModelTests.valid(
+                self,
+                keys_to_access_value=["reasonCode", i, "coding", 0, "display"],
+                valid_items_to_test="ABC123",
+            )
+
+    def test_model_pre_validate_invalid_reason_code_coding_display(self):
+        """Test pre_validate_reason_code_coding_display rejects invalid values when in a model"""
+
+        # Check that both of the reasonCode[*] -> coding -> display fields in the sample data are
+        # rejected when invalid
+        for i in range(2):
+            GenericValidatorModelTests.string_invalid(
+                self,
+                field_location="reasonCode[*] -> coding[0] -> display",
+                keys_to_access_value=["reasonCode", i, "coding", 0, "display"],
+            )

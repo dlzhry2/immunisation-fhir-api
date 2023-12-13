@@ -254,8 +254,16 @@
     {
       "coding": [
         {
-          "code": "snomed",
-          "display": "test"
+          "code": "snomed1",
+          "display": "test1"
+        }
+      ]
+    },
+    {
+      "coding": [
+        {
+          "code": "snomed2",
+          "display": "test2"
         }
       ]
     }

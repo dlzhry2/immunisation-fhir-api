@@ -1,6 +1,7 @@
 """Immunization pre-validators"""
 
-import re
+from decimal import Decimal
+from typing import Union
 from models.utils import (
     generic_string_validation,
     generic_date_time_validation,
@@ -33,7 +34,7 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def occurrence_date_time(occurrence_date_time: str) -> str:
-        """Pre_validate occurrenceDateTime (date_and_time)"""
+        """Pre-validate occurrenceDateTime (date_and_time)"""
 
         generic_date_time_validation(occurrence_date_time, "occurrenceDateTime")
 
@@ -132,7 +133,7 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def recorded(recorded: str) -> str:
-        """Pre_validate recorded (recorded_date)"""
+        """Pre-validate recorded (recorded_date)"""
 
         generic_date_validation(recorded, "recorded")
 
@@ -140,7 +141,7 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def primary_source(primary_source: bool) -> bool:
-        """Pre_validate primarySource (primary_source)"""
+        """Pre-validate primarySource (primary_source)"""
 
         generic_boolean_validation(primary_source, "primarySource")
 
@@ -148,7 +149,7 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def report_origin_text(report_origin_text: str) -> str:
-        """Pre_validate reportOrigin -> text (report_origin)"""
+        """Pre-validate reportOrigin -> text (report_origin)"""
 
         generic_string_validation(
             report_origin_text, "reportOrigin -> text", max_length=100
@@ -230,7 +231,7 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def status_reason_coding_display(status_reason_coding_display: str) -> str:
-        """Pre_validate statusReason -> coding[0] -> display (reason_not_given_term)"""
+        """Pre-validate statusReason -> coding[0] -> display (reason_not_given_term)"""
 
         generic_string_validation(
             status_reason_coding_display, "statusReason -> coding[0] -> display"
@@ -296,7 +297,7 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def vaccine_code_coding_display(vaccine_code_coding_display: str) -> str:
-        """Pre_validate vaccineCode -> coding[0] -> display (vaccine_product_term)"""
+        """Pre-validate vaccineCode -> coding[0] -> display (vaccine_product_term)"""
 
         generic_string_validation(
             vaccine_code_coding_display, "vaccineCode -> coding[0] -> display"
@@ -306,7 +307,7 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def manufacturer_display(manufacturer_display: str) -> str:
-        """Pre_validate manufacturer -> display (vaccine_manufacturer)"""
+        """Pre-validate manufacturer -> display (vaccine_manufacturer)"""
 
         generic_string_validation(manufacturer_display, "manufacturer -> display")
 
@@ -314,7 +315,7 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def lot_number(lot_number: str) -> str:
-        """Pre_validate lot_number (batch_number)"""
+        """Pre-validate lot_number (batch_number)"""
 
         generic_string_validation(lot_number, "lotNumber", max_length=100)
 
@@ -322,7 +323,7 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def expiration_date(expiration_date: str) -> str:
-        """Pre_validate expirationDate (expiry_date)"""
+        """Pre-validate expirationDate (expiry_date)"""
 
         generic_date_validation(expiration_date, "expirationDate")
 
@@ -343,7 +344,7 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def site_coding_display(site_coding_display: str) -> str:
-        """Pre_validate site -> coding[0] -> display (site_of_vaccination_term)"""
+        """Pre-validate site -> coding[0] -> display (site_of_vaccination_term)"""
 
         generic_string_validation(site_coding_display, "site -> coding[0] -> display")
 
@@ -372,25 +373,78 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def route_coding_display(route_coding_display: str) -> str:
-        """Pre_validate route -> coding[0] -> display (route_of_vaccination_term)"""
+        """Pre-validate route -> coding[0] -> display (route_of_vaccination_term)"""
 
         generic_string_validation(route_coding_display, "route -> coding[0] -> display")
 
         return route_coding_display
 
     @staticmethod
-    def dose_quantity_value(dose_quantity_value: str) -> str:
-        """Pre_validate doseQuantity -> value (dose_amount)"""
+    def dose_quantity_value(dose_quantity_value):
+        """Pre-validate doseQuantity -> value (dose_amount)"""
 
-        # Check is a non-empty string
-        generic_string_validation(dose_quantity_value, "doseQuantity -> value")
+        # Check is a Decimal or integer (note that booleans are a sub-class of integers in python)
+        if not (
+            isinstance(dose_quantity_value, Decimal)
+            or isinstance(dose_quantity_value, int)
+        ) or isinstance(dose_quantity_value, bool):
+            raise TypeError("doseQuantity -> value must be a number")
 
-        # Check string represents an integer or decimal with maximum 4 decimal places
-        decimal_max_4_dp_regex = re.compile("^[0-9]+([.][0-9]{1,4})?$")
-        if not decimal_max_4_dp_regex.fullmatch(dose_quantity_value):
-            raise ValueError(
-                "doseQuantity -> value must be a string representing an integer or decimal number "
-                + "with maximum FOUR decimal places"
-            )
+        # Check has maximum of 4 decimal places (no need to check integers)
+        if isinstance(dose_quantity_value, Decimal):
+            if abs(dose_quantity_value.as_tuple().exponent) > 4:
+                raise ValueError(
+                    "doseQuantity -> value must be a number with a maximum of FOUR decimal places"
+                )
 
         return dose_quantity_value
+
+    @staticmethod
+    def dose_quantity_code(dose_quantity_code: str) -> str:
+        """Pre-validate doseQuantity -> code (dose_unit_code)"""
+
+        generic_string_validation(dose_quantity_code, "doseQuantity -> code")
+
+        return dose_quantity_code
+
+    @staticmethod
+    def dose_quantity_unit(dose_quantity_unit: str) -> str:
+        """Pre-validate doseQuantity -> unit (dose_unit_term)"""
+
+        generic_string_validation(dose_quantity_unit, "doseQuantity -> unit")
+
+        return dose_quantity_unit
+
+    @staticmethod
+    def reason_code_coding(reason_code_coding: list) -> list:
+        """
+        Pre-validate reasonCode[*] -> coding
+        """
+
+        generic_list_validation(
+            reason_code_coding,
+            "reasonCode[*] -> coding",
+            defined_length=1,
+        )
+
+        return reason_code_coding
+
+    @staticmethod
+    def reason_code_coding_code(reason_code_coding_code: str) -> str:
+        """Pre-validate reasonCode[*] -> coding[0] -> code (indication_code)"""
+
+        generic_string_validation(
+            reason_code_coding_code, "reasonCode[*] -> coding[0] -> code"
+        )
+
+        return reason_code_coding_code
+
+    @staticmethod
+    def reason_code_coding_display(reason_code_coding_display: str) -> str:
+        """Pre-validate reasonCode[*] -> coding[0] -> display (indication_term"""
+
+        generic_string_validation(
+            reason_code_coding_display, "reasonCode[*] -> coding[0] -> display"
+        )
+
+        return reason_code_coding_display

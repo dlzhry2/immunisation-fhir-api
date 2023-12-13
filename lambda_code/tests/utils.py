@@ -41,6 +41,8 @@ def set_in_dict(data_dict, map_list, value):
 class InvalidDataTypes:
     """Store lists of invalid data types for tests"""
 
+    # TODO: ?Change floats to Decimals or add Decimals (if decide to always parse float as Decimal)
+
     for_strings = [
         None,
         -1,
@@ -492,6 +494,7 @@ class GenericValidatorModelTests:
     ):
         """Test that a validator method accepts valid data when in a model"""
         valid_json_data = deepcopy(test_instance.json_data)
+
         for valid_item in valid_items_to_test:
             set_in_dict(valid_json_data, keys_to_access_value, valid_item)
 

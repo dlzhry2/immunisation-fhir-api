@@ -527,12 +527,101 @@ class ImmunizationValidator:
     def pre_validate_dose_quantity_value(cls, values: dict) -> dict:
         """
         Pre-validate that, if doseQuantity -> value (dose_amount) exists,
-        then it is a non-empty string representing an integer or decimal with
+        then it is a number representing an integer or decimal with
         maximum four decimal places
+
+        NOTE: This validator will only work if the raw json data is parsed with the 
+        parse_float argument set to equal Decimal type (Decimal must be imported from decimal).
+        Floats (but not integers) will then be parsed as Decimals.
+        e.g json.loads(raw_data, parse_float=Decimal)
         """
         try:
             dose_quantity_value = values["doseQuantity"]["value"]
             ImmunizationPreValidators.dose_quantity_value(dose_quantity_value)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_dose_quantity_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if doseQuantity -> code (dose_unit_code) exists,
+        then it is a non-empty string
+        """
+        try:
+            dose_quantity_code = values["doseQuantity"]["code"]
+            ImmunizationPreValidators.dose_quantity_code(dose_quantity_code)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_dose_quantity_unit(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if doseQuantity -> unit (dose_unit_term) exists,
+        then it is a non-empty string
+        """
+        try:
+            dose_quantity_unit = values["doseQuantity"]["unit"]
+            ImmunizationPreValidators.dose_quantity_unit(dose_quantity_unit)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_reason_code_codings(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if they exist, each reasonCode[*] -> coding is a list of length 1
+        """
+
+        try:
+            for item in values["reasonCode"]:
+                try:
+                    coding = item["coding"]
+                    ImmunizationPreValidators.reason_code_coding(coding)
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_reason_code_coding_codes(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if they exist, each reasonCode[*] -> coding -> code (indication_code)
+        is a non-empty string
+        """
+
+        try:
+            for item in values["reasonCode"]:
+                try:
+                    coding = item["coding"][0]["code"]
+                    ImmunizationPreValidators.reason_code_coding_code(coding)
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_reason_code_coding_displays(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if they exist, each reasonCode[*] -> coding -> display (indication_term)
+        is a non-empty string
+        """
+
+        try:
+            for item in values["reasonCode"]:
+                try:
+                    coding = item["coding"][0]["display"]
+                    ImmunizationPreValidators.reason_code_coding_display(coding)
+                except KeyError:
+                    pass
         except KeyError:
             pass
 
@@ -609,6 +698,15 @@ class ImmunizationValidator:
             self.pre_validate_route_coding_display, pre=True
         )
         Immunization.add_root_validator(self.pre_validate_dose_quantity_value, pre=True)
+        Immunization.add_root_validator(self.pre_validate_dose_quantity_code, pre=True)
+        Immunization.add_root_validator(self.pre_validate_dose_quantity_unit, pre=True)
+        Immunization.add_root_validator(self.pre_validate_reason_code_codings, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_reason_code_coding_codes, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_reason_code_coding_displays, pre=True
+        )
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
