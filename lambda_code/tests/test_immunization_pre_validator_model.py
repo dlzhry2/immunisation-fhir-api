@@ -592,24 +592,84 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             keys_to_access_value=["statusReason", "coding", 0, "display"],
         )
 
+    def test_model_pre_validate_valid_protocol_applied(self):
+        """Test pre_validate_protocol_applied accepts valid values when in a model"""
+        valid_items_to_test = [
+            [
+                {
+                    "targetDisease": [
+                        {"coding": [{"code": "ABC123"}]},
+                        {"coding": [{"code": "DEF456"}]},
+                    ],
+                    "doseNumberPositiveInt": 1,
+                }
+            ]
+        ]
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["protocolApplied"],
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_model_pre_validate_invalid_protocol_applied(self):
+        """Test pre_validate_protocol_applied rejects invalid values when in a model"""
+        valid_list_element = {
+            "targetDisease": [
+                {"coding": [{"code": "ABC123"}]},
+                {"coding": [{"code": "DEF456"}]},
+            ],
+            "doseNumberPositiveInt": 1,
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorModelTests.list_invalid(
+            self,
+            field_location="protocolApplied",
+            keys_to_access_value=["protocolApplied"],
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
     def test_model_pre_validate_valid_protocol_applied_dose_number_positive_int(
         self,
     ):
-        # TODO: Fix this test
-        """Test pre_validate_protocol_applied_dose_number_positive_int accepts valid values when in a model"""
+        """
+        Test pre_validate_protocol_applied_dose_number_positive_int accepts valid values when
+        in a model
+        """
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["protocolApplied", "doseNumberPositiveInt"],
+            keys_to_access_value=["protocolApplied", 0, "doseNumberPositiveInt"],
             valid_items_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
         )
 
     def test_model_pre_validate_invalid_protocol_applied_dose_number_positive_int(
         self,
     ):
-        """Test pre_validate_protocol_applied_dose_number_positive_int rejects invalid values when in a model"""
-        # TODO: Fix and complete this test
-        GenericValidatorModelTests.integer_invalid(
+        """
+        Test pre_validate_protocol_applied_dose_number_positive_int rejects invalid values when in a
+        model
+        """
+        # Test invalid data types and non-positive integers
+        GenericValidatorModelTests.positive_integer_invalid(
             self,
-            field_location="protocolApplied -> doseNumberPositiveInt",
-            keys_to_access_value=["protocolApplied", "doseNumberPositiveInt"],
+            field_location="protocolApplied[0] -> doseNumberPositiveInt",
+            keys_to_access_value=["protocolApplied", 0, "doseNumberPositiveInt"],
         )
+
+        # Test positive integers outside of the range 1 to 9
+        invalid_values = [10, 20]
+        invalid_json_data = deepcopy(self.json_data)
+
+        for invalid_value in invalid_values:
+            invalid_json_data["protocolApplied"][0][
+                "doseNumberPositiveInt"
+            ] = invalid_value
+            with self.assertRaises(ValidationError) as error:
+                self.validator.validate(invalid_json_data)
+
+            self.assertTrue(
+                "protocolApplied[0] -> doseNumberPositiveInt must be an integer in the range 1 to "
+                + "9 (type=value_error)"
+                in str(error.exception)
+            )

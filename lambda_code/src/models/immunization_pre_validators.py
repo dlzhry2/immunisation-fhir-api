@@ -237,21 +237,34 @@ class ImmunizationPreValidators:
         return status_reason_coding_display
 
     @staticmethod
+    def protocol_applied(protocol_applied: list) -> list:
+        """
+        Pre-validate protocolApplied
+        """
+        generic_list_validation(
+            protocol_applied,
+            "protocolApplied",
+            defined_length=1,
+        )
+
+        return protocol_applied
+
+    @staticmethod
     def protocol_applied_dose_number_positive_int(
         protocol_applied_dose_number_positive_int: int,
     ) -> int:
-        """Pre-validate protocolApplied -> doseNumberPositiveInt (dose_sequence)"""
+        """Pre-validate protocolApplied[0] -> doseNumberPositiveInt (dose_sequence)"""
 
         # Raise error if is not a positive integer
         generic_positive_integer_validation(
             protocol_applied_dose_number_positive_int,
-            "protocolApplied -> doseNumberPositiveInt",
+            "protocolApplied[0] -> doseNumberPositiveInt",
         )
 
         # Raise error if is not in the range 1 to 9
         if protocol_applied_dose_number_positive_int not in range(1, 10):
             raise ValueError(
-                "protocolApplied -> doseNumberPositiveInt must be an integer in the range 1 to 9"
+                "protocolApplied[0] -> doseNumberPositiveInt must be an integer in the range 1 to 9"
             )
 
         return protocol_applied_dose_number_positive_int

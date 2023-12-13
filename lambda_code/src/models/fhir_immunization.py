@@ -350,16 +350,27 @@ class ImmunizationValidator:
         cls, values: dict
     ) -> dict:
         """
-        Pre-validate that, if protocolApplied -> doseNumberPositiveInt (dose_sequence) exists,
+        Pre-validate that, if protocolApplied[0] -> doseNumberPositiveInt (dose_sequence) exists,
         then it is an integer from 1 to 9
         """
         try:
-            protocol_applied_dose_number_positive_int = values["protocolApplied"][
+            protocol_applied_dose_number_positive_int = values["protocolApplied"][0][
                 "doseNumberPositiveInt"
             ]
             ImmunizationPreValidators.protocol_applied_dose_number_positive_int(
                 protocol_applied_dose_number_positive_int
             )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_protocol_applied(cls, values: dict) -> dict:
+        """Pre-validate that, if protocolApplied exists, then it is a list of length 1"""
+        try:
+            protocol_applied = values["protocolApplied"]
+            ImmunizationPreValidators.protocol_applied(protocol_applied)
         except KeyError:
             pass
 
@@ -412,6 +423,7 @@ class ImmunizationValidator:
         Immunization.add_root_validator(
             self.pre_validate_status_reason_coding_display, pre=True
         )
+        Immunization.add_root_validator(self.pre_validate_protocol_applied, pre=True)
         Immunization.add_root_validator(
             self.pre_validate_protocol_applied_dose_number_positive_int, pre=True
         )

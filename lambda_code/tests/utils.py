@@ -446,7 +446,7 @@ class GenericValidatorMethodTests:
             )
 
     @staticmethod
-    def integer_invalid(
+    def positive_integer_invalid(
         test_instance: unittest.TestCase, validator: Callable, field_location: str
     ):
         """
@@ -462,6 +462,7 @@ class GenericValidatorMethodTests:
                 str(error.exception),
                 f"{field_location} must be a positive integer",
             )
+
         # Test non-positive integers
         for non_positive_integer in [-10, -1, 0]:
             with test_instance.assertRaises(ValueError) as error:
@@ -859,7 +860,7 @@ class GenericValidatorModelTests:
             )
 
     @staticmethod
-    def integer_invalid(
+    def positive_integer_invalid(
         test_instance: unittest.TestCase,
         field_location: str,
         keys_to_access_value: list,
@@ -881,4 +882,13 @@ class GenericValidatorModelTests:
                 in str(error.exception)
             )
 
-        # TODO: Amend this test to check for POSITIVE integers
+        # Test non-positive integers
+        for non_positive_integer in [-10, -1, 0]:
+            set_in_dict(invalid_json_data, keys_to_access_value, non_positive_integer)
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a positive integer (type=value_error)"
+                in str(error.exception)
+            )

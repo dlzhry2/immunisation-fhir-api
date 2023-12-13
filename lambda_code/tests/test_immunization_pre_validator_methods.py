@@ -455,6 +455,45 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             field_location="statusReason -> coding[0] -> display",
         )
 
+    def test_pre_protocol_applied_valid(self):
+        """Test ImmunizationPreValidators.protocol_applied"""
+        valid_items_to_test = [
+            [
+                {
+                    "targetDisease": [
+                        {"coding": [{"code": "ABC123"}]},
+                        {"coding": [{"code": "DEF456"}]},
+                    ],
+                    "doseNumberPositiveInt": 1,
+                }
+            ]
+        ]
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.protocol_applied,
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_pre_status_protocol_applied_invalid(self):
+        """Test ImmunizationPreValidators.protocol_applied"""
+        valid_list_element = {
+            "targetDisease": [
+                {"coding": [{"code": "ABC123"}]},
+                {"coding": [{"code": "DEF456"}]},
+            ],
+            "doseNumberPositiveInt": 1,
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=ImmunizationPreValidators.protocol_applied,
+            field_location="protocolApplied",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
     def test_pre_protocol_applied_dose_number_positive_int_valid(self):
         """Test ImmunizationPreValidators.protocol_applied_dose_number_positive_int"""
 
@@ -468,10 +507,10 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
         """Test ImmunizationPreValidators.protocol_applied_dose_number_positive_int"""
 
         # Test invalid data types and non-positive integers
-        GenericValidatorMethodTests.integer_invalid(
+        GenericValidatorMethodTests.positive_integer_invalid(
             self,
             validator=ImmunizationPreValidators.protocol_applied_dose_number_positive_int,
-            field_location="protocolApplied -> doseNumberPositiveInt",
+            field_location="protocolApplied[0] -> doseNumberPositiveInt",
         )
 
         # Test positive integers outside of the range 1 to 9
@@ -485,5 +524,5 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
 
             self.assertEqual(
                 str(error.exception),
-                "protocolApplied -> doseNumberPositiveInt must be an integer in the range 1 to 9",
+                "protocolApplied[0] -> doseNumberPositiveInt must be an integer in the range 1 to 9",
             )
