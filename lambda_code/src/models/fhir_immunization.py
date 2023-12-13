@@ -1,6 +1,9 @@
 """Immunization FHIR R4B validator"""
 from fhir.resources.R4B.immunization import Immunization
-from models.utils import get_generic_questionnaire_response_value
+from models.utils import (
+    get_generic_questionnaire_response_value,
+    get_generic_extension_value,
+)
 from models.immunization_pre_validators import (
     ImmunizationPreValidators,
 )
@@ -63,7 +66,7 @@ class ImmunizationValidator:
     @classmethod
     def pre_validate_questionnaire_answers(cls, values: dict) -> dict:
         """
-        Pre-validate that, if contained[0] -> resourceType[QuestionnaireResponse]:
+        Pre-validate that, if they exist, each contained[0] -> resourceType[QuestionnaireResponse]:
         item[*] -> linkId[*]: answer is a list of length 1
         """
 
@@ -227,8 +230,149 @@ class ImmunizationValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_extension_value_codeable_concept_codings(
+        cls, values: dict
+    ) -> dict:
+        """
+        Pre-validate that, if they exist, each extension[*] -> valueCodeableConcept -> coding
+        is a list of length 1
+        """
+
+        try:
+            for item in values["extension"]:
+                try:
+                    coding = item["valueCodeableConcept"]["coding"]
+                    ImmunizationPreValidators.extension_value_codeable_concept_coding(
+                        coding
+                    )
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_vaccination_situation_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if extension[*] ->
+        url[https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation]:
+        valueCodeableConcept -> coding -> code (vaccination_situation_code) exists,
+        then it is a non-empty string
+        """
+        try:
+            vaccination_situation_code = get_generic_extension_value(
+                values,
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+                "code",
+            )
+            ImmunizationPreValidators.vaccination_situation_code(
+                vaccination_situation_code
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_vaccination_situation_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if extension[*] ->
+        url[https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation]:
+        valueCodeableConcept -> coding -> display (vaccination_situation_term) exists,
+        then it is a non-empty string
+        """
+        try:
+            vaccination_situation_display = get_generic_extension_value(
+                values,
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+                "display",
+            )
+            ImmunizationPreValidators.vaccination_situation_display(
+                vaccination_situation_display
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_status_reason_coding(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if statusReason -> coding (reason_not_given_code) exists, then it is a
+        list of length 1
+        """
+        try:
+            coding = values["statusReason"]["coding"]
+            ImmunizationPreValidators.status_reason_coding(coding)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_status_reason_coding_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if statusReason -> coding[0] -> code (reason_not_given_code) exists,
+        then it is a non-empty string
+        """
+        try:
+            status_reason_coding_code = values["statusReason"]["coding"][0]["code"]
+            ImmunizationPreValidators.status_reason_coding_code(
+                status_reason_coding_code
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_status_reason_coding_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if statusReason -> coding[0] -> display (reason_not_given_term) exists,
+        then it is a non-empty string
+        """
+        try:
+            status_reason_coding_display = values["statusReason"]["coding"][0][
+                "display"
+            ]
+            ImmunizationPreValidators.status_reason_coding_display(
+                status_reason_coding_display
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_protocol_applied_dose_number_positive_int(
+        cls, values: dict
+    ) -> dict:
+        """
+        Pre-validate that, if protocolApplied -> doseNumberPositiveInt (dose_sequence) exists,
+        then it is an integer from 1 to 9
+        """
+        try:
+            protocol_applied_dose_number_positive_int = values["protocolApplied"][
+                "doseNumberPositiveInt"
+            ]
+            ImmunizationPreValidators.protocol_applied_dose_number_positive_int(
+                protocol_applied_dose_number_positive_int
+            )
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
-        """Add custom NHS validators to the model"""
+        """
+        Add custom NHS validators to the model
+
+        NOTE: THE ORDER IN WHICH THE VALIDATORS ARE ADDED IS IMPORTANT! DO NOT CHANGE THE ORDER
+        WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST.
+        """
+        # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
         Immunization.add_root_validator(
             self.pre_validate_patient_identifier_value, pre=True
         )
@@ -250,6 +394,27 @@ class ImmunizationValidator:
         Immunization.add_root_validator(self.pre_validate_recorded, pre=True)
         Immunization.add_root_validator(self.pre_validate_primary_source, pre=True)
         Immunization.add_root_validator(self.pre_validate_report_origin_text, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_extension_value_codeable_concept_codings, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_vaccination_situation_code, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_vaccination_situation_display, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_status_reason_coding, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_status_reason_coding_code, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_status_reason_coding_display, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_protocol_applied_dose_number_positive_int, pre=True
+        )
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""

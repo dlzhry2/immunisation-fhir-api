@@ -10,6 +10,7 @@ from models.fhir_immunization import ImmunizationValidator
 from .utils import (
     GenericValidatorModelTests,
     generate_field_location_for_questionnnaire_response,
+    generate_field_location_for_extension,
 )
 
 
@@ -395,4 +396,220 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             keys_to_access_value=["reportOrigin", "text"],
             max_length=100,
             invalid_length_strings_to_test=invalid_length_strings_to_test,
+        )
+
+    def test_model_pre_validate_valid_extension_value_codeable_concept_codings(self):
+        """
+        Test pre_validate_extension_value_codeable_concept_codings accepts valid values when in a
+        model
+        """
+        valid_items_to_test = [
+            [{"system": "http://snomed.info/sct", "code": "ABC123", "display": "test"}]
+        ]
+
+        # Check that both of the relevant coding fields in the sample data are accepted when valid
+        for i in range(2):
+            GenericValidatorModelTests.valid(
+                self,
+                keys_to_access_value=["extension", i, "valueCodeableConcept", "coding"],
+                valid_items_to_test=valid_items_to_test,
+            )
+
+    def test_model_pre_validate_invalid_extension_value_codeable_concept_codings(self):
+        """
+        Test pre_validate_extension_value_codeable_concept_codings rejects invalid values when
+        in a model
+        """
+
+        valid_list_element = {
+            "system": "http://snomed.info/sct",
+            "code": "ABC123",
+            "display": "test",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        # Check that both of the 2 relevant coding fields in the sample data are rejected when
+        # invalid
+        for i in range(2):
+            GenericValidatorModelTests.list_invalid(
+                self,
+                field_location="extension[*] -> valueCodeableConcept -> coding",
+                keys_to_access_value=[
+                    "extension",
+                    i,
+                    "valueCodeableConcept",
+                    "coding",
+                ],
+                predefined_list_length=1,
+                invalid_length_lists_to_test=invalid_length_lists_to_test,
+            )
+
+    def test_model_pre_validate_valid_vaccination_situation_code(self):
+        """Test pre_validate_vaccination_situation_code accepts valid values when in a model"""
+
+        keys_to_access_value = [
+            "extension",
+            1,
+            "valueCodeableConcept",
+            "coding",
+            0,
+            "code",
+        ]
+
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=keys_to_access_value,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_invalid_vaccination_situation_code(self):
+        """Test pre_validate_vaccination_situation_code rejects invalid values when in a model"""
+
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+            field_type="code",
+        )
+
+        keys_to_access_value = [
+            "extension",
+            1,
+            "valueCodeableConcept",
+            "coding",
+            0,
+            "code",
+        ]
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location=field_location,
+            keys_to_access_value=keys_to_access_value,
+        )
+
+    def test_model_pre_validate_valid_vaccination_situation_display(self):
+        """Test pre_validate_vaccination_situation_display accepts valid values when in a model"""
+
+        keys_to_access_value = [
+            "extension",
+            1,
+            "valueCodeableConcept",
+            "coding",
+            0,
+            "display",
+        ]
+
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=keys_to_access_value,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_invalid_vaccination_situation_display(self):
+        """Test pre_validate_vaccination_situation_display rejects invalid values when in a model"""
+
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+            field_type="display",
+        )
+
+        keys_to_access_value = [
+            "extension",
+            1,
+            "valueCodeableConcept",
+            "coding",
+            0,
+            "display",
+        ]
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location=field_location,
+            keys_to_access_value=keys_to_access_value,
+        )
+
+    def test_model_pre_validate_valid_status_reason_coding(self):
+        """Test pre_validate_status_reason_coding accepts valid values when in a model"""
+        valid_items_to_test = [
+            [
+                {
+                    "system": "http://snomed.info/sct",
+                    "code": "ABC123",
+                    "display": "test",
+                }
+            ]
+        ]
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["statusReason", "coding"],
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_model_pre_validate_invalid_status_reason_coding(self):
+        """Test pre_validate_status_reason_coding rejects invalid values when in a model"""
+        valid_list_element = {
+            "system": "http://snomed.info/sct",
+            "code": "ABC123",
+            "display": "test",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorModelTests.list_invalid(
+            self,
+            field_location="statusReason -> coding",
+            keys_to_access_value=["statusReason", "coding"],
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_model_pre_validate_valid_status_reason_coding_code(self):
+        """Test pre_validate_status_reason_coding_code accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["statusReason", "coding", 0, "code"],
+            valid_items_to_test="dummy",
+        )
+
+    def test_model_pre_validate_invalid_status_reason_coding_code(self):
+        """Test pre_validate_status_reason_coding_code rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="statusReason -> coding[0] -> code",
+            keys_to_access_value=["statusReason", "coding", 0, "code"],
+        )
+
+    def test_model_pre_validate_valid_status_reason_coding_display(self):
+        """Test pre_validate_status_reason_coding_display accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["statusReason", "coding", 0, "display"],
+            valid_items_to_test="dummy",
+        )
+
+    def test_model_pre_validate_invalid_status_reason_coding_display(self):
+        """Test pre_validate_status_reason_coding_display rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="statusReason -> coding[0] -> display",
+            keys_to_access_value=["statusReason", "coding", 0, "display"],
+        )
+
+    def test_model_pre_validate_valid_protocol_applied_dose_number_positive_int(
+        self,
+    ):
+        # TODO: Fix this test
+        """Test pre_validate_protocol_applied_dose_number_positive_int accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["protocolApplied", "doseNumberPositiveInt"],
+            valid_items_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
+        )
+
+    def test_model_pre_validate_invalid_protocol_applied_dose_number_positive_int(
+        self,
+    ):
+        """Test pre_validate_protocol_applied_dose_number_positive_int rejects invalid values when in a model"""
+        # TODO: Fix and complete this test
+        GenericValidatorModelTests.integer_invalid(
+            self,
+            field_location="protocolApplied -> doseNumberPositiveInt",
+            keys_to_access_value=["protocolApplied", "doseNumberPositiveInt"],
         )

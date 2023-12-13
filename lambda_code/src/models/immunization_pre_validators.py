@@ -5,6 +5,7 @@ from models.utils import (
     generic_list_validation,
     generic_date_validation,
     generic_boolean_validation,
+    generic_positive_integer_validation,
 )
 
 from models.constants import Constants
@@ -152,3 +153,105 @@ class ImmunizationPreValidators:
         )
 
         return report_origin_text
+
+    @staticmethod
+    def extension_value_codeable_concept_coding(coding: list) -> list:
+        """
+        Pre-validate extension[*] -> valueCodeableConcept -> coding
+        """
+        generic_list_validation(
+            coding,
+            "extension[*] -> valueCodeableConcept -> coding",
+            defined_length=1,
+        )
+
+        return coding
+
+    @staticmethod
+    def vaccination_situation_code(vaccination_situation_code: str) -> str:
+        """
+        Pre-validate extension[*] ->
+        url[https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation]:
+        valueCodeableConcept -> coding -> code
+        (vaccination_situation_code)
+        """
+
+        generic_string_validation(
+            vaccination_situation_code,
+            "extension[*] -> url["
+            + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation]: "
+            + "valueCodeableConcept -> coding[0] -> code",
+        )
+
+        return vaccination_situation_code
+
+    @staticmethod
+    def vaccination_situation_display(vaccination_situation_display: str) -> str:
+        """
+        Pre-validate extension[*] ->
+        url[https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation]:
+        valueCodeableConcept -> coding -> display
+        (vaccination_situation_term)
+        """
+
+        generic_string_validation(
+            vaccination_situation_display,
+            "extension[*] -> url["
+            + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation]: "
+            + "valueCodeableConcept -> coding[0] -> display",
+        )
+
+        return vaccination_situation_display
+
+    @staticmethod
+    def status_reason_coding(coding: list) -> list:
+        """
+        Pre-validate statusReason -> coding (reason_not_given_code)
+        """
+        generic_list_validation(
+            coding,
+            "statusReason -> coding",
+            defined_length=1,
+        )
+
+        return coding
+
+    @staticmethod
+    def status_reason_coding_code(status_reason_coding_code: str) -> str:
+        """Pre-validate statusReason -> coding[0] -> code (reason_not_given_code)"""
+
+        generic_string_validation(
+            status_reason_coding_code, "statusReason -> coding[0] -> code"
+        )
+
+        return status_reason_coding_code
+
+    @staticmethod
+    def status_reason_coding_display(status_reason_coding_display: str) -> str:
+        """Pre_validate statusReason -> coding[0] -> display (reason_not_given_term)"""
+
+        generic_string_validation(
+            status_reason_coding_display, "statusReason -> coding[0] -> display"
+        )
+
+        return status_reason_coding_display
+
+    @staticmethod
+    def protocol_applied_dose_number_positive_int(
+        protocol_applied_dose_number_positive_int: int,
+    ) -> int:
+        """Pre-validate protocolApplied -> doseNumberPositiveInt (dose_sequence)"""
+
+        # Raise error if is not a positive integer
+        generic_positive_integer_validation(
+            protocol_applied_dose_number_positive_int,
+            "protocolApplied -> doseNumberPositiveInt",
+        )
+
+        # Raise error if is not in the range 1 to 9
+        if protocol_applied_dose_number_positive_int not in range(1, 10):
+            raise ValueError(
+                "protocolApplied -> doseNumberPositiveInt must be an integer in the range 1 to 9"
+            )
+
+        return protocol_applied_dose_number_positive_int

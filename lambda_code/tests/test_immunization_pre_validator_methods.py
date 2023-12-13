@@ -6,6 +6,7 @@ from models.immunization_pre_validators import ImmunizationPreValidators
 from .utils import (
     GenericValidatorMethodTests,
     generate_field_location_for_questionnnaire_response,
+    generate_field_location_for_extension,
 )
 
 
@@ -311,3 +312,178 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             max_length=100,
             invalid_length_strings_to_test=invalid_length_strings_to_test,
         )
+
+    def test_pre_extension_value_codeable_concept_coding_valid(self):
+        """Test ImmunizationPreValidators.extension_value_codeable_concept_coding"""
+        valid_items_to_test = [
+            [{"system": "http://snomed.info/sct", "code": "ABC123", "display": "test"}]
+        ]
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.extension_value_codeable_concept_coding,
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_pre_extension_value_codeable_concept_coding_invalid(self):
+        """Test ImmunizationPreValidators.extension_value_codeable_concept_coding"""
+        valid_list_element = {
+            "system": "http://snomed.info/sct",
+            "code": "ABC123",
+            "display": "test",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=ImmunizationPreValidators.extension_value_codeable_concept_coding,
+            field_location="extension[*] -> valueCodeableConcept -> coding",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_pre_vaccination_situation_code_valid(self):
+        """Test ImmunizationPreValidators.vaccination_situation_code"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.vaccination_situation_code,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_vaccination_situation_code_invalid(self):
+        """Test ImmunizationPreValidators.vaccination_situation_code"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.vaccination_situation_code,
+            field_location=generate_field_location_for_extension(
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+                "code",
+            ),
+        )
+
+    def test_pre_vaccination_situation_display_valid(self):
+        """Test ImmunizationPreValidators.vaccination_situation_display"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.vaccination_situation_display,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_vaccination_situation_display_invalid(self):
+        """Test ImmunizationPreValidators.vaccination_situation_display"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.vaccination_situation_display,
+            field_location=generate_field_location_for_extension(
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+                "display",
+            ),
+        )
+
+    def test_pre_status_reason_coding_valid(self):
+        """Test ImmunizationPreValidators.status_reason_coding"""
+        valid_items_to_test = [
+            [
+                {
+                    "system": "http://snomed.info/sct",
+                    "code": "ABC123",
+                    "display": "test",
+                }
+            ]
+        ]
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.status_reason_coding,
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_pre_status_reason_coding_invalid(self):
+        """Test ImmunizationPreValidators.status_reason_coding"""
+        valid_list_element = {
+            "system": "http://snomed.info/sct",
+            "code": "ABC123",
+            "display": "test",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=ImmunizationPreValidators.status_reason_coding,
+            field_location="statusReason -> coding",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_pre_status_reason_coding_code_valid(self):
+        """Test ImmunizationPreValidators.status_reason_coding_code"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.status_reason_coding_code,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_status_reason_coding_code_invalid(self):
+        """Test ImmunizationPreValidators.status_reason_coding_code"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.status_reason_coding_code,
+            field_location="statusReason -> coding[0] -> code",
+        )
+
+    def test_pre_status_reason_coding_display_valid(self):
+        """Test ImmunizationPreValidators.status_reason_coding_display"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.status_reason_coding_display,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_status_reason_coding_display_invalid(self):
+        """Test ImmunizationPreValidators.status_reason_coding_display"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.status_reason_coding_display,
+            field_location="statusReason -> coding[0] -> display",
+        )
+
+    def test_pre_protocol_applied_dose_number_positive_int_valid(self):
+        """Test ImmunizationPreValidators.protocol_applied_dose_number_positive_int"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.protocol_applied_dose_number_positive_int,
+            valid_items_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
+        )
+
+    def test_pre_protocol_applied_dose_number_positive_int_invalid(self):
+        """Test ImmunizationPreValidators.protocol_applied_dose_number_positive_int"""
+
+        # Test invalid data types and non-positive integers
+        GenericValidatorMethodTests.integer_invalid(
+            self,
+            validator=ImmunizationPreValidators.protocol_applied_dose_number_positive_int,
+            field_location="protocolApplied -> doseNumberPositiveInt",
+        )
+
+        # Test positive integers outside of the range 1 to 9
+        invalid_values = [10, 20]
+
+        for invalid_value in invalid_values:
+            with self.assertRaises(ValueError) as error:
+                ImmunizationPreValidators.protocol_applied_dose_number_positive_int(
+                    invalid_value
+                )
+
+            self.assertEqual(
+                str(error.exception),
+                "protocolApplied -> doseNumberPositiveInt must be an integer in the range 1 to 9",
+            )
