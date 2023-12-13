@@ -598,3 +598,233 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             validator=ImmunizationPreValidators.vaccine_code_coding_display,
             field_location="vaccineCode -> coding[0] -> display",
         )
+
+    def test_pre_manufacturer_display_valid(self):
+        """Test ImmunizationPreValidators.manufacturer_display"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.manufacturer_display,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_manufacturer_display_invalid(self):
+        """Test ImmunizationPreValidators.manufacturer_display"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.manufacturer_display,
+            field_location="manufacturer -> display",
+        )
+
+    def test_pre_lot_number_valid(self):
+        """Test ImmunizationPreValidators.lot_number"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.lot_number,
+            valid_items_to_test=[
+                "sample",
+                "0123456789101112",
+            ],
+        )
+
+    def test_pre_lot_number_invalid(self):
+        """Test ImmunizationPreValidators.lot_number"""
+
+        invalid_length_strings_to_test = [
+            "This is a really long string with more than 100 "
+            + "characters to test whether the validator is working well"
+        ]
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.lot_number,
+            field_location="lotNumber",
+            max_length=100,
+            invalid_length_strings_to_test=invalid_length_strings_to_test,
+        )
+
+    def test_pre_expiration_date_valid(self):
+        """Test ImmunizationPreValidators.expiration_date"""
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.expiration_date,
+            valid_items_to_test=["2030-01-01", "2003-12-31"],
+        )
+
+    def test_pre_expiration_date_invalid(self):
+        """Test ImmunizationPreValidators.expiration_date"""
+
+        GenericValidatorMethodTests.date_invalid(
+            self,
+            validator=ImmunizationPreValidators.expiration_date,
+            field_location="expirationDate",
+        )
+
+    def test_pre_site_coding_valid(self):
+        """Test ImmunizationPreValidators.site_coding"""
+        valid_items_to_test = [
+            [{"system": "http://snomed.info/sct", "code": "LA", "display": "left arm"}]
+        ]
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.site_coding,
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_pre_status_site_coding_invalid(self):
+        """Test ImmunizationPreValidators.site_coding"""
+        valid_list_element = {
+            "system": "http://snomed.info/sct",
+            "code": "LA",
+            "display": "left arm",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=ImmunizationPreValidators.site_coding,
+            field_location="site -> coding",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_pre_site_coding_display_valid(self):
+        """Test ImmunizationPreValidators.site_coding_display"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.site_coding_display,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_site_coding_display_invalid(self):
+        """Test ImmunizationPreValidators.site_coding_display"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.site_coding_display,
+            field_location="site -> coding[0] -> display",
+        )
+
+    def test_pre_route_coding_valid(self):
+        """Test ImmunizationPreValidators.route_coding"""
+        valid_items_to_test = [
+            [
+                {
+                    "system": "http://snomed.info/sct",
+                    "code": "IM",
+                    "display": "injection, intramuscular",
+                }
+            ]
+        ]
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.route_coding,
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_pre_status_route_coding_invalid(self):
+        """Test ImmunizationPreValidators.route_coding"""
+        valid_list_element = {
+            "system": "http://snomed.info/sct",
+            "code": "IM",
+            "display": "injection, intramuscular",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorMethodTests.list_invalid(
+            self,
+            validator=ImmunizationPreValidators.route_coding,
+            field_location="route -> coding",
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_pre_route_coding_code_valid(self):
+        """Test ImmunizationPreValidators.route_coding_code"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.route_coding_code,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_route_coding_code_invalid(self):
+        """Test ImmunizationPreValidators.route_coding_code"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.route_coding_code,
+            field_location="route -> coding[0] -> code",
+        )
+
+    def test_pre_route_coding_display_valid(self):
+        """Test ImmunizationPreValidators.route_coding_display"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.route_coding_display,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_route_coding_display_invalid(self):
+        """Test ImmunizationPreValidators.route_coding_display"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.route_coding_display,
+            field_location="route -> coding[0] -> display",
+        )
+
+    def test_pre_dose_quantity_value_valid(self):
+        """Test ImmunizationPreValidators.dose_quantity_value"""
+
+        valid_items_to_test = [
+            "1",  # small integer
+            "100",  # larger integer
+            "0.1",  # 1 decimal place
+            "100.52",  # 2 decimal places
+            "32.430",  # 3 decimal places
+            "1.1234",  # 4 decimal places
+        ]
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.dose_quantity_value,
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_pre_dose_quantity_value_invalid(self):
+        """Test ImmunizationPreValidators.dose_quantity_value"""
+
+        # Test invalid data types and the empty string
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.dose_quantity_value,
+            field_location="doseQuantity -> value",
+        )
+
+        # TODO: handle 0s (i.e. 0, 0.0 etc)
+        # TODO: Check if should be float, not string
+        invalid_items_to_test = [
+            "1a"  # string with non-digit/decimal point characters
+            " 1.1"  # leading whitespace
+            " 1"  # trailing whitespace
+            "1. 2"  # whitespace in middle of string
+            "1.1.1"  # more than 1 decimal point
+            ".1"  # no digit before decimal point
+            "1."  # no digit after decimal point
+        ]
+
+        for invalid_item_to_test in invalid_items_to_test:
+            with self.assertRaises(ValueError) as error:
+                ImmunizationPreValidators.dose_quantity_value(invalid_item_to_test)
+
+            self.assertEqual(
+                str(error.exception),
+                "doseQuantity -> value must be a string representing an integer or decimal number "
+                + "with maximum FOUR decimal places",
+            )

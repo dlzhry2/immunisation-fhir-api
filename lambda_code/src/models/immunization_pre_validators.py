@@ -1,4 +1,6 @@
 """Immunization pre-validators"""
+
+import re
 from models.utils import (
     generic_string_validation,
     generic_date_time_validation,
@@ -301,3 +303,94 @@ class ImmunizationPreValidators:
         )
 
         return vaccine_code_coding_display
+
+    @staticmethod
+    def manufacturer_display(manufacturer_display: str) -> str:
+        """Pre_validate manufacturer -> display (vaccine_manufacturer)"""
+
+        generic_string_validation(manufacturer_display, "manufacturer -> display")
+
+        return manufacturer_display
+
+    @staticmethod
+    def lot_number(lot_number: str) -> str:
+        """Pre_validate lot_number (batch_number)"""
+
+        generic_string_validation(lot_number, "lotNumber", max_length=100)
+
+        return lot_number
+
+    @staticmethod
+    def expiration_date(expiration_date: str) -> str:
+        """Pre_validate expirationDate (expiry_date)"""
+
+        generic_date_validation(expiration_date, "expirationDate")
+
+        return expiration_date
+
+    @staticmethod
+    def site_coding(site_coding: list) -> list:
+        """
+        Pre-validate site -> coding
+        """
+        generic_list_validation(
+            site_coding,
+            "site -> coding",
+            defined_length=1,
+        )
+
+        return site_coding
+
+    @staticmethod
+    def site_coding_display(site_coding_display: str) -> str:
+        """Pre_validate site -> coding[0] -> display (site_of_vaccination_term)"""
+
+        generic_string_validation(site_coding_display, "site -> coding[0] -> display")
+
+        return site_coding_display
+
+    @staticmethod
+    def route_coding(route_coding: list) -> list:
+        """
+        Pre-validate route -> coding
+        """
+        generic_list_validation(
+            route_coding,
+            "route -> coding",
+            defined_length=1,
+        )
+
+        return route_coding
+
+    @staticmethod
+    def route_coding_code(route_coding_code: str) -> str:
+        """Pre-validate route -> coding[0] -> code (route_of_vaccination_code)"""
+
+        generic_string_validation(route_coding_code, "route -> coding[0] -> code")
+
+        return route_coding_code
+
+    @staticmethod
+    def route_coding_display(route_coding_display: str) -> str:
+        """Pre_validate route -> coding[0] -> display (route_of_vaccination_term)"""
+
+        generic_string_validation(route_coding_display, "route -> coding[0] -> display")
+
+        return route_coding_display
+
+    @staticmethod
+    def dose_quantity_value(dose_quantity_value: str) -> str:
+        """Pre_validate doseQuantity -> value (dose_amount)"""
+
+        # Check is a non-empty string
+        generic_string_validation(dose_quantity_value, "doseQuantity -> value")
+
+        # Check string represents an integer or decimal with maximum 4 decimal places
+        decimal_max_4_dp_regex = re.compile("^[0-9]+([.][0-9]{1,4})?$")
+        if not decimal_max_4_dp_regex.fullmatch(dose_quantity_value):
+            raise ValueError(
+                "doseQuantity -> value must be a string representing an integer or decimal number "
+                + "with maximum FOUR decimal places"
+            )
+
+        return dose_quantity_value

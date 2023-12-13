@@ -378,7 +378,7 @@ class ImmunizationValidator:
 
     @classmethod
     def pre_validate_vaccine_code_coding(cls, values: dict) -> dict:
-        """Pre-validate that, if vaccineCodeCoding exists, then it is a list of length 1"""
+        """Pre-validate that, if vaccineCode -> coding exists, then it is a list of length 1"""
         try:
             vaccine_code_coding = values["vaccineCode"]["coding"]
             ImmunizationPreValidators.vaccine_code_coding(vaccine_code_coding)
@@ -412,6 +412,127 @@ class ImmunizationValidator:
             ImmunizationPreValidators.vaccine_code_coding_display(
                 vaccine_code_coding_display
             )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_manufacturer_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if manufacturer -> display (vaccine_manufacturer) exists,
+        then it is a non-empty string
+        """
+        try:
+            manufacturer_display = values["manufacturer"]["display"]
+            ImmunizationPreValidators.manufacturer_display(manufacturer_display)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_lot_number(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if lotNumber (batch_number) exists,
+        then it is a non-empty string
+        """
+        try:
+            lot_number = values["lotNumber"]
+            ImmunizationPreValidators.lot_number(lot_number)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_expiration_date(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if expirationDate (expiry_date) exists, then it is a string in the format
+        YYYY-MM-DD, representing a valid date
+        """
+        try:
+            expiration_date = values["expirationDate"]
+            ImmunizationPreValidators.expiration_date(expiration_date)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_site_coding(cls, values: dict) -> dict:
+        """Pre-validate that, if site -> coding exists, then it is a list of length 1"""
+        try:
+            site_coding = values["site"]["coding"]
+            ImmunizationPreValidators.site_coding(site_coding)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_site_coding_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if site -> coding[0] -> display (site_of_vaccination_term) exists,
+        then it is a non-empty string
+        """
+        try:
+            site_coding_display = values["site"]["coding"][0]["display"]
+            ImmunizationPreValidators.site_coding_display(site_coding_display)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_route_coding(cls, values: dict) -> dict:
+        """Pre-validate that, if route -> coding exists, then it is a list of length 1"""
+        try:
+            route_coding = values["route"]["coding"]
+            ImmunizationPreValidators.route_coding(route_coding)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_route_coding_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if route -> coding[0] -> code (route_of_vaccination_code) exists,
+        then it is a non-empty string
+        """
+        try:
+            route_coding_code = values["route"]["coding"][0]["code"]
+            ImmunizationPreValidators.route_coding_code(route_coding_code)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_route_coding_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if route -> coding[0] -> display (route_of_vaccination_term) exists,
+        then it is a non-empty string
+        """
+        try:
+            route_coding_display = values["route"]["coding"][0]["display"]
+            ImmunizationPreValidators.route_coding_display(route_coding_display)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_dose_quantity_value(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if doseQuantity -> value (dose_amount) exists,
+        then it is a non-empty string representing an integer or decimal with
+        maximum four decimal places
+        """
+        try:
+            dose_quantity_value = values["doseQuantity"]["value"]
+            ImmunizationPreValidators.dose_quantity_value(dose_quantity_value)
         except KeyError:
             pass
 
@@ -475,6 +596,19 @@ class ImmunizationValidator:
         Immunization.add_root_validator(
             self.pre_validate_vaccine_code_coding_display, pre=True
         )
+        Immunization.add_root_validator(
+            self.pre_validate_manufacturer_display, pre=True
+        )
+        Immunization.add_root_validator(self.pre_validate_lot_number, pre=True)
+        Immunization.add_root_validator(self.pre_validate_expiration_date, pre=True)
+        Immunization.add_root_validator(self.pre_validate_site_coding, pre=True)
+        Immunization.add_root_validator(self.pre_validate_site_coding_display, pre=True)
+        Immunization.add_root_validator(self.pre_validate_route_coding, pre=True)
+        Immunization.add_root_validator(self.pre_validate_route_coding_code, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_route_coding_display, pre=True
+        )
+        Immunization.add_root_validator(self.pre_validate_dose_quantity_value, pre=True)
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""

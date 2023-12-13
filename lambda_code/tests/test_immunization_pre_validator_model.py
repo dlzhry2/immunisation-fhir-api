@@ -741,3 +741,178 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location="vaccineCode -> coding[0] -> display",
             keys_to_access_value=["vaccineCode", "coding", 0, "display"],
         )
+
+    def test_model_pre_validate_valid_manufacturer_display(self):
+        """Test pre_validate_manufacturer_display accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["manufacturer", "display"],
+            valid_items_to_test="dummy",
+        )
+
+    def test_model_pre_validate_invalid_manufacturer_display(self):
+        """Test pre_validate_manufacturer_display rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="manufacturer -> display",
+            keys_to_access_value=["manufacturer", "display"],
+        )
+
+    def test_model_pre_validate_valid_lot_number(self):
+        """Test pre_validate_lot_number accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["lotNumber"],
+            valid_items_to_test=[
+                "sample",
+                "0123456789101112",
+            ],
+        )
+
+    def test_model_pre_validate_invalid_lot_number(self):
+        """Test pre_validate_lot_number rejects invalid values when in a model"""
+        invalid_length_strings_to_test = [
+            "This is a really long string with more than 100 "
+            + "characters to test whether the validator is working well"
+        ]
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="lotNumber",
+            keys_to_access_value=["lotNumber"],
+            max_length=100,
+            invalid_length_strings_to_test=invalid_length_strings_to_test,
+        )
+
+    def test_model_pre_validate_valid_expiration_date(self):
+        """Test pre_validate_expiration_date accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["expirationDate"],
+            valid_items_to_test=["2030-01-01", "2003-12-31"],
+        )
+
+    def test_model_pre_validate_invalid_expiration_date(self):
+        """Test pre_validate_expiration_date rejects invalid values when in a model"""
+        GenericValidatorModelTests.date_invalid(
+            self,
+            field_location="expirationDate",
+            keys_to_access_value=["expirationDate"],
+        )
+
+    def test_model_pre_validate_valid_site_coding(self):
+        """Test pre_validate_site_coding accepts valid values when in a model"""
+        valid_items_to_test = [
+            [{"system": "http://snomed.info/sct", "code": "LA", "display": "left arm"}]
+        ]
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["site", "coding"],
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_model_pre_validate_invalid_site_coding(self):
+        """Test pre_validate_site_coding rejects invalid values when in a model"""
+        valid_list_element = {
+            "system": "http://snomed.info/sct",
+            "code": "LA",
+            "display": "left arm",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorModelTests.list_invalid(
+            self,
+            field_location="site -> coding",
+            keys_to_access_value=["site", "coding"],
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_model_pre_validate_valid_site_coding_display(self):
+        """Test pre_validate_site_coding_display accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["site", "coding", 0, "display"],
+            valid_items_to_test="dummy",
+        )
+
+    def test_model_pre_validate_invalid_site_coding_display(self):
+        """Test pre_validate_site_coding_display rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="site -> coding[0] -> display",
+            keys_to_access_value=["site", "coding", 0, "display"],
+        )
+
+    def test_model_pre_validate_valid_route_coding(self):
+        """Test pre_validate_route_coding accepts valid values when in a model"""
+        valid_items_to_test = [
+            [
+                {
+                    "system": "http://snomed.info/sct",
+                    "code": "IM",
+                    "display": "injection, intramuscular",
+                }
+            ]
+        ]
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["vaccineCode", "coding"],
+            valid_items_to_test=valid_items_to_test,
+        )
+
+    def test_model_pre_validate_invalid_route_coding(self):
+        """Test pre_validate_route_coding rejects invalid values when in a model"""
+        valid_list_element = {
+            "system": "http://snomed.info/sct",
+            "code": "IM",
+            "display": "injection, intramuscular",
+        }
+        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
+        GenericValidatorModelTests.list_invalid(
+            self,
+            field_location="route -> coding",
+            keys_to_access_value=["route", "coding"],
+            predefined_list_length=1,
+            invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_model_pre_validate_valid_route_coding_code(self):
+        """Test pre_validate_route_coding_code accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["route", "coding", 0, "code"],
+            valid_items_to_test="dummy",
+        )
+
+    def test_model_pre_validate_invalid_route_coding_code(self):
+        """Test pre_validate_route_coding_code rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="route -> coding[0] -> code",
+            keys_to_access_value=["route", "coding", 0, "code"],
+        )
+
+    def test_model_pre_validate_valid_route_coding_display(self):
+        """Test pre_validate_route_coding_display accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["route", "coding", 0, "display"],
+            valid_items_to_test="dummy",
+        )
+
+    def test_model_pre_validate_invalid_route_coding_display(self):
+        """Test pre_validate_route_coding_display rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="route -> coding[0] -> display",
+            keys_to_access_value=["route", "coding", 0, "display"],
+        )
+
+
+# TODO: dose_quantity_value tests
