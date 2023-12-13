@@ -380,7 +380,9 @@ class ImmunizationPreValidators:
         return route_coding_display
 
     @staticmethod
-    def dose_quantity_value(dose_quantity_value):
+    def dose_quantity_value(
+        dose_quantity_value: Union[Decimal, int]
+    ) -> Union[Decimal, int]:
         """Pre-validate doseQuantity -> value (dose_amount)"""
 
         # Check is a Decimal or integer (note that booleans are a sub-class of integers in python)
