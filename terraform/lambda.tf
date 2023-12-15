@@ -1,10 +1,5 @@
 locals {
     lambda_dir         = abspath("${path.root}/../lambda_code")
-    #build_dir          = abspath("${path.root}/build")
-    # lambda_source_zip is only used for change detection. lambda_deployment_zip is the final zip file that is getting deployed
-    #lambda_source_zip  = "lambda_source_code.zip"
-    #lambda_package_zip = "${local.build_dir}/lambda_package.zip"
-
     source_path   = local.lambda_dir
     path_include  = ["**"]
     path_exclude  = ["**/__pycache__/**"]
@@ -14,43 +9,6 @@ locals {
 
     dir_sha = sha1(join("", [for f in local.files : filesha1("${local.source_path}/${f}")]))
 }
-
-/*data "archive_file" "lambda_source_zip" {
-    type        = "zip"
-    source_dir  = "${local.lambda_dir}/src"
-    output_path = "${local.build_dir}/${local.lambda_source_zip}"
-}
-locals {
-    lambda_code_sha = data.archive_file.lambda_source_zip.output_base64sha256
-}*/
-/*
-resource "aws_s3_bucket" "lambda_source_bucket" {
-    bucket        = "${local.prefix}-lambda-source-code"
-    force_destroy = true
-}
-
-resource "null_resource" "lambda_package" {
-    triggers = {
-        lambda_source_code = local.lambda_code_sha
-        docker_file        = filemd5("${local.lambda_dir}/Dockerfile")
-        entrypoint         = filemd5("${local.lambda_dir}/entrypoint.sh")
-    }
-
-    provisioner "local-exec" {
-        interpreter = ["bash", "-c"]
-        command     = <<EOF
-docker build -f ${local.lambda_dir}/Dockerfile -t ${local.prefix}-lambda-build ${local.lambda_dir}
-docker run --rm -v ${local.build_dir}:/build ${local.prefix}-lambda-build
-   EOF
-    }
-}
-resource "aws_s3_object" "lambda_function_code" {
-    bucket      = aws_s3_bucket.lambda_source_bucket.bucket
-    key         = "package"
-    source      = local.lambda_package_zip
-    source_hash = local.lambda_code_sha
-    depends_on  = [null_resource.lambda_package]
-}*/
 
 #resource "docker_image" "lambda_function_docker" {
 module "docker_image" {
@@ -76,14 +34,8 @@ module "docker_image" {
     })
 
     use_image_tag = false
-    #image_tag     = "1.0"
-
-    source_path      = local.lambda_dir
-
+    source_path   = local.lambda_dir
     triggers = {
-/*        lambda_source_code = local.lambda_code_sha
-        docker_file        = filemd5("${local.lambda_dir}/Dockerfile-poetry")
-        dir_sha1           = sha1(join("", [for f in fileset(path.module, "src*//*") : filesha1(f)]))*/
         dir_sha = local.dir_sha
     }
 }
