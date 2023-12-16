@@ -3,16 +3,23 @@ import re
 import uuid
 from typing import Optional
 
+import boto3
+from botocore.config import Config
 from fhir.resources.operationoutcome import OperationOutcome
 
 from fhir_repository import ImmunisationRepository, create_table
 from fhir_service import FhirService
-from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError
+from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError, \
+    ValidationError
+from pds_service import PdsService, Authenticator
 
 
 def make_controller():
     imms_repo = ImmunisationRepository(create_table())
-    service = FhirService(imms_repo=imms_repo)
+    env = "internal-dev"
+    my_config = Config(region_name='eu-west-2')
+    pds_service = PdsService(Authenticator(boto3.client('secretsmanager', config=my_config), env), env)
+    service = FhirService(imms_repo=imms_repo, pds_service=pds_service)
     return FhirController(fhir_service=service)
 
 
@@ -48,8 +55,11 @@ class FhirController:
                                             diagnostics=f"Request's body contains malformed JSON\n{error}")
             return self.create_response(400, body.json())
 
-        resource = self.fhir_service.create_immunization(imms)
-        return self.create_response(201, resource.json())
+        try:
+            resource = self.fhir_service.create_immunization(imms)
+            return self.create_response(201, resource.json())
+        except ValidationError as error:
+            return self.create_response(400, error.to_operation_outcome().json())
 
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]

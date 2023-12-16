@@ -3,11 +3,14 @@ from typing import Optional
 from fhir.resources.immunization import Immunization
 
 from fhir_repository import ImmunisationRepository
+from models.errors import InvalidPatientId
+from pds_service import PdsService
 
 
 class FhirService:
-    def __init__(self, imms_repo: ImmunisationRepository):
+    def __init__(self, imms_repo: ImmunisationRepository, pds_service: PdsService):
         self.immunisation_repo = imms_repo
+        self.pds_service = pds_service
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunisation_repo.get_immunization_by_id(imms_id)
@@ -19,9 +22,13 @@ class FhirService:
             return None
 
     def create_immunization(self, immunization: dict) -> Immunization:
-        # TODO: AMB-1730 - do the PDS lookup
-        imms = self.immunisation_repo.create_immunization(immunization)
-        return Immunization.parse_obj(imms)
+        nhs_number = immunization['patient']['identifier']['value']
+        patient = self.pds_service.get_patient_details(nhs_number)
+        if patient:
+            imms = self.immunisation_repo.create_immunization(immunization)
+            return Immunization.parse_obj(imms)
+        else:
+            raise InvalidPatientId(nhs_number=nhs_number)
 
     def delete_immunization(self, imms_id) -> Immunization:
         """Delete an Immunization if it exits and return the ID back if successful.
