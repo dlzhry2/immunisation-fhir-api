@@ -144,6 +144,18 @@ class TestCreateImmunization(unittest.TestCase):
         self.assertEqual(body["resourceType"], "OperationOutcome")
         self.assertTrue(invalid_nhs_num in body["issue"][0]["diagnostics"])
 
+    def test_pds_unhandled_error(self):
+        """it should respond with 500 if PDS returns error"""
+        imms = Immunization.construct()
+        aws_event = {"body": imms.json()}
+        self.service.create_immunization.side_effect = UnhandledResponseError(response={}, message="a message")
+
+        response = self.controller.create_immunization(aws_event)
+
+        self.assertEqual(500, response["statusCode"])
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+
 
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):

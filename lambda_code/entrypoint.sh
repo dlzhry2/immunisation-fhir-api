@@ -16,7 +16,7 @@ pip install \
 --platform manylinux2014_x86_64 \
 --target=. \
 --implementation cp \
---python-version 3.8 \
+--python-version 3.9 \
 --only-binary=:all: --upgrade \
 -q -r requirements_binary.txt
 echo "Building lambda package"
