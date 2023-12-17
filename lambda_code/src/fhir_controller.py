@@ -8,6 +8,7 @@ import boto3
 from botocore.config import Config
 from fhir.resources.operationoutcome import OperationOutcome
 
+from cache import Cache
 from fhir_repository import ImmunisationRepository, create_table
 from fhir_service import FhirService
 from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError, \
@@ -17,9 +18,14 @@ from pds_service import PdsService, Authenticator
 
 def make_controller(pds_env: str = os.getenv("PDS_ENV", "int")):
     imms_repo = ImmunisationRepository(create_table())
+
     boto_config = Config(region_name='eu-west-2')
-    pds_service = PdsService(Authenticator(boto3.client('secretsmanager', config=boto_config), pds_env), pds_env)
+    cache = Cache(directory="/tmp")
+    authenticator = Authenticator(boto3.client('secretsmanager', config=boto_config), pds_env, cache)
+    pds_service = PdsService(authenticator, pds_env)
+
     service = FhirService(imms_repo=imms_repo, pds_service=pds_service)
+
     return FhirController(fhir_service=service)
 
 
