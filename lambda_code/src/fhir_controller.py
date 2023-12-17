@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import uuid
 from typing import Optional
@@ -14,11 +15,10 @@ from models.errors import Severity, Code, create_operation_outcome, ResourceNotF
 from pds_service import PdsService, Authenticator
 
 
-def make_controller():
+def make_controller(pds_env: str = os.getenv("PDS_ENV", "int")):
     imms_repo = ImmunisationRepository(create_table())
-    env = "internal-dev"
-    my_config = Config(region_name='eu-west-2')
-    pds_service = PdsService(Authenticator(boto3.client('secretsmanager', config=my_config), env), env)
+    boto_config = Config(region_name='eu-west-2')
+    pds_service = PdsService(Authenticator(boto3.client('secretsmanager', config=boto_config), pds_env), pds_env)
     service = FhirService(imms_repo=imms_repo, pds_service=pds_service)
     return FhirController(fhir_service=service)
 

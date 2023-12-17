@@ -53,6 +53,18 @@ class TestPdsService(unittest.TestCase):
         # Then
         self.assertIsNone(patient)
 
+    def test_env_mapping(self):
+        """it should target int environment for none-prod environment, otherwise int"""
+        # For env=none-prod
+        env = "some-env"
+        service = PdsService(None, env)
+        self.assertTrue(service.base_url.startswith(f"https://{env}."))
+
+        # For env=prod
+        env = "prod"
+        service = PdsService(None, env)
+        self.assertTrue(env not in service.base_url)
+
 
 class TestAuthenticator(unittest.TestCase):
     def setUp(self):
@@ -67,7 +79,6 @@ class TestAuthenticator(unittest.TestCase):
         secret_response = {"SecretString": json.dumps(pds_secret)}
         self.secret_manager_client.get_secret_value.return_value = secret_response
 
-        # FIXME: AMB-1838 make sure environment is parametrized and tested not hardcoded
         self.authenticator = Authenticator(self.secret_manager_client, "int")
         self.url = "https://int.api.service.nhs.uk/oauth2/token"
 
@@ -115,3 +126,15 @@ class TestAuthenticator(unittest.TestCase):
             # Then
             mock_jwt.assert_called_once_with(claims, self.private_key,
                                              algorithm="RS512", headers={"kid": self.kid})
+
+    def test_env_mapping(self):
+        """it should target int environment for none-prod environment, otherwise int"""
+        # For env=none-prod
+        env = "some-env"
+        auth = Authenticator(None, env)
+        self.assertTrue(auth.token_url.startswith(f"https://{env}."))
+
+        # For env=prod
+        env = "prod"
+        auth = Authenticator(None, env)
+        self.assertTrue(env not in auth.token_url)

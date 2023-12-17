@@ -10,15 +10,15 @@ import requests
 class Authenticator:
     def __init__(self, secret_manager_client, environment):
         self.secret_manager_client = secret_manager_client
-        # FIXME: the secret name's env is hardcoded. AMB-1838 should address this.
-        self.secret_name = 'imms/pds/int/jwt'
-        self.token_url = f"https://{environment}.api.service.nhs.uk/oauth2/token"
+        self.secret_name = f"imms/pds/{environment}/jwt-secrets"
+        self.token_url = f"https://{environment}.api.service.nhs.uk/oauth2/token" \
+            if environment != "prod" else "https://api.service.nhs.uk/oauth2/token"
 
     def get_pds_secrets(self):
         kwargs = {"SecretId": self.secret_name}
         response = self.secret_manager_client.get_secret_value(**kwargs)
         secret_object = json.loads(response['SecretString'])
-        secret_object['private_key'] = base64.b64decode(secret_object['private_key']).decode()
+        secret_object['private_key'] = base64.b64decode(secret_object['private_key_b64']).decode()
 
         return secret_object
 
@@ -54,7 +54,9 @@ class Authenticator:
 class PdsService:
     def __init__(self, authenticator: Authenticator, environment):
         self.authenticator = authenticator
-        self.base_url = f"https://{environment}.api.service.nhs.uk/personal-demographics/FHIR/R4/Patient"
+
+        self.base_url = f"https://{environment}.api.service.nhs.uk/personal-demographics/FHIR/R4/Patient" \
+            if environment != "prod" else "https://api.service.nhs.uk/personal-demographics/FHIR/R4/Patient"
 
     def get_patient_details(self, patient_id):
         access_token = self.authenticator.get_access_token()
