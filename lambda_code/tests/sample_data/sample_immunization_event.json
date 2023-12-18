@@ -186,8 +186,6 @@
       }
     ]
   },
-  "lotNumber": "AAJN11K",
-  "expirationDate": "2020-05-06",
   "patient": {
     "identifier": {
       "system": "https//fhir.nhs.uk/Id/nhs-number",
@@ -195,13 +193,22 @@
     }
   },
   "occurrenceDateTime": "2020-12-14T10:08:15+00:00",
+  "recorded": "2010-05-06",
   "primarySource": true,
+  "reportOrigin": {
+    "text": "sample"
+  },
   "location": {
     "identifier": {
       "system": "https://fhir.nhs.uk/Id/ods-organization-code",
       "value": "B0C4P"
     }
   },
+  "manufacturer": {
+    "display": "test"
+  },
+  "lotNumber": "AAJN11K",
+  "expirationDate": "2020-05-06",
   "site": {
     "coding": [
       {
@@ -226,6 +233,28 @@
     "system": "http://unitsofmeasure.org",
     "code": "snomed"
   },
+  "reasonCode": [
+    {
+      "coding": [
+        {
+          "code": "snomed",
+          "display": "test"
+        }
+      ]
+    }
+  ],
+  "performer": [
+    {
+      "actor": {
+        "reference": "Practitioner/1",
+        "type": "Practitioner",
+        "identifier": {
+          "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+          "value": "B0C4P"
+        }
+      }
+    }
+  ],
   "protocolApplied": [
     {
       "targetDisease": [
@@ -245,35 +274,6 @@
         }
       ],
       "doseNumberPositiveInt": 5
-    }
-  ],
-  "reportOrigin": {
-    "text": "sample"
-  },
-  "reasonCode": [
-    {
-      "coding": [
-        {
-          "code": "snomed",
-          "display": "test"
-        }
-      ]
-    }
-  ],
-  "recorded": "2010-05-06",
-  "manufacturer": {
-    "display": "test"
-  },
-  "performer": [
-    {
-      "actor": {
-        "reference": "Practitioner/1",
-        "type": "Practitioner",
-        "identifier": {
-          "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-          "value": "B0C4P"
-        }
-      }
     }
   ]
 }
