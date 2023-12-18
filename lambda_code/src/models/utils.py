@@ -68,17 +68,20 @@ def generic_date_validation(field_value: str, field_location: str):
     if not isinstance(field_value, str):
         raise TypeError(f"{field_location} must be a string")
 
-    date_pattern = re.compile(r"\d{4}-\d{2}-\d{2}")
+    # date_pattern = re.compile(r"\d{4}-\d{2}-\d{2}")
 
-    if not date_pattern.fullmatch(field_value):
-        raise ValueError(
-            f'{field_location} must be a string in the format "YYYY-MM-DD"'
-        )
+    # if not date_pattern.fullmatch(field_value):
+    #     raise ValueError(
+    #         f'{field_location} must be a string in the format "YYYY-MM-DD"'
+    #     )
 
     try:
         datetime.strptime(field_value, "%Y-%m-%d").date()
     except ValueError as value_error:
-        raise ValueError(f"{field_location} must be a valid date") from value_error
+        raise ValueError(
+            f"{field_location} must be a valid date string in the format "
+            + '"YYYY-MM-DD"'
+        ) from value_error
 
 
 def generic_date_time_validation(field_value: str, field_location: str):
