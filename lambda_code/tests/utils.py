@@ -184,7 +184,7 @@ class GenericValidatorMethodTests:
         validator: Callable,
         field_location: str,
         defined_length: int = None,
-        max_length: int = 0,
+        max_length: int = None,
         invalid_length_strings_to_test: list = None,
         predefined_values: tuple = None,
         invalid_strings_to_test: list = None,
