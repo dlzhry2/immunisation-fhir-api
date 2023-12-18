@@ -75,7 +75,7 @@ class TestAuthenticator(unittest.TestCase):
         # The private key must be stored as base64 encoded in secret-manager
         b64_private_key = base64.b64encode(self.private_key.encode()).decode()
 
-        pds_secret = {"private_key": b64_private_key, "kid": self.kid, "api_key": self.api_key}
+        pds_secret = {"private_key_b64": b64_private_key, "kid": self.kid, "api_key": self.api_key}
         secret_response = {"SecretString": json.dumps(pds_secret)}
         self.secret_manager_client.get_secret_value.return_value = secret_response
 
