@@ -8,9 +8,7 @@ from .example_loader import load_example
 from .immunization_api import ImmunisationApi
 
 
-
-
-def create_an_imms_obj(imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number) -> dict:
+def create_an_imms_obj(imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1) -> dict:
     imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
     imms["id"] = imms_id
     imms["patient"]["identifier"]["value"] = nhs_number
@@ -36,7 +34,6 @@ def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> dict:
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -45,26 +42,23 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
 
     # CREATE
     result = imms_api.create_immunization(imms)
-    print("yooo")
-    print(result.status_code)
-    print(result.text)
-    # res_body = result.json()
-    #
-    # assert result.status_code == 201
-    # assert res_body["resourceType"] == "Immunization"
-    #
-    # # READ
-    # imms_id = res_body["id"]
-    #
-    # result = imms_api.get_immunization_by_id(imms_id)
-    #
-    # assert result.status_code == 200
-    # assert res_body["id"] == imms_id
-    #
-    # # DELETE
-    # result = imms_api.delete_immunization(imms_id)
-    #
-    # assert result.status_code == 200
+    res_body = result.json()
+
+    assert result.status_code == 201
+    assert res_body["resourceType"] == "Immunization"
+
+    # READ
+    imms_id = res_body["id"]
+
+    result = imms_api.get_immunization_by_id(imms_id)
+
+    assert result.status_code == 200
+    assert res_body["id"] == imms_id
+
+    # DELETE
+    result = imms_api.delete_immunization(imms_id)
+
+    assert result.status_code == 200
 
 
 @pytest.mark.nhsd_apim_authorization(
