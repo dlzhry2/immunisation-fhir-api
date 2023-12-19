@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import create_autospec
 
 from fhir.resources.immunization import Immunization
+from fhir.resources.list import List as FhirList
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
