@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import create_autospec
 
 from fhir.resources.immunization import Immunization
+from fhir.resources.list import List
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
@@ -144,6 +145,18 @@ class TestCreateImmunization(unittest.TestCase):
         self.assertEqual(body["resourceType"], "OperationOutcome")
         self.assertTrue(invalid_nhs_num in body["issue"][0]["diagnostics"])
 
+    def test_pds_unhandled_error(self):
+        """it should respond with 500 if PDS returns error"""
+        imms = Immunization.construct()
+        aws_event = {"body": imms.json()}
+        self.service.create_immunization.side_effect = UnhandledResponseError(response={}, message="a message")
+
+        response = self.controller.create_immunization(aws_event)
+
+        self.assertEqual(500, response["statusCode"])
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+
 
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
@@ -208,3 +221,56 @@ class TestDeleteImmunization(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
         self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+
+
+class TestSearchImmunisations(unittest.TestCase):
+    def setUp(self):
+        self.service = create_autospec(FhirService)
+        self.controller = FhirController(self.service)
+
+    def test_search_immunizations(self):
+        """it should search based on nhsNumber and diseaseType"""
+        search_result = List.construct()
+        self.service.search_immunizations.return_value = search_result
+
+        nhs_number = "an-patient-id"
+        disease_type = "a-disease-type"
+        lambda_event = {"queryStringParameters": {
+            "diseaseType": disease_type,
+            "nhsNumber": nhs_number
+        }}
+
+        # When
+        response = self.controller.search_immunizations(lambda_event)
+
+        # Then
+        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type)
+        self.assertEqual(response["statusCode"], 200)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "List")
+
+    def test_nhs_number_is_mandatory(self):
+        """nhsNumber is a mandatory query param"""
+        lambda_event = {"queryStringParameters": {
+            "diseaseType": "a-disease-type",
+        }}
+
+        response = self.controller.search_immunizations(lambda_event)
+
+        self.assertEqual(self.service.search_immunizations.call_count, 0)
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")
+
+    def test_diseaseType_is_mandatory(self):
+        """diseaseType is a mandatory query param"""
+        lambda_event = {"queryStringParameters": {
+            "nhsNumber": "an-id",
+        }}
+
+        response = self.controller.search_immunizations(lambda_event)
+
+        self.assertEqual(self.service.search_immunizations.call_count, 0)
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")

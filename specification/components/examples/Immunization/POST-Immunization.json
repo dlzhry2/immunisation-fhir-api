@@ -17,6 +17,22 @@
       "value": "9000000009"
     }
   },
+  "protocolApplied": [
+    {
+      "doseNumber": 1,
+      "targetDisease": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "39114911000001105",
+              "display": "flue vaccine"
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "vaccineCode": {
     "coding": [
       {
