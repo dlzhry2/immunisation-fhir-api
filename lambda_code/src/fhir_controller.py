@@ -57,6 +57,8 @@ class FhirController:
             return self.create_response(201, resource.json())
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome().json())
+        except UnhandledResponseError as unhandled_error:
+            return self.create_response(500, unhandled_error.to_operation_outcome().json())
 
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]

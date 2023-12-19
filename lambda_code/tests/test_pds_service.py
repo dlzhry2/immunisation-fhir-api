@@ -11,6 +11,7 @@ from responses import matchers
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 from pds_service import PdsService
 from pds_service import Authenticator
+from models.errors import UnhandledResponseError
 
 
 class TestPdsService(unittest.TestCase):
@@ -45,13 +46,27 @@ class TestPdsService(unittest.TestCase):
     def test_get_patient_details_not_found(self):
         """it should return None if patient doesn't exist or if there is any error"""
         patient_id = "900000009"
-        responses.add(responses.GET, f"{self.base_url}/{patient_id}", status=400)
+        responses.add(responses.GET, f"{self.base_url}/{patient_id}", status=404)
 
         # When
         patient = self.pds_service.get_patient_details(patient_id)
 
         # Then
         self.assertIsNone(patient)
+
+    @responses.activate
+    def test_get_patient_details_error(self):
+        """it should raise exception if PDS responded with error"""
+        patient_id = "900000009"
+        response = {"msg": "an-error"}
+        responses.add(responses.GET, f"{self.base_url}/{patient_id}", status=400, json=response)
+
+        with self.assertRaises(UnhandledResponseError) as e:
+            # When
+            self.pds_service.get_patient_details(patient_id)
+
+        # Then
+        self.assertDictEqual(e.exception.response, response)
 
     def test_env_mapping(self):
         """it should target int environment for none-prod environment, otherwise int"""

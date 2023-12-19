@@ -4,6 +4,7 @@ from time import sleep
 
 import pytest
 
+from .configuration.config import valid_nhs_number1, valid_nhs_number2
 from .example_loader import load_example
 from .immunization_api import ImmunisationApi
 
@@ -63,12 +64,12 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
     records = [
         {
-            "nhs_number": "2345564537",
+            "nhs_number": valid_nhs_number1,
             "diseases": [flu_code, mmr_code],
             "responses": [],
         },
         {
-            "nhs_number": "76237163009",
+            "nhs_number": valid_nhs_number2,
             "diseases": [flu_code, mmr_code, covid_code, mmr_code],
             "responses": [],
         }
@@ -102,12 +103,12 @@ def test_search_immunization_ignore_deleted(nhsd_apim_proxy_url, nhsd_apim_auth_
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
     records = [
         {
-            "nhs_number": "7465734581",
+            "nhs_number": valid_nhs_number1,
             "diseases": [mmr_code, mmr_code],
             "responses": [],
         },
         {  # same nhs_number but, we will delete it in this test and not during cleanup
-            "nhs_number": "7465734581",
+            "nhs_number": valid_nhs_number1,
             "diseases": [mmr_code],
             "responses": [],
         }

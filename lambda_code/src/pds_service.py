@@ -6,6 +6,8 @@ import uuid
 import jwt
 import requests
 
+from models.errors import UnhandledResponseError
+
 
 class Authenticator:
     def __init__(self, secret_manager_client, environment):
@@ -69,5 +71,8 @@ class PdsService:
 
         if response.status_code == 200:
             return response.json()
-        else:
+        elif response.status_code == 404:
             return None
+        else:
+            msg = "Downstream service failed to validate the patient"
+            raise UnhandledResponseError(response=response.json(), message=msg)
