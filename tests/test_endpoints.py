@@ -42,7 +42,6 @@ def test_status(nhsd_apim_proxy_url, status_endpoint_auth_headers):
         f"{nhsd_apim_proxy_url}/_status", headers=status_endpoint_auth_headers
     )
     assert resp.status_code == 200
-    # Make some additional assertions about your status response here!
 
 
 @pytest.mark.smoketest
@@ -71,5 +70,5 @@ def test_wait_for_status(nhsd_apim_proxy_url, status_endpoint_auth_headers):
 
 @pytest.mark.nhsd_apim_authorization({"access": "application", "level": "level0"})
 def test_app_level0(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
-    resp = requests.get(f"{nhsd_apim_proxy_url}", headers=nhsd_apim_auth_headers)
+    resp = requests.get(f"{nhsd_apim_proxy_url}/event", headers=nhsd_apim_auth_headers)
     assert resp.status_code == 401  # unauthorized

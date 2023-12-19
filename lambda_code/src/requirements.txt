@@ -1,0 +1,7 @@
+fhir.resources==7.0.2
+boto3==1.28.68
+requests
+pydantic
+PyJWT
+cryptography==37.0.4
+aws-secretsmanager-caching

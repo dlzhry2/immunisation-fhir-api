@@ -1,16 +1,16 @@
 resource "aws_cloudwatch_log_group" "api_access_log" {
-  name              = "/aws/vendedlogs/${aws_apigatewayv2_api.service_api.id}/${local.api_stage_name}"
-  retention_in_days = 7
+    name              = "/aws/vendedlogs/${aws_apigatewayv2_api.service_api.id}/${local.api_stage_name}"
+    retention_in_days = 7
 }
 
 resource "aws_api_gateway_account" "api_account" {
-  cloudwatch_role_arn = aws_iam_role.api_cloudwatch.arn
+    cloudwatch_role_arn = aws_iam_role.api_cloudwatch.arn
 }
 
 resource "aws_iam_role" "api_cloudwatch" {
-  name = "${var.short_prefix}-api-logs"
+    name = "${var.short_prefix}-api-logs"
 
-  assume_role_policy = <<EOF
+    assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -28,10 +28,10 @@ EOF
 }
 
 resource "aws_iam_role_policy" "cloudwatch" {
-  name = "${var.prefix}-api-logs"
-  role = aws_iam_role.api_cloudwatch.id
+    name = "${var.prefix}-api-logs"
+    role = aws_iam_role.api_cloudwatch.id
 
-  policy = <<EOF
+    policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [

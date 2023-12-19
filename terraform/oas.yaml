@@ -1,0 +1,119 @@
+openapi: 3.0.0
+info:
+  title: Immunisation FHIR API
+  description: Immunisation FHIR API
+  version: 0.1.0
+paths:
+  /status:
+    get:
+      x-amazon-apigateway-integration:
+        uri: "${get_status_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "GET"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      
+      responses:
+        '201':
+          description: Get status
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+
+  /event/{id}:
+    get:
+      x-amazon-apigateway-integration:
+        uri: "${get_event.lambda_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "GET"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      responses:
+        '200':
+          description: An Immunisation get event
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+    delete:
+      x-amazon-apigateway-integration:
+        uri: "${delete_event.lambda_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "DELETE"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      responses:
+        '200':
+          description: An Immunisation delete event
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+
+  /event:
+    get:
+      x-amazon-apigateway-integration:
+        uri: "${search_event.lambda_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "GET"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      parameters:
+        - name: NhsNumber
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: diseaseType
+          in: query
+          schema:
+            type: string
+      responses:
+        '201':
+          description: An Immunisation search event
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+    post:
+      x-amazon-apigateway-integration:
+        uri: "${post_event.lambda_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      responses:
+        '201':
+          description: An Immunisation post event
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+  /{proxy+}:
+    x-amazon-apigateway-any-method:
+      parameters:
+        - name: proxy+
+          in: path
+          required: true
+          schema:
+            type: string 
+      x-amazon-apigateway-integration:
+        uri: "${not_found.lambda_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "GET"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      responses:
+        '404':
+          description: Not Found
+          content:
+            application/fhir+json:
+              schema:
+                type: object

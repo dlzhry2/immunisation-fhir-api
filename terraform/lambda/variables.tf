@@ -1,5 +1,11 @@
 variable "prefix" {}
 variable "short_prefix" {}
-variable "environment" {}
-variable "lambda_zip_name" { default = "lambda_function" }
-variable "dynamodb_table_name" {}
+variable "function_name" {}
+variable "source_bucket" {}
+variable "source_key" {}
+variable "source_sha" {}
+variable "environments" {
+    default = {}
+}
+
+variable "policy_json" {}
