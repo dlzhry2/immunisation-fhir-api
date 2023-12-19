@@ -147,7 +147,8 @@ class TestDeleteImmunization(unittest.TestCase):
 class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.imms_repo = create_autospec(ImmunisationRepository)
-        self.fhir_service = FhirService(self.imms_repo)
+        self.pds_service = create_autospec(PdsService)
+        self.fhir_service = FhirService(self.imms_repo, self.pds_service)
 
     def test_map_disease_type_to_disease_code(self):
         """it should map disease_type to disease_code"""
