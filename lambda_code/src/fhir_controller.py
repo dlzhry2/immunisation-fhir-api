@@ -42,11 +42,8 @@ class FhirController:
     def create_immunization(self, aws_event):
         try:
             imms = json.loads(aws_event["body"])
-        except json.decoder.JSONDecodeError as error:
-            body = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                            code=Code.invalid,
-                                            diagnostics=f"Request's body contains malformed JSON\n{error}")
-            return self.create_response(400, body.json())
+        except json.decoder.JSONDecodeError as e:
+            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
 
         resource = self.fhir_service.create_immunization(imms)
         return self.create_response(201, resource.json())
@@ -66,6 +63,18 @@ class FhirController:
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome().json())
 
+    def search_immunizations(self, aws_event) -> dict:
+        params = aws_event["queryStringParameters"]
+
+        if "nhsNumber" not in params:
+            return self._create_bad_request("Query parameter 'nhsNumber' is mandatory")
+        if "diseaseType" not in params:
+            return self._create_bad_request("Query parameter 'diseaseType' is mandatory")
+
+        result = self.fhir_service.search_immunizations(params["nhsNumber"], params["diseaseType"])
+
+        return self.create_response(200, result.json())
+
     def _validate_id(self, _id: str) -> Optional[OperationOutcome]:
         if not re.match(self.immunization_id_pattern, _id):
             msg = "the provided event ID is either missing or not in the expected format."
@@ -74,6 +83,12 @@ class FhirController:
                                             diagnostics=msg)
         else:
             return None
+
+    def _create_bad_request(self, message):
+        error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                         code=Code.invalid,
+                                         diagnostics=message)
+        return self.create_response(400, error.json())
 
     @staticmethod
     def create_response(status_code, body):
