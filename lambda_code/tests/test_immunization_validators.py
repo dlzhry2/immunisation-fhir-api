@@ -1,12 +1,12 @@
 """Tests for the NHS Immunization validators"""
 
-import unittest
-import sys
-import os
 import json
+import os
+import sys
+import unittest
 from copy import deepcopy
-import dateutil.parser
 
+import dateutil.parser
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
@@ -95,7 +95,6 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
             invalid_json_data["patient"]["identifier"][
                 "value"
             ] = invalid_patient_identifier_value
-            print(invalid_patient_identifier_value)
             with self.assertRaises(ValueError):
                 self.immunization_validator.validate(invalid_json_data)
 
