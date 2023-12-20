@@ -11,7 +11,7 @@ sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_controller import FhirController
 from fhir_service import FhirService
-from models.errors import ResourceNotFoundError, UnhandledResponseError
+from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId
 
 
 def _create_a_post_event(body: str) -> dict:
@@ -130,6 +130,32 @@ class TestCreateImmunization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 400)
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
+
+    def test_invalid_nhs_number(self):
+        """it should handle ValidationError when patient doesn't exist"""
+        imms = Immunization.construct()
+        aws_event = {"body": imms.json()}
+        invalid_nhs_num = "a-bad-id"
+        self.service.create_immunization.side_effect = InvalidPatientId(nhs_number=invalid_nhs_num)
+
+        response = self.controller.create_immunization(aws_event)
+
+        self.assertEqual(response["statusCode"], 400)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertTrue(invalid_nhs_num in body["issue"][0]["diagnostics"])
+
+    def test_pds_unhandled_error(self):
+        """it should respond with 500 if PDS returns error"""
+        imms = Immunization.construct()
+        aws_event = {"body": imms.json()}
+        self.service.create_immunization.side_effect = UnhandledResponseError(response={}, message="a message")
+
+        response = self.controller.create_immunization(aws_event)
+
+        self.assertEqual(500, response["statusCode"])
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
 
 
 class TestDeleteImmunization(unittest.TestCase):
