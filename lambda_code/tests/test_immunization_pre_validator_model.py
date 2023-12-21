@@ -1090,6 +1090,23 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             keys_to_access_value=["doseQuantity", "code"],
         )
 
+    def test_model_pre_validate_valid_dose_quantity_unit(self):
+        """Test pre_validate_dose_quantity_unit accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["doseQuantity", "unit"],
+            valid_items_to_test="Millilitre",
+        )
+
+    def test_model_pre_validate_invalid_dose_quantity_unit(self):
+        """Test pre_validate_dose_quantity_unit rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="doseQuantity -> unit",
+            keys_to_access_value=["doseQuantity", "unit"],
+        )
+
     def test_model_pre_validate_valid_reason_code_codings(self):
         """Test pre_validate_reason_code_codings accepts valid values when in a model"""
         valid_items_to_test = [[{"code": "ABC123", "display": "test"}]]
