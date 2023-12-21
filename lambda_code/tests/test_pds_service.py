@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import sys
+import time
 import unittest
 from unittest.mock import create_autospec, MagicMock, patch, ANY
 
@@ -163,7 +164,7 @@ class TestAuthenticator(unittest.TestCase):
         """it should return cached token"""
         cached_token = {
             "token": "a-cached-access-token",
-            "expires_at": 0  # make sure it's not expired
+            "expires_at": int(time.time()) + 99999  # make sure it's not expired
         }
         self.cache.get.return_value = cached_token
 
@@ -197,18 +198,20 @@ class TestAuthenticator(unittest.TestCase):
     def test_expired_token_in_cache(self):
         """it should not return cached access token if it's expired"""
         now_epoch = 12345
+        expires_at = now_epoch + self.authenticator.expiry
         cached_token = {
             "token": "an-expired-cached-access-token",
-            "expires_at": now_epoch + self.authenticator.expiry  # make sure it's expired
+            "expires_at": expires_at,
         }
         self.cache.get.return_value = cached_token
 
         new_token = "a-new-token"
         responses.add(responses.POST, self.url, status=200, json={"access_token": new_token})
 
+        new_now = expires_at  # this is to trigger expiry and also the mocked now-time when storing the new token
         with patch("jwt.encode") as mock_jwt:
             with patch("time.time") as mock_time:
-                mock_time.return_value = now_epoch
+                mock_time.return_value = new_now
                 mock_jwt.return_value = "a-jwt"
                 # When
                 self.authenticator.get_access_token()
@@ -216,6 +219,6 @@ class TestAuthenticator(unittest.TestCase):
         # Then
         exp_cached_token = {
             "token": new_token,
-            "expires_at": now_epoch + self.authenticator.expiry
+            "expires_at": new_now + self.authenticator.expiry
         }
         self.cache.put.assert_called_once_with(ANY, exp_cached_token)

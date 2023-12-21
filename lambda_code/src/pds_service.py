@@ -6,9 +6,8 @@ import uuid
 import jwt
 import requests
 
-from models.errors import UnhandledResponseError
-
 from cache import Cache
+from models.errors import UnhandledResponseError
 
 
 class Authenticator:
@@ -45,7 +44,7 @@ class Authenticator:
     def get_access_token(self):
         now = int(time.time())
         cached = self.cache.get("pds_token")
-        if cached and cached["expires_at"] < now + self.expiry:
+        if cached and cached["expires_at"] > now:
             return cached["token"]
 
         _jwt = self.create_jwt(now)
