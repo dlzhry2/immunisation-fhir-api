@@ -5,7 +5,7 @@ from datetime import date
 from datetime import datetime
 from typing import Optional, Any
 from pydantic import BaseModel, validator
-from models.old_nhs_validators import (
+from models.nhs_validators import (
     NHSImmunizationValidators,
     NHSPatientValidators,
     NHSPractitionerValidators,
