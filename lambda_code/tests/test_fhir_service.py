@@ -142,3 +142,37 @@ class TestDeleteImmunization(unittest.TestCase):
         self.imms_repo.delete_immunization.assert_called_once_with(imms_id)
         self.assertIsInstance(act_imms, Immunization)
         self.assertEqual(act_imms.id, imms_id)
+
+
+class TestSearchImmunizations(unittest.TestCase):
+    def setUp(self):
+        self.imms_repo = create_autospec(ImmunisationRepository)
+        self.pds_service = create_autospec(PdsService)
+        self.fhir_service = FhirService(self.imms_repo, self.pds_service)
+
+    def test_map_disease_type_to_disease_code(self):
+        """it should map disease_type to disease_code"""
+        # TODO: for this ticket we are assuming code is provided
+        nhs_number = "a-patient-id"
+        disease_type = "a-disease-code"
+        # TODO: here we are assuming disease_type=disease_code this is because the mapping is not in place yet
+        disease_code = disease_type
+
+        # When
+        _ = self.fhir_service.search_immunizations(nhs_number, disease_code)
+
+        # Then
+        self.imms_repo.find_immunizations.assert_called_once_with(nhs_number, disease_code)
+
+    def test_make_fhir_list_from_search_result(self):
+        """it should return a FHIR:List[Immunization] resource"""
+        imms_ids = ["imms-1", "imms-2"]
+        imms_list = [_create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        self.imms_repo.find_immunizations.return_value = imms_list
+
+        # When
+        result = self.fhir_service.search_immunizations("an-id", "a-code")
+
+        # Then
+        self.assertIsInstance(result, FhirList)
+        self.assertListEqual([entry.id for entry in result.entry], imms_ids)
