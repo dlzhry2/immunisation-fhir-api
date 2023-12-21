@@ -3,7 +3,11 @@
 import unittest
 import os
 import json
+import os
+import sys
+import unittest
 from copy import deepcopy
+
 import dateutil.parser
 
 
@@ -92,7 +96,6 @@ class TestNHSImmunizationValidationRules(unittest.TestCase):
             invalid_json_data["patient"]["identifier"][
                 "value"
             ] = invalid_patient_identifier_value
-            print(invalid_patient_identifier_value)
             with self.assertRaises(ValueError):
                 self.immunization_validator.validate(invalid_json_data)
 
