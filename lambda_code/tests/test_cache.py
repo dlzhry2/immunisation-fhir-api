@@ -14,7 +14,7 @@ class TestCache(unittest.TestCase):
         self.cache = Cache(tempfile.gettempdir())
 
     def test_cache_put(self):
-        """it should store cache in specified directory"""
+        """it should store cache in specified key"""
         value = {"foo": "a-foo", "bar": 42}
         key = "a_key"
 
