@@ -97,7 +97,17 @@
   ],
   "protocolApplied": [
     {
-      "doseNumberPositiveInt": 1
+      "doseNumberPositiveInt": 1,
+      "targetDisease": [
+        {
+          "coding": [
+            {
+              "code": "443684005",
+              "display": "Disease outbreak (event)"
+            }
+          ]
+        }
+      ]
     }
   ],
   "location": {
