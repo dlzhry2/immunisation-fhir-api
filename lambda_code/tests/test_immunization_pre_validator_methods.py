@@ -343,6 +343,48 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             invalid_length_lists_to_test=invalid_length_lists_to_test,
         )
 
+    def test_pre_vaccination_procedure_code_valid(self):
+        """Test ImmunizationPreValidators.vaccination_procedure_code"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.vaccination_procedure_code,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_vaccination_procedure_code_invalid(self):
+        """Test ImmunizationPreValidators.vaccination_procedure_code"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.vaccination_procedure_code,
+            field_location=generate_field_location_for_extension(
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+                "code",
+            ),
+        )
+
+    def test_pre_vaccination_procedure_display_valid(self):
+        """Test ImmunizationPreValidators.vaccination_procedure_display"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.vaccination_procedure_display,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_vaccination_procedure_display_invalid(self):
+        """Test ImmunizationPreValidators.vaccination_procedure_display"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.vaccination_procedure_display,
+            field_location=generate_field_location_for_extension(
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+                "display",
+            ),
+        )
+
     def test_pre_vaccination_situation_code_valid(self):
         """Test ImmunizationPreValidators.vaccination_situation_code"""
 
@@ -689,6 +731,24 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             field_location="site -> coding",
             predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_pre_site_coding_code_valid(self):
+        """Test ImmunizationPreValidators.site_coding_code"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.site_coding_code,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_pre_site_coding_code_invalid(self):
+        """Test ImmunizationPreValidators.site_coding_code"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.site_coding_code,
+            field_location="site -> coding[0] -> code",
         )
 
     def test_pre_site_coding_display_valid(self):

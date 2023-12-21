@@ -446,6 +446,86 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 invalid_length_lists_to_test=invalid_length_lists_to_test,
             )
 
+    def test_model_pre_validate_valid_vaccination_procedure_code(self):
+        """Test pre_validate_vaccination_procedure_code accepts valid values when in a model"""
+
+        keys_to_access_value = [
+            "extension",
+            0,
+            "valueCodeableConcept",
+            "coding",
+            0,
+            "code",
+        ]
+
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=keys_to_access_value,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_invalid_vaccination_procedure_code(self):
+        """Test pre_validate_vaccination_procedure_code rejects invalid values when in a model"""
+
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+            field_type="code",
+        )
+
+        keys_to_access_value = [
+            "extension",
+            0,
+            "valueCodeableConcept",
+            "coding",
+            0,
+            "code",
+        ]
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location=field_location,
+            keys_to_access_value=keys_to_access_value,
+        )
+
+    def test_model_pre_validate_valid_vaccination_procedure_display(self):
+        """Test pre_validate_vaccination_procedure_display accepts valid values when in a model"""
+
+        keys_to_access_value = [
+            "extension",
+            0,
+            "valueCodeableConcept",
+            "coding",
+            0,
+            "display",
+        ]
+
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=keys_to_access_value,
+            valid_items_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_invalid_vaccination_procedure_display(self):
+        """Test pre_validate_vaccination_procedure_display rejects invalid values when in a model"""
+
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+            field_type="display",
+        )
+
+        keys_to_access_value = [
+            "extension",
+            0,
+            "valueCodeableConcept",
+            "coding",
+            0,
+            "display",
+        ]
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location=field_location,
+            keys_to_access_value=keys_to_access_value,
+        )
+
     def test_model_pre_validate_valid_vaccination_situation_code(self):
         """Test pre_validate_vaccination_situation_code accepts valid values when in a model"""
 
@@ -829,6 +909,23 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             keys_to_access_value=["site", "coding"],
             predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
+        )
+
+    def test_model_pre_validate_valid_site_coding_code(self):
+        """Test pre_validate_site_coding_code accepts valid values when in a model"""
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=["site", "coding", 0, "code"],
+            valid_items_to_test="dummy",
+        )
+
+    def test_model_pre_validate_invalid_site_coding_code(self):
+        """Test pre_validate_site_coding_code rejects invalid values when in a model"""
+
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="site -> coding[0] -> code",
+            keys_to_access_value=["site", "coding", 0, "code"],
         )
 
     def test_model_pre_validate_valid_site_coding_display(self):

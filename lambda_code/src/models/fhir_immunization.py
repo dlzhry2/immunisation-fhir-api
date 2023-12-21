@@ -254,6 +254,50 @@ class ImmunizationValidator:
         return values
 
     @classmethod
+    def pre_validate_vaccination_procedure_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if extension[*] ->
+        url[https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure]:
+        valueCodeableConcept -> coding -> code (vaccination_procedure_code) exists,
+        then it is a non-empty string
+        """
+        try:
+            vaccination_procedure_code = get_generic_extension_value(
+                values,
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+                "code",
+            )
+            ImmunizationPreValidators.vaccination_procedure_code(
+                vaccination_procedure_code
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_vaccination_procedure_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if extension[*] ->
+        url[https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure]:
+        valueCodeableConcept -> coding -> display (vaccination_procedure_term) exists,
+        then it is a non-empty string
+        """
+        try:
+            vaccination_procedure_display = get_generic_extension_value(
+                values,
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+                "display",
+            )
+            ImmunizationPreValidators.vaccination_procedure_display(
+                vaccination_procedure_display
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
     def pre_validate_vaccination_situation_code(cls, values: dict) -> dict:
         """
         Pre-validate that, if extension[*] ->
@@ -471,6 +515,20 @@ class ImmunizationValidator:
         return values
 
     @classmethod
+    def pre_validate_site_coding_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if site -> coding[0] -> code (site_of_vaccination_code) exists,
+        then it is a non-empty string
+        """
+        try:
+            site_coding_code = values["site"]["coding"][0]["code"]
+            ImmunizationPreValidators.site_coding_code(site_coding_code)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
     def pre_validate_site_coding_display(cls, values: dict) -> dict:
         """
         Pre-validate that, if site -> coding[0] -> display (site_of_vaccination_term) exists,
@@ -530,7 +588,7 @@ class ImmunizationValidator:
         then it is a number representing an integer or decimal with
         maximum four decimal places
 
-        NOTE: This validator will only work if the raw json data is parsed with the 
+        NOTE: This validator will only work if the raw json data is parsed with the
         parse_float argument set to equal Decimal type (Decimal must be imported from decimal).
         Floats (but not integers) will then be parsed as Decimals.
         e.g json.loads(raw_data, parse_float=Decimal)
@@ -660,6 +718,12 @@ class ImmunizationValidator:
             self.pre_validate_extension_value_codeable_concept_codings, pre=True
         )
         Immunization.add_root_validator(
+            self.pre_validate_vaccination_procedure_code, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_vaccination_procedure_display, pre=True
+        )
+        Immunization.add_root_validator(
             self.pre_validate_vaccination_situation_code, pre=True
         )
         Immunization.add_root_validator(
@@ -691,6 +755,7 @@ class ImmunizationValidator:
         Immunization.add_root_validator(self.pre_validate_lot_number, pre=True)
         Immunization.add_root_validator(self.pre_validate_expiration_date, pre=True)
         Immunization.add_root_validator(self.pre_validate_site_coding, pre=True)
+        Immunization.add_root_validator(self.pre_validate_site_coding_code, pre=True)
         Immunization.add_root_validator(self.pre_validate_site_coding_display, pre=True)
         Immunization.add_root_validator(self.pre_validate_route_coding, pre=True)
         Immunization.add_root_validator(self.pre_validate_route_coding_code, pre=True)

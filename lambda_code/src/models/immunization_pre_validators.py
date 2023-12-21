@@ -171,6 +171,42 @@ class ImmunizationPreValidators:
         return coding
 
     @staticmethod
+    def vaccination_procedure_code(vaccination_procedure_code: str) -> str:
+        """
+        Pre-validate extension[*] ->
+        url[https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure]:
+        valueCodeableConcept -> coding -> code
+        (vaccination_procedure_code)
+        """
+
+        generic_string_validation(
+            vaccination_procedure_code,
+            "extension[*] -> url["
+            + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure]: "
+            + "valueCodeableConcept -> coding[0] -> code",
+        )
+
+        return vaccination_procedure_code
+
+    @staticmethod
+    def vaccination_procedure_display(vaccination_procedure_display: str) -> str:
+        """
+        Pre-validate extension[*] ->
+        url[https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure]:
+        valueCodeableConcept -> coding -> display
+        (vaccination_procedure_term)
+        """
+
+        generic_string_validation(
+            vaccination_procedure_display,
+            "extension[*] -> url["
+            + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure]: "
+            + "valueCodeableConcept -> coding[0] -> display",
+        )
+
+        return vaccination_procedure_display
+
+    @staticmethod
     def vaccination_situation_code(vaccination_situation_code: str) -> str:
         """
         Pre-validate extension[*] ->
@@ -341,6 +377,14 @@ class ImmunizationPreValidators:
         )
 
         return site_coding
+    
+    @staticmethod
+    def site_coding_code(site_coding_code: str) -> str:
+        """Pre-validate site -> coding[0] -> code (site_of_vaccination_code)"""
+
+        generic_string_validation(site_coding_code, "site -> coding[0] -> code")
+
+        return site_coding_code
 
     @staticmethod
     def site_coding_display(site_coding_display: str) -> str:
