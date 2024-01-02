@@ -5,15 +5,16 @@ from datetime import datetime
 from typing import Literal, Union
 
 
-def generic_string_validation(
+def pre_validate_string(
     field_value: str,
     field_location: str,
     defined_length: int = None,
     max_length: int = None,
     predefined_values: tuple = None,
+    is_postal_code: bool = False,
 ):
     """
-    Apply generic validation to a string field to ensure it is a non-empty string which meets
+    Apply pre-validation to a string field to ensure it is a non-empty string which meets
     the length requirements and predefined values requirements
     """
     if not isinstance(field_value, str):
@@ -39,13 +40,35 @@ def generic_string_validation(
                 + str(", ".join(predefined_values))
             )
 
+    if is_postal_code:
+        # Validate that field_value contains a single space which divides the two parts
+        # of the postal code
+        if (
+            field_value.count(" ") != 1
+            or field_value.startswith(" ")
+            or field_value.endswith(" ")
+        ):
+            raise ValueError(
+                f"{field_location} must contain a single space, "
+                + "which divides the two parts of the postal code"
+            )
 
-def generic_list_validation(
-    field_value: list, field_location: str, defined_length: int = None
+        # Validate that max length is 8 (excluding the space)
+        if len(field_value.replace(" ", "")) > 8:
+            raise ValueError(
+                f"{field_location} must be 8 or fewer characters (excluding spaces)"
+            )
+
+
+def pre_validate_list(
+    field_value: list,
+    field_location: str,
+    defined_length: int = None,
+    elements_are_strings: bool = False,
 ):
     """
-    Apply generic validation to a list field to ensure it is a non-empty list which meets
-    the length requirements
+    Apply pre-validation to a list field to ensure it is a non-empty list which meets
+    the length requirements and requirements, if applicable, for each list element to be a string
     """
     if not isinstance(field_value, list):
         raise TypeError(f"{field_location} must be an array")
@@ -59,10 +82,19 @@ def generic_list_validation(
         if len(field_value) == 0:
             raise ValueError(f"{field_location} must be a non-empty array")
 
+    if elements_are_strings:
+        for element in field_value:
+            if not isinstance(element, str):
+                raise TypeError(f"{field_location} must be an array of strings")
+            if len(element) == 0:
+                raise ValueError(
+                    f"{field_location} must be an array of non-empty strings"
+                )
 
-def generic_date_validation(field_value: str, field_location: str):
+
+def pre_validate_date(field_value: str, field_location: str):
     """
-    Apply generic validation to a date field to ensure that it is a string (JSON dates must be
+    Apply pre-validation to a date field to ensure that it is a string (JSON dates must be
     written as strings) containing a valid date in the format "YYYY-MM-DD"
     """
     if not isinstance(field_value, str):
@@ -77,9 +109,9 @@ def generic_date_validation(field_value: str, field_location: str):
         ) from value_error
 
 
-def generic_date_time_validation(field_value: str, field_location: str):
+def pre_validate_date_time(field_value: str, field_location: str):
     """
-    Apply generic validation to a datetime field to ensure that it is a string (JSON dates must be
+    Apply pre-validation to a datetime field to ensure that it is a string (JSON dates must be
     written as strings) containing a valid datetime in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or
     "YYYY-MM-DDThh:mm:ss-zz:zz" (i.e. date and time, including timezone offset in hours and minutes)
     """
@@ -104,14 +136,14 @@ def generic_date_time_validation(field_value: str, field_location: str):
         raise ValueError(f"{field_location} must be a valid datetime") from value_error
 
 
-def generic_boolean_validation(field_value: str, field_location: str):
-    """Apply generic validation to a boolean field to ensure that it is a boolean"""
+def pre_validate_boolean(field_value: str, field_location: str):
+    """Apply pre-validation to a boolean field to ensure that it is a boolean"""
     if not isinstance(field_value, bool):
         raise TypeError(f"{field_location} must be a boolean")
 
 
-def generic_positive_integer_validation(field_value: int, field_location: str):
-    """Apply generic validation to an integer field to ensure that it is an integer"""
+def pre_validate_positive_integer(field_value: int, field_location: str):
+    """Apply pre-validation to an integer field to ensure that it is an integer"""
     if not isinstance(field_value, int):
         raise TypeError(f"{field_location} must be a positive integer")
     # Note that booleans are a sub-class of integers in python

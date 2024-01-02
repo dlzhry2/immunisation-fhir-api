@@ -3,12 +3,12 @@
 from decimal import Decimal
 from typing import Union
 from models.utils import (
-    generic_string_validation,
-    generic_date_time_validation,
-    generic_list_validation,
-    generic_date_validation,
-    generic_boolean_validation,
-    generic_positive_integer_validation,
+    pre_validate_string,
+    pre_validate_date_time,
+    pre_validate_list,
+    pre_validate_date,
+    pre_validate_boolean,
+    pre_validate_positive_integer,
 )
 
 from models.constants import Constants
@@ -21,7 +21,7 @@ class ImmunizationPreValidators:
     def patient_identifier_value(patient_identifier_value: str) -> str:
         """Pre-validate patient -> identifier value (NHS_number)"""
 
-        generic_string_validation(
+        pre_validate_string(
             patient_identifier_value,
             "patient -> identifier -> value",
             defined_length=10,
@@ -36,7 +36,7 @@ class ImmunizationPreValidators:
     def occurrence_date_time(occurrence_date_time: str) -> str:
         """Pre-validate occurrenceDateTime (date_and_time)"""
 
-        generic_date_time_validation(occurrence_date_time, "occurrenceDateTime")
+        pre_validate_date_time(occurrence_date_time, "occurrenceDateTime")
 
         return occurrence_date_time
 
@@ -44,7 +44,7 @@ class ImmunizationPreValidators:
     def contained(contained: list) -> list:
         """Pre-validate contained"""
 
-        generic_list_validation(contained, "contained", defined_length=1)
+        pre_validate_list(contained, "contained", defined_length=1)
 
         return contained
 
@@ -55,7 +55,7 @@ class ImmunizationPreValidators:
         item[*] -> linkId[*]: answer
         """
 
-        generic_list_validation(
+        pre_validate_list(
             questionnaire_answer,
             "contained[0] -> resourceType[QuestionnaireResponse]: item[*] -> linkId[*]: answer",
             defined_length=1,
@@ -72,7 +72,7 @@ class ImmunizationPreValidators:
         (site_code)
         """
 
-        generic_string_validation(
+        pre_validate_string(
             questionnaire_site_code_code,
             "contained[0] -> resourceType[QuestionnaireResponse]: "
             + "item[*] -> linkId[SiteCode]: answer[0] -> valueCoding -> code",
@@ -89,7 +89,7 @@ class ImmunizationPreValidators:
         (site_name)
         """
 
-        generic_string_validation(
+        pre_validate_string(
             questionnaire_site_name_code,
             "contained[0] -> resourceType[QuestionnaireResponse]: "
             + "item[*] -> linkId[SiteName]: answer[0] -> valueCoding -> code",
@@ -101,7 +101,7 @@ class ImmunizationPreValidators:
     def identifier(identifier: list[dict]) -> list[dict]:
         """Pre-validate identifier"""
 
-        generic_list_validation(identifier, "identifier", defined_length=1)
+        pre_validate_list(identifier, "identifier", defined_length=1)
 
         return identifier
 
@@ -109,7 +109,7 @@ class ImmunizationPreValidators:
     def identifier_value(identifier_value: str) -> str:
         """Pre-validate identifier[0] -> value (unique_id)"""
 
-        generic_string_validation(identifier_value, "identifier[0] -> value")
+        pre_validate_string(identifier_value, "identifier[0] -> value")
 
         return identifier_value
 
@@ -117,7 +117,7 @@ class ImmunizationPreValidators:
     def identifier_system(identifier_system: str) -> str:
         """Pre-validate identifier[0] -> system (unique_id_uri)"""
 
-        generic_string_validation(identifier_system, "identifier[0] -> system")
+        pre_validate_string(identifier_system, "identifier[0] -> system")
 
         return identifier_system
 
@@ -125,9 +125,7 @@ class ImmunizationPreValidators:
     def status(status: str) -> str:
         """Pre-validate status (action_flag)"""
 
-        generic_string_validation(
-            status, "status", predefined_values=Constants.STATUSES
-        )
+        pre_validate_string(status, "status", predefined_values=Constants.STATUSES)
 
         return status
 
@@ -135,7 +133,7 @@ class ImmunizationPreValidators:
     def recorded(recorded: str) -> str:
         """Pre-validate recorded (recorded_date)"""
 
-        generic_date_validation(recorded, "recorded")
+        pre_validate_date(recorded, "recorded")
 
         return recorded
 
@@ -143,7 +141,7 @@ class ImmunizationPreValidators:
     def primary_source(primary_source: bool) -> bool:
         """Pre-validate primarySource (primary_source)"""
 
-        generic_boolean_validation(primary_source, "primarySource")
+        pre_validate_boolean(primary_source, "primarySource")
 
         return primary_source
 
@@ -151,9 +149,7 @@ class ImmunizationPreValidators:
     def report_origin_text(report_origin_text: str) -> str:
         """Pre-validate reportOrigin -> text (report_origin)"""
 
-        generic_string_validation(
-            report_origin_text, "reportOrigin -> text", max_length=100
-        )
+        pre_validate_string(report_origin_text, "reportOrigin -> text", max_length=100)
 
         return report_origin_text
 
@@ -162,7 +158,7 @@ class ImmunizationPreValidators:
         """
         Pre-validate extension[*] -> valueCodeableConcept -> coding
         """
-        generic_list_validation(
+        pre_validate_list(
             coding,
             "extension[*] -> valueCodeableConcept -> coding",
             defined_length=1,
@@ -179,7 +175,7 @@ class ImmunizationPreValidators:
         (vaccination_procedure_code)
         """
 
-        generic_string_validation(
+        pre_validate_string(
             vaccination_procedure_code,
             "extension[*] -> url["
             + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure]: "
@@ -197,7 +193,7 @@ class ImmunizationPreValidators:
         (vaccination_procedure_term)
         """
 
-        generic_string_validation(
+        pre_validate_string(
             vaccination_procedure_display,
             "extension[*] -> url["
             + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure]: "
@@ -215,7 +211,7 @@ class ImmunizationPreValidators:
         (vaccination_situation_code)
         """
 
-        generic_string_validation(
+        pre_validate_string(
             vaccination_situation_code,
             "extension[*] -> url["
             + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation]: "
@@ -233,7 +229,7 @@ class ImmunizationPreValidators:
         (vaccination_situation_term)
         """
 
-        generic_string_validation(
+        pre_validate_string(
             vaccination_situation_display,
             "extension[*] -> url["
             + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation]: "
@@ -247,7 +243,7 @@ class ImmunizationPreValidators:
         """
         Pre-validate statusReason -> coding (reason_not_given_code)
         """
-        generic_list_validation(
+        pre_validate_list(
             coding,
             "statusReason -> coding",
             defined_length=1,
@@ -259,7 +255,7 @@ class ImmunizationPreValidators:
     def status_reason_coding_code(status_reason_coding_code: str) -> str:
         """Pre-validate statusReason -> coding[0] -> code (reason_not_given_code)"""
 
-        generic_string_validation(
+        pre_validate_string(
             status_reason_coding_code, "statusReason -> coding[0] -> code"
         )
 
@@ -269,7 +265,7 @@ class ImmunizationPreValidators:
     def status_reason_coding_display(status_reason_coding_display: str) -> str:
         """Pre-validate statusReason -> coding[0] -> display (reason_not_given_term)"""
 
-        generic_string_validation(
+        pre_validate_string(
             status_reason_coding_display, "statusReason -> coding[0] -> display"
         )
 
@@ -280,7 +276,7 @@ class ImmunizationPreValidators:
         """
         Pre-validate protocolApplied
         """
-        generic_list_validation(
+        pre_validate_list(
             protocol_applied,
             "protocolApplied",
             defined_length=1,
@@ -295,7 +291,7 @@ class ImmunizationPreValidators:
         """Pre-validate protocolApplied[0] -> doseNumberPositiveInt (dose_sequence)"""
 
         # Raise error if is not a positive integer
-        generic_positive_integer_validation(
+        pre_validate_positive_integer(
             protocol_applied_dose_number_positive_int,
             "protocolApplied[0] -> doseNumberPositiveInt",
         )
@@ -313,7 +309,7 @@ class ImmunizationPreValidators:
         """
         Pre-validate vaccineCode -> coding
         """
-        generic_list_validation(
+        pre_validate_list(
             vaccine_code_coding,
             "vaccineCode -> coding",
             defined_length=1,
@@ -325,7 +321,7 @@ class ImmunizationPreValidators:
     def vaccine_code_coding_code(vaccine_code_coding_code: str) -> str:
         """Pre-validate vaccineCode -> coding[0] -> code (vaccine_product_code)"""
 
-        generic_string_validation(
+        pre_validate_string(
             vaccine_code_coding_code, "vaccineCode -> coding[0] -> code"
         )
 
@@ -335,7 +331,7 @@ class ImmunizationPreValidators:
     def vaccine_code_coding_display(vaccine_code_coding_display: str) -> str:
         """Pre-validate vaccineCode -> coding[0] -> display (vaccine_product_term)"""
 
-        generic_string_validation(
+        pre_validate_string(
             vaccine_code_coding_display, "vaccineCode -> coding[0] -> display"
         )
 
@@ -345,7 +341,7 @@ class ImmunizationPreValidators:
     def manufacturer_display(manufacturer_display: str) -> str:
         """Pre-validate manufacturer -> display (vaccine_manufacturer)"""
 
-        generic_string_validation(manufacturer_display, "manufacturer -> display")
+        pre_validate_string(manufacturer_display, "manufacturer -> display")
 
         return manufacturer_display
 
@@ -353,7 +349,7 @@ class ImmunizationPreValidators:
     def lot_number(lot_number: str) -> str:
         """Pre-validate lot_number (batch_number)"""
 
-        generic_string_validation(lot_number, "lotNumber", max_length=100)
+        pre_validate_string(lot_number, "lotNumber", max_length=100)
 
         return lot_number
 
@@ -361,7 +357,7 @@ class ImmunizationPreValidators:
     def expiration_date(expiration_date: str) -> str:
         """Pre-validate expirationDate (expiry_date)"""
 
-        generic_date_validation(expiration_date, "expirationDate")
+        pre_validate_date(expiration_date, "expirationDate")
 
         return expiration_date
 
@@ -370,19 +366,19 @@ class ImmunizationPreValidators:
         """
         Pre-validate site -> coding
         """
-        generic_list_validation(
+        pre_validate_list(
             site_coding,
             "site -> coding",
             defined_length=1,
         )
 
         return site_coding
-    
+
     @staticmethod
     def site_coding_code(site_coding_code: str) -> str:
         """Pre-validate site -> coding[0] -> code (site_of_vaccination_code)"""
 
-        generic_string_validation(site_coding_code, "site -> coding[0] -> code")
+        pre_validate_string(site_coding_code, "site -> coding[0] -> code")
 
         return site_coding_code
 
@@ -390,7 +386,7 @@ class ImmunizationPreValidators:
     def site_coding_display(site_coding_display: str) -> str:
         """Pre-validate site -> coding[0] -> display (site_of_vaccination_term)"""
 
-        generic_string_validation(site_coding_display, "site -> coding[0] -> display")
+        pre_validate_string(site_coding_display, "site -> coding[0] -> display")
 
         return site_coding_display
 
@@ -399,7 +395,7 @@ class ImmunizationPreValidators:
         """
         Pre-validate route -> coding
         """
-        generic_list_validation(
+        pre_validate_list(
             route_coding,
             "route -> coding",
             defined_length=1,
@@ -411,7 +407,7 @@ class ImmunizationPreValidators:
     def route_coding_code(route_coding_code: str) -> str:
         """Pre-validate route -> coding[0] -> code (route_of_vaccination_code)"""
 
-        generic_string_validation(route_coding_code, "route -> coding[0] -> code")
+        pre_validate_string(route_coding_code, "route -> coding[0] -> code")
 
         return route_coding_code
 
@@ -419,7 +415,7 @@ class ImmunizationPreValidators:
     def route_coding_display(route_coding_display: str) -> str:
         """Pre-validate route -> coding[0] -> display (route_of_vaccination_term)"""
 
-        generic_string_validation(route_coding_display, "route -> coding[0] -> display")
+        pre_validate_string(route_coding_display, "route -> coding[0] -> display")
 
         return route_coding_display
 
@@ -449,7 +445,7 @@ class ImmunizationPreValidators:
     def dose_quantity_code(dose_quantity_code: str) -> str:
         """Pre-validate doseQuantity -> code (dose_unit_code)"""
 
-        generic_string_validation(dose_quantity_code, "doseQuantity -> code")
+        pre_validate_string(dose_quantity_code, "doseQuantity -> code")
 
         return dose_quantity_code
 
@@ -457,7 +453,7 @@ class ImmunizationPreValidators:
     def dose_quantity_unit(dose_quantity_unit: str) -> str:
         """Pre-validate doseQuantity -> unit (dose_unit_term)"""
 
-        generic_string_validation(dose_quantity_unit, "doseQuantity -> unit")
+        pre_validate_string(dose_quantity_unit, "doseQuantity -> unit")
 
         return dose_quantity_unit
 
@@ -467,7 +463,7 @@ class ImmunizationPreValidators:
         Pre-validate reasonCode[*] -> coding
         """
 
-        generic_list_validation(
+        pre_validate_list(
             reason_code_coding,
             "reasonCode[*] -> coding",
             defined_length=1,
@@ -479,7 +475,7 @@ class ImmunizationPreValidators:
     def reason_code_coding_code(reason_code_coding_code: str) -> str:
         """Pre-validate reasonCode[*] -> coding[0] -> code (indication_code)"""
 
-        generic_string_validation(
+        pre_validate_string(
             reason_code_coding_code, "reasonCode[*] -> coding[0] -> code"
         )
 
@@ -489,7 +485,7 @@ class ImmunizationPreValidators:
     def reason_code_coding_display(reason_code_coding_display: str) -> str:
         """Pre-validate reasonCode[*] -> coding[0] -> display (indication_term"""
 
-        generic_string_validation(
+        pre_validate_string(
             reason_code_coding_display, "reasonCode[*] -> coding[0] -> display"
         )
 
