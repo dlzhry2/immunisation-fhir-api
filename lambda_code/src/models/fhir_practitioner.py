@@ -1,6 +1,10 @@
 """Practitioner FHIR R4B validator"""
 from fhir.resources.R4B.practitioner import Practitioner
-from models.practitioner_pre_validators import PractitionerPreValidators
+
+from models.utils import (
+    pre_validate_list,
+    pre_validate_string,
+)
 
 
 class PractitionerValidator:
@@ -17,7 +21,7 @@ class PractitionerValidator:
         """Pre-validate that, if name exists, then it is an array of length 1"""
         try:
             name = values["name"]
-            PractitionerPreValidators.name(name)
+            pre_validate_list(name, "name", defined_length=1)
         except KeyError:
             pass
 
@@ -31,7 +35,12 @@ class PractitionerValidator:
         """
         try:
             name_given = values["name"][0]["given"]
-            PractitionerPreValidators.name_given(name_given)
+            pre_validate_list(
+                name_given,
+                "name[0] -> given",
+                defined_length=1,
+                elements_are_strings=True,
+            )
         except KeyError:
             pass
 
@@ -46,7 +55,7 @@ class PractitionerValidator:
 
         try:
             name_family = values["name"][0]["family"]
-            PractitionerPreValidators.name_family(name_family)
+            pre_validate_string(name_family, "name[0] -> family")
         except KeyError:
             pass
 
@@ -59,7 +68,7 @@ class PractitionerValidator:
         """
         try:
             identifier = values["identifier"]
-            PractitionerPreValidators.identifier(identifier)
+            pre_validate_list(identifier, "identifier", defined_length=1)
         except KeyError:
             pass
 
@@ -73,7 +82,7 @@ class PractitionerValidator:
         """
         try:
             identifier_value = values["identifier"][0]["value"]
-            PractitionerPreValidators.identifier_value(identifier_value)
+            pre_validate_string(identifier_value, "identifier[0] -> value")
         except KeyError:
             pass
 
@@ -87,7 +96,7 @@ class PractitionerValidator:
         """
         try:
             identifier_system = values["identifier"][0]["system"]
-            PractitionerPreValidators.identifier_system(identifier_system)
+            pre_validate_string(identifier_system, "identifier[0] -> system")
         except KeyError:
             pass
 
@@ -100,7 +109,11 @@ class PractitionerValidator:
         """
         try:
             identifier_type_coding = values["identifier"][0]["type"]["coding"]
-            PractitionerPreValidators.identifier_type_coding(identifier_type_coding)
+            pre_validate_list(
+                identifier_type_coding,
+                "identifier[0] -> type -> coding",
+                defined_length=1,
+            )
         except KeyError:
             pass
 
@@ -116,8 +129,9 @@ class PractitionerValidator:
             identifier_type_coding_display = values["identifier"][0]["type"]["coding"][
                 0
             ]["display"]
-            PractitionerPreValidators.identifier_type_coding_display(
-                identifier_type_coding_display
+            pre_validate_string(
+                identifier_type_coding_display,
+                "identifier[0] -> type -> coding[0] -> display",
             )
         except KeyError:
             pass
