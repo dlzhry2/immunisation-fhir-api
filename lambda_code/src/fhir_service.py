@@ -15,13 +15,21 @@ class FhirService:
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunisation_repo.get_immunization_by_id(imms_id)
+        print(imms, "<<<<<<<<<<<< IMMS EVENT OBJECT")
         if imms:
             # TODO: This shouldn't raise an exception since, we validate the message before storing it,
             #  but what if the stored message is different from the requested FHIR version?
             nhs_number = imms['patient']['identifier']['value']
             patient = self.pds_service.get_patient_details(nhs_number)
-            print(patient)
-            return Immunization.parse_obj(imms)
+            patient_is_restricted = patient['meta']['security'][0]['display']
+            print(patient, "<<<<<<<<<<< PATIENT FROM PDS CALLOUT")
+            if patient_is_restricted == "restricted":
+                # TODO: Logic handling ommitted response
+                print("PATIENT IS RESTRICTED")
+                return Immunization.parse_obj(imms)
+            else:
+                print("PATIENT IS UNRESTRICTED")
+                return Immunization.parse_obj(imms)
         else:
             return None
 
