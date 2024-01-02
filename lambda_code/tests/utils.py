@@ -122,21 +122,21 @@ class InvalidDataTypes:
 class InvalidValues:
     """Store lists of invalid values for tests"""
 
-    # Strings which are not in acceptable date format
     for_date_string_formats = [
+        # Strings which are not in acceptable date format
         "",  # Empty
         "invalid",  # With letters
         "20000101",  # Without dashes
+        "200001-01",  # Missing first dash
+        "2000-0101",  # Missing second dash
+        "2000:01:01",  # Semi-colons instead of dashes
         "2000-01-011",  # Extra digit at end
         "12000-01-01",  # Extra digit at start
         "12000-01-021",  # Extra digit at start and end
         "99-01-01",  # Year represented without century (i.e. 2 digits instead of 4)
         "01-01-1999",  # DD-MM-YYYY format
         "01-01-99",  # DD-MM-YY format
-    ]
-
-    # Strings which are in acceptable date format, but are invalid dates
-    for_dates = [
+        # Strings which are in acceptable date format, but are invalid dates
         "2000-00-01",  # Month 0
         "2000-13-01",  # Month 13
         "2000-01-00",  # Day 0
@@ -201,7 +201,7 @@ class GenericValidatorMethodTests:
         validator: Callable,
         field_location: str,
         defined_length: int = None,
-        max_length: int = 0,
+        max_length: int = None,
         invalid_length_strings_to_test: list = None,
         predefined_values: tuple = None,
         invalid_strings_to_test: list = None,
@@ -378,16 +378,7 @@ class GenericValidatorMethodTests:
 
             test_instance.assertEqual(
                 str(error.exception),
-                f'{field_location} must be a string in the format "YYYY-MM-DD"',
-            )
-
-        for invalid_date in InvalidValues.for_dates:
-            with test_instance.assertRaises(ValueError) as error:
-                validator(invalid_date)
-
-            test_instance.assertEqual(
-                str(error.exception),
-                f"{field_location} must be a valid date",
+                f'{field_location} must be a valid date string in the format "YYYY-MM-DD"',
             )
 
     @staticmethod
@@ -742,17 +733,8 @@ class GenericValidatorModelTests:
                 test_instance.validator.validate(invalid_json_data)
 
             test_instance.assertTrue(
-                f'{field_location} must be a string in the format "YYYY-MM-DD" (type=value_error)'
-                in str(error.exception)
-            )
-
-        for invalid_date in InvalidValues.for_dates:
-            set_in_dict(invalid_json_data, keys_to_access_value, invalid_date)
-            with test_instance.assertRaises(ValidationError) as error:
-                test_instance.validator.validate(invalid_json_data)
-
-            test_instance.assertTrue(
-                f"{field_location} must be a valid date (type=value_error)"
+                f'{field_location} must be a valid date string in the format "YYYY-MM-DD" '
+                + "(type=value_error)"
                 in str(error.exception)
             )
 
