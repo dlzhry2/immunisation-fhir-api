@@ -22,6 +22,7 @@ class FhirService:
 
       if patient_is_restricted == "restricted":
           filtered_immunization = remove_personal_info(imms['entry'][0]) if bundle else remove_personal_info(imms)
+          print(filtered_immunization, "<<<<<<<<<< FILTERED IMMUNZATION")
           print(Immunization.parse_obj(filtered_immunization), "<<<<<<<<< RESTRICTED PARSED AND FILTERED IMMS")
           return Immunization.parse_obj(filtered_immunization)
       else:
