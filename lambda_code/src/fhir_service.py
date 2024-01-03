@@ -1,11 +1,10 @@
-import json
 from typing import Optional
 from fhir.resources.immunization import Immunization
 from fhir.resources.list import List as FhirList
-
 from fhir_repository import ImmunisationRepository
 from models.errors import InvalidPatientId
 from pds_service import PdsService
+from s_flag_handler import remove_personal_info
 
 
 class FhirService:
@@ -26,7 +25,8 @@ class FhirService:
             if patient_is_restricted == "restricted":
                 # TODO: Logic handling ommitted response
                 print("PATIENT IS RESTRICTED")
-                return Immunization.parse_obj(imms)
+                filtered_immunization = remove_personal_info(imms)
+                return Immunization.parse_obj(filtered_immunization)
             else:
                 print("PATIENT IS UNRESTRICTED")
                 return Immunization.parse_obj(imms)
