@@ -17,6 +17,20 @@ def remove_personal_info(data):
         return result if result else None
     else:
         return data
+    
+def filter_immunization(data):
+    filtered_data = {
+        "resourceType": data["resourceType"],
+        "type": data.get("type"),
+        "total": data.get("total"),
+        "entry": [entry for entry in data.get("entry", []) if entry.get("resourceType") == "Immunization"]
+    }
+
+    # If there's only one 'Immunization' entry, directly assign it as 'entry'
+    if len(filtered_data["entry"]) == 1:
+        filtered_data["entry"] = filtered_data["entry"][0]
+
+    return filtered_data
 
 # fhir_imms = {
 #   "resourceType": "Immunization",
