@@ -4,8 +4,9 @@ import operator
 import unittest
 from copy import deepcopy
 from functools import reduce
-from typing import Callable, Literal
+from typing import Literal
 from pydantic import ValidationError
+from jsonpath_ng.ext import parse
 
 
 def generate_field_location_for_questionnnaire_response(
@@ -180,6 +181,7 @@ class InvalidValues:
         "2000-01-01T00:00:00-24:00",  # Timezone hour -24
         "2000-01-01T00:00:00+00:60",  # Timezone minute 60
     ]
+
 
 class GenericValidatorModelTests:
     """
@@ -584,6 +586,460 @@ class GenericValidatorModelTests:
         # Test non-positive integers
         for non_positive_integer in [-10, -1, 0]:
             set_in_dict(invalid_json_data, keys_to_access_value, non_positive_integer)
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a positive integer (type=value_error)"
+                in str(error.exception)
+            )
+
+
+class JsonPathGenericValidatorModelTests:
+    """
+    Generic tests for model validators
+
+    NOTE:
+    TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
+    this happens, the error message is suffixed with the type of error e.g. type_error or
+    value_error. This is why the tests check for the type of error in the error message.
+    """
+
+    @staticmethod
+    def valid(
+        test_instance: unittest.TestCase,
+        field_location,
+        valid_items_to_test: list,
+    ):
+        """Test that a validator method accepts valid data when in a model"""
+        valid_json_data = deepcopy(test_instance.json_data)
+
+        for valid_item in valid_items_to_test:
+            # set_in_dict(valid_json_data, keys_to_access_value, valid_item)
+            valid_json_data = parse(field_location).update(valid_json_data, valid_item)
+
+            test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+
+    @staticmethod
+    def string_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        defined_length: int = None,
+        max_length: int = None,
+        invalid_length_strings_to_test: list = None,
+        predefined_values: tuple = None,
+        invalid_strings_to_test: list = None,
+        is_mandatory_fhir: bool = False,
+    ):
+        """
+        Test that a validator rejects the following invalid strings when in a model:
+        * All invalid data types
+        * If there is a defined_string_length: Strings of invalid length (defined by the argument
+            invalid_length_strings_to_test), plus the empty string
+        * If there is no defined_string_length: Empty strings
+        * If there is a max_length: Strings longer than max length (defined by the argument
+            invalid_length_strings_to_test)
+        * If there are predefined values: Invalid strings (i.e. not one of the predefined values) as
+            defined by the argument invalid_strings_to_test
+        * If is_mandatory_fhir is true: Value of None
+
+        NOTE: No validation of optional arguments will occur if the method is not given a list of
+        values to test. This means that:
+        * When optional arguments defined_length and max_length are given, the optional argument
+            invalid_length_strings_to_test MUST also be given
+        * When optional argument predefined_lines is given, the optional argument
+            invalid_strings_to_test MUST also be given.
+        """
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # If is mandatory FHIR, then for none type the model raises an
+        # exception prior to running NHS pre-validators
+        if is_mandatory_fhir:
+            invalid_json_data = parse(field_location).update(invalid_json_data, None)
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                "none is not an allowed value (type=type_error.none.not_allowed)"
+                in str(error.exception)
+            )
+
+        # Set list of invalid data types to test
+        invalid_data_types_for_strings = InvalidDataTypes.for_strings
+        if is_mandatory_fhir:
+            invalid_data_types_for_strings = filter(
+                None, invalid_data_types_for_strings
+            )
+
+        # Test invalid data types
+        for invalid_data_type_for_string in invalid_data_types_for_strings:
+            # set_in_dict(
+            #     invalid_json_data, keys_to_access_value, invalid_data_type_for_string
+            # )
+            invalid_json_data = parse(field_location).update(
+                invalid_json_data, invalid_data_type_for_string
+            )
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a string (type=type_error)"
+                in str(error.exception)
+            )
+
+        # If there is a predefined string length, then test invalid string lengths,
+        # otherwise check the empty string only
+        if defined_length:
+            for invalid_length_string in invalid_length_strings_to_test:
+                # set_in_dict(
+                #     invalid_json_data, keys_to_access_value, invalid_length_string
+                # )
+                invalid_json_data = parse(field_location).update(
+                    invalid_json_data, invalid_length_string
+                )
+                with test_instance.assertRaises(ValidationError) as error:
+                    test_instance.validator.validate(invalid_json_data)
+
+                test_instance.assertTrue(
+                    f"{field_location} must be 10 characters (type=value_error)"
+                    in str(error.exception)
+                )
+        else:
+            # set_in_dict(invalid_json_data, keys_to_access_value, "")
+            invalid_json_data = parse(field_location).update(invalid_json_data, "")
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a non-empty string (type=value_error)"
+                in str(error.exception)
+            )
+
+        # If there is a max_length, test strings which exceed that length
+        if max_length:
+            for invalid_length_string in invalid_length_strings_to_test:
+                # set_in_dict(
+                #     invalid_json_data, keys_to_access_value, invalid_length_string
+                # )
+                invalid_json_data = parse(field_location).update(
+                    invalid_json_data, invalid_length_string
+                )
+                with test_instance.assertRaises(ValidationError) as error:
+                    test_instance.validator.validate(invalid_json_data)
+
+                test_instance.assertTrue(
+                    f"{field_location} must be {max_length} or fewer characters (type=value_error)"
+                    in str(error.exception)
+                )
+
+        # If there are predefined values, then test strings which are
+        # not in the set of predefined values
+        if predefined_values:
+            for invalid_string in invalid_strings_to_test:
+                # set_in_dict(invalid_json_data, keys_to_access_value, invalid_string)
+                invalid_json_data = parse(field_location).update(
+                    invalid_json_data, invalid_string
+                )
+                with test_instance.assertRaises(ValidationError) as error:
+                    test_instance.validator.validate(invalid_json_data)
+                test_instance.assertTrue(
+                    f"{field_location} must be one of the following: "
+                    + str(", ".join(predefined_values))
+                    + " (type=value_error)"
+                    in str(error.exception)
+                )
+
+    @staticmethod
+    def list_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        predefined_list_length: int = None,
+        invalid_length_lists_to_test: list = None,
+        invalid_lists_with_non_string_data_types_to_test: list = None,
+    ):
+        """
+        Test that a validator rejects the following invalid lists when in a model:
+        * All invalid data types
+        * If there is a predefined list length: Strings of invalid length (defined by the argument
+            invalid_length_lists_to_test), plus the empty list
+        * If there is no predfined list length: Empty list
+        * If there is a list of invalid_lists_with_non_string_data_types_to_test: Each of the
+            items in the list, plus a list containing an empty string
+
+        NOTE: No validation of optional arguments will occur if the method is not given a list of
+        values to test. This means that:
+        * When optional arguments predefined_list_length is given, the optional argument
+            invalid_length_lists_to_test MUST also be given
+        """
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_list in InvalidDataTypes.for_lists:
+            # set_in_dict(
+            #     invalid_json_data, keys_to_access_value, invalid_data_type_for_list
+            # )
+            invalid_json_data = parse(field_location).update(
+                invalid_json_data, invalid_data_type_for_list
+            )
+
+            # Check that we get the correct error message and that it contains type=value_error
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be an array (type=type_error)"
+                in str(error.exception)
+            )
+
+        # If there is a predefined list length, then test invalid list lengths, plus the empty
+        # list, otherwise check the empty list only
+        if predefined_list_length:
+            invalid_length_lists_to_test.append([])
+            for invalid_length_list in invalid_length_lists_to_test:
+                # set_in_dict(
+                #     invalid_json_data, keys_to_access_value, invalid_length_list
+                # )
+                invalid_json_data = parse(field_location).update(
+                    invalid_json_data, invalid_length_list
+                )
+                with test_instance.assertRaises(ValueError) as error:
+                    test_instance.validator.validate(invalid_json_data)
+
+                test_instance.assertTrue(
+                    f"{field_location} must be an array of length 1 (type=value_error)"
+                    in str(error.exception)
+                )
+        else:
+            # set_in_dict(invalid_json_data, keys_to_access_value, [])
+            invalid_json_data = parse(field_location).update(invalid_json_data, [])
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a non-empty array (type=value_error)"
+                in str(error.exception)
+            )
+
+        # Tests invalid_lists_with_non_string_data_types_to_test (if provided)
+        if invalid_lists_with_non_string_data_types_to_test:
+            # Test each invalid list
+            for invalid_list in invalid_lists_with_non_string_data_types_to_test:
+                # set_in_dict(invalid_json_data, keys_to_access_value, invalid_list)
+                invalid_json_data = parse(field_location).update(
+                    invalid_json_data, invalid_list
+                )
+                with test_instance.assertRaises(ValidationError) as error:
+                    test_instance.validator.validate(invalid_json_data)
+
+                test_instance.assertTrue(
+                    f"{field_location} must be an array of strings (type=type_error)"
+                    in str(error.exception)
+                )
+
+                # Test empty string in list
+                # set_in_dict(invalid_json_data, keys_to_access_value, [""])
+                invalid_json_data = parse(field_location).update(
+                    invalid_json_data, [""]
+                )
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be an array of non-empty strings (type=value_error)"
+                in str(error.exception)
+            )
+
+    @staticmethod
+    def date_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+    ):
+        """
+        Test that a validator method rejects the following when in a model:
+        * All invalid data types
+        * Invalid date formats
+        * Invalid dates
+        """
+
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_string in InvalidDataTypes.for_strings:
+            # set_in_dict(
+            #     invalid_json_data, keys_to_access_value, invalid_data_type_for_string
+            # )
+            invalid_json_data = parse(field_location).update(
+                invalid_json_data, invalid_data_type_for_string
+            )
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a string (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test invalid date string formats
+        for invalid_date_format in InvalidValues.for_date_string_formats:
+            # set_in_dict(invalid_json_data, keys_to_access_value, invalid_date_format)
+            invalid_json_data = parse(field_location).update(
+                invalid_json_data, invalid_date_format
+            )
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f'{field_location} must be a valid date string in the format "YYYY-MM-DD" '
+                + "(type=value_error)"
+                in str(error.exception)
+            )
+
+    @staticmethod
+    def date_time_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        is_occurrence_date_time: bool = False,
+    ):
+        """
+        Test that a validator method rejects the following when in a model:
+        * All invalid data types
+        * Invalid date time string formats
+        * Invalid date-times
+        """
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # If is occurrenceDateTime, then for none type the model raises an exception prior to
+        # running NHS pre-validators, because occurrenceDateTime is a mandatory FHIR field
+        if is_occurrence_date_time:
+            # set_in_dict(invalid_json_data, keys_to_access_value, None)
+            invalid_json_data = parse(field_location).update(invalid_json_data, None)
+
+            # Check that we get the correct error message and that it contains type=type_error
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                "Expect any of field value from this list "
+                + "['occurrenceDateTime', 'occurrenceString']. (type=value_error)"
+                in str(error.exception)
+            )
+
+        # Set list of invalid data types to test
+        invalid_data_types_for_strings = InvalidDataTypes.for_strings
+        if is_occurrence_date_time:
+            invalid_data_types_for_strings = filter(
+                None, invalid_data_types_for_strings
+            )
+
+        # Test invalid data types
+        for invalid_data_type_for_string in invalid_data_types_for_strings:
+            # set_in_dict(
+            #     invalid_json_data, keys_to_access_value, invalid_data_type_for_string
+            # )
+            invalid_json_data = parse(field_location).update(
+                invalid_json_data, invalid_data_type_for_string
+            )
+            # Check that we get the correct error message and that it contains type=type_error
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a string (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test invalid date time string formats
+        for invalid_occurrence_date_time in InvalidValues.for_date_time_string_formats:
+            # set_in_dict(
+            #     invalid_json_data, keys_to_access_value, invalid_occurrence_date_time
+            # )
+            invalid_json_data = parse(field_location).update(
+                invalid_json_data, invalid_occurrence_date_time
+            )
+            # Check that we get the correct error message and that it contains type=value_error
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or'
+                + '"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, including timezone offset in '
+                + "hours and minutes)"
+                in str(error.exception)
+            )
+
+        # Test invalid date times
+        for invalid_occurrence_date_time in InvalidValues.for_date_times:
+            # set_in_dict(
+            #     invalid_json_data, keys_to_access_value, invalid_occurrence_date_time
+            # )
+            invalid_json_data = parse(field_location).update(
+                invalid_json_data, invalid_occurrence_date_time
+            )
+            # Check that we get the correct error message and that it contains type=value_error
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a valid datetime (type=value_error)"
+                in str(error.exception)
+            )
+
+    @staticmethod
+    def boolean_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+    ):
+        """Test that a validator rejects any non-boolean value when in a model"""
+
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_boolean in InvalidDataTypes.for_booleans:
+            # set_in_dict(
+            #     invalid_json_data, keys_to_access_value, invalid_data_type_for_boolean
+            # )
+            invalid_json_data = parse(field_location).update(
+                invalid_json_data, invalid_data_type_for_boolean
+            )
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a boolean (type=type_error)"
+                in str(error.exception)
+            )
+
+    @staticmethod
+    def positive_integer_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+    ):
+        """Test that a validator rejects any non-integer value when in a model"""
+
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_integer in InvalidDataTypes.for_integers:
+            # set_in_dict(
+            #     invalid_json_data, keys_to_access_value, invalid_data_type_for_integer
+            # )
+            invalid_json_data = parse(field_location).update(
+                invalid_json_data, invalid_data_type_for_integer
+            )
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a positive integer (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test non-positive integers
+        for non_positive_integer in [-10, -1, 0]:
+            # set_in_dict(invalid_json_data, keys_to_access_value, non_positive_integer)
+            invalid_json_data = parse(field_location).update(
+                invalid_json_data, non_positive_integer
+            )
             with test_instance.assertRaises(ValidationError) as error:
                 test_instance.validator.validate(invalid_json_data)
 

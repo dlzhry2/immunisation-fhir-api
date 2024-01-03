@@ -5,11 +5,12 @@ import json
 from copy import deepcopy
 from decimal import Decimal
 from pydantic import ValidationError
-
+from jsonpath_ng.ext import parse
 
 from models.fhir_immunization import ImmunizationValidator
 from .utils import (
     GenericValidatorModelTests,
+    JsonPathGenericValidatorModelTests,
     generate_field_location_for_questionnnaire_response,
     generate_field_location_for_extension,
     set_in_dict,
@@ -50,12 +51,25 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         # Ensure that good data is not inadvertently amended by the tests
         self.assertEqual(self.untouched_json_data, self.json_data)
 
+    def test_json_path(self):
+        "This test is only for debugging issues with json path and can be deleted if not needed"
+        json_data = deepcopy(self.json_data)
+        i = 1
+        jsonpath_expression = parse(
+            f"$.contained[?(@.resourceType=='QuestionnaireResponse')].item[{i}].answer"
+        )
+        value = jsonpath_expression.find(json_data)
+        jsonpath_expression.update(json_data, "IT WORKS!")
+        ic(json_data)
+        for match in value:
+            ic(match.value)
+
     def test_model_pre_validate_valid_patient_identifier_value(self):
         """Test pre_validate_patient_identifier_value accepts valid values when in a model"""
 
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["patient", "identifier", "value"],
+            field_location="$.patient.identifier.value",
             valid_items_to_test=["1234567890"],
         )
 
@@ -63,10 +77,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         """Test pre_validate_patient_identifier_value rejects invalid values when in a model"""
 
         # Test invalid data types and invalid length strings
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
-            field_location="patient -> identifier -> value",
-            keys_to_access_value=["patient", "identifier", "value"],
+            field_location="$.patient.identifier.value",
             defined_length=10,
             invalid_length_strings_to_test=["123456789", "12345678901", ""],
         )
@@ -82,7 +95,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 self.validator.validate(invalid_json_data)
 
             self.assertTrue(
-                "patient -> identifier -> value must not contain spaces (type=value_error)"
+                "$.patient.identifier.value must not contain spaces (type=value_error)"
                 in str(error.exception)
             )
 
@@ -94,18 +107,17 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             "1933-12-31T11:11:11-05:00",  # Negative offset
         ]
 
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["occurrenceDateTime"],
+            field_location="$.occurrenceDateTime",
             valid_items_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_occurrence_date_time(self):
         """Test pre_validate_occurrence_date_time rejects invalid values when in a model"""
-        GenericValidatorModelTests.date_time_invalid(
+        JsonPathGenericValidatorModelTests.date_time_invalid(
             self,
-            field_location="occurrenceDateTime",
-            keys_to_access_value=["occurrenceDateTime"],
+            field_location="$.occurrenceDateTime",
             is_occurrence_date_time=True,
         )
 
@@ -114,9 +126,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         valid_items_to_test = [
             [{"resourceType": "QuestionnaireResponse", "status": "completed"}]
         ]
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["contained"],
+            field_location="$.contained",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -128,23 +140,25 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         }
         invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
-        GenericValidatorModelTests.list_invalid(
+        JsonPathGenericValidatorModelTests.list_invalid(
             self,
-            field_location="contained",
-            keys_to_access_value=["contained"],
+            field_location="$.contained",
             predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
         )
 
     def test_model_pre_validate_valid_questionnaire_answers(self):
         """Test pre_validate_questionnaire_answers accepts valid values when in a model"""
-        valid_items_to_test = [[{"valueCoding": {"code": "B0C4P"}}]]
+        valid_items_to_test = [
+            [{"valueCoding": {"code": "B0C4P"}}],
+        ]
 
         # Check that all of the 12 answer fields in the sample data are accepted when valid
         for i in range(12):
-            GenericValidatorModelTests.valid(
+            JsonPathGenericValidatorModelTests.valid(
                 self,
-                keys_to_access_value=["contained", 0, "item", i, "answer"],
+                field_location="$.contained[?(@.resourceType=='QuestionnaireResponse')]"
+                + f".item[{i}].answer",
                 valid_items_to_test=valid_items_to_test,
             )
 
@@ -156,11 +170,10 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
         # Check that any of the 12 answer fields in the sample data are rejected when invalid
         for i in range(12):
-            GenericValidatorModelTests.list_invalid(
+            JsonPathGenericValidatorModelTests.list_invalid(
                 self,
-                field_location="contained[0] -> resourceType[QuestionnaireResponse]: "
-                + "item[*] -> linkId[*]: answer",
-                keys_to_access_value=["contained", 0, "item", i, "answer"],
+                field_location="$.contained[?(@.resourceType=='QuestionnaireResponse')]"
+                + f".item[{i}].answer",
                 predefined_list_length=1,
                 invalid_length_lists_to_test=invalid_length_lists_to_test,
             )

@@ -36,7 +36,7 @@ class ImmunizationValidator:
             patient_identifier_value = values["patient"]["identifier"]["value"]
             pre_validate_string(
                 patient_identifier_value,
-                "patient -> identifier -> value",
+                "$.patient.identifier.value",
                 defined_length=10,
                 spaces_allowed=False,
             )
@@ -57,7 +57,7 @@ class ImmunizationValidator:
         """
         try:
             occurrence_date_time = values["occurrenceDateTime"]
-            pre_validate_date_time(occurrence_date_time, "occurrenceDateTime")
+            pre_validate_date_time(occurrence_date_time, "$.occurrenceDateTime")
         except KeyError:
             pass
 
@@ -70,7 +70,7 @@ class ImmunizationValidator:
         """
         try:
             contained = values["contained"]
-            pre_validate_list(contained, "contained", defined_length=1)
+            pre_validate_list(contained, "$.contained", defined_length=1)
         except KeyError:
             pass
 
@@ -84,12 +84,13 @@ class ImmunizationValidator:
         """
 
         try:
-            for item in values["contained"][0]["item"]:
+            for index, value in enumerate(values["contained"][0]["item"]):
                 try:
-                    questionnaire_answer = item["answer"]
+                    questionnaire_answer = value["answer"]
                     pre_validate_list(
                         questionnaire_answer,
-                        "contained[0] -> resourceType[QuestionnaireResponse]: item[*] -> linkId[*]: answer",
+                        "$.contained[?(@.resourceType=='QuestionnaireResponse')]"
+                        + f".item[{index}].answer",
                         defined_length=1,
                     )
                 except KeyError:
