@@ -105,9 +105,20 @@ def generic_date_time_validation(field_value: str, field_location: str):
 
 
 def generic_boolean_validation(field_value: str, field_location: str):
-    """Apply generic vlaidation to a boolean field to ensure that it is a boolean"""
+    """Apply generic validation to a boolean field to ensure that it is a boolean"""
     if not isinstance(field_value, bool):
         raise TypeError(f"{field_location} must be a boolean")
+
+
+def generic_positive_integer_validation(field_value: int, field_location: str):
+    """Apply generic validation to an integer field to ensure that it is an integer"""
+    if not isinstance(field_value, int):
+        raise TypeError(f"{field_location} must be a positive integer")
+    # Note that booleans are a sub-class of integers in python
+    if isinstance(field_value, bool):
+        raise TypeError(f"{field_location} must be a positive integer")
+    if field_value <= 0:
+        raise ValueError(f"{field_location} must be a positive integer")
 
 
 def get_generic_questionnaire_response_value(
@@ -126,4 +137,21 @@ def get_generic_questionnaire_response_value(
     raise KeyError(
         "contained[0] -> resourceType[QuestionnaireResponse]: "
         + f"item[*] -> linkId[{link_id}]: answer[0] -> valueCoding -> {field_type} does not exist"
+    )
+
+
+def get_generic_extension_value(
+    json_data: dict, url: str, field_type: Literal["code", "display", "system"]
+) -> Union[str, None]:
+    """
+    Get the value of an extension field, given its url
+    """
+
+    for record in json_data["extension"]:
+        if record["url"] == url:
+            return record["valueCodeableConcept"]["coding"][0][field_type]
+
+    raise KeyError(
+        f"extension[*] -> url[{url}]: "
+        + f"valueCodableConcept -> coding[0] -> {field_type} does not exist"
     )

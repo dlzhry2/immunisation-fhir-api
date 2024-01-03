@@ -18,6 +18,16 @@ def generate_field_location_for_questionnnaire_response(
     )
 
 
+def generate_field_location_for_extension(
+    url: str, field_type: Literal["code", "display", "system"]
+) -> str:
+    """Generate the field location string for extension items"""
+    return (
+        f"extension[*] -> url[{url}]: "
+        + f"valueCodeableConcept -> coding[0] -> {field_type}"
+    )
+
+
 def get_from_dict(data_dict, map_list):
     """takes a list of keys and returns the value in a nested dictionary"""
     return reduce(operator.getitem, map_list, data_dict)
@@ -30,6 +40,8 @@ def set_in_dict(data_dict, map_list, value):
 
 class InvalidDataTypes:
     """Store lists of invalid data types for tests"""
+
+    # TODO: ?Change floats to Decimals or add Decimals (if decide to always parse float as Decimal)
 
     for_strings = [
         None,
@@ -91,6 +103,11 @@ class InvalidDataTypes:
     for_integers = [
         None,
         True,
+        False,
+        0.0,
+        1.0,
+        2.5,
+        -1.3,
         "",
         {},
         [],
@@ -421,6 +438,34 @@ class GenericValidatorMethodTests:
                 f"{field_location} must be a boolean",
             )
 
+    @staticmethod
+    def positive_integer_invalid(
+        test_instance: unittest.TestCase, validator: Callable, field_location: str
+    ):
+        """
+        Test that a validator method rejects the following:
+        * Non-integer values
+        """
+        # Test invalid data types
+        for invalid_data_type_for_integer in InvalidDataTypes.for_integers:
+            with test_instance.assertRaises(TypeError) as error:
+                validator(invalid_data_type_for_integer)
+
+            test_instance.assertEqual(
+                str(error.exception),
+                f"{field_location} must be a positive integer",
+            )
+
+        # Test non-positive integers
+        for non_positive_integer in [-10, -1, 0]:
+            with test_instance.assertRaises(ValueError) as error:
+                validator(non_positive_integer)
+
+            test_instance.assertEqual(
+                str(error.exception),
+                f"{field_location} must be a positive integer",
+            )
+
 
 class GenericValidatorModelTests:
     """
@@ -440,6 +485,7 @@ class GenericValidatorModelTests:
     ):
         """Test that a validator method accepts valid data when in a model"""
         valid_json_data = deepcopy(test_instance.json_data)
+
         for valid_item in valid_items_to_test:
             set_in_dict(valid_json_data, keys_to_access_value, valid_item)
 
@@ -795,5 +841,39 @@ class GenericValidatorModelTests:
 
             test_instance.assertTrue(
                 f"{field_location} must be a boolean (type=type_error)"
+                in str(error.exception)
+            )
+
+    @staticmethod
+    def positive_integer_invalid(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        keys_to_access_value: list,
+    ):
+        """Test that a validator rejects any non-integer value when in a model"""
+
+        invalid_json_data = deepcopy(test_instance.json_data)
+
+        # Test invalid data types
+        for invalid_data_type_for_integer in InvalidDataTypes.for_integers:
+            set_in_dict(
+                invalid_json_data, keys_to_access_value, invalid_data_type_for_integer
+            )
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a positive integer (type=type_error)"
+                in str(error.exception)
+            )
+
+        # Test non-positive integers
+        for non_positive_integer in [-10, -1, 0]:
+            set_in_dict(invalid_json_data, keys_to_access_value, non_positive_integer)
+            with test_instance.assertRaises(ValidationError) as error:
+                test_instance.validator.validate(invalid_json_data)
+
+            test_instance.assertTrue(
+                f"{field_location} must be a positive integer (type=value_error)"
                 in str(error.exception)
             )
