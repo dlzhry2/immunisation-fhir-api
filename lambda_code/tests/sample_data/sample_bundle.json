@@ -196,7 +196,7 @@
             "patient": {
               "identifier": {
                 "system": "https//fhir.nhs.uk/Id/nhs-number",
-                "value": "1234567891"
+                "value": "9449310475"
               }
             },
             "occurrenceDateTime": "2020-12-14T10:08:15+00:00",
@@ -298,7 +298,7 @@
               "given": ["test_given_name_first", "test_given_name_middle"]
             }
           ],
-          "id": "9000000009",
+          "id": "9449310475",
           "birthDate": "1990-01-01",
           "gender": "male",
           "address": [

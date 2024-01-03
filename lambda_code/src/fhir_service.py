@@ -18,7 +18,7 @@ class FhirService:
         if imms:
             # TODO: This shouldn't raise an exception since, we validate the message before storing it,
             #  but what if the stored message is different from the requested FHIR version?
-            nhs_number = imms['patient']['identifier']['value']
+            nhs_number = imms['patient']['identifier']['value'] if imms['resourceType'] == "Immunization" else imms["entry"][0]['patient']['identifier']['value']
             patient = self.pds_service.get_patient_details(nhs_number)
             patient_is_restricted = patient['meta']['security'][0]['display']
             print(patient, "<<<<<<<<<<< PATIENT FROM PDS CALLOUT")
