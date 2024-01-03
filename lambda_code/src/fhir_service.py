@@ -26,6 +26,8 @@ class FhirService:
                 # TODO: Logic handling ommitted response
                 print("PATIENT IS RESTRICTED")
                 filtered_immunization = remove_personal_info(imms)
+                print(filtered_immunization, "<<<<<<<<< FILTERED IMMUNIZATION")
+                print(Immunization.parse_obj(filtered_immunization), "<<<<<<<< PARSED AND FILTERED IMMUNIZATION")
                 return Immunization.parse_obj(filtered_immunization)
             else:
                 print("PATIENT IS UNRESTRICTED")
