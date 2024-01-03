@@ -3,6 +3,7 @@
 import re
 from datetime import datetime
 from typing import Literal, Union
+from decimal import Decimal
 
 
 def pre_validate_string(
@@ -12,6 +13,7 @@ def pre_validate_string(
     max_length: int = None,
     predefined_values: tuple = None,
     is_postal_code: bool = False,
+    spaces_allowed: bool = True,
 ):
     """
     Apply pre-validation to a string field to ensure it is a non-empty string which meets
@@ -58,6 +60,10 @@ def pre_validate_string(
             raise ValueError(
                 f"{field_location} must be 8 or fewer characters (excluding spaces)"
             )
+
+    if not spaces_allowed:
+        if " " in field_value:
+            raise ValueError(f"{field_location} must not contain spaces")
 
 
 def pre_validate_list(
@@ -142,15 +148,46 @@ def pre_validate_boolean(field_value: str, field_location: str):
         raise TypeError(f"{field_location} must be a boolean")
 
 
-def pre_validate_positive_integer(field_value: int, field_location: str):
-    """Apply pre-validation to an integer field to ensure that it is an integer"""
-    if not isinstance(field_value, int):
+def pre_validate_positive_integer(
+    field_value: int, field_location: str, max_value: int = None
+):
+    """
+    Apply pre-validation to an integer field to ensure that it is a positive integer,
+    which does not exceed the maximum allowed value (if applicable)
+    """
+    if type(field_value) != int:  # pylint: disable=unidiomatic-typecheck
         raise TypeError(f"{field_location} must be a positive integer")
-    # Note that booleans are a sub-class of integers in python
-    if isinstance(field_value, bool):
-        raise TypeError(f"{field_location} must be a positive integer")
+
     if field_value <= 0:
         raise ValueError(f"{field_location} must be a positive integer")
+
+    if max_value:
+        if field_value not in range(1, max_value + 1):
+            raise ValueError(
+                f"{field_location} must be an integer in the range 1 to {max_value}"
+            )
+
+
+def pre_validate_decimal(
+    field_value: int, field_location: str, max_decimal_places: int = None
+):
+    """
+    Apply pre-validation to a decimal field to ensure that it is an integer or decimal,
+    which does not exceed the maximum allowed number of decimal places (if applicable)
+    """
+    if not (
+        type(field_value) is int  # pylint: disable=unidiomatic-typecheck
+        or type(field_value) is Decimal  # pylint: disable=unidiomatic-typecheck
+    ):
+        raise TypeError(f"{field_location} must be a number")
+
+    if max_decimal_places:
+        if isinstance(field_value, Decimal):
+            if abs(field_value.as_tuple().exponent) > max_decimal_places:
+                raise ValueError(
+                    f"{field_location} must be a number with a maximum of {max_decimal_places}"
+                    + " decimal places"
+                )
 
 
 def get_generic_questionnaire_response_value(

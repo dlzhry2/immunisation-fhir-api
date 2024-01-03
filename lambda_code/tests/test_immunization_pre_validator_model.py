@@ -1068,7 +1068,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self.validator.validate(invalid_json_data)
 
         self.assertTrue(
-            "doseQuantity -> value must be a number with a maximum of FOUR decimal places "
+            "doseQuantity -> value must be a number with a maximum of 4 decimal places "
             + "(type=value_error)"
             in str(error.exception)
         )

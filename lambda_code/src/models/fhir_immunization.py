@@ -4,9 +4,17 @@ from models.utils import (
     get_generic_questionnaire_response_value,
     get_generic_extension_value,
 )
-from models.immunization_pre_validators import (
-    ImmunizationPreValidators,
+
+from models.utils import (
+    pre_validate_string,
+    pre_validate_date_time,
+    pre_validate_list,
+    pre_validate_date,
+    pre_validate_boolean,
+    pre_validate_positive_integer,
+    pre_validate_decimal,
 )
+from models.constants import Constants
 
 
 class ImmunizationValidator:
@@ -26,7 +34,12 @@ class ImmunizationValidator:
         """
         try:
             patient_identifier_value = values["patient"]["identifier"]["value"]
-            ImmunizationPreValidators.patient_identifier_value(patient_identifier_value)
+            pre_validate_string(
+                patient_identifier_value,
+                "patient -> identifier -> value",
+                defined_length=10,
+                spaces_allowed=False,
+            )
         except KeyError:
             pass
 
@@ -44,7 +57,7 @@ class ImmunizationValidator:
         """
         try:
             occurrence_date_time = values["occurrenceDateTime"]
-            ImmunizationPreValidators.occurrence_date_time(occurrence_date_time)
+            pre_validate_date_time(occurrence_date_time, "occurrenceDateTime")
         except KeyError:
             pass
 
@@ -57,7 +70,7 @@ class ImmunizationValidator:
         """
         try:
             contained = values["contained"]
-            ImmunizationPreValidators.contained(contained)
+            pre_validate_list(contained, "contained", defined_length=1)
         except KeyError:
             pass
 
@@ -73,8 +86,12 @@ class ImmunizationValidator:
         try:
             for item in values["contained"][0]["item"]:
                 try:
-                    answer = item["answer"]
-                    ImmunizationPreValidators.questionnaire_answer(answer)
+                    questionnaire_answer = item["answer"]
+                    pre_validate_list(
+                        questionnaire_answer,
+                        "contained[0] -> resourceType[QuestionnaireResponse]: item[*] -> linkId[*]: answer",
+                        defined_length=1,
+                    )
                 except KeyError:
                     pass
         except KeyError:
@@ -93,8 +110,10 @@ class ImmunizationValidator:
             questionnaire_site_code_code = get_generic_questionnaire_response_value(
                 values, "SiteCode", "code"
             )
-            ImmunizationPreValidators.questionnaire_site_code_code(
-                questionnaire_site_code_code
+            pre_validate_string(
+                questionnaire_site_code_code,
+                "contained[0] -> resourceType[QuestionnaireResponse]: "
+                + "item[*] -> linkId[SiteCode]: answer[0] -> valueCoding -> code",
             )
         except KeyError:
             pass
@@ -112,8 +131,10 @@ class ImmunizationValidator:
             questionnaire_site_name_code = get_generic_questionnaire_response_value(
                 values, "SiteName", "code"
             )
-            ImmunizationPreValidators.questionnaire_site_name_code(
-                questionnaire_site_name_code
+            pre_validate_string(
+                questionnaire_site_name_code,
+                "contained[0] -> resourceType[QuestionnaireResponse]: "
+                + "item[*] -> linkId[SiteName]: answer[0] -> valueCoding -> code",
             )
         except KeyError:
             pass
@@ -127,7 +148,7 @@ class ImmunizationValidator:
         """
         try:
             identifier = values["identifier"]
-            ImmunizationPreValidators.identifier(identifier)
+            pre_validate_list(identifier, "identifier", defined_length=1)
         except KeyError:
             pass
 
@@ -141,7 +162,7 @@ class ImmunizationValidator:
         """
         try:
             identifier_value = values["identifier"][0]["value"]
-            ImmunizationPreValidators.identifier_value(identifier_value)
+            pre_validate_string(identifier_value, "identifier[0] -> value")
         except KeyError:
             pass
 
@@ -155,7 +176,7 @@ class ImmunizationValidator:
         """
         try:
             identifier_system = values["identifier"][0]["system"]
-            ImmunizationPreValidators.identifier_system(identifier_system)
+            pre_validate_string(identifier_system, "identifier[0] -> system")
         except KeyError:
             pass
 
@@ -181,7 +202,7 @@ class ImmunizationValidator:
 
         try:
             status = values["status"]
-            ImmunizationPreValidators.status(status)
+            pre_validate_string(status, "status", predefined_values=Constants.STATUSES)
         except KeyError:
             pass
 
@@ -196,7 +217,7 @@ class ImmunizationValidator:
 
         try:
             recorded = values["recorded"]
-            ImmunizationPreValidators.recorded(recorded)
+            pre_validate_date(recorded, "recorded")
         except KeyError:
             pass
 
@@ -208,7 +229,7 @@ class ImmunizationValidator:
 
         try:
             primary_source = values["primarySource"]
-            ImmunizationPreValidators.primary_source(primary_source)
+            pre_validate_boolean(primary_source, "primarySource")
         except KeyError:
             pass
 
@@ -224,7 +245,9 @@ class ImmunizationValidator:
         try:
             report_origin_text = values["reportOrigin"]["text"]
 
-            ImmunizationPreValidators.report_origin_text(report_origin_text)
+            pre_validate_string(
+                report_origin_text, "reportOrigin -> text", max_length=100
+            )
         except KeyError:
             pass
 
@@ -243,8 +266,10 @@ class ImmunizationValidator:
             for item in values["extension"]:
                 try:
                     coding = item["valueCodeableConcept"]["coding"]
-                    ImmunizationPreValidators.extension_value_codeable_concept_coding(
-                        coding
+                    pre_validate_list(
+                        coding,
+                        "extension[*] -> valueCodeableConcept -> coding",
+                        defined_length=1,
                     )
                 except KeyError:
                     pass
@@ -267,8 +292,11 @@ class ImmunizationValidator:
                 "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
                 "code",
             )
-            ImmunizationPreValidators.vaccination_procedure_code(
-                vaccination_procedure_code
+            pre_validate_string(
+                vaccination_procedure_code,
+                "extension[*] -> url["
+                + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure]: "
+                + "valueCodeableConcept -> coding[0] -> code",
             )
         except KeyError:
             pass
@@ -289,8 +317,11 @@ class ImmunizationValidator:
                 "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
                 "display",
             )
-            ImmunizationPreValidators.vaccination_procedure_display(
-                vaccination_procedure_display
+            pre_validate_string(
+                vaccination_procedure_display,
+                "extension[*] -> url["
+                + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure]: "
+                + "valueCodeableConcept -> coding[0] -> display",
             )
         except KeyError:
             pass
@@ -311,8 +342,11 @@ class ImmunizationValidator:
                 "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
                 "code",
             )
-            ImmunizationPreValidators.vaccination_situation_code(
-                vaccination_situation_code
+            pre_validate_string(
+                vaccination_situation_code,
+                "extension[*] -> url["
+                + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation]: "
+                + "valueCodeableConcept -> coding[0] -> code",
             )
         except KeyError:
             pass
@@ -333,8 +367,11 @@ class ImmunizationValidator:
                 "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
                 "display",
             )
-            ImmunizationPreValidators.vaccination_situation_display(
-                vaccination_situation_display
+            pre_validate_string(
+                vaccination_situation_display,
+                "extension[*] -> url["
+                + "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation]: "
+                + "valueCodeableConcept -> coding[0] -> display",
             )
         except KeyError:
             pass
@@ -349,7 +386,11 @@ class ImmunizationValidator:
         """
         try:
             coding = values["statusReason"]["coding"]
-            ImmunizationPreValidators.status_reason_coding(coding)
+            pre_validate_list(
+                coding,
+                "statusReason -> coding",
+                defined_length=1,
+            )
         except KeyError:
             pass
 
@@ -363,8 +404,8 @@ class ImmunizationValidator:
         """
         try:
             status_reason_coding_code = values["statusReason"]["coding"][0]["code"]
-            ImmunizationPreValidators.status_reason_coding_code(
-                status_reason_coding_code
+            pre_validate_string(
+                status_reason_coding_code, "statusReason -> coding[0] -> code"
             )
         except KeyError:
             pass
@@ -381,8 +422,8 @@ class ImmunizationValidator:
             status_reason_coding_display = values["statusReason"]["coding"][0][
                 "display"
             ]
-            ImmunizationPreValidators.status_reason_coding_display(
-                status_reason_coding_display
+            pre_validate_string(
+                status_reason_coding_display, "statusReason -> coding[0] -> display"
             )
         except KeyError:
             pass
@@ -394,7 +435,11 @@ class ImmunizationValidator:
         """Pre-validate that, if protocolApplied exists, then it is a list of length 1"""
         try:
             protocol_applied = values["protocolApplied"]
-            ImmunizationPreValidators.protocol_applied(protocol_applied)
+            pre_validate_list(
+                protocol_applied,
+                "protocolApplied",
+                defined_length=1,
+            )
         except KeyError:
             pass
 
@@ -412,8 +457,10 @@ class ImmunizationValidator:
             protocol_applied_dose_number_positive_int = values["protocolApplied"][0][
                 "doseNumberPositiveInt"
             ]
-            ImmunizationPreValidators.protocol_applied_dose_number_positive_int(
-                protocol_applied_dose_number_positive_int
+            pre_validate_positive_integer(
+                protocol_applied_dose_number_positive_int,
+                "protocolApplied[0] -> doseNumberPositiveInt",
+                max_value=9,
             )
         except KeyError:
             pass
@@ -425,7 +472,11 @@ class ImmunizationValidator:
         """Pre-validate that, if vaccineCode -> coding exists, then it is a list of length 1"""
         try:
             vaccine_code_coding = values["vaccineCode"]["coding"]
-            ImmunizationPreValidators.vaccine_code_coding(vaccine_code_coding)
+            pre_validate_list(
+                vaccine_code_coding,
+                "vaccineCode -> coding",
+                defined_length=1,
+            )
         except KeyError:
             pass
 
@@ -439,7 +490,9 @@ class ImmunizationValidator:
         """
         try:
             vaccine_code_coding_code = values["vaccineCode"]["coding"][0]["code"]
-            ImmunizationPreValidators.vaccine_code_coding_code(vaccine_code_coding_code)
+            pre_validate_string(
+                vaccine_code_coding_code, "vaccineCode -> coding[0] -> code"
+            )
         except KeyError:
             pass
 
@@ -453,8 +506,8 @@ class ImmunizationValidator:
         """
         try:
             vaccine_code_coding_display = values["vaccineCode"]["coding"][0]["display"]
-            ImmunizationPreValidators.vaccine_code_coding_display(
-                vaccine_code_coding_display
+            pre_validate_string(
+                vaccine_code_coding_display, "vaccineCode -> coding[0] -> display"
             )
         except KeyError:
             pass
@@ -469,7 +522,7 @@ class ImmunizationValidator:
         """
         try:
             manufacturer_display = values["manufacturer"]["display"]
-            ImmunizationPreValidators.manufacturer_display(manufacturer_display)
+            pre_validate_string(manufacturer_display, "manufacturer -> display")
         except KeyError:
             pass
 
@@ -483,7 +536,7 @@ class ImmunizationValidator:
         """
         try:
             lot_number = values["lotNumber"]
-            ImmunizationPreValidators.lot_number(lot_number)
+            pre_validate_string(lot_number, "lotNumber", max_length=100)
         except KeyError:
             pass
 
@@ -497,7 +550,7 @@ class ImmunizationValidator:
         """
         try:
             expiration_date = values["expirationDate"]
-            ImmunizationPreValidators.expiration_date(expiration_date)
+            pre_validate_date(expiration_date, "expirationDate")
         except KeyError:
             pass
 
@@ -508,7 +561,11 @@ class ImmunizationValidator:
         """Pre-validate that, if site -> coding exists, then it is a list of length 1"""
         try:
             site_coding = values["site"]["coding"]
-            ImmunizationPreValidators.site_coding(site_coding)
+            pre_validate_list(
+                site_coding,
+                "site -> coding",
+                defined_length=1,
+            )
         except KeyError:
             pass
 
@@ -522,7 +579,7 @@ class ImmunizationValidator:
         """
         try:
             site_coding_code = values["site"]["coding"][0]["code"]
-            ImmunizationPreValidators.site_coding_code(site_coding_code)
+            pre_validate_string(site_coding_code, "site -> coding[0] -> code")
         except KeyError:
             pass
 
@@ -536,7 +593,7 @@ class ImmunizationValidator:
         """
         try:
             site_coding_display = values["site"]["coding"][0]["display"]
-            ImmunizationPreValidators.site_coding_display(site_coding_display)
+            pre_validate_string(site_coding_display, "site -> coding[0] -> display")
         except KeyError:
             pass
 
@@ -547,7 +604,11 @@ class ImmunizationValidator:
         """Pre-validate that, if route -> coding exists, then it is a list of length 1"""
         try:
             route_coding = values["route"]["coding"]
-            ImmunizationPreValidators.route_coding(route_coding)
+            pre_validate_list(
+                route_coding,
+                "route -> coding",
+                defined_length=1,
+            )
         except KeyError:
             pass
 
@@ -561,7 +622,7 @@ class ImmunizationValidator:
         """
         try:
             route_coding_code = values["route"]["coding"][0]["code"]
-            ImmunizationPreValidators.route_coding_code(route_coding_code)
+            pre_validate_string(route_coding_code, "route -> coding[0] -> code")
         except KeyError:
             pass
 
@@ -575,7 +636,7 @@ class ImmunizationValidator:
         """
         try:
             route_coding_display = values["route"]["coding"][0]["display"]
-            ImmunizationPreValidators.route_coding_display(route_coding_display)
+            pre_validate_string(route_coding_display, "route -> coding[0] -> display")
         except KeyError:
             pass
 
@@ -595,7 +656,9 @@ class ImmunizationValidator:
         """
         try:
             dose_quantity_value = values["doseQuantity"]["value"]
-            ImmunizationPreValidators.dose_quantity_value(dose_quantity_value)
+            pre_validate_decimal(
+                dose_quantity_value, "doseQuantity -> value", max_decimal_places=4
+            )
         except KeyError:
             pass
 
@@ -609,7 +672,7 @@ class ImmunizationValidator:
         """
         try:
             dose_quantity_code = values["doseQuantity"]["code"]
-            ImmunizationPreValidators.dose_quantity_code(dose_quantity_code)
+            pre_validate_string(dose_quantity_code, "doseQuantity -> code")
         except KeyError:
             pass
 
@@ -623,7 +686,7 @@ class ImmunizationValidator:
         """
         try:
             dose_quantity_unit = values["doseQuantity"]["unit"]
-            ImmunizationPreValidators.dose_quantity_unit(dose_quantity_unit)
+            pre_validate_string(dose_quantity_unit, "doseQuantity -> unit")
         except KeyError:
             pass
 
@@ -638,8 +701,12 @@ class ImmunizationValidator:
         try:
             for item in values["reasonCode"]:
                 try:
-                    coding = item["coding"]
-                    ImmunizationPreValidators.reason_code_coding(coding)
+                    reason_code_coding = item["coding"]
+                    pre_validate_list(
+                        reason_code_coding,
+                        "reasonCode[*] -> coding",
+                        defined_length=1,
+                    )
                 except KeyError:
                     pass
         except KeyError:
@@ -657,8 +724,10 @@ class ImmunizationValidator:
         try:
             for item in values["reasonCode"]:
                 try:
-                    coding = item["coding"][0]["code"]
-                    ImmunizationPreValidators.reason_code_coding_code(coding)
+                    reason_code_coding_code = item["coding"][0]["code"]
+                    pre_validate_string(
+                        reason_code_coding_code, "reasonCode[*] -> coding[0] -> code"
+                    )
                 except KeyError:
                     pass
         except KeyError:
@@ -676,8 +745,11 @@ class ImmunizationValidator:
         try:
             for item in values["reasonCode"]:
                 try:
-                    coding = item["coding"][0]["display"]
-                    ImmunizationPreValidators.reason_code_coding_display(coding)
+                    reason_code_coding_display = item["coding"][0]["display"]
+                    pre_validate_string(
+                        reason_code_coding_display,
+                        "reasonCode[*] -> coding[0] -> display",
+                    )
                 except KeyError:
                     pass
         except KeyError:
