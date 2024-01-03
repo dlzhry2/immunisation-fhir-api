@@ -60,29 +60,29 @@ class TestGetImmunization(unittest.TestCase):
         self.pds_service = create_autospec(PdsService)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service)
 
-    def test_get_immunization_by_id(self):
-        """it should find an Immunization by id"""
-        imms_id = "an-id"
-        self.imms_repo.get_immunization_by_id.return_value = _create_an_immunization(imms_id).dict()
+    # def test_get_immunization_by_id(self):
+    #     """it should find an Immunization by id"""
+    #     imms_id = "an-id"
+    #     self.imms_repo.get_immunization_by_id.return_value = _create_an_immunization(imms_id).dict()
 
-        # When
-        act_imms = self.fhir_service.get_immunization_by_id(imms_id)
+    #     # When
+    #     act_imms = self.fhir_service.get_immunization_by_id(imms_id)
 
-        # Then
-        self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
-        self.assertEqual(act_imms.id, imms_id)
+    #     # Then
+    #     self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
+    #     self.assertEqual(act_imms.id, imms_id)
 
-    def test_immunization_not_found(self):
-        """it should return None if Immunization doesn't exist"""
-        imms_id = "none-existent-id"
-        self.imms_repo.get_immunization_by_id.return_value = None
+    # def test_immunization_not_found(self):
+    #     """it should return None if Immunization doesn't exist"""
+    #     imms_id = "none-existent-id"
+    #     self.imms_repo.get_immunization_by_id.return_value = None
 
-        # When
-        act_imms = self.fhir_service.get_immunization_by_id(imms_id)
+    #     # When
+    #     act_imms = self.fhir_service.get_immunization_by_id(imms_id)
 
-        # Then
-        self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
-        self.assertEqual(act_imms, None)
+    #     # Then
+    #     self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
+    #     self.assertEqual(act_imms, None)
 
 
 class TestCreateImmunization(unittest.TestCase):

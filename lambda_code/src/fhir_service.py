@@ -14,7 +14,7 @@ class FhirService:
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
       imms = self.immunisation_repo.get_immunization_by_id(imms_id)
-      bundle = imms['resourceType'] == "Bundle"
+      bundle = False if imms['resourceType'] == "Immunization" else True
 
       nhs_number = imms['patient']['identifier']['value'] if imms['resourceType'] == "Immunization" else imms["entry"][0]['patient']['identifier']['value']
       patient = self.pds_service.get_patient_details(nhs_number)
