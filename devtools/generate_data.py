@@ -42,7 +42,7 @@ def pick_rand(pool):
     return pool[idx]
 
 
-def generate_immunisation(num):
+def generate_immunization(num):
     with open("sample_imms.json", "r") as template:
         imms = json.loads(template.read())
 
@@ -77,5 +77,5 @@ def write(_data, resource_type):
 
 
 if __name__ == '__main__':
-    imms = generate_immunisation(30)
-    write(imms, resource_type="immunisation")
+    imms = generate_immunization(30)
+    write(imms, resource_type="immunization")

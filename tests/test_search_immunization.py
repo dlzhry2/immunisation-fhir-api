@@ -6,7 +6,7 @@ import pytest
 
 from .configuration.config import valid_nhs_number1, valid_nhs_number2
 from .example_loader import load_example
-from .immunization_api import ImmunisationApi
+from .immunisation_api import ImmunisationApi
 
 
 def create_immunization(imms_id, nhs_number, disease_code):

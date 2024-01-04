@@ -12,7 +12,7 @@ from models.nhs_validators import (
 )
 
 
-class CsvImmunizationModel(BaseModel):
+class CsvImmunisationModel(BaseModel):
     """Pydantic CSV Immunization BaseModel"""
 
     NHS_NUMBER: str = None
