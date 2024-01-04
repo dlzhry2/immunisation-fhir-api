@@ -3,11 +3,9 @@ import unittest
 import os
 import json
 from copy import deepcopy
-from pydantic import ValidationError
-from jsonpath_ng.ext import parse
 
 from models.fhir_patient import PatientValidator
-from .utils import GenericValidatorModelTests
+from .utils import ValidatorModelTests
 
 
 class TestPatientModelPreValidationRules(unittest.TestCase):
@@ -46,7 +44,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_valid_name(self):
         """Test pre_validate_name accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        ValidatorModelTests.valid(
             self,
             field_location="name",
             valid_items_to_test=[[{"family": "Test"}]],
@@ -54,7 +52,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_invalid_name(self):
         """Test pre_validate_name rejects invalid values when in a model"""
-        GenericValidatorModelTests.list_invalid(
+        ValidatorModelTests.list_invalid(
             self,
             field_location="name",
             predefined_list_length=1,
@@ -63,7 +61,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_valid_name_given(self):
         """Test pre_validate_name_given accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        ValidatorModelTests.valid(
             self,
             field_location="name[0].given",
             valid_items_to_test=[["Test"], ["Test test"]],
@@ -71,7 +69,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_invalid_name_given(self):
         """Test pre_validate_name_given rejects invalid values when in a model"""
-        GenericValidatorModelTests.list_invalid(
+        ValidatorModelTests.list_invalid(
             self,
             field_location="name[0].given",
             predefined_list_length=1,
@@ -81,7 +79,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_valid_name_family(self):
         """Test pre_validate_name_family accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        ValidatorModelTests.valid(
             self,
             field_location="name[0].family",
             valid_items_to_test=["test"],
@@ -89,11 +87,11 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_invalid_name_family(self):
         """Test pre_validate_name_family rejects invalid values when in a model"""
-        GenericValidatorModelTests.string_invalid(self, field_location="name[0].family")
+        ValidatorModelTests.string_invalid(self, field_location="name[0].family")
 
     def test_model_pre_validate_valid_birth_date(self):
         """Test pre_validate_birth_date accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        ValidatorModelTests.valid(
             self,
             field_location="birthDate",
             valid_items_to_test=["2000-01-01", "1933-12-31"],
@@ -101,11 +99,11 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_invalid_birth_date(self):
         """Test pre_validate_birth_date rejects invalid values when in a model"""
-        GenericValidatorModelTests.date_invalid(self, field_location="birthDate")
+        ValidatorModelTests.date_invalid(self, field_location="birthDate")
 
     def test_model_pre_validate_valid_gender(self):
         """Test pre_validate_gender accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        ValidatorModelTests.valid(
             self,
             field_location="gender",
             valid_items_to_test=["male", "female", "other", "unknown"],
@@ -124,7 +122,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
             "Other",
         ]
 
-        GenericValidatorModelTests.string_invalid(
+        ValidatorModelTests.string_invalid(
             self,
             field_location="gender",
             predefined_values=("male", "female", "other", "unknown"),
@@ -133,7 +131,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_valid_address(self):
         """Test pre_validate_address accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        ValidatorModelTests.valid(
             self,
             field_location="address",
             valid_items_to_test=[[{"postalCode": "AA1 1AA"}]],
@@ -141,7 +139,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_invalid_address(self):
         """Test pre_validate_address rejects invalid values when in a model"""
-        GenericValidatorModelTests.list_invalid(
+        ValidatorModelTests.list_invalid(
             self,
             field_location="address",
             predefined_list_length=1,
@@ -150,7 +148,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_valid_address_postal_code(self):
         """Test pre_validate_address_postal_code accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        ValidatorModelTests.valid(
             self,
             field_location="address[0].postalCode",
             valid_items_to_test=["AA00 00AA", "A0 0AA"],
@@ -159,50 +157,6 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
     def test_model_pre_validate_invalid_address_postal_code(self):
         """Test pre_validate_address_postal_code rejects invalid values when in a model"""
         # Test invalid data types and empty string
-        GenericValidatorModelTests.string_invalid(
-            self, field_location="address[0].postalCode"
-        )
-
-        # Test address_postal_codes which are not separated into the two parts by a single space
-        invalid_address_postal_codes = [
-            "SW1  1AA",  # Too many spaces in divider
-            "SW 1 1A",  # Too many space dividers
-            "AAA0000AA",  # Too few space dividers
-            " AA00 00AA",  # Invalid additional space at start
-            "AA00 00AA ",  # Invalid additional space at end
-            " AA0000AA",  # Space is incorrectly at start
-            "AA0000AA ",  # Space is incorrectly at end
-        ]
-
-        invalid_json_data = deepcopy(self.json_data)
-
-        for invalid_address_postal_code in invalid_address_postal_codes:
-            # invalid_json_data["address"][0]["postalCode"] = invalid_address_postal_code
-            invalid_json_data = parse("address[0].postalCode").update(
-                invalid_json_data, invalid_address_postal_code
-            )
-            # Check that we get the correct error message and that it contains type=value_error
-            with self.assertRaises(ValidationError) as error:
-                self.validator.validate(invalid_json_data)
-
-            self.assertTrue(
-                "address[0].postalCode must contain a single space, "
-                + "which divides the two parts of the postal code (type=value_error)"
-                in str(error.exception)
-            )
-
-        # Test invalid address_postal_code length
-        # invalid_json_data["address"][0]["postalCode"] = "AA000 00AA"
-        invalid_json_data = parse("address[0].postalCode").update(
-            invalid_json_data, "AA000 00AA"
-        )
-
-        # Check that we get the correct error message and that it contains type=value_error
-        with self.assertRaises(ValidationError) as error:
-            self.validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            "address[0].postalCode must be 8 or fewer characters "
-            + "(excluding spaces) (type=value_error)"
-            in str(error.exception)
+        ValidatorModelTests.string_invalid(
+            self, field_location="address[0].postalCode", is_postal_code=True
         )
