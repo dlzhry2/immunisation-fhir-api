@@ -4,7 +4,7 @@ import os
 import json
 from copy import deepcopy
 from pydantic import ValidationError
-
+from jsonpath_ng.ext import parse
 
 from models.fhir_patient import PatientValidator
 from .utils import GenericValidatorModelTests
@@ -48,82 +48,66 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         """Test pre_validate_name accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["name"],
+            field_location="name",
             valid_items_to_test=[[{"family": "Test"}]],
         )
 
     def test_model_pre_validate_invalid_name(self):
         """Test pre_validate_name rejects invalid values when in a model"""
-        invalid_list_lengths_to_test = [[{"family": "Test"}, {"family": "Test"}]]
-
         GenericValidatorModelTests.list_invalid(
             self,
             field_location="name",
-            keys_to_access_value=["name"],
             predefined_list_length=1,
-            invalid_length_lists_to_test=invalid_list_lengths_to_test,
+            valid_list_element={"family": "Test"},
         )
 
     def test_model_pre_validate_valid_name_given(self):
         """Test pre_validate_name_given accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["name", 0, "given"],
+            field_location="name[0].given",
             valid_items_to_test=[["Test"], ["Test test"]],
         )
 
     def test_model_pre_validate_invalid_name_given(self):
         """Test pre_validate_name_given rejects invalid values when in a model"""
-        invalid_lists = [
-            [1],
-            [False],
-            [["Test1"]],
-        ]
-
         GenericValidatorModelTests.list_invalid(
             self,
-            field_location="name[0] -> given",
-            keys_to_access_value=["name", 0, "given"],
+            field_location="name[0].given",
             predefined_list_length=1,
-            invalid_length_lists_to_test=[["Test1", "Test2"]],
-            invalid_lists_with_non_string_data_types_to_test=invalid_lists,
+            valid_list_element="Test",
+            is_list_of_strings=True,
         )
 
     def test_model_pre_validate_valid_name_family(self):
         """Test pre_validate_name_family accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["name", 0, "family"],
+            field_location="name[0].family",
             valid_items_to_test=["test"],
         )
 
     def test_model_pre_validate_invalid_name_family(self):
         """Test pre_validate_name_family rejects invalid values when in a model"""
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="name[0] -> family",
-            keys_to_access_value=["name", 0, "family"],
-        )
+        GenericValidatorModelTests.string_invalid(self, field_location="name[0].family")
 
     def test_model_pre_validate_valid_birth_date(self):
         """Test pre_validate_birth_date accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["birthDate"],
+            field_location="birthDate",
             valid_items_to_test=["2000-01-01", "1933-12-31"],
         )
 
     def test_model_pre_validate_invalid_birth_date(self):
         """Test pre_validate_birth_date rejects invalid values when in a model"""
-        GenericValidatorModelTests.date_invalid(
-            self, field_location="birthDate", keys_to_access_value=["birthDate"]
-        )
+        GenericValidatorModelTests.date_invalid(self, field_location="birthDate")
 
     def test_model_pre_validate_valid_gender(self):
         """Test pre_validate_gender accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["gender"],
+            field_location="gender",
             valid_items_to_test=["male", "female", "other", "unknown"],
         )
 
@@ -143,7 +127,6 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         GenericValidatorModelTests.string_invalid(
             self,
             field_location="gender",
-            keys_to_access_value=["gender"],
             predefined_values=("male", "female", "other", "unknown"),
             invalid_strings_to_test=invalid_strings_to_test,
         )
@@ -152,7 +135,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         """Test pre_validate_address accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["address"],
+            field_location="address",
             valid_items_to_test=[[{"postalCode": "AA1 1AA"}]],
         )
 
@@ -161,16 +144,15 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         GenericValidatorModelTests.list_invalid(
             self,
             field_location="address",
-            keys_to_access_value=["address"],
             predefined_list_length=1,
-            invalid_length_lists_to_test=[[{"family": "Test"}, {"family": "Test"}]],
+            valid_list_element={"family": "Test"},
         )
 
     def test_model_pre_validate_valid_address_postal_code(self):
         """Test pre_validate_address_postal_code accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["address", 0, "postalCode"],
+            field_location="address[0].postalCode",
             valid_items_to_test=["AA00 00AA", "A0 0AA"],
         )
 
@@ -178,9 +160,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         """Test pre_validate_address_postal_code rejects invalid values when in a model"""
         # Test invalid data types and empty string
         GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="address -> postalCode",
-            keys_to_access_value=["address", 0, "postalCode"],
+            self, field_location="address[0].postalCode"
         )
 
         # Test address_postal_codes which are not separated into the two parts by a single space
@@ -197,27 +177,32 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         invalid_json_data = deepcopy(self.json_data)
 
         for invalid_address_postal_code in invalid_address_postal_codes:
-            invalid_json_data["address"][0]["postalCode"] = invalid_address_postal_code
-
+            # invalid_json_data["address"][0]["postalCode"] = invalid_address_postal_code
+            invalid_json_data = parse("address[0].postalCode").update(
+                invalid_json_data, invalid_address_postal_code
+            )
             # Check that we get the correct error message and that it contains type=value_error
             with self.assertRaises(ValidationError) as error:
                 self.validator.validate(invalid_json_data)
 
             self.assertTrue(
-                "address -> postalCode must contain a single space, "
+                "address[0].postalCode must contain a single space, "
                 + "which divides the two parts of the postal code (type=value_error)"
                 in str(error.exception)
             )
 
         # Test invalid address_postal_code length
-        invalid_json_data["address"][0]["postalCode"] = "AA000 00AA"
+        # invalid_json_data["address"][0]["postalCode"] = "AA000 00AA"
+        invalid_json_data = parse("address[0].postalCode").update(
+            invalid_json_data, "AA000 00AA"
+        )
 
         # Check that we get the correct error message and that it contains type=value_error
         with self.assertRaises(ValidationError) as error:
             self.validator.validate(invalid_json_data)
 
         self.assertTrue(
-            "address -> postalCode must be 8 or fewer characters "
+            "address[0].postalCode must be 8 or fewer characters "
             + "(excluding spaces) (type=value_error)"
             in str(error.exception)
         )

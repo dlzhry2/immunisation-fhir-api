@@ -47,62 +47,48 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         """Test pre_validate_name accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["name"],
+            field_location="name",
             valid_items_to_test=[[{"family": "Test"}]],
         )
 
     def test_model_pre_validate_invalid_name(self):
         """Test pre_validate_name rejects invalid values when in a model"""
-        invalid_list_lengths_to_test = [[{"family": "Test"}, {"family": "Test"}]]
-
         GenericValidatorModelTests.list_invalid(
             self,
             field_location="name",
-            keys_to_access_value=["name"],
             predefined_list_length=1,
-            invalid_length_lists_to_test=invalid_list_lengths_to_test,
+            valid_list_element={"family": "Test"},
         )
 
     def test_model_pre_validate_valid_name_given(self):
         """Test pre_validate_name_given accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["name", 0, "given"],
+            field_location="name[0].given",
             valid_items_to_test=[["Test"], ["Test test"]],
         )
 
     def test_model_pre_validate_invalid_name_given(self):
         """Test pre_validate_name_given rejects invalid values when in a model"""
-        invalid_lists = [
-            [1],
-            [False],
-            [["Test1"]],
-        ]
-
         GenericValidatorModelTests.list_invalid(
             self,
-            field_location="name[0] -> given",
-            keys_to_access_value=["name", 0, "given"],
+            field_location="name[0].given",
             predefined_list_length=1,
-            invalid_length_lists_to_test=[["Test1", "Test2"]],
-            invalid_lists_with_non_string_data_types_to_test=invalid_lists,
+            valid_list_element="Test",
+            is_list_of_strings=True,
         )
 
     def test_model_pre_validate_valid_name_family(self):
         """Test pre_validate_name_family accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["name", 0, "family"],
+            field_location="name[0].family",
             valid_items_to_test=["test"],
         )
 
     def test_model_pre_validate_invalid_name_family(self):
         """Test pre_validate_name_family rejects invalid values when in a model"""
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="name[0] -> family",
-            keys_to_access_value=["name", 0, "family"],
-        )
+        GenericValidatorModelTests.string_invalid(self, field_location="name[0].family")
 
     def test_model_pre_validate_valid_identifier(self):
         """Test pre_validate_identifier accepts valid values when in a model"""
@@ -117,7 +103,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
 
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["identifier"],
+            field_location="identifier",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -128,13 +114,12 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
             "system": "https://supplierABC/identifiers/vacc",
             "value": "ACME-vacc123456",
         }
-        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
+
         GenericValidatorModelTests.list_invalid(
             self,
             field_location="identifier",
-            keys_to_access_value=["identifier"],
             predefined_list_length=1,
-            invalid_length_lists_to_test=invalid_length_lists_to_test,
+            valid_list_element=valid_list_element,
         )
 
     def test_model_pre_validate_valid_identifier_value(self):
@@ -147,7 +132,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
 
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["identifier", 0, "value"],
+            field_location="identifier[0].value",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -155,9 +140,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         """Test pre_validate_identifier_value rejects invalid values when in a model"""
 
         GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="identifier[0] -> value",
-            keys_to_access_value=["identifier", 0, "value"],
+            self, field_location="identifier[0].value"
         )
 
     def test_model_pre_validate_valid_identifier_system(self):
@@ -169,44 +152,38 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
 
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["identifier", 0, "system"],
+            field_location="identifier[0].system",
             valid_items_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_identifier_system(self):
         """Test pre_validate_identifier_system rejects invalid values when in a model"""
         GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="identifier[0] -> system",
-            keys_to_access_value=["identifier", 0, "system"],
+            self, field_location="identifier[0].system"
         )
 
     def test_model_pre_validate_valid_identifier_type_coding(self):
         """Test pre_validate_identifier_type_coding accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["identifier", 0, "type", "coding"],
+            field_location="identifier[0].type.coding",
             valid_items_to_test=[[{"display": "test_display"}]],
         )
 
     def test_model_pre_validate_invalid_identifier_type_coding(self):
         """Test pre_validate_identifier_type_coding rejects invalid values when in a model"""
-
-        valid_list_element = {"display": "test_display"}
-        invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
         GenericValidatorModelTests.list_invalid(
             self,
-            field_location="identifier[0] -> type -> coding",
-            keys_to_access_value=["identifier", 0, "type", "coding"],
+            field_location="identifier[0].type.coding",
             predefined_list_length=1,
-            invalid_length_lists_to_test=invalid_length_lists_to_test,
+            valid_list_element={"display": "test_display"},
         )
 
     def test_model_pre_validate_valid_identifier_type_coding_display(self):
         """Test pre_validate_identifier_type_coding_display accepts valid values when in a model"""
         GenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["identifier", 0, "type", "coding", 0, "display"],
+            field_location="identifier[0].type.coding[0].display",
             valid_items_to_test=["test"],
         )
 
@@ -215,7 +192,5 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         Test pre_validate_identifier_type_coding_display rejects invalid values when in a model
         """
         GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="identifier[0] -> type -> coding[0] -> display",
-            keys_to_access_value=["identifier", 0, "type", "coding", 0, "display"],
+            self, field_location="identifier[0].type.coding[0].display"
         )

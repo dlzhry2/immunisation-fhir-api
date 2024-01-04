@@ -32,14 +32,14 @@ class PatientValidator:
     @classmethod
     def pre_validate_name_given(cls, values: dict) -> dict:
         """
-        Pre-validate that, if name[0] -> given (person_forename) exists, then it is a
+        Pre-validate that, if name[0].given (legacy CSV field name: PERSON_FORENAME) exists, then it is a
         an array containing a single non-empty string
         """
         try:
             name_given = values["name"][0]["given"]
             pre_validate_list(
                 name_given,
-                "name[0] -> given",
+                "name[0].given",
                 defined_length=1,
                 elements_are_strings=True,
             )
@@ -51,13 +51,13 @@ class PatientValidator:
     @classmethod
     def pre_validate_name_family(cls, values: dict) -> dict:
         """
-        Pre-validate that, if name[0] -> family (person_surname) exists,
+        Pre-validate that, if name[0].family (legacy CSV field name: PERSON_SURNAME) exists,
         then it is a non-empty string
         """
 
         try:
             name_family = values["name"][0]["family"]
-            pre_validate_string(name_family, "name[0] -> family")
+            pre_validate_string(name_family, "name[0].family")
         except KeyError:
             pass
 
@@ -66,8 +66,8 @@ class PatientValidator:
     @classmethod
     def pre_validate_birth_date(cls, values: dict) -> dict:
         """
-        Pre-validate that, if birthDate (person_DOB) exists, then it is a string in the format
-        YYYY-MM-DD, representing a valid date
+        Pre-validate that, if birthDate (legacy CSV field name: PERSON_DOB) exists, then it is a
+        string in the format YYYY-MM-DD, representing a valid date
         """
 
         try:
@@ -81,8 +81,8 @@ class PatientValidator:
     @classmethod
     def pre_validate_gender(cls, values: dict) -> dict:
         """
-        Pre-validate that, if gender (person_gender_code) exists, then it is a string, which is one
-        of the following: male, female, other, unknown
+        Pre-validate that, if gender (legacy CSV field name: PERSON_GENDER_CODE) exists,
+        then it is a string, which is one of the following: male, female, other, unknown
         """
 
         try:
@@ -107,14 +107,14 @@ class PatientValidator:
     @classmethod
     def pre_validate_address_postal_code(cls, values: dict) -> dict:
         """
-        Pre-validate that, if  address -> postalCode  (person_postcode) exists, is a non-empty
-        string, separated into two parts by a single space
+        Pre-validate that, if address[0].postalCode (legacy CSV field name: PERSON_POSTCODE)
+        exists, then it is a non-empty string, separated into two parts by a single space
         """
 
         try:
             address_postal_code = values["address"][0]["postalCode"]
             pre_validate_string(
-                address_postal_code, "address -> postalCode", is_postal_code=True
+                address_postal_code, "address[0].postalCode", is_postal_code=True
             )
         except KeyError:
             pass
