@@ -7,10 +7,11 @@ The tests are in a separate module so in order for them to see each other we nee
 ### IntelliJ
 
 - Open the root repo directory in IntelliJ.
-- Set up the interpreter as you see fit.
-  - One option is direnv and pyenv with an `.envrc` of `layout pyenv 3.8.10`.  
-    Then add an existing virtualenv SDK in the project settings for `.direnv/python-3.8.10/bin/python`
-- Add a new module of the `lambda_code` directory to the Project Structure. Add the `src` and `tests` directories as sources.
+- Set up the SDK as you see fit.
+  - One option is direnv and pyenv with an `.envrc` of `layout pyenv 3.8.10`.
+    Then add an existing virtualenv SDK in the project settings for `.direnv/python-3.8.10/bin/python`  
+    You likely want separate environments for the root and for `lambda_code`.
+- Add a new module of the `lambda_code` directory to the Project Structure, using the SDK created above. Add the `src` and `tests` directories as sources.
 
 
 ### VS Code
