@@ -9,11 +9,9 @@ from jsonpath_ng.ext import parse
 
 from models.fhir_immunization import ImmunizationValidator
 from .utils import (
-    GenericValidatorModelTests,
     JsonPathGenericValidatorModelTests,
     generate_field_location_for_questionnnaire_response,
     generate_field_location_for_extension,
-    set_in_dict,
 )
 
 
@@ -51,25 +49,12 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         # Ensure that good data is not inadvertently amended by the tests
         self.assertEqual(self.untouched_json_data, self.json_data)
 
-    def test_json_path(self):
-        "This test is only for debugging issues with json path and can be deleted if not needed"
-        json_data = deepcopy(self.json_data)
-        i = 1
-        jsonpath_expression = parse(
-            f"$.contained[?(@.resourceType=='QuestionnaireResponse')].item[{i}].answer"
-        )
-        value = jsonpath_expression.find(json_data)
-        jsonpath_expression.update(json_data, "IT WORKS!")
-        ic(json_data)
-        for match in value:
-            ic(match.value)
-
     def test_model_pre_validate_valid_patient_identifier_value(self):
         """Test pre_validate_patient_identifier_value accepts valid values when in a model"""
 
         JsonPathGenericValidatorModelTests.valid(
             self,
-            field_location="$.patient.identifier.value",
+            field_location="patient.identifier.value",
             valid_items_to_test=["1234567890"],
         )
 
@@ -79,7 +64,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         # Test invalid data types and invalid length strings
         JsonPathGenericValidatorModelTests.string_invalid(
             self,
-            field_location="$.patient.identifier.value",
+            field_location="patient.identifier.value",
             defined_length=10,
             invalid_length_strings_to_test=["123456789", "12345678901", ""],
         )
@@ -95,7 +80,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 self.validator.validate(invalid_json_data)
 
             self.assertTrue(
-                "$.patient.identifier.value must not contain spaces (type=value_error)"
+                "patient.identifier.value must not contain spaces (type=value_error)"
                 in str(error.exception)
             )
 
@@ -109,7 +94,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
         JsonPathGenericValidatorModelTests.valid(
             self,
-            field_location="$.occurrenceDateTime",
+            field_location="occurrenceDateTime",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -117,7 +102,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         """Test pre_validate_occurrence_date_time rejects invalid values when in a model"""
         JsonPathGenericValidatorModelTests.date_time_invalid(
             self,
-            field_location="$.occurrenceDateTime",
+            field_location="occurrenceDateTime",
             is_occurrence_date_time=True,
         )
 
@@ -128,7 +113,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ]
         JsonPathGenericValidatorModelTests.valid(
             self,
-            field_location="$.contained",
+            field_location="contained",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -142,7 +127,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
         JsonPathGenericValidatorModelTests.list_invalid(
             self,
-            field_location="$.contained",
+            field_location="contained",
             predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
         )
@@ -157,7 +142,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         for i in range(12):
             JsonPathGenericValidatorModelTests.valid(
                 self,
-                field_location="$.contained[?(@.resourceType=='QuestionnaireResponse')]"
+                field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
                 + f".item[{i}].answer",
                 valid_items_to_test=valid_items_to_test,
             )
@@ -172,7 +157,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         for i in range(12):
             JsonPathGenericValidatorModelTests.list_invalid(
                 self,
-                field_location="$.contained[?(@.resourceType=='QuestionnaireResponse')]"
+                field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
                 + f".item[{i}].answer",
                 predefined_list_length=1,
                 invalid_length_lists_to_test=invalid_length_lists_to_test,
@@ -180,87 +165,40 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_valid_questionnaire_site_code_code(self):
         """Test pre_validate_questionnaire_site_code_code accepts valid values when in a model"""
-        keys_to_access_value = [
-            "contained",
-            0,
-            "item",
-            0,
-            "answer",
-            0,
-            "valueCoding",
-            "code",
-        ]
-
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=keys_to_access_value,
+            field_location=generate_field_location_for_questionnnaire_response(
+                link_id="SiteCode", field_type="code"
+            ),
             valid_items_to_test=["B0C4P"],
         )
 
     def test_model_pre_validate_invalid_questionnaire_site_code_code(self):
         """Test pre_validate_questionnaire_site_code_code rejects invalid values when in a model"""
-
-        field_location = generate_field_location_for_questionnnaire_response(
-            link_id="SiteCode", field_type="code"
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self,
+            field_location=generate_field_location_for_questionnnaire_response(
+                link_id="SiteCode", field_type="code"
+            ),
         )
 
-        keys_to_access_value = [
-            "contained",
-            0,
-            "item",
-            0,
-            "answer",
-            0,
-            "valueCoding",
-            "code",
-        ]
-        GenericValidatorModelTests.string_invalid(
+    def test_model_pre_validate_valid_site_name_code(self):
+        """Test pre_validate_site_name_code accepts valid values when in a model"""
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            field_location=field_location,
-            keys_to_access_value=keys_to_access_value,
-        )
-
-    def test_model_pre_validate_valid_questionnaire_site_name_code(self):
-        """Test pre_validate_questionnaire_site_name_code accepts valid values when in a model"""
-
-        keys_to_access_value = [
-            "contained",
-            0,
-            "item",
-            1,
-            "answer",
-            0,
-            "valueCoding",
-            "code",
-        ]
-
-        GenericValidatorModelTests.valid(
-            self,
-            keys_to_access_value=keys_to_access_value,
+            field_location=generate_field_location_for_questionnnaire_response(
+                link_id="SiteName", field_type="code"
+            ),
             valid_items_to_test=["dummy"],
         )
 
-    def test_model_pre_validate_invalid_questionnaire_site_name_code(self):
-        """Test pre_validate_questionnaire_site_code_code rejects invalid values when in a model"""
-
-        field_location = generate_field_location_for_questionnnaire_response(
-            link_id="SiteName", field_type="code"
-        )
-
-        keys_to_access_value = [
-            "contained",
-            0,
-            "item",
-            1,
-            "answer",
-            0,
-            "valueCoding",
-            "code",
-        ]
-        GenericValidatorModelTests.string_invalid(
+    def test_model_pre_validate_invalid_site_name_code(self):
+        """Test pre_validate_site_code_code rejects invalid values when in a model"""
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
-            field_location=field_location,
-            keys_to_access_value=keys_to_access_value,
+            field_location=generate_field_location_for_questionnnaire_response(
+                link_id="SiteName", field_type="code"
+            ),
         )
 
     def test_model_pre_validate_valid_identifier(self):
@@ -271,12 +209,12 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                     "system": "https://supplierABC/identifiers/vacc",
                     "value": "ACME-vacc123456",
                 }
-            ]
+            ],
         ]
 
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["identifier"],
+            field_location="identifier",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -288,10 +226,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             "value": "ACME-vacc123456",
         }
         invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
-        GenericValidatorModelTests.list_invalid(
+        JsonPathGenericValidatorModelTests.list_invalid(
             self,
             field_location="identifier",
-            keys_to_access_value=["identifier"],
             predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
         )
@@ -304,19 +241,18 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             "ACME-CUSTOMER1-vacc123456",
         ]
 
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["identifier", 0, "value"],
+            field_location="identifier[0].value",
             valid_items_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_identifier_value(self):
         """Test pre_validate_identifier_value rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
-            field_location="identifier[0] -> value",
-            keys_to_access_value=["identifier", 0, "value"],
+            field_location="identifier[0].value",
         )
 
     def test_model_pre_validate_valid_identifier_system(self):
@@ -326,34 +262,32 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             "https://supplierABC/ODSCode_NKO41/identifiers/vacc",
         ]
 
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["identifier", 0, "system"],
+            field_location="identifier[0].system",
             valid_items_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_identifier_system(self):
         """Test pre_validate_identifier_system rejects invalid values when in a model"""
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
-            field_location="identifier[0] -> system",
-            keys_to_access_value=["identifier", 0, "system"],
+            field_location="identifier[0].system",
         )
 
     def test_model_pre_validate_valid_status(self):
         """Test pre_validate_status accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["status"],
+            field_location="status",
             valid_items_to_test=["completed", "entered-in-error", "not-done"],
         )
 
     def test_model_pre_validate_invalid_status(self):
         """Test pre_validate_status rejects invalid values when in a model"""
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
             field_location="status",
-            keys_to_access_value=["status"],
             predefined_values=("completed", "entered-in-error", "not-done"),
             invalid_strings_to_test=["1", "complete", "enteredinerror"],
             is_mandatory_fhir=True,
@@ -361,37 +295,35 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_model_pre_validate_valid_recorded(self):
         """Test pre_validate_recorded accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["recorded"],
+            field_location="recorded",
             valid_items_to_test=["2000-01-01", "1933-12-31"],
         )
 
     def test_model_pre_validate_invalid_recorded(self):
         """Test pre_validate_recorded rejects invalid values when in a model"""
-        GenericValidatorModelTests.date_invalid(
-            self, field_location="recorded", keys_to_access_value=["recorded"]
-        )
+        JsonPathGenericValidatorModelTests.date_invalid(self, field_location="recorded")
 
     def test_model_pre_validate_valid_primary_source(self):
         """Test pre_validate_primary_source accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["primarySource"],
+            field_location="primarySource",
             valid_items_to_test=[True, False],
         )
 
     def test_model_pre_validate_invalid_primary_source(self):
         """Test pre_validate_primary_source rejects invalid values when in a model"""
-        GenericValidatorModelTests.boolean_invalid(
-            self, field_location="primarySource", keys_to_access_value=["primarySource"]
+        JsonPathGenericValidatorModelTests.boolean_invalid(
+            self, field_location="primarySource"
         )
 
     def test_model_pre_validate_valid_report_origin_text(self):
         """Test pre_validate_report_origin_text accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["reportOrigin", "text"],
+            field_location="reportOrigin.text",
             valid_items_to_test=[
                 "sample",
                 "Free text description of organisation recording the event",
@@ -405,10 +337,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + "characters to test whether the validator is working well"
         ]
 
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
-            field_location="reportOrigin -> text",
-            keys_to_access_value=["reportOrigin", "text"],
+            field_location="reportOrigin.text",
             max_length=100,
             invalid_length_strings_to_test=invalid_length_strings_to_test,
         )
@@ -424,9 +355,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
         # Check that both of the relevant coding fields in the sample data are accepted when valid
         for i in range(2):
-            GenericValidatorModelTests.valid(
+            JsonPathGenericValidatorModelTests.valid(
                 self,
-                keys_to_access_value=["extension", i, "valueCodeableConcept", "coding"],
+                field_location=f"extension[{i}].valueCodeableConcept.coding",
                 valid_items_to_test=valid_items_to_test,
             )
 
@@ -446,15 +377,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         # Check that both of the 2 relevant coding fields in the sample data are rejected when
         # invalid
         for i in range(2):
-            GenericValidatorModelTests.list_invalid(
+            JsonPathGenericValidatorModelTests.list_invalid(
                 self,
-                field_location="extension[*] -> valueCodeableConcept -> coding",
-                keys_to_access_value=[
-                    "extension",
-                    i,
-                    "valueCodeableConcept",
-                    "coding",
-                ],
+                field_location=f"extension[{i}].valueCodeableConcept.coding",
                 predefined_list_length=1,
                 invalid_length_lists_to_test=invalid_length_lists_to_test,
             )
@@ -462,18 +387,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
     def test_model_pre_validate_valid_vaccination_procedure_code(self):
         """Test pre_validate_vaccination_procedure_code accepts valid values when in a model"""
 
-        keys_to_access_value = [
-            "extension",
-            0,
-            "valueCodeableConcept",
-            "coding",
-            0,
-            "code",
-        ]
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+            field_type="code",
+        )
 
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=keys_to_access_value,
+            field_location=field_location,
             valid_items_to_test=["dummy"],
         )
 
@@ -485,35 +406,22 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_type="code",
         )
 
-        keys_to_access_value = [
-            "extension",
-            0,
-            "valueCodeableConcept",
-            "coding",
-            0,
-            "code",
-        ]
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
             field_location=field_location,
-            keys_to_access_value=keys_to_access_value,
         )
 
     def test_model_pre_validate_valid_vaccination_procedure_display(self):
         """Test pre_validate_vaccination_procedure_display accepts valid values when in a model"""
 
-        keys_to_access_value = [
-            "extension",
-            0,
-            "valueCodeableConcept",
-            "coding",
-            0,
-            "display",
-        ]
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+            field_type="display",
+        )
 
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=keys_to_access_value,
+            field_location=field_location,
             valid_items_to_test=["dummy"],
         )
 
@@ -525,35 +433,22 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_type="display",
         )
 
-        keys_to_access_value = [
-            "extension",
-            0,
-            "valueCodeableConcept",
-            "coding",
-            0,
-            "display",
-        ]
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
             field_location=field_location,
-            keys_to_access_value=keys_to_access_value,
         )
 
     def test_model_pre_validate_valid_vaccination_situation_code(self):
         """Test pre_validate_vaccination_situation_code accepts valid values when in a model"""
 
-        keys_to_access_value = [
-            "extension",
-            1,
-            "valueCodeableConcept",
-            "coding",
-            0,
-            "code",
-        ]
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+            field_type="code",
+        )
 
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=keys_to_access_value,
+            field_location=field_location,
             valid_items_to_test=["dummy"],
         )
 
@@ -565,35 +460,22 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_type="code",
         )
 
-        keys_to_access_value = [
-            "extension",
-            1,
-            "valueCodeableConcept",
-            "coding",
-            0,
-            "code",
-        ]
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
             field_location=field_location,
-            keys_to_access_value=keys_to_access_value,
         )
 
     def test_model_pre_validate_valid_vaccination_situation_display(self):
         """Test pre_validate_vaccination_situation_display accepts valid values when in a model"""
 
-        keys_to_access_value = [
-            "extension",
-            1,
-            "valueCodeableConcept",
-            "coding",
-            0,
-            "display",
-        ]
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+            field_type="display",
+        )
 
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=keys_to_access_value,
+            field_location=field_location,
             valid_items_to_test=["dummy"],
         )
 
@@ -605,18 +487,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_type="display",
         )
 
-        keys_to_access_value = [
-            "extension",
-            1,
-            "valueCodeableConcept",
-            "coding",
-            0,
-            "display",
-        ]
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
             field_location=field_location,
-            keys_to_access_value=keys_to_access_value,
         )
 
     def test_model_pre_validate_valid_status_reason_coding(self):
@@ -630,9 +503,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 }
             ]
         ]
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["statusReason", "coding"],
+            field_location="statusReason.coding",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -645,46 +518,42 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         }
         invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
-        GenericValidatorModelTests.list_invalid(
+        JsonPathGenericValidatorModelTests.list_invalid(
             self,
-            field_location="statusReason -> coding",
-            keys_to_access_value=["statusReason", "coding"],
+            field_location="statusReason.coding",
             predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
         )
 
     def test_model_pre_validate_valid_status_reason_coding_code(self):
         """Test pre_validate_status_reason_coding_code accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["statusReason", "coding", 0, "code"],
-            valid_items_to_test="dummy",
+            field_location="statusReason.coding[0].code",
+            valid_items_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_status_reason_coding_code(self):
         """Test pre_validate_status_reason_coding_code rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
-            field_location="statusReason -> coding[0] -> code",
-            keys_to_access_value=["statusReason", "coding", 0, "code"],
+            field_location="statusReason.coding[0].code",
         )
 
     def test_model_pre_validate_valid_status_reason_coding_display(self):
         """Test pre_validate_status_reason_coding_display accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["statusReason", "coding", 0, "display"],
-            valid_items_to_test="dummy",
+            field_location="statusReason.coding[0].display",
+            valid_items_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_status_reason_coding_display(self):
         """Test pre_validate_status_reason_coding_display rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="statusReason -> coding[0] -> display",
-            keys_to_access_value=["statusReason", "coding", 0, "display"],
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self, field_location="statusReason.coding[0].display"
         )
 
     def test_model_pre_validate_valid_protocol_applied(self):
@@ -697,12 +566,12 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                         {"coding": [{"code": "DEF456"}]},
                     ],
                     "doseNumberPositiveInt": 1,
-                }
+                },
             ]
         ]
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["protocolApplied"],
+            field_location="protocolApplied",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -717,10 +586,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         }
         invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
-        GenericValidatorModelTests.list_invalid(
+        JsonPathGenericValidatorModelTests.list_invalid(
             self,
             field_location="protocolApplied",
-            keys_to_access_value=["protocolApplied"],
             predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
         )
@@ -732,9 +600,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_protocol_applied_dose_number_positive_int accepts valid values when
         in a model
         """
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["protocolApplied", 0, "doseNumberPositiveInt"],
+            field_location="protocolApplied[0].doseNumberPositiveInt",
             valid_items_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
         )
 
@@ -746,10 +614,8 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         model
         """
         # Test invalid data types and non-positive integers
-        GenericValidatorModelTests.positive_integer_invalid(
-            self,
-            field_location="protocolApplied[0] -> doseNumberPositiveInt",
-            keys_to_access_value=["protocolApplied", 0, "doseNumberPositiveInt"],
+        JsonPathGenericValidatorModelTests.positive_integer_invalid(
+            self, field_location="protocolApplied[0].doseNumberPositiveInt"
         )
 
         # Test positive integers outside of the range 1 to 9
@@ -757,14 +623,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         invalid_json_data = deepcopy(self.json_data)
 
         for invalid_value in invalid_values:
-            invalid_json_data["protocolApplied"][0][
-                "doseNumberPositiveInt"
-            ] = invalid_value
+            invalid_json_data = parse(
+                "protocolApplied[0].doseNumberPositiveInt"
+            ).update(invalid_json_data, invalid_value)
             with self.assertRaises(ValidationError) as error:
                 self.validator.validate(invalid_json_data)
 
             self.assertTrue(
-                "protocolApplied[0] -> doseNumberPositiveInt must be an integer in the range 1 to "
+                "protocolApplied[0].doseNumberPositiveInt must be an integer in the range 1 to "
                 + "9 (type=value_error)"
                 in str(error.exception)
             )
@@ -777,12 +643,12 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                     "system": "http://snomed.info/sct",
                     "code": "ABC123",
                     "display": "test",
-                }
+                },
             ]
         ]
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["vaccineCode", "coding"],
+            field_location="vaccineCode.coding",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -795,74 +661,64 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         }
         invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
-        GenericValidatorModelTests.list_invalid(
+        JsonPathGenericValidatorModelTests.list_invalid(
             self,
-            field_location="vaccineCode -> coding",
-            keys_to_access_value=["vaccineCode", "coding"],
+            field_location="vaccineCode.coding",
             predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
         )
 
     def test_model_pre_validate_valid_vaccine_code_coding_code(self):
         """Test pre_validate_vaccine_code_coding_code accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["vaccineCode", "coding", 0, "code"],
-            valid_items_to_test="dummy",
+            field_location="vaccineCode.coding[0].code",
+            valid_items_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_vaccine_code_coding_code(self):
         """Test pre_validate_vaccine_code_coding_code rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="vaccineCode -> coding[0] -> code",
-            keys_to_access_value=["vaccineCode", "coding", 0, "code"],
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self, field_location="vaccineCode.coding[0].code"
         )
 
     def test_model_pre_validate_valid_vaccine_code_coding_display(self):
         """Test pre_validate_vaccine_code_coding_display accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["vaccineCode", "coding", 0, "display"],
-            valid_items_to_test="dummy",
+            field_location="vaccineCode.coding[0].display",
+            valid_items_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_vaccine_code_coding_display(self):
         """Test pre_validate_vaccine_code_coding_display rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="vaccineCode -> coding[0] -> display",
-            keys_to_access_value=["vaccineCode", "coding", 0, "display"],
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self, field_location="vaccineCode.coding[0].display"
         )
 
     def test_model_pre_validate_valid_manufacturer_display(self):
         """Test pre_validate_manufacturer_display accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["manufacturer", "display"],
-            valid_items_to_test="dummy",
+            field_location="manufacturer.display",
+            valid_items_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_manufacturer_display(self):
         """Test pre_validate_manufacturer_display rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="manufacturer -> display",
-            keys_to_access_value=["manufacturer", "display"],
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self, field_location="manufacturer.display"
         )
 
     def test_model_pre_validate_valid_lot_number(self):
         """Test pre_validate_lot_number accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["lotNumber"],
-            valid_items_to_test=[
-                "sample",
-                "0123456789101112",
-            ],
+            field_location="lotNumber",
+            valid_items_to_test=["sample", "0123456789101112"],
         )
 
     def test_model_pre_validate_invalid_lot_number(self):
@@ -872,38 +728,42 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + "characters to test whether the validator is working well"
         ]
 
-        GenericValidatorModelTests.string_invalid(
+        JsonPathGenericValidatorModelTests.string_invalid(
             self,
             field_location="lotNumber",
-            keys_to_access_value=["lotNumber"],
             max_length=100,
             invalid_length_strings_to_test=invalid_length_strings_to_test,
         )
 
     def test_model_pre_validate_valid_expiration_date(self):
         """Test pre_validate_expiration_date accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["expirationDate"],
+            field_location="expirationDate",
             valid_items_to_test=["2030-01-01", "2003-12-31"],
         )
 
     def test_model_pre_validate_invalid_expiration_date(self):
         """Test pre_validate_expiration_date rejects invalid values when in a model"""
-        GenericValidatorModelTests.date_invalid(
+        JsonPathGenericValidatorModelTests.date_invalid(
             self,
             field_location="expirationDate",
-            keys_to_access_value=["expirationDate"],
         )
 
     def test_model_pre_validate_valid_site_coding(self):
         """Test pre_validate_site_coding accepts valid values when in a model"""
         valid_items_to_test = [
-            [{"system": "http://snomed.info/sct", "code": "LA", "display": "left arm"}]
+            [
+                {
+                    "system": "http://snomed.info/sct",
+                    "code": "LA",
+                    "display": "left arm",
+                },
+            ]
         ]
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["site", "coding"],
+            field_location="site.coding",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -916,46 +776,41 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         }
         invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
-        GenericValidatorModelTests.list_invalid(
+        JsonPathGenericValidatorModelTests.list_invalid(
             self,
-            field_location="site -> coding",
-            keys_to_access_value=["site", "coding"],
+            field_location="site.coding",
             predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
         )
 
     def test_model_pre_validate_valid_site_coding_code(self):
         """Test pre_validate_site_coding_code accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["site", "coding", 0, "code"],
-            valid_items_to_test="dummy",
+            field_location="site.coding[0].code",
+            valid_items_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_site_coding_code(self):
         """Test pre_validate_site_coding_code rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="site -> coding[0] -> code",
-            keys_to_access_value=["site", "coding", 0, "code"],
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self, field_location="site.coding[0].code"
         )
 
     def test_model_pre_validate_valid_site_coding_display(self):
         """Test pre_validate_site_coding_display accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["site", "coding", 0, "display"],
-            valid_items_to_test="dummy",
+            field_location="site.coding[0].display",
+            valid_items_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_site_coding_display(self):
         """Test pre_validate_site_coding_display rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="site -> coding[0] -> display",
-            keys_to_access_value=["site", "coding", 0, "display"],
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self, field_location="site.coding[0].display"
         )
 
     def test_model_pre_validate_valid_route_coding(self):
@@ -966,12 +821,12 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                     "system": "http://snomed.info/sct",
                     "code": "IM",
                     "display": "injection, intramuscular",
-                }
+                },
             ]
         ]
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["route", "coding"],
+            field_location="route.coding",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -984,46 +839,41 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         }
         invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
-        GenericValidatorModelTests.list_invalid(
+        JsonPathGenericValidatorModelTests.list_invalid(
             self,
-            field_location="route -> coding",
-            keys_to_access_value=["route", "coding"],
+            field_location="route.coding",
             predefined_list_length=1,
             invalid_length_lists_to_test=invalid_length_lists_to_test,
         )
 
     def test_model_pre_validate_valid_route_coding_code(self):
         """Test pre_validate_route_coding_code accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["route", "coding", 0, "code"],
-            valid_items_to_test="dummy",
+            field_location="route.coding[0].code",
+            valid_items_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_route_coding_code(self):
         """Test pre_validate_route_coding_code rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="route -> coding[0] -> code",
-            keys_to_access_value=["route", "coding", 0, "code"],
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self, field_location="route.coding[0].code"
         )
 
     def test_model_pre_validate_valid_route_coding_display(self):
         """Test pre_validate_route_coding_display accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["route", "coding", 0, "display"],
-            valid_items_to_test="dummy",
+            field_location="route.coding[0].display",
+            valid_items_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_route_coding_display(self):
         """Test pre_validate_route_coding_display rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="route -> coding[0] -> display",
-            keys_to_access_value=["route", "coding", 0, "display"],
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self, field_location="route.coding[0].display"
         )
 
     def test_model_pre_validate_valid_dose_quantity_value(self):
@@ -1035,12 +885,12 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             Decimal("0.1"),  # 1 decimal place
             Decimal("100.52"),  # 2 decimal places
             Decimal("32.430"),  # 3 decimal places
-            Decimal("1.1234"),  # 4 decimal places
+            Decimal("1.1234"),  # 4 decimal places,
         ]
 
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["doseQuantity", "value"],
+            field_location="doseQuantity.value",
             valid_items_to_test=valid_items_to_test,
         )
 
@@ -1066,70 +916,70 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ]
 
         for invalid_data_type in invalid_data_types_to_test:
-            set_in_dict(invalid_json_data, ["doseQuantity", "value"], invalid_data_type)
+            invalid_json_data = parse("doseQuantity.value").update(
+                invalid_json_data, invalid_data_type
+            )
             with self.assertRaises(ValidationError) as error:
                 self.validator.validate(invalid_json_data)
 
             self.assertTrue(
-                "doseQuantity -> value must be a number (type=type_error)"
+                "doseQuantity.value must be a number (type=type_error)"
                 in str(error.exception)
             )
 
         # Test Decimals with more than FOUR decimal places
-        set_in_dict(invalid_json_data, ["doseQuantity", "value"], Decimal("1.12345"))
+        invalid_json_data = parse("doseQuantity.value").update(
+            invalid_json_data, Decimal("1.12345")
+        )
         with self.assertRaises(ValidationError) as error:
             self.validator.validate(invalid_json_data)
 
         self.assertTrue(
-            "doseQuantity -> value must be a number with a maximum of 4 decimal places "
+            "doseQuantity.value must be a number with a maximum of 4 decimal places "
             + "(type=value_error)"
             in str(error.exception)
         )
 
     def test_model_pre_validate_valid_dose_quantity_code(self):
         """Test pre_validate_dose_quantity_code accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["doseQuantity", "code"],
-            valid_items_to_test="ABC123",
+            field_location="doseQuantity.code",
+            valid_items_to_test=["ABC123"],
         )
 
     def test_model_pre_validate_invalid_dose_quantity_code(self):
         """Test pre_validate_dose_quantity_code rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="doseQuantity -> code",
-            keys_to_access_value=["doseQuantity", "code"],
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self, field_location="doseQuantity.code"
         )
 
     def test_model_pre_validate_valid_dose_quantity_unit(self):
         """Test pre_validate_dose_quantity_unit accepts valid values when in a model"""
-        GenericValidatorModelTests.valid(
+        JsonPathGenericValidatorModelTests.valid(
             self,
-            keys_to_access_value=["doseQuantity", "unit"],
-            valid_items_to_test="Millilitre",
+            field_location="doseQuantity.unit",
+            valid_items_to_test=["Millilitre"],
         )
 
     def test_model_pre_validate_invalid_dose_quantity_unit(self):
         """Test pre_validate_dose_quantity_unit rejects invalid values when in a model"""
 
-        GenericValidatorModelTests.string_invalid(
-            self,
-            field_location="doseQuantity -> unit",
-            keys_to_access_value=["doseQuantity", "unit"],
+        JsonPathGenericValidatorModelTests.string_invalid(
+            self, field_location="doseQuantity.unit"
         )
 
     def test_model_pre_validate_valid_reason_code_codings(self):
         """Test pre_validate_reason_code_codings accepts valid values when in a model"""
         valid_items_to_test = [[{"code": "ABC123", "display": "test"}]]
 
-        # Check that both of the reasonCode[*] -> coding fields in the sample data are accepted when
-        #  valid
+        # Check that both of the reasonCode[{index}].coding fields in the sample data are accepted
+        # when valid
         for i in range(2):
-            GenericValidatorModelTests.valid(
+            JsonPathGenericValidatorModelTests.valid(
                 self,
-                keys_to_access_value=["reasonCode", i, "coding"],
+                field_location=f"reasonCode[{i}].coding",
                 valid_items_to_test=valid_items_to_test,
             )
 
@@ -1139,61 +989,56 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         valid_list_element = {"code": "ABC123", "display": "test"}
         invalid_length_lists_to_test = [[valid_list_element, valid_list_element]]
 
-        # Check that both of the 2 reasonCode[*] -> coding fields in the sample data are rejected
+        # Check that both of the 2 reasonCode[{index}].coding fields in the sample data are rejected
         # when invalid
         for i in range(2):
-            GenericValidatorModelTests.list_invalid(
+            JsonPathGenericValidatorModelTests.list_invalid(
                 self,
-                field_location="reasonCode[*] -> coding",
-                keys_to_access_value=["reasonCode", i, "coding"],
+                field_location=f"reasonCode[{i}].coding",
                 predefined_list_length=1,
                 invalid_length_lists_to_test=invalid_length_lists_to_test,
             )
 
-    def test_model_pre_validate_valid_reason_code_coding_code(self):
-        """Test pre_validate_reason_code_coding_code accepts valid values when in a model"""
+    def test_model_pre_validate_valid_reason_code_coding_codes(self):
+        """Test pre_validate_reason_code_coding_codes accepts valid values when in a model"""
 
-        # Check that both of the reasonCode[*] -> coding -> code fields in the sample data are
+        # Check that both of the reasonCode[{index}].coding[0].code fields in the sample data are
         # accepted when valid
         for i in range(2):
-            GenericValidatorModelTests.valid(
+            JsonPathGenericValidatorModelTests.valid(
                 self,
-                keys_to_access_value=["reasonCode", i, "coding", 0, "code"],
-                valid_items_to_test="ABC123",
+                field_location=f"reasonCode[{i}].coding[0].code",
+                valid_items_to_test=["ABC123"],
             )
 
-    def test_model_pre_validate_invalid_reason_code_coding_code(self):
-        """Test pre_validate_reason_code_coding_code rejects invalid values when in a model"""
+    def test_model_pre_validate_invalid_reason_code_coding_codes(self):
+        """Test pre_validate_reason_code_coding_codes rejects invalid values when in a model"""
 
-        # Check that both of the reasonCode[*] -> coding -> code fields in the sample data are
+        # Check that both of the reasonCode[{index}].coding[0].code fields in the sample data are
         # rejected when invalid
         for i in range(2):
-            GenericValidatorModelTests.string_invalid(
-                self,
-                field_location="reasonCode[*] -> coding[0] -> code",
-                keys_to_access_value=["reasonCode", i, "coding", 0, "code"],
+            JsonPathGenericValidatorModelTests.string_invalid(
+                self, field_location=f"reasonCode[{i}].coding[0].code"
             )
 
-    def test_model_pre_validate_valid_reason_code_coding_display(self):
-        """Test pre_validate_reason_code_coding_display accepts valid values when in a model"""
+    def test_model_pre_validate_valid_reason_code_coding_displays(self):
+        """Test pre_validate_reason_code_coding_displays accepts valid values when in a model"""
 
-        # Check that both of the reasonCode[*] -> coding -> display fields in the sample data are
+        # Check that both of the reasonCode[{index}].coding[0].display fields in the sample data are
         # accepted when valid
         for i in range(2):
-            GenericValidatorModelTests.valid(
+            JsonPathGenericValidatorModelTests.valid(
                 self,
-                keys_to_access_value=["reasonCode", i, "coding", 0, "display"],
-                valid_items_to_test="ABC123",
+                field_location=f"reasonCode[{i}].coding[0].display",
+                valid_items_to_test=["ABC123"],
             )
 
-    def test_model_pre_validate_invalid_reason_code_coding_display(self):
-        """Test pre_validate_reason_code_coding_display rejects invalid values when in a model"""
+    def test_model_pre_validate_invalid_reason_code_coding_displays(self):
+        """Test pre_validate_reason_code_coding_displays rejects invalid values when in a model"""
 
-        # Check that both of the reasonCode[*] -> coding -> display fields in the sample data are
+        # Check that both of the reasonCode[{index}].coding[0].display fields in the sample data are
         # rejected when invalid
         for i in range(2):
-            GenericValidatorModelTests.string_invalid(
-                self,
-                field_location="reasonCode[*] -> coding[0] -> display",
-                keys_to_access_value=["reasonCode", i, "coding", 0, "display"],
+            JsonPathGenericValidatorModelTests.string_invalid(
+                self, field_location=f"reasonCode[{i}].coding[0].display"
             )

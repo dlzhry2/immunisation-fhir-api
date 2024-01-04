@@ -204,8 +204,8 @@ def get_generic_questionnaire_response_value(
                     return item["answer"][0]["valueCoding"][field_type]
 
     raise KeyError(
-        "contained[0] -> resourceType[QuestionnaireResponse]: "
-        + f"item[*] -> linkId[{link_id}]: answer[0] -> valueCoding -> {field_type} does not exist"
+        "$.contained[?(@.resourceType=='QuestionnaireResponse')]"
+        + f".item[?(@.linkId=='{link_id}')].answer[0].valueCoding.{field_type}"
     )
 
 
@@ -221,6 +221,5 @@ def get_generic_extension_value(
             return record["valueCodeableConcept"]["coding"][0][field_type]
 
     raise KeyError(
-        f"extension[*] -> url[{url}]: "
-        + f"valueCodableConcept -> coding[0] -> {field_type} does not exist"
+        f"$.extension[?(@.url=='{url}')].valueCodeableConcept.coding[0].{field_type} does not exist"
     )

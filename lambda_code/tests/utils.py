@@ -14,8 +14,8 @@ def generate_field_location_for_questionnnaire_response(
 ) -> str:
     """Generate the field location string for questionnaire response items"""
     return (
-        "contained[0] -> resourceType[QuestionnaireResponse]: "
-        + f"item[*] -> linkId[{link_id}]: answer[0] -> valueCoding -> {field_type}"
+        "contained[?(@.resourceType=='QuestionnaireResponse')]"
+        + f".item[?(@.linkId=='{link_id}')].answer[0].valueCoding.{field_type}"
     )
 
 
@@ -23,10 +23,7 @@ def generate_field_location_for_extension(
     url: str, field_type: Literal["code", "display", "system"]
 ) -> str:
     """Generate the field location string for extension items"""
-    return (
-        f"extension[*] -> url[{url}]: "
-        + f"valueCodeableConcept -> coding[0] -> {field_type}"
-    )
+    return f"extension[?(@.url=='{url}')].valueCodeableConcept.coding[0].{field_type}"
 
 
 def get_from_dict(data_dict, map_list):
