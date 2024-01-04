@@ -1,3 +1,4 @@
+import traceback
 import uuid
 
 from fhir_controller import FhirController, make_controller
@@ -10,8 +11,10 @@ def create_imms_handler(event, context):
 
 def create_immunization(event, controller: FhirController):
     try:
+        print(event)
         return controller.create_immunization(event)
     except Exception as e:
+        print(traceback.format_exc())
         exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
                                              code=Code.server_error,
                                              diagnostics=str(e))
