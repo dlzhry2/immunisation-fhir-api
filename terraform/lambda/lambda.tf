@@ -10,6 +10,8 @@ module "lambda_function_container_image" {
     image_uri    = var.image_uri
     package_type = "Image"
     architectures = ["x86_64"]
+    timeout = 6
+    memory_size = 1024
 
     environment_variables = var.environments
     image_config_command = ["${var.function_name}_handler.${var.function_name}_handler"]
