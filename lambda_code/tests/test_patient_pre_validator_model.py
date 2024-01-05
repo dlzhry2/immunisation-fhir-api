@@ -9,15 +9,7 @@ from .utils import ValidatorModelTests
 
 
 class TestPatientModelPreValidationRules(unittest.TestCase):
-    """
-    Test patient pre validation rules on the model
-
-    Notes:-
-    TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
-    this happens, the error message is suffixed with the type of error e.g. type_error or
-    value_error. This is why the tests check for the type of error in the error message.
-
-    """
+    """Test patient pre validation rules on the model"""
 
     @classmethod
     def setUpClass(cls):
@@ -47,7 +39,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="name",
-            valid_items_to_test=[[{"family": "Test"}]],
+            valid_values_to_test=[[{"family": "Test"}]],
         )
 
     def test_model_pre_validate_invalid_name(self):
@@ -64,7 +56,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="name[0].given",
-            valid_items_to_test=[["Test"], ["Test test"]],
+            valid_values_to_test=[["Test"], ["Test test"]],
         )
 
     def test_model_pre_validate_invalid_name_given(self):
@@ -82,7 +74,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="name[0].family",
-            valid_items_to_test=["test"],
+            valid_values_to_test=["test"],
         )
 
     def test_model_pre_validate_invalid_name_family(self):
@@ -94,7 +86,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="birthDate",
-            valid_items_to_test=["2000-01-01", "1933-12-31"],
+            valid_values_to_test=["2000-01-01", "1933-12-31"],
         )
 
     def test_model_pre_validate_invalid_birth_date(self):
@@ -106,7 +98,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="gender",
-            valid_items_to_test=["male", "female", "other", "unknown"],
+            valid_values_to_test=["male", "female", "other", "unknown"],
         )
 
     def test_model_pre_validate_invalid_gender(self):
@@ -134,7 +126,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="address",
-            valid_items_to_test=[[{"postalCode": "AA1 1AA"}]],
+            valid_values_to_test=[[{"postalCode": "AA1 1AA"}]],
         )
 
     def test_model_pre_validate_invalid_address(self):
@@ -151,7 +143,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="address[0].postalCode",
-            valid_items_to_test=["AA00 00AA", "A0 0AA"],
+            valid_values_to_test=["AA00 00AA", "A0 0AA"],
         )
 
     def test_model_pre_validate_invalid_address_postal_code(self):

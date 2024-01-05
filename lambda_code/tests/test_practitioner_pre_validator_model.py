@@ -10,15 +10,7 @@ from .utils import ValidatorModelTests
 
 
 class TestPractitionerModelPreValidationRules(unittest.TestCase):
-    """
-    Test practitioner pre validation rules on the model
-
-    Notes:-
-    TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
-    this happens, the error message is suffixed with the type of error e.g. type_error or
-    value_error. This is why the tests check for the type of error in the error message.
-
-    """
+    """Test practitioner pre validation rules on the model"""
 
     @classmethod
     def setUpClass(cls):
@@ -48,7 +40,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="name",
-            valid_items_to_test=[[{"family": "Test"}]],
+            valid_values_to_test=[[{"family": "Test"}]],
         )
 
     def test_model_pre_validate_invalid_name(self):
@@ -65,7 +57,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="name[0].given",
-            valid_items_to_test=[["Test"], ["Test test"]],
+            valid_values_to_test=[["Test"], ["Test test"]],
         )
 
     def test_model_pre_validate_invalid_name_given(self):
@@ -83,7 +75,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="name[0].family",
-            valid_items_to_test=["test"],
+            valid_values_to_test=["test"],
         )
 
     def test_model_pre_validate_invalid_name_family(self):
@@ -104,7 +96,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="identifier",
-            valid_items_to_test=valid_items_to_test,
+            valid_values_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_identifier(self):
@@ -133,7 +125,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="identifier[0].value",
-            valid_items_to_test=valid_items_to_test,
+            valid_values_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_identifier_value(self):
@@ -150,7 +142,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="identifier[0].system",
-            valid_items_to_test=valid_items_to_test,
+            valid_values_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_identifier_system(self):
@@ -162,7 +154,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="identifier[0].type.coding",
-            valid_items_to_test=[[{"display": "test_display"}]],
+            valid_values_to_test=[[{"display": "test_display"}]],
         )
 
     def test_model_pre_validate_invalid_identifier_type_coding(self):
@@ -179,7 +171,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="identifier[0].type.coding[0].display",
-            valid_items_to_test=["test"],
+            valid_values_to_test=["test"],
         )
 
     def test_model_pre_validate_invalid_identifier_type_coding_display(self):

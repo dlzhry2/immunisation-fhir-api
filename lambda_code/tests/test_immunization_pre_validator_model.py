@@ -16,15 +16,7 @@ from .utils import (
 
 
 class TestImmunizationModelPreValidationRules(unittest.TestCase):
-    """
-    Test immunization pre validation rules on the model
-
-    Notes:-
-    TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
-    this happens, the error message is suffixed with the type of error e.g. type_error or
-    value_error. This is why the tests check for the type of error in the error message.
-
-    """
+    """Test immunization pre validation rules on the model"""
 
     @classmethod
     def setUpClass(cls):
@@ -54,7 +46,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="patient.identifier.value",
-            valid_items_to_test=["1234567890"],
+            valid_values_to_test=["1234567890"],
         )
 
     def test_model_pre_validate_invalid_patient_identifier_value(self):
@@ -79,7 +71,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="occurrenceDateTime",
-            valid_items_to_test=ValidValues.for_date_times,
+            valid_values_to_test=ValidValues.for_date_times,
         )
 
     def test_model_pre_validate_invalid_occurrence_date_time(self):
@@ -99,7 +91,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="contained",
-            valid_items_to_test=valid_items_to_test,
+            valid_values_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_contained(self):
@@ -124,7 +116,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 self,
                 field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
                 + f".item[{i}].answer",
-                valid_items_to_test=[[{"valueCoding": {"code": "B0C4P"}}]],
+                valid_values_to_test=[[{"valueCoding": {"code": "B0C4P"}}]],
             )
 
     def test_model_pre_validate_invalid_questionnaire_answers(self):
@@ -146,7 +138,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location=generate_field_location_for_questionnnaire_response(
                 link_id="SiteCode", field_type="code"
             ),
-            valid_items_to_test=["B0C4P"],
+            valid_values_to_test=["B0C4P"],
         )
 
     def test_model_pre_validate_invalid_questionnaire_site_code_code(self):
@@ -165,7 +157,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location=generate_field_location_for_questionnnaire_response(
                 link_id="SiteName", field_type="code"
             ),
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_site_name_code(self):
@@ -191,7 +183,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="identifier",
-            valid_items_to_test=valid_items_to_test,
+            valid_values_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_identifier(self):
@@ -219,7 +211,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="identifier[0].value",
-            valid_items_to_test=valid_items_to_test,
+            valid_values_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_identifier_value(self):
@@ -239,7 +231,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="identifier[0].system",
-            valid_items_to_test=valid_items_to_test,
+            valid_values_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_identifier_system(self):
@@ -254,7 +246,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="status",
-            valid_items_to_test=["completed", "entered-in-error", "not-done"],
+            valid_values_to_test=["completed", "entered-in-error", "not-done"],
         )
 
     def test_model_pre_validate_invalid_status(self):
@@ -272,7 +264,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="recorded",
-            valid_items_to_test=["2000-01-01", "1933-12-31"],
+            valid_values_to_test=["2000-01-01", "1933-12-31"],
         )
 
     def test_model_pre_validate_invalid_recorded(self):
@@ -284,7 +276,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="primarySource",
-            valid_items_to_test=[True, False],
+            valid_values_to_test=[True, False],
         )
 
     def test_model_pre_validate_invalid_primary_source(self):
@@ -296,7 +288,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="reportOrigin.text",
-            valid_items_to_test=[
+            valid_values_to_test=[
                 "sample",
                 "Free text description of organisation recording the event",
             ],
@@ -321,7 +313,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ValidatorModelTests.valid(
                 self,
                 field_location=f"extension[{i}].valueCodeableConcept.coding",
-                valid_items_to_test=[[ValidValues.snomed_coding_element]],
+                valid_values_to_test=[[ValidValues.snomed_coding_element]],
             )
 
     def test_model_pre_validate_invalid_extension_value_codeable_concept_codings(self):
@@ -350,7 +342,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location=field_location,
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_vaccination_procedure_code(self):
@@ -377,7 +369,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location=field_location,
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_vaccination_procedure_display(self):
@@ -404,7 +396,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location=field_location,
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_vaccination_situation_code(self):
@@ -431,7 +423,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location=field_location,
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_vaccination_situation_display(self):
@@ -452,7 +444,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="statusReason.coding",
-            valid_items_to_test=[[ValidValues.snomed_coding_element]],
+            valid_values_to_test=[[ValidValues.snomed_coding_element]],
         )
 
     def test_model_pre_validate_invalid_status_reason_coding(self):
@@ -469,7 +461,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="statusReason.coding[0].code",
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_status_reason_coding_code(self):
@@ -484,7 +476,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="statusReason.coding[0].display",
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_status_reason_coding_display(self):
@@ -509,7 +501,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="protocolApplied",
-            valid_items_to_test=valid_items_to_test,
+            valid_values_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_protocol_applied(self):
@@ -539,7 +531,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="protocolApplied[0].doseNumberPositiveInt",
-            valid_items_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
+            valid_values_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
         )
 
     def test_model_pre_validate_invalid_protocol_applied_dose_number_positive_int(
@@ -559,7 +551,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="vaccineCode.coding",
-            valid_items_to_test=[[ValidValues.snomed_coding_element]],
+            valid_values_to_test=[[ValidValues.snomed_coding_element]],
         )
 
     def test_model_pre_validate_invalid_vaccine_code_coding(self):
@@ -576,7 +568,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="vaccineCode.coding[0].code",
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_vaccine_code_coding_code(self):
@@ -591,7 +583,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="vaccineCode.coding[0].display",
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_vaccine_code_coding_display(self):
@@ -606,7 +598,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="manufacturer.display",
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_manufacturer_display(self):
@@ -618,7 +610,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="lotNumber",
-            valid_items_to_test=["sample", "0123456789101112"],
+            valid_values_to_test=["sample", "0123456789101112"],
         )
 
     def test_model_pre_validate_invalid_lot_number(self):
@@ -635,7 +627,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="expirationDate",
-            valid_items_to_test=["2030-01-01", "2003-12-31"],
+            valid_values_to_test=["2030-01-01", "2003-12-31"],
         )
 
     def test_model_pre_validate_invalid_expiration_date(self):
@@ -650,7 +642,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="site.coding",
-            valid_items_to_test=[[ValidValues.snomed_coding_element]],
+            valid_values_to_test=[[ValidValues.snomed_coding_element]],
         )
 
     def test_model_pre_validate_invalid_site_coding(self):
@@ -667,7 +659,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="site.coding[0].code",
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_site_coding_code(self):
@@ -679,7 +671,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="site.coding[0].display",
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_site_coding_display(self):
@@ -693,7 +685,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="route.coding",
-            valid_items_to_test=[[ValidValues.snomed_coding_element]],
+            valid_values_to_test=[[ValidValues.snomed_coding_element]],
         )
 
     def test_model_pre_validate_invalid_route_coding(self):
@@ -710,7 +702,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="route.coding[0].code",
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_route_coding_code(self):
@@ -722,7 +714,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="route.coding[0].display",
-            valid_items_to_test=["dummy"],
+            valid_values_to_test=["dummy"],
         )
 
     def test_model_pre_validate_invalid_route_coding_display(self):
@@ -747,7 +739,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="doseQuantity.value",
-            valid_items_to_test=valid_items_to_test,
+            valid_values_to_test=valid_items_to_test,
         )
 
     def test_model_pre_validate_invalid_dose_quantity_value(self):
@@ -761,7 +753,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="doseQuantity.code",
-            valid_items_to_test=["ABC123"],
+            valid_values_to_test=["ABC123"],
         )
 
     def test_model_pre_validate_invalid_dose_quantity_code(self):
@@ -773,7 +765,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.valid(
             self,
             field_location="doseQuantity.unit",
-            valid_items_to_test=["Millilitre"],
+            valid_values_to_test=["Millilitre"],
         )
 
     def test_model_pre_validate_invalid_dose_quantity_unit(self):
@@ -789,7 +781,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ValidatorModelTests.valid(
                 self,
                 field_location=f"reasonCode[{i}].coding",
-                valid_items_to_test=valid_items_to_test,
+                valid_values_to_test=valid_items_to_test,
             )
 
     def test_model_pre_validate_invalid_reason_code_codings(self):
@@ -812,7 +804,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ValidatorModelTests.valid(
                 self,
                 field_location=f"reasonCode[{i}].coding[0].code",
-                valid_items_to_test=["ABC123"],
+                valid_values_to_test=["ABC123"],
             )
 
     def test_model_pre_validate_invalid_reason_code_coding_codes(self):
@@ -832,7 +824,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ValidatorModelTests.valid(
                 self,
                 field_location=f"reasonCode[{i}].coding[0].display",
-                valid_items_to_test=["ABC123"],
+                valid_values_to_test=["ABC123"],
             )
 
     def test_model_pre_validate_invalid_reason_code_coding_displays(self):
