@@ -66,9 +66,7 @@ class ImmunizationValidator:
 
     @classmethod
     def pre_validate_contained(cls, values: dict) -> dict:
-        """
-        Pre-validate that, if contained exists, then it is a list of length 1
-        """
+        """Pre-validate that, if contained exists, then it is a list of length 1"""
         try:
             contained = values["contained"]
             pre_validate_list(contained, "contained", defined_length=1)
@@ -84,7 +82,6 @@ class ImmunizationValidator:
         contained[?(@.resourceType=='QuestionnaireResponse')].item[index].answer
         is a list of length 1
         """
-
         try:
             for index, value in enumerate(values["contained"][0]["item"]):
                 try:
@@ -203,7 +200,6 @@ class ImmunizationValidator:
         NOTE 2: Status is a mandatory FHIR field. A value of None will be rejected by the
         FHIR model before pre-validators are run.
         """
-
         try:
             status = values["status"]
             pre_validate_string(status, "status", predefined_values=Constants.STATUSES)
@@ -218,7 +214,6 @@ class ImmunizationValidator:
         Pre-validate that, if recorded (legacy CSV field name: RECORDED_DATE) exists, then it is a
         string in the format YYYY-MM-DD, representing a valid date
         """
-
         try:
             recorded = values["recorded"]
             pre_validate_date(recorded, "recorded")
@@ -233,7 +228,6 @@ class ImmunizationValidator:
         Pre-validate that, if primarySource (legacy CSV field name: PRIMARY_SOURCE) exists,
         then it is a boolean
         """
-
         try:
             primary_source = values["primarySource"]
             pre_validate_boolean(primary_source, "primarySource")
@@ -248,7 +242,6 @@ class ImmunizationValidator:
         Pre-validate that, if reportOrigin.text (legacy CSV field name: REPORT_ORIGIN_TEXT)
         exists, then it is a non-empty string with maximum length 100 characters
         """
-
         try:
             report_origin_text = values["reportOrigin"]["text"]
 
@@ -266,7 +259,6 @@ class ImmunizationValidator:
         Pre-validate that, if they exist, each extension[{index}].valueCodeableConcept.coding
         is a list of length 1
         """
-
         try:
             for index, value in enumerate(values["extension"]):
                 try:
@@ -692,7 +684,6 @@ class ImmunizationValidator:
         """
         Pre-validate that, if they exist, each reasonCode[{index}].coding is a list of length 1
         """
-
         try:
             for index, value in enumerate(values["reasonCode"]):
                 try:
@@ -715,7 +706,6 @@ class ImmunizationValidator:
         Pre-validate that, if they exist, each reasonCode[{index}].coding[0].code
         (legacy CSV field name: INDICATION_CODE) is a non-empty string
         """
-
         try:
             for index, value in enumerate(values["reasonCode"]):
                 try:
@@ -736,7 +726,6 @@ class ImmunizationValidator:
         Pre-validate that, if they exist, each reasonCode[{index}].coding[0].display
         (legacy CSV field name: INDICATION_CODE) is a non-empty string
         """
-
         try:
             for index, value in enumerate(values["reasonCode"]):
                 try:

@@ -34,75 +34,51 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         # Ensure that good data is not inadvertently amended by the tests
         self.assertEqual(self.untouched_patient_json_data, self.json_data)
 
-    def test_model_pre_validate_valid_name(self):
-        """Test pre_validate_name accepts valid values when in a model"""
-        ValidatorModelTests.valid(
+    def test_model_pre_validate_name(self):
+        """Test pre_validate_name accepts valid values and rejects invalid values when in a model"""
+        ValidatorModelTests.test_list_value(
             self,
             field_location="name",
-            valid_values_to_test=[[{"family": "Test"}]],
-        )
-
-    def test_model_pre_validate_invalid_name(self):
-        """Test pre_validate_name rejects invalid values when in a model"""
-        ValidatorModelTests.list_invalid(
-            self,
-            field_location="name",
+            valid_lists_to_test=[[{"family": "Test"}]],
             predefined_list_length=1,
             valid_list_element={"family": "Test"},
         )
 
-    def test_model_pre_validate_valid_name_given(self):
-        """Test pre_validate_name_given accepts valid values when in a model"""
-        ValidatorModelTests.valid(
+    def test_model_pre_validate_name_given(self):
+        """
+        Test pre_validate_name_given accepts valid values and rejects invalid values
+        when in a model
+        """
+        ValidatorModelTests.test_list_value(
             self,
             field_location="name[0].given",
-            valid_values_to_test=[["Test"], ["Test test"]],
-        )
-
-    def test_model_pre_validate_invalid_name_given(self):
-        """Test pre_validate_name_given rejects invalid values when in a model"""
-        ValidatorModelTests.list_invalid(
-            self,
-            field_location="name[0].given",
+            valid_lists_to_test=[["Test"], ["Test test"]],
             predefined_list_length=1,
             valid_list_element="Test",
             is_list_of_strings=True,
         )
 
-    def test_model_pre_validate_valid_name_family(self):
-        """Test pre_validate_name_family accepts valid values when in a model"""
-        ValidatorModelTests.valid(
-            self,
-            field_location="name[0].family",
-            valid_values_to_test=["test"],
+    def test_model_pre_validate_name_family(self):
+        """
+        Test pre_validate_name_family accepts valid values and rejects invalid values
+        when in a model
+        """
+        ValidatorModelTests.test_string_value(
+            self, field_location="name[0].family", valid_strings_to_test=["test"]
         )
 
-    def test_model_pre_validate_invalid_name_family(self):
-        """Test pre_validate_name_family rejects invalid values when in a model"""
-        ValidatorModelTests.string_invalid(self, field_location="name[0].family")
+    def test_model_pre_validate_birth_date(self):
+        """
+        Test pre_validate_birth_date accepts valid values and rejects invalid values 
+        when in a model
+        """
+        ValidatorModelTests.test_date_value(self, field_location="birthDate")
 
-    def test_model_pre_validate_valid_birth_date(self):
-        """Test pre_validate_birth_date accepts valid values when in a model"""
-        ValidatorModelTests.valid(
-            self,
-            field_location="birthDate",
-            valid_values_to_test=["2000-01-01", "1933-12-31"],
-        )
-
-    def test_model_pre_validate_invalid_birth_date(self):
-        """Test pre_validate_birth_date rejects invalid values when in a model"""
-        ValidatorModelTests.date_invalid(self, field_location="birthDate")
-
-    def test_model_pre_validate_valid_gender(self):
-        """Test pre_validate_gender accepts valid values when in a model"""
-        ValidatorModelTests.valid(
-            self,
-            field_location="gender",
-            valid_values_to_test=["male", "female", "other", "unknown"],
-        )
-
-    def test_model_pre_validate_invalid_gender(self):
-        """Test pre_validate_gender rejects invalid values when in a model"""
+    def test_model_pre_validate_gender(self):
+        """
+        Test pre_validate_gender accepts valid values and rejects invalid values 
+        when in a model
+        """
         invalid_strings_to_test = [
             "0",
             "1",
@@ -114,41 +90,36 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
             "Other",
         ]
 
-        ValidatorModelTests.string_invalid(
+        ValidatorModelTests.test_string_value(
             self,
             field_location="gender",
+            valid_strings_to_test=["male", "female", "other", "unknown"],
             predefined_values=("male", "female", "other", "unknown"),
             invalid_strings_to_test=invalid_strings_to_test,
         )
 
-    def test_model_pre_validate_valid_address(self):
-        """Test pre_validate_address accepts valid values when in a model"""
-        ValidatorModelTests.valid(
+    def test_model_pre_validate_address(self):
+        """
+        Test pre_validate_address accepts valid values and rejects invalid values 
+        when in a model
+        """
+        ValidatorModelTests.test_list_value(
             self,
             field_location="address",
-            valid_values_to_test=[[{"postalCode": "AA1 1AA"}]],
-        )
-
-    def test_model_pre_validate_invalid_address(self):
-        """Test pre_validate_address rejects invalid values when in a model"""
-        ValidatorModelTests.list_invalid(
-            self,
-            field_location="address",
+            valid_lists_to_test=[[{"postalCode": "AA1 1AA"}]],
             predefined_list_length=1,
             valid_list_element={"family": "Test"},
         )
 
-    def test_model_pre_validate_valid_address_postal_code(self):
-        """Test pre_validate_address_postal_code accepts valid values when in a model"""
-        ValidatorModelTests.valid(
+    def test_model_pre_validate_address_postal_code(self):
+        """
+        Test pre_validate_address_postal_code accepts valid values and rejects invalid values 
+        when in a model
+        """
+        # Test invalid data types and empty string
+        ValidatorModelTests.test_string_value(
             self,
             field_location="address[0].postalCode",
-            valid_values_to_test=["AA00 00AA", "A0 0AA"],
-        )
-
-    def test_model_pre_validate_invalid_address_postal_code(self):
-        """Test pre_validate_address_postal_code rejects invalid values when in a model"""
-        # Test invalid data types and empty string
-        ValidatorModelTests.string_invalid(
-            self, field_location="address[0].postalCode", is_postal_code=True
+            valid_strings_to_test=["AA00 00AA", "A0 0AA"],
+            is_postal_code=True,
         )
