@@ -19,3 +19,10 @@ The tests are in a separate module so in order for them to see each other we nee
 - Open the root repo directory in VS Code.
 - Copy `.vscode/settings.json.default` to `.vscode/settings.json`, or integrate the contents with your existing file.
 - Run the `Python: Configure Tests` command and when it asks for a directory give it `lambda_code`.
+
+
+## Troubleshooting
+
+Tests fail with `No products grant access to proxy [...]`.
+Products are handle by the infra template and get cleaned up periodically.
+Running `/azp run` on the PR should fix it.
