@@ -45,7 +45,7 @@ class TestFhirController(unittest.TestCase):
         self.assertEqual(res["body"], "a body")
 
 
-class TestFhirControllerGetImmunisationById(unittest.TestCase):
+class TestFhirControllerGetImmunizationById(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
         self.controller = FhirController(self.service)
@@ -219,7 +219,7 @@ class TestDeleteImmunization(unittest.TestCase):
         self.assertEqual(body["issue"][0]["code"], "internal-server-error")
 
 
-class TestSearchImmunisations(unittest.TestCase):
+class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
         self.controller = FhirController(self.service)

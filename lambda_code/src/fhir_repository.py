@@ -20,7 +20,7 @@ def create_table(table_name=None, endpoint_url=None, region_name='eu-west-2'):
     return db.Table(table_name)
 
 
-class ImmunisationRepository:
+class ImmunizationRepository:
     def __init__(self, table):
         self.table = table
 

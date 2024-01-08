@@ -5,11 +5,11 @@ from typing import Union, List
 from pydantic import ValidationError
 
 
-from models.csv_immunization import CsvImmunizationModel
-from models.failures import CsvImmunizationErrorModel
+from models.csv_immunisation import CsvImmunisationModel
+from models.failures import CsvImmunisationErrorModel
 
 
-def generate_failed_record(row: dict, reasons: str) -> CsvImmunizationErrorModel:
+def generate_failed_record(row: dict, reasons: str) -> CsvImmunisationErrorModel:
     """Format an exception into a record"""
     failed_record = {
         "nhs_number": row.get("NHS_NUMBER", None),
@@ -17,14 +17,14 @@ def generate_failed_record(row: dict, reasons: str) -> CsvImmunizationErrorModel
         "failure_reasons": reasons,
     }
 
-    immunisation_failure = CsvImmunizationErrorModel(**failed_record)
+    immunisation_failure = CsvImmunisationErrorModel(**failed_record)
 
     return immunisation_failure
 
 
 def read_csv_to_model(
     csv_data: str,
-) -> Union[List[CsvImmunizationModel], List[CsvImmunizationErrorModel]]:
+) -> Union[List[CsvImmunisationModel], List[CsvImmunisationErrorModel]]:
     """Read a CSV file and return a list of ImmunizationModel objects"""
     immunizations = []
     failures = []
@@ -33,7 +33,7 @@ def read_csv_to_model(
     for row in csv_reader:
         try:
             # Filter out unwanted fields
-            imms = CsvImmunizationModel(**row)
+            imms = CsvImmunisationModel(**row)
             immunizations.append(imms)
         except ValidationError as failure:
             # ValidationError's errors() method returns a list of errors

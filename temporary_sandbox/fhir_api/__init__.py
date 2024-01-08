@@ -16,7 +16,7 @@ Reference.update_forward_refs(identifier=Identifier)
 
 
 app = FastAPI(
-    title=os.getenv('FASTAPI_TITLE', 'Immunization Fhir API'),
+    title=os.getenv('FASTAPI_TITLE', 'Immunisation Fhir API'),
     description=os.getenv(
         'FASTAPI_DESC', 'API'),
     version=os.getenv('VERSION', 'DEVELOPMENT'),
