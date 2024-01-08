@@ -7,6 +7,7 @@ Add your workspace name to the env file. This is usually your shortcode.
 ```
 echo environment=your-shortcode > .env
 make init
+make workspace
 make apply
 ```
 

@@ -22,16 +22,11 @@ lock-provider:
 workspace:
 	$(tf_cmd) workspace new $(environment) || $(tf_cmd) workspace select $(environment) && echo "Switched to workspace/environment: $(environment)"
 
-init-impl:
+init:
 	$(tf_cmd) init $(tf_state) -upgrade  $(tf_vars)
-
-init: | init-impl workspace
 
 plan: workspace
 	 $(tf_cmd) plan $(tf_vars)
-
-show: workspace
-	 $(tf_cmd) show
 
 plan-changes: workspace
 	 $(tf_cmd) plan $(tf_vars) -out=plan && $(tf_cmd) show -no-color -json plan | jq -r '.resource_changes[] | select(.change.actions[0]=="update" or .change.actions[0]=="create" or .change.actions[0]=="add") | .address'
@@ -50,9 +45,6 @@ destroy: workspace
 output:
 	$(tf_cmd) output -raw $(name)
 
-state-list: workspace
-	 $(tf_cmd) state list
-
 #Make lambda zip file in /terraform/zips directory. Whenever code gets changed in lamdba_typescript directory , new zip file gets uploaded to s3. For local,you can you this make target
 lambda-zip:
 	cd ../lambda_typescript && \
@@ -64,3 +56,6 @@ catch-all-zip:
 	cd ../catch_all_lambda && \
 	chmod +x ./deploy.sh && \
 	./deploy.sh
+
+tf-%:
+	$(tf_cmd) $*
