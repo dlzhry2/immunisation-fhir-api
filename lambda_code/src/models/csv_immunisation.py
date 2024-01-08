@@ -1,4 +1,4 @@
-"""CSV Immunization Model"""
+"""CSV Immunisation Model"""
 
 import dateutil.parser
 from datetime import date
@@ -13,7 +13,7 @@ from models.nhs_validators import (
 
 
 class CsvImmunisationModel(BaseModel):
-    """Pydantic CSV Immunization BaseModel"""
+    """Pydantic CSV Immunisation BaseModel"""
 
     NHS_NUMBER: str = None
     PERSON_FORENAME: str = None
