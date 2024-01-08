@@ -995,3 +995,23 @@ class TestPreImmunizationMethodValidators(unittest.TestCase):
             validator=ImmunizationPreValidators.reason_code_coding_display,
             field_location="reasonCode[*] -> coding[0] -> display",
         )
+
+    def test_pre_questionnaire_nhs_number_status_code_valid(self):
+        """Test ImmunizationPreValidators.questionnaire_nhs_number_status_code"""
+
+        GenericValidatorMethodTests.valid(
+            self,
+            validator=ImmunizationPreValidators.questionnaire_nhs_number_status_code,
+            valid_items_to_test=["01"],
+        )
+
+    def test_pre_questionnaire_nhs_number_status_code_invalid(self):
+        """Test ImmunizationPreValidators.questionnaire_nhs_number_status_code"""
+
+        GenericValidatorMethodTests.string_invalid(
+            self,
+            validator=ImmunizationPreValidators.questionnaire_nhs_number_status_code,
+            field_location=generate_field_location_for_questionnnaire_response(
+                "NhsNumberStatus", "code"
+            ),
+        )

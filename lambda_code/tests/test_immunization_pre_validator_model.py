@@ -1184,3 +1184,40 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 field_location="reasonCode[*] -> coding[0] -> display",
                 keys_to_access_value=["reasonCode", i, "coding", 0, "display"],
             )
+
+    def test_model_pre_validate_valid_nhs_number_status_code(self):
+        """Test pre_validate_nhs_number_status_code accepts valid values when in a model"""
+        keys_to_access_value = [
+            "contained",
+            0,
+            "item",
+            2,
+            "answer",
+            0,
+            "valueCoding",
+            "code",
+        ]
+        GenericValidatorModelTests.valid(
+            self,
+            keys_to_access_value=keys_to_access_value,
+            valid_items_to_test=["01"],
+        )
+
+    def test_model_pre_validate_invalid_nhs_number_status_code(self):
+        """Test pre_validate_nhs_number_status_code rejects invalid values when in a model"""
+        keys_to_access_value = [
+            "contained",
+            0,
+            "item",
+            2,
+            "answer",
+            0,
+            "valueCoding",
+            "code",
+        ]
+        GenericValidatorModelTests.string_invalid(
+            self,
+            field_location="contained[0] -> resourceType[QuestionnaireResponse]: "
+            + "item[*] -> linkId[NhsNumberStatus]: answer[0] -> valueCoding -> code",
+            keys_to_access_value=keys_to_access_value,
+        )

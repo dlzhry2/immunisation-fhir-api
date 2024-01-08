@@ -685,6 +685,28 @@ class ImmunizationValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_questionnaire_nhs_number_status_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[0] -> resourceType[QuestionnaireResponse]:
+        item[*] -> linkId[NhsNumberStatus]:
+        answer[0] -> valueCoding -> code (nhs_number_status_indicator_code) exists,
+        then it is a non-empty string
+        """
+        try:
+            questionnaire_nhs_number_status_code = (
+                get_generic_questionnaire_response_value(
+                    values, "NhsNumberStatus", "code"
+                )
+            )
+            ImmunizationPreValidators.questionnaire_nhs_number_status_code(
+                questionnaire_nhs_number_status_code
+            )
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """
         Add custom NHS validators to the model
@@ -771,6 +793,9 @@ class ImmunizationValidator:
         )
         Immunization.add_root_validator(
             self.pre_validate_reason_code_coding_displays, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_questionnaire_nhs_number_status_code, pre=True
         )
 
     def validate(self, json_data) -> Immunization:
