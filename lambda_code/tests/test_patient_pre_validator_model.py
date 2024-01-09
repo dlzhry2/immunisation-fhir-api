@@ -9,7 +9,7 @@ from .utils import ValidatorModelTests
 
 
 class TestPatientModelPreValidationRules(unittest.TestCase):
-    """Test patient pre validation rules on the model"""
+    """Test patient pre validation rules on the FHIR model"""
 
     @classmethod
     def setUpClass(cls):
@@ -35,7 +35,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         self.assertEqual(self.untouched_patient_json_data, self.json_data)
 
     def test_model_pre_validate_name(self):
-        """Test pre_validate_name accepts valid values and rejects invalid values when in a model"""
+        """Test pre_validate_name accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_list_value(
             self,
             field_location="name",
@@ -45,10 +45,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         )
 
     def test_model_pre_validate_name_given(self):
-        """
-        Test pre_validate_name_given accepts valid values and rejects invalid values
-        when in a model
-        """
+        """Test pre_validate_name_given accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_list_value(
             self,
             field_location="name[0].given",
@@ -59,26 +56,17 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         )
 
     def test_model_pre_validate_name_family(self):
-        """
-        Test pre_validate_name_family accepts valid values and rejects invalid values
-        when in a model
-        """
+        """Test pre_validate_name_family accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_string_value(
             self, field_location="name[0].family", valid_strings_to_test=["test"]
         )
 
     def test_model_pre_validate_birth_date(self):
-        """
-        Test pre_validate_birth_date accepts valid values and rejects invalid values 
-        when in a model
-        """
+        """Test pre_validate_birth_date accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_date_value(self, field_location="birthDate")
 
     def test_model_pre_validate_gender(self):
-        """
-        Test pre_validate_gender accepts valid values and rejects invalid values 
-        when in a model
-        """
+        """Test pre_validate_gender accepts valid values and rejects invalid values"""
         invalid_strings_to_test = [
             "0",
             "1",
@@ -99,10 +87,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         )
 
     def test_model_pre_validate_address(self):
-        """
-        Test pre_validate_address accepts valid values and rejects invalid values 
-        when in a model
-        """
+        """Test pre_validate_address accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_list_value(
             self,
             field_location="address",
@@ -112,10 +97,7 @@ class TestPatientModelPreValidationRules(unittest.TestCase):
         )
 
     def test_model_pre_validate_address_postal_code(self):
-        """
-        Test pre_validate_address_postal_code accepts valid values and rejects invalid values 
-        when in a model
-        """
+        """Test pre_validate_address_postal_code accepts valid values and rejects invalid values"""
         # Test invalid data types and empty string
         ValidatorModelTests.test_string_value(
             self,

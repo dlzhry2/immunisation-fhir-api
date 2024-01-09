@@ -10,7 +10,7 @@ from .utils import ValidatorModelTests
 
 
 class TestPractitionerModelPreValidationRules(unittest.TestCase):
-    """Test practitioner pre validation rules on the model"""
+    """Test practitioner pre validation rules on the FHIR model"""
 
     @classmethod
     def setUpClass(cls):
@@ -36,7 +36,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         self.assertEqual(self.untouched_practitioner_json_data, self.json_data)
 
     def test_model_pre_validate_name(self):
-        """Test pre_validate_name accepts valid values and rejects invalid values when in a model"""
+        """Test pre_validate_name accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_list_value(
             self,
             field_location="name",
@@ -48,7 +48,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
     def test_model_pre_validate_name_given(self):
         """
         Test pre_validate_name_given accepts valid values and rejects invalid values
-        when in a model
+
         """
         ValidatorModelTests.test_list_value(
             self,
@@ -60,19 +60,13 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         )
 
     def test_model_pre_validate_name_family(self):
-        """
-        Test pre_validate_name_family accepts valid values and rejects invalid values
-        when in a model
-        """
+        """Test pre_validate_name_family accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_string_value(
             self, field_location="name[0].family", valid_strings_to_test=["test"]
         )
 
     def test_model_pre_validate_identifier(self):
-        """
-        Test pre_validate_identifier accepts valid values and rejects invalid values
-        when in a model
-        """
+        """Test pre_validate_identifier accepts valid values and rejects invalid values"""
 
         valid_list_element = {
             "system": "https://supplierABC/identifiers/vacc",
@@ -88,10 +82,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         )
 
     def test_model_pre_validate_identifier_value(self):
-        """
-        Test pre_validate_identifier_value accepts valid values and rejects invalid values
-        when in a model
-        """
+        """Test pre_validate_identifier_value accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_string_value(
             self,
             field_location="identifier[0].value",
@@ -103,10 +94,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
         )
 
     def test_model_pre_validate_identifier_system(self):
-        """
-        Test pre_validate_identifier_system accepts valid values and rejects invalid values
-        when in a model
-        """
+        """Test pre_validate_identifier_system accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_string_value(
             self,
             field_location="identifier[0].system",
@@ -119,7 +107,6 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
     def test_model_pre_validate_identifier_type_coding(self):
         """
         Test pre_validate_identifier_type_coding accepts valid values and rejects invalid values
-        when in a model
         """
         ValidatorModelTests.test_list_value(
             self,
@@ -132,7 +119,7 @@ class TestPractitionerModelPreValidationRules(unittest.TestCase):
     def test_model_pre_validate_identifier_type_coding_display(self):
         """
         Test pre_validate_identifier_type_coding_display accepts valid values and rejects invalid
-        values when in a model
+        values
         """
         ValidatorModelTests.test_string_value(
             self,

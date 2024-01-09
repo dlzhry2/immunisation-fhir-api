@@ -11,7 +11,7 @@ from jsonpath_ng.ext import parse
 # Lists of data types for 'invalid data type' testing
 integers = [-1, 0, 1]
 floats = [-1.3, 0.0, 1.0, 2.5]
-decimals = [Decimal(-1), Decimal(0), Decimal(1), Decimal(-1.3), Decimal(2.5)]
+decimals = [Decimal("-1"), Decimal("0"), Decimal("1"), Decimal("-1.3"), Decimal("2.5")]
 booleans = [True, False]
 dicts = [{}, {"InvalidKey": "InvalidValue"}]
 lists = [[], ["Invalid"]]
@@ -207,7 +207,7 @@ class ValidatorModelTests:
         is_mandatory_fhir: bool = False,
     ):
         """
-        Test that a validator rejects the following invalid strings when in a model:
+        Test that a FHIR model accepts valid string values and rejects the following invalid values:
         * All invalid data types
         * If there is a defined_string_length: Strings of invalid length (defined by the argument
             invalid_length_strings_to_test), plus the empty string
@@ -226,7 +226,7 @@ class ValidatorModelTests:
         values to test. This means that:
         * When optional arguments defined_length and max_length are given, the optional argument
             invalid_length_strings_to_test MUST also be given
-        * When optional argument predefined_lines is given, the optional argument
+        * When optional argument predefined_values is given, the optional argument
             invalid_strings_to_test MUST also be given.
         * When optional argument spaces_allowed is given, the optional argument
             invalid_strings_with_spaces_test must also be given
@@ -366,7 +366,7 @@ class ValidatorModelTests:
         is_list_of_strings: bool = False,
     ):
         """
-        Test that a validator rejects the following invalid lists when in a model:
+        Test that a FHIR model accepts valid list values and rejects the following invalid values:
         * All invalid data types
         * If there is a predefined list length: Strings of invalid length, plus the empty list (note
             that a valid list element must be supplied when a predefined list length is given as
@@ -466,7 +466,7 @@ class ValidatorModelTests:
         field_location: str,
     ):
         """
-        Test that a validator method rejects the following when in a model:
+        Test that a FHIR model accepts valid date values and rejects the following invalid values:
         * All invalid data types
         * Invalid date formats
         * Invalid dates
@@ -509,7 +509,8 @@ class ValidatorModelTests:
         is_occurrence_date_time: bool = False,
     ):
         """
-        Test that a validator method rejects the following when in a model:
+        Test that a FHIR model accepts valid date-time values and rejects the following invalid
+        values:
         * All invalid data types
         * Invalid date time string formats
         * Invalid date-times
@@ -582,7 +583,7 @@ class ValidatorModelTests:
         test_instance: unittest.TestCase,
         field_location: str,
     ):
-        """Test that a validator rejects any non-boolean value when in a model"""
+        """Test that a FHIR model accepts valid boolean values and rejects non-boolean values."""
 
         valid_json_data = deepcopy(test_instance.json_data)
 
@@ -606,11 +607,12 @@ class ValidatorModelTests:
     def test_positive_integer_value(
         test_instance: unittest.TestCase,
         field_location: str,
-        valid_positive_integers_to_test: list = None,
+        valid_positive_integers_to_test: list,
         max_value: int = None,
     ):
         """
-        Test that a validator method rejects the following when in a model:
+        Test that a FHIR model accepts valid positive integer values and rejects the following
+        invalid values:
         * All invalid data types
         * Non-postive integers
         * If there is a max value: a value which exceeds the maximum
@@ -668,7 +670,8 @@ class ValidatorModelTests:
         max_decimal_places: int = None,
     ):
         """
-        Test that a validator method rejects the following when in a model:
+        Test that a FHIR model accepts valid decimal or integer values and rejects the following
+        invalid values:
         * All invalid data types
         * If there is a max number of decimal places: a Decimal with too many decimal places
         """
