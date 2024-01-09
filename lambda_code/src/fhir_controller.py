@@ -1,18 +1,25 @@
 import json
+import os
 import re
 import uuid
 from typing import Optional
 
+import boto3
+from botocore.config import Config
 from fhir.resources.operationoutcome import OperationOutcome
 
-from fhir_repository import ImmunisationRepository, create_table
+from fhir_repository import ImmunizationRepository, create_table
 from fhir_service import FhirService
-from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError
+from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError, \
+    ValidationError
+from pds_service import PdsService, Authenticator
 
 
-def make_controller():
-    imms_repo = ImmunisationRepository(create_table())
-    service = FhirService(imms_repo=imms_repo)
+def make_controller(pds_env: str = os.getenv("PDS_ENV", "int")):
+    imms_repo = ImmunizationRepository(create_table())
+    boto_config = Config(region_name='eu-west-2')
+    pds_service = PdsService(Authenticator(boto3.client('secretsmanager', config=boto_config), pds_env), pds_env)
+    service = FhirService(imms_repo=imms_repo, pds_service=pds_service)
     return FhirController(fhir_service=service)
 
 
@@ -42,14 +49,16 @@ class FhirController:
     def create_immunization(self, aws_event):
         try:
             imms = json.loads(aws_event["body"])
-        except json.decoder.JSONDecodeError as error:
-            body = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                            code=Code.invalid,
-                                            diagnostics=f"Request's body contains malformed JSON\n{error}")
-            return self.create_response(400, body.json())
+        except json.decoder.JSONDecodeError as e:
+            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
 
-        resource = self.fhir_service.create_immunization(imms)
-        return self.create_response(201, resource.json())
+        try:
+            resource = self.fhir_service.create_immunization(imms)
+            return self.create_response(201, resource.json())
+        except ValidationError as error:
+            return self.create_response(400, error.to_operation_outcome().json())
+        except UnhandledResponseError as unhandled_error:
+            return self.create_response(500, unhandled_error.to_operation_outcome().json())
 
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]
@@ -66,6 +75,18 @@ class FhirController:
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome().json())
 
+    def search_immunizations(self, aws_event) -> dict:
+        params = aws_event["queryStringParameters"]
+
+        if "nhsNumber" not in params:
+            return self._create_bad_request("Query parameter 'nhsNumber' is mandatory")
+        if "diseaseType" not in params:
+            return self._create_bad_request("Query parameter 'diseaseType' is mandatory")
+
+        result = self.fhir_service.search_immunizations(params["nhsNumber"], params["diseaseType"])
+
+        return self.create_response(200, result.json())
+
     def _validate_id(self, _id: str) -> Optional[OperationOutcome]:
         if not re.match(self.immunization_id_pattern, _id):
             msg = "the provided event ID is either missing or not in the expected format."
@@ -74,6 +95,12 @@ class FhirController:
                                             diagnostics=msg)
         else:
             return None
+
+    def _create_bad_request(self, message):
+        error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+                                         code=Code.invalid,
+                                         diagnostics=message)
+        return self.create_response(400, error.json())
 
     @staticmethod
     def create_response(status_code, body):
