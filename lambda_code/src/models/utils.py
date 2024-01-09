@@ -73,8 +73,8 @@ def pre_validate_list(
     elements_are_strings: bool = False,
 ):
     """
-    Apply pre-validation to a list field to ensure it is a non-empty list which meets
-    the length requirements and requirements, if applicable, for each list element to be a string
+    Apply pre-validation to a list field to ensure it is a non-empty list which meets the length
+    requirements and requirements, if applicable, for each list element to be a non-empty string
     """
     if not isinstance(field_value, list):
         raise TypeError(f"{field_location} must be an array")
@@ -162,7 +162,7 @@ def pre_validate_positive_integer(
         raise ValueError(f"{field_location} must be a positive integer")
 
     if max_value:
-        if field_value not in range(1, max_value + 1):
+        if field_value > max_value:
             raise ValueError(
                 f"{field_location} must be an integer in the range 1 to {max_value}"
             )
@@ -181,7 +181,7 @@ def pre_validate_decimal(
     ):
         raise TypeError(f"{field_location} must be a number")
 
-    if max_decimal_places:
+    if max_decimal_places is not None:
         if isinstance(field_value, Decimal):
             if abs(field_value.as_tuple().exponent) > max_decimal_places:
                 raise ValueError(
