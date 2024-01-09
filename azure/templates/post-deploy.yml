@@ -64,7 +64,7 @@ steps:
           ./deploy.sh
 
         cd ../terraform
-
+ 
         make init
           make apply aws_account_no=${aws_account_no} environment=$workspace
           AWS_DOMAIN_NAME=https://$(make -s output name=service_domain_name)
