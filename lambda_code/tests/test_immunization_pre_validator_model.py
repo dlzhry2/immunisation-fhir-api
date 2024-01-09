@@ -388,7 +388,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_vaccine_code_coding_code accepts valid values and rejects invalid
         values when in a model
         """
-
         ValidatorModelTests.test_string_value(
             self,
             field_location="vaccineCode.coding[0].code",
@@ -400,7 +399,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_vaccine_code_coding_display accepts valid values and rejects invalid
         values when in a model
         """
-
         ValidatorModelTests.test_string_value(
             self,
             field_location="vaccineCode.coding[0].display",

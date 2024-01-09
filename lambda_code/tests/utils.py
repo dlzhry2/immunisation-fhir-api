@@ -2,10 +2,20 @@
 
 import unittest
 from copy import deepcopy
-from typing import Literal
+from typing import Literal, Any
 from decimal import Decimal
 from pydantic import ValidationError
 from jsonpath_ng.ext import parse
+
+
+# Lists of data types for 'invalid data type' testing
+integers = [-1, 0, 1]
+floats = [-1.3, 0.0, 1.0, 2.5]
+decimals = [Decimal(-1), Decimal(0), Decimal(1), Decimal(-1.3), Decimal(2.5)]
+booleans = [True, False]
+dicts = [{}, {"InvalidKey": "InvalidValue"}]
+lists = [[], ["Invalid"]]
+strings = ["", "invalid"]
 
 
 def generate_field_location_for_questionnnaire_response(
@@ -19,7 +29,7 @@ def generate_field_location_for_questionnnaire_response(
 
 
 def generate_field_location_for_extension(
-    url: str, field_type: Literal["code", "display", "system"]
+    url: str, field_type: Literal["code", "display"]
 ) -> str:
     """Generate the field location string for extension items"""
     return f"extension[?(@.url=='{url}')].valueCodeableConcept.coding[0].{field_type}"
@@ -28,7 +38,7 @@ def generate_field_location_for_extension(
 def test_valid_values_accepted(
     test_instance: unittest.TestCase,
     valid_json_data: dict,
-    field_location,
+    field_location: str,
     valid_values_to_test: list,
 ):
     """Test that valid json data is accepted by the model"""
@@ -43,9 +53,11 @@ def test_invalid_values_rejected(
     test_instance: unittest.TestCase,
     valid_json_data: dict,
     field_location: str,
-    invalid_value,
+    invalid_value: Any,
     expected_error_message: str,
-    error_type: str,
+    expected_error_type: Literal[
+        "type_error", "value_error", "type_error.none.not_allowed"
+    ],
 ):
     """
     Test that invalid json data is rejected by the model, with an appropriate validation error
@@ -63,20 +75,13 @@ def test_invalid_values_rejected(
         test_instance.validator.validate(invalid_json_data)
 
     test_instance.assertTrue(
-        (expected_error_message + f" (type={error_type})") in str(error.exception)
+        (expected_error_message + f" (type={expected_error_type})")
+        in str(error.exception)
     )
 
 
 class InvalidDataTypes:
     """Store lists of invalid data types for tests"""
-
-    integers = [-1, 0, 1]
-    floats = [-1.3, 0.0, 1.0, 2.5]
-    decimals = [Decimal(-1), Decimal(0), Decimal(1), Decimal(-1.3), Decimal(2.5)]
-    booleans = [True, False]
-    dicts = [{}, {"InvalidKey": "InvalidValue"}]
-    lists = [[], ["Invalid"]]
-    strings = ["", "invalid"]
 
     for_integers = [None] + floats + decimals + booleans + dicts + lists + strings
     for_decimals_or_integers = [None] + floats + booleans + dicts + lists + strings
@@ -190,7 +195,7 @@ class ValidatorModelTests:
     def test_string_value(
         test_instance: unittest.TestCase,
         field_location: str,
-        valid_strings_to_test: dict = None,
+        valid_strings_to_test: dict,
         defined_length: int = None,
         max_length: int = None,
         invalid_length_strings_to_test: list = None,
@@ -243,7 +248,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=None,
                 expected_error_message="none is not an allowed value",
-                error_type="type_error.none.not_allowed",
+                expected_error_type="type_error.none.not_allowed",
             )
 
         # Set list of invalid data types to test
@@ -261,7 +266,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_string,
                 expected_error_message=f"{field_location} must be a string",
-                error_type="type_error",
+                expected_error_type="type_error",
             )
 
         # If there is a predefined string length, then test invalid string lengths,
@@ -274,7 +279,7 @@ class ValidatorModelTests:
                     field_location=field_location,
                     invalid_value=invalid_length_string,
                     expected_error_message=f"{field_location} must be 10 characters",
-                    error_type="value_error",
+                    expected_error_type="value_error",
                 )
         else:
             test_invalid_values_rejected(
@@ -283,7 +288,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value="",
                 expected_error_message=f"{field_location} must be a non-empty string",
-                error_type="value_error",
+                expected_error_type="value_error",
             )
 
         # If there is a max_length, test strings which exceed that length
@@ -296,7 +301,7 @@ class ValidatorModelTests:
                     invalid_value=invalid_length_string,
                     expected_error_message=f"{field_location} must be {max_length} "
                     + "or fewer characters",
-                    error_type="value_error",
+                    expected_error_type="value_error",
                 )
 
         # If there are predefined values, then test strings which are
@@ -310,7 +315,7 @@ class ValidatorModelTests:
                     invalid_value=invalid_string,
                     expected_error_message=f"{field_location} must be one of the following: "
                     + str(", ".join(predefined_values)),
-                    error_type="value_error",
+                    expected_error_type="value_error",
                 )
 
         # If spaces are not allowed, then test strings with spaces
@@ -322,7 +327,7 @@ class ValidatorModelTests:
                     field_location=field_location,
                     invalid_value=invalid_string_with_spaces,
                     expected_error_message=f"{field_location} must not contain spaces",
-                    error_type="value_error",
+                    expected_error_type="value_error",
                 )
 
         # If is a postal code, then test postal codes which are not separated into the two parts
@@ -337,7 +342,7 @@ class ValidatorModelTests:
                     invalid_value=invalid_postal_code,
                     expected_error_message=f"{field_location} must contain a single space, "
                     + "which divides the two parts of the postal code",
-                    error_type="value_error",
+                    expected_error_type="value_error",
                 )
 
             # Test invalid postal code length
@@ -348,14 +353,14 @@ class ValidatorModelTests:
                 invalid_value="AA000 00AA",
                 expected_error_message=f"{field_location} must be 8 or fewer characters "
                 + "(excluding spaces)",
-                error_type="value_error",
+                expected_error_type="value_error",
             )
 
     @staticmethod
     def test_list_value(
         test_instance: unittest.TestCase,
         field_location: str,
-        valid_lists_to_test: list = None,
+        valid_lists_to_test: list,
         predefined_list_length: int = None,
         valid_list_element=None,
         is_list_of_strings: bool = False,
@@ -391,7 +396,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_list,
                 expected_error_message=f"{field_location} must be an array",
-                error_type="type_error",
+                expected_error_type="type_error",
             )
 
         # If there is a predefined list length, then test the empty list and a list which is
@@ -401,8 +406,8 @@ class ValidatorModelTests:
             list_too_short = []
             for _ in range(predefined_list_length - 1):
                 list_too_short.append(valid_list_element)
-            list_too_long = []
 
+            list_too_long = []
             for _ in range(predefined_list_length + 1):
                 list_too_long.append(valid_list_element)
 
@@ -420,7 +425,7 @@ class ValidatorModelTests:
                     invalid_value=invalid_length_list,
                     expected_error_message=f"{field_location} must be an array of length "
                     + f"{predefined_list_length}",
-                    error_type="value_error",
+                    expected_error_type="value_error",
                 )
         else:
             test_invalid_values_rejected(
@@ -429,7 +434,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=[],
                 expected_error_message=f"{field_location} must be a non-empty array",
-                error_type="value_error",
+                expected_error_type="value_error",
             )
 
         # Tests lists with non-string or empty string elements (if applicable)
@@ -442,7 +447,7 @@ class ValidatorModelTests:
                     field_location=field_location,
                     invalid_value=invalid_list,
                     expected_error_message=f"{field_location} must be an array of strings",
-                    error_type="type_error",
+                    expected_error_type="type_error",
                 )
 
             # Test empty string in list
@@ -452,7 +457,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=[""],
                 expected_error_message=f"{field_location} must be an array of non-empty strings",
-                error_type="value_error",
+                expected_error_type="value_error",
             )
 
     @staticmethod
@@ -482,7 +487,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_string,
                 expected_error_message=f"{field_location} must be a string",
-                error_type="type_error",
+                expected_error_type="type_error",
             )
 
         # Test invalid date string formats
@@ -494,7 +499,7 @@ class ValidatorModelTests:
                 invalid_value=invalid_date_format,
                 expected_error_message=f"{field_location} must be a valid date string in the "
                 + 'format "YYYY-MM-DD"',
-                error_type="value_error",
+                expected_error_type="value_error",
             )
 
     @staticmethod
@@ -527,7 +532,7 @@ class ValidatorModelTests:
                 invalid_value=None,
                 expected_error_message="Expect any of field value from this list "
                 + "['occurrenceDateTime', 'occurrenceString'].",
-                error_type="value_error",
+                expected_error_type="value_error",
             )
 
         # Set list of invalid data types to test
@@ -545,7 +550,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_string,
                 expected_error_message=f"{field_location} must be a string",
-                error_type="type_error",
+                expected_error_type="type_error",
             )
 
         # Test invalid date time string formats
@@ -558,7 +563,7 @@ class ValidatorModelTests:
                 expected_error_message=f"{field_location} must be a string in the format "
                 + '"YYYY-MM-DDThh:mm:ss+zz:zz" or"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, '
                 + "including timezone offset in hours and minutes)",
-                error_type="value_error",
+                expected_error_type="value_error",
             )
 
         # Test invalid date times
@@ -569,7 +574,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=invalid_occurrence_date_time,
                 expected_error_message=f"{field_location} must be a valid datetime",
-                error_type="value_error",
+                expected_error_type="value_error",
             )
 
     @staticmethod
@@ -594,7 +599,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_boolean,
                 expected_error_message=f"{field_location} must be a boolean",
-                error_type="type_error",
+                expected_error_type="type_error",
             )
 
     @staticmethod
@@ -629,7 +634,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_integer,
                 expected_error_message=f"{field_location} must be a positive integer",
-                error_type="type_error",
+                expected_error_type="type_error",
             )
 
         # Test non-positive integers
@@ -640,7 +645,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=non_positive_integer,
                 expected_error_message=f"{field_location} must be a positive integer",
-                error_type="value_error",
+                expected_error_type="value_error",
             )
 
         # Test value exceeding the max value (if applicable)
@@ -652,14 +657,14 @@ class ValidatorModelTests:
                 invalid_value=max_value + 1,
                 expected_error_message=f"{field_location} must be an integer in the range 1 to "
                 + f"{str(max_value)}",
-                error_type="value_error",
+                expected_error_type="value_error",
             )
 
     @staticmethod
     def test_decimal_or_integer_value(
         test_instance: unittest.TestCase,
         field_location: str,
-        valid_decimals_and_integers_to_test: list = None,
+        valid_decimals_and_integers_to_test: list,
         max_decimal_places: int = None,
     ):
         """
@@ -688,7 +693,7 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_decimals_or_integers,
                 expected_error_message=f"{field_location} must be a number",
-                error_type="type_error",
+                expected_error_type="type_error",
             )
 
         # Test Decimal with more than the maximum number of decimal places
@@ -700,5 +705,5 @@ class ValidatorModelTests:
             invalid_value=decimal_too_many_dp,
             expected_error_message=f"{field_location} must be a number with a maximum of "
             + f"{max_decimal_places} decimal places",
-            error_type="value_error",
+            expected_error_type="value_error",
         )

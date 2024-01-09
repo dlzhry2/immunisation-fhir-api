@@ -223,3 +223,20 @@ def get_generic_extension_value(
     raise KeyError(
         f"$.extension[?(@.url=='{url}')].valueCodeableConcept.coding[0].{field_type} does not exist"
     )
+
+
+def generate_field_location_for_questionnnaire_response(
+    link_id: str, field_type: Literal["code", "display", "system"]
+) -> str:
+    """Generate the field location string for questionnaire response items"""
+    return (
+        "contained[?(@.resourceType=='QuestionnaireResponse')]"
+        + f".item[?(@.linkId=='{link_id}')].answer[0].valueCoding.{field_type}"
+    )
+
+
+def generate_field_location_for_extension(
+    url: str, field_type: Literal["code", "display"]
+) -> str:
+    """Generate the field location string for extension items"""
+    return f"extension[?(@.url=='{url}')].valueCodeableConcept.coding[0].{field_type}"

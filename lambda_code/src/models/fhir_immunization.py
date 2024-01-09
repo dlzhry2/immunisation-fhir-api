@@ -1,11 +1,6 @@
 """Immunization FHIR R4B validator"""
 from fhir.resources.R4B.immunization import Immunization
 from models.utils import (
-    get_generic_questionnaire_response_value,
-    get_generic_extension_value,
-)
-
-from models.utils import (
     pre_validate_string,
     pre_validate_date_time,
     pre_validate_list,
@@ -13,6 +8,10 @@ from models.utils import (
     pre_validate_boolean,
     pre_validate_positive_integer,
     pre_validate_decimal,
+    get_generic_questionnaire_response_value,
+    get_generic_extension_value,
+    generate_field_location_for_questionnnaire_response,
+    generate_field_location_for_extension,
 )
 from models.constants import Constants
 
@@ -29,8 +28,8 @@ class ImmunizationValidator:
     @classmethod
     def pre_validate_patient_identifier_value(cls, values: dict) -> dict:
         """
-        Pre-validate that, if  patient.identifier.value (legacy CSV field name: NHS_NUMBER)
-        exists, then it is a string of 10 characters
+        Pre-validate that, if patient.identifier.value (legacy CSV field name: NHS_NUMBER)
+        exists, then it is a string of 10 characters which does not contain spaces
         """
         try:
             patient_identifier_value = values["patient"]["identifier"]["value"]
@@ -112,8 +111,9 @@ class ImmunizationValidator:
             )
             pre_validate_string(
                 questionnaire_site_code_code,
-                "contained[?(@.resourceType=='QuestionnaireResponse')]"
-                + ".item[?(@.linkId=='SiteCode')].answer[0].valueCoding.code",
+                generate_field_location_for_questionnnaire_response(
+                    link_id="SiteCode", field_type="code"
+                ),
             )
         except KeyError:
             pass
@@ -133,8 +133,9 @@ class ImmunizationValidator:
             )
             pre_validate_string(
                 site_name_code,
-                "contained[?(@.resourceType=='QuestionnaireResponse')]"
-                + ".item[?(@.linkId=='SiteName')].answer[0].valueCoding.code",
+                generate_field_location_for_questionnnaire_response(
+                    link_id="SiteName", field_type="code"
+                ),
             )
         except KeyError:
             pass
@@ -283,15 +284,18 @@ class ImmunizationValidator:
         (legacy CSV field name: VACCINATION_PROCEDURE_CODE) exists, then it is a non-empty string
         """
         try:
+            url = (
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+                + "VaccinationProcedure"
+            )
             vaccination_procedure_code = get_generic_extension_value(
                 values,
-                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+                url,
                 "code",
             )
             pre_validate_string(
                 vaccination_procedure_code,
-                "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
-                + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[0].code",
+                generate_field_location_for_extension(url=url, field_type="code"),
             )
         except KeyError:
             pass
@@ -306,15 +310,18 @@ class ImmunizationValidator:
         (legacy CSV field name: VACCINATION_PROCEDURE_CODE) exists, then it is a non-empty string
         """
         try:
+            url = (
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+                + "VaccinationProcedure"
+            )
             vaccination_procedure_display = get_generic_extension_value(
                 values,
-                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+                url,
                 "display",
             )
             pre_validate_string(
                 vaccination_procedure_display,
-                "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
-                + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[0].display",
+                generate_field_location_for_extension(url=url, field_type="display"),
             )
         except KeyError:
             pass
@@ -329,15 +336,18 @@ class ImmunizationValidator:
         (legacy CSV field name: VACCINATION_SITUATION_CODE) exists, then it is a non-empty string
         """
         try:
+            url = (
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+                + "VaccinationSituation"
+            )
             vaccination_situation_code = get_generic_extension_value(
                 values,
-                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+                url,
                 "code",
             )
             pre_validate_string(
                 vaccination_situation_code,
-                "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
-                + "Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[0].code",
+                generate_field_location_for_extension(url=url, field_type="code"),
             )
         except KeyError:
             pass
@@ -352,15 +362,18 @@ class ImmunizationValidator:
         (legacy CSV field name: VACCINATION_SITUATION_CODE) exists, then it is a non-empty string
         """
         try:
+            url = (
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+                + "VaccinationSituation"
+            )
             vaccination_situation_display = get_generic_extension_value(
                 values,
-                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+                url,
                 "display",
             )
             pre_validate_string(
                 vaccination_situation_display,
-                "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
-                + "Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[0].display",
+                generate_field_location_for_extension(url=url, field_type="display"),
             )
         except KeyError:
             pass
