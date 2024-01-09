@@ -69,7 +69,6 @@ steps:
           make apply aws_account_no=${aws_account_no} environment=$workspace
           AWS_DOMAIN_NAME=https://$(make -s output name=service_domain_name)
           echo "##vso[task.setvariable variable=AWS_DOMAIN_NAME]$AWS_DOMAIN_NAME"
-          echo $(AWS_DOMAIN_NAME)
           
 
       fi
@@ -87,7 +86,7 @@ steps:
       export APIGEE_ACCESS_TOKEN="$(secret.AccessToken)"
       export PROXY_NAME="$(FULLY_QUALIFIED_SERVICE_NAME)"
       export STATUS_ENDPOINT_API_KEY="$(status-endpoint-api-key)"
-      export AWS_DOMAIN_NAME=$(AWS_DOMAIN_NAME)
+      export AWS_DOMAIN_NAME="$(AWS_DOMAIN_NAME)"
       marker="not sandbox_int"
       if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]
       then
