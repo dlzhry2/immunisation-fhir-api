@@ -72,3 +72,13 @@ def test_wait_for_status(nhsd_apim_proxy_url, status_endpoint_auth_headers):
 def test_app_level0(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     resp = requests.get(f"{nhsd_apim_proxy_url}/event", headers=nhsd_apim_auth_headers)
     assert resp.status_code == 401  # unauthorized
+
+
+@pytest.mark.debug
+@pytest.mark.smoketest({"access": "application", "level": "level0"})
+def test_aws_service_not_running_without_cert(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+    service_domain_name = getenv('AWS_DOMAIN_NAME')
+    print("*********************************")
+    print(service_domain_name)
+    result = requests.get(f"{service_domain_name}/status", headers=nhsd_apim_auth_headers)
+    assert result.status_code == 403  # Forbidden
