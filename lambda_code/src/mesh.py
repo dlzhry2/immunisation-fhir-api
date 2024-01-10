@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from csv_to_model import read_csv_to_model
-from models.csv_immunization import CsvImmunizationModel
-from models.failures import CsvImmunizationErrorModel
+from models.csv_immunisation import CsvImmunisationModel
+from models.failures import CsvImmunisationErrorModel
 import boto3
 
 
@@ -23,7 +23,7 @@ class MeshCsvParser:
     def __init__(self, content):
         self.content = content
 
-    def parse(self) -> ([CsvImmunizationModel], [CsvImmunizationErrorModel]):
+    def parse(self) -> ([CsvImmunisationModel], [CsvImmunisationErrorModel]):
         """Parse every CSV record and return a tuple
         first item is a list of successful records and second one is a list of errors
         """

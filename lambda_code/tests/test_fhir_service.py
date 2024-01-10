@@ -9,7 +9,7 @@ from fhir.resources.list import List as FhirList
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from fhir_repository import ImmunisationRepository
+from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService
 from pds_service import PdsService
 from models.errors import InvalidPatientId
@@ -57,7 +57,7 @@ def _create_an_immunization_dict(imms_id, nhs_number=valid_nhs_number):
 
 class TestGetImmunization(unittest.TestCase):
     def setUp(self):
-        self.imms_repo = create_autospec(ImmunisationRepository)
+        self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
         self.validator = create_autospec(ImmunizationValidator)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
@@ -89,7 +89,7 @@ class TestGetImmunization(unittest.TestCase):
 
 class TestCreateImmunization(unittest.TestCase):
     def setUp(self):
-        self.imms_repo = create_autospec(ImmunisationRepository)
+        self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
         self.validator = create_autospec(ImmunizationValidator)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
@@ -142,7 +142,7 @@ class TestCreateImmunization(unittest.TestCase):
 
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
-        self.imms_repo = create_autospec(ImmunisationRepository)
+        self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
         self.validator = create_autospec(ImmunizationValidator)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
@@ -164,7 +164,7 @@ class TestDeleteImmunization(unittest.TestCase):
 
 class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
-        self.imms_repo = create_autospec(ImmunisationRepository)
+        self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
         self.validator = create_autospec(ImmunizationValidator)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
