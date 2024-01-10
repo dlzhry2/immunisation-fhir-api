@@ -169,7 +169,9 @@ def pre_validate_positive_integer(
 
 
 def pre_validate_decimal(
-    field_value: int, field_location: str, max_decimal_places: int = None
+    field_value: Union[int, Decimal],
+    field_location: str,
+    max_decimal_places: int = None,
 ):
     """
     Apply pre-validation to a decimal field to ensure that it is an integer or decimal,

@@ -5,4 +5,4 @@ requests
 responses
 pydantic
 PyJWT==2.8.0
-jsonpath_ng
+jsonpath-ng==1.6.0

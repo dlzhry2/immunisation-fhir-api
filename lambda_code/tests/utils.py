@@ -278,7 +278,7 @@ class ValidatorModelTests:
                     valid_json_data,
                     field_location=field_location,
                     invalid_value=invalid_length_string,
-                    expected_error_message=f"{field_location} must be 10 characters",
+                    expected_error_message=f"{field_location} must be {defined_length} characters",
                     expected_error_type="value_error",
                 )
         else:
