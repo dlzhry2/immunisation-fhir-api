@@ -39,6 +39,16 @@ class UnhandledResponseError(RuntimeError):
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
 
 
+@dataclass
+class PreValidationError(RuntimeError):
+    """Pre validation error"""
+    message: str
+
+    def to_operation_outcome(self) -> OperationOutcome:
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invalid, diagnostics=self.message)
+
+
 class ValidationError(RuntimeError):
     def to_operation_outcome(self) -> OperationOutcome:
         pass
