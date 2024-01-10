@@ -1,11 +1,7 @@
-import os
-import sys
 import unittest
 
 import responses
 from responses import matchers
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from immunisation_api import ImmunisationApi
 
