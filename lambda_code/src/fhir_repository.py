@@ -9,7 +9,6 @@ import botocore.exceptions
 from boto3.dynamodb.conditions import Attr, Key
 
 from models.errors import ResourceNotFoundError, UnhandledResponseError
-from models.fhir_patient import PatientDetails
 
 
 def create_table(table_name=None, endpoint_url=None, region_name='eu-west-2'):
@@ -31,7 +30,7 @@ class ImmunizationRepository:
         else:
             return None
 
-    def create_immunization(self, immunization: dict, patient_details: PatientDetails) -> dict:
+    def create_immunization(self, immunization: dict, patient: dict) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
 
@@ -48,12 +47,7 @@ class ImmunizationRepository:
             'PatientSK': patient_sk,
             # Attributes:
             'Resource': json.dumps(immunization),
-            'NhsNumber': patient_details.nhs_number,
-            'PersonForename': patient_details.firstname,
-            'PersonSurname': patient_details.lastname,
-            'PersonDob': patient_details.dob,
-            'PersonGenderCode': patient_details.gender,
-            'PersonPostCode': patient_details.postcode,
+            'Patient': patient,
         })
 
         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:

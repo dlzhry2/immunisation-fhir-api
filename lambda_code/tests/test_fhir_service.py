@@ -2,7 +2,6 @@ import json
 import os
 import sys
 import unittest
-import uuid
 from unittest.mock import create_autospec
 
 from fhir.resources.immunization import Immunization
@@ -14,7 +13,6 @@ from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService
 from pds_service import PdsService
 from models.errors import InvalidPatientId
-from models.fhir_patient import PatientDetails
 
 valid_nhs_number = "2374658346"
 
@@ -48,30 +46,6 @@ def _create_an_immunization(imms_id, nhs_number=valid_nhs_number) -> Immunizatio
         },
     }
     return Immunization.parse_obj(base_imms)
-
-
-def _create_a_patient(nhs_number=valid_nhs_number) -> dict:
-    return {
-        "resourceType": "Patient",
-        "id": uuid.uuid4(),
-        "identifier": [
-            {
-                "system": "https://fhir.nhs.uk/Id/nhs-number",
-                "value": nhs_number,
-            }
-        ],
-        "name": [
-            {
-                "given": ["Jane"],
-                "family": "Smith"
-            }
-        ],
-        "gender": "female",
-        "birthDate": "2010-10-22",
-        "address": [{
-            "postalCode": "LS1 6AE"
-        }]
-    }
 
 
 def _create_an_immunization_dict(imms_id, nhs_number=valid_nhs_number):
@@ -121,9 +95,8 @@ class TestCreateImmunization(unittest.TestCase):
         """it should create Immunization and validate NHS number"""
         imms_id = "an-id"
         self.imms_repo.create_immunization.return_value = _create_an_immunization_dict(imms_id)
-        pds_patient = _create_a_patient()
+        pds_patient = {"id": "a-patient-id"}
         self.fhir_service.pds_service.get_patient_details.return_value = pds_patient
-        patient_details = PatientDetails.from_fhir(pds_patient)
 
         nhs_number = valid_nhs_number
         req_imms = _create_an_immunization_dict(imms_id, nhs_number)
@@ -132,7 +105,7 @@ class TestCreateImmunization(unittest.TestCase):
         stored_imms = self.fhir_service.create_immunization(req_imms)
 
         # Then
-        self.imms_repo.create_immunization.assert_called_once_with(req_imms, patient_details)
+        self.imms_repo.create_immunization.assert_called_once_with(req_imms, pds_patient)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
         self.assertIsInstance(stored_imms, Immunization)
 

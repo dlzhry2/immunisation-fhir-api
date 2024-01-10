@@ -1,29 +1,7 @@
 """Patient FHIR R4B validator"""
-from dataclasses import dataclass
 
 from fhir.resources.R4B.patient import Patient
 from models.patient_pre_validators import PatientPreValidators
-
-
-@dataclass
-class PatientDetails:
-    nhs_number: str
-    firstname: str
-    lastname: str
-    dob: str
-    gender: str
-    postcode: str
-
-    @staticmethod
-    def from_fhir(fhir_patient: dict):
-        nhs_num = fhir_patient["identifier"][0]["value"]
-        firstname = fhir_patient["name"][0]["given"]
-        lastname = fhir_patient["name"][0]["family"]
-        gender = fhir_patient["gender"]
-        dob = fhir_patient["birthDate"]
-        postcode = fhir_patient["address"][0]["postalCode"]
-        return PatientDetails(nhs_number=nhs_num, firstname=firstname, lastname=lastname, dob=dob, gender=gender,
-                              postcode=postcode)
 
 
 class PatientValidator:
