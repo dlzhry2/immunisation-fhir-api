@@ -1,8 +1,4 @@
-import os
-import sys
 import unittest
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from models.errors import Severity, Code, create_operation_outcome
 

@@ -48,7 +48,7 @@ class Authenticator:
             'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
             'client_assertion': _jwt
         }
-        token_response = requests.post(self.token_url, data=data, headers=headers)
+        token_response = requests.post(self.token_url, data=data, headers=headers, timeout=2)
 
         return token_response.json().get('access_token')
 
@@ -67,7 +67,7 @@ class PdsService:
             'X-Request-ID': str(uuid.uuid4()),
             'X-Correlation-ID': str(uuid.uuid4())
         }
-        response = requests.get(f"{self.base_url}/{patient_id}", headers=request_headers)
+        response = requests.get(f"{self.base_url}/{patient_id}", headers=request_headers, timeout=2)
 
         if response.status_code == 200:
             return response.json()
