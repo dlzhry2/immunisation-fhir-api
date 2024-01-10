@@ -3,14 +3,14 @@ from typing import Optional
 from fhir.resources.immunization import Immunization
 from fhir.resources.list import List as FhirList
 
-from fhir_repository import ImmunisationRepository
+from fhir_repository import ImmunizationRepository
 from models.errors import InvalidPatientId
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 
 
 class FhirService:
-    def __init__(self, imms_repo: ImmunisationRepository, pds_service: PdsService,
+    def __init__(self, imms_repo: ImmunizationRepository, pds_service: PdsService,
                  pre_validator: ImmunizationValidator):
         self.immunization_repo = imms_repo
         self.pds_service = pds_service
