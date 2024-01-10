@@ -16,8 +16,8 @@ class TestGetImmunisationById(unittest.TestCase):
     def setUp(self):
         self.controller = create_autospec(FhirController)
 
-    def test_get_immunisation_by_id(self):
-        """it should return immunisation by id"""
+    def test_get_immunization_by_id(self):
+        """it should return Immunization by id"""
         lambda_event = {"pathParameters": {"id": "an-id"}}
         exp_res = {"a-key": "a-value"}
 

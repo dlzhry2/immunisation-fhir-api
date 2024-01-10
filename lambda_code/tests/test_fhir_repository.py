@@ -10,13 +10,13 @@ from boto3.dynamodb.conditions import Attr, Key
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from fhir_repository import ImmunisationRepository, create_table
+from fhir_repository import ImmunizationRepository, create_table
 from models.errors import ResourceNotFoundError, UnhandledResponseError
 
 
 def local_test():
     table = create_table("local-imms-events", "http://localhost:4566", "us-east-1")
-    repository = ImmunisationRepository(table=table)
+    repository = ImmunizationRepository(table=table)
     res = repository.get_immunization_by_id("5a921187-19c7-8df4-8f4f-f31e78de5857")
     _ = res
     # print(res)
@@ -33,7 +33,7 @@ def _make_patient_pk(_id):
 class TestGetImmunization(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
-        self.repository = ImmunisationRepository(table=self.table)
+        self.repository = ImmunizationRepository(table=self.table)
 
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
@@ -65,7 +65,7 @@ def _make_an_immunization(imms_id="an-id") -> dict:
 class TestCreateImmunizationMainIndex(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
-        self.repository = ImmunisationRepository(table=self.table)
+        self.repository = ImmunizationRepository(table=self.table)
 
     def test_create_immunization(self):
         """it should create Immunization, and return created object"""
@@ -120,7 +120,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
 
     def setUp(self):
         self.table = MagicMock()
-        self.repository = ImmunisationRepository(table=self.table)
+        self.repository = ImmunizationRepository(table=self.table)
 
     def test_create_patient_gsi(self):
         """create Immunization method should create Patient index with nhs-number as ID and no system"""
@@ -160,7 +160,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
-        self.repository = ImmunisationRepository(table=self.table)
+        self.repository = ImmunizationRepository(table=self.table)
 
     def test_get_deleted_immunization(self):
         """it should return None if Immunization is logically deleted"""
@@ -254,7 +254,7 @@ class TestDeleteImmunization(unittest.TestCase):
 class TestFindImmunizations(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
-        self.repository = ImmunisationRepository(table=self.table)
+        self.repository = ImmunizationRepository(table=self.table)
 
     def test_find_immunizations(self):
         """it should find events with nhsNumber and diseaseCode(like snomed)"""
