@@ -1,17 +1,21 @@
-import json
 from typing import Optional
+
 from fhir.resources.immunization import Immunization
 from fhir.resources.list import List as FhirList
 
 from fhir_repository import ImmunisationRepository
 from models.errors import InvalidPatientId
+from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 
 
 class FhirService:
-    def __init__(self, imms_repo: ImmunisationRepository, pds_service: PdsService):
+    def __init__(self, imms_repo: ImmunisationRepository, pds_service: PdsService,
+                 pre_validator: ImmunizationValidator):
         self.immunisation_repo = imms_repo
         self.pds_service = pds_service
+        self.pre_validator = pre_validator
+        self.pre_validator.add_custom_root_validators()
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunisation_repo.get_immunization_by_id(imms_id)
@@ -23,6 +27,9 @@ class FhirService:
             return None
 
     def create_immunization(self, immunization: dict) -> Immunization:
+        self.pre_validator.validate(immunization)
+
+        # TODO: check if nhs number exists
         nhs_number = immunization['patient']['identifier']['value']
         patient = self.pds_service.get_patient_details(nhs_number)
         if patient:
