@@ -6,13 +6,15 @@ from unittest.mock import create_autospec
 
 from fhir.resources.immunization import Immunization
 from fhir.resources.list import List as FhirList
+from pydantic import ValidationError
+from pydantic.error_wrappers import ErrorWrapper
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService
 from pds_service import PdsService
-from models.errors import InvalidPatientId
+from models.errors import InvalidPatientId, CoarseValidationError
 from models.fhir_immunization import ImmunizationValidator
 
 valid_nhs_number = "2374658346"
@@ -115,13 +117,16 @@ class TestCreateImmunization(unittest.TestCase):
     def test_pre_validation_failed(self):
         """it should throw exception if Immunization is not valid"""
         self.imms_repo.create_immunization.return_value = _create_an_immunization_dict("an-id")
-        self.validator.validate.side_effect = Exception()
+        validation_error = ValidationError([ErrorWrapper(TypeError('bad type'), '/type'), ], Immunization)
+        self.validator.validate.side_effect = validation_error
+        expected_msg = str(validation_error)
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(CoarseValidationError) as error:
             # When
             self.fhir_service.create_immunization({})
 
         # Then
+        self.assertEqual(error.exception.message, expected_msg)
         self.imms_repo.create_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 

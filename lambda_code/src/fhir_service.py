@@ -2,9 +2,10 @@ from typing import Optional
 
 from fhir.resources.immunization import Immunization
 from fhir.resources.list import List as FhirList
+from pydantic import ValidationError
 
 from fhir_repository import ImmunizationRepository
-from models.errors import InvalidPatientId
+from models.errors import InvalidPatientId, CoarseValidationError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 
@@ -27,7 +28,10 @@ class FhirService:
             return None
 
     def create_immunization(self, immunization: dict) -> Immunization:
-        self.pre_validator.validate(immunization)
+        try:
+            self.pre_validator.validate(immunization)
+        except ValidationError as error:
+            raise CoarseValidationError(message=str(error))
 
         # TODO: check if nhs number exists
         nhs_number = immunization['patient']['identifier']['value']

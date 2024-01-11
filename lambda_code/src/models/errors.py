@@ -56,7 +56,7 @@ class InvalidPatientId(ValidationError):
 
 
 @dataclass
-class PreValidationError(ValidationError):
+class CoarseValidationError(ValidationError):
     """Pre validation error"""
     message: str
 
