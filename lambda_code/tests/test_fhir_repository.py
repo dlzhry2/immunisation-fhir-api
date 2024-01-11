@@ -10,16 +10,8 @@ from boto3.dynamodb.conditions import Attr, Key
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from fhir_repository import ImmunizationRepository, create_table
+from fhir_repository import ImmunizationRepository
 from models.errors import ResourceNotFoundError, UnhandledResponseError
-
-
-def local_test():
-    table = create_table("local-imms-events", "http://localhost:4566", "us-east-1")
-    repository = ImmunizationRepository(table=table)
-    res = repository.get_immunization_by_id("5a921187-19c7-8df4-8f4f-f31e78de5857")
-    _ = res
-    # print(res)
 
 
 def _make_immunization_pk(_id):
@@ -143,7 +135,8 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         """Patient record should have a sort-key based on disease-type"""
         imms = _make_an_immunization()
 
-        disease_code = "a-disease-code"
+        # disease_code = "a-disease-code"
+        disease_code = "covid"
         disease = {"targetDisease": [{"coding": [{"code": disease_code}]}]}
         imms["protocolApplied"] = [disease]
 

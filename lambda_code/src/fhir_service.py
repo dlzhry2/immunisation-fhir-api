@@ -11,7 +11,7 @@ from pds_service import PdsService
 
 class FhirService:
     def __init__(self, imms_repo: ImmunizationRepository, pds_service: PdsService,
-                 pre_validator: ImmunizationValidator):
+                 pre_validator: ImmunizationValidator = ImmunizationValidator()):
         self.immunization_repo = imms_repo
         self.pds_service = pds_service
         self.pre_validator = pre_validator

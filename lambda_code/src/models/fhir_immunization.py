@@ -1,5 +1,6 @@
 """Immunization FHIR R4B validator"""
 from fhir.resources.R4B.immunization import Immunization
+from models.constants import Constants
 from models.utils import (
     pre_validate_string,
     pre_validate_date_time,
@@ -13,7 +14,6 @@ from models.utils import (
     generate_field_location_for_questionnnaire_response,
     generate_field_location_for_extension,
 )
-from models.constants import Constants
 
 
 class ImmunizationValidator:
@@ -761,86 +761,87 @@ class ImmunizationValidator:
         NOTE: THE ORDER IN WHICH THE VALIDATORS ARE ADDED IS IMPORTANT! DO NOT CHANGE THE ORDER
         WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST.
         """
-        # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
-        Immunization.add_root_validator(
-            self.pre_validate_patient_identifier_value, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_occurrence_date_time, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_contained, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_questionnaire_answers, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_questionnaire_site_code_code, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_site_name_code, pre=True)
-        Immunization.add_root_validator(self.pre_validate_identifier, pre=True)
-        Immunization.add_root_validator(self.pre_validate_identifier_value, pre=True)
-        Immunization.add_root_validator(self.pre_validate_identifier_system, pre=True)
-        Immunization.add_root_validator(self.pre_validate_status, pre=True)
-        Immunization.add_root_validator(self.pre_validate_recorded, pre=True)
-        Immunization.add_root_validator(self.pre_validate_primary_source, pre=True)
-        Immunization.add_root_validator(self.pre_validate_report_origin_text, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_extension_value_codeable_concept_codings, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_vaccination_procedure_code, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_vaccination_procedure_display, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_vaccination_situation_code, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_vaccination_situation_display, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_status_reason_coding, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_status_reason_coding_code, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_status_reason_coding_display, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_protocol_applied, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_protocol_applied_dose_number_positive_int, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_vaccine_code_coding, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_vaccine_code_coding_code, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_vaccine_code_coding_display, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_manufacturer_display, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_lot_number, pre=True)
-        Immunization.add_root_validator(self.pre_validate_expiration_date, pre=True)
-        Immunization.add_root_validator(self.pre_validate_site_coding, pre=True)
-        Immunization.add_root_validator(self.pre_validate_site_coding_code, pre=True)
-        Immunization.add_root_validator(self.pre_validate_site_coding_display, pre=True)
-        Immunization.add_root_validator(self.pre_validate_route_coding, pre=True)
-        Immunization.add_root_validator(self.pre_validate_route_coding_code, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_route_coding_display, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_dose_quantity_value, pre=True)
-        Immunization.add_root_validator(self.pre_validate_dose_quantity_code, pre=True)
-        Immunization.add_root_validator(self.pre_validate_dose_quantity_unit, pre=True)
-        Immunization.add_root_validator(self.pre_validate_reason_code_codings, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_reason_code_coding_codes, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_reason_code_coding_displays, pre=True
-        )
+        if not hasattr(Immunization, "pre_validate_patient_identifier_value"):
+            # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
+            Immunization.add_root_validator(
+                self.pre_validate_patient_identifier_value, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_occurrence_date_time, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_contained, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_questionnaire_answers, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_questionnaire_site_code_code, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_site_name_code, pre=True)
+            Immunization.add_root_validator(self.pre_validate_identifier, pre=True)
+            Immunization.add_root_validator(self.pre_validate_identifier_value, pre=True)
+            Immunization.add_root_validator(self.pre_validate_identifier_system, pre=True)
+            Immunization.add_root_validator(self.pre_validate_status, pre=True)
+            Immunization.add_root_validator(self.pre_validate_recorded, pre=True)
+            Immunization.add_root_validator(self.pre_validate_primary_source, pre=True)
+            Immunization.add_root_validator(self.pre_validate_report_origin_text, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_extension_value_codeable_concept_codings, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_vaccination_procedure_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_vaccination_procedure_display, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_vaccination_situation_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_vaccination_situation_display, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_status_reason_coding, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_status_reason_coding_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_status_reason_coding_display, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_protocol_applied, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_protocol_applied_dose_number_positive_int, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_vaccine_code_coding, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_vaccine_code_coding_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_vaccine_code_coding_display, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_manufacturer_display, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_lot_number, pre=True)
+            Immunization.add_root_validator(self.pre_validate_expiration_date, pre=True)
+            Immunization.add_root_validator(self.pre_validate_site_coding, pre=True)
+            Immunization.add_root_validator(self.pre_validate_site_coding_code, pre=True)
+            Immunization.add_root_validator(self.pre_validate_site_coding_display, pre=True)
+            Immunization.add_root_validator(self.pre_validate_route_coding, pre=True)
+            Immunization.add_root_validator(self.pre_validate_route_coding_code, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_route_coding_display, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_dose_quantity_value, pre=True)
+            Immunization.add_root_validator(self.pre_validate_dose_quantity_code, pre=True)
+            Immunization.add_root_validator(self.pre_validate_dose_quantity_unit, pre=True)
+            Immunization.add_root_validator(self.pre_validate_reason_code_codings, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_reason_code_coding_codes, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_reason_code_coding_displays, pre=True
+            )
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
