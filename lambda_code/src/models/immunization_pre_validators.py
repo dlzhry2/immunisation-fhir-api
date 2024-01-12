@@ -377,7 +377,7 @@ class ImmunizationPreValidators:
         )
 
         return site_coding
-
+    
     @staticmethod
     def site_coding_code(site_coding_code: str) -> str:
         """Pre-validate site -> coding[0] -> code (site_of_vaccination_code)"""
@@ -487,28 +487,10 @@ class ImmunizationPreValidators:
 
     @staticmethod
     def reason_code_coding_display(reason_code_coding_display: str) -> str:
-        """Pre-validate reasonCode[*] -> coding[0] -> display (indication_term)"""
+        """Pre-validate reasonCode[*] -> coding[0] -> display (indication_term"""
 
         generic_string_validation(
             reason_code_coding_display, "reasonCode[*] -> coding[0] -> display"
         )
 
         return reason_code_coding_display
-
-    @staticmethod
-    def questionnaire_nhs_number_status_code(
-        questionnaire_nhs_number_status_code: str,
-    ) -> str:
-        """
-        Pre-validate contained[0] -> resourceType[QuestionnaireResponse]:
-        item[*] -> linkId[NhsNumberStatus]:
-        answer[0] -> valueCoding -> code (nhs_number_status_indicator_code)
-        """
-
-        generic_string_validation(
-            questionnaire_nhs_number_status_code,
-            "contained[0] -> resourceType[QuestionnaireResponse]: "
-            + "item[*] -> linkId[NhsNumberStatus]: answer[0] -> valueCoding -> code",
-        )
-
-        return questionnaire_nhs_number_status_code
