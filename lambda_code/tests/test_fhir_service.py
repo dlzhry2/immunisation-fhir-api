@@ -4,7 +4,7 @@ import sys
 import unittest
 from unittest.mock import create_autospec
 
-from fhir.resources.immunization import Immunization
+from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.list import List as FhirList
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper

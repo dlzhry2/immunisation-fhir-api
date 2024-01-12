@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fhir.resources.immunization import Immunization
+from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.list import List as FhirList
 from pydantic import ValidationError
 
