@@ -536,3 +536,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.display",
             valid_strings_to_test=["Number present and verified"],
         )
+
+    def test_model_pre_validate_site_code_system(self):
+        """
+        Test pre_validate_site_code_system accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='SiteCode')].answer[0].valueCoding.system",
+            valid_strings_to_test=["snomed"],
+        )

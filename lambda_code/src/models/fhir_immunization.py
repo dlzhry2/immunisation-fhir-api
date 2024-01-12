@@ -781,7 +781,7 @@ class ImmunizationValidator:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.display (legacy CSV field name:
-        NHS_NUMBER_STATUS_INDICATOR_CODE) exists, then it is a non-empty string
+        NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION) exists, then it is a non-empty string
         """
         try:
             nhs_number_status_display = get_generic_questionnaire_response_value(
@@ -791,6 +791,28 @@ class ImmunizationValidator:
                 nhs_number_status_display,
                 generate_field_location_for_questionnnaire_response(
                     link_id="NhsNumberStatus", field_type="display"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_site_code_system(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='SiteCode')].answer[0].valueCoding.system (legacy CSV field name:
+        SITE_CODE_TYPE_URI) exists, then it is a non-empty string
+        """
+        try:
+            site_code_system = get_generic_questionnaire_response_value(
+                values, "SiteCode", "system"
+            )
+            pre_validate_string(
+                site_code_system,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="SiteCode", field_type="system"
                 ),
             )
         except KeyError:
@@ -891,6 +913,7 @@ class ImmunizationValidator:
         Immunization.add_root_validator(
             self.pre_validate_nhs_number_status_display, pre=True
         )
+        Immunization.add_root_validator(self.pre_validate_site_code_system, pre=True)
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
