@@ -89,9 +89,17 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         """
         Test pre_validate_quesionnaire_answers accepts valid values and rejects invalid values
         """
-        valid_list_element = {"valueCoding": {"code": "B0C4P"}}
         # Check that any of the 12 answer fields in the sample data are rejected when invalid
         for i in range(12):
+            if i == 10:
+                # for SubmittedTimeStamp, the code is a date time string
+                valid_list_element = {
+                    "valueCoding": {"code": "2020-12-14T10:08:15+00:00"}
+                }
+            else:
+                # for everything else, the code is a string
+                valid_list_element = {"valueCoding": {"code": "B0C4P"}}
+
             ValidatorModelTests.test_list_value(
                 self,
                 field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
@@ -678,4 +686,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueCoding.code",
+        )
+
+    def test_model_pre_validate_location_identifier_value(self):
+        """
+        Test pre_validate_location_identifier_value accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="location.identifier.value",
+            valid_strings_to_test=["B0C4P", "140565"],
         )
