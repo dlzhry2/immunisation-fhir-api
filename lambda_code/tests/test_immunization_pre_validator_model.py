@@ -697,3 +697,13 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location="location.identifier.value",
             valid_strings_to_test=["B0C4P", "140565"],
         )
+
+    def test_model_pre_validate_location_identifier_system(self):
+        """
+        Test pre_validate_location_identifier_system accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="location.identifier.system",
+            valid_strings_to_test=["https://fhir.hl7.org.uk/Id/140565"],
+        )

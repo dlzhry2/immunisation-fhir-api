@@ -1076,6 +1076,22 @@ class ImmunizationValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_location_identifier_system(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if location.identifier.system (legacy CSV field name:
+        LOCATION_CODE_TYPE_URI) exists, then it is a non-empty string
+        """
+        try:
+            location_identifier_system = values["location"]["identifier"]["system"]
+            pre_validate_string(
+                location_identifier_system, "location.identifier.system"
+            )
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """
         Add custom NHS validators to the model
@@ -1189,6 +1205,9 @@ class ImmunizationValidator:
         )
         Immunization.add_root_validator(
             self.pre_validate_location_identifier_value, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_location_identifier_system, pre=True
         )
 
     def validate(self, json_data) -> Immunization:
