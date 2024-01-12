@@ -1,11 +1,7 @@
 import json
-import os
-import sys
 import unittest
 import uuid
 from unittest.mock import create_autospec
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from delete_imms_handler import delete_immunization
 from fhir_controller import FhirController
