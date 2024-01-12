@@ -584,3 +584,17 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='Consent')].answer[0].valueCoding.code",
             valid_strings_to_test=["snomed"],
         )
+
+    def test_model_pre_validate_consent_display(self):
+        """
+        Test pre_validate_consent_display accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='Consent')].answer[0].valueCoding.display",
+            valid_strings_to_test=[
+                "Patient consented to be given the vaccination",
+                "Parent/carer/guardian consented for child to be given the vaccination",
+            ],
+        )
