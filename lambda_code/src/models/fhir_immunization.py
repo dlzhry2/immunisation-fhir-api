@@ -908,6 +908,28 @@ class ImmunizationValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_care_setting_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='CareSetting')].answer[0].valueCoding.code (legacy CSV field name:
+        CARE_SETTING_TYPE_CODE) exists, then it is a non-empty string
+        """
+        try:
+            care_setting_code = get_generic_questionnaire_response_value(
+                values, "CareSetting", "code"
+            )
+            pre_validate_string(
+                care_setting_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="CareSetting", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """
         Add custom NHS validators to the model
@@ -1008,6 +1030,7 @@ class ImmunizationValidator:
         )
         Immunization.add_root_validator(self.pre_validate_consent_code, pre=True)
         Immunization.add_root_validator(self.pre_validate_consent_display, pre=True)
+        Immunization.add_root_validator(self.pre_validate_care_setting_code, pre=True)
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""

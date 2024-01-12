@@ -598,3 +598,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 "Parent/carer/guardian consented for child to be given the vaccination",
             ],
         )
+
+    def test_model_pre_validate_care_setting_code(self):
+        """
+        Test pre_validate_care_setting_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='CareSetting')].answer[0].valueCoding.code",
+            valid_strings_to_test=["snomed"],
+        )
