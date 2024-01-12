@@ -1040,6 +1040,28 @@ class ImmunizationValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_submitted_time_stamp_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueCoding.code (legacy CSV field name:
+        SUBMITTED_TIMESTAMP) exists, then it is a non-empty string
+        """
+        try:
+            user_email_code = get_generic_questionnaire_response_value(
+                values, "SubmittedTimeStamp", "code"
+            )
+            pre_validate_date_time(
+                user_email_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="SubmittedTimeStamp", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """
         Add custom NHS validators to the model
@@ -1148,6 +1170,9 @@ class ImmunizationValidator:
         Immunization.add_root_validator(self.pre_validate_user_id_code, pre=True)
         Immunization.add_root_validator(self.pre_validate_user_name_code, pre=True)
         Immunization.add_root_validator(self.pre_validate_user_email_code, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_submitted_time_stamp_code, pre=True
+        )
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""

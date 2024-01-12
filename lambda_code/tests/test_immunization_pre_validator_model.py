@@ -669,3 +669,13 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='UserEmail')].answer[0].valueCoding.code",
             valid_strings_to_test=["lester.tester@test.com"],
         )
+
+    def test_model_pre_validate_submitted_time_stamp_code(self):
+        """
+        Test pre_validate_submitted_time_stamp_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_date_time_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueCoding.code",
+        )
