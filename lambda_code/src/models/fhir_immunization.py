@@ -974,6 +974,50 @@ class ImmunizationValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_user_id_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='UserId')].answer[0].valueCoding.code (legacy CSV field name:
+        USER_ID) exists, then it is a non-empty string
+        """
+        try:
+            user_id_code = get_generic_questionnaire_response_value(
+                values, "UserId", "code"
+            )
+            pre_validate_string(
+                user_id_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="UserId", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_user_name_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='UserName')].answer[0].valueCoding.code (legacy CSV field name:
+        USER_NAME) exists, then it is a non-empty string
+        """
+        try:
+            user_name_code = get_generic_questionnaire_response_value(
+                values, "UserName", "code"
+            )
+            pre_validate_string(
+                user_name_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="UserName", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """
         Add custom NHS validators to the model
@@ -1079,6 +1123,8 @@ class ImmunizationValidator:
             self.pre_validate_care_setting_display, pre=True
         )
         Immunization.add_root_validator(self.pre_validate_ip_address_code, pre=True)
+        Immunization.add_root_validator(self.pre_validate_user_id_code, pre=True)
+        Immunization.add_root_validator(self.pre_validate_user_name_code, pre=True)
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""

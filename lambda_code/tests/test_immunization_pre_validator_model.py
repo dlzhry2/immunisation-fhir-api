@@ -636,3 +636,25 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
             ],
         )
+
+    def test_model_pre_validate_user_id_code(self):
+        """
+        Test pre_validate_user_id_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserId')].answer[0].valueCoding.code",
+            valid_strings_to_test=["LESTER_TESTER-1234"],
+        )
+
+    def test_model_pre_validate_user_name_code(self):
+        """
+        Test pre_validate_user_name_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserName')].answer[0].valueCoding.code",
+            valid_strings_to_test=["LESTER TESTER"],
+        )
