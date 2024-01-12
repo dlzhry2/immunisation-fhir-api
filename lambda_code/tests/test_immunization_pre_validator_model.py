@@ -609,3 +609,16 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='CareSetting')].answer[0].valueCoding.code",
             valid_strings_to_test=["snomed"],
         )
+
+    def test_model_pre_validate_care_setting_display(self):
+        """
+        Test pre_validate_care_setting_display accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='CareSetting')].answer[0].valueCoding.display",
+            valid_strings_to_test=[
+                "SNOMED-CT Term description Community health services (qualifier value)"
+            ],
+        )
