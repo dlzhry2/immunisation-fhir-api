@@ -556,5 +556,20 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.code",
-            valid_strings_to_test=["ACME-patient123456"],
+            valid_strings_to_test=[
+                "ACME-patient123456",
+                "ACME-CUST1-pat123456",
+                "ACME-CUST2-pat123456",
+            ],
+        )
+
+    def test_model_pre_validate_local_patient_system(self):
+        """
+        Test pre_validate_local_patient_system accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.system",
+            valid_strings_to_test=["https://supplierABC/identifiers"],
         )

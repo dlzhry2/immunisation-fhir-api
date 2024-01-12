@@ -828,13 +828,35 @@ class ImmunizationValidator:
         LOCAL_PATIENT_ID) exists, then it is a non-empty string
         """
         try:
-            site_code_system = get_generic_questionnaire_response_value(
+            local_patient_code = get_generic_questionnaire_response_value(
                 values, "LocalPatient", "code"
             )
             pre_validate_string(
-                site_code_system,
+                local_patient_code,
                 generate_field_location_for_questionnnaire_response(
                     link_id="LocalPatient", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_local_patient_system(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.system (legacy CSV field name:
+        LOCAL_PATIENT_URI) exists, then it is a non-empty string
+        """
+        try:
+            local_patient_system = get_generic_questionnaire_response_value(
+                values, "LocalPatient", "system"
+            )
+            pre_validate_string(
+                local_patient_system,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="LocalPatient", field_type="system"
                 ),
             )
         except KeyError:
@@ -937,6 +959,9 @@ class ImmunizationValidator:
         )
         Immunization.add_root_validator(self.pre_validate_site_code_system, pre=True)
         Immunization.add_root_validator(self.pre_validate_local_patient_code, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_local_patient_system, pre=True
+        )
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
