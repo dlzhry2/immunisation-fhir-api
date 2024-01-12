@@ -707,3 +707,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location="location.identifier.system",
             valid_strings_to_test=["https://fhir.hl7.org.uk/Id/140565"],
         )
+
+    def test_model_pre_validate_reduce_validation_code(self):
+        """
+        Test pre_validate_reduce_validation_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.code",
+            valid_strings_to_test=["True", "False"],
+        )

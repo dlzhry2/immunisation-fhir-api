@@ -1048,11 +1048,11 @@ class ImmunizationValidator:
         SUBMITTED_TIMESTAMP) exists, then it is a non-empty string
         """
         try:
-            user_email_code = get_generic_questionnaire_response_value(
+            submitted_time_stamp_code = get_generic_questionnaire_response_value(
                 values, "SubmittedTimeStamp", "code"
             )
             pre_validate_date_time(
-                user_email_code,
+                submitted_time_stamp_code,
                 generate_field_location_for_questionnnaire_response(
                     link_id="SubmittedTimeStamp", field_type="code"
                 ),
@@ -1086,6 +1086,29 @@ class ImmunizationValidator:
             location_identifier_system = values["location"]["identifier"]["system"]
             pre_validate_string(
                 location_identifier_system, "location.identifier.system"
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_reduce_validation_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.code (legacy CSV field name:
+        REDUCE_VALIDATION_CODE) exists, then it is a non-empty string
+        """
+        try:
+            reduce_validation_code = get_generic_questionnaire_response_value(
+                values, "ReduceValidation", "code"
+            )
+            pre_validate_string(
+                reduce_validation_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="ReduceValidation", field_type="code"
+                ),
+                predefined_values=Constants.REDUCE_VALIDATION_CODES,
             )
         except KeyError:
             pass
@@ -1208,6 +1231,9 @@ class ImmunizationValidator:
         )
         Immunization.add_root_validator(
             self.pre_validate_location_identifier_system, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_reduce_validation_code, pre=True
         )
 
     def validate(self, json_data) -> Immunization:
