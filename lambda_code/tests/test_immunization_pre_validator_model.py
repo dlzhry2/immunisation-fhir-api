@@ -547,3 +547,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='SiteCode')].answer[0].valueCoding.system",
             valid_strings_to_test=["snomed"],
         )
+
+    def test_model_pre_validate_local_patient_code(self):
+        """
+        Test pre_validate_local_patient_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.code",
+            valid_strings_to_test=["ACME-patient123456"],
+        )
