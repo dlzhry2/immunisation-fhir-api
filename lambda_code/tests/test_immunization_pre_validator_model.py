@@ -573,3 +573,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.system",
             valid_strings_to_test=["https://supplierABC/identifiers"],
         )
+
+    def test_model_pre_validate_consent_code(self):
+        """
+        Test pre_validate_consent_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='Consent')].answer[0].valueCoding.code",
+            valid_strings_to_test=["snomed"],
+        )
