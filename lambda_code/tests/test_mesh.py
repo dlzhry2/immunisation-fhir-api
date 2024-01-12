@@ -1,12 +1,9 @@
 import copy
 import os
-import sys
 import unittest
 import json
 import boto3
 from moto import mock_s3
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from mesh import (
     MeshInputHandler,

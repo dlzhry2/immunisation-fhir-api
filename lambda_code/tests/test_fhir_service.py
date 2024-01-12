@@ -1,6 +1,4 @@
 import json
-import os
-import sys
 import unittest
 from unittest.mock import create_autospec
 
@@ -8,8 +6,6 @@ from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.list import List as FhirList
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService

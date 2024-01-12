@@ -1,8 +1,5 @@
 import os
-import sys
 import unittest
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from mesh import S3Service
 from immunisation_api import ImmunisationApi
