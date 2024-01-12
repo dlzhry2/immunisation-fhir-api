@@ -658,3 +658,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='UserName')].answer[0].valueCoding.code",
             valid_strings_to_test=["LESTER TESTER"],
         )
+
+    def test_model_pre_validate_user_email_code(self):
+        """
+        Test pre_validate_user_email_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserEmail')].answer[0].valueCoding.code",
+            valid_strings_to_test=["lester.tester@test.com"],
+        )
