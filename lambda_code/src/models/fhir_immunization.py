@@ -1115,6 +1115,28 @@ class ImmunizationValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_reduce_validation_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.display (legacy CSV field name:
+        REDUCE_VALIDATION_REASON) exists, then it is a non-empty string
+        """
+        try:
+            reduce_validation_display = get_generic_questionnaire_response_value(
+                values, "ReduceValidation", "display"
+            )
+            pre_validate_string(
+                reduce_validation_display,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="ReduceValidation", field_type="display"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """
         Add custom NHS validators to the model
@@ -1234,6 +1256,9 @@ class ImmunizationValidator:
         )
         Immunization.add_root_validator(
             self.pre_validate_reduce_validation_code, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_reduce_validation_display, pre=True
         )
 
     def validate(self, json_data) -> Immunization:

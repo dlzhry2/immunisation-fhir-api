@@ -126,7 +126,7 @@
           "answer": [
             {
               "valueCoding": {
-                "code": "TRUE",
+                "code": "True",
                 "display": "test"
               }
             }

@@ -98,7 +98,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 }
             else:
                 # for everything else, the code is a string
-                valid_list_element = {"valueCoding": {"code": "B0C4P"}}
+                valid_list_element = {"valueCoding": {"code": "True"}}
 
             ValidatorModelTests.test_list_value(
                 self,
@@ -717,4 +717,15 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.code",
             valid_strings_to_test=["True", "False"],
+        )
+
+    def test_model_pre_validate_reduce_validation_display(self):
+        """
+        Test pre_validate_reduce_validation_display accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.display",
+            valid_strings_to_test=["From DPS CSV"],
         )
