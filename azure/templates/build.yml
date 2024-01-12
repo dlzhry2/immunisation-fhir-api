@@ -1,9 +1,8 @@
 steps:
   - bash: |
-      docker build -t imms-lambda-build .
-      docker run --rm -v $(shell pwd)/build:/build imms-lambda-build
+      BUILDKIT_PROGRESS=plain docker build --target test -t imms-lambda-build .
 
-    displayName: Build and test lambda code
+    displayName: Test lambda code
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/lambda_code"
   - bash: |
       mkdir -p build
