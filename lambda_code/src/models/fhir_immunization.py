@@ -754,6 +754,50 @@ class ImmunizationValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_nhs_number_status_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.code (legacy CSV field name:
+        NHS_NUMBER_STATUS_INDICATOR_CODE) exists, then it is a non-empty string
+        """
+        try:
+            nhs_number_status_code = get_generic_questionnaire_response_value(
+                values, "NhsNumberStatus", "code"
+            )
+            pre_validate_string(
+                nhs_number_status_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="NhsNumberStatus", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_nhs_number_status_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.display (legacy CSV field name:
+        NHS_NUMBER_STATUS_INDICATOR_CODE) exists, then it is a non-empty string
+        """
+        try:
+            nhs_number_status_display = get_generic_questionnaire_response_value(
+                values, "NhsNumberStatus", "display"
+            )
+            pre_validate_string(
+                nhs_number_status_display,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="NhsNumberStatus", field_type="display"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """
         Add custom NHS validators to the model
@@ -840,6 +884,12 @@ class ImmunizationValidator:
         )
         Immunization.add_root_validator(
             self.pre_validate_reason_code_coding_displays, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_nhs_number_status_code, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_nhs_number_status_display, pre=True
         )
 
     def validate(self, json_data) -> Immunization:

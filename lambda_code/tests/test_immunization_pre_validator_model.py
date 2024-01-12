@@ -525,3 +525,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.code",
             valid_strings_to_test=["01"],
         )
+
+    def test_model_pre_validate_nhs_number_status_display(self):
+        """
+        Test pre_validate_nhs_number_status_display accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.display",
+            valid_strings_to_test=["Number present and verified"],
+        )
