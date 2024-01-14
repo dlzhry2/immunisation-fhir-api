@@ -76,7 +76,6 @@ def test_app_level0(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
 
 @pytest.mark.nhsd_apim_authorization({"access": "application", "level": "level0"})
 def test_aws_service_not_running_without_cert(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
-    # For your local machine, add your PR AWS custom domain name in .env file i.e: https://pr-33.imms.dev.api.platform.nhs.uk
     service_domain_name = getenv('AWS_DOMAIN_NAME')
     with pytest.raises(requests.exceptions.RequestException) as excinfo:
         requests.get(f"{service_domain_name}/status", headers=nhsd_apim_auth_headers)
