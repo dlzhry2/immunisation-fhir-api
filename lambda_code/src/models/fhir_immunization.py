@@ -836,6 +836,7 @@ class ImmunizationValidator:
                 generate_field_location_for_questionnnaire_response(
                     link_id="LocalPatient", field_type="code"
                 ),
+                max_length=20,
             )
         except KeyError:
             pass
@@ -1045,7 +1046,9 @@ class ImmunizationValidator:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueCoding.code (legacy CSV field name:
-        SUBMITTED_TIMESTAMP) exists, then it is a non-empty string
+        SUBMITTED_TIMESTAMP), then it is a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or
+        "YYYY-MM-DDThh:mm:ss-zz:zz" (i.e. date and time, including timezone offset in hours and
+        minutes), representing a valid datetime.
         """
         try:
             submitted_time_stamp_code = get_generic_questionnaire_response_value(

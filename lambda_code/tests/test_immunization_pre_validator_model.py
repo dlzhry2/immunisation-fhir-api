@@ -569,6 +569,8 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 "ACME-CUST1-pat123456",
                 "ACME-CUST2-pat123456",
             ],
+            invalid_length_strings_to_test=["ACME-CUST1-pat1234567"],
+            max_length=20,
         )
 
     def test_model_pre_validate_local_patient_system(self):
@@ -717,6 +719,8 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.code",
             valid_strings_to_test=["True", "False"],
+            predefined_values=("True", "False"),
+            invalid_strings_to_test=["true", "false", "TRUE", "FALSE"],
         )
 
     def test_model_pre_validate_reduce_validation_display(self):
