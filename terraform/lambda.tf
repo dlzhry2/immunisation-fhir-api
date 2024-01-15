@@ -33,6 +33,7 @@ module "docker_image" {
         ]
     })
 
+    platform = "linux/amd64"
     use_image_tag = false
     source_path   = local.lambda_dir
     triggers = {
