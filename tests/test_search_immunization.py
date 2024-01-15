@@ -58,7 +58,6 @@ def cleanup(imms_api: ImmunisationApi, stored_records: list):
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     """it should filter based on disease type"""
     token = nhsd_apim_auth_headers["Authorization"]
@@ -85,7 +84,6 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     cleanup(imms_api, stored_records)
 
     # Then
-    print(response.text)
     results = response.json()
     assert response.status_code == 200
     assert results["resourceType"] == "List"
