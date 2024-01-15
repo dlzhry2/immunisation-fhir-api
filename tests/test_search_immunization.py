@@ -85,6 +85,7 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     cleanup(imms_api, stored_records)
 
     # Then
+    print(response.text)
     results = response.json()
     assert response.status_code == 200
     assert results["resourceType"] == "List"
