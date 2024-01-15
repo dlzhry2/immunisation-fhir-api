@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import sys
+import time
 import unittest
 from unittest.mock import create_autospec, MagicMock, patch, ANY
 
@@ -83,7 +84,6 @@ class TestPdsService(unittest.TestCase):
 
 class TestAuthenticator(unittest.TestCase):
     def setUp(self):
-        self.secret_manager_client = MagicMock()
         self.kid = "a_kid"
         self.api_key = "an_api_key"
         self.private_key = "a_private_key"
@@ -92,10 +92,16 @@ class TestAuthenticator(unittest.TestCase):
 
         pds_secret = {"private_key_b64": b64_private_key, "kid": self.kid, "api_key": self.api_key}
         secret_response = {"SecretString": json.dumps(pds_secret)}
+
+        self.secret_manager_client = MagicMock()
         self.secret_manager_client.get_secret_value.return_value = secret_response
 
-        self.authenticator = Authenticator(self.secret_manager_client, "int")
-        self.url = "https://int.api.service.nhs.uk/oauth2/token"
+        self.cache = MagicMock()
+        self.cache.get.return_value = None
+
+        env = "an-env"
+        self.authenticator = Authenticator(self.secret_manager_client, env, self.cache)
+        self.url = f"https://{env}.api.service.nhs.uk/oauth2/token"
 
     @responses.activate
     def test_post_request_to_token(self):
@@ -146,10 +152,73 @@ class TestAuthenticator(unittest.TestCase):
         """it should target int environment for none-prod environment, otherwise int"""
         # For env=none-prod
         env = "some-env"
-        auth = Authenticator(None, env)
+        auth = Authenticator(None, env, None)
         self.assertTrue(auth.token_url.startswith(f"https://{env}."))
 
         # For env=prod
         env = "prod"
-        auth = Authenticator(None, env)
+        auth = Authenticator(None, env, None)
         self.assertTrue(env not in auth.token_url)
+
+    def test_returned_cached_token(self):
+        """it should return cached token"""
+        cached_token = {
+            "token": "a-cached-access-token",
+            "expires_at": int(time.time()) + 99999  # make sure it's not expired
+        }
+        self.cache.get.return_value = cached_token
+
+        # When
+        token = self.authenticator.get_access_token()
+
+        # Then
+        self.assertEqual(token, cached_token["token"])
+        self.secret_manager_client.assert_not_called()
+
+    @responses.activate
+    def test_update_cache(self):
+        """it should update cached token"""
+        self.cache.get.return_value = None
+        token = "a-new-access-token"
+        cached_token = {
+            "token": token,
+            "expires_at": ANY
+        }
+        responses.add(responses.POST, self.url, status=200, json={"access_token": token})
+
+        with patch("jwt.encode") as mock_jwt:
+            mock_jwt.return_value = "a-jwt"
+            # When
+            self.authenticator.get_access_token()
+
+        # Then
+        self.cache.put.assert_called_once_with("pds_access_token", cached_token)
+
+    @responses.activate
+    def test_expired_token_in_cache(self):
+        """it should not return cached access token if it's expired"""
+        now_epoch = 12345
+        expires_at = now_epoch + self.authenticator.expiry
+        cached_token = {
+            "token": "an-expired-cached-access-token",
+            "expires_at": expires_at,
+        }
+        self.cache.get.return_value = cached_token
+
+        new_token = "a-new-token"
+        responses.add(responses.POST, self.url, status=200, json={"access_token": new_token})
+
+        new_now = expires_at  # this is to trigger expiry and also the mocked now-time when storing the new token
+        with patch("jwt.encode") as mock_jwt:
+            with patch("time.time") as mock_time:
+                mock_time.return_value = new_now
+                mock_jwt.return_value = "a-jwt"
+                # When
+                self.authenticator.get_access_token()
+
+        # Then
+        exp_cached_token = {
+            "token": new_token,
+            "expires_at": new_now + self.authenticator.expiry
+        }
+        self.cache.put.assert_called_once_with(ANY, exp_cached_token)
