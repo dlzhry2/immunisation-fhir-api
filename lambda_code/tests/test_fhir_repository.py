@@ -135,8 +135,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         """Patient record should have a sort-key based on disease-type"""
         imms = _make_an_immunization()
 
-        # disease_code = "a-disease-code"
-        disease_code = "covid"
+        disease_code = "a-disease-code"
         disease = {"targetDisease": [{"coding": [{"code": disease_code}]}]}
         imms["protocolApplied"] = [disease]
 
