@@ -1,13 +1,9 @@
 import json
-import os
-import sys
 import unittest
 from unittest.mock import create_autospec
 
 from fhir.resources.immunization import Immunization
 from fhir.resources.list import List
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from fhir_controller import FhirController
 from fhir_service import FhirService
@@ -49,7 +45,7 @@ class TestFhirController(unittest.TestCase):
         self.assertEqual(res["body"], "a body")
 
 
-class TestFhirControllerGetImmunisationById(unittest.TestCase):
+class TestFhirControllerGetImmunizationById(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
         self.controller = FhirController(self.service)
@@ -223,7 +219,7 @@ class TestDeleteImmunization(unittest.TestCase):
         self.assertEqual(body["issue"][0]["code"], "internal-server-error")
 
 
-class TestSearchImmunisations(unittest.TestCase):
+class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
         self.controller = FhirController(self.service)

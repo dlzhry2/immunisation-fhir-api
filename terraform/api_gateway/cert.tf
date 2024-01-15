@@ -8,6 +8,11 @@ resource "aws_acm_certificate" "service_certificate" {
     }
 }
 
+resource "aws_acm_certificate_validation" "service_certificate" {
+    certificate_arn         = aws_acm_certificate.service_certificate.arn
+    validation_record_fqdns = [for record in aws_route53_record.dns_validation : record.fqdn]
+}
+
 resource "aws_route53_record" "dns_validation" {
     for_each = {
         for dvo in aws_acm_certificate.service_certificate.domain_validation_options : dvo.domain_name => {
