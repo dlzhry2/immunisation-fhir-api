@@ -65,7 +65,12 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     records = [
         {
             "nhs_number": valid_nhs_number1,
-            "diseases": [flu_code, mmr_code],
+            "diseases": [mmr_code],
+            "responses": [],
+        },
+        {
+            "nhs_number": valid_nhs_number1,
+            "diseases": [flu_code],
             "responses": [],
         },
         {
@@ -85,9 +90,11 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
 
     # Then
     results = response.json()
+    result_ids = [result["id"] for result in results["entry"]]
     assert response.status_code == 200
     assert results["resourceType"] == "List"
-    assert len(results["entry"]) == 1
+    for resource in record["responses"]:
+        assert resource["id"] in result_ids
 
 
 @pytest.mark.nhsd_apim_authorization(
@@ -129,6 +136,11 @@ def test_search_immunization_ignore_deleted(nhsd_apim_proxy_url, nhsd_apim_auth_
 
     # Then
     results = response.json()
+    result_ids = [result["id"] for result in results["entry"]]
+
     assert response.status_code == 200
     assert results["resourceType"] == "List"
-    assert len(results["entry"]) == 2
+    assert id_to_delete not in result_ids
+    for record in stored_records:
+        for resource in record["responses"]:
+            assert resource["id"] in result_ids
