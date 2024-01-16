@@ -1,6 +1,19 @@
 """Immunization FHIR R4B validator"""
 from fhir.resources.R4B.immunization import Immunization
-from models.nhs_validators import NHSImmunizationValidators
+from models.utils import (
+    pre_validate_string,
+    pre_validate_date_time,
+    pre_validate_list,
+    pre_validate_date,
+    pre_validate_boolean,
+    pre_validate_positive_integer,
+    pre_validate_decimal,
+    get_generic_questionnaire_response_value,
+    get_generic_extension_value,
+    generate_field_location_for_questionnnaire_response,
+    generate_field_location_for_extension,
+)
+from models.constants import Constants
 
 
 class ImmunizationValidator:
@@ -13,278 +26,821 @@ class ImmunizationValidator:
         pass
 
     @classmethod
-    def validate_patient_identifier_value(cls, values: dict) -> dict:
-        """Validate patient identifier value (NHS number)"""
-        if values.get("patient"):
-            patient_identifier_value = values.get("patient").identifier.value
-            NHSImmunizationValidators.validate_patient_identifier_value(
-                patient_identifier_value
+    def pre_validate_patient_identifier_value(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if patient.identifier.value (legacy CSV field name: NHS_NUMBER)
+        exists, then it is a string of 10 characters which does not contain spaces
+        """
+        try:
+            patient_identifier_value = values["patient"]["identifier"]["value"]
+            pre_validate_string(
+                patient_identifier_value,
+                "patient.identifier.value",
+                defined_length=10,
+                spaces_allowed=False,
             )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
     def pre_validate_occurrence_date_time(cls, values: dict) -> dict:
-        """Pre-validate occurrence date time"""
-        occurrence_date_time = values.get("occurrenceDateTime", None)
-        if not isinstance(occurrence_date_time, str):
-            raise ValueError("occurrenceDateTime must be a string")
+        """
+        Pre-validate that, if occurrenceDateTime exists (legacy CSV field name: DATE_AND_TIME),
+        then it is a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz"
+        (i.e. date and time, including timezone offset in hours and minutes), representing a valid
+        datetime.
 
-        if occurrence_date_time.isnumeric():
-            raise ValueError(
-                "occurrenceDateTime must be in the format YYYY-MM-DDThh:mm:ss+00:00"
+        NOTE: occurrenceDateTime is a mandatory FHIR field. A value of None will be rejected by the
+        FHIR model before pre-validators are run.
+        """
+        try:
+            occurrence_date_time = values["occurrenceDateTime"]
+            pre_validate_date_time(occurrence_date_time, "occurrenceDateTime")
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_contained(cls, values: dict) -> dict:
+        """Pre-validate that, if contained exists, then it is a list of length 1"""
+        try:
+            contained = values["contained"]
+            pre_validate_list(contained, "contained", defined_length=1)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_questionnaire_answers(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if they exist, each
+        contained[?(@.resourceType=='QuestionnaireResponse')].item[index].answer
+        is a list of length 1
+        """
+        try:
+            for index, value in enumerate(values["contained"][0]["item"]):
+                try:
+                    questionnaire_answer = value["answer"]
+                    pre_validate_list(
+                        questionnaire_answer,
+                        "contained[?(@.resourceType=='QuestionnaireResponse')]"
+                        + f".item[{index}].answer",
+                        defined_length=1,
+                    )
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_questionnaire_site_code_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='SiteCode')].answer[0].valueCoding.code (legacy CSV field name: SITE_CODE)
+        exists, then it is a non-empty string
+        """
+        try:
+            questionnaire_site_code_code = get_generic_questionnaire_response_value(
+                values, "SiteCode", "code"
             )
+            pre_validate_string(
+                questionnaire_site_code_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="SiteCode", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
 
         return values
 
     @classmethod
-    def validate_occurrence_date_time(cls, values: dict) -> dict:
-        """Validate occurrence date time"""
-        occurrence_date_time = values.get("occurrenceDateTime", None)
-        values[
-            "occurrenceDateTime"
-        ] = NHSImmunizationValidators.validate_occurrence_date_time(
-            occurrence_date_time
-        )
-        return values
-
-    @classmethod
-    def validate_questionnaire_site_code_code(cls, values: dict) -> dict:
+    def pre_validate_site_name_code(cls, values: dict) -> dict:
         """
-        Validate questionnaire site code (code of the Commissioned Healthcare Provider who has
-        administered the vaccination)
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='SiteName')].answer[0].valueCoding.code (legacy CSV field name: SITE_NAME)
+        exists, then it is a non-empty string
         """
-        questionnaire_site_code_code = None
-        for record in values.get("contained"):
-            if (
-                record.resource_type == "QuestionnaireResponse"
-                and record.item is not None
-            ):
-                for item in record.item:
-                    if item.linkId == "SiteCode":
-                        questionnaire_site_code_code = item.answer[0].valueCoding.code
+        try:
+            site_name_code = get_generic_questionnaire_response_value(
+                values, "SiteName", "code"
+            )
+            pre_validate_string(
+                site_name_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="SiteName", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
 
-        NHSImmunizationValidators.validate_questionnaire_site_code_code(
-            questionnaire_site_code_code
-        )
         return values
 
     @classmethod
-    def validate_identifier_value(cls, values: dict) -> dict:
-        """Validate immunization identifier value"""
-        identifier_value = values.get("identifier")[0].value
-        NHSImmunizationValidators.validate_identifier_value(identifier_value)
+    def pre_validate_identifier(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if identifier exists, then it is a list of length 1
+        """
+        try:
+            identifier = values["identifier"]
+            pre_validate_list(identifier, "identifier", defined_length=1)
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_action_flag(cls, values) -> dict:
-        """Validate Action Flag"""
-        action_flag = values.get("status")
-        NHSImmunizationValidators.validate_action_flag(action_flag)
+    def pre_validate_identifier_value(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if identifier[0].value (legacy CSV field name: UNIQUE_ID) exists,
+        then it is a non-empty string
+        """
+        try:
+            identifier_value = values["identifier"][0]["value"]
+            pre_validate_string(identifier_value, "identifier[0].value")
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_recorded_date(cls, values: dict) -> dict:
-        """Validate Recorded Date"""
-        recorded_date = str(values.get("recorded"))
-        NHSImmunizationValidators.validate_recorded_date(recorded_date)
+    def pre_validate_identifier_system(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if identifier[0].system (legacy CSV field name: UNIQUE_ID_URI) exists,
+        then it is a non-empty string
+        """
+        try:
+            identifier_system = values["identifier"][0]["system"]
+            pre_validate_string(identifier_system, "identifier[0].system")
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_report_origin(cls, values) -> dict:
-        """Validate Report Origin"""
-        report_origin = values.get("reportOrigin").text
-        primary_source = values.get("primarySource")
-        NHSImmunizationValidators.validate_report_origin(report_origin, primary_source)
+    def pre_validate_status(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if status (legacy CSV field names ACTION_FLAG or NOT_GIVEN) exists,
+        then it is a non-empty string which is one of the following: completed, entered-in-error,
+        not-done.
+
+        NOTE 1: ACTION_FLAG and NOT_GIVEN are mutually exclusive i.e. if ACTION_FLAG is present then
+        NOT_GIVEN will be absent and vice versa. The ACTION_FLAGs are 'completed' and 'not-done'.
+        The following 1-to-1 mapping applies:
+        * NOT_GIVEN is True <---> Status will be set to 'not-done' (and therefore ACTION_FLAG is
+            absent)
+        * NOT_GIVEN is False <---> Status will be set to 'completed' or 'entered-in-error' (and
+            therefore ACTION_FLAG is present)
+
+        NOTE 2: Status is a mandatory FHIR field. A value of None will be rejected by the
+        FHIR model before pre-validators are run.
+        """
+        try:
+            status = values["status"]
+            pre_validate_string(status, "status", predefined_values=Constants.STATUSES)
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_vaccination_procedure_code(cls, values) -> dict:
-        """Validate Vaccination Procedure Code"""
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
-        for record in values.get("extension"):
-            if record.url == url:
-                vaccination_procedure_code = record.valueCodeableConcept.coding[0].code
-        not_given = values.get("status")
+    def pre_validate_recorded(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if recorded (legacy CSV field name: RECORDED_DATE) exists, then it is a
+        string in the format YYYY-MM-DD, representing a valid date
+        """
+        try:
+            recorded = values["recorded"]
+            pre_validate_date(recorded, "recorded")
+        except KeyError:
+            pass
 
-        NHSImmunizationValidators.validate_vaccination_procedure_code(
-            vaccination_procedure_code, not_given
-        )
         return values
 
     @classmethod
-    def validate_vaccination_situation_code(cls, values) -> dict:
-        """Validate Vaccination Procedure Code"""
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
-        for record in values.get("extension"):
-            if record.url == url:
-                vaccination_situation_code = record.valueCodeableConcept.coding[0].code
-        not_given = values.get("status")
+    def pre_validate_primary_source(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if primarySource (legacy CSV field name: PRIMARY_SOURCE) exists,
+        then it is a boolean
+        """
+        try:
+            primary_source = values["primarySource"]
+            pre_validate_boolean(primary_source, "primarySource")
+        except KeyError:
+            pass
 
-        NHSImmunizationValidators.validate_vaccination_procedure_code(
-            vaccination_situation_code, not_given
-        )
         return values
 
     @classmethod
-    def validate_reason_not_given_code(cls, values) -> dict:
-        """Validate Reason Not Given Code"""
-        reason_not_given_code = values.get("statusReason").coding[0].code
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_vaccination_procedure_code(
-            reason_not_given_code, not_given
-        )
+    def pre_validate_report_origin_text(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if reportOrigin.text (legacy CSV field name: REPORT_ORIGIN_TEXT)
+        exists, then it is a non-empty string with maximum length 100 characters
+        """
+        try:
+            report_origin_text = values["reportOrigin"]["text"]
+
+            pre_validate_string(report_origin_text, "reportOrigin.text", max_length=100)
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_dose_sequence(cls, values) -> dict:
-        """Validate Dose Sequence"""
-        dose_sequence = values.get("protocolApplied")[0].doseNumberPositiveInt
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_dose_sequence(dose_sequence, not_given)
+    def pre_validate_extension_value_codeable_concept_codings(
+        cls, values: dict
+    ) -> dict:
+        """
+        Pre-validate that, if they exist, each extension[{index}].valueCodeableConcept.coding
+        is a list of length 1
+        """
+        try:
+            for index, value in enumerate(values["extension"]):
+                try:
+                    coding = value["valueCodeableConcept"]["coding"]
+                    pre_validate_list(
+                        coding,
+                        f"extension[{index}].valueCodeableConcept.coding",
+                        defined_length=1,
+                    )
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_vaccine_product_code(cls, values) -> dict:
-        """Validate Vaccine Product Code"""
-        for record in values.get("vaccineCode").coding:
-            if record.system == "http://snomed.info/sct":
-                vaccine_product_code = record.code
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_vaccine_product_code(
-            vaccine_product_code, not_given
-        )
+    def pre_validate_vaccination_procedure_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
+        Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[0].code
+        (legacy CSV field name: VACCINATION_PROCEDURE_CODE) exists, then it is a non-empty string
+        """
+        try:
+            url = (
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+                + "VaccinationProcedure"
+            )
+            vaccination_procedure_code = get_generic_extension_value(
+                values,
+                url,
+                "code",
+            )
+            pre_validate_string(
+                vaccination_procedure_code,
+                generate_field_location_for_extension(url=url, field_type="code"),
+            )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_vaccine_manufacturer(cls, values) -> dict:
-        """Validate Vaccine Manufacturer"""
-        vaccine_manufacturer = values.get("manufacturer").display
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_vaccine_manufacturer(
-            vaccine_manufacturer, not_given
-        )
+    def pre_validate_vaccination_procedure_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
+        Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[0].display
+        (legacy CSV field name: VACCINATION_PROCEDURE_CODE) exists, then it is a non-empty string
+        """
+        try:
+            url = (
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+                + "VaccinationProcedure"
+            )
+            vaccination_procedure_display = get_generic_extension_value(
+                values,
+                url,
+                "display",
+            )
+            pre_validate_string(
+                vaccination_procedure_display,
+                generate_field_location_for_extension(url=url, field_type="display"),
+            )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_batch_number(cls, values) -> dict:
-        """Validate Batch Number"""
-        batch_number = values.get("lotNumber")
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_batch_number(batch_number, not_given)
+    def pre_validate_vaccination_situation_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
+        Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[0].code
+        (legacy CSV field name: VACCINATION_SITUATION_CODE) exists, then it is a non-empty string
+        """
+        try:
+            url = (
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+                + "VaccinationSituation"
+            )
+            vaccination_situation_code = get_generic_extension_value(
+                values,
+                url,
+                "code",
+            )
+            pre_validate_string(
+                vaccination_situation_code,
+                generate_field_location_for_extension(url=url, field_type="code"),
+            )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_expiry_date(cls, values) -> dict:
-        """Validate Expiry Date"""
-        expiry_date = str(values.get("expirationDate"))
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_expiry_date(expiry_date, not_given)
+    def pre_validate_vaccination_situation_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
+        Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[0].display
+        (legacy CSV field name: VACCINATION_SITUATION_CODE) exists, then it is a non-empty string
+        """
+        try:
+            url = (
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+                + "VaccinationSituation"
+            )
+            vaccination_situation_display = get_generic_extension_value(
+                values,
+                url,
+                "display",
+            )
+            pre_validate_string(
+                vaccination_situation_display,
+                generate_field_location_for_extension(url=url, field_type="display"),
+            )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_route_of_vaccination_code(cls, values) -> dict:
-        """Validate Route of Vaccination Code"""
-        for record in values.get("route").coding:
-            if record.system == "http://snomed.info/sct":
-                route_of_vaccination_code = record.code
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_route_of_vaccination_code(
-            route_of_vaccination_code, not_given
-        )
+    def pre_validate_status_reason_coding(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if statusReason.coding (legacy CSV field name: REASON_GIVEN_CODE)
+        exists, then it is a list of length 1
+        """
+        try:
+            coding = values["statusReason"]["coding"]
+            pre_validate_list(
+                coding,
+                "statusReason.coding",
+                defined_length=1,
+            )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_dose_amount(cls, values) -> dict:
-        """Validate Dose Amount"""
-        dose_amount = values.get("doseQuantity").value
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_dose_amount(str(dose_amount), not_given)
+    def pre_validate_status_reason_coding_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if statusReason.coding[0].code (legacy CSV field location:
+        REASON_NOT_GIVEN_CODE) exists, then it is a non-empty string
+        """
+        try:
+            status_reason_coding_code = values["statusReason"]["coding"][0]["code"]
+            pre_validate_string(
+                status_reason_coding_code, "statusReason.coding[0].code"
+            )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_dose_unit_code(cls, values) -> dict:
-        """Validate Dose Unit Code"""
-        dose_unit_code = values.get("doseQuantity").code
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_dose_unit_code(dose_unit_code, not_given)
+    def pre_validate_status_reason_coding_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if statusReason.coding[0].display (legacy CSV field name:
+        REASON_NOT_GIVEN_TERM) exists, then it is a non-empty string
+        """
+        try:
+            status_reason_coding_display = values["statusReason"]["coding"][0][
+                "display"
+            ]
+            pre_validate_string(
+                status_reason_coding_display, "statusReason.coding[0].display"
+            )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_indication_code(cls, values) -> dict:
-        """Validate Indication Code"""
-        indication_code = values.get("reasonCode")[0].coding[0].code
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_indication_code(indication_code, not_given)
+    def pre_validate_protocol_applied(cls, values: dict) -> dict:
+        """Pre-validate that, if protocolApplied exists, then it is a list of length 1"""
+        try:
+            protocol_applied = values["protocolApplied"]
+            pre_validate_list(
+                protocol_applied,
+                "protocolApplied",
+                defined_length=1,
+            )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_consent_for_treatment_code(cls, values) -> dict:
-        """Validate Consent for Treatment Code"""
-        for record in values.get("contained")[0].item:
-            if record.linkId == "Consent":
-                consent_for_treatment_code = record.answer[0].valueCoding.code
-        not_given = values.get("status")
-        NHSImmunizationValidators.validate_consent_for_treatment_code(
-            consent_for_treatment_code, not_given
-        )
+    def pre_validate_protocol_applied_dose_number_positive_int(
+        cls, values: dict
+    ) -> dict:
+        """
+        Pre-validate that, if protocolApplied[0].doseNumberPositiveInt (legacy CSV fidose_sequence)
+        exists, then it is an integer from 1 to 9
+        """
+        try:
+            protocol_applied_dose_number_positive_int = values["protocolApplied"][0][
+                "doseNumberPositiveInt"
+            ]
+            pre_validate_positive_integer(
+                protocol_applied_dose_number_positive_int,
+                "protocolApplied[0].doseNumberPositiveInt",
+                max_value=9,
+            )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_submitted_timestamp(cls, values) -> dict:
-        """Validate Submitted Timestamp"""
-        for record in values.get("contained")[0].item:
-            if record.linkId == "SubmittedTimeStamp":
-                submitted_timestamp = record.answer[0].valueCoding.code
-        NHSImmunizationValidators.validate_submitted_timestamp(submitted_timestamp)
+    def pre_validate_vaccine_code_coding(cls, values: dict) -> dict:
+        """Pre-validate that, if vaccineCode.coding exists, then it is a list of length 1"""
+        try:
+            vaccine_code_coding = values["vaccineCode"]["coding"]
+            pre_validate_list(
+                vaccine_code_coding,
+                "vaccineCode.coding",
+                defined_length=1,
+            )
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_location_code(cls, values) -> dict:
-        """Validate Location Code"""
-        location_code = values.get("location").identifier.value
-        NHSImmunizationValidators.validate_location_code(location_code)
+    def pre_validate_vaccine_code_coding_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if vaccineCode.coding[0].code (legacy CSV field name:
+        VACCINE_PRODUCT_CODE) exists, then it is a non-empty string
+        """
+        try:
+            vaccine_code_coding_code = values["vaccineCode"]["coding"][0]["code"]
+            pre_validate_string(vaccine_code_coding_code, "vaccineCode.coding[0].code")
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_reduce_validation_code(cls, values) -> dict:
-        """Validate Reduce Validation Code"""
-        for record in values.get("contained")[0].item:
-            if record.linkId == "ReduceValidation":
-                reduce_validation_code = record.answer[0].valueCoding.code
-                reduce_validation_reason = record.answer[0].valueCoding.display
-        NHSImmunizationValidators.validate_reduce_validation_code(
-            reduce_validation_code, reduce_validation_reason
-        )
+    def pre_validate_vaccine_code_coding_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if vaccineCode.coding[0].display (legacy CSV field name:
+        VACCINE_PRODUCT_TERM) exists, then it is a non-empty string
+        """
+        try:
+            vaccine_code_coding_display = values["vaccineCode"]["coding"][0]["display"]
+            pre_validate_string(
+                vaccine_code_coding_display, "vaccineCode.coding[0].display"
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_manufacturer_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if manufacturer.display (legacy CSV field name: VACCINE_MANUFACTURER)
+        exists, then it is a non-empty string
+        """
+        try:
+            manufacturer_display = values["manufacturer"]["display"]
+            pre_validate_string(manufacturer_display, "manufacturer.display")
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_lot_number(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if lotNumber (legacy CSV field name: BATCH_NUMBER) exists,
+        then it is a non-empty string
+        """
+        try:
+            lot_number = values["lotNumber"]
+            pre_validate_string(lot_number, "lotNumber", max_length=100)
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_expiration_date(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if expirationDate (legacy CSV field name: EXPIRY_DATE) exists,
+        then it is a string in the format YYYY-MM-DD, representing a valid date
+        """
+        try:
+            expiration_date = values["expirationDate"]
+            pre_validate_date(expiration_date, "expirationDate")
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_site_coding(cls, values: dict) -> dict:
+        """Pre-validate that, if site.coding exists, then it is a list of length 1"""
+        try:
+            site_coding = values["site"]["coding"]
+            pre_validate_list(
+                site_coding,
+                "site.coding",
+                defined_length=1,
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_site_coding_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if site.coding[0].code (legacy CSV field name: SITE_OF_VACCINATION_CODE)
+        exists, then it is a non-empty string
+        """
+        try:
+            site_coding_code = values["site"]["coding"][0]["code"]
+            pre_validate_string(site_coding_code, "site.coding[0].code")
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_site_coding_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if site.coding[0].display (legacy CSV field name:
+        SITE_OF_VACCINATION_TERM) exists, then it is a non-empty string
+        """
+        try:
+            site_coding_display = values["site"]["coding"][0]["display"]
+            pre_validate_string(site_coding_display, "site.coding[0].display")
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_route_coding(cls, values: dict) -> dict:
+        """Pre-validate that, if route.coding exists, then it is a list of length 1"""
+        try:
+            route_coding = values["route"]["coding"]
+            pre_validate_list(
+                route_coding,
+                "route.coding",
+                defined_length=1,
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_route_coding_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if route.coding[0].code (legacy CSV field name:
+        ROUTE_OF_VACCINATION_CODE) exists, then it is a non-empty string
+        """
+        try:
+            route_coding_code = values["route"]["coding"][0]["code"]
+            pre_validate_string(route_coding_code, "route.coding[0].code")
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_route_coding_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if route.coding[0].display (legacy CSV field name:
+        ROUTE_OF_VACCINATION_TERM) exists, then it is a non-empty string
+        """
+        try:
+            route_coding_display = values["route"]["coding"][0]["display"]
+            pre_validate_string(route_coding_display, "route.coding[0].display")
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_dose_quantity_value(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if doseQuantity.value (legacy CSV field name: DOSE_AMOUNT) exists,
+        then it is a number representing an integer or decimal with
+        maximum four decimal places
+
+        NOTE: This validator will only work if the raw json data is parsed with the
+        parse_float argument set to equal Decimal type (Decimal must be imported from decimal).
+        Floats (but not integers) will then be parsed as Decimals.
+        e.g json.loads(raw_data, parse_float=Decimal)
+        """
+        try:
+            dose_quantity_value = values["doseQuantity"]["value"]
+            pre_validate_decimal(
+                dose_quantity_value, "doseQuantity.value", max_decimal_places=4
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_dose_quantity_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if doseQuantity.code (legacy CSV field name: DOSE_UNIT_CODE) exists,
+        then it is a non-empty string
+        """
+        try:
+            dose_quantity_code = values["doseQuantity"]["code"]
+            pre_validate_string(dose_quantity_code, "doseQuantity.code")
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_dose_quantity_unit(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if doseQuantity.unit (legacy CSV field name: DOSE_UNIT_TERM) exists,
+        then it is a non-empty string
+        """
+        try:
+            dose_quantity_unit = values["doseQuantity"]["unit"]
+            pre_validate_string(dose_quantity_unit, "doseQuantity.unit")
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_reason_code_codings(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if they exist, each reasonCode[{index}].coding is a list of length 1
+        """
+        try:
+            for index, value in enumerate(values["reasonCode"]):
+                try:
+                    reason_code_coding = value["coding"]
+                    pre_validate_list(
+                        reason_code_coding,
+                        f"reasonCode[{index}].coding",
+                        defined_length=1,
+                    )
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_reason_code_coding_codes(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if they exist, each reasonCode[{index}].coding[0].code
+        (legacy CSV field name: INDICATION_CODE) is a non-empty string
+        """
+        try:
+            for index, value in enumerate(values["reasonCode"]):
+                try:
+                    reason_code_coding_code = value["coding"][0]["code"]
+                    pre_validate_string(
+                        reason_code_coding_code, f"reasonCode[{index}].coding[0].code"
+                    )
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_reason_code_coding_displays(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if they exist, each reasonCode[{index}].coding[0].display
+        (legacy CSV field name: INDICATION_CODE) is a non-empty string
+        """
+        try:
+            for index, value in enumerate(values["reasonCode"]):
+                try:
+                    reason_code_coding_display = value["coding"][0]["display"]
+                    pre_validate_string(
+                        reason_code_coding_display,
+                        f"reasonCode[{index}].coding[0].display",
+                    )
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
         return values
 
     def add_custom_root_validators(self):
-        """Add custom NHS validators to the model"""
-        Immunization.add_root_validator(self.validate_patient_identifier_value)
+        """
+        Add custom NHS validators to the model
+
+        NOTE: THE ORDER IN WHICH THE VALIDATORS ARE ADDED IS IMPORTANT! DO NOT CHANGE THE ORDER
+        WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST.
+        """
+        # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
+        Immunization.add_root_validator(
+            self.pre_validate_patient_identifier_value, pre=True
+        )
         Immunization.add_root_validator(
             self.pre_validate_occurrence_date_time, pre=True
         )
-        Immunization.add_root_validator(self.validate_occurrence_date_time)
-        Immunization.add_root_validator(self.validate_questionnaire_site_code_code)
-        Immunization.add_root_validator(self.validate_identifier_value)
-        Immunization.add_root_validator(self.validate_action_flag)
-        Immunization.add_root_validator(self.validate_recorded_date)
-        Immunization.add_root_validator(self.validate_report_origin)
-        Immunization.add_root_validator(self.validate_vaccination_procedure_code)
-        Immunization.add_root_validator(self.validate_vaccination_situation_code)
-        Immunization.add_root_validator(self.validate_reason_not_given_code)
-        Immunization.add_root_validator(self.validate_dose_sequence)
-        Immunization.add_root_validator(self.validate_vaccine_product_code)
-        Immunization.add_root_validator(self.validate_vaccine_manufacturer)
-        Immunization.add_root_validator(self.validate_batch_number)
-        Immunization.add_root_validator(self.validate_expiry_date)
-        Immunization.add_root_validator(self.validate_route_of_vaccination_code)
-        Immunization.add_root_validator(self.validate_dose_amount)
-        Immunization.add_root_validator(self.validate_dose_unit_code)
-        Immunization.add_root_validator(self.validate_indication_code)
-        Immunization.add_root_validator(self.validate_consent_for_treatment_code)
-        Immunization.add_root_validator(self.validate_submitted_timestamp)
-        Immunization.add_root_validator(self.validate_location_code)
-        Immunization.add_root_validator(self.validate_reduce_validation_code)
+        Immunization.add_root_validator(self.pre_validate_contained, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_questionnaire_answers, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_questionnaire_site_code_code, pre=True
+        )
+        Immunization.add_root_validator(self.pre_validate_site_name_code, pre=True)
+        Immunization.add_root_validator(self.pre_validate_identifier, pre=True)
+        Immunization.add_root_validator(self.pre_validate_identifier_value, pre=True)
+        Immunization.add_root_validator(self.pre_validate_identifier_system, pre=True)
+        Immunization.add_root_validator(self.pre_validate_status, pre=True)
+        Immunization.add_root_validator(self.pre_validate_recorded, pre=True)
+        Immunization.add_root_validator(self.pre_validate_primary_source, pre=True)
+        Immunization.add_root_validator(self.pre_validate_report_origin_text, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_extension_value_codeable_concept_codings, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_vaccination_procedure_code, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_vaccination_procedure_display, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_vaccination_situation_code, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_vaccination_situation_display, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_status_reason_coding, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_status_reason_coding_code, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_status_reason_coding_display, pre=True
+        )
+        Immunization.add_root_validator(self.pre_validate_protocol_applied, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_protocol_applied_dose_number_positive_int, pre=True
+        )
+        Immunization.add_root_validator(self.pre_validate_vaccine_code_coding, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_vaccine_code_coding_code, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_vaccine_code_coding_display, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_manufacturer_display, pre=True
+        )
+        Immunization.add_root_validator(self.pre_validate_lot_number, pre=True)
+        Immunization.add_root_validator(self.pre_validate_expiration_date, pre=True)
+        Immunization.add_root_validator(self.pre_validate_site_coding, pre=True)
+        Immunization.add_root_validator(self.pre_validate_site_coding_code, pre=True)
+        Immunization.add_root_validator(self.pre_validate_site_coding_display, pre=True)
+        Immunization.add_root_validator(self.pre_validate_route_coding, pre=True)
+        Immunization.add_root_validator(self.pre_validate_route_coding_code, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_route_coding_display, pre=True
+        )
+        Immunization.add_root_validator(self.pre_validate_dose_quantity_value, pre=True)
+        Immunization.add_root_validator(self.pre_validate_dose_quantity_code, pre=True)
+        Immunization.add_root_validator(self.pre_validate_dose_quantity_unit, pre=True)
+        Immunization.add_root_validator(self.pre_validate_reason_code_codings, pre=True)
+        Immunization.add_root_validator(
+            self.pre_validate_reason_code_coding_codes, pre=True
+        )
+        Immunization.add_root_validator(
+            self.pre_validate_reason_code_coding_displays, pre=True
+        )
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""

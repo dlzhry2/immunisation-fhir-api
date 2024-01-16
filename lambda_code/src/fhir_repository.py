@@ -6,6 +6,7 @@ from typing import Optional
 
 import boto3
 import botocore.exceptions
+from botocore.config import Config
 from boto3.dynamodb.conditions import Attr, Key
 
 from models.errors import ResourceNotFoundError, UnhandledResponseError
@@ -14,11 +15,12 @@ from models.errors import ResourceNotFoundError, UnhandledResponseError
 def create_table(table_name=None, endpoint_url=None, region_name='eu-west-2'):
     if not table_name:
         table_name = os.environ["DYNAMODB_TABLE_NAME"]
-    db = boto3.resource("dynamodb", endpoint_url=endpoint_url, region_name=region_name)
+    config = Config(connect_timeout=1, read_timeout=1)
+    db = boto3.resource("dynamodb", endpoint_url=endpoint_url, region_name=region_name, config=config)
     return db.Table(table_name)
 
 
-class ImmunisationRepository:
+class ImmunizationRepository:
     def __init__(self, table):
         self.table = table
 
@@ -30,7 +32,7 @@ class ImmunisationRepository:
         else:
             return None
 
-    def create_immunization(self, immunization: dict) -> dict:
+    def create_immunization(self, immunization: dict, patient: dict) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
 
@@ -43,9 +45,11 @@ class ImmunisationRepository:
 
         response = self.table.put_item(Item={
             'PK': self._make_immunization_pk(new_id),
-            'Resource': json.dumps(immunization),
             'PatientPK': self._make_patient_pk(patient_id),
             'PatientSK': patient_sk,
+            # Attributes:
+            'Resource': json.dumps(immunization),
+            'Patient': patient,
         })
 
         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:

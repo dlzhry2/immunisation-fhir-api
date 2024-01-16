@@ -1,11 +1,7 @@
 import json
-import os
-import sys
 import unittest
 import uuid
 from unittest.mock import create_autospec
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from get_imms_handler import get_immunization_by_id
 from fhir_controller import FhirController
@@ -16,8 +12,8 @@ class TestGetImmunisationById(unittest.TestCase):
     def setUp(self):
         self.controller = create_autospec(FhirController)
 
-    def test_get_immunisation_by_id(self):
-        """it should return immunisation by id"""
+    def test_get_immunization_by_id(self):
+        """it should return Immunization by id"""
         lambda_event = {"pathParameters": {"id": "an-id"}}
         exp_res = {"a-key": "a-value"}
 

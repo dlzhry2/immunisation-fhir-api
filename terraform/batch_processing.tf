@@ -31,9 +31,7 @@ module "batch_processing" {
     prefix        = local.prefix
     short_prefix  = local.short_prefix
     function_name = local.batch_processing_lambda_name
-    source_bucket = aws_s3_bucket.lambda_source_bucket.bucket
-    source_key    = aws_s3_object.lambda_function_code.key
-    source_sha    = aws_s3_object.lambda_function_code.source_hash
+    image_uri     = module.docker_image.image_uri
     policy_json   = data.aws_iam_policy_document.batch_processing_policy_document.json
     environments  = {
         "SERVICE_DOMAIN_NAME" = module.api_gateway.service_domain_name

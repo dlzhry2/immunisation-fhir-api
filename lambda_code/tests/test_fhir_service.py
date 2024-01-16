@@ -1,15 +1,11 @@
 import json
-import os
-import sys
 import unittest
 from unittest.mock import create_autospec
 
 from fhir.resources.immunization import Immunization
 from fhir.resources.list import List as FhirList
 
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
-
-from fhir_repository import ImmunisationRepository
+from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService
 from pds_service import PdsService
 from models.errors import InvalidPatientId
@@ -56,7 +52,7 @@ def _create_an_immunization_dict(imms_id, nhs_number=valid_nhs_number):
 
 class TestGetImmunization(unittest.TestCase):
     def setUp(self):
-        self.imms_repo = create_autospec(ImmunisationRepository)
+        self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service)
 
@@ -87,7 +83,7 @@ class TestGetImmunization(unittest.TestCase):
 
 class TestCreateImmunization(unittest.TestCase):
     def setUp(self):
-        self.imms_repo = create_autospec(ImmunisationRepository)
+        self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service)
 
@@ -95,7 +91,8 @@ class TestCreateImmunization(unittest.TestCase):
         """it should create Immunization and validate NHS number"""
         imms_id = "an-id"
         self.imms_repo.create_immunization.return_value = _create_an_immunization_dict(imms_id)
-        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "a-patient-id"}
+        pds_patient = {"id": "a-patient-id"}
+        self.fhir_service.pds_service.get_patient_details.return_value = pds_patient
 
         nhs_number = valid_nhs_number
         req_imms = _create_an_immunization_dict(imms_id, nhs_number)
@@ -104,7 +101,7 @@ class TestCreateImmunization(unittest.TestCase):
         stored_imms = self.fhir_service.create_immunization(req_imms)
 
         # Then
-        self.imms_repo.create_immunization.assert_called_once_with(req_imms)
+        self.imms_repo.create_immunization.assert_called_once_with(req_imms, pds_patient)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
         self.assertIsInstance(stored_imms, Immunization)
 
@@ -125,7 +122,7 @@ class TestCreateImmunization(unittest.TestCase):
 
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
-        self.imms_repo = create_autospec(ImmunisationRepository)
+        self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service)
 
@@ -146,7 +143,7 @@ class TestDeleteImmunization(unittest.TestCase):
 
 class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
-        self.imms_repo = create_autospec(ImmunisationRepository)
+        self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service)
 

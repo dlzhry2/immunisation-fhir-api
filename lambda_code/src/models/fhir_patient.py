@@ -1,6 +1,13 @@
 """Patient FHIR R4B validator"""
+
 from fhir.resources.R4B.patient import Patient
-from models.nhs_validators import NHSPatientValidators
+
+from models.utils import (
+    pre_validate_list,
+    pre_validate_string,
+    pre_validate_date,
+)
+from models.constants import Constants
 
 
 class PatientValidator:
@@ -13,59 +20,117 @@ class PatientValidator:
         pass
 
     @classmethod
-    def validate_name_given(cls, values: dict) -> dict:
-        """Validate given name (forename)"""
-        name_given = values.get("name")[0].given[0]
-        NHSPatientValidators.validate_name_given(name_given)
+    def pre_validate_name(cls, values: dict) -> dict:
+        """Pre-validate that, if name exists, then it is an array of length 1"""
+        try:
+            name = values["name"]
+            pre_validate_list(name, "name", defined_length=1)
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_name_family(cls, values: dict) -> dict:
-        """Validate family name (surname)"""
-        name_family = values.get("name")[0].family
-        NHSPatientValidators.validate_name_family(name_family)
+    def pre_validate_name_given(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if name[0].given (legacy CSV field name: PERSON_FORENAME) exists, then it is a
+        an array containing a single non-empty string
+        """
+        try:
+            name_given = values["name"][0]["given"]
+            pre_validate_list(
+                name_given,
+                "name[0].given",
+                defined_length=1,
+                elements_are_strings=True,
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_name_family(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if name[0].family (legacy CSV field name: PERSON_SURNAME) exists,
+        then it is a non-empty string
+        """
+
+        try:
+            name_family = values["name"][0]["family"]
+            pre_validate_string(name_family, "name[0].family")
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
     def pre_validate_birth_date(cls, values: dict) -> dict:
-        """Validate birth date"""
-        birth_date = values.get("birthDate", None)
-        if not isinstance(birth_date, str):
-            raise ValueError("birthDate must be a string")
-        if birth_date.isnumeric():
-            raise ValueError("birthDate must be in the format YYYY-MM-DD")
+        """
+        Pre-validate that, if birthDate (legacy CSV field name: PERSON_DOB) exists, then it is a
+        string in the format YYYY-MM-DD, representing a valid date
+        """
+
+        try:
+            birth_date = values["birthDate"]
+            pre_validate_date(birth_date, "birthDate")
+        except KeyError:
+            pass
 
         return values
 
     @classmethod
-    def validate_birth_date(cls, values: dict) -> dict:
-        """Validate birth date"""
-        birth_date = values.get("birthDate")
-        NHSPatientValidators.validate_birth_date(str(birth_date))
+    def pre_validate_gender(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if gender (legacy CSV field name: PERSON_GENDER_CODE) exists,
+        then it is a string, which is one of the following: male, female, other, unknown
+        """
+
+        try:
+            gender = values["gender"]
+            pre_validate_string(gender, "gender", predefined_values=Constants.GENDERS)
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_gender(cls, values: dict) -> dict:
-        """Validate gender"""
-        gender = values.get("gender")
-        NHSPatientValidators.validate_gender(gender)
+    def pre_validate_address(cls, values: dict) -> dict:
+        """Pre-validate that, if address exists, then it is an array of length 1"""
+        try:
+            address = values["address"]
+            pre_validate_list(address, "address", defined_length=1)
+        except KeyError:
+            pass
+
         return values
 
     @classmethod
-    def validate_address_postal_code(cls, values: dict) -> dict:
-        """Validate address postal code"""
-        address_postal_code = values.get("address")[0].postalCode
-        NHSPatientValidators.validate_address_postal_code(address_postal_code)
+    def pre_validate_address_postal_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if address[0].postalCode (legacy CSV field name: PERSON_POSTCODE)
+        exists, then it is a non-empty string, separated into two parts by a single space
+        """
+
+        try:
+            address_postal_code = values["address"][0]["postalCode"]
+            pre_validate_string(
+                address_postal_code, "address[0].postalCode", is_postal_code=True
+            )
+        except KeyError:
+            pass
+
         return values
 
     def add_custom_root_validators(self):
         """Add custom NHS validators to the model"""
-        Patient.add_root_validator(self.validate_name_given)
-        Patient.add_root_validator(self.validate_name_family)
-        Patient.add_root_validator(self.validate_address_postal_code)
+        Patient.add_root_validator(self.pre_validate_name, pre=True)
+        Patient.add_root_validator(self.pre_validate_name_given, pre=True)
+        Patient.add_root_validator(self.pre_validate_name_family, pre=True)
         Patient.add_root_validator(self.pre_validate_birth_date, pre=True)
-        Patient.add_root_validator(self.validate_birth_date)
-        Patient.add_root_validator(self.validate_gender)
+        Patient.add_root_validator(self.pre_validate_gender, pre=True)
+        Patient.add_root_validator(self.pre_validate_address, pre=True)
+        Patient.add_root_validator(self.pre_validate_address_postal_code, pre=True)
 
     def validate(self, json_data) -> Patient:
         """Generate the Patient model from the JSON data"""
