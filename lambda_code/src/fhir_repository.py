@@ -32,7 +32,7 @@ class ImmunizationRepository:
         else:
             return None
 
-    def create_immunization(self, immunization: dict) -> dict:
+    def create_immunization(self, immunization: dict, patient: dict) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
 
@@ -45,9 +45,11 @@ class ImmunizationRepository:
 
         response = self.table.put_item(Item={
             'PK': self._make_immunization_pk(new_id),
-            'Resource': json.dumps(immunization),
             'PatientPK': self._make_patient_pk(patient_id),
             'PatientSK': patient_sk,
+            # Attributes:
+            'Resource': json.dumps(immunization),
+            'Patient': patient,
         })
 
         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:

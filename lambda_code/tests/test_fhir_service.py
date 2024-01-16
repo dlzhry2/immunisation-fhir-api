@@ -91,7 +91,8 @@ class TestCreateImmunization(unittest.TestCase):
         """it should create Immunization and validate NHS number"""
         imms_id = "an-id"
         self.imms_repo.create_immunization.return_value = _create_an_immunization_dict(imms_id)
-        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "a-patient-id"}
+        pds_patient = {"id": "a-patient-id"}
+        self.fhir_service.pds_service.get_patient_details.return_value = pds_patient
 
         nhs_number = valid_nhs_number
         req_imms = _create_an_immunization_dict(imms_id, nhs_number)
@@ -100,7 +101,7 @@ class TestCreateImmunization(unittest.TestCase):
         stored_imms = self.fhir_service.create_immunization(req_imms)
 
         # Then
-        self.imms_repo.create_immunization.assert_called_once_with(req_imms)
+        self.imms_repo.create_immunization.assert_called_once_with(req_imms, pds_patient)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
         self.assertIsInstance(stored_imms, Immunization)
 
