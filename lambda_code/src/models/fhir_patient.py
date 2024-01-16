@@ -1,4 +1,5 @@
 """Patient FHIR R4B validator"""
+
 from fhir.resources.R4B.patient import Patient
 
 from models.utils import (
