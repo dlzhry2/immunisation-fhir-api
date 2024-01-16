@@ -83,8 +83,7 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
 
     # Tests
     # Search patient with multiple disease types
-    record = stored_records[0]
-    response = imms_api.search_immunizations(record["nhs_number"], mmr_code)
+    response = imms_api.search_immunizations(stored_records[0]["nhs_number"], mmr_code)
 
     cleanup(imms_api, stored_records)
 
@@ -93,8 +92,10 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     result_ids = [result["id"] for result in results["entry"]]
     assert response.status_code == 200
     assert results["resourceType"] == "List"
-    for resource in record["responses"]:
+    for resource in stored_records[0]["responses"]:
         assert resource["id"] in result_ids
+    for resource in stored_records[1]["responses"]:
+        assert resource["id"] not in result_ids
 
 
 @pytest.mark.nhsd_apim_authorization(
