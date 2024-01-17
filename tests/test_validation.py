@@ -14,7 +14,6 @@ from .immunisation_api import ImmunisationApi
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_coarse_validation(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)

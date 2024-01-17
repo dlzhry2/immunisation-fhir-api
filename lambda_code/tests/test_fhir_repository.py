@@ -1,15 +1,10 @@
 import json
-import os
-import sys
 import time
 import unittest
 from unittest.mock import MagicMock, patch, ANY
 
 import botocore.exceptions
 from boto3.dynamodb.conditions import Attr, Key
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
-
 from fhir_repository import ImmunizationRepository
 from models.errors import ResourceNotFoundError, UnhandledResponseError
 
