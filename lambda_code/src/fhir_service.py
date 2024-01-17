@@ -37,7 +37,7 @@ class FhirService:
         nhs_number = immunization['patient']['identifier']['value']
         patient = self.pds_service.get_patient_details(nhs_number)
         if patient:
-            imms = self.immunization_repo.create_immunization(immunization)
+            imms = self.immunization_repo.create_immunization(immunization, patient)
             return Immunization.parse_obj(imms)
         else:
             raise InvalidPatientId(nhs_number=nhs_number)
