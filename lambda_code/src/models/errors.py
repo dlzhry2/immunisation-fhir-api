@@ -79,14 +79,6 @@ def create_operation_outcome(resource_id: str, severity: Severity, code: Code, d
             {
                 "severity": severity,
                 "code": code,
-                "details": {
-                    "coding": [
-                        {
-                            "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                            "code": code.upper()
-                        }
-                    ]
-                },
                 "diagnostics": diagnostics
             }
         ]
