@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fhir.resources.R4B.immunization import Immunization
-from fhir.resources.list import List as FhirList
+from fhir.resources.R4B.list import List as FhirList
 from pydantic import ValidationError
 
 from fhir_repository import ImmunizationRepository
@@ -37,7 +37,7 @@ class FhirService:
         nhs_number = immunization['patient']['identifier']['value']
         patient = self.pds_service.get_patient_details(nhs_number)
         if patient:
-            imms = self.immunization_repo.create_immunization(immunization)
+            imms = self.immunization_repo.create_immunization(immunization, patient)
             return Immunization.parse_obj(imms)
         else:
             raise InvalidPatientId(nhs_number=nhs_number)
