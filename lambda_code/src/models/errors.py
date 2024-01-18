@@ -2,7 +2,7 @@ import uuid
 from dataclasses import dataclass
 from enum import Enum
 
-from fhir.resources.operationoutcome import OperationOutcome
+from fhir.resources.R4B.operationoutcome import OperationOutcome
 
 
 class Severity(str, Enum):
@@ -63,7 +63,7 @@ class CoarseValidationError(ValidationError):
 
     def to_operation_outcome(self) -> OperationOutcome:
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invalid, diagnostics=self.message)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
 
 
 def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> OperationOutcome:
