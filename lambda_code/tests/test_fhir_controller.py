@@ -2,12 +2,12 @@ import json
 import unittest
 from unittest.mock import create_autospec
 
+from fhir.resources.R4B.operationoutcome import OperationOutcome
 from fhir.resources.immunization import Immunization
 from fhir.resources.list import List
-
 from fhir_controller import FhirController
 from fhir_service import FhirService
-from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId
+from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId, ValidationError
 
 
 def _create_a_post_event(body: str) -> dict:
@@ -152,6 +152,61 @@ class TestCreateImmunization(unittest.TestCase):
         self.assertEqual(500, response["statusCode"])
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
+
+
+class TestUpdateImmunization(unittest.TestCase):
+    def setUp(self):
+        self.service = create_autospec(FhirService)
+        self.controller = FhirController(self.service)
+
+    def test_create_immunization(self):
+        """it should update Immunization"""
+        imms = "{}"
+        aws_event = {"body": imms, "pathParameters": {"id": "valid-id"}}
+        self.service.update_immunization.return_value = None
+
+        response = self.controller.update_immunization(aws_event)
+
+        self.service.update_immunization.assert_called_once_with(json.loads(imms))
+        self.assertEqual(response["statusCode"], 200)
+        self.assertTrue("body" not in response)
+
+    def test_validation_error(self):
+        """it should return 400 if Immunization is invalid"""
+        imms = "{}"
+        aws_event = {"body": imms, "pathParameters": {"id": "valid-id"}}
+        error = create_autospec(ValidationError)
+        error.to_operation_outcome.return_value = OperationOutcome.construct()
+        self.service.update_immunization.side_effect = error
+
+        response = self.controller.update_immunization(aws_event)
+
+        self.assertEqual(400, response["statusCode"])
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+
+    def test_malformed_resource(self):
+        """it should return 400 if json is malformed"""
+        bad_json = "{foo: \"bar\"}"
+        aws_event = {"body": bad_json, "pathParameters": {"id": "valid-id"}}
+
+        response = self.controller.update_immunization(aws_event)
+
+        self.assertEqual(self.service.update_immunization.call_count, 0)
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")
+
+    def test_validate_imms_id(self):
+        """it should validate lambda's Immunization id"""
+        invalid_id = {"pathParameters": {"id": "invalid %$ id"}}
+
+        response = self.controller.update_immunization(invalid_id)
+
+        self.assertEqual(self.service.update_immunization.call_count, 0)
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
 
 class TestDeleteImmunization(unittest.TestCase):

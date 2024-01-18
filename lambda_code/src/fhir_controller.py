@@ -79,6 +79,7 @@ class FhirController:
         try:
             self.fhir_service.update_immunization(imms)
             return self.create_response(200)
+        # TODO: add 404
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome().json())
 

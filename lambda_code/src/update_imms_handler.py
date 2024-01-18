@@ -10,7 +10,7 @@ def update_imms_handler(event, context):
 
 def update_imms(event, controller: FhirController):
     try:
-        return controller.update_immunizations(event)
+        return controller.update_immunization(event)
     except Exception as e:
         exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
                                              code=Code.server_error,
