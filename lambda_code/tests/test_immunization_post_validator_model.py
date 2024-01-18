@@ -8,7 +8,9 @@ from decimal import Decimal
 from models.fhir_immunization import ImmunizationValidator
 from .utils import (
     generate_field_location_for_extension,
-    test_valid_values_accepted,
+    # these have an underscore to avoid pytest collecting them as tests
+    test_valid_values_accepted as _test_valid_values_accepted,
+    test_invalid_values_rejected as _test_invalid_values_rejected,
 )
 
 
@@ -31,6 +33,8 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # set up the validator and add custom root validators
         cls.validator = ImmunizationValidator()
+        cls.validator.remove_custom_root_validators("pre")
+        cls.validator.remove_custom_root_validators("post")
         cls.validator.add_custom_root_pre_validators()
         cls.validator.add_custom_root_post_validators()
 
@@ -38,6 +42,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """Set up for each test. This runs before every test"""
         # Ensure that good data is not inadvertently amended by the tests
         self.assertEqual(self.untouched_json_data, self.json_data)
+
+    @classmethod
+    def tearDownClass(cls):
+        """Tear down for the tests. This only runs once when the class is destroyed"""
+        # Remove the custom root validators
+        cls.validator.remove_custom_root_validators("pre")
+        cls.validator.remove_custom_root_validators("post")
 
     def test_model_post_vaccination_procedure_code(self):
         """
@@ -48,7 +59,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             + "VaccinationProcedure"
         )
         field_location = generate_field_location_for_extension(url, "code")
-        ic(self.json_data)
-        test_valid_values_accepted(
+
+        _test_valid_values_accepted(
             self, self.json_data, field_location, ["1324681000000101"]
         )

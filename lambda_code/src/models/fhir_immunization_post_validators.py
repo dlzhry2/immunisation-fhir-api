@@ -33,3 +33,13 @@ class FHIRImmunizationPostValidators:
             raise ValueError(f"{field_location} is a mandatory field") from error
 
         return values
+
+    @classmethod
+    def validate_status(cls, values: dict) -> dict:
+        "Validate that status is a valid code"
+        try:
+            cls.status = values["status"]
+        except KeyError as error:
+            raise ValueError("status is a mandatory field") from error
+
+        return values
