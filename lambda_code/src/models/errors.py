@@ -13,6 +13,7 @@ class Code(str, Enum):
     not_found = "not-found"
     invalid = "invalid"
     server_error = "internal-server-error"
+    invariant = "invariant"
 
 
 @dataclass
