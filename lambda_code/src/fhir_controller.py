@@ -77,7 +77,7 @@ class FhirController:
             return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
 
         try:
-            self.fhir_service.update_immunization(imms)
+            self.fhir_service.update_immunization(imms_id, imms)
             return self.create_response(200)
         # TODO: add 404
         except ValidationError as error:

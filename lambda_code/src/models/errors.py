@@ -12,6 +12,7 @@ class Severity(str, Enum):
 class Code(str, Enum):
     not_found = "not-found"
     invalid = "invalid"
+    invariant = "invariant"
     server_error = "internal-server-error"
 
 
@@ -42,6 +43,16 @@ class UnhandledResponseError(RuntimeError):
 class ValidationError(RuntimeError):
     def to_operation_outcome(self) -> OperationOutcome:
         pass
+
+
+@dataclass
+class CoarseValidationError(ValidationError):
+    """Pre validation error"""
+    message: str
+
+    def to_operation_outcome(self) -> OperationOutcome:
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
 
 
 @dataclass

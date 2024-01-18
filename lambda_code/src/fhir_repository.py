@@ -57,7 +57,7 @@ class ImmunizationRepository:
         else:
             raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
 
-    def update_immunization(self, immunization: dict, patient: dict) -> dict:
+    def update_immunization(self, immunization: dict, patient: dict) -> None:
         # first get-imms and if not raise 404
         # replace the existing one entirely
         # TODO: I think we should add UpdatedAt attribute

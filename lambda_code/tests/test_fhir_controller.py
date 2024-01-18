@@ -2,12 +2,11 @@ import json
 import unittest
 from unittest.mock import create_autospec
 
-from fhir.resources.R4B.operationoutcome import OperationOutcome
 from fhir.resources.immunization import Immunization
 from fhir.resources.list import List
 from fhir_controller import FhirController
 from fhir_service import FhirService
-from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId, ValidationError
+from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId, CoarseValidationError
 
 
 def _create_a_post_event(body: str) -> dict:
@@ -175,9 +174,7 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should return 400 if Immunization is invalid"""
         imms = "{}"
         aws_event = {"body": imms, "pathParameters": {"id": "valid-id"}}
-        error = create_autospec(ValidationError)
-        error.to_operation_outcome.return_value = OperationOutcome.construct()
-        self.service.update_immunization.side_effect = error
+        self.service.update_immunization.side_effect = CoarseValidationError(message="invalid")
 
         response = self.controller.update_immunization(aws_event)
 

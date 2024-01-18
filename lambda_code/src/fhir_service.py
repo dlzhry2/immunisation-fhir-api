@@ -31,7 +31,7 @@ class FhirService:
         else:
             raise InvalidPatientId(nhs_number=nhs_number)
 
-    def update_immunization(self, immunization: dict) -> None:
+    def update_immunization(self, imms_id: str, immunization: dict) -> None:
         nhs_number = immunization['patient']['identifier']['value']
         patient = self.pds_service.get_patient_details(nhs_number)
         # TODO: We'll replace the existing patient as well. Make sure this behaviour is communicated.
