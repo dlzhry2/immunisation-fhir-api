@@ -65,6 +65,23 @@ class FhirController:
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome().json())
 
+    def update_immunization(self, aws_event):
+        # TODO: spec says path must include id but, what happens to the id that's inside the request's body?
+        imms_id = aws_event["pathParameters"]["id"]
+        id_error = self._validate_id(imms_id)
+        if id_error:
+            return FhirController.create_response(400, json.dumps(id_error.dict()))
+        try:
+            imms = json.loads(aws_event["body"])
+        except json.decoder.JSONDecodeError as e:
+            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+
+        try:
+            self.fhir_service.update_immunization(imms)
+            return self.create_response(200)
+        except ValidationError as error:
+            return self.create_response(400, error.to_operation_outcome().json())
+
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]
 
@@ -108,11 +125,14 @@ class FhirController:
         return self.create_response(400, error.json())
 
     @staticmethod
-    def create_response(status_code, body):
-        return {
+    def create_response(status_code, body=None):
+        response = {
             "statusCode": status_code,
-            "headers": {
-                "Content-Type": "application/fhir+json",
-            },
-            "body": body
+            "headers": {},
         }
+        if body:
+            response["body"] = body
+            response["headers"]["Content-Type"] = "application/fhir+json"
+            return response
+        else:
+            return response

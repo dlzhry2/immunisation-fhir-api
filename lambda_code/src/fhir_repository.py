@@ -6,8 +6,8 @@ from typing import Optional
 
 import boto3
 import botocore.exceptions
-from botocore.config import Config
 from boto3.dynamodb.conditions import Attr, Key
+from botocore.config import Config
 
 from models.errors import ResourceNotFoundError, UnhandledResponseError
 
@@ -56,6 +56,12 @@ class ImmunizationRepository:
             return immunization
         else:
             raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
+
+    def update_immunization(self, immunization: dict, patient: dict) -> dict:
+        # first get-imms and if not raise 404
+        # replace the existing one entirely
+        # TODO: I think we should add UpdatedAt attribute
+        pass
 
     def delete_immunization(self, imms_id: str) -> dict:
         now_timestamp = int(time.time())
