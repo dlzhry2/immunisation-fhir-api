@@ -35,8 +35,9 @@ class FhirService:
         nhs_number = immunization['patient']['identifier']['value']
         patient = self.pds_service.get_patient_details(nhs_number)
         # TODO: We'll replace the existing patient as well. Make sure this behaviour is communicated.
+        # TODO: spec says path must include id but, what happens to the id that's inside the request's body?
         if patient:
-            self.immunization_repo.update_immunization(immunization, patient)
+            self.immunization_repo.update_immunization(imms_id, immunization, patient)
         else:
             raise InvalidPatientId(nhs_number=nhs_number)
 

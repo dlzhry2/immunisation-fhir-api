@@ -66,7 +66,6 @@ class FhirController:
             return self.create_response(500, unhandled_error.to_operation_outcome().json())
 
     def update_immunization(self, aws_event):
-        # TODO: spec says path must include id but, what happens to the id that's inside the request's body?
         imms_id = aws_event["pathParameters"]["id"]
         id_error = self._validate_id(imms_id)
         if id_error:

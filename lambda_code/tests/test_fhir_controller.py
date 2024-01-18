@@ -161,12 +161,13 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_create_immunization(self):
         """it should update Immunization"""
         imms = "{}"
-        aws_event = {"body": imms, "pathParameters": {"id": "valid-id"}}
+        imms_id = "valid-id"
+        aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
         self.service.update_immunization.return_value = None
 
         response = self.controller.update_immunization(aws_event)
 
-        self.service.update_immunization.assert_called_once_with(json.loads(imms))
+        self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms))
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
 

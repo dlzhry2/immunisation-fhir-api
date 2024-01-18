@@ -125,7 +125,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.pds_service = create_autospec(PdsService)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service)
 
-    def test_create_immunization(self):
+    def test_update_immunization(self):
         """it should update Immunization and validate NHS number"""
         imms_id = "an-id"
         self.imms_repo.update_immunization.return_value = None
@@ -136,12 +136,25 @@ class TestUpdateImmunization(unittest.TestCase):
         req_imms = _create_an_immunization_dict(imms_id, nhs_number)
 
         # When
-        stored_imms = self.fhir_service.update_immunization(req_imms)
+        self.fhir_service.update_immunization(imms_id, req_imms)
 
         # Then
-        self.imms_repo.create_immunization.assert_called_once_with(req_imms, pds_patient)
+        self.imms_repo.update_immunization.assert_called_once_with(req_imms, pds_patient)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
-        self.assertIsInstance(stored_imms, Immunization)
+
+    def test_patient_error(self):
+        """it should throw error when PDS can't resolve patient"""
+        self.fhir_service.pds_service.get_patient_details.return_value = None
+        invalid_nhs_number = "a-bad-patient-id"
+        bad_patient_imms = _create_an_immunization_dict("an-id", invalid_nhs_number)
+
+        with self.assertRaises(InvalidPatientId) as e:
+            # When
+            self.fhir_service.update_immunization(invalid_nhs_number, bad_patient_imms)
+
+        # Then
+        self.assertEqual(e.exception.nhs_number, invalid_nhs_number)
+        self.imms_repo.update_immunization.assert_not_called()
 
 
 class TestDeleteImmunization(unittest.TestCase):
