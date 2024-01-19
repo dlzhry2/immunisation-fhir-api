@@ -2,9 +2,8 @@ import json
 import unittest
 from unittest.mock import create_autospec
 
-from fhir.resources.immunization import Immunization
-from fhir.resources.list import List
-
+from fhir.resources.R4B.immunization import Immunization
+from fhir.resources.R4B.list import List
 from fhir_controller import FhirController
 from fhir_service import FhirService
 from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId

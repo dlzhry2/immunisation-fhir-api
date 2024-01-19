@@ -2,13 +2,15 @@ import json
 import unittest
 from unittest.mock import create_autospec
 
-from fhir.resources.immunization import Immunization
-from fhir.resources.list import List as FhirList
-
+from fhir.resources.R4B.immunization import Immunization
+from fhir.resources.R4B.list import List as FhirList
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService
+from models.errors import InvalidPatientId, CoarseValidationError
+from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
-from models.errors import InvalidPatientId
+from pydantic import ValidationError
+from pydantic.error_wrappers import ErrorWrapper
 
 valid_nhs_number = "2374658346"
 
@@ -54,7 +56,8 @@ class TestGetImmunization(unittest.TestCase):
     def setUp(self):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
-        self.fhir_service = FhirService(self.imms_repo, self.pds_service)
+        self.validator = create_autospec(ImmunizationValidator)
+        self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
 
     # def test_get_immunization_by_id(self):
     #     """it should find an Immunization by id"""
@@ -85,10 +88,11 @@ class TestCreateImmunization(unittest.TestCase):
     def setUp(self):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
-        self.fhir_service = FhirService(self.imms_repo, self.pds_service)
+        self.validator = create_autospec(ImmunizationValidator)
+        self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
 
     def test_create_immunization(self):
-        """it should create Immunization and validate NHS number"""
+        """it should create Immunization and validate it"""
         imms_id = "an-id"
         self.imms_repo.create_immunization.return_value = _create_an_immunization_dict(imms_id)
         pds_patient = {"id": "a-patient-id"}
@@ -102,8 +106,25 @@ class TestCreateImmunization(unittest.TestCase):
 
         # Then
         self.imms_repo.create_immunization.assert_called_once_with(req_imms, pds_patient)
+        self.validator.validate.assert_called_once_with(req_imms)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
         self.assertIsInstance(stored_imms, Immunization)
+
+    def test_pre_validation_failed(self):
+        """it should throw exception if Immunization is not valid"""
+        self.imms_repo.create_immunization.return_value = _create_an_immunization_dict("an-id")
+        validation_error = ValidationError([ErrorWrapper(TypeError('bad type'), '/type'), ], Immunization)
+        self.validator.validate.side_effect = validation_error
+        expected_msg = str(validation_error)
+
+        with self.assertRaises(CoarseValidationError) as error:
+            # When
+            self.fhir_service.create_immunization({})
+
+        # Then
+        self.assertEqual(error.exception.message, expected_msg)
+        self.imms_repo.create_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
 
     def test_patient_error(self):
         """it should throw error when PDS can't resolve patient"""
@@ -124,7 +145,8 @@ class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
-        self.fhir_service = FhirService(self.imms_repo, self.pds_service)
+        self.validator = create_autospec(ImmunizationValidator)
+        self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
 
     def test_delete_immunization(self):
         """it should delete Immunization record"""
@@ -145,7 +167,8 @@ class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
-        self.fhir_service = FhirService(self.imms_repo, self.pds_service)
+        self.validator = create_autospec(ImmunizationValidator)
+        self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
 
     def test_map_disease_type_to_disease_code(self):
         """it should map disease_type to disease_code"""

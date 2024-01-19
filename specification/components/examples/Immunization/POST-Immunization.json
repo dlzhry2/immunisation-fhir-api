@@ -19,7 +19,7 @@
   },
   "protocolApplied": [
     {
-      "doseNumber": 1,
+      "doseNumberPositiveInt": 1,
       "targetDisease": [
         {
           "coding": [
