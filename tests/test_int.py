@@ -117,7 +117,7 @@ def test_aws_service_not_running_without_cert(nhs_login_mock_token):
 
 
 @pytest.mark.mock_int
-def test_apigee_running_with_cert(nhs_login_mock_token):
+def test_int_happy_path(nhs_login_mock_token):
     headers = {
         "Authorization": f"Bearer {nhs_login_mock_token}",
         "X-Request-ID": "60E0B220-8136-4CA5-AE46-1D97EF59D068",
