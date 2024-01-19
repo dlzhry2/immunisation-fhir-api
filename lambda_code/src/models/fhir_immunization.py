@@ -12,7 +12,13 @@ class ImmunizationValidator:
     """
 
     def __init__(self) -> None:
-        self.immunization = Immunization
+        class NewImmunization(Immunization):
+            """
+            Workaround for tests so we can instantiate our own instance of Immunization, and add
+            the pre/post validators independently without affecting other tests
+            """
+
+        self.immunization = NewImmunization
 
     def add_custom_root_pre_validators(self):
         """

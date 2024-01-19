@@ -33,8 +33,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # set up the validator and add custom root validators
         cls.validator = ImmunizationValidator()
-        cls.validator.remove_custom_root_validators("pre")
-        cls.validator.remove_custom_root_validators("post")
         cls.validator.add_custom_root_pre_validators()
         cls.validator.add_custom_root_post_validators()
 
@@ -42,13 +40,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """Set up for each test. This runs before every test"""
         # Ensure that good data is not inadvertently amended by the tests
         self.assertEqual(self.untouched_json_data, self.json_data)
-
-    @classmethod
-    def tearDownClass(cls):
-        """Tear down for the tests. This only runs once when the class is destroyed"""
-        # Remove the custom root validators
-        cls.validator.remove_custom_root_validators("pre")
-        cls.validator.remove_custom_root_validators("post")
 
     def test_model_post_vaccination_procedure_code(self):
         """
