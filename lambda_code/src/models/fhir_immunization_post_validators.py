@@ -3,12 +3,35 @@ from models.utils.generic_utils import (
     generate_field_location_for_questionnnaire_response,
 )
 
-
 from models.utils.post_validation_utils import PostValidation
 
 
 class FHIRImmunizationPostValidators:
     """FHIR Immunization Post Validators"""
+
+    @classmethod
+    def set_reduce_validation_code(cls, values: dict) -> dict:
+        """
+        Set reduce_validation_code property to match the value in the JSON data.
+        If the field does not exist then assume False.
+        """
+
+        reduce_validation_code = "False"
+
+        # If reduce_validation_code field exists then retrieve it's value
+        try:
+            for record in values["contained"]:
+                if record.resource_type == "QuestionnaireResponse":
+                    for item in record.item:
+                        if item.linkId == "ReduceValidation":
+                            if item.answer[0].valueCoding.code:
+                                reduce_validation_code = item.answer[0].valueCoding.code
+        except KeyError:
+            pass
+
+        cls.reduce_validation_code = reduce_validation_code
+
+        return values
 
     @classmethod
     def validate_vaccination_procedure_code(cls, values: dict) -> dict:

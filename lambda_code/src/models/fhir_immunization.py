@@ -235,6 +235,9 @@ class ImmunizationValidator:
         # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
 
         self.immunization.add_root_validator(
+            FHIRImmunizationPostValidators.set_reduce_validation_code
+        )
+        self.immunization.add_root_validator(
             FHIRImmunizationPostValidators.validate_vaccination_procedure_code
         )
         self.immunization.add_root_validator(

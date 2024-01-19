@@ -97,7 +97,7 @@ def test_missing_mandatory_field_rejected(
     value_error. This is why the test checks for the type of error in the error message.
     """
 
-    # Create invalid json data by amending the value of the relevant field
+    # Create invalid json data by removing the relevant field
     invalid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
 
     # Test that correct error message is raised
@@ -169,7 +169,7 @@ class InvalidValues:
         "2000-00-01",  # Month 0
         "2000-13-01",  # Month 13
         "2000-01-00",  # Day 0
-        "2000-01-32",  # Day 13
+        "2000-01-32",  # Day 32
         "2000-02-30",  # Invalid combnation of month and day
     ]
 
