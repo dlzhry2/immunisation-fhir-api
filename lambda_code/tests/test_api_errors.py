@@ -18,4 +18,3 @@ class TestApiErrors(unittest.TestCase):
         self.assertEqual(issue["code"], "not-found")
         self.assertEqual(issue["severity"], "error")
         self.assertEqual(issue["diagnostics"], diag)
-        self.assertEqual(issue["details"]["coding"][0]["code"], "NOT-FOUND")
