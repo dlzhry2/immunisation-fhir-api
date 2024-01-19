@@ -61,11 +61,9 @@ class FHIRImmunizationPostValidators:
         return values
 
     @classmethod
-    def validate_status(cls, values: dict) -> dict:
-        "Validate that status is a valid code"
-        try:
-            cls.status = values["status"]
-        except KeyError as error:
-            raise ValueError("status is a mandatory field") from error
+    def set_status(cls, values: dict) -> dict:
+        "Set status property to match the value in the JSON data"
+        # Note: no need to check field is present, as this is done already by the FHIR validator
+        cls.status = values["status"]
 
         return values

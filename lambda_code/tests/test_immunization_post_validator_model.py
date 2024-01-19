@@ -37,9 +37,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         self.validator.add_custom_root_post_validators()
 
     def test_model_post_reduce_validation_code(self):
-        """
-        Test reduce_validation_code accepts valid values and rejects invalid values
-        """
+        """Test set_reduce_validation_code"""
         valid_json_data = deepcopy(self.json_data)
         field_location = generate_field_location_for_questionnnaire_response(
             link_id="ReduceValidation", field_type="code"
@@ -62,15 +60,17 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_model_post_vaccination_procedure_code(self):
         """
-        Test post_vaccination_procedure_code accepts valid values and rejects invalid values
+        Test post_vaccination_procedure_code accepts valid values, rejects invalid values
+        and rejects missing data
         """
+        valid_json_data = deepcopy(self.json_data)
         url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
         field_location = generate_field_location_for_extension(url, "code")
 
         # Test that a valid COVID-19 code is accepted and vaccine_type is therefore set to COVID-19
         _test_valid_values_accepted(
             self,
-            valid_json_data=self.json_data,
+            valid_json_data=valid_json_data,
             field_location=field_location,
             valid_values_to_test=["1324681000000101"],
         )
@@ -79,7 +79,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # Test that an invalid code is rejected
         _test_invalid_values_rejected(
             self,
-            valid_json_data=self.json_data,
+            valid_json_data=valid_json_data,
             field_location=field_location,
             invalid_value="INVALID_VALUE",
             expected_error_message=f"{field_location}:"
@@ -90,8 +90,31 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # Test that json data which doesn't contain vaccination_procedure_code is rejected
         _test_missing_mandatory_field_rejected(
             self,
-            valid_json_data=self.json_data,
+            valid_json_data=valid_json_data,
             field_location=field_location,
             expected_error_message=f"{field_location} is a mandatory field",
             expected_error_type="value_error",
+        )
+
+    def test_model_post_status(self):
+        """
+        Test that when status field is absent it is rejected (by FHIR validator) and when it is
+        present the status property is set equal to it
+        """
+        valid_json_data = deepcopy(self.json_data)
+
+        # Test that status property is set to the value of status in the JSON data, where it exists
+        for valid_value in ["completed", "entered-in-error", "not-done"]:
+            valid_json_data = parse("status").update(valid_json_data, valid_value)
+            self.validator.validate(valid_json_data)
+            self.assertEqual(valid_value, self.validator.immunization.status)
+
+        # This error is raised by the FHIR validator (status is a mandatory FHIR field)
+        _test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data=valid_json_data,
+            field_location="status",
+            # TODO: work out how to check for complete error message
+            expected_error_message="field required",
+            expected_error_type="value_error.missing",
         )
