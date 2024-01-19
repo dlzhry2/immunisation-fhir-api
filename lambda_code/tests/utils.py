@@ -80,6 +80,36 @@ def test_invalid_values_rejected(
     )
 
 
+def test_missing_mandatory_field_rejected(
+    test_instance: unittest.TestCase,
+    valid_json_data: dict,
+    field_location: str,
+    expected_error_message: str,
+    expected_error_type: str,
+):
+    """
+    Test that json data which is missing a mandatory field is rejected by the model, with
+    an appropriate validation error
+
+    NOTE:
+    TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
+    this happens, the error message is suffixed with the type of error e.g. type_error or
+    value_error. This is why the test checks for the type of error in the error message.
+    """
+
+    # Create invalid json data by amending the value of the relevant field
+    invalid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
+
+    # Test that correct error message is raised
+    with test_instance.assertRaises(ValidationError) as error:
+        test_instance.validator.validate(invalid_json_data)
+
+    test_instance.assertTrue(
+        (expected_error_message + f" (type={expected_error_type})")
+        in str(error.exception)
+    )
+
+
 class InvalidDataTypes:
     """Store lists of invalid data types for tests"""
 
@@ -413,7 +443,7 @@ class ValidatorModelTests:
 
             invalid_length_lists = [list_too_short, list_too_long]
 
-            if predefined_list_length is not 1:  # If is 1 then list_too_short = []
+            if predefined_list_length != 1:  # If is 1 then list_too_short = []
                 invalid_length_lists.append([])
 
             # Test invalid list lengths

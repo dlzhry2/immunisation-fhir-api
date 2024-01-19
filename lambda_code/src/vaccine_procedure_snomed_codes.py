@@ -16,4 +16,18 @@ vaccination_procedure_snomed_codes = {
     "mockMMRcode1": "MMR",
     "mockMMRcode2": "MMR",
     "mockOTHERDISEASEcode1": "OTHER_DISEASE",
+    "mockMENINGITIScode1": "MEN",
 }
+
+# TODO: Update dictionary to use correct codes and mappings.
+# This is just an example of a possible structure
+vaccine_type_applicable_validations = {
+    "VALIDATION_A": {
+        "COVID-19": "M",
+        "FLU": "R",
+        "HPV": "O",
+        "MMR": "N/A",
+        "MEN": "CM",
+    },
+}
+apply_validation = vaccine_type_applicable_validations["VALIDATION_A"]["COVID-19"]

@@ -121,7 +121,8 @@ class PreValidation:
         """
         Apply pre-validation to a datetime field to ensure that it is a string (JSON dates must be
         written as strings) containing a valid datetime in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or
-        "YYYY-MM-DDThh:mm:ss-zz:zz" (i.e. date and time, including timezone offset in hours and minutes)
+        "YYYY-MM-DDThh:mm:ss-zz:zz" (i.e. date and time, including timezone offset in hours and
+        minutes)
         """
 
         if not isinstance(field_value, str):

@@ -1,5 +1,6 @@
 from models.utils.generic_utils import (
     generate_field_location_for_extension,
+    generate_field_location_for_questionnnaire_response,
 )
 
 
@@ -25,6 +26,8 @@ class FHIRImmunizationPostValidators:
                         0
                     ].code
                     break
+            if vaccination_procedure_code is None:
+                raise KeyError
             cls.vaccine_type = PostValidation.vaccination_procedure_code(
                 vaccination_procedure_code, field_location
             )

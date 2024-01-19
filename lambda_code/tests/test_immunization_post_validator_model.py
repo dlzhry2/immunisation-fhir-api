@@ -11,6 +11,7 @@ from .utils import (
     # these have an underscore to avoid pytest collecting them as tests
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
+    test_missing_mandatory_field_rejected as _test_missing_mandatory_field_rejected,
 )
 
 
@@ -41,6 +42,12 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # Ensure that good data is not inadvertently amended by the tests
         self.assertEqual(self.untouched_json_data, self.json_data)
 
+    def test_model_post_reduce_validation_code(self):
+        """
+        Test reduce_validation_code accepts valid values and rejects invalid values
+        """
+        field_location = "reduce_validation_code"
+
     def test_model_post_vaccination_procedure_code(self):
         """
         Test post_vaccination_procedure_code accepts valid values and rejects invalid values
@@ -52,5 +59,24 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         field_location = generate_field_location_for_extension(url, "code")
 
         _test_valid_values_accepted(
-            self, self.json_data, field_location, ["1324681000000101"]
+            self,
+            valid_json_data=self.json_data,
+            field_location=field_location,
+            valid_values_to_test=["1324681000000101"],
+        )
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=self.json_data,
+            field_location=field_location,
+            invalid_value="INVALID_VALUE",
+            expected_error_message=f"{field_location}:"
+            + " INVALID_VALUE is not a valid code for this service",
+            expected_error_type="value_error",
+        )
+        _test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data=self.json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
         )
