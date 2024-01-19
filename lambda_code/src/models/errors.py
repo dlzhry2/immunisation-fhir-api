@@ -2,7 +2,7 @@ import uuid
 from dataclasses import dataclass
 from enum import Enum
 
-from fhir.resources.operationoutcome import OperationOutcome
+from fhir.resources.R4B.operationoutcome import OperationOutcome
 
 
 class Severity(str, Enum):
@@ -13,6 +13,7 @@ class Code(str, Enum):
     not_found = "not-found"
     invalid = "invalid"
     server_error = "internal-server-error"
+    invariant = "invariant"
 
 
 @dataclass
@@ -62,7 +63,7 @@ class CoarseValidationError(ValidationError):
 
     def to_operation_outcome(self) -> OperationOutcome:
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invalid, diagnostics=self.message)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
 
 
 def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> OperationOutcome:
@@ -78,14 +79,6 @@ def create_operation_outcome(resource_id: str, severity: Severity, code: Code, d
             {
                 "severity": severity,
                 "code": code,
-                "details": {
-                    "coding": [
-                        {
-                            "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                            "code": code.upper()
-                        }
-                    ]
-                },
                 "diagnostics": diagnostics
             }
         ]
