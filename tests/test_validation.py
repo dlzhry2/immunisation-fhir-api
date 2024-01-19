@@ -23,6 +23,8 @@ def test_coarse_validation(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     imms["occurrenceDateTime"] = "2020-12-14"
 
     response = imms_api.create_immunization(imms)
+    content = response.json()
 
     assert response.status_code == 400
-    assert response.json()["resourceType"] == "OperationOutcome"
+    assert content["resourceType"] == "OperationOutcome"
+    assert "occurrenceDateTime" in content["issue"][0]["diagnostics"]
