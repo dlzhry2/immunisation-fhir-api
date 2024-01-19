@@ -15,21 +15,25 @@ class FhirService:
         self.pds_service = pds_service
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
-      imms = self.immunization_repo.get_immunization_by_id(imms_id)
-      bundle = False if imms['resourceType'] == "Immunization" else True
+        imms = self.immunization_repo.get_immunization_by_id(imms_id)
 
-      nhs_number = imms['patient']['identifier']['value'] if imms['resourceType'] == "Immunization" else imms["entry"][0]['patient']['identifier']['value']
-      patient = self.pds_service.get_patient_details(nhs_number)
-      patient_is_restricted = patient['meta']['security'][0]['display']
+        if not imms:
+            return None
 
-      if patient_is_restricted == "restricted":
-          filtered_immunization = remove_personal_info(imms['entry'][0]) if bundle else remove_personal_info(imms)
-          print(filtered_immunization, "<<<<<<<<<< FILTERED IMMUNZATION")
-          print(Immunization.parse_obj(filtered_immunization), "<<<<<<<<< RESTRICTED PARSED AND FILTERED IMMS")
-          return Immunization.parse_obj(filtered_immunization)
-      else:
-          print(Immunization.parse_obj(imms), "<<<<<<<<< PARSED IMMS")
-          return Immunization.parse_obj(imms)
+        bundle = False if imms['resourceType'] == "Immunization" else True
+
+        nhs_number = imms['patient']['identifier']['value'] if imms['resourceType'] == "Immunization" else imms["entry"][0]['patient']['identifier']['value']
+        patient = self.pds_service.get_patient_details(nhs_number)
+        patient_is_restricted = patient['meta']['security'][0]['display']
+
+        if patient_is_restricted == "restricted":
+            filtered_immunization = remove_personal_info(imms['entry'][0]) if bundle else remove_personal_info(imms)
+            print(filtered_immunization, "<<<<<<<<<< FILTERED IMMUNZATION")
+            print(Immunization.parse_obj(filtered_immunization), "<<<<<<<<< RESTRICTED PARSED AND FILTERED IMMS")
+            return Immunization.parse_obj(filtered_immunization)
+        else:
+            print(Immunization.parse_obj(imms), "<<<<<<<<< PARSED IMMS")
+            return Immunization.parse_obj(imms)
 
     def create_immunization(self, immunization: dict) -> Immunization:
         nhs_number = immunization['patient']['identifier']['value']
