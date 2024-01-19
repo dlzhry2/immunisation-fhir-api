@@ -17,6 +17,7 @@ class Constants:
     # TODO: valid_disease_types needs updated to reprent agreed list (needs to consider the
     # mapping used for converting snomed code to disease type)
     VALID_DISEASE_TYPES = {"COVID-19", "FLU"}
+    REDUCE_VALIDATION_CODES = ("True", "False")
 
     @staticmethod
     def convert_snomed_code_to_target_disease_type(
