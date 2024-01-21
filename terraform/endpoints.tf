@@ -69,6 +69,7 @@ locals {
     oas_parameters = {
         get_event      = local.imms_lambdas["${local.short_prefix}_get_imms"]
         post_event     = local.imms_lambdas["${local.short_prefix}_create_imms"]
+        update_event   = local.imms_lambdas["${local.short_prefix}_update_imms"]
         delete_event   = local.imms_lambdas["${local.short_prefix}_delete_imms"]
         search_event   = local.imms_lambdas["${local.short_prefix}_search_imms"]
         not_found      = local.imms_lambdas["${local.short_prefix}_not_found"]

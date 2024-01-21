@@ -23,25 +23,17 @@ class FhirService:
             return None
 
     def create_immunization(self, immunization: dict) -> Immunization:
-        nhs_number = immunization['patient']['identifier']['value']
-        patient = self.pds_service.get_patient_details(nhs_number)
-        if patient:
-            imms = self.immunization_repo.create_immunization(immunization, patient)
-            return Immunization.parse_obj(imms)
-        else:
-            raise InvalidPatientId(nhs_number=nhs_number)
+        patient = self._validate_patient(immunization)
+        imms = self.immunization_repo.create_immunization(immunization, patient)
+
+        return Immunization.parse_obj(imms)
 
     def update_immunization(self, imms_id: str, immunization: dict) -> None:
         # The id that comes in the request's path is our id. So the imms object must have the same id
         immunization['id'] = imms_id
-        print("service: ", imms_id)
 
-        nhs_number = immunization['patient']['identifier']['value']
-        patient = self.pds_service.get_patient_details(nhs_number)
-        if patient:
-            self.immunization_repo.update_immunization(imms_id, immunization, patient)
-        else:
-            raise InvalidPatientId(nhs_number=nhs_number)
+        patient = self._validate_patient(immunization)
+        self.immunization_repo.update_immunization(imms_id, immunization, patient)
 
     def delete_immunization(self, imms_id) -> Immunization:
         """Delete an Immunization if it exits and return the ID back if successful.
@@ -61,3 +53,11 @@ class FhirService:
 
         entries = [Immunization.parse_obj(imms) for imms in resources]
         return FhirList.construct(entry=entries)
+
+    def _validate_patient(self, imms: dict):
+        nhs_number = imms['patient']['identifier']['value']
+        patient = self.pds_service.get_patient_details(nhs_number)
+        if patient:
+            return patient
+        else:
+            raise InvalidPatientId(nhs_number=nhs_number)

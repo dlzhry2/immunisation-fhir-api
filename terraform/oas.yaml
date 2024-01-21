@@ -25,7 +25,7 @@ paths:
   /Immunization/{id}:
     put:
       x-amazon-apigateway-integration:
-        uri: "${get_event.lambda_arn}"
+        uri: "${update_event.lambda_arn}"
         payloadFormatVersion: "1.0"
         passthroughBehavior: "when_no_match"
         httpMethod: "PUT"

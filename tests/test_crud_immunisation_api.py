@@ -34,7 +34,6 @@ def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> dict:
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_update_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -49,16 +48,17 @@ def test_update_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_heade
     imms_id = res_body['id']
     print("imms id", imms_id)
     new_imms = copy.deepcopy(imms)
-    new_imms["status"] = "failed"
+    new_imms["status"] = "not-done"
     result = imms_api.update_immunization(imms_id, new_imms)
     assert result.status_code == 200
 
     # read back
     result = imms_api.get_immunization_by_id(imms_id)
+    res_body = result.json()
     print(result.text)
 
     assert result.status_code == 200
-    assert res_body["status"] == "failed"
+    assert res_body["status"] == "not-done"
 
 
 @pytest.mark.nhsd_apim_authorization(
@@ -68,6 +68,7 @@ def test_update_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_heade
         "login_form": {"username": "656005750104"},
     }
 )
+@pytest.mark.debug
 def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -90,8 +91,14 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     assert res_body["id"] == imms_id
 
     # UPDATE
-    new_imms = imms["status"] = "failed"
+    new_imms = copy.deepcopy(imms)
+    new_imms["status"] = "not-done"
     result = imms_api.update_immunization(imms_id, new_imms)
+    assert result.status_code == 200
+
+    result = imms_api.get_immunization_by_id(imms_id)
+    res_body = result.json()
+    assert res_body["status"] == "not-done"
 
     # DELETE
     result = imms_api.delete_immunization(imms_id)

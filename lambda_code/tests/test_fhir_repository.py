@@ -195,7 +195,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertDictEqual(act_resource, resource)
 
         update_exp = ("SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-                      "PatientSK = :patient_sk, Resource = :resource, Patient = :patient")
+                      "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient")
         patient_id = self.patient["identifier"]["value"]
         disease_type = imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"]
         patient_sk = f"{disease_type}#{imms_id}"
@@ -203,11 +203,14 @@ class TestUpdateImmunization(unittest.TestCase):
         self.table.update_item.assert_called_once_with(
             Key={"PK": _make_immunization_pk(imms_id)},
             UpdateExpression=update_exp,
+            ExpressionAttributeNames={
+                '#imms_resource': "Resource",
+            },
             ExpressionAttributeValues={
                 ':timestamp': now_epoch,
                 ':patient_pk': _make_patient_pk(patient_id),
                 ':patient_sk': patient_sk,
-                ':Resource': json.dumps(imms),
+                ':imms_resource_val': json.dumps(imms),
                 ':patient': self.patient,
             },
             ReturnValues=ANY, ConditionExpression=ANY
