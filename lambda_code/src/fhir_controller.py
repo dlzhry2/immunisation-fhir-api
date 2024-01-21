@@ -68,7 +68,9 @@ class FhirController:
     def update_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]
         id_error = self._validate_id(imms_id)
+        print("controller ", aws_event)
         if id_error:
+            print("id invalid")
             return FhirController.create_response(400, json.dumps(id_error.dict()))
         try:
             imms = json.loads(aws_event["body"])

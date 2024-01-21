@@ -139,8 +139,24 @@ class TestUpdateImmunization(unittest.TestCase):
         self.fhir_service.update_immunization(imms_id, req_imms)
 
         # Then
-        self.imms_repo.update_immunization.assert_called_once_with(req_imms, pds_patient)
+        self.imms_repo.update_immunization.assert_called_once_with(imms_id, req_imms, pds_patient)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
+
+    def test_consistent_imms_id(self):
+        """Immunization[id] should be the same as request"""
+        req_imms_id = "an-id"
+        self.imms_repo.update_immunization.return_value = None
+        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
+
+        obj_imms_id = "a-diff-id"
+        req_imms = _create_an_immunization_dict(obj_imms_id)
+
+        # When
+        self.fhir_service.update_immunization(req_imms_id, req_imms)
+
+        # Then
+        passed_imms = self.imms_repo.update_immunization.call_args.args[1]
+        self.assertEqual(passed_imms["id"], req_imms_id)
 
     def test_patient_error(self):
         """it should throw error when PDS can't resolve patient"""

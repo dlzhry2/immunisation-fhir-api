@@ -32,10 +32,12 @@ class FhirService:
             raise InvalidPatientId(nhs_number=nhs_number)
 
     def update_immunization(self, imms_id: str, immunization: dict) -> None:
+        # The id that comes in the request's path is our id. So the imms object must have the same id
+        immunization['id'] = imms_id
+        print("service: ", imms_id)
+
         nhs_number = immunization['patient']['identifier']['value']
         patient = self.pds_service.get_patient_details(nhs_number)
-        # TODO: We'll replace the existing patient as well. Make sure this behaviour is communicated.
-        # TODO: spec says path must include id but, what happens to the id that's inside the request's body?
         if patient:
             self.immunization_repo.update_immunization(imms_id, immunization, patient)
         else:
