@@ -83,7 +83,7 @@ class ImmunizationRepository:
 
     def update_immunization(self, imms_id: str, immunization: dict, patient: dict) -> dict:
         attr = RecordAttributes(immunization, patient)
-        # Resource is a dynamodb reserved word
+        # "Resource" is a dynamodb reserved word
         update_exp = ("SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
                       "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient")
 

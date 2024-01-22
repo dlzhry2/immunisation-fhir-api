@@ -163,12 +163,25 @@ class TestUpdateImmunization(unittest.TestCase):
         imms = "{}"
         imms_id = "valid-id"
         aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
-        self.service.update_immunization.return_value = None
+        self.service.update_immunization.return_value = True
 
         response = self.controller.update_immunization(aws_event)
 
         self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms))
         self.assertEqual(response["statusCode"], 200)
+        self.assertTrue("body" not in response)
+
+    def test_create_new_imms(self):
+        """it should return 201 if update creates a new record"""
+        imms = "{}"
+        imms_id = "valid-id"
+        aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
+        self.service.update_immunization.return_value = False
+
+        response = self.controller.update_immunization(aws_event)
+
+        self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms))
+        self.assertEqual(response["statusCode"], 201)
         self.assertTrue("body" not in response)
 
     def test_validation_error(self):

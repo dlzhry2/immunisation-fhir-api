@@ -46,7 +46,6 @@ def test_update_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_heade
 
     # UPDATE
     imms_id = res_body['id']
-    print("imms id", imms_id)
     new_imms = copy.deepcopy(imms)
     new_imms["status"] = "not-done"
     result = imms_api.update_immunization(imms_id, new_imms)
@@ -55,7 +54,6 @@ def test_update_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_heade
     # read back
     result = imms_api.get_immunization_by_id(imms_id)
     res_body = result.json()
-    print(result.text)
 
     assert result.status_code == 200
     assert res_body["status"] == "not-done"
@@ -68,7 +66,6 @@ def test_update_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_heade
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -194,6 +191,28 @@ def test_get_deleted_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     # Assert
     assert result.status_code == 404
     assert json_result["resourceType"] == "OperationOutcome"
+
+
+@pytest.mark.nhsd_apim_authorization(
+    {
+        "access": "healthcare_worker",
+        "level": "aal3",
+        "login_form": {"username": "656005750104"},
+    }
+)
+@pytest.mark.debug
+def test_update_none_existing_record_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+    """update a record that doesn't exist should create a new record"""
+    token = nhsd_apim_auth_headers["Authorization"]
+    imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
+
+    imms_id = str(uuid.uuid4())
+    # imms_id = "d5d9d3db-38d3-4765-a131-d372ca8812bf"
+    imms = create_an_imms_obj(imms_id)
+    result = imms_api.update_immunization(imms_id, imms)
+    # result = imms_api.create_immunization(imms)
+    print(result.text)
+    assert result.status_code == 201
 
 
 @pytest.mark.nhsd_apim_authorization(

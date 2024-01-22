@@ -76,13 +76,12 @@ class FhirController:
             return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
 
         try:
-            self.fhir_service.update_immunization(imms_id, imms)
-            return self.create_response(200)
+            if self.fhir_service.update_immunization(imms_id, imms):
+                return self.create_response(200)
+            else:
+                return self.create_response(201)
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome().json())
-            # TODO: Should we support creating new object when it's not there?
-        except ResourceNotFoundError as not_found:
-            return self.create_response(404, not_found.to_operation_outcome().json())
 
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]

@@ -5,7 +5,7 @@ from fhir.resources.R4B.list import List as FhirList
 from pydantic import ValidationError
 
 from fhir_repository import ImmunizationRepository
-from models.errors import InvalidPatientId, CoarseValidationError
+from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 
@@ -38,12 +38,23 @@ class FhirService:
 
         return Immunization.parse_obj(imms)
 
-    def update_immunization(self, imms_id: str, immunization: dict) -> None:
+    def update_immunization(self, imms_id: str, immunization: dict) -> bool:
         # The id that comes in the request's path is our id. So the imms object must have the same id
         immunization['id'] = imms_id
 
+        try:
+            self.pre_validator.validate(immunization)
+        except ValidationError as error:
+            raise CoarseValidationError(message=str(error))
+
         patient = self._validate_patient(immunization)
-        self.immunization_repo.update_immunization(imms_id, immunization, patient)
+
+        try:
+            self.immunization_repo.update_immunization(imms_id, immunization, patient)
+            return True
+        except ResourceNotFoundError:
+            self.immunization_repo.create_immunization(immunization, patient)
+            return False
 
     def delete_immunization(self, imms_id) -> Immunization:
         """Delete an Immunization if it exits and return the ID back if successful.

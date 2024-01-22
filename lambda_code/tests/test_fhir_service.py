@@ -6,7 +6,7 @@ from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.list import List as FhirList
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService
-from models.errors import InvalidPatientId, CoarseValidationError
+from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from pydantic import ValidationError
@@ -159,11 +159,48 @@ class TestUpdateImmunization(unittest.TestCase):
         req_imms = _create_an_immunization_dict(imms_id, nhs_number)
 
         # When
-        self.fhir_service.update_immunization(imms_id, req_imms)
+        is_updated = self.fhir_service.update_immunization(imms_id, req_imms)
 
         # Then
+        self.assertTrue(is_updated)
         self.imms_repo.update_immunization.assert_called_once_with(imms_id, req_imms, pds_patient)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
+
+    def test_none_existing_imms(self):
+        """it should create a new record, if it doesn't exist"""
+        imms_id = "an-id"
+        imms = _create_an_immunization_dict(imms_id, valid_nhs_number)
+
+        self.imms_repo.update_immunization.side_effect = ResourceNotFoundError("Immunization", imms_id)
+        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "a-patient-id"}
+
+        # When
+        is_updated = self.fhir_service.update_immunization(imms_id, imms)
+
+        # Then
+        self.assertFalse(is_updated)
+        self.imms_repo.create_immunization.assert_called_once()
+
+    def test_pre_validation_failed(self):
+        """it should throw exception if Immunization is not valid"""
+        imms_id = "an-id"
+        imms = _create_an_immunization_dict(imms_id)
+        imms["patient"] = {"identifier": {"value": valid_nhs_number}}
+
+        self.imms_repo.update_immunization.return_value = {}
+
+        validation_error = ValidationError([ErrorWrapper(TypeError('bad type'), '/type'), ], Immunization)
+        self.validator.validate.side_effect = validation_error
+        expected_msg = str(validation_error)
+
+        with self.assertRaises(CoarseValidationError) as error:
+            # When
+            self.fhir_service.update_immunization("an-id", imms)
+
+        # Then
+        self.assertEqual(error.exception.message, expected_msg)
+        self.imms_repo.update_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
 
     def test_consistent_imms_id(self):
         """Immunization[id] should be the same as request"""
