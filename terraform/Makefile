@@ -39,8 +39,8 @@ clean:
 
 destroy: workspace
 	$(tf_cmd) destroy $(tf_vars) -auto-approve
-	terraform workspace select default
-	terraform workspace delete $(environment)
+	$(tf_cmd) workspace select default
+	$(tf_cmd) workspace delete $(environment)
 
 output:
 	$(tf_cmd) output -raw $(name)

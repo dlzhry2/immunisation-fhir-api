@@ -1,5 +1,6 @@
 """Immunization FHIR R4B validator"""
 from fhir.resources.R4B.immunization import Immunization
+from models.constants import Constants
 from models.utils import (
     pre_validate_string,
     pre_validate_date_time,
@@ -13,7 +14,6 @@ from models.utils import (
     generate_field_location_for_questionnnaire_response,
     generate_field_location_for_extension,
 )
-from models.constants import Constants
 
 
 class ImmunizationValidator:
@@ -754,6 +754,392 @@ class ImmunizationValidator:
 
         return values
 
+    @classmethod
+    def pre_validate_nhs_number_status_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.code (legacy CSV field name:
+        NHS_NUMBER_STATUS_INDICATOR_CODE) exists, then it is a non-empty string
+        """
+        try:
+            nhs_number_status_code = get_generic_questionnaire_response_value(
+                values, "NhsNumberStatus", "code"
+            )
+            pre_validate_string(
+                nhs_number_status_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="NhsNumberStatus", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_nhs_number_status_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.display (legacy CSV field name:
+        NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION) exists, then it is a non-empty string
+        """
+        try:
+            nhs_number_status_display = get_generic_questionnaire_response_value(
+                values, "NhsNumberStatus", "display"
+            )
+            pre_validate_string(
+                nhs_number_status_display,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="NhsNumberStatus", field_type="display"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_site_code_system(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='SiteCode')].answer[0].valueCoding.system (legacy CSV field name:
+        SITE_CODE_TYPE_URI) exists, then it is a non-empty string
+        """
+        try:
+            site_code_system = get_generic_questionnaire_response_value(
+                values, "SiteCode", "system"
+            )
+            pre_validate_string(
+                site_code_system,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="SiteCode", field_type="system"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_local_patient_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.code (legacy CSV field name:
+        LOCAL_PATIENT_ID) exists, then it is a non-empty string
+        """
+        try:
+            local_patient_code = get_generic_questionnaire_response_value(
+                values, "LocalPatient", "code"
+            )
+            pre_validate_string(
+                local_patient_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="LocalPatient", field_type="code"
+                ),
+                max_length=20,
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_local_patient_system(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.system (legacy CSV field name:
+        LOCAL_PATIENT_URI) exists, then it is a non-empty string
+        """
+        try:
+            local_patient_system = get_generic_questionnaire_response_value(
+                values, "LocalPatient", "system"
+            )
+            pre_validate_string(
+                local_patient_system,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="LocalPatient", field_type="system"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_consent_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='Consent')].answer[0].valueCoding.code (legacy CSV field name:
+        CONSENT_FOR_TREATMENT_CODE) exists, then it is a non-empty string
+        """
+        try:
+            consent_code = get_generic_questionnaire_response_value(
+                values, "Consent", "code"
+            )
+            pre_validate_string(
+                consent_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="Consent", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_consent_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='Consent')].answer[0].valueCoding.display (legacy CSV field name:
+        CONSENT_FOR_TREATMENT_DESCRIPTION) exists, then it is a non-empty string
+        """
+        try:
+            consent_display = get_generic_questionnaire_response_value(
+                values, "Consent", "display"
+            )
+            pre_validate_string(
+                consent_display,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="Consent", field_type="display"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_care_setting_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='CareSetting')].answer[0].valueCoding.code (legacy CSV field name:
+        CARE_SETTING_TYPE_CODE) exists, then it is a non-empty string
+        """
+        try:
+            care_setting_code = get_generic_questionnaire_response_value(
+                values, "CareSetting", "code"
+            )
+            pre_validate_string(
+                care_setting_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="CareSetting", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_care_setting_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='CareSetting')].answer[0].valueCoding.display (legacy CSV field name:
+        CARE_SETTING_TYPE_DESCRIPTION) exists, then it is a non-empty string
+        """
+        try:
+            care_setting_display = get_generic_questionnaire_response_value(
+                values, "CareSetting", "display"
+            )
+            pre_validate_string(
+                care_setting_display,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="CareSetting", field_type="display"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_ip_address_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='IpAddress')].answer[0].valueCoding.code (legacy CSV field name:
+        IP_ADDRESS) exists, then it is a non-empty string
+        """
+        try:
+            ip_address_code = get_generic_questionnaire_response_value(
+                values, "IpAddress", "code"
+            )
+            pre_validate_string(
+                ip_address_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="IpAddress", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_user_id_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='UserId')].answer[0].valueCoding.code (legacy CSV field name:
+        USER_ID) exists, then it is a non-empty string
+        """
+        try:
+            user_id_code = get_generic_questionnaire_response_value(
+                values, "UserId", "code"
+            )
+            pre_validate_string(
+                user_id_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="UserId", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_user_name_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='UserName')].answer[0].valueCoding.code (legacy CSV field name:
+        USER_NAME) exists, then it is a non-empty string
+        """
+        try:
+            user_name_code = get_generic_questionnaire_response_value(
+                values, "UserName", "code"
+            )
+            pre_validate_string(
+                user_name_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="UserName", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_user_email_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='UserEmail')].answer[0].valueCoding.code (legacy CSV field name:
+        USER_EMAIL) exists, then it is a non-empty string
+        """
+        try:
+            user_email_code = get_generic_questionnaire_response_value(
+                values, "UserEmail", "code"
+            )
+            pre_validate_string(
+                user_email_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="UserEmail", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_submitted_time_stamp_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueCoding.code (legacy CSV field name:
+        SUBMITTED_TIMESTAMP), then it is a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or
+        "YYYY-MM-DDThh:mm:ss-zz:zz" (i.e. date and time, including timezone offset in hours and
+        minutes), representing a valid datetime.
+        """
+        try:
+            submitted_time_stamp_code = get_generic_questionnaire_response_value(
+                values, "SubmittedTimeStamp", "code"
+            )
+            pre_validate_date_time(
+                submitted_time_stamp_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="SubmittedTimeStamp", field_type="code"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_location_identifier_value(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if location.identifier.value (legacy CSV field name: LOCATION_CODE)
+        exists, then it is a non-empty string
+        """
+        try:
+            location_identifier_value = values["location"]["identifier"]["value"]
+            pre_validate_string(location_identifier_value, "location.identifier.value")
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_location_identifier_system(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if location.identifier.system (legacy CSV field name:
+        LOCATION_CODE_TYPE_URI) exists, then it is a non-empty string
+        """
+        try:
+            location_identifier_system = values["location"]["identifier"]["system"]
+            pre_validate_string(
+                location_identifier_system, "location.identifier.system"
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_reduce_validation_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.code (legacy CSV field name:
+        REDUCE_VALIDATION_CODE) exists, then it is a non-empty string
+        """
+        try:
+            reduce_validation_code = get_generic_questionnaire_response_value(
+                values, "ReduceValidation", "code"
+            )
+            pre_validate_string(
+                reduce_validation_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="ReduceValidation", field_type="code"
+                ),
+                predefined_values=Constants.REDUCE_VALIDATION_CODES,
+            )
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_reduce_validation_display(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.display (legacy CSV field name:
+        REDUCE_VALIDATION_REASON) exists, then it is a non-empty string
+        """
+        try:
+            reduce_validation_display = get_generic_questionnaire_response_value(
+                values, "ReduceValidation", "display"
+            )
+            pre_validate_string(
+                reduce_validation_display,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="ReduceValidation", field_type="display"
+                ),
+            )
+        except KeyError:
+            pass
+
+        return values
+
     def add_custom_root_validators(self):
         """
         Add custom NHS validators to the model
@@ -761,86 +1147,123 @@ class ImmunizationValidator:
         NOTE: THE ORDER IN WHICH THE VALIDATORS ARE ADDED IS IMPORTANT! DO NOT CHANGE THE ORDER
         WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST.
         """
-        # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
-        Immunization.add_root_validator(
-            self.pre_validate_patient_identifier_value, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_occurrence_date_time, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_contained, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_questionnaire_answers, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_questionnaire_site_code_code, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_site_name_code, pre=True)
-        Immunization.add_root_validator(self.pre_validate_identifier, pre=True)
-        Immunization.add_root_validator(self.pre_validate_identifier_value, pre=True)
-        Immunization.add_root_validator(self.pre_validate_identifier_system, pre=True)
-        Immunization.add_root_validator(self.pre_validate_status, pre=True)
-        Immunization.add_root_validator(self.pre_validate_recorded, pre=True)
-        Immunization.add_root_validator(self.pre_validate_primary_source, pre=True)
-        Immunization.add_root_validator(self.pre_validate_report_origin_text, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_extension_value_codeable_concept_codings, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_vaccination_procedure_code, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_vaccination_procedure_display, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_vaccination_situation_code, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_vaccination_situation_display, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_status_reason_coding, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_status_reason_coding_code, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_status_reason_coding_display, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_protocol_applied, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_protocol_applied_dose_number_positive_int, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_vaccine_code_coding, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_vaccine_code_coding_code, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_vaccine_code_coding_display, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_manufacturer_display, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_lot_number, pre=True)
-        Immunization.add_root_validator(self.pre_validate_expiration_date, pre=True)
-        Immunization.add_root_validator(self.pre_validate_site_coding, pre=True)
-        Immunization.add_root_validator(self.pre_validate_site_coding_code, pre=True)
-        Immunization.add_root_validator(self.pre_validate_site_coding_display, pre=True)
-        Immunization.add_root_validator(self.pre_validate_route_coding, pre=True)
-        Immunization.add_root_validator(self.pre_validate_route_coding_code, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_route_coding_display, pre=True
-        )
-        Immunization.add_root_validator(self.pre_validate_dose_quantity_value, pre=True)
-        Immunization.add_root_validator(self.pre_validate_dose_quantity_code, pre=True)
-        Immunization.add_root_validator(self.pre_validate_dose_quantity_unit, pre=True)
-        Immunization.add_root_validator(self.pre_validate_reason_code_codings, pre=True)
-        Immunization.add_root_validator(
-            self.pre_validate_reason_code_coding_codes, pre=True
-        )
-        Immunization.add_root_validator(
-            self.pre_validate_reason_code_coding_displays, pre=True
-        )
+        if not hasattr(Immunization, "pre_validate_patient_identifier_value"):
+            # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
+            Immunization.add_root_validator(
+                self.pre_validate_patient_identifier_value, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_occurrence_date_time, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_contained, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_questionnaire_answers, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_questionnaire_site_code_code, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_site_name_code, pre=True)
+            Immunization.add_root_validator(self.pre_validate_identifier, pre=True)
+            Immunization.add_root_validator(self.pre_validate_identifier_value, pre=True)
+            Immunization.add_root_validator(self.pre_validate_identifier_system, pre=True)
+            Immunization.add_root_validator(self.pre_validate_status, pre=True)
+            Immunization.add_root_validator(self.pre_validate_recorded, pre=True)
+            Immunization.add_root_validator(self.pre_validate_primary_source, pre=True)
+            Immunization.add_root_validator(self.pre_validate_report_origin_text, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_extension_value_codeable_concept_codings, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_vaccination_procedure_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_vaccination_procedure_display, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_vaccination_situation_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_vaccination_situation_display, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_status_reason_coding, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_status_reason_coding_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_status_reason_coding_display, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_protocol_applied, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_protocol_applied_dose_number_positive_int, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_vaccine_code_coding, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_vaccine_code_coding_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_vaccine_code_coding_display, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_manufacturer_display, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_lot_number, pre=True)
+            Immunization.add_root_validator(self.pre_validate_expiration_date, pre=True)
+            Immunization.add_root_validator(self.pre_validate_site_coding, pre=True)
+            Immunization.add_root_validator(self.pre_validate_site_coding_code, pre=True)
+            Immunization.add_root_validator(self.pre_validate_site_coding_display, pre=True)
+            Immunization.add_root_validator(self.pre_validate_route_coding, pre=True)
+            Immunization.add_root_validator(self.pre_validate_route_coding_code, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_route_coding_display, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_dose_quantity_value, pre=True)
+            Immunization.add_root_validator(self.pre_validate_dose_quantity_code, pre=True)
+            Immunization.add_root_validator(self.pre_validate_dose_quantity_unit, pre=True)
+            Immunization.add_root_validator(self.pre_validate_reason_code_codings, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_reason_code_coding_codes, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_reason_code_coding_displays, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_nhs_number_status_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_nhs_number_status_display, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_site_code_system, pre=True)
+            Immunization.add_root_validator(self.pre_validate_local_patient_code, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_local_patient_system, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_consent_code, pre=True)
+            Immunization.add_root_validator(self.pre_validate_consent_display, pre=True)
+            Immunization.add_root_validator(self.pre_validate_care_setting_code, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_care_setting_display, pre=True
+            )
+            Immunization.add_root_validator(self.pre_validate_ip_address_code, pre=True)
+            Immunization.add_root_validator(self.pre_validate_user_id_code, pre=True)
+            Immunization.add_root_validator(self.pre_validate_user_name_code, pre=True)
+            Immunization.add_root_validator(self.pre_validate_user_email_code, pre=True)
+            Immunization.add_root_validator(
+                self.pre_validate_submitted_time_stamp_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_location_identifier_value, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_location_identifier_system, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_reduce_validation_code, pre=True
+            )
+            Immunization.add_root_validator(
+                self.pre_validate_reduce_validation_display, pre=True
+            )
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""

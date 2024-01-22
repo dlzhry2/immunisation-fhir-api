@@ -89,9 +89,17 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         """
         Test pre_validate_quesionnaire_answers accepts valid values and rejects invalid values
         """
-        valid_list_element = {"valueCoding": {"code": "B0C4P"}}
         # Check that any of the 12 answer fields in the sample data are rejected when invalid
         for i in range(12):
+            if i == 10:
+                # for SubmittedTimeStamp, the code is a date time string
+                valid_list_element = {
+                    "valueCoding": {"code": "2020-12-14T10:08:15+00:00"}
+                }
+            else:
+                # for everything else, the code is a string
+                valid_list_element = {"valueCoding": {"code": "True"}}
+
             ValidatorModelTests.test_list_value(
                 self,
                 field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
@@ -514,3 +522,214 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 field_location=f"reasonCode[{i}].coding[0].display",
                 valid_strings_to_test=["test"],
             )
+
+    def test_model_pre_validate_nhs_number_status_code(self):
+        """
+        Test pre_validate_nhs_number_status_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.code",
+            valid_strings_to_test=["01"],
+        )
+
+    def test_model_pre_validate_nhs_number_status_display(self):
+        """
+        Test pre_validate_nhs_number_status_display accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.display",
+            valid_strings_to_test=["Number present and verified"],
+        )
+
+    def test_model_pre_validate_site_code_system(self):
+        """
+        Test pre_validate_site_code_system accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='SiteCode')].answer[0].valueCoding.system",
+            valid_strings_to_test=["snomed"],
+        )
+
+    def test_model_pre_validate_local_patient_code(self):
+        """
+        Test pre_validate_local_patient_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.code",
+            valid_strings_to_test=[
+                "ACME-patient123456",
+                "ACME-CUST1-pat123456",
+                "ACME-CUST2-pat123456",
+            ],
+            invalid_length_strings_to_test=["ACME-CUST1-pat1234567"],
+            max_length=20,
+        )
+
+    def test_model_pre_validate_local_patient_system(self):
+        """
+        Test pre_validate_local_patient_system accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.system",
+            valid_strings_to_test=["https://supplierABC/identifiers"],
+        )
+
+    def test_model_pre_validate_consent_code(self):
+        """
+        Test pre_validate_consent_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='Consent')].answer[0].valueCoding.code",
+            valid_strings_to_test=["snomed"],
+        )
+
+    def test_model_pre_validate_consent_display(self):
+        """
+        Test pre_validate_consent_display accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='Consent')].answer[0].valueCoding.display",
+            valid_strings_to_test=[
+                "Patient consented to be given the vaccination",
+                "Parent/carer/guardian consented for child to be given the vaccination",
+            ],
+        )
+
+    def test_model_pre_validate_care_setting_code(self):
+        """
+        Test pre_validate_care_setting_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='CareSetting')].answer[0].valueCoding.code",
+            valid_strings_to_test=["snomed"],
+        )
+
+    def test_model_pre_validate_care_setting_display(self):
+        """
+        Test pre_validate_care_setting_display accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='CareSetting')].answer[0].valueCoding.display",
+            valid_strings_to_test=[
+                "SNOMED-CT Term description Community health services (qualifier value)"
+            ],
+        )
+
+    def test_model_pre_validate_ip_address_code(self):
+        """
+        Test pre_validate_ip_address_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='IpAddress')].answer[0].valueCoding.code",
+            valid_strings_to_test=[
+                "192.168.0.1",
+                "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+            ],
+        )
+
+    def test_model_pre_validate_user_id_code(self):
+        """
+        Test pre_validate_user_id_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserId')].answer[0].valueCoding.code",
+            valid_strings_to_test=["LESTER_TESTER-1234"],
+        )
+
+    def test_model_pre_validate_user_name_code(self):
+        """
+        Test pre_validate_user_name_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserName')].answer[0].valueCoding.code",
+            valid_strings_to_test=["LESTER TESTER"],
+        )
+
+    def test_model_pre_validate_user_email_code(self):
+        """
+        Test pre_validate_user_email_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserEmail')].answer[0].valueCoding.code",
+            valid_strings_to_test=["lester.tester@test.com"],
+        )
+
+    def test_model_pre_validate_submitted_time_stamp_code(self):
+        """
+        Test pre_validate_submitted_time_stamp_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_date_time_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueCoding.code",
+        )
+
+    def test_model_pre_validate_location_identifier_value(self):
+        """
+        Test pre_validate_location_identifier_value accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="location.identifier.value",
+            valid_strings_to_test=["B0C4P", "140565"],
+        )
+
+    def test_model_pre_validate_location_identifier_system(self):
+        """
+        Test pre_validate_location_identifier_system accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="location.identifier.system",
+            valid_strings_to_test=["https://fhir.hl7.org.uk/Id/140565"],
+        )
+
+    def test_model_pre_validate_reduce_validation_code(self):
+        """
+        Test pre_validate_reduce_validation_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.code",
+            valid_strings_to_test=["True", "False"],
+            predefined_values=("True", "False"),
+            invalid_strings_to_test=["true", "false", "TRUE", "FALSE"],
+        )
+
+    def test_model_pre_validate_reduce_validation_display(self):
+        """
+        Test pre_validate_reduce_validation_display accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.display",
+            valid_strings_to_test=["From DPS CSV"],
+        )
