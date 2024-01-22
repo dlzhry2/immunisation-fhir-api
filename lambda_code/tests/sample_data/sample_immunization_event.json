@@ -116,7 +116,7 @@
           "answer": [
             {
               "valueCoding": {
-                "code": "2020-12-14T10:08:15"
+                "code": "2020-12-14T10:08:15+00:00"
               }
             }
           ]
@@ -126,7 +126,7 @@
           "answer": [
             {
               "valueCoding": {
-                "code": "TRUE",
+                "code": "True",
                 "display": "test"
               }
             }

@@ -6,7 +6,7 @@ from typing import Optional
 
 import boto3
 from botocore.config import Config
-from fhir.resources.operationoutcome import OperationOutcome
+from fhir.resources.R4B.operationoutcome import OperationOutcome
 
 from cache import Cache
 from fhir_repository import ImmunizationRepository, create_table

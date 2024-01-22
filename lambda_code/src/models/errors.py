@@ -2,7 +2,7 @@ import uuid
 from dataclasses import dataclass
 from enum import Enum
 
-from fhir.resources.operationoutcome import OperationOutcome
+from fhir.resources.R4B.operationoutcome import OperationOutcome
 
 
 class Severity(str, Enum):
@@ -12,8 +12,8 @@ class Severity(str, Enum):
 class Code(str, Enum):
     not_found = "not-found"
     invalid = "invalid"
-    invariant = "invariant"
     server_error = "internal-server-error"
+    invariant = "invariant"
 
 
 @dataclass
@@ -46,16 +46,6 @@ class ValidationError(RuntimeError):
 
 
 @dataclass
-class CoarseValidationError(ValidationError):
-    """Pre validation error"""
-    message: str
-
-    def to_operation_outcome(self) -> OperationOutcome:
-        return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
-
-
-@dataclass
 class InvalidPatientId(ValidationError):
     """Use this when NHS Number is invalid or doesn't exist"""
     nhs_number: str
@@ -64,6 +54,16 @@ class InvalidPatientId(ValidationError):
         msg = f"NHS Number: {self.nhs_number} is invalid or it doesn't exist."
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
+
+
+@dataclass
+class CoarseValidationError(ValidationError):
+    """Pre validation error"""
+    message: str
+
+    def to_operation_outcome(self) -> OperationOutcome:
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
 
 
 # TODO: bug: R4 performs regex validation on regex. It requires alphanum+whitespace.
@@ -82,14 +82,6 @@ def create_operation_outcome(resource_id: str, severity: Severity, code: Code, d
             {
                 "severity": severity,
                 "code": code,
-                "details": {
-                    "coding": [
-                        {
-                            "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                            "code": code.upper()
-                        }
-                    ]
-                },
                 "diagnostics": diagnostics
             }
         ]
