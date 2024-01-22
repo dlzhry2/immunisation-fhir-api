@@ -49,6 +49,20 @@ def test_valid_values_accepted(
         test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
 
 
+def test_missing_required_or_optional_field_accepted(
+    test_instance: unittest.TestCase,
+    valid_json_data: dict,
+    field_location: str,
+):
+    """Test that JSON data which is missing a required or optional field is accepted"""
+
+    # Create valid json data by removing the relevant field
+    valid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
+
+    # Test that the valid data is accepted by the model
+    test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+
+
 def test_invalid_values_rejected(
     test_instance: unittest.TestCase,
     valid_json_data: dict,
@@ -106,6 +120,32 @@ def test_missing_mandatory_field_rejected(
 
     test_instance.assertTrue(
         (expected_error_message + f" (type={expected_error_type})")
+        in str(error.exception)
+    )
+
+
+def test_present_not_applicable_field_rejected(
+    test_instance: unittest.TestCase,
+    valid_json_data: dict,
+    field_location: str,
+):
+    """
+    TODO: Test that JSON data containing a not applicable field is rejected.
+
+    NOTE:
+    TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
+    this happens, the error message is suffixed with the type of error e.g. type_error or
+    value_error. This is why the test checks for the type of error in the error message.
+    """
+
+    # Test that correct error message is raised
+    with test_instance.assertRaises(ValidationError) as error:
+        test_instance.validator.validate(valid_json_data)
+
+    test_instance.assertTrue(
+        (
+            f"{field_location} must not be provided for this vaccine type (type=value_error)"
+        )
         in str(error.exception)
     )
 

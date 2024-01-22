@@ -11,8 +11,10 @@ from .utils import (
     generate_field_location_for_questionnnaire_response,
     # these have an underscore to avoid pytest collecting them as tests
     test_valid_values_accepted as _test_valid_values_accepted,
+    test_missing_required_or_optional_field_accepted as _test_missing_required_or_optional_field_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
     test_missing_mandatory_field_rejected as _test_missing_mandatory_field_rejected,
+    test_present_not_applicable_field_rejected as _test_present_not_applicable_field_rejected,
 )
 from jsonpath_ng.ext import parse
 
@@ -43,7 +45,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             link_id="ReduceValidation", field_type="code"
         )
 
-        # Test that reduce_validation_code property is to the value of
+        # Test that reduce_validation_code property is set to the value of
         # reduce_validation_code in the JSON data, where it exists
         for valid_value in ["True", "False"]:
             valid_json_data = parse(field_location).update(valid_json_data, valid_value)
@@ -117,4 +119,18 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             # TODO: work out how to check for complete error message
             expected_error_message="field required",
             expected_error_type="value_error.missing",
+        )
+
+    def test_model_post_patient_identifier_value(self):
+        "Test that the JSON data is accepted whether or not it contains patient.identifier.value"
+        valid_json_data = deepcopy(self.json_data)
+        _test_valid_values_accepted(
+            self,
+            valid_json_data=valid_json_data,
+            field_location="patient.identifier.value",
+            valid_values_to_test=["0123456789"],
+        )
+
+        _test_missing_required_or_optional_field_accepted(
+            self, valid_json_data, field_location="patient.identifier.value"
         )

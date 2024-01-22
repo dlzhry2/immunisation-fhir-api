@@ -4,6 +4,7 @@ from models.utils.generic_utils import (
 )
 
 from models.utils.post_validation_utils import PostValidation
+from mappings import vaccine_type_applicable_validations
 
 
 class FHIRImmunizationPostValidators:
@@ -65,5 +66,19 @@ class FHIRImmunizationPostValidators:
         "Set status property to match the value in the JSON data"
         # Note: no need to check field is present, as this is done already by the FHIR validator
         cls.status = values["status"]
+
+        return values
+
+    @classmethod
+    def validate_patient_identifier_value(cls, values: dict) -> dict:
+        "Validate that vaccination_procedure_code is a valid code"
+        field_location = "patient.identifier.value"
+        mandation = vaccine_type_applicable_validations["patient_identifier_value"][
+            cls.vaccine_type
+        ]
+
+        PostValidation.check_attribute_exists(
+            values, "patient", "identifier.value", mandation, field_location
+        )
 
         return values
