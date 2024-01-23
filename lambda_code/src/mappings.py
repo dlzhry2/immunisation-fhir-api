@@ -40,7 +40,7 @@ vaccine_type_applicable_validations = {
         "HPV": "M",
         "MMR": "M",
     },
-    "site_name_display": {
+    "site_name_code": {
         "COVID-19": "M",
         "FLU": "M",
         "HPV": "M",
