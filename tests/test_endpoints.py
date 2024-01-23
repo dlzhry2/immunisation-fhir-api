@@ -82,9 +82,12 @@ def test_app_level0(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     assert resp.status_code == 401  # unauthorized
 
 
-@pytest.mark.nhsd_apim_authorization({"access": "application", "level": "level0"})
-def test_aws_service_not_running_without_cert(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+@pytest.mark.smoketest
+def test_aws_service_not_running_without_cert():
     service_domain_name = getenv('AWS_DOMAIN_NAME')
+    headers = {
+         "X-Request-ID": "60E0B220-8136-4CA5-AE46-1D97EF59D068"
+    }
     with pytest.raises(requests.exceptions.RequestException) as excinfo:
-        requests.get(f"{service_domain_name}/status", headers=nhsd_apim_auth_headers)
+        requests.get(f"{service_domain_name}/status", headers=headers)
     assert "ConnectionResetError" in str(excinfo.value)
