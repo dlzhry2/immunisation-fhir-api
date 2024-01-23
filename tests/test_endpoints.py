@@ -82,7 +82,7 @@ def test_app_level0(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     assert resp.status_code == 401  # unauthorized
 
 
-@pytest.mark.smoketest
+@pytest.mark.mtls
 def test_aws_service_not_running_without_cert():
     service_domain_name = getenv('AWS_DOMAIN_NAME')
     headers = {

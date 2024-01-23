@@ -94,12 +94,12 @@ steps:
       if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]
       then
         echo "Sandbox env tests"
-        marker="not nhsd_apim_authorization and not sandbox_int"
+        marker="not nhsd_apim_authorization and not sandbox_int and not mtls"
       elif [[ $APIGEE_ENVIRONMENT == "int" ]]
       then
         export DEFAULT_CLIENT_ID="$(INT_CLIENT_ID)"
         export DEFAULT_CLIENT_SECRET="$(INT_CLIENT_SECRET)"
-        marker="smoketest"
+        marker="smoketest or mtls"
       fi
         echo $marker
       poetry run pytest -v -m "$marker" --api-name=immunisation-fhir-api --proxy-name=$PROXY_NAME -o junit_logging=all --junitxml=test-report.xml
