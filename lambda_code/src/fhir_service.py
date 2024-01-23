@@ -25,14 +25,12 @@ class FhirService:
         if not imms:
             return None
 
-        bundle = False if imms['resourceType'] == "Immunization" else True
-
-        nhs_number = imms['patient']['identifier']['value'] if imms['resourceType'] == "Immunization" else imms["entry"][0]['patient']['identifier']['value']
+        nhs_number = imms['patient']['identifier']['value']
         patient = self.pds_service.get_patient_details(nhs_number)
-        patient_is_restricted = patient['meta']['security'][0]['display']
+        patient_is_restricted = patient['meta']['security'][0]['display'] == "restricted"
 
-        if patient_is_restricted == "restricted":
-            filtered_immunization = remove_personal_info(imms['entry'][0]) if bundle else remove_personal_info(imms)
+        if patient_is_restricted:
+            filtered_immunization = remove_personal_info(imms)
             print(filtered_immunization, "<<<<<<<<<< FILTERED IMMUNZATION")
             print(Immunization.parse_obj(filtered_immunization), "<<<<<<<<< RESTRICTED PARSED AND FILTERED IMMS")
             return Immunization.parse_obj(filtered_immunization)
