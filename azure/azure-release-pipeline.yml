@@ -48,9 +48,10 @@ extends:
           DOMAIN_ENDPOINT: just-dummy-value-for-successful-build
         depends_on:
           - internal_dev_sandbox
-    # # Enable int environment when ready by uncommenting:
-    #   - environment: int
-    #     depends_on:
-    #       - internal_dev
-    #     post_deploy:
-    #       - template: ./templates/post-deploy.yml
+      - environment: int
+        depends_on:
+          - internal_dev
+        jinja_templates:
+          DOMAIN_ENDPOINT: https://int.imms.dev.api.platform.nhs.uk
+        post_deploy:
+           - template: ./templates/post-deploy.yml
