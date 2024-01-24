@@ -185,6 +185,8 @@ class ValidatorModelTests:
         predefined_list_length: int = None,
         valid_list_element=None,
         is_list_of_strings: bool = False,
+        duplicates_allowed: bool = True,
+        invalid_lists_with_duplicates_to_test: list = None,
     ):
         """
         Test that a FHIR model accepts valid list values and rejects the following invalid values:

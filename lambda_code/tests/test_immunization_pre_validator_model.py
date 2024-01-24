@@ -25,7 +25,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         cls.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
 
         # set up the sample immunization event JSON data
-        cls.immunization_file_path = f"{cls.data_path}/sample_immunization_event.json"
+        cls.immunization_file_path = (
+            f"{cls.data_path}/sample_covid_immunization_event.json"
+        )
         with open(cls.immunization_file_path, "r", encoding="utf-8") as f:
             cls.json_data = json.load(f, parse_float=Decimal)
 
@@ -41,13 +43,54 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         # Ensure that good data is not inadvertently amended by the tests
         self.assertEqual(self.untouched_json_data, self.json_data)
 
+    def test_model_pre_validate_contained(self):
+        """Test pre_validate_contained accepts valid values and rejects invalid values"""
+        # Test that the contained field is rejected when invalid
+        valid_lists_to_test = [
+            [
+                {
+                    "resourceType": "Practitioner",
+                    "id": "Pract1",
+                },
+                {
+                    "resourceType": "Patient",
+                    "id": "Pat1",
+                },
+                {
+                    "resourceType": "QuestionnaireResponse",
+                    "id": "QR1",
+                    "status": "completed",
+                },
+            ]
+        ]
+        ValidatorModelTests.test_list_value(
+            self,
+            field_location="contained",
+            valid_lists_to_test=valid_lists_to_test,
+        )
+
+    def test_model_pre_validate_patient_identifier(self):
+        """Test pre_validate_patient_identifier accepts valid values and rejects invalid values"""
+        valid_list_element = {
+            "system": "https://fhir.nhs.uk/Id/nhs-number",
+            "value": "9000000009",
+        }
+
+        ValidatorModelTests.test_list_value(
+            self,
+            field_location="contained[?(@.resourceType=='Patient')].identifier",
+            valid_lists_to_test=[[valid_list_element]],
+            predefined_list_length=1,
+            valid_list_element=valid_list_element,
+        )
+
     def test_model_pre_validate_patient_identifier_value(self):
         """
         Test pre_validate_patient_identifier_value accepts valid values and rejects invalid values
         """
         ValidatorModelTests.test_string_value(
             self,
-            field_location="patient.identifier.value",
+            field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
             valid_strings_to_test=["1234567890"],
             defined_length=10,
             invalid_length_strings_to_test=["123456789", "12345678901", ""],
@@ -68,21 +111,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="occurrenceDateTime",
             is_occurrence_date_time=True,
-        )
-
-    def test_model_pre_validate_contained(self):
-        """Test pre_validate_contained accepts valid values and rejects invalid values"""
-        valid_list_element = {
-            "resourceType": "QuestionnaireResponse",
-            "status": "completed",
-        }
-
-        ValidatorModelTests.test_list_value(
-            self,
-            field_location="contained",
-            valid_lists_to_test=[[valid_list_element]],
-            predefined_list_length=1,
-            valid_list_element=valid_list_element,
         )
 
     def test_model_pre_validate_valid_questionnaire_answers(self):

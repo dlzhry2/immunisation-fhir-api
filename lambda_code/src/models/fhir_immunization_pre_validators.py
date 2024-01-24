@@ -6,14 +6,58 @@ from models.utils.generic_utils import (
 )
 from models.utils.pre_validator_utils import PreValidation
 from models.constants import Constants
+from icecream import ic
 
 
 class FHIRImmunizationPreValidators:
     """Some stuff"""
 
-    # TODO: change this to contained[?(@.resourceType=='Patient')].identifier[0].value.
-    # also need to contstrain identifier to be a list of length 1
-    # TODO: change name of method to match new location
+    # TODO: all patient and practitioner validations need to be moved into here as they are now
+    # contained resources
+    # -----------------------------------------------------------------------------------------
+
+    # TODO: Need to check that each resourceType is unique
+    @classmethod
+    def pre_validate_contained(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained exists, then it is a list of length 2
+        """
+        try:
+            contained = values["contained"]
+            found_resource_types = []
+            for item in contained:
+                if item["resourceType"] in found_resource_types:
+                    raise ValueError(
+                        f"contained[?(@.resourceType=='{item['resourceType']}')] must be unique"
+                    )
+
+                found_resource_types.append(item["resourceType"])
+
+        except KeyError:
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_patient_identifier(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].identifier exists, then it
+        is a list of length 1
+        """
+        try:
+            patient_identifier = [
+                x for x in values["contained"] if x["resourceType"] == "Patient"
+            ][0]["identifier"]
+            PreValidation.for_list(
+                patient_identifier,
+                "contained[?(@.resourceType=='Patient')].identifier",
+                defined_length=1,
+            )
+        except KeyError:
+            pass
+
+        return values
+
     @classmethod
     def pre_validate_patient_identifier_value(cls, values: dict) -> dict:
         """
@@ -21,10 +65,13 @@ class FHIRImmunizationPreValidators:
         exists, then it is a string of 10 characters which does not contain spaces
         """
         try:
-            patient_identifier_value = values["patient"]["identifier"]["value"]
+            patient_identifier_value = [
+                x for x in values["contained"] if x["resourceType"] == "Patient"
+            ][0]["identifier"][0]["value"]
+
             PreValidation.for_string(
                 patient_identifier_value,
-                "patient.identifier.value",
+                "contained[?(@.resourceType=='Patient')].identifier[0].value",
                 defined_length=10,
                 spaces_allowed=False,
             )
@@ -52,19 +99,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: Remove this as we're no longer constraining to length 1
-    # TODO: Need to check that each resourceType is unique
     # TODO: Need to check that each QuestionnaireResponse linkId is unique
-    @classmethod
-    def pre_validate_contained(cls, values: dict) -> dict:
-        """Pre-validate that, if contained exists, then it is a list of length 1"""
-        try:
-            contained = values["contained"]
-            PreValidation.for_list(contained, "contained", defined_length=1)
-        except KeyError:
-            pass
-
-        return values
 
     @classmethod
     def pre_validate_questionnaire_answers(cls, values: dict) -> dict:
