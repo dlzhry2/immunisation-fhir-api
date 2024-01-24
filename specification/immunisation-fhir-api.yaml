@@ -120,10 +120,10 @@ info:
     ---------------------------------------------------------------------- |
 
     | Sandbox           |
-    https://sandbox.api.service.nhs.uk/Immunisation-fhir-api    |
+    https://sandbox.api.service.nhs.uk/immunisation-fhir-api    |
 
     | Integration test  |
-    https://int.api.service.nhs.uk/Immunisation-fhir-api        |
+    https://int.api.service.nhs.uk/immunisation-fhir-api        |
 
 
     ## Onboarding
@@ -134,11 +134,11 @@ info:
     url: 'https://digital.nhs.uk/developer/help-and-support'
     email: api.management@nhs.net
 servers:
-  - url: 'https://sandbox.api.service.nhs.uk/Immunisation-fhir-api'
+  - url: 'https://sandbox.api.service.nhs.uk/immunisation-fhir-api'
     description: Sandbox environment.
-  - url: 'https://int.api.service.nhs.uk/Immunisation-fhir-api'
+  - url: 'https://int.api.service.nhs.uk/immunisation-fhir-api'
     description: Integration test environment.
-  - url: 'https://api.service.nhs.uk/Immunisation-fhir-api'
+  - url: 'https://api.service.nhs.uk/immunisation-fhir-api'
     description: Production environment.
 paths:
   /Immunization:
@@ -188,7 +188,7 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               type: object
-              properties: {}
+              properties: { }
       responses:
         "200":
           description: Search Immunization operation successful
@@ -249,7 +249,7 @@ paths:
           description: Delete Immunization operation successful
         4XX:
           $ref: '#/components/responses/4XX-imms'
-            
+
 components:
   responses:
     4XX-imms:
@@ -289,7 +289,7 @@ components:
         application/fhir+json:
           schema:
             $ref: '#/components/schemas/OperationOutcome'
-          example: 
+          example:
             $ref: 'components/examples/OperationOutcome/400-invalid.json'
   requestBodies:
     Immunization:
@@ -298,7 +298,7 @@ components:
           schema:
             $ref: '#/components/schemas/Immunization'
       required: true
-      
+  
   parameters:
     Id:
       in: path
@@ -324,7 +324,7 @@ components:
 
 
         Mirrored back in a response header.
-        
+      
       schema:
         type: string
         pattern: >-
@@ -1512,7 +1512,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/Quantity'
         - type: object
-          properties: {}
+          properties: { }
     Annotation:
       allOf:
         - $ref: '#/components/schemas/Element'
@@ -1638,17 +1638,17 @@ components:
       allOf:
         - $ref: '#/components/schemas/Quantity'
         - type: object
-          properties: {}
+          properties: { }
     Distance:
       allOf:
         - $ref: '#/components/schemas/Quantity'
         - type: object
-          properties: {}
+          properties: { }
     Duration:
       allOf:
         - $ref: '#/components/schemas/Quantity'
         - type: object
-          properties: {}
+          properties: { }
     HumanName:
       allOf:
         - $ref: '#/components/schemas/Element'
@@ -1733,7 +1733,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/Quantity'
         - type: object
-          properties: {}
+          properties: { }
     Period:
       allOf:
         - $ref: '#/components/schemas/Element'
@@ -1852,7 +1852,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/Quantity'
         - type: object
-          properties: {}
+          properties: { }
     Signature:
       allOf:
         - $ref: '#/components/schemas/Element'
