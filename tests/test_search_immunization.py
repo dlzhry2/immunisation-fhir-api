@@ -32,7 +32,7 @@ def seed_records(imms_api: ImmunisationApi, records):
 
             stored_imms = imms_api.create_immunization(imms)
             if stored_imms.status_code != 201:
-                print(stored_imms.json())
+                print(stored_imms.text())
             assert stored_imms.status_code == 201
             sleep(0.1)
 
@@ -65,7 +65,12 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     records = [
         {
             "nhs_number": valid_nhs_number1,
-            "diseases": [flu_code, mmr_code],
+            "diseases": [mmr_code],
+            "responses": [],
+        },
+        {
+            "nhs_number": valid_nhs_number1,
+            "diseases": [flu_code],
             "responses": [],
         },
         {
@@ -78,16 +83,19 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
 
     # Tests
     # Search patient with multiple disease types
-    record = stored_records[0]
-    response = imms_api.search_immunizations(record["nhs_number"], mmr_code)
+    response = imms_api.search_immunizations(stored_records[0]["nhs_number"], mmr_code)
 
     cleanup(imms_api, stored_records)
 
     # Then
     results = response.json()
+    result_ids = [result["id"] for result in results["entry"]]
     assert response.status_code == 200
     assert results["resourceType"] == "List"
-    assert len(results["entry"]) == 1
+    for resource in stored_records[0]["responses"]:
+        assert resource["id"] in result_ids
+    for resource in stored_records[1]["responses"]:
+        assert resource["id"] not in result_ids
 
 
 @pytest.mark.nhsd_apim_authorization(
@@ -129,6 +137,11 @@ def test_search_immunization_ignore_deleted(nhsd_apim_proxy_url, nhsd_apim_auth_
 
     # Then
     results = response.json()
+    result_ids = [result["id"] for result in results["entry"]]
+
     assert response.status_code == 200
     assert results["resourceType"] == "List"
-    assert len(results["entry"]) == 2
+    assert id_to_delete not in result_ids
+    for record in stored_records:
+        for resource in record["responses"]:
+            assert resource["id"] in result_ids
