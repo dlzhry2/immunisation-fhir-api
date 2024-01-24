@@ -5,7 +5,7 @@ import json
 from copy import deepcopy
 
 from models.fhir_patient import PatientValidator
-from .utils import ValidatorModelTests
+from .utils.pre_validation_test_utils import ValidatorModelTests
 
 
 class TestPatientModelPreValidationRules(unittest.TestCase):

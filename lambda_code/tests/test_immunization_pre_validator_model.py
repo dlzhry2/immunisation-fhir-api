@@ -4,15 +4,15 @@ import os
 import json
 from copy import deepcopy
 from decimal import Decimal
-
 from models.fhir_immunization import ImmunizationValidator
-from .utils import (
-    ValidatorModelTests,
-    ValidValues,
-    InvalidValues,
+from .utils.generic_utils import (
     generate_field_location_for_questionnnaire_response,
     generate_field_location_for_extension,
 )
+from .utils.pre_validation_test_utils import (
+    ValidatorModelTests,
+)
+from .utils.values_for_tests import ValidValues, InvalidValues
 
 
 class TestImmunizationModelPreValidationRules(unittest.TestCase):

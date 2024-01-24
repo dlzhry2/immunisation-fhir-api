@@ -4,38 +4,35 @@ import os
 import json
 from copy import deepcopy
 from decimal import Decimal
-from icecream import ic
-
+from jsonpath_ng.ext import parse
 from models.fhir_immunization import ImmunizationValidator
-from .utils import (
-    generate_field_location_for_extension,
+from .utils.generic_utils import (
     generate_field_location_for_questionnnaire_response,
+    generate_field_location_for_extension,
     # these have an underscore to avoid pytest collecting them as tests
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
-    MandationTests,
 )
-from jsonpath_ng.ext import parse
+from .utils.mandation_test_utils import MandationTests
 
 
 class TestImmunizationModelPostValidationRules(unittest.TestCase):
     """Test immunization post validation rules on the FHIR model"""
 
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
         """Set up for each test. This runs before every test"""
         # Set up the path for the sample data
-        cls.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
+        self.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
 
         # set up the sample immunization event JSON data
-        cls.immunization_file_path = f"{cls.data_path}/sample_immunization_event.json"
-        with open(cls.immunization_file_path, "r", encoding="utf-8") as f:
-            cls.json_data = json.load(f, parse_float=Decimal)
+        self.immunization_file_path = f"{self.data_path}/sample_immunization_event.json"
+        with open(self.immunization_file_path, "r", encoding="utf-8") as f:
+            self.json_data = json.load(f, parse_float=Decimal)
 
         # set up the validator and add custom root validators
-        cls.validator = ImmunizationValidator()
-        cls.validator.add_custom_root_pre_validators()
-        cls.validator.add_custom_root_post_validators()
+        self.validator = ImmunizationValidator()
+        self.validator.add_custom_root_pre_validators()
+        self.validator.add_custom_root_post_validators()
 
     def test_model_post_reduce_validation_code(self):
         """Test set_reduce_validation_code"""

@@ -6,7 +6,7 @@ from copy import deepcopy
 
 
 from models.fhir_practitioner import PractitionerValidator
-from .utils import ValidatorModelTests
+from .utils.pre_validation_test_utils import ValidatorModelTests
 
 
 class TestPractitionerModelPreValidationRules(unittest.TestCase):
