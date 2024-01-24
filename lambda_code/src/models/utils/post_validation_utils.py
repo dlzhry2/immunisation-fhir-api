@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from typing import Union
 from decimal import Decimal
-from mappings import vaccination_procedure_snomed_codes
+from mappings import Mandation, vaccination_procedure_snomed_codes
 from icecream import ic
 
 
@@ -50,16 +50,16 @@ class PostValidation:
             else:
                 field_value = obj
                 if field_value is None:
-                    if mandation == "M":
+                    if mandation == Mandation.mandatory:
                         raise MandatoryError()
 
-            if mandation == "N/A":
+            if mandation == Mandation.not_applicable:
                 raise NotApplicableError(
                     f"{field_location} must not be provided for this vaccine type"
                 )
 
         except (KeyError, AttributeError, MandatoryError) as error:
-            if mandation == "M":
+            if mandation == Mandation.mandatory:
                 raise MandatoryError(
                     f"{field_location} is a mandatory field"
                 ) from error
@@ -80,16 +80,16 @@ class PostValidation:
             field_value = get_deep_attr(item.answer[0].valueCoding, field_type)
 
             if field_value is None:
-                if mandation == "M":
+                if mandation == Mandation.mandatory:
                     raise MandatoryError()
 
-            if mandation == "N/A":
+            if mandation == Mandation.not_applicable:
                 raise NotApplicableError(
                     f"{field_location} must not be provided for this vaccine type"
                 )
 
         except (KeyError, AttributeError, MandatoryError) as error:
-            if mandation == "M":
+            if mandation == Mandation.mandatory:
                 raise MandatoryError(
                     f"{field_location} is a mandatory field"
                 ) from error

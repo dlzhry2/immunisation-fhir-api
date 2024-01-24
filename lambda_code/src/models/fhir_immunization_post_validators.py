@@ -4,7 +4,7 @@ from models.utils.generic_utils import (
 )
 
 from models.utils.post_validation_utils import PostValidation, MandatoryError
-from mappings import vaccine_type_applicable_validations
+from mappings import Mandation, vaccine_type_applicable_validations
 from icecream import ic
 
 
@@ -193,7 +193,7 @@ class FHIRImmunizationPostValidators:
         ]
 
         if not values["primarySource"]:
-            mandation = "M"
+            mandation = Mandation.mandatory
 
         try:
             PostValidation.check_attribute_exists(
