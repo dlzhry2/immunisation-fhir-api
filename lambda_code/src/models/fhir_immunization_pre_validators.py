@@ -11,6 +11,9 @@ from models.constants import Constants
 class FHIRImmunizationPreValidators:
     """Some stuff"""
 
+    # TODO: change this to contained[?(@.resourceType=='Patient')].identifier[0].value.
+    # also need to contstrain identifier to be a list of length 1
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_patient_identifier_value(cls, values: dict) -> dict:
         """
@@ -49,6 +52,9 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: Remove this as we're no longer constraining to length 1
+    # TODO: Need to check that each resourceType is unique
+    # TODO: Need to check that each QuestionnaireResponse linkId is unique
     @classmethod
     def pre_validate_contained(cls, values: dict) -> dict:
         """Pre-validate that, if contained exists, then it is a list of length 1"""
@@ -84,6 +90,12 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: need to check that performer only has 1 type of Organisation
+    # TODO: need to check that performer only has 1 actor with a reference to practitioner in
+    # contained
+    # TODO: change where we get site_code_code from
+    # (to performer[?@.actor.type == "Organization"].actor.identifier.value)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_questionnaire_site_code_code(cls, values: dict) -> dict:
         """
@@ -106,6 +118,9 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change where we get site_code_system from
+    # (to performer[?@.actor.type == "Organization"].actor.display)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_site_name_code(cls, values: dict) -> dict:
         """
@@ -197,6 +212,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: Check with martin that this is still just a date and not date time
     @classmethod
     def pre_validate_recorded(cls, values: dict) -> dict:
         """
@@ -242,6 +258,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: need to check that the coding[*] system is unique for each extension
+    # TODO: remove this when the above in complete
     @classmethod
     def pre_validate_extension_value_codeable_concept_codings(
         cls, values: dict
@@ -266,6 +284,10 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change coding[0] to look for "http://snomed.info/sct"
+    # extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
+    # Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system==
+    # 'http://snomed.info/sct')].code
     @classmethod
     def pre_validate_vaccination_procedure_code(cls, values: dict) -> dict:
         """
@@ -292,12 +314,16 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change coding[0] to look for "http://snomed.info/sct"
+    # extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
+    # Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system==
+    # 'http://snomed.info/sct')].display
     @classmethod
     def pre_validate_vaccination_procedure_display(cls, values: dict) -> dict:
         """
         Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
         Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[0].display
-        (legacy CSV field name: VACCINATION_PROCEDURE_CODE) exists, then it is a non-empty string
+        (legacy CSV field name: VACCINATION_PROCEDURE_TERM) exists, then it is a non-empty string
         """
         try:
             url = (
@@ -318,6 +344,11 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change coding[0] to look for "http://snomed.info/sct"
+    # extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
+    # Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[?(@.system==
+    # 'http://snomed.info/sct')].code
+    # TODO: amend the test to run on the not-done data
     @classmethod
     def pre_validate_vaccination_situation_code(cls, values: dict) -> dict:
         """
@@ -344,12 +375,17 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change coding[0] to look for "http://snomed.info/sct"
+    # extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
+    # Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[?(@.system==
+    # 'http://snomed.info/sct')].display
+    # TODO: amend the test to run on the not-done data
     @classmethod
     def pre_validate_vaccination_situation_display(cls, values: dict) -> dict:
         """
         Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
         Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[0].display
-        (legacy CSV field name: VACCINATION_SITUATION_CODE) exists, then it is a non-empty string
+        (legacy CSV field name: VACCINATION_SITUATION_TERM) exists, then it is a non-empty string
         """
         try:
             url = (
@@ -370,6 +406,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: amend the test to run on the not-done data
     @classmethod
     def pre_validate_status_reason_coding(cls, values: dict) -> dict:
         """
@@ -388,6 +425,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: amend the test to run on the not-done data
     @classmethod
     def pre_validate_status_reason_coding_code(cls, values: dict) -> dict:
         """
@@ -404,6 +442,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: amend the test to run on the not-done data
     @classmethod
     def pre_validate_status_reason_coding_display(cls, values: dict) -> dict:
         """
@@ -459,6 +498,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: need to check that the coding[*] system is unique
+    # TODO: remove this when the above in complete
     @classmethod
     def pre_validate_vaccine_code_coding(cls, values: dict) -> dict:
         """Pre-validate that, if vaccineCode.coding exists, then it is a list of length 1"""
@@ -474,6 +515,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change coding[0] to look for "http://snomed.info/sct"
+    # vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code
     @classmethod
     def pre_validate_vaccine_code_coding_code(cls, values: dict) -> dict:
         """
@@ -490,6 +533,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change coding[0] to look for "http://snomed.info/sct"
+    # vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display
     @classmethod
     def pre_validate_vaccine_code_coding_display(cls, values: dict) -> dict:
         """
@@ -548,6 +593,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: need to check that the coding[*] system is unique
+    # TODO: remove this when the above in complete
     @classmethod
     def pre_validate_site_coding(cls, values: dict) -> dict:
         """Pre-validate that, if site.coding exists, then it is a list of length 1"""
@@ -563,6 +610,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change coding[0] to look for "http://snomed.info/sct"
+    # site.coding[?(@.system=='http://snomed.info/sct')].code
     @classmethod
     def pre_validate_site_coding_code(cls, values: dict) -> dict:
         """
@@ -577,6 +626,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change coding[0] to look for "http://snomed.info/sct"
+    # site.coding[?(@.system=='http://snomed.info/sct')].display
     @classmethod
     def pre_validate_site_coding_display(cls, values: dict) -> dict:
         """
@@ -591,6 +642,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: need to check that the coding[*] system is unique
+    # TODO: remove this when the above in complete
     @classmethod
     def pre_validate_route_coding(cls, values: dict) -> dict:
         """Pre-validate that, if route.coding exists, then it is a list of length 1"""
@@ -606,6 +659,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change coding[0] to look for "http://snomed.info/sct"
+    # route.coding[?(@.system=='http://snomed.info/sct')].code
     @classmethod
     def pre_validate_route_coding_code(cls, values: dict) -> dict:
         """
@@ -620,6 +675,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change coding[0] to look for "http://snomed.info/sct"
+    # route.coding[?(@.system=='http://snomed.info/sct')].display
     @classmethod
     def pre_validate_route_coding_display(cls, values: dict) -> dict:
         """
@@ -634,6 +691,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: need to validate that doseQuantity.system is "http://unitsofmeasure.org"
     @classmethod
     def pre_validate_dose_quantity_value(cls, values: dict) -> dict:
         """
@@ -729,7 +787,7 @@ class FHIRImmunizationPreValidators:
     def pre_validate_reason_code_coding_displays(cls, values: dict) -> dict:
         """
         Pre-validate that, if they exist, each reasonCode[{index}].coding[0].display
-        (legacy CSV field name: INDICATION_CODE) is a non-empty string
+        (legacy CSV field name: INDICATION_TERM) is a non-empty string
         """
         try:
             for index, value in enumerate(values["reasonCode"]):
@@ -746,12 +804,21 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: check that the url is unique
+    # TODO: need to check that the coding[*] system is unique
+    # TODO: change where we get nhs_number_status_code from
+    # (to contained[?(@.resourceType=='Patient')].extension[?(@.url==
+    # 'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]
+    # .valueCodeableConcept.coding[?(@.system==
+    # 'https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland')].code)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_nhs_number_status_code(cls, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.code (legacy CSV field name:
-        NHS_NUMBER_STATUS_INDICATOR_CODE) exists, then it is a non-empty string
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].extension[?(@.url==
+        'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]
+        .valueCodeableConcept.coding[0].code (legacy CSV field name: NHS_NUMBER_STATUS_INDICATOR_CODE)
+        exists, then it is a non-empty string
         """
         try:
             nhs_number_status_code = get_generic_questionnaire_response_value(
@@ -768,6 +835,12 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: change where we get nhs_number_status_display from
+    # (to contained[?(@.resourceType=='Patient')].extension[?(@.url==
+    # 'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]
+    # .valueCodeableConcept.coding[?(@.system==
+    # 'https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland')].display)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_nhs_number_status_display(cls, values: dict) -> dict:
         """
@@ -790,6 +863,10 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: search for actor type organization
+    # change where we get site_code_system from
+    # (to performer[?@.actor.type == "Organization"].actor.identifier.system)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_site_code_system(cls, values: dict) -> dict:
         """
@@ -945,6 +1022,10 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # change where we get ip_address_code from
+    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
+    # .item[?(@.linkId=='IpAddress')].answer[0].valueString)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_ip_address_code(cls, values: dict) -> dict:
         """
@@ -967,6 +1048,10 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # change where we get user_id_code from
+    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
+    # .item[?(@.linkId=='UserId')].answer[0].valueString)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_user_id_code(cls, values: dict) -> dict:
         """
@@ -989,6 +1074,10 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # change where we get user_name from
+    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
+    # .item[?(@.linkId=='UserName')].answer[0].valueString)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_user_name_code(cls, values: dict) -> dict:
         """
@@ -1011,6 +1100,10 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # change where we get user_email_code from
+    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
+    # .item[?(@.linkId=='UserEmail')].answer[0].valueString)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_user_email_code(cls, values: dict) -> dict:
         """
@@ -1033,6 +1126,10 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # change where we get submitted_time_stamp_code from
+    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
+    # .item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueDateTime)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_submitted_time_stamp_code(cls, values: dict) -> dict:
         """
@@ -1089,6 +1186,10 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # change where we get reduce_validation_code from
+    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
+    # .item[?(@.linkId=='ReduceValidation')].answer[0].valueBoolean)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_reduce_validation_code(cls, values: dict) -> dict:
         """
@@ -1112,6 +1213,10 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # change where we get reduce_validation_display from
+    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
+    # .item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString)
+    # TODO: change name of method to match new location
     @classmethod
     def pre_validate_reduce_validation_display(cls, values: dict) -> dict:
         """
