@@ -3,6 +3,7 @@
 from typing import Literal, Union
 
 
+# TODO : Access value using list comprehension
 def get_generic_questionnaire_response_value(
     json_data: dict, link_id: str, field_type: Literal["code", "display", "system"]
 ) -> Union[str, None]:
@@ -22,6 +23,7 @@ def get_generic_questionnaire_response_value(
     )
 
 
+# TODO : Access value using list comprehension
 def get_generic_extension_value(
     json_data: dict, url: str, field_type: Literal["code", "display", "system"]
 ) -> Union[str, None]:
