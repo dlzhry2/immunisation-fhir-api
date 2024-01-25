@@ -106,8 +106,14 @@ class ImmunizationRepository:
             )
             return self._handle_dynamo_response(response)
 
-        except botocore.exceptions.ClientError as e:
-            self._handle_dynamo_exception(e, imms_id)
+        except botocore.exceptions.ClientError as error:
+            # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
+            if error.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                raise ResourceNotFoundError(resource_type="Immunization", resource_id=imms_id)
+            else:
+                raise UnhandledResponseError(
+                    message=f"Unhandled error from dynamodb: {error.response['Error']['Code']}",
+                    response=error.response)
 
     def delete_immunization(self, imms_id: str) -> dict:
         now_timestamp = int(time.time())
@@ -123,8 +129,14 @@ class ImmunizationRepository:
             )
             return self._handle_dynamo_response(response)
 
-        except botocore.exceptions.ClientError as e:
-            self._handle_dynamo_exception(e, imms_id)
+        except botocore.exceptions.ClientError as error:
+            # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
+            if error.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                raise ResourceNotFoundError(resource_type="Immunization", resource_id=imms_id)
+            else:
+                raise UnhandledResponseError(
+                    message=f"Unhandled error from dynamodb: {error.response['Error']['Code']}",
+                    response=error.response)
 
     def find_immunizations(self, nhs_number: str, disease_code: str):
         """it should find all patient's Immunization events for a specified disease_code"""
@@ -151,11 +163,3 @@ class ImmunizationRepository:
         else:
             raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
 
-    @staticmethod
-    def _handle_dynamo_exception(error, imms_id):
-        # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
-        if error.response['Error']['Code'] == 'ConditionalCheckFailedException':
-            raise ResourceNotFoundError(resource_type="Immunization", resource_id=imms_id)
-        else:
-            raise UnhandledResponseError(message=f"Unhandled error from dynamodb: {error.response['Error']['Code']}",
-                                         response=error.response)
