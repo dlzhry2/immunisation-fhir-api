@@ -1171,43 +1171,57 @@ schemas:
             pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?
             description: The date that the attachment was first created.
   CodeableConcept:
-    allOf:
-      - $ref: '#/components/schemas/Element'
-      - type: object
-        properties:
-          coding:
-            type: array
-            items:
-              $ref: '#/components/schemas/Coding'
-              description: A reference to a code defined by a terminology system.
-          text:
-            type: string
-            pattern: '[ \r\n\t\S]+'
-            description: A human language representation of the concept as seen/selected/uttered by the user who entered the data and/or which represents the intended meaning of the user.
+    type: object
+    properties:
+      id:
+        type: string
+        pattern: '[A-Za-z0-9\-\.]{1,64}'
+        description: Unique id for the element within a resource (for internal references). This may be any string value that does not contain spaces.
+      extension:
+        type: array
+        items:
+          $ref: '#/components/schemas/Extension'
+          description: May be used to represent additional information that is not part of the basic definition of the element. To make the use of extensions safe and manageable, there is a strict set of governance  applied to the definition and use of extensions. Though any implementer can define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension.
+      coding:
+        type: array
+        items:
+          $ref: '#/components/schemas/Coding'
+          description: A reference to a code defined by a terminology system.
+      text:
+        type: string
+        pattern: '[ \r\n\t\S]+'
+        description: A human language representation of the concept as seen/selected/uttered by the user who entered the data and/or which represents the intended meaning of the user.
   Coding:
-    allOf:
-      - $ref: '#/components/schemas/Element'
-      - type: object
-        properties:
-          system:
-            type: string
-            pattern: \S*
-            description: The identification of the code system that defines the meaning of the symbol in the code.
-          version:
-            type: string
-            pattern: '[ \r\n\t\S]+'
-            description: The version of the code system which was used when choosing this code. Note that a well&ndash;maintained code system does not need the version reported, because the meaning of codes is consistent across versions. However this cannot consistently be assured, and when the meaning is not guaranteed to be consistent, the version SHOULD be exchanged.
-          code:
-            type: string
-            pattern: '[^\s]+(\s[^\s]+)*'
-            description: A symbol in syntax defined by the system. The symbol may be a predefined code or an expression in a syntax defined by the coding system (e.g. post&ndash;coordination).
-          display:
-            type: string
-            pattern: '[ \r\n\t\S]+'
-            description: A representation of the meaning of the code in the system, following the rules of the system.
-          userSelected:
-            type: boolean
-            description: Indicates that this coding was chosen by a user directly &ndash; e.g. off a pick list of available items (codes or displays).
+    type: object
+    properties:
+      id:
+        type: string
+        pattern: '[A-Za-z0-9\-\.]{1,64}'
+        description: Unique id for the element within a resource (for internal references). This may be any string value that does not contain spaces.
+      extension:
+        type: array
+        items:
+          $ref: '#/components/schemas/Extension'
+          description: May be used to represent additional information that is not part of the basic definition of the element. To make the use of extensions safe and manageable, there is a strict set of governance  applied to the definition and use of extensions. Though any implementer can define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension.
+      system:
+        type: string
+        pattern: \S*
+        description: The identification of the code system that defines the meaning of the symbol in the code.
+      version:
+        type: string
+        pattern: '[ \r\n\t\S]+'
+        description: The version of the code system which was used when choosing this code. Note that a well&ndash;maintained code system does not need the version reported, because the meaning of codes is consistent across versions. However this cannot consistently be assured, and when the meaning is not guaranteed to be consistent, the version SHOULD be exchanged.
+      code:
+        type: string
+        pattern: '[^\s]+(\s[^\s]+)*'
+        description: A symbol in syntax defined by the system. The symbol may be a predefined code or an expression in a syntax defined by the coding system (e.g. post&ndash;coordination).
+      display:
+        type: string
+        pattern: '[ \r\n\t\S]+'
+        description: A representation of the meaning of the code in the system, following the rules of the system.
+      userSelected:
+        type: boolean
+        description: Indicates that this coding was chosen by a user directly &ndash; e.g. off a pick list of available items (codes or displays).
   ContactPoint:
     allOf:
       - $ref: '#/components/schemas/Element'
@@ -1286,35 +1300,42 @@ schemas:
             $ref: '#/components/schemas/Period'
             description: Indicates the period of time when this name was valid for the named person.
   Identifier:
-    allOf:
-      - $ref: '#/components/schemas/Element'
-      - type: object
-        properties:
-          use:
-            type: string
-            pattern: '[^\s]+(\s[^\s]+)*'
-            description: The purpose of this identifier.
-          type:
-            $ref: '#/components/schemas/CodeableConcept'
-            description: A coded type for the identifier that can be used to determine which identifier to use for a specific purpose.
-          system:
-            type: string
-            pattern: \S*
-            description: Establishes the namespace for the value &ndash; that is, a URL that describes a set values that are unique.
-          value:
-            type: string
-            pattern: '[ \r\n\t\S]+'
-            description: The portion of the identifier typically relevant to the user and which is unique within the context of the system.
-          period:
-            $ref: '#/components/schemas/Period'
-            description: Time period during which identifier is/was valid for use.
-          assigner:
-            $ref: '#/components/schemas/Reference'
-            description: Organization that issued/manages the identifier.
-            example:
-              reference: Organization/123
-              type: Organization
-              display: The Assigning Organization
+    type: object
+    properties:
+      id:
+        type: string
+        pattern: '[A-Za-z0-9\-\.]{1,64}'
+        description: Unique id for the element within a resource (for internal references). This may be any string value that does not contain spaces.
+      extension:
+        type: array
+        items:
+          $ref: '#/components/schemas/Extension'
+          description: May be used to represent additional information that is not part of the basic definition of the element. To make the use of extensions safe and manageable, there is a strict set of governance  applied to the definition and use of extensions. Though any implementer can define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension.
+      use:
+        type: string
+        pattern: '[^\s]+(\s[^\s]+)*'
+        description: The purpose of this identifier.
+      type:
+        $ref: '#/components/schemas/CodeableConcept'
+        description: A coded type for the identifier that can be used to determine which identifier to use for a specific purpose.
+      system:
+        type: string
+        pattern: \S*
+        description: Establishes the namespace for the value &ndash; that is, a URL that describes a set values that are unique.
+      value:
+        type: string
+        pattern: '[ \r\n\t\S]+'
+        description: The portion of the identifier typically relevant to the user and which is unique within the context of the system.
+      period:
+        $ref: '#/components/schemas/Period'
+        description: Time period during which identifier is/was valid for use.
+      assigner:
+        $ref: '#/components/schemas/Reference'
+        description: Organization that issued/manages the identifier.
+        example:
+          reference: Organization/123
+          type: Organization
+          display: The Assigning Organization
   Money:
     allOf:
       - $ref: '#/components/schemas/Element'
@@ -1392,28 +1413,35 @@ schemas:
             $ref: '#/components/schemas/Quantity'
             description: The value of the denominator.
   Reference:
-    allOf:
-      - $ref: '#/components/schemas/Element'
-      - type: object
-        properties:
-          reference:
-            type: string
-            pattern: '[ \r\n\t\S]+'
-            description: A reference to a location at which the other resource is found. The reference may be a relative reference, in which case it is relative to the service base URL, or an absolute URL that resolves to the location where the resource is found. The reference may be version specific or not. If the reference is not to a FHIR RESTful server, then it should be assumed to be version specific. Internal fragment references (start with '#') refer to contained resources.
-          type:
-            type: string
-            pattern: \S*
-            description: |-
-              The expected type of the target of the reference. If both Reference.type and Reference.reference are populated and Reference.reference is a FHIR URL, both SHALL be consistent.
-              
-              The type is the Canonical URL of Resource Definition that is the type this reference refers to. References are URLs that are relative to http://hl7.org/fhir/StructureDefinition/ e.g. "Patient" is a reference to http://hl7.org/fhir/StructureDefinition/Patient. Absolute URLs are only allowed for logical models (and can only be used in references in logical models, not resources).
-          identifier:
-            $ref: '#/components/schemas/Identifier'
-            description: An identifier for the target resource. This is used when there is no way to reference the other resource directly, either because the entity it represents is not available through a FHIR server, or because there is no way for the author of the resource to convert a known identifier to an actual location. There is no requirement that a Reference.identifier point to something that is actually exposed as a FHIR instance, but it SHALL point to a business concept that would be expected to be exposed as a FHIR instance, and that instance would need to be of a FHIR resource type allowed by the reference.
-          display:
-            type: string
-            pattern: '[ \r\n\t\S]+'
-            description: Plain text narrative that identifies the resource in addition to the resource reference.
+    type: object
+    properties:
+      id:
+        type: string
+        pattern: '[A-Za-z0-9\-\.]{1,64}'
+        description: Unique id for the element within a resource (for internal references). This may be any string value that does not contain spaces.
+      extension:
+        type: array
+        items:
+          $ref: '#/components/schemas/Extension'
+          description: May be used to represent additional information that is not part of the basic definition of the element. To make the use of extensions safe and manageable, there is a strict set of governance  applied to the definition and use of extensions. Though any implementer can define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension.
+      reference:
+        type: string
+        pattern: '[ \r\n\t\S]+'
+        description: A reference to a location at which the other resource is found. The reference may be a relative reference, in which case it is relative to the service base URL, or an absolute URL that resolves to the location where the resource is found. The reference may be version specific or not. If the reference is not to a FHIR RESTful server, then it should be assumed to be version specific. Internal fragment references (start with '#') refer to contained resources.
+      type:
+        type: string
+        pattern: \S*
+        description: |-
+          The expected type of the target of the reference. If both Reference.type and Reference.reference are populated and Reference.reference is a FHIR URL, both SHALL be consistent.
+          
+          The type is the Canonical URL of Resource Definition that is the type this reference refers to. References are URLs that are relative to http://hl7.org/fhir/StructureDefinition/ e.g. "Patient" is a reference to http://hl7.org/fhir/StructureDefinition/Patient. Absolute URLs are only allowed for logical models (and can only be used in references in logical models, not resources).
+      identifier:
+        $ref: '#/components/schemas/Identifier'
+        description: An identifier for the target resource. This is used when there is no way to reference the other resource directly, either because the entity it represents is not available through a FHIR server, or because there is no way for the author of the resource to convert a known identifier to an actual location. There is no requirement that a Reference.identifier point to something that is actually exposed as a FHIR instance, but it SHALL point to a business concept that would be expected to be exposed as a FHIR instance, and that instance would need to be of a FHIR resource type allowed by the reference.
+      display:
+        type: string
+        pattern: '[ \r\n\t\S]+'
+        description: Plain text narrative that identifies the resource in addition to the resource reference.
   SampledData:
     allOf:
       - $ref: '#/components/schemas/Element'
@@ -1696,162 +1724,169 @@ schemas:
           - status
           - div
   Extension:
-    allOf:
-      - $ref: '#/components/schemas/Element'
-      - type: object
-        properties:
-          url:
-            type: string
-            pattern: \S*
-            description: Source of the definition for the extension code &ndash; a logical name or a URL.
-          valueBase64Binary:
-            type: string
-            pattern: (\s*([0-9a-zA-Z\+/=]){4}\s*)+
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueBoolean:
-            type: boolean
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueCanonical:
-            type: string
-            pattern: \S*
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueCode:
-            type: string
-            pattern: '[^\s]+(\s[^\s]+)*'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueDate:
-            type: string
-            pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueDateTime:
-            type: string
-            pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueDecimal:
-            type: number
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueId:
-            type: string
-            pattern: '[A-Za-z0-9\-\.]{1,64}'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueInstant:
-            type: string
-            pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueInteger:
-            type: integer
-            format: int32
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueMarkdown:
-            type: string
-            pattern: '[ \r\n\t\S]+'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueOid:
-            type: string
-            pattern: urn:oid:[0-2](\.(0|[1-9][0-9]*))+
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valuePositiveInt:
-            type: integer
-            format: int32
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueString:
-            type: string
-            pattern: '[ \r\n\t\S]+'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueTime:
-            type: string
-            pattern: ([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueUnsignedInt:
-            type: integer
-            format: int32
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueUri:
-            type: string
-            pattern: \S*
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueUrl:
-            type: string
-            pattern: \S*
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueUuid:
-            type: string
-            pattern: urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueAddress:
-            $ref: '#/components/schemas/Address'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueAge:
-            $ref: '#/components/schemas/Age'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueAnnotation:
-            $ref: '#/components/schemas/Annotation'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueAttachment:
-            $ref: '#/components/schemas/Attachment'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueCodeableConcept:
-            $ref: '#/components/schemas/CodeableConcept'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueCoding:
-            $ref: '#/components/schemas/Coding'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueContactPoint:
-            $ref: '#/components/schemas/ContactPoint'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueCount:
-            $ref: '#/components/schemas/Count'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueDistance:
-            $ref: '#/components/schemas/Distance'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueDuration:
-            $ref: '#/components/schemas/Duration'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueHumanName:
-            $ref: '#/components/schemas/HumanName'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueIdentifier:
-            $ref: '#/components/schemas/Identifier'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueMoney:
-            $ref: '#/components/schemas/Money'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valuePeriod:
-            $ref: '#/components/schemas/Period'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueQuantity:
-            $ref: '#/components/schemas/Quantity'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueRange:
-            $ref: '#/components/schemas/Range'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueRatio:
-            $ref: '#/components/schemas/Ratio'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueReference:
-            $ref: '#/components/schemas/Reference'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueSampledData:
-            $ref: '#/components/schemas/SampledData'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueSignature:
-            $ref: '#/components/schemas/Signature'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueTiming:
-            $ref: '#/components/schemas/Timing'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueContactDetail:
-            $ref: '#/components/schemas/ContactDetail'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueRelatedArtifact:
-            $ref: '#/components/schemas/RelatedArtifact'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueUsageContext:
-            $ref: '#/components/schemas/UsageContext'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-          valueMeta:
-            $ref: '#/components/schemas/Meta'
-            description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
-        required:
-          - url
+    type: object
+    properties:
+      id:
+        type: string
+        pattern: '[A-Za-z0-9\-\.]{1,64}'
+        description: Unique id for the element within a resource (for internal references). This may be any string value that does not contain spaces.
+      extension:
+        type: array
+        items:
+          $ref: '#/components/schemas/Extension'
+          description: May be used to represent additional information that is not part of the basic definition of the element. To make the use of extensions safe and manageable, there is a strict set of governance  applied to the definition and use of extensions. Though any implementer can define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension.
+      url:
+        type: string
+        pattern: \S*
+        description: Source of the definition for the extension code &ndash; a logical name or a URL.
+      valueBase64Binary:
+        type: string
+        pattern: (\s*([0-9a-zA-Z\+/=]){4}\s*)+
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueBoolean:
+        type: boolean
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueCanonical:
+        type: string
+        pattern: \S*
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueCode:
+        type: string
+        pattern: '[^\s]+(\s[^\s]+)*'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueDate:
+        type: string
+        pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueDateTime:
+        type: string
+        pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueDecimal:
+        type: number
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueId:
+        type: string
+        pattern: '[A-Za-z0-9\-\.]{1,64}'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueInstant:
+        type: string
+        pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueInteger:
+        type: integer
+        format: int32
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueMarkdown:
+        type: string
+        pattern: '[ \r\n\t\S]+'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueOid:
+        type: string
+        pattern: urn:oid:[0-2](\.(0|[1-9][0-9]*))+
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valuePositiveInt:
+        type: integer
+        format: int32
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueString:
+        type: string
+        pattern: '[ \r\n\t\S]+'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueTime:
+        type: string
+        pattern: ([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueUnsignedInt:
+        type: integer
+        format: int32
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueUri:
+        type: string
+        pattern: \S*
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueUrl:
+        type: string
+        pattern: \S*
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueUuid:
+        type: string
+        pattern: urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueAddress:
+        $ref: '#/components/schemas/Address'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueAge:
+        $ref: '#/components/schemas/Age'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueAnnotation:
+        $ref: '#/components/schemas/Annotation'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueAttachment:
+        $ref: '#/components/schemas/Attachment'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueCodeableConcept:
+        $ref: '#/components/schemas/CodeableConcept'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueCoding:
+        $ref: '#/components/schemas/Coding'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueContactPoint:
+        $ref: '#/components/schemas/ContactPoint'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueCount:
+        $ref: '#/components/schemas/Count'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueDistance:
+        $ref: '#/components/schemas/Distance'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueDuration:
+        $ref: '#/components/schemas/Duration'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueHumanName:
+        $ref: '#/components/schemas/HumanName'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueIdentifier:
+        $ref: '#/components/schemas/Identifier'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueMoney:
+        $ref: '#/components/schemas/Money'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valuePeriod:
+        $ref: '#/components/schemas/Period'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueQuantity:
+        $ref: '#/components/schemas/Quantity'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueRange:
+        $ref: '#/components/schemas/Range'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueRatio:
+        $ref: '#/components/schemas/Ratio'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueReference:
+        $ref: '#/components/schemas/Reference'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueSampledData:
+        $ref: '#/components/schemas/SampledData'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueSignature:
+        $ref: '#/components/schemas/Signature'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueTiming:
+        $ref: '#/components/schemas/Timing'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueContactDetail:
+        $ref: '#/components/schemas/ContactDetail'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueRelatedArtifact:
+        $ref: '#/components/schemas/RelatedArtifact'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueUsageContext:
+        $ref: '#/components/schemas/UsageContext'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+      valueMeta:
+        $ref: '#/components/schemas/Meta'
+        description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+    required:
+      - url
