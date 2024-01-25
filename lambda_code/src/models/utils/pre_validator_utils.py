@@ -195,3 +195,23 @@ class PreValidation:
                         f"{field_location} must be a number with a maximum of {max_decimal_places}"
                         + " decimal places"
                     )
+
+    @staticmethod
+    def for_unique_list(
+        list_to_check: list,
+        unique_value_in_list: str,
+        field_location: str,
+    ):
+        """
+        Apply pre-validation to a list of dictionaries to ensure that a specified value in each
+        dictionary is unique across the list
+        """
+        found = []
+        for item in list_to_check:
+            if item[unique_value_in_list] in found:
+                raise ValueError(
+                    f"{field_location.replace('FIELD_TO_REPLACE', item[unique_value_in_list])}"
+                    + " must be unique"
+                )
+
+            found.append(item[unique_value_in_list])

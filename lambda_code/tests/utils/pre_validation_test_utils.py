@@ -185,8 +185,6 @@ class ValidatorModelTests:
         predefined_list_length: int = None,
         valid_list_element=None,
         is_list_of_strings: bool = False,
-        duplicates_allowed: bool = True,
-        invalid_lists_with_duplicates_to_test: list = None,
     ):
         """
         Test that a FHIR model accepts valid list values and rejects the following invalid values:
@@ -282,6 +280,36 @@ class ValidatorModelTests:
                 expected_error_message=f"{field_location} must be an array of non-empty strings",
                 expected_error_type="value_error",
             )
+
+    @staticmethod
+    def test_unique_list(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        valid_lists_to_test: list,
+        invalid_list_with_duplicates_to_test: list,
+        expected_error_message: str,
+    ):
+        """
+        Test that a FHIR model accepts valid lists with unique values and rejects the following
+        invalid values:
+        * Lists with duplicate values
+        """
+
+        valid_json_data = deepcopy(test_instance.json_data)
+
+        # Test that valid data is accepted
+        test_valid_values_accepted(
+            test_instance, valid_json_data, field_location, valid_lists_to_test
+        )
+        # Test lists with duplicate values
+        test_invalid_values_rejected(
+            test_instance,
+            valid_json_data,
+            field_location=field_location,
+            invalid_value=invalid_list_with_duplicates_to_test,
+            expected_error_message=expected_error_message,
+            expected_error_type="value_error",
+        )
 
     @staticmethod
     def test_date_value(

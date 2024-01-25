@@ -30,6 +30,10 @@ class ImmunizationValidator:
         # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
 
         self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_contained, pre=True
+        )
+
+        self.immunization.add_root_validator(
             FHIRImmunizationPreValidators.pre_validate_patient_identifier, pre=True
         )
 

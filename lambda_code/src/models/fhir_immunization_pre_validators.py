@@ -6,7 +6,6 @@ from models.utils.generic_utils import (
 )
 from models.utils.pre_validator_utils import PreValidation
 from models.constants import Constants
-from icecream import ic
 
 
 class FHIRImmunizationPreValidators:
@@ -16,22 +15,18 @@ class FHIRImmunizationPreValidators:
     # contained resources
     # -----------------------------------------------------------------------------------------
 
-    # TODO: Need to check that each resourceType is unique
     @classmethod
     def pre_validate_contained(cls, values: dict) -> dict:
         """
-        Pre-validate that, if contained exists, then it is a list of length 2
+        Pre-validate that, if contained exists, then  each resourceType is unique
         """
         try:
             contained = values["contained"]
-            found_resource_types = []
-            for item in contained:
-                if item["resourceType"] in found_resource_types:
-                    raise ValueError(
-                        f"contained[?(@.resourceType=='{item['resourceType']}')] must be unique"
-                    )
-
-                found_resource_types.append(item["resourceType"])
+            PreValidation.for_unique_list(
+                contained,
+                "resourceType",
+                "contained[?(@.resourceType=='FIELD_TO_REPLACE')]",
+            )
 
         except KeyError:
             pass
