@@ -413,8 +413,10 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=invalid_occurrence_date_time,
                 expected_error_message=f"{field_location} must be a string in the format "
-                + '"YYYY-MM-DDThh:mm:ss+zz:zz" or"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, '
-                + "including timezone offset in hours and minutes)",
+                + '"YYYY-MM-DDThh:mm:ss+zz:zz" or '
+                + '"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, including timezone offset in '
+                + "hours and minutes). Milliseconds are optional after the seconds "
+                + "(e.g. 2021-01-01T00:00:00.000+00:00).",
                 expected_error_type="value_error",
             )
 

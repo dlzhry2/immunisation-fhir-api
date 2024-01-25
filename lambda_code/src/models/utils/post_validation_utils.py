@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Union
 from decimal import Decimal
 from mappings import Mandation, vaccination_procedure_snomed_codes
-from icecream import ic
 
 
 def get_deep_attr(obj, attrs):

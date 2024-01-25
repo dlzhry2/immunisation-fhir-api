@@ -32,6 +32,9 @@ class ValidValues:
         "2000-01-01T00:00:00+00:00",  # Time and offset all zeroes
         "1933-12-31T11:11:11+12:45",  # Positive offset (with hours and minutes not 0)
         "1933-12-31T11:11:11-05:00",  # Negative offset
+        "2000-01-01T00:00:00.000+00:00",  # Time and offset all zeroes with milliseconds
+        "1933-12-31T11:11:11.1+12:45",  # Positive offset (with hours and minutes not 0)
+        "1933-12-31T11:11:11.111111+12:45",  # Positive offset (with hours and minutes not 0)
     ]
 
     # Not a valid snomed code, but is valid coding format for format testing

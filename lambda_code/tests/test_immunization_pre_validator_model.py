@@ -125,17 +125,62 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ],
         )
 
+    def test_model_pre_validate_occurrence_date_time(self):
+        """
+        Test pre_validate_occurrence_date_time accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_date_time_value(
+            self,
+            field_location="occurrenceDateTime",
+            is_occurrence_date_time=True,
+        )
 
-#    def test_model_pre_validate_occurrence_date_time(self):
-#        """
-#        Test pre_validate_occurrence_date_time accepts valid values and rejects invalid values
-#        """
-#        ValidatorModelTests.test_date_time_value(
-#            self,
-#            field_location="occurrenceDateTime",
-#            is_occurrence_date_time=True,
-#        )
-#
+    def test_model_pre_validate_questionnaire_response_item(self):
+        """
+        Test pre_validate_questionnaire_response_item accepts valid values and rejects invalid
+        values
+        """
+        # Test that the contained field is rejected when invalid
+        valid_lists_to_test = [
+            [
+                {
+                    "linkId": "Immunisation",
+                    "answer": [{"valueReference": {"reference": "#"}}],
+                },
+                {"linkId": "ReduceValidation", "answer": [{"valueBoolean": False}]},
+                {
+                    "linkId": "IpAddress",
+                    "answer": [
+                        {"valueString": "IP_ADDRESS"},
+                    ],
+                },
+            ]
+        ]
+        invalid_list_to_test = [
+            {
+                "linkId": "Immunisation",
+                "answer": [{"valueReference": {"reference": "#"}}],
+            },
+            {"linkId": "ReduceValidation", "answer": [{"valueBoolean": False}]},
+            {"linkId": "ReduceValidation", "answer": [{"valueBoolean": True}]},
+            {
+                "linkId": "IpAddress",
+                "answer": [
+                    {"valueString": "IP_ADDRESS"},
+                ],
+            },
+        ]
+
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')].item",
+            valid_lists_to_test=valid_lists_to_test,
+            invalid_list_with_duplicates_to_test=invalid_list_to_test,
+            expected_error_message="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='ReduceValidation')] must be unique",
+        )
+
+
 #    def test_model_pre_validate_valid_questionnaire_answers(self):
 #        """
 #        Test pre_validate_quesionnaire_answers accepts valid values and rejects invalid values

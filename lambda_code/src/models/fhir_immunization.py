@@ -41,15 +41,19 @@ class ImmunizationValidator:
             FHIRImmunizationPreValidators.pre_validate_patient_identifier_value,
             pre=True,
         )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_occurrence_date_time, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_contained, pre=True
-        # )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_occurrence_date_time, pre=True
+        )
+
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_questionnaire_response_item,
+            pre=True,
+        )
+
         # self.immunization.add_root_validator(
         #    FHIRImmunizationPreValidators.pre_validate_questionnaire_answers, pre=True
         # )
+
         # self.immunization.add_root_validator(
         #    FHIRImmunizationPreValidators.pre_validate_questionnaire_site_code_code,
         #    pre=True,

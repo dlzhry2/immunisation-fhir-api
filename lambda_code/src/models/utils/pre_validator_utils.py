@@ -129,22 +129,26 @@ class PreValidation:
             raise TypeError(f"{field_location} must be a string")
 
         date_time_pattern_with_timezone = re.compile(
-            r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\+|-)\d{2}:\d{2}"
+            r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.[0-9]+)?(\+|-)\d{2}:\d{2}"
         )
 
         if not date_time_pattern_with_timezone.fullmatch(field_value):
             raise ValueError(
-                f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or'
+                f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or '
                 + '"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, including timezone offset in '
-                + "hours and minutes)"
+                + "hours and minutes). Milliseconds are optional after the seconds "
+                + "(e.g. 2021-01-01T00:00:00.000+00:00)."
             )
 
         try:
             datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S%z")
-        except ValueError as value_error:
-            raise ValueError(
-                f"{field_location} must be a valid datetime"
-            ) from value_error
+        except ValueError:
+            try:
+                datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S.%f%z")
+            except ValueError as value_error:
+                raise ValueError(
+                    f"{field_location} must be a valid datetime"
+                ) from value_error
 
     @staticmethod
     def for_boolean(field_value: str, field_location: str):

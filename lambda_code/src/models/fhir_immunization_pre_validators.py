@@ -75,6 +75,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: fix milliseconds
     @classmethod
     def pre_validate_occurrence_date_time(cls, values: dict) -> dict:
         """
@@ -94,7 +95,30 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: Need to check that each QuestionnaireResponse linkId is unique
+    @classmethod
+    def pre_validate_questionnaire_response_item(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item exists,
+        then each linkId is unique
+        """
+        try:
+            questionnaire_response_item = [
+                x
+                for x in values["contained"]
+                if x["resourceType"] == "QuestionnaireResponse"
+            ][0]["item"]
+
+            PreValidation.for_unique_list(
+                questionnaire_response_item,
+                "linkId",
+                "contained[?(@.resourceType=='QuestionnaireResponse')]"
+                + ".item[?(@.linkId=='FIELD_TO_REPLACE')]",
+            )
+
+        except KeyError:
+            pass
+
+        return values
 
     @classmethod
     def pre_validate_questionnaire_answers(cls, values: dict) -> dict:
