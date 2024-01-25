@@ -66,9 +66,6 @@ class CoarseValidationError(ValidationError):
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
 
 
-# TODO: bug: R4 performs regex validation on regex. It requires alphanum+whitespace.
-#  It's either unnecessary (I can't find this rule in fhir spec) or if not we need to transform the message and
-#  make it alphanum only
 def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> OperationOutcome:
     model = {
         "resourceType": "OperationOutcome",
