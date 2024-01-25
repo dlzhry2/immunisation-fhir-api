@@ -5,7 +5,7 @@ from unittest.mock import create_autospec
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.list import List
 from fhir_controller import FhirController
-from fhir_service import FhirService
+from fhir_service import FhirService, UpdateOutcome
 from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId, CoarseValidationError
 
 
@@ -163,7 +163,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms = "{}"
         imms_id = "valid-id"
         aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
-        self.service.update_immunization.return_value = True
+        self.service.update_immunization.return_value = UpdateOutcome.UPDATE
 
         response = self.controller.update_immunization(aws_event)
 
@@ -176,7 +176,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms = "{}"
         imms_id = "valid-id"
         aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
-        self.service.update_immunization.return_value = False
+        self.service.update_immunization.return_value = UpdateOutcome.CREATE
 
         response = self.controller.update_immunization(aws_event)
 

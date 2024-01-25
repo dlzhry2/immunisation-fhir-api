@@ -10,7 +10,7 @@ from fhir.resources.R4B.operationoutcome import OperationOutcome
 
 from cache import Cache
 from fhir_repository import ImmunizationRepository, create_table
-from fhir_service import FhirService
+from fhir_service import FhirService, UpdateOutcome
 from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError, \
     ValidationError
 from pds_service import PdsService, Authenticator
@@ -76,9 +76,10 @@ class FhirController:
             return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
 
         try:
-            if self.fhir_service.update_immunization(imms_id, imms):
+            outcome = self.fhir_service.update_immunization(imms_id, imms)
+            if outcome == UpdateOutcome.UPDATE:
                 return self.create_response(200)
-            else:
+            elif outcome == UpdateOutcome.CREATE:
                 return self.create_response(201)
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome().json())

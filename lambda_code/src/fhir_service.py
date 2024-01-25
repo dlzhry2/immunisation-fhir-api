@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 from fhir.resources.R4B.immunization import Immunization
@@ -8,6 +9,11 @@ from fhir_repository import ImmunizationRepository
 from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
+
+
+class UpdateOutcome(Enum):
+    UPDATE = 0
+    CREATE = 1
 
 
 class FhirService:
@@ -38,7 +44,7 @@ class FhirService:
 
         return Immunization.parse_obj(imms)
 
-    def update_immunization(self, imms_id: str, immunization: dict) -> bool:
+    def update_immunization(self, imms_id: str, immunization: dict) -> UpdateOutcome:
         # The id that comes in the request's path is our id. So the imms object must have the same id
         immunization['id'] = imms_id
 
@@ -51,10 +57,10 @@ class FhirService:
 
         try:
             self.immunization_repo.update_immunization(imms_id, immunization, patient)
-            return True
+            return UpdateOutcome.UPDATE
         except ResourceNotFoundError:
             self.immunization_repo.create_immunization(immunization, patient)
-            return False
+            return UpdateOutcome.CREATE
 
     def delete_immunization(self, imms_id) -> Immunization:
         """Delete an Immunization if it exits and return the ID back if successful.

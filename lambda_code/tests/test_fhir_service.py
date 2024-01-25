@@ -5,7 +5,7 @@ from unittest.mock import create_autospec
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.list import List as FhirList
 from fhir_repository import ImmunizationRepository
-from fhir_service import FhirService
+from fhir_service import FhirService, UpdateOutcome
 from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
@@ -159,10 +159,10 @@ class TestUpdateImmunization(unittest.TestCase):
         req_imms = _create_an_immunization_dict(imms_id, nhs_number)
 
         # When
-        is_updated = self.fhir_service.update_immunization(imms_id, req_imms)
+        outcome = self.fhir_service.update_immunization(imms_id, req_imms)
 
         # Then
-        self.assertTrue(is_updated)
+        self.assertEqual(outcome, UpdateOutcome.UPDATE)
         self.imms_repo.update_immunization.assert_called_once_with(imms_id, req_imms, pds_patient)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
 
@@ -175,10 +175,10 @@ class TestUpdateImmunization(unittest.TestCase):
         self.fhir_service.pds_service.get_patient_details.return_value = {"id": "a-patient-id"}
 
         # When
-        is_updated = self.fhir_service.update_immunization(imms_id, imms)
+        outcome = self.fhir_service.update_immunization(imms_id, imms)
 
         # Then
-        self.assertFalse(is_updated)
+        self.assertEqual(outcome, UpdateOutcome.CREATE)
         self.imms_repo.create_immunization.assert_called_once()
 
     def test_pre_validation_failed(self):
