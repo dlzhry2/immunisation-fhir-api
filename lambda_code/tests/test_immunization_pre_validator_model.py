@@ -5,9 +5,13 @@ import json
 from copy import deepcopy
 from decimal import Decimal
 from models.fhir_immunization import ImmunizationValidator
+from jsonpath_ng.ext import parse
+from pydantic import ValidationError
 from .utils.generic_utils import (
     generate_field_location_for_questionnnaire_response,
     generate_field_location_for_extension,
+    test_valid_values_accepted as _test_valid_values_accepted,
+    test_invalid_values_rejected as _test_invalid_values_rejected,
 )
 from .utils.pre_validation_test_utils import (
     ValidatorModelTests,
@@ -135,6 +139,34 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             is_occurrence_date_time=True,
         )
 
+    def test_model_pre_validate_valid_questionnaire_answers(self):
+        """
+        Test pre_validate_quesionnaire_answers accepts valid values and rejects invalid values
+        """
+        # Check that any of the answer fields in the sample data are rejected when invalid
+        for i in range(len(self.json_data["contained"][2]["item"])):
+            # Determine what valid list element looks like
+            answer_keys = self.json_data["contained"][2]["item"][i]["answer"][0].keys()
+            if "valueCoding" in answer_keys:
+                valid_list_element = {"valueCoding": {"code": "True"}}
+            elif "valueBoolean" in answer_keys:
+                valid_list_element = {"valueBoolean": True}
+            elif "valueString" in answer_keys:
+                valid_list_element = {"valueString": "test_string"}
+            elif "valueDateTime" in answer_keys:
+                valid_list_element = {"valueDateTime": "2021-02-07T13:44:07+00:00"}
+            elif "valueReference" in answer_keys:
+                valid_list_element = {"valueReference": {"reference": "#"}}
+
+            ValidatorModelTests.test_list_value(
+                self,
+                field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+                + f".item[{i}].answer",
+                valid_lists_to_test=[[valid_list_element]],
+                predefined_list_length=1,
+                valid_list_element=valid_list_element,
+            )
+
     def test_model_pre_validate_questionnaire_response_item(self):
         """
         Test pre_validate_questionnaire_response_item accepts valid values and rejects invalid
@@ -180,123 +212,287 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='ReduceValidation')] must be unique",
         )
 
+    def test_model_pre_validate_performer_actor_type(self):
+        """
+        Test pre_validate_performer_actor_type accepts valid values and rejects invalid
+        values
+        """
 
-#    def test_model_pre_validate_valid_questionnaire_answers(self):
-#        """
-#        Test pre_validate_quesionnaire_answers accepts valid values and rejects invalid values
-#        """
-#        # Check that any of the 12 answer fields in the sample data are rejected when invalid
-#        for i in range(12):
-#            if i == 10:
-#                # for SubmittedTimeStamp, the code is a date time string
-#                valid_list_element = {
-#                    "valueCoding": {"code": "2020-12-14T10:08:15+00:00"}
-#                }
-#            else:
-#                # for everything else, the code is a string
-#                valid_list_element = {"valueCoding": {"code": "True"}}
-#
-#            ValidatorModelTests.test_list_value(
-#                self,
-#                field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
-#                + f".item[{i}].answer",
-#                valid_lists_to_test=[[valid_list_element]],
-#                predefined_list_length=1,
-#                valid_list_element=valid_list_element,
-#            )
-#
-#    def test_model_pre_validate_questionnaire_site_code_code(self):
-#        """
-#        Test pre_validate_questionnaire_site_code_code accepts valid values and rejects invalid
-#        values
-#        """
-#        ValidatorModelTests.test_string_value(
-#            self,
-#            field_location=generate_field_location_for_questionnnaire_response(
-#                link_id="SiteCode", field_type="code"
-#            ),
-#            valid_strings_to_test=["B0C4P"],
-#        )
-#
-#    def test_model_pre_validate_site_name_code(self):
-#        """Test pre_validate_site_code_code accepts valid values and rejects invalid values"""
-#        ValidatorModelTests.test_string_value(
-#            self,
-#            field_location=generate_field_location_for_questionnnaire_response(
-#                link_id="SiteName", field_type="code"
-#            ),
-#            valid_strings_to_test=["dummy"],
-#        )
-#
-#    def test_model_pre_validate_identifier(self):
-#        """Test pre_validate_identifier accepts valid values and rejects invalid values"""
-#        valid_list_element = {
-#            "system": "https://supplierABC/identifiers/vacc",
-#            "value": "ACME-vacc123456",
-#        }
-#
-#        ValidatorModelTests.test_list_value(
-#            self,
-#            field_location="identifier",
-#            valid_lists_to_test=[[valid_list_element]],
-#            predefined_list_length=1,
-#            valid_list_element=valid_list_element,
-#        )
-#
-#    def test_model_pre_validate_identifier_value(self):
-#        """Test pre_validate_identifier_value accepts valid values and rejects invalid values"""
-#        ValidatorModelTests.test_string_value(
-#            self,
-#            field_location="identifier[0].value",
-#            valid_strings_to_test=[
-#                "e045626e-4dc5-4df3-bc35-da25263f901e",
-#                "ACME-vacc123456",
-#                "ACME-CUSTOMER1-vacc123456",
-#            ],
-#        )
-#
-#    def test_model_pre_validate_identifier_system(self):
-#        """Test pre_validate_identifier_system accepts valid values and rejects invalid values"""
-#        ValidatorModelTests.test_string_value(
-#            self,
-#            field_location="identifier[0].system",
-#            valid_strings_to_test=[
-#                "https://supplierABC/identifiers/vacc",
-#                "https://supplierABC/ODSCode_NKO41/identifiers/vacc",
-#            ],
-#        )
-#
-#    def test_model_pre_validate_status(self):
-#        """Test pre_validate_status accepts valid values and rejects invalid values"""
-#        ValidatorModelTests.test_string_value(
-#            self,
-#            field_location="status",
-#            valid_strings_to_test=["completed", "entered-in-error", "not-done"],
-#            predefined_values=("completed", "entered-in-error", "not-done"),
-#            invalid_strings_to_test=["1", "complete", "enteredinerror"],
-#            is_mandatory_fhir=True,
-#        )
-#
-#    def test_model_pre_validate_recorded(self):
-#        """Test pre_validate_recorded accepts valid values and rejects invalid values"""
-#        ValidatorModelTests.test_date_value(self, field_location="recorded")
-#
-#    def test_model_pre_validate_primary_source(self):
-#        """Test pre_validate_primary_source accepts valid values and rejects invalid values"""
-#        ValidatorModelTests.test_boolean_value(self, field_location="primarySource")
-#
-#    def test_model_pre_validate_report_origin_text(self):
-#        """Test pre_validate_report_origin_text accepts valid values and rejects invalid values"""
-#        ValidatorModelTests.test_string_value(
-#            self,
-#            field_location="reportOrigin.text",
-#            valid_strings_to_test=[
-#                "sample",
-#                "Free text description of organisation recording the event",
-#            ],
-#            max_length=100,
-#            invalid_length_strings_to_test=InvalidValues.for_strings_with_max_100_chars,
-#        )
+        valid_json_data = deepcopy(self.json_data)
+
+        valid_performers_to_test = [
+            [
+                {"actor": {"reference": "#Pract1"}},
+                {
+                    "actor": {
+                        "type": "Organization",
+                        "display": "Acme Healthcare",
+                    }
+                },
+            ]
+        ]
+
+        invalid_performer = [
+            {"actor": {"reference": "#Pract1", "type": "Organization"}},
+            {
+                "actor": {
+                    "type": "Organization",
+                    "display": "Acme Healthcare",
+                }
+            },
+        ]
+
+        # Test that valid data is accepted
+        _test_valid_values_accepted(
+            self, valid_json_data, "performer", valid_performers_to_test
+        )
+
+        # Test lists with duplicate values
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data,
+            field_location="performer",
+            invalid_value=invalid_performer,
+            expected_error_message="performer.actor[?@.type=='Organization'] must be unique",
+            expected_error_type="value_error",
+        )
+
+    def test_model_pre_validate_performer_actor_reference(self):
+        """
+        Test pre_validate_performer_actor_type accepts valid values and rejects invalid
+        values
+        """
+
+        valid_json_data = deepcopy(self.json_data)
+        invalid_json_data = deepcopy(self.json_data)
+
+        valid_contained_with_no_practitioner = [
+            {
+                "resourceType": "Patient",
+                "id": "Pat1",
+            },
+        ]
+
+        valid_contained_with_practitioner = [
+            {
+                "resourceType": "Practitioner",
+                "id": "Pract1",
+            },
+            {
+                "resourceType": "Patient",
+                "id": "Pat1",
+            },
+        ]
+
+        valid_performer_with_no_contained_practitioner_reference = [
+            {"actor": {"reference": "#Pract0"}},
+            {
+                "actor": {
+                    "type": "Organization",
+                    "identifier": {
+                        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                        "value": "B0C4P",
+                    },
+                    "display": "Acme Healthcare",
+                }
+            },
+        ]
+
+        valid_performer_with_one_contained_practitioner_reference = [
+            {"actor": {"reference": "#Pract0"}},
+            {"actor": {"reference": "#Pract1"}},
+            {
+                "actor": {
+                    "type": "Organization",
+                    "identifier": {
+                        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                        "value": "B0C4P",
+                    },
+                    "display": "Acme Healthcare",
+                }
+            },
+        ]
+
+        valid_performer_with_more_than_one_contained_practitioner_reference = [
+            {"actor": {"reference": "#Pract1"}},
+            {"actor": {"reference": "#Pract1"}},
+            {
+                "actor": {
+                    "type": "Organization",
+                    "identifier": {
+                        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                        "value": "B0C4P",
+                    },
+                    "display": "Acme Healthcare",
+                }
+            },
+        ]
+
+        # Test case: Pract1 in contained, 0 actor of #Pract1 in performer - reject
+        invalid_json_data = parse("contained").update(
+            invalid_json_data, valid_contained_with_practitioner
+        )
+        invalid_json_data = parse("performer").update(
+            invalid_json_data, valid_performer_with_no_contained_practitioner_reference
+        )
+        with self.assertRaises(ValidationError) as error:
+            self.validator.validate(invalid_json_data)
+
+        self.assertTrue(
+            (
+                "Pract1 must be referenced by exactly ONE performer.actor"
+                + " (type=value_error)"
+            )
+            in str(error.exception)
+        )
+
+        # Test case: Pract1 in contained, 1 actor of Pract1 in performer - accept
+        valid_json_data = parse("contained").update(
+            valid_json_data, valid_contained_with_practitioner
+        )
+        valid_json_data = parse("performer").update(
+            valid_json_data, valid_performer_with_one_contained_practitioner_reference
+        )
+
+        self.assertTrue(self.validator.validate(valid_json_data))
+
+        # Test Case: Pract1 in contained, 2 actors of Pract1 in performer - reject
+        invalid_json_data = parse("contained").update(
+            invalid_json_data, valid_contained_with_practitioner
+        )
+        invalid_json_data = parse("performer").update(
+            invalid_json_data,
+            valid_performer_with_more_than_one_contained_practitioner_reference,
+        )
+        with self.assertRaises(ValidationError) as error:
+            self.validator.validate(invalid_json_data)
+
+        self.assertTrue(
+            (
+                "Pract1 must be referenced by exactly ONE performer.actor"
+                + " (type=value_error)"
+            )
+            in str(error.exception)
+        )
+
+        # Test case: No practitioner in contained, 0 actor with reference in performer - accept
+        valid_json_data = parse("contained").update(
+            valid_json_data, valid_contained_with_no_practitioner
+        )
+        valid_json_data = parse("performer").update(
+            valid_json_data, valid_performer_with_no_contained_practitioner_reference
+        )
+
+        self.assertTrue(self.validator.validate(valid_json_data))
+
+        # Test case: No practitioner in contained, 1 or more actors with reference in performer
+        # - accept
+        valid_json_data = parse("contained").update(
+            valid_json_data, valid_contained_with_no_practitioner
+        )
+        valid_json_data = parse("performer").update(
+            valid_json_data, valid_performer_with_one_contained_practitioner_reference
+        )
+
+        self.assertTrue(self.validator.validate(valid_json_data))
+
+        valid_json_data = parse("performer").update(
+            valid_json_data,
+            valid_performer_with_more_than_one_contained_practitioner_reference,
+        )
+
+        self.assertTrue(self.validator.validate(valid_json_data))
+
+    def test_model_pre_validate_organization_identifier_value(self):
+        """
+        Test pre_validate_organization_identifier_value accepts valid values and rejects invalid
+        values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="performer[?(@.actor.type=='Organization')].actor.identifier.value",
+            valid_strings_to_test=["B0C4P"],
+        )
+
+    def test_model_pre_validate_organization_display(self):
+        """Test pre_validate_organization_display accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="performer[?@.actor.type == 'Organization'].actor.display",
+            valid_strings_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_identifier(self):
+        """Test pre_validate_identifier accepts valid values and rejects invalid values"""
+        valid_list_element = {
+            "system": "https://supplierABC/identifiers/vacc",
+            "value": "ACME-vacc123456",
+        }
+
+        ValidatorModelTests.test_list_value(
+            self,
+            field_location="identifier",
+            valid_lists_to_test=[[valid_list_element]],
+            predefined_list_length=1,
+            valid_list_element=valid_list_element,
+        )
+
+    def test_model_pre_validate_identifier_value(self):
+        """Test pre_validate_identifier_value accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="identifier[0].value",
+            valid_strings_to_test=[
+                "e045626e-4dc5-4df3-bc35-da25263f901e",
+                "ACME-vacc123456",
+                "ACME-CUSTOMER1-vacc123456",
+            ],
+        )
+
+    def test_model_pre_validate_identifier_system(self):
+        """Test pre_validate_identifier_system accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="identifier[0].system",
+            valid_strings_to_test=[
+                "https://supplierABC/identifiers/vacc",
+                "https://supplierABC/ODSCode_NKO41/identifiers/vacc",
+            ],
+        )
+
+    def test_model_pre_validate_status(self):
+        """Test pre_validate_status accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="status",
+            valid_strings_to_test=["completed", "entered-in-error", "not-done"],
+            predefined_values=("completed", "entered-in-error", "not-done"),
+            invalid_strings_to_test=["1", "complete", "enteredinerror"],
+            is_mandatory_fhir=True,
+        )
+
+    def test_model_pre_validate_recorded(self):
+        """Test pre_validate_recorded accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_date_value(self, field_location="recorded")
+
+    def test_model_pre_validate_primary_source(self):
+        """Test pre_validate_primary_source accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_boolean_value(self, field_location="primarySource")
+
+    def test_model_pre_validate_report_origin_text(self):
+        """Test pre_validate_report_origin_text accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="reportOrigin.text",
+            valid_strings_to_test=[
+                "sample",
+                "Free text description of organisation recording the event",
+            ],
+            max_length=100,
+            invalid_length_strings_to_test=InvalidValues.for_strings_with_max_100_chars,
+        )
+
+
 #
 #    def test_model_pre_validate_extension_value_codeable_concept_codings(self):
 #        """

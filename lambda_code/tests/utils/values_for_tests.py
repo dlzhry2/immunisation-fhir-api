@@ -32,9 +32,9 @@ class ValidValues:
         "2000-01-01T00:00:00+00:00",  # Time and offset all zeroes
         "1933-12-31T11:11:11+12:45",  # Positive offset (with hours and minutes not 0)
         "1933-12-31T11:11:11-05:00",  # Negative offset
-        "2000-01-01T00:00:00.000+00:00",  # Time and offset all zeroes with milliseconds
-        "1933-12-31T11:11:11.1+12:45",  # Positive offset (with hours and minutes not 0)
-        "1933-12-31T11:11:11.111111+12:45",  # Positive offset (with hours and minutes not 0)
+        "1933-12-31T11:11:11.1+12:45",  # DateTime with milliseconds to 1 decimal place
+        "2000-01-01T00:00:00.000+00:00",  # DateTime with milliseconds to 3 decimal places
+        "1933-12-31T11:11:11.111111+12:45",  # DateTime with milliseconds to 6 decimal places
     ]
 
     # Not a valid snomed code, but is valid coding format for format testing
@@ -90,12 +90,14 @@ class InvalidValues:
         "200001010000000000",  # Date, time and timezone digits only
         "2000-01-01",  # Date only
         "2000-01-01T00:00:00",  # Date and time only
+        "2000-01-01T00:00:00.000",  # Date and time only (with milliseconds)
         "2000-01-01T00:00:00+00",  # Date and time with GMT timezone offset only in hours
         "2000-01-01T00:00:00+01",  # Date and time with BST timezone offset only in hours
         "12000-01-01T00:00:00+00:00",  # Extra character at start of string
         "2000-01-01T00:00:00+00:001",  # Extra character at end of string
         "12000-01-02T00:00:00-01:001",  # Extra characters at start and end of string
         "2000-01-0122:22:22+00:00",  # Missing T
+        "2000-01-0122:22:22+00:00.000",  # Missing T (with milliseconds)
         "2000-01-01T222222+00:00",  # Missing time colons
         "2000-01-01T22:22:2200:00",  # Missing timezone indicator
         "2000-01-01T22:22:22-0100",  # Missing timezone colon

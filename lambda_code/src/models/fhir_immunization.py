@@ -32,11 +32,9 @@ class ImmunizationValidator:
         self.immunization.add_root_validator(
             FHIRImmunizationPreValidators.pre_validate_contained, pre=True
         )
-
         self.immunization.add_root_validator(
             FHIRImmunizationPreValidators.pre_validate_patient_identifier, pre=True
         )
-
         self.immunization.add_root_validator(
             FHIRImmunizationPreValidators.pre_validate_patient_identifier_value,
             pre=True,
@@ -44,44 +42,48 @@ class ImmunizationValidator:
         self.immunization.add_root_validator(
             FHIRImmunizationPreValidators.pre_validate_occurrence_date_time, pre=True
         )
-
         self.immunization.add_root_validator(
             FHIRImmunizationPreValidators.pre_validate_questionnaire_response_item,
             pre=True,
         )
-
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_questionnaire_answers, pre=True
-        # )
-
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_questionnaire_site_code_code,
-        #    pre=True,
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_site_name_code, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_identifier, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_identifier_value, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_identifier_system, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_status, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_recorded, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_primary_source, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_report_origin_text, pre=True
-        # )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_questionnaire_answers, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_performer_actor_type, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_performer_actor_reference,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_organization_identifier_value,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_organization_display, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_identifier, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_identifier_value, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_identifier_system, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_status, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_recorded, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_primary_source, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_report_origin_text, pre=True
+        )
         # self.immunization.add_root_validator(
         #    FHIRImmunizationPreValidators.pre_validate_extension_value_codeable_concept_codings,
         #    pre=True,

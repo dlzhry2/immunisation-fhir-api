@@ -41,14 +41,14 @@ class FHIRImmunizationPreValidators:
         """
         try:
             patient_identifier = [
-                x for x in values["contained"] if x["resourceType"] == "Patient"
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
             ][0]["identifier"]
             PreValidation.for_list(
                 patient_identifier,
                 "contained[?(@.resourceType=='Patient')].identifier",
                 defined_length=1,
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -61,7 +61,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             patient_identifier_value = [
-                x for x in values["contained"] if x["resourceType"] == "Patient"
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
             ][0]["identifier"][0]["value"]
 
             PreValidation.for_string(
@@ -70,19 +70,18 @@ class FHIRImmunizationPreValidators:
                 defined_length=10,
                 spaces_allowed=False,
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: fix milliseconds
     @classmethod
     def pre_validate_occurrence_date_time(cls, values: dict) -> dict:
         """
         Pre-validate that, if occurrenceDateTime exists (legacy CSV field name: DATE_AND_TIME),
         then it is a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz"
         (i.e. date and time, including timezone offset in hours and minutes), representing a valid
-        datetime.
+        datetime. Milliseconds are optional after the seconds (e.g. 2021-01-01T00:00:00.000+00:00)."
 
         NOTE: occurrenceDateTime is a mandatory FHIR field. A value of None will be rejected by the
         FHIR model before pre-validators are run.
@@ -105,7 +104,7 @@ class FHIRImmunizationPreValidators:
             questionnaire_response_item = [
                 x
                 for x in values["contained"]
-                if x["resourceType"] == "QuestionnaireResponse"
+                if x.get("resourceType") == "QuestionnaireResponse"
             ][0]["item"]
 
             PreValidation.for_unique_list(
@@ -115,7 +114,7 @@ class FHIRImmunizationPreValidators:
                 + ".item[?(@.linkId=='FIELD_TO_REPLACE')]",
             )
 
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -128,7 +127,12 @@ class FHIRImmunizationPreValidators:
         is a list of length 1
         """
         try:
-            for index, value in enumerate(values["contained"][0]["item"]):
+            questionnaire_items = [
+                x
+                for x in values["contained"]
+                if x.get("resourceType") == "QuestionnaireResponse"
+            ][0]["item"]
+            for index, value in enumerate(questionnaire_items):
                 try:
                     questionnaire_answer = value["answer"]
                     PreValidation.for_list(
@@ -139,60 +143,122 @@ class FHIRImmunizationPreValidators:
                     )
                 except KeyError:
                     pass
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: need to check that performer only has 1 type of Organisation
-    # TODO: need to check that performer only has 1 actor with a reference to practitioner in
-    # contained
-    # TODO: change where we get site_code_code from
-    # (to performer[?@.actor.type == "Organization"].actor.identifier.value)
-    # TODO: change name of method to match new location
+    # TODO: Handle scenario where item.get("actor") = None (? can except attribute error)
     @classmethod
-    def pre_validate_questionnaire_site_code_code(cls, values: dict) -> dict:
+    def pre_validate_performer_actor_type(cls, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='SiteCode')].answer[0].valueCoding.code (legacy CSV field name: SITE_CODE)
-        exists, then it is a non-empty string
+        Pre-validate that, if performer.actor.organisation exists, then there is only one such
+        key with the value of "Organization"
         """
         try:
-            questionnaire_site_code_code = get_generic_questionnaire_response_value(
-                values, "SiteCode", "code"
-            )
-            PreValidation.for_string(
-                questionnaire_site_code_code,
-                generate_field_location_for_questionnnaire_response(
-                    link_id="SiteCode", field_type="code"
-                ),
-            )
+            found = []
+            for item in values["performer"]:
+                if (
+                    item.get("actor").get("type") == "Organization"
+                    and item.get("actor").get("type") in found
+                ):
+                    raise ValueError(
+                        "performer.actor[?@.type=='Organization'] must be unique"
+                    )
+
+                found.append(item.get("actor").get("type"))
+
         except KeyError:
             pass
 
         return values
 
-    # TODO: change where we get site_code_system from
-    # (to performer[?@.actor.type == "Organization"].actor.display)
-    # TODO: change name of method to match new location
+    # TODO: Handle scenario where item.get("actor") = None (? can except attribute error)
     @classmethod
-    def pre_validate_site_name_code(cls, values: dict) -> dict:
+    def pre_validate_performer_actor_reference(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if performer.actor.organisation exists, then there is only one such
+        key with the value of "Organization"
+        """
+        try:
+            # Obtain the contained_practitioner_id
+            contained_practitioner = [
+                x
+                for x in values["contained"]
+                if x.get("resourceType") == "Practitioner"
+            ][0]
+            contained_practitioner_id = "#" + contained_practitioner["id"]
+
+            # Check that there is exactly one performer_actor_reference which matches the
+            # contained_practitioner_id
+            performer_actor_references = []
+            for item in values.get("performer", []):
+                # If more than one reference contains the id then raise an error
+                if (
+                    item.get("actor").get("reference") == contained_practitioner_id
+                    and item.get("actor").get("reference") in performer_actor_references
+                ):
+                    raise ValueError(
+                        f"{contained_practitioner_id} must be referenced by exactly ONE "
+                        + "performer.actor"
+                    )
+
+                performer_actor_references.append(item.get("actor").get("reference"))
+
+            # If no reference contains the id then raise an erro
+            if contained_practitioner_id not in performer_actor_references:
+                raise ValueError(
+                    f"{contained_practitioner_id} must be referenced by exactly ONE "
+                    + "performer.actor"
+                )
+
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    # TODO: Handle scenario where item.get("actor") = None (? can except attribute error)
+    # TODO: ?Add tests for the above scenario
+    @classmethod
+    def pre_validate_organization_identifier_value(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if performer[?(@.actor.type=='Organization').identifier.value]
+        (legacy CSV field name: SITE_CODE) exists, then it is a non-empty string
+        """
+        try:
+            organization_identifier_value = [
+                x
+                for x in values["performer"]
+                if x.get("actor").get("type") == "Organization"
+            ][0]["actor"]["identifier"]["value"]
+            PreValidation.for_string(
+                organization_identifier_value,
+                "performer[?(@.actor.type=='Organization')].actor.identifier.value",
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    # TODO: Handle scenario where item.get("actor") = None (? can except attribute error)
+    @classmethod
+    def pre_validate_organization_display(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='SiteName')].answer[0].valueCoding.code (legacy CSV field name: SITE_NAME)
         exists, then it is a non-empty string
         """
         try:
-            site_name_code = get_generic_questionnaire_response_value(
-                values, "SiteName", "code"
-            )
+            organization_display = [
+                x
+                for x in values["performer"]
+                if x.get("actor").get("type") == "Organization"
+            ][0]["actor"]["display"]
             PreValidation.for_string(
-                site_name_code,
-                generate_field_location_for_questionnnaire_response(
-                    link_id="SiteName", field_type="code"
-                ),
+                organization_display,
+                "performer[?@.actor.type == 'Organization'].actor.display",
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
