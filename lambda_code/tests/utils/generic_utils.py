@@ -17,10 +17,13 @@ def generate_field_location_for_questionnnaire_response(
 
 
 def generate_field_location_for_extension(
-    url: str, field_type: Literal["code", "display"]
+    url: str, system: str, field_type: Literal["code", "display"]
 ) -> str:
     """Generate the field location string for extension items"""
-    return f"extension[?(@.url=='{url}')].valueCodeableConcept.coding[0].{field_type}"
+    return (
+        f"extension[?(@.url=='{url}')].valueCodeableConcept."
+        + f"coding[?(@.system=='{system}')].{field_type}"
+    )
 
 
 def test_valid_values_accepted(

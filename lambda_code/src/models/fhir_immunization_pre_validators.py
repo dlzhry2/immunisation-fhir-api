@@ -148,7 +148,6 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: Handle scenario where item.get("actor") = None (? can except attribute error)
     @classmethod
     def pre_validate_performer_actor_type(cls, values: dict) -> dict:
         """
@@ -168,12 +167,11 @@ class FHIRImmunizationPreValidators:
 
                 found.append(item.get("actor").get("type"))
 
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
 
         return values
 
-    # TODO: Handle scenario where item.get("actor") = None (? can except attribute error)
     @classmethod
     def pre_validate_performer_actor_reference(cls, values: dict) -> dict:
         """
@@ -205,20 +203,18 @@ class FHIRImmunizationPreValidators:
 
                 performer_actor_references.append(item.get("actor").get("reference"))
 
-            # If no reference contains the id then raise an erro
+            # If no reference contains the id then raise an error
             if contained_practitioner_id not in performer_actor_references:
                 raise ValueError(
                     f"{contained_practitioner_id} must be referenced by exactly ONE "
                     + "performer.actor"
                 )
 
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, AttributeError):
             pass
 
         return values
 
-    # TODO: Handle scenario where item.get("actor") = None (? can except attribute error)
-    # TODO: ?Add tests for the above scenario
     @classmethod
     def pre_validate_organization_identifier_value(cls, values: dict) -> dict:
         """
@@ -235,12 +231,11 @@ class FHIRImmunizationPreValidators:
                 organization_identifier_value,
                 "performer[?(@.actor.type=='Organization')].actor.identifier.value",
             )
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, AttributeError):
             pass
 
         return values
 
-    # TODO: Handle scenario where item.get("actor") = None (? can except attribute error)
     @classmethod
     def pre_validate_organization_display(cls, values: dict) -> dict:
         """
@@ -258,7 +253,7 @@ class FHIRImmunizationPreValidators:
                 organization_display,
                 "performer[?@.actor.type == 'Organization'].actor.display",
             )
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, AttributeError):
             pass
 
         return values
@@ -378,24 +373,42 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: need to check that the coding[*] system is unique for each extension
-    # TODO: remove this when the above in complete
+    @classmethod
+    def pre_validate_extension_urls(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if extension exists, then each url is unique
+        """
+        try:
+            PreValidation.for_unique_list(
+                values["extension"],
+                "url",
+                "extension[?(@.url=='FIELD_TO_REPLACE')]",
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
     @classmethod
     def pre_validate_extension_value_codeable_concept_codings(
         cls, values: dict
     ) -> dict:
         """
-        Pre-validate that, if they exist, each extension[{index}].valueCodeableConcept.coding
-        is a list of length 1
+        Pre-validate that, if they exist, each extension[{index}].valueCodeableConcept.coding.system
+        is unique
         """
         try:
-            for index, value in enumerate(values["extension"]):
+            for i in range(len(values["extension"])):
                 try:
-                    coding = value["valueCodeableConcept"]["coding"]
-                    PreValidation.for_list(
-                        coding,
-                        f"extension[{index}].valueCodeableConcept.coding",
-                        defined_length=1,
+                    extension_value_codeable_concept_coding = values["extension"][i][
+                        "valueCodeableConcept"
+                    ]["coding"]
+
+                    PreValidation.for_unique_list(
+                        extension_value_codeable_concept_coding,
+                        "system",
+                        f"extension[?(@.URL=='{values['extension'][i]['url']}']"
+                        + ".valueCodeableConcept.coding[?(@.system=='FIELD_TO_REPLACE')]",
                     )
                 except KeyError:
                     pass
@@ -404,15 +417,12 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: change coding[0] to look for "http://snomed.info/sct"
-    # extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
-    # Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system==
-    # 'http://snomed.info/sct')].code
     @classmethod
     def pre_validate_vaccination_procedure_code(cls, values: dict) -> dict:
         """
         Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
-        Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[0].code
+        Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system==
+        'http://snomed.info/sct')].code
         (legacy CSV field name: VACCINATION_PROCEDURE_CODE) exists, then it is a non-empty string
         """
         try:
@@ -420,29 +430,29 @@ class FHIRImmunizationPreValidators:
                 "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
                 + "VaccinationProcedure"
             )
+            system = "http://snomed.info/sct"
+            field_type = "code"
             vaccination_procedure_code = get_generic_extension_value(
                 values,
                 url,
-                "code",
+                system,
+                field_type,
             )
             PreValidation.for_string(
                 vaccination_procedure_code,
-                generate_field_location_for_extension(url=url, field_type="code"),
+                generate_field_location_for_extension(url, system, field_type),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: change coding[0] to look for "http://snomed.info/sct"
-    # extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
-    # Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system==
-    # 'http://snomed.info/sct')].display
     @classmethod
     def pre_validate_vaccination_procedure_display(cls, values: dict) -> dict:
         """
         Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
-        Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[0].display
+        Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system==
+        'http://snomed.info/sct')].display
         (legacy CSV field name: VACCINATION_PROCEDURE_TERM) exists, then it is a non-empty string
         """
         try:
@@ -450,30 +460,29 @@ class FHIRImmunizationPreValidators:
                 "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
                 + "VaccinationProcedure"
             )
+            system = "http://snomed.info/sct"
+            field_type = "display"
             vaccination_procedure_display = get_generic_extension_value(
                 values,
                 url,
-                "display",
+                system,
+                field_type,
             )
             PreValidation.for_string(
                 vaccination_procedure_display,
-                generate_field_location_for_extension(url=url, field_type="display"),
+                generate_field_location_for_extension(url, system, field_type),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: change coding[0] to look for "http://snomed.info/sct"
-    # extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
-    # Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[?(@.system==
-    # 'http://snomed.info/sct')].code
-    # TODO: amend the test to run on the not-done data
     @classmethod
     def pre_validate_vaccination_situation_code(cls, values: dict) -> dict:
         """
         Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
-        Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[0].code
+        Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[?(@.system==
+        'http://snomed.info/sct')].code
         (legacy CSV field name: VACCINATION_SITUATION_CODE) exists, then it is a non-empty string
         """
         try:
@@ -481,30 +490,26 @@ class FHIRImmunizationPreValidators:
                 "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
                 + "VaccinationSituation"
             )
+            system = "http://snomed.info/sct"
+            field_type = "code"
             vaccination_situation_code = get_generic_extension_value(
-                values,
-                url,
-                "code",
+                values, url, system, field_type
             )
             PreValidation.for_string(
                 vaccination_situation_code,
-                generate_field_location_for_extension(url=url, field_type="code"),
+                generate_field_location_for_extension(url, system, field_type),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: change coding[0] to look for "http://snomed.info/sct"
-    # extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
-    # Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[?(@.system==
-    # 'http://snomed.info/sct')].display
-    # TODO: amend the test to run on the not-done data
     @classmethod
     def pre_validate_vaccination_situation_display(cls, values: dict) -> dict:
         """
         Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
-        Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[0].display
+        Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[?(@.system==
+        'http://snomed.info/sct')].display
         (legacy CSV field name: VACCINATION_SITUATION_TERM) exists, then it is a non-empty string
         """
         try:
@@ -512,71 +517,79 @@ class FHIRImmunizationPreValidators:
                 "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
                 + "VaccinationSituation"
             )
+            system = "http://snomed.info/sct"
+            field_type = "display"
             vaccination_situation_display = get_generic_extension_value(
-                values,
-                url,
-                "display",
+                values, url, system, field_type
             )
             PreValidation.for_string(
                 vaccination_situation_display,
-                generate_field_location_for_extension(url=url, field_type="display"),
+                generate_field_location_for_extension(url, system, field_type),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: amend the test to run on the not-done data
     @classmethod
     def pre_validate_status_reason_coding(cls, values: dict) -> dict:
         """
         Pre-validate that, if statusReason.coding (legacy CSV field name: REASON_GIVEN_CODE)
-        exists, then it is a list of length 1
+        exists, then each coding system value is unique
         """
         try:
             coding = values["statusReason"]["coding"]
-            PreValidation.for_list(
+
+            PreValidation.for_unique_list(
                 coding,
-                "statusReason.coding",
-                defined_length=1,
+                "system",
+                "statusReason.coding[?(@.system=='FIELD_TO_REPLACE')]",
             )
         except KeyError:
             pass
 
         return values
 
-    # TODO: amend the test to run on the not-done data
     @classmethod
     def pre_validate_status_reason_coding_code(cls, values: dict) -> dict:
         """
-        Pre-validate that, if statusReason.coding[0].code (legacy CSV field location:
+        Pre-validate that, if statusReason.coding[?(@.system==
+        'http://snomed.info/sct')].code (legacy CSV field location:
         REASON_NOT_GIVEN_CODE) exists, then it is a non-empty string
         """
         try:
-            status_reason_coding_code = values["statusReason"]["coding"][0]["code"]
+            status_reason_coding_code = [
+                x
+                for x in values["statusReason"]["coding"]
+                if x.get("system") == "http://snomed.info/sct"
+            ][0]["code"]
             PreValidation.for_string(
-                status_reason_coding_code, "statusReason.coding[0].code"
+                status_reason_coding_code,
+                "statusReason.coding[?(@.system=='http://snomed.info/sct')].code",
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: amend the test to run on the not-done data
     @classmethod
     def pre_validate_status_reason_coding_display(cls, values: dict) -> dict:
         """
-        Pre-validate that, if statusReason.coding[0].display (legacy CSV field name:
+        Pre-validate that, if statusReason.coding[?(@.system==
+        'http://snomed.info/sct')].display (legacy CSV field name:
         REASON_NOT_GIVEN_TERM) exists, then it is a non-empty string
         """
         try:
-            status_reason_coding_display = values["statusReason"]["coding"][0][
-                "display"
-            ]
+            status_reason_coding_display = [
+                x
+                for x in values["statusReason"]["coding"]
+                if x.get("system") == "http://snomed.info/sct"
+            ][0]["display"]
             PreValidation.for_string(
-                status_reason_coding_display, "statusReason.coding[0].display"
+                status_reason_coding_display,
+                "statusReason.coding[?(@.system=='http://snomed.info/sct')].display",
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -618,37 +631,40 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: need to check that the coding[*] system is unique
-    # TODO: remove this when the above in complete
     @classmethod
     def pre_validate_vaccine_code_coding(cls, values: dict) -> dict:
-        """Pre-validate that, if vaccineCode.coding exists, then it is a list of length 1"""
+        """Pre-validate that, if vaccineCode.coding exists, then each code system is unique"""
         try:
             vaccine_code_coding = values["vaccineCode"]["coding"]
-            PreValidation.for_list(
+
+            PreValidation.for_unique_list(
                 vaccine_code_coding,
-                "vaccineCode.coding",
-                defined_length=1,
+                "system",
+                "vaccineCode.coding[?(@.system=='FIELD_TO_REPLACE')]",
             )
         except KeyError:
             pass
 
         return values
 
-    # TODO: change coding[0] to look for "http://snomed.info/sct"
-    # vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code
     @classmethod
     def pre_validate_vaccine_code_coding_code(cls, values: dict) -> dict:
         """
-        Pre-validate that, if vaccineCode.coding[0].code (legacy CSV field name:
-        VACCINE_PRODUCT_CODE) exists, then it is a non-empty string
+        Pre-validate that, if vaccineCode.coding[?(@.system==
+        'http://snomed.info/sct')].code (legacy CSV field location:
+        REASON_NOT_GIVEN_CODE) exists, then it is a non-empty string
         """
         try:
-            vaccine_code_coding_code = values["vaccineCode"]["coding"][0]["code"]
+            status_reason_coding_code = [
+                x
+                for x in values["vaccineCode"]["coding"]
+                if x.get("system") == "http://snomed.info/sct"
+            ][0]["code"]
             PreValidation.for_string(
-                vaccine_code_coding_code, "vaccineCode.coding[0].code"
+                status_reason_coding_code,
+                "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code",
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -658,15 +674,21 @@ class FHIRImmunizationPreValidators:
     @classmethod
     def pre_validate_vaccine_code_coding_display(cls, values: dict) -> dict:
         """
-        Pre-validate that, if vaccineCode.coding[0].display (legacy CSV field name:
-        VACCINE_PRODUCT_TERM) exists, then it is a non-empty string
+        Pre-validate that, if vaccineCode.coding[?(@.system==
+        'http://snomed.info/sct')].display (legacy CSV field name:
+        REASON_NOT_GIVEN_TERM) exists, then it is a non-empty string
         """
         try:
-            vaccine_code_coding_display = values["vaccineCode"]["coding"][0]["display"]
+            vaccine_code_coding_display = [
+                x
+                for x in values["vaccineCode"]["coding"]
+                if x.get("system") == "http://snomed.info/sct"
+            ][0]["display"]
             PreValidation.for_string(
-                vaccine_code_coding_display, "vaccineCode.coding[0].display"
+                vaccine_code_coding_display,
+                "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display",
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values

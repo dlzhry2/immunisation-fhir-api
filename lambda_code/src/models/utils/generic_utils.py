@@ -23,11 +23,6 @@ def get_generic_questionnaire_response_value(
         The value coding field type to be validated, must be provided for valueCoding fields
     """
 
-    error_msg = (
-        "$.contained[?(@.resourceType=='QuestionnaireResponse')]"
-        + f".item[?(@.linkId=='{link_id}')].answer[0]"
-    )
-
     questionnaire_reponse = [
         x
         for x in json_data["contained"]
@@ -37,36 +32,35 @@ def get_generic_questionnaire_response_value(
     item = [x for x in questionnaire_reponse["item"] if x.get("linkId") == link_id][0]
 
     if answer_type == "valueCoding":
-        error_msg = f"{error_msg}.{answer_type}.{field_type}"
-        return item["answer"][0][answer_type][field_type]
+        value = item["answer"][0][answer_type][field_type]
 
     if answer_type == "valueReference":
-        error_msg = f"{error_msg}.{answer_type}.identifier.{field_type}"
-        return item["answer"][0][answer_type]["identifier"][field_type]
+        value = item["answer"][0][answer_type]["identifier"][field_type]
 
     if answer_type in ("valueBoolean", "valueString", "valueDateTime"):
-        error_msg = f"{error_msg}.{answer_type}"
-        return item["answer"][0][answer_type]
+        value = item["answer"][0][answer_type]
 
-    raise KeyError(error_msg)
+    return value
 
 
-# TODO : Access value using list comprehension
 def get_generic_extension_value(
     json_data: dict,
     url: str,
+    system: str,
     field_type: Literal["code", "display", "system"],
 ) -> Union[str, None]:
     """
-    Get the value of an extension field, given its url
+    Get the value of an extension field, given its url, field_type, and system
     """
-    for record in json_data["extension"]:
-        if record["url"] == url:
-            return record["valueCodeableConcept"]["coding"][0][field_type]
+    value_codeable_concept_coding = [
+        x for x in json_data["extension"] if x.get("url") == url
+    ][0]["valueCodeableConcept"]["coding"]
 
-    raise KeyError(
-        f"$.extension[?(@.url=='{url}')].valueCodeableConcept.coding[0].{field_type} does not exist"
-    )
+    value = [x for x in value_codeable_concept_coding if x.get("system") == system][0][
+        field_type
+    ]
+
+    return value
 
 
 def generate_field_location_for_questionnnaire_response(
@@ -88,7 +82,10 @@ def generate_field_location_for_questionnnaire_response(
 
 
 def generate_field_location_for_extension(
-    url: str, field_type: Literal["code", "display"]
+    url: str, system: str, field_type: Literal["code", "display"]
 ) -> str:
     """Generate the field location string for extension items"""
-    return f"extension[?(@.url=='{url}')].valueCodeableConcept.coding[0].{field_type}"
+    return (
+        f"extension[?(@.url=='{url}')].valueCodeableConcept."
+        + f"coding[?(@.system=='{system}')].{field_type}"
+    )

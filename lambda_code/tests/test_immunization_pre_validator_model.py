@@ -492,180 +492,225 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             invalid_length_strings_to_test=InvalidValues.for_strings_with_max_100_chars,
         )
 
-    #
-    #    def test_model_pre_validate_extension_value_codeable_concept_codings(self):
-    #        """
-    #        Test pre_validate_extension_value_codeable_concept_codings accepts valid values and rejects
-    #        invalid values
-    #        """
-    #        # Check that both of the 2 relevant coding fields in the sample data are rejected when
-    #        # invalid
-    #        for i in range(2):
-    #            ValidatorModelTests.test_list_value(
-    #                self,
-    #                field_location=f"extension[{i}].valueCodeableConcept.coding",
-    #                valid_lists_to_test=[[ValidValues.snomed_coding_element]],
-    #                predefined_list_length=1,
-    #                valid_list_element=ValidValues.snomed_coding_element,
-    #            )
-    #
-    #    def test_model_pre_validate_vaccination_procedure_code(self):
-    #        """
-    #        Test pre_validate_vaccination_procedure_code accepts valid values and rejects invalid
-    #        values
-    #        """
-    #
-    #        field_location = generate_field_location_for_extension(
-    #            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
-    #            field_type="code",
-    #        )
-    #
-    #        ValidatorModelTests.test_string_value(
-    #            self, field_location=field_location, valid_strings_to_test=["dummy"]
-    #        )
-    #
-    #    def test_model_pre_validate_vaccination_procedure_display(self):
-    #        """
-    #        Test pre_validate_vaccination_procedure_display accepts valid values and rejects
-    #        invalid values
-    #        """
-    #
-    #        field_location = generate_field_location_for_extension(
-    #            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
-    #            field_type="display",
-    #        )
-    #
-    #        ValidatorModelTests.test_string_value(
-    #            self, field_location=field_location, valid_strings_to_test=["dummy"]
-    #        )
-    #
-    #    def test_model_pre_validate_vaccination_situation_code(self):
-    #        """
-    #        Test pre_validate_vaccination_situation_code accepts valid values and rejects invalid
-    #        values
-    #        """
-    #
-    #        field_location = generate_field_location_for_extension(
-    #            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
-    #            field_type="code",
-    #        )
-    #
-    #        ValidatorModelTests.test_string_value(
-    #            self, field_location=field_location, valid_strings_to_test=["dummy"]
-    #        )
-    #
-    #    def test_model_pre_validate_vaccination_situation_display(self):
-    #        """
-    #        Test pre_validate_vaccination_situation_display accepts valid values and rejects invalid
-    #        values
-    #        """
-    #
-    #        field_location = generate_field_location_for_extension(
-    #            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
-    #            field_type="display",
-    #        )
-    #
-    #        ValidatorModelTests.test_string_value(
-    #            self, field_location=field_location, valid_strings_to_test=["dummy"]
-    #        )
-    #
-    #    def test_model_pre_validate_status_reason_coding(self):
-    #        """
-    #        Test pre_validate_status_reason_coding accepts valid values and rejects invalid values
-    #        """
-    #        ValidatorModelTests.test_list_value(
-    #            self,
-    #            field_location="statusReason.coding",
-    #            valid_lists_to_test=[[ValidValues.snomed_coding_element]],
-    #            predefined_list_length=1,
-    #            valid_list_element=ValidValues.snomed_coding_element,
-    #        )
-    #
-    #    def test_model_pre_validate_status_reason_coding_code(self):
-    #        """
-    #        Test pre_validate_status_reason_coding_code accepts valid values and rejects invalid values
-    #        """
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="statusReason.coding[0].code",
-    #            valid_strings_to_test=["dummy"],
-    #        )
-    #
-    #    def test_model_pre_validate_status_reason_coding_display(self):
-    #        """
-    #        Test pre_validate_status_reason_coding_display accepts valid values and rejects invalid
-    #        values
-    #        """
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="statusReason.coding[0].display",
-    #            valid_strings_to_test=["dummy"],
-    #        )
-    #
-    #    def test_model_pre_validate_protocol_applied(self):
-    #        """Test pre_validate_protocol_applied accepts valid values and rejects invalid values"""
-    #        valid_list_element = {
-    #            "targetDisease": [
-    #                {"coding": [{"code": "ABC123"}]},
-    #                {"coding": [{"code": "DEF456"}]},
-    #            ],
-    #            "doseNumberPositiveInt": 1,
-    #        }
-    #
-    #        ValidatorModelTests.test_list_value(
-    #            self,
-    #            field_location="protocolApplied",
-    #            valid_lists_to_test=[[valid_list_element]],
-    #            predefined_list_length=1,
-    #            valid_list_element=valid_list_element,
-    #        )
-    #
-    #    def test_model_pre_validate_protocol_applied_dose_number_positive_int(
-    #        self,
-    #    ):
-    #        """
-    #        Test pre_validate_protocol_applied_dose_number_positive_int accepts valid values and
-    #        rejects invalid values
-    #        """
-    #        # Test invalid data types and non-positive integers
-    #        ValidatorModelTests.test_positive_integer_value(
-    #            self,
-    #            field_location="protocolApplied[0].doseNumberPositiveInt",
-    #            valid_positive_integers_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
-    #            max_value=9,
-    #        )
-    #
-    #    def test_model_pre_validate_vaccine_code_coding(self):
-    #        """Test pre_validate_vaccine_code_coding accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_list_value(
-    #            self,
-    #            field_location="vaccineCode.coding",
-    #            valid_lists_to_test=[[ValidValues.snomed_coding_element]],
-    #            predefined_list_length=1,
-    #            valid_list_element=ValidValues.snomed_coding_element,
-    #        )
-    #
-    #    def test_model_pre_validate_vaccine_code_coding_code(self):
-    #        """
-    #        Test pre_validate_vaccine_code_coding_code accepts valid values and rejects invalid values
-    #        """
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="vaccineCode.coding[0].code",
-    #            valid_strings_to_test=["dummy"],
-    #        )
-    #
-    #    def test_model_pre_validate_vaccine_code_coding_display(self):
-    #        """
-    #        Test pre_validate_vaccine_code_coding_display accepts valid values and rejects invalid
-    #        values
-    #        """
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="vaccineCode.coding[0].display",
-    #            valid_strings_to_test=["dummy"],
-    #        )
-    #
+    def test_model_pre_validate_extension_urls(self):
+        """
+        Test pre_validate_extension_urls accepts valid values and rejects invalid
+        values
+        """
+        valid_extension_item = {
+            "url": "https://fhir.hl7.org.uk/StructureDefinition"
+            + "/Extension-UKCore-VaccinationProcedure",
+            "valueCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "1324681000000101",
+                        "display": "Administration of first dose of severe acute "
+                        + "respiratory syndrome coronavirus 2 vaccine (procedure)",
+                    }
+                ]
+            },
+        }
+
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location="extension",
+            valid_lists_to_test=[[valid_extension_item]],
+            invalid_list_with_duplicates_to_test=[
+                valid_extension_item,
+                valid_extension_item,
+            ],
+            expected_error_message="extension[?(@.url=='https://fhir.hl7.org.uk"
+            + "/StructureDefinition/Extension-UKCore-VaccinationProcedure')] must be unique",
+        )
+
+    def test_model_pre_validate_extension_value_codeable_concept_codings(self):
+        """
+        Test pre_validate_extension_value_codeable_concept_codings accepts valid values and rejects
+        invalid values
+        """
+
+        valid_extension_values = [
+            [
+                {
+                    "url": "https://fhir.hl7.org.uk/StructureDefinition"
+                    + "/Extension-UKCore-VaccinationProcedure",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "http://snomed.info/sct",
+                                "code": "1324681000000101",
+                                "display": "Administration of first dose of severe acute "
+                                + "respiratory syndrome coronavirus 2 vaccine (procedure)",
+                            },
+                            {
+                                "system": "dm+d url",
+                                "code": "DUMMY DM+D CODE",
+                                "display": "Administration of first dose of severe acute "
+                                + "respiratory syndrome coronavirus 2 vaccine (procedure)",
+                            },
+                        ]
+                    },
+                },
+                {
+                    "url": "https://fhir.hl7.org.uk/StructureDefinition"
+                    + "/Extension-UKCore-VaccinationSituation",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "http://snomed.info/sct",
+                                "code": "SOME DUMMY SNOMED CODE",
+                                "display": "DUMMY TERM FOR THE SNOMED CODE",
+                            }
+                        ]
+                    },
+                },
+            ]
+        ]
+
+        invalid_extension_value = [
+            {
+                "url": "https://fhir.hl7.org.uk/StructureDefinition"
+                + "/Extension-UKCore-VaccinationProcedure",
+                "valueCodeableConcept": {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "1324681000000101",
+                            "display": "Administration of first dose of severe acute "
+                            + "respiratory syndrome coronavirus 2 vaccine (procedure)",
+                        }
+                    ]
+                },
+            },
+            {
+                "url": "https://fhir.hl7.org.uk/StructureDefinition"
+                + "/Extension-UKCore-VaccinationSituation",
+                "valueCodeableConcept": {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "SOME DUMMY SNOMED CODE",
+                            "display": "DUMMY TERM FOR THE SNOMED CODE",
+                        },
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "A DIFFERENT SNOMED CODE",
+                            "display": "DUMMY TERM FOR THE SNOMED CODE",
+                        },
+                    ]
+                },
+            },
+        ]
+
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location="extension",
+            valid_lists_to_test=valid_extension_values,
+            invalid_list_with_duplicates_to_test=invalid_extension_value,
+            expected_error_message="extension[?(@.URL=='https://fhir.hl7.org.uk"
+            + "/StructureDefinition/Extension-UKCore-VaccinationSituation']"
+            + ".valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')] must be unique",
+        )
+
+    def test_model_pre_validate_vaccination_procedure_code(self):
+        """
+        Test pre_validate_vaccination_procedure_code accepts valid values and rejects invalid
+        values
+        """
+
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+            system="http://snomed.info/sct",
+            field_type="code",
+        )
+
+        ValidatorModelTests.test_string_value(
+            self, field_location=field_location, valid_strings_to_test=["dummy"]
+        )
+
+    def test_model_pre_validate_vaccination_procedure_display(self):
+        """
+        Test pre_validate_vaccination_procedure_display accepts valid values and rejects
+        invalid values
+        """
+
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+            system="http://snomed.info/sct",
+            field_type="display",
+        )
+
+        ValidatorModelTests.test_string_value(
+            self, field_location=field_location, valid_strings_to_test=["dummy"]
+        )
+
+    def test_model_pre_validate_protocol_applied(self):
+        """Test pre_validate_protocol_applied accepts valid values and rejects invalid values"""
+        valid_list_element = {
+            "targetDisease": [
+                {"coding": [{"code": "ABC123"}]},
+                {"coding": [{"code": "DEF456"}]},
+            ],
+            "doseNumberPositiveInt": 1,
+        }
+
+        ValidatorModelTests.test_list_value(
+            self,
+            field_location="protocolApplied",
+            valid_lists_to_test=[[valid_list_element]],
+            predefined_list_length=1,
+            valid_list_element=valid_list_element,
+        )
+
+    def test_model_pre_validate_protocol_applied_dose_number_positive_int(self):
+        """
+        Test pre_validate_protocol_applied_dose_number_positive_int accepts valid values and
+        rejects invalid values
+        """
+        # Test invalid data types and non-positive integers
+        ValidatorModelTests.test_positive_integer_value(
+            self,
+            field_location="protocolApplied[0].doseNumberPositiveInt",
+            valid_positive_integers_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
+            max_value=9,
+        )
+
+    def test_model_pre_validate_vaccine_code_coding(self):
+        """Test pre_validate_vaccine_code_coding accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location="vaccineCode.coding",
+            valid_lists_to_test=[[ValidValues.snomed_coding_element]],
+            invalid_list_with_duplicates_to_test=[
+                ValidValues.snomed_coding_element,
+                ValidValues.snomed_coding_element,
+            ],
+            expected_error_message="vaccineCode.coding[?(@.system=='http://snomed.info/sct')]"
+            + " must be unique",
+        )
+
+    def test_model_pre_validate_vaccine_code_coding_code(self):
+        """
+        Test pre_validate_vaccine_code_coding_code accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code",
+            valid_strings_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_vaccine_code_coding_display(self):
+        """
+        Test pre_validate_vaccine_code_coding_display accepts valid values and rejects invalid
+        values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display",
+            valid_strings_to_test=["dummy"],
+        )
+
     #    def test_model_pre_validate_manufacturer_display(self):
     #        """
     #        Test pre_validate_manufacturer_display accepts valid values and rejects invalid values
@@ -1011,13 +1056,112 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='ReduceValidation')].answer[0].valueBoolean",
         )
 
-    def test_model_pre_validate_reduce_validation_reason_answer(self):
+    # def test_model_pre_validate_reduce_validation_reason_answer(self):
+    #     """
+    #     Test pre_validate_reduce_validation_display accepts valid values and rejects invalid values
+    #     """
+    #     ValidatorModelTests.test_string_value(
+    #         self,
+    #         field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+    #         + ".item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString",
+    #         valid_strings_to_test=["From DPS CSV"],
+    #     )
+
+
+class TestImmunizationModelPreValidationRulesForNotDone(unittest.TestCase):
+    """Test immunization pre validation rules on the FHIR model using the status="not-done" data"""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up for the tests. This only runs once when the class is instantiated"""
+        # Set up the path for the sample data
+        cls.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
+
+        # set up the sample immunization event JSON data
+        cls.immunization_file_path = (
+            f"{cls.data_path}/sample_immunization_not_done_event.json"
+        )
+        with open(cls.immunization_file_path, "r", encoding="utf-8") as f:
+            cls.json_data = json.load(f, parse_float=Decimal)
+
+        # set up the untouched sample immunization event JSON data
+        cls.untouched_json_data = deepcopy(cls.json_data)
+
+        # set up the validator and add custom root validators
+        cls.validator = ImmunizationValidator()
+        cls.validator.add_custom_root_pre_validators()
+
+    def setUp(self):
+        """Set up for each test. This runs before every test"""
+        # Ensure that good data is not inadvertently amended by the tests
+        self.assertEqual(self.untouched_json_data, self.json_data)
+
+    def test_model_pre_validate_vaccination_situation_code(self):
         """
-        Test pre_validate_reduce_validation_display accepts valid values and rejects invalid values
+        Test pre_validate_vaccination_situation_code accepts valid values and rejects invalid
+        values
+        """
+
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+            system="http://snomed.info/sct",
+            field_type="code",
+        )
+
+        ValidatorModelTests.test_string_value(
+            self, field_location=field_location, valid_strings_to_test=["dummy"]
+        )
+
+    def test_model_pre_validate_vaccination_situation_display(self):
+        """
+        Test pre_validate_vaccination_situation_display accepts valid values and rejects invalid
+        values
+        """
+
+        field_location = generate_field_location_for_extension(
+            url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+            system="http://snomed.info/sct",
+            field_type="display",
+        )
+
+        ValidatorModelTests.test_string_value(
+            self, field_location=field_location, valid_strings_to_test=["dummy"]
+        )
+
+    def test_model_pre_validate_status_reason_coding(self):
+        """
+        Test pre_validate_status_reason_coding accepts valid values and rejects invalid values
+        """
+
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location="statusReason.coding",
+            valid_lists_to_test=[[ValidValues.snomed_coding_element]],
+            invalid_list_with_duplicates_to_test=[
+                ValidValues.snomed_coding_element,
+                ValidValues.snomed_coding_element,
+            ],
+            expected_error_message="statusReason.coding[?(@.system=='http://snomed.info/sct')]"
+            + " must be unique",
+        )
+
+    def test_model_pre_validate_status_reason_coding_code(self):
+        """
+        Test pre_validate_status_reason_coding_code accepts valid values and rejects invalid values
         """
         ValidatorModelTests.test_string_value(
             self,
-            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
-            + ".item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString",
-            valid_strings_to_test=["From DPS CSV"],
+            field_location="statusReason.coding[?(@.system=='http://snomed.info/sct')].code",
+            valid_strings_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_status_reason_coding_display(self):
+        """
+        Test pre_validate_status_reason_coding_display accepts valid values and rejects invalid
+        values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="statusReason.coding[?(@.system=='http://snomed.info/sct')].display",
+            valid_strings_to_test=["dummy"],
         )
