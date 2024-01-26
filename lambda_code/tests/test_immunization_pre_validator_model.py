@@ -711,187 +711,288 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_strings_to_test=["dummy"],
         )
 
-    #    def test_model_pre_validate_manufacturer_display(self):
-    #        """
-    #        Test pre_validate_manufacturer_display accepts valid values and rejects invalid values
-    #        """
-    #        ValidatorModelTests.test_string_value(
-    #            self, field_location="manufacturer.display", valid_strings_to_test=["dummy"]
-    #        )
-    #
-    #    def test_model_pre_validate_lot_number(self):
-    #        """Test pre_validate_lot_number accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="lotNumber",
-    #            valid_strings_to_test=["sample", "0123456789101112"],
-    #            max_length=100,
-    #            invalid_length_strings_to_test=InvalidValues.for_strings_with_max_100_chars,
-    #        )
-    #
-    #    def test_model_pre_validate_expiration_date(self):
-    #        """Test pre_validate_expiration_date accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_date_value(
-    #            self,
-    #            field_location="expirationDate",
-    #        )
-    #
-    #    def test_model_pre_validate_site_coding(self):
-    #        """Test pre_validate_site_coding accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_list_value(
-    #            self,
-    #            field_location="site.coding",
-    #            valid_lists_to_test=[[ValidValues.snomed_coding_element]],
-    #            predefined_list_length=1,
-    #            valid_list_element=ValidValues.snomed_coding_element,
-    #        )
-    #
-    #    def test_model_pre_validate_site_coding_code(self):
-    #        """Test pre_validate_site_coding_code accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_string_value(
-    #            self, field_location="site.coding[0].code", valid_strings_to_test=["dummy"]
-    #        )
-    #
-    #    def test_model_pre_validate_site_coding_display(self):
-    #        """Test pre_validate_site_coding_display accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="site.coding[0].display",
-    #            valid_strings_to_test=["dummy"],
-    #        )
-    #
-    #    def test_model_pre_validate_route_coding(self):
-    #        """Test pre_validate_route_coding accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_list_value(
-    #            self,
-    #            field_location="route.coding",
-    #            valid_lists_to_test=[[ValidValues.snomed_coding_element]],
-    #            predefined_list_length=1,
-    #            valid_list_element=ValidValues.snomed_coding_element,
-    #        )
-    #
-    #    def test_model_pre_validate_route_coding_code(self):
-    #        """Test pre_validate_route_coding_code accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="route.coding[0].code",
-    #            valid_strings_to_test=["dummy"],
-    #        )
-    #
-    #    def test_model_pre_validate_valid_route_coding_display(self):
-    #        """
-    #        Test pre_validate_route_coding_display accepts valid values and rejects invalid values
-    #        """
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="route.coding[0].display",
-    #            valid_strings_to_test=["dummy"],
-    #        )
-    #
-    #    def test_model_pre_validate_dose_quantity_value(self):
-    #        """Test pre_validate_dose_quantity_value accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_decimal_or_integer_value(
-    #            self,
-    #            field_location="doseQuantity.value",
-    #            valid_decimals_and_integers_to_test=[
-    #                1,  # small integer
-    #                100,  # larger integer
-    #                Decimal("1.0"),  # Only 0s after decimal point
-    #                Decimal("0.1"),  # 1 decimal place
-    #                Decimal("100.52"),  # 2 decimal places
-    #                Decimal("32.430"),  # 3 decimal places
-    #                Decimal("1.1234"),  # 4 decimal places,
-    #            ],
-    #            max_decimal_places=4,
-    #        )
-    #
-    #    def test_model_pre_validate_dose_quantity_code(self):
-    #        """Test pre_validate_dose_quantity_code accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_string_value(
-    #            self, field_location="doseQuantity.code", valid_strings_to_test=["ABC123"]
-    #        )
-    #
-    #    def test_model_pre_validate_dose_quantity_unit(self):
-    #        """Test pre_validate_dose_quantity_unit accepts valid values and rejects invalid values"""
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="doseQuantity.unit",
-    #            valid_strings_to_test=["Millilitre"],
-    #        )
-    #
-    #    def test_model_pre_validate_reason_code_codings(self):
-    #        """Test pre_validate_reason_code_codings accepts valid values and rejects invalid values"""
-    #        # Check that both of the 2 reasonCode[{index}].coding fields in the sample data are rejected
-    #        # when invalid
-    #        for i in range(2):
-    #            ValidatorModelTests.test_list_value(
-    #                self,
-    #                field_location=f"reasonCode[{i}].coding",
-    #                valid_lists_to_test=[[{"code": "ABC123", "display": "test"}]],
-    #                predefined_list_length=1,
-    #                valid_list_element={"code": "ABC123", "display": "test"},
-    #            )
-    #
-    #    def test_model_pre_validate_reason_code_coding_codes(self):
-    #        """
-    #        Test pre_validate_reason_code_coding_codes accepts valid values and rejects invalid values
-    #        """
-    #        # Check that both of the reasonCode[{index}].coding[0].code fields in the sample data are
-    #        # rejected when invalid
-    #        for i in range(2):
-    #            ValidatorModelTests.test_string_value(
-    #                self,
-    #                field_location=f"reasonCode[{i}].coding[0].code",
-    #                valid_strings_to_test=["ABC123"],
-    #            )
-    #
-    #    def test_model_pre_validate_reason_code_coding_displays(self):
-    #        """
-    #        Test pre_validate_reason_code_coding_displays accepts valid values and rejects invalid
-    #        values
-    #        """
-    #        # Check that both of the reasonCode[{index}].coding[0].display fields in the sample data are
-    #        # rejected when invalid
-    #        for i in range(2):
-    #            ValidatorModelTests.test_string_value(
-    #                self,
-    #                field_location=f"reasonCode[{i}].coding[0].display",
-    #                valid_strings_to_test=["test"],
-    #            )
-    #
-    #    def test_model_pre_validate_nhs_number_status_code(self):
-    #        """
-    #        Test pre_validate_nhs_number_status_code accepts valid values and rejects invalid values
-    #        """
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
-    #            + ".item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.code",
-    #            valid_strings_to_test=["01"],
-    #        )
-    #
-    #    def test_model_pre_validate_nhs_number_status_display(self):
-    #        """
-    #        Test pre_validate_nhs_number_status_display accepts valid values and rejects invalid values
-    #        """
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
-    #            + ".item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.display",
-    #            valid_strings_to_test=["Number present and verified"],
-    #        )
-    #
-    #    def test_model_pre_validate_site_code_system(self):
-    #        """
-    #        Test pre_validate_site_code_system accepts valid values and rejects invalid values
-    #        """
-    #        ValidatorModelTests.test_string_value(
-    #            self,
-    #            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
-    #            + ".item[?(@.linkId=='SiteCode')].answer[0].valueCoding.system",
-    #            valid_strings_to_test=["snomed"],
-    #        )
-    #
+    def test_model_pre_validate_manufacturer_display(self):
+        """
+        Test pre_validate_manufacturer_display accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self, field_location="manufacturer.display", valid_strings_to_test=["dummy"]
+        )
+
+    def test_model_pre_validate_lot_number(self):
+        """Test pre_validate_lot_number accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="lotNumber",
+            valid_strings_to_test=["sample", "0123456789101112"],
+            max_length=100,
+            invalid_length_strings_to_test=InvalidValues.for_strings_with_max_100_chars,
+        )
+
+    def test_model_pre_validate_expiration_date(self):
+        """Test pre_validate_expiration_date accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_date_value(
+            self,
+            field_location="expirationDate",
+        )
+
+    def test_model_pre_validate_site_coding(self):
+        """Test pre_validate_site_coding accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location="site.coding",
+            valid_lists_to_test=[[ValidValues.snomed_coding_element]],
+            invalid_list_with_duplicates_to_test=[
+                ValidValues.snomed_coding_element,
+                ValidValues.snomed_coding_element,
+            ],
+            expected_error_message="site.coding[?(@.system=='http://snomed.info/sct')]"
+            + " must be unique",
+        )
+
+    def test_model_pre_validate_site_coding_code(self):
+        """Test pre_validate_site_coding_code accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="site.coding[?(@.system=='http://snomed.info/sct')].code",
+            valid_strings_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_site_coding_display(self):
+        """Test pre_validate_site_coding_display accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="site.coding[?(@.system=='http://snomed.info/sct')].display",
+            valid_strings_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_route_coding(self):
+        """Test pre_validate_route_coding accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location="route.coding",
+            valid_lists_to_test=[[ValidValues.snomed_coding_element]],
+            invalid_list_with_duplicates_to_test=[
+                ValidValues.snomed_coding_element,
+                ValidValues.snomed_coding_element,
+            ],
+            expected_error_message="route.coding[?(@.system=='http://snomed.info/sct')]"
+            + " must be unique",
+        )
+
+    def test_model_pre_validate_route_coding_code(self):
+        """Test pre_validate_route_coding_code accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="route.coding[?(@.system=='http://snomed.info/sct')].code",
+            valid_strings_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_route_coding_display(self):
+        """Test pre_validate_route_coding_display accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="route.coding[?(@.system=='http://snomed.info/sct')].display",
+            valid_strings_to_test=["dummy"],
+        )
+
+    def test_model_pre_validate_dose_quantity_value(self):
+        """Test pre_validate_dose_quantity_value accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_decimal_or_integer_value(
+            self,
+            field_location="doseQuantity.value",
+            valid_decimals_and_integers_to_test=[
+                1,  # small integer
+                100,  # larger integer
+                Decimal("1.0"),  # Only 0s after decimal point
+                Decimal("0.1"),  # 1 decimal place
+                Decimal("100.52"),  # 2 decimal places
+                Decimal("32.430"),  # 3 decimal places
+                Decimal("1.1234"),  # 4 decimal places,
+            ],
+            max_decimal_places=4,
+        )
+
+    def test_model_pre_validate_dose_quantity_code(self):
+        """Test pre_validate_dose_quantity_code accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self, field_location="doseQuantity.code", valid_strings_to_test=["ABC123"]
+        )
+
+    def test_model_pre_validate_dose_quantity_unit(self):
+        """Test pre_validate_dose_quantity_unit accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="doseQuantity.unit",
+            valid_strings_to_test=["Millilitre"],
+        )
+
+    # TODO: ?add extra reason code to sample data for validation testing
+    def test_model_pre_validate_reason_code_codings(self):
+        """Test pre_validate_reason_code_codings accepts valid values and rejects invalid values"""
+        # Check that both of the 2 reasonCode[{index}].coding fields in the sample data are rejected
+        # when invalid
+        for i in range(1):
+            ValidatorModelTests.test_list_value(
+                self,
+                field_location=f"reasonCode[{i}].coding",
+                valid_lists_to_test=[[{"code": "ABC123", "display": "test"}]],
+                predefined_list_length=1,
+                valid_list_element={"code": "ABC123", "display": "test"},
+            )
+
+    # TODO: ?add extra reason code to sample data for validation testing
+    def test_model_pre_validate_reason_code_coding_codes(self):
+        """
+        Test pre_validate_reason_code_coding_codes accepts valid values and rejects invalid values
+        """
+        # Check that both of the reasonCode[{index}].coding[0].code fields in the sample data are
+        # rejected when invalid
+        for i in range(1):
+            ValidatorModelTests.test_string_value(
+                self,
+                field_location=f"reasonCode[{i}].coding[0].code",
+                valid_strings_to_test=["ABC123"],
+            )
+
+    # TODO: ?add extra reason code to sample data for validation testing
+    def test_model_pre_validate_reason_code_coding_displays(self):
+        """
+        Test pre_validate_reason_code_coding_displays accepts valid values and rejects invalid
+        values
+        """
+        # Check that both of the reasonCode[{index}].coding[0].display fields in the sample data are
+        # rejected when invalid
+        for i in range(1):
+            ValidatorModelTests.test_string_value(
+                self,
+                field_location=f"reasonCode[{i}].coding[0].display",
+                valid_strings_to_test=["test"],
+            )
+
+    def test_model_pre_validate_patient_identifier_extension(self):
+        """
+        Test pre_validate_patient_identifier_extension accepts valid values and rejects invalid
+        values
+        """
+        valid_patient_extension_item = {
+            "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+            + "NHSNumberVerificationStatus",
+            "valueCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-"
+                        + "NHSNumberVerificationStatusEngland",
+                        "code": "NHS_NUMBER_STATUS_INDICATOR_CODE",
+                        "display": "NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION",
+                    }
+                ]
+            },
+        }
+
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location="contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension",
+            valid_lists_to_test=[[valid_patient_extension_item]],
+            invalid_list_with_duplicates_to_test=[
+                valid_patient_extension_item,
+                valid_patient_extension_item,
+            ],
+            expected_error_message="contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url=="
+            + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+            + "NHSNumberVerificationStatus')] must be unique",
+        )
+
+    def test_model_pre_validate_nhs_number_verification_status_coding(self):
+        """
+        Test pre_validate_nhs_number_verification_status_coding accepts valid values and rejects
+        invalid values
+        """
+        valid_coding_item = {
+            "system": "https://fhir.hl7.org.uk/CodeSystem"
+            + "/UKCore-NHSNumberVerificationStatusEngland",
+            "code": "NHS_NUMBER_STATUS_INDICATOR_CODE",
+            "display": "NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION",
+        }
+
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location="contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url=="
+            + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+            + "NHSNumberVerificationStatus')].valueCodeableConcept.coding",
+            valid_lists_to_test=[[valid_coding_item]],
+            invalid_list_with_duplicates_to_test=[
+                valid_coding_item,
+                valid_coding_item,
+            ],
+            expected_error_message="contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url=="
+            + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+            + "NHSNumberVerificationStatus')].valueCodeableConcept.coding"
+            + "[?(@.system=='https://fhir.hl7.org.uk/CodeSystem/UKCore-"
+            + "NHSNumberVerificationStatusEngland')] must be unique",
+        )
+
+    def test_model_pre_validate_nhs_number_verification_status_code(self):
+        """
+        Test pre_validate_nhs_number_verification_status_code accepts valid values and
+        rejects invalid values
+        """
+        url = (
+            "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+            + "NHSNumberVerificationStatus"
+        )
+        system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+        field_type = "code"
+
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + generate_field_location_for_extension(url, system, field_type)
+        )
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location,
+            valid_strings_to_test=["01"],
+        )
+
+    def test_model_pre_validate_nhs_number_verification_status_display(self):
+        """
+        Test pre_validate_nhs_number_verification_status_display accepts valid values and
+        rejects invalid values
+        """
+        url = (
+            "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+            + "NHSNumberVerificationStatus"
+        )
+        system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+        field_type = "display"
+
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + generate_field_location_for_extension(url, system, field_type)
+        )
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location,
+            valid_strings_to_test=["01"],
+        )
+
+    def test_model_pre_validate_organisation_identifier_system(self):
+        """
+        Test pre_validate_organization_identifier_system accepts valid systems and rejects invalid
+        systems
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="performer[?(@.actor.type=='Organization')].actor.identifier.system",
+            valid_strings_to_test=["DUMMY"],
+        )
+
     def test_model_pre_validate_local_patient_value(self):
         """
         Test pre_validate_local_patient_value accepts valid values and rejects invalid values
@@ -1056,17 +1157,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='ReduceValidation')].answer[0].valueBoolean",
         )
 
-    # def test_model_pre_validate_reduce_validation_reason_answer(self):
-    #     """
-    #     Test pre_validate_reduce_validation_display accepts valid values and rejects invalid values
-    #     """
-    #     ValidatorModelTests.test_string_value(
-    #         self,
-    #         field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
-    #         + ".item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString",
-    #         valid_strings_to_test=["From DPS CSV"],
-    #     )
-
 
 class TestImmunizationModelPreValidationRulesForNotDone(unittest.TestCase):
     """Test immunization pre validation rules on the FHIR model using the status="not-done" data"""
@@ -1132,7 +1222,6 @@ class TestImmunizationModelPreValidationRulesForNotDone(unittest.TestCase):
         """
         Test pre_validate_status_reason_coding accepts valid values and rejects invalid values
         """
-
         ValidatorModelTests.test_unique_list(
             self,
             field_location="statusReason.coding",
@@ -1165,3 +1254,49 @@ class TestImmunizationModelPreValidationRulesForNotDone(unittest.TestCase):
             field_location="statusReason.coding[?(@.system=='http://snomed.info/sct')].display",
             valid_strings_to_test=["dummy"],
         )
+
+
+# class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCase):
+#     """
+#     Test immunization pre validation rules on the FHIR model using the status="reduce validation"
+#     data
+#     """
+
+#     @classmethod
+#     def setUpClass(cls):
+#         """Set up for the tests. This only runs once when the class is instantiated"""
+#         # Set up the path for the sample data
+#         cls.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
+
+#         # set up the sample immunization event JSON data
+#         cls.immunization_file_path = (
+#             f"{cls.data_path}/sample_immunization_reduce_validation_event.json"
+#         )
+#         with open(cls.immunization_file_path, "r", encoding="utf-8") as f:
+#             cls.json_data = json.load(f, parse_float=Decimal)
+
+#         # set up the untouched sample immunization event JSON data
+#         cls.untouched_json_data = deepcopy(cls.json_data)
+
+#         # set up the validator and add custom root validators
+#         cls.validator = ImmunizationValidator()
+#         cls.validator.add_custom_root_pre_validators()
+
+#     def setUp(self):
+#         """Set up for each test. This runs before every test"""
+#         # Ensure that good data is not inadvertently amended by the tests
+#         self.assertEqual(self.untouched_json_data, self.json_data)
+
+#         # TODO: Create separate validation rule to check reduce validation field only and
+#         # not apply validation if this is true
+
+#     # def test_model_pre_validate_reduce_validation_reason_answer(self):
+#     #     """
+#     #     Test pre_validate_reduce_validation_display accepts valid values and rejects invalid values
+#     #     """
+#     #     ValidatorModelTests.test_string_value(
+#     #         self,
+#     #         field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+#     #         + ".item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString",
+#     #         valid_strings_to_test=["From DPS CSV"],
+#     #     )

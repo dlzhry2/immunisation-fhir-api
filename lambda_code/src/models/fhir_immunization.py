@@ -137,63 +137,73 @@ class ImmunizationValidator:
             FHIRImmunizationPreValidators.pre_validate_vaccine_code_coding_display,
             pre=True,
         )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_manufacturer_display, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_lot_number, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_expiration_date, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_site_coding, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_site_coding_code, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_site_coding_display, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_route_coding, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_route_coding_code, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_route_coding_display, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_dose_quantity_value, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_dose_quantity_code, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_dose_quantity_unit, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_reason_code_codings, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_reason_code_coding_codes,
-        #    pre=True,
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_reason_code_coding_displays,
-        #    pre=True,
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_nhs_number_status_code, pre=True
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_nhs_number_status_display,
-        #    pre=True,
-        # )
-        # self.immunization.add_root_validator(
-        #    FHIRImmunizationPreValidators.pre_validate_site_code_system, pre=True
-        # )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_manufacturer_display, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_lot_number, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_expiration_date, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_site_coding, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_site_coding_code, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_site_coding_display, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_route_coding, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_route_coding_code, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_route_coding_display, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_dose_quantity_value, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_dose_quantity_code, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_dose_quantity_unit, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_reason_code_codings, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_reason_code_coding_codes,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_reason_code_coding_displays,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_patient_identifier_extension,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_nhs_number_verification_status_coding,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_nhs_number_verification_status_code,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_nhs_number_verification_status_display,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_organization_identifier_system,
+            pre=True,
+        )
         self.immunization.add_root_validator(
             FHIRImmunizationPreValidators.pre_validate_local_patient_value, pre=True
         )

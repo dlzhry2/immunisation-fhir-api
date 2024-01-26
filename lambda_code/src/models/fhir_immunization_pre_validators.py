@@ -669,8 +669,6 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: change coding[0] to look for "http://snomed.info/sct"
-    # vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display
     @classmethod
     def pre_validate_vaccine_code_coding_display(cls, values: dict) -> dict:
         """
@@ -735,105 +733,126 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: need to check that the coding[*] system is unique
-    # TODO: remove this when the above in complete
     @classmethod
     def pre_validate_site_coding(cls, values: dict) -> dict:
-        """Pre-validate that, if site.coding exists, then it is a list of length 1"""
+        """Pre-validate that, if site.coding exists, then each code system is unique"""
         try:
-            site_coding = values["site"]["coding"]
-            PreValidation.for_list(
-                site_coding,
-                "site.coding",
-                defined_length=1,
+            coding = values["site"]["coding"]
+
+            PreValidation.for_unique_list(
+                coding,
+                "system",
+                "site.coding[?(@.system=='FIELD_TO_REPLACE')]",
             )
         except KeyError:
             pass
 
         return values
 
-    # TODO: change coding[0] to look for "http://snomed.info/sct"
-    # site.coding[?(@.system=='http://snomed.info/sct')].code
     @classmethod
     def pre_validate_site_coding_code(cls, values: dict) -> dict:
         """
-        Pre-validate that, if site.coding[0].code (legacy CSV field name: SITE_OF_VACCINATION_CODE)
-        exists, then it is a non-empty string
+        Pre-validate that, if site.coding[?(@.system=='http://snomed.info/sct')].code
+        (legacy CSV field name: SITE_OF_VACCINATION_CODE) exists, then it is a non-empty string
         """
         try:
-            site_coding_code = values["site"]["coding"][0]["code"]
-            PreValidation.for_string(site_coding_code, "site.coding[0].code")
-        except KeyError:
+            site_coding_code = [
+                x
+                for x in values["site"]["coding"]
+                if x.get("system") == "http://snomed.info/sct"
+            ][0]["code"]
+            PreValidation.for_string(
+                site_coding_code,
+                "site.coding[?(@.system=='http://snomed.info/sct')].code",
+            )
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: change coding[0] to look for "http://snomed.info/sct"
-    # site.coding[?(@.system=='http://snomed.info/sct')].display
     @classmethod
     def pre_validate_site_coding_display(cls, values: dict) -> dict:
         """
-        Pre-validate that, if site.coding[0].display (legacy CSV field name:
-        SITE_OF_VACCINATION_TERM) exists, then it is a non-empty string
+        Pre-validate that, if site.coding[?(@.system=='http://snomed.info/sct')].display
+        (legacy CSV field name: SITE_OF_VACCINATION_TERM) exists, then it is a non-empty string
         """
         try:
-            site_coding_display = values["site"]["coding"][0]["display"]
-            PreValidation.for_string(site_coding_display, "site.coding[0].display")
-        except KeyError:
+            site_coding_display = [
+                x
+                for x in values["site"]["coding"]
+                if x.get("system") == "http://snomed.info/sct"
+            ][0]["display"]
+
+            PreValidation.for_string(
+                site_coding_display,
+                "site.coding[?(@.system=='http://snomed.info/sct')].display",
+            )
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: need to check that the coding[*] system is unique
-    # TODO: remove this when the above in complete
     @classmethod
     def pre_validate_route_coding(cls, values: dict) -> dict:
-        """Pre-validate that, if route.coding exists, then it is a list of length 1"""
+        """Pre-validate that, if route.coding exists, then each code system is unique"""
         try:
-            route_coding = values["route"]["coding"]
-            PreValidation.for_list(
-                route_coding,
-                "route.coding",
-                defined_length=1,
+            coding = values["route"]["coding"]
+
+            PreValidation.for_unique_list(
+                coding,
+                "system",
+                "route.coding[?(@.system=='FIELD_TO_REPLACE')]",
             )
         except KeyError:
             pass
 
         return values
 
-    # TODO: change coding[0] to look for "http://snomed.info/sct"
-    # route.coding[?(@.system=='http://snomed.info/sct')].code
     @classmethod
     def pre_validate_route_coding_code(cls, values: dict) -> dict:
         """
-        Pre-validate that, if route.coding[0].code (legacy CSV field name:
-        ROUTE_OF_VACCINATION_CODE) exists, then it is a non-empty string
+        Pre-validate that, if route.coding[?(@.system=='http://snomed.info/sct')].code
+        (legacy CSV field name: ROUTE_OF_VACCINATION_CODE) exists, then it is a non-empty string
         """
         try:
-            route_coding_code = values["route"]["coding"][0]["code"]
-            PreValidation.for_string(route_coding_code, "route.coding[0].code")
-        except KeyError:
+            route_coding_code = [
+                x
+                for x in values["route"]["coding"]
+                if x.get("system") == "http://snomed.info/sct"
+            ][0]["code"]
+            PreValidation.for_string(
+                route_coding_code,
+                "route.coding[?(@.system=='http://snomed.info/sct')].code",
+            )
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: change coding[0] to look for "http://snomed.info/sct"
-    # route.coding[?(@.system=='http://snomed.info/sct')].display
     @classmethod
     def pre_validate_route_coding_display(cls, values: dict) -> dict:
         """
-        Pre-validate that, if route.coding[0].display (legacy CSV field name:
-        ROUTE_OF_VACCINATION_TERM) exists, then it is a non-empty string
+        Pre-validate that, if route.coding[?(@.system=='http://snomed.info/sct')].display
+        (legacy CSV field name: ROUTE_OF_VACCINATION_TERM) exists, then it is a non-empty string
         """
         try:
-            route_coding_display = values["route"]["coding"][0]["display"]
-            PreValidation.for_string(route_coding_display, "route.coding[0].display")
-        except KeyError:
+            route_coding_display = [
+                x
+                for x in values["route"]["coding"]
+                if x.get("system") == "http://snomed.info/sct"
+            ][0]["display"]
+
+            PreValidation.for_string(
+                route_coding_display,
+                "route.coding[?(@.system=='http://snomed.info/sct')].display",
+            )
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: need to validate that doseQuantity.system is "http://unitsofmeasure.org"
+    # TODO: need to validate that doseQuantity.system is "http://unitsofmeasure.org"? Check with Martin
+
     @classmethod
     def pre_validate_dose_quantity_value(cls, values: dict) -> dict:
         """
@@ -941,92 +960,187 @@ class FHIRImmunizationPreValidators:
                     )
                 except KeyError:
                     pass
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # TODO: check that the url is unique
-    # TODO: need to check that the coding[*] system is unique
-    # TODO: change where we get nhs_number_status_code from
-    # (to contained[?(@.resourceType=='Patient')].extension[?(@.url==
-    # 'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]
-    # .valueCodeableConcept.coding[?(@.system==
-    # 'https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland')].code)
-    # TODO: change name of method to match new location
     @classmethod
-    def pre_validate_nhs_number_status_code(cls, values: dict) -> dict:
+    def pre_validate_patient_identifier_extension(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].identifier
+        [?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension exists, then each url is unique
+        """
+        try:
+            patient_identifier = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["identifier"]
+            patient_extension = [
+                x
+                for x in patient_identifier
+                if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0]["extension"]
+
+            PreValidation.for_unique_list(
+                patient_extension,
+                "url",
+                "contained[?(@.resourceType=='Patient')].identifier"
+                + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url=="
+                + "'FIELD_TO_REPLACE')]",
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_nhs_number_verification_status_coding(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if "contained[?(@.resourceType=='Patient')].identifier
+        [?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url==
+        'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-
+        NHSNumberVerificationStatus')].valueCodeableConcept.coding exists, then each url is unique
+        """
+        try:
+            patient_identifier = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["identifier"]
+
+            patient_extension = [
+                x
+                for x in patient_identifier
+                if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0]["extension"]
+
+            nhs_number_verification_status_coding = [
+                x
+                for x in patient_extension
+                if x.get("url")
+                == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+                + "NHSNumberVerificationStatus"
+            ][0]["valueCodeableConcept"]["coding"]
+
+            PreValidation.for_unique_list(
+                nhs_number_verification_status_coding,
+                "system",
+                "contained[?(@.resourceType=='Patient')].identifier"
+                + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url=="
+                + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+                + "NHSNumberVerificationStatus')].valueCodeableConcept.coding"
+                + "[?(@.system=='FIELD_TO_REPLACE')]",
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_nhs_number_verification_status_code(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].extension[?(@.url==
         'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]
-        .valueCodeableConcept.coding[0].code (legacy CSV field name: NHS_NUMBER_STATUS_INDICATOR_CODE)
-        exists, then it is a non-empty string
+        .valueCodeableConcept.coding[0].code (legacy CSV field name:
+        NHS_NUMBER_STATUS_INDICATOR_CODE) exists, then it is a non-empty string
         """
         try:
-            nhs_number_status_code = get_generic_questionnaire_response_value(
-                values, "NhsNumberStatus", "code"
+            url = (
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-"
+                + "UKCore-NHSNumberVerificationStatus"
             )
+            system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+            field_type = "code"
+
+            patient_identifier = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["identifier"]
+
+            patient_identifier_extension_item = [
+                x
+                for x in patient_identifier
+                if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0]
+
+            nhs_number_verification_status_code = get_generic_extension_value(
+                patient_identifier_extension_item, url, system, field_type
+            )
+
+            field_location = (
+                "contained[?(@.resourceType=='Patient')].identifier"
+                + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+                + generate_field_location_for_extension(url, system, field_type)
+            )
+
             PreValidation.for_string(
-                nhs_number_status_code,
-                generate_field_location_for_questionnnaire_response(
-                    link_id="NhsNumberStatus", field_type="code"
-                ),
+                nhs_number_verification_status_code,
+                field_location,
             )
         except KeyError:
             pass
 
         return values
 
-    # TODO: change where we get nhs_number_status_display from
-    # (to contained[?(@.resourceType=='Patient')].extension[?(@.url==
-    # 'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]
-    # .valueCodeableConcept.coding[?(@.system==
-    # 'https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland')].display)
-    # TODO: change name of method to match new location
     @classmethod
-    def pre_validate_nhs_number_status_display(cls, values: dict) -> dict:
+    def pre_validate_nhs_number_verification_status_display(cls, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='NhsNumberStatus')].answer[0].valueCoding.display (legacy CSV field name:
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].extension[?(@.url==
+        'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]
+        .valueCodeableConcept.coding[0].display (legacy CSV field name:
         NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION) exists, then it is a non-empty string
         """
         try:
-            nhs_number_status_display = get_generic_questionnaire_response_value(
-                values, "NhsNumberStatus", "display"
+            url = (
+                "https://fhir.hl7.org.uk/StructureDefinition/Extension-"
+                + "UKCore-NHSNumberVerificationStatus"
             )
+            system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+            field_type = "display"
+
+            patient_identifier = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["identifier"]
+
+            patient_identifier_extension_item = [
+                x
+                for x in patient_identifier
+                if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0]
+
+            nhs_number_verification_status_display = get_generic_extension_value(
+                patient_identifier_extension_item, url, system, field_type
+            )
+
+            field_location = (
+                "contained[?(@.resourceType=='Patient')].identifier"
+                + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+                + generate_field_location_for_extension(url, system, field_type)
+            )
+
             PreValidation.for_string(
-                nhs_number_status_display,
-                generate_field_location_for_questionnnaire_response(
-                    link_id="NhsNumberStatus", field_type="display"
-                ),
+                nhs_number_verification_status_display,
+                field_location,
             )
         except KeyError:
             pass
 
         return values
 
-    # TODO: search for actor type organization
-    # change where we get site_code_system from
-    # (to performer[?@.actor.type == "Organization"].actor.identifier.system)
-    # TODO: change name of method to match new location
     @classmethod
-    def pre_validate_site_code_system(cls, values: dict) -> dict:
+    def pre_validate_organization_identifier_system(cls, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='SiteCode')].answer[0].valueCoding.system (legacy CSV field name:
-        SITE_CODE_TYPE_URI) exists, then it is a non-empty string
+        Pre-validate that, if performer[?(@.actor.type=='Organization').identifier.system]
+        (legacy CSV field name: SITE_CODE_TYPE_URI) exists, then it is a non-empty string
         """
         try:
-            site_code_system = get_generic_questionnaire_response_value(
-                values, "SiteCode", "system"
-            )
+            organization_identifier_system = [
+                x
+                for x in values["performer"]
+                if x.get("actor").get("type") == "Organization"
+            ][0]["actor"]["identifier"]["system"]
             PreValidation.for_string(
-                site_code_system,
-                generate_field_location_for_questionnnaire_response(
-                    link_id="SiteCode", field_type="system"
-                ),
+                organization_identifier_system,
+                "performer[?(@.actor.type=='Organization')].actor.identifier.system",
             )
-        except KeyError:
+        except (KeyError, IndexError, AttributeError):
             pass
 
         return values

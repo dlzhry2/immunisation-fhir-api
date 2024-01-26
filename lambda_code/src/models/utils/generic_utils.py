@@ -47,7 +47,7 @@ def get_generic_extension_value(
     json_data: dict,
     url: str,
     system: str,
-    field_type: Literal["code", "display", "system"],
+    field_type: Literal["code", "display"],
 ) -> Union[str, None]:
     """
     Get the value of an extension field, given its url, field_type, and system
