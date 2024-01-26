@@ -1010,24 +1010,28 @@ class FHIRImmunizationPreValidators:
         return values
 
     @classmethod
-    def pre_validate_local_patient_code(cls, values: dict) -> dict:
+    def pre_validate_local_patient_value(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.code (legacy CSV field name:
+        .item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.value (legacy CSV field name:
         LOCAL_PATIENT_ID) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueReference"
             local_patient_code = get_generic_questionnaire_response_value(
-                values, "LocalPatient", "code"
+                values,
+                "LocalPatient",
+                answer_type=answer_type,
+                field_type="value",
             )
             PreValidation.for_string(
                 local_patient_code,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="LocalPatient", field_type="code"
+                    link_id="LocalPatient", answer_type=answer_type, field_type="value"
                 ),
                 max_length=20,
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -1040,16 +1044,20 @@ class FHIRImmunizationPreValidators:
         LOCAL_PATIENT_URI) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueReference"
             local_patient_system = get_generic_questionnaire_response_value(
-                values, "LocalPatient", "system"
+                values,
+                "LocalPatient",
+                answer_type=answer_type,
+                field_type="system",
             )
             PreValidation.for_string(
                 local_patient_system,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="LocalPatient", field_type="system"
+                    link_id="LocalPatient", answer_type=answer_type, field_type="system"
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -1062,16 +1070,20 @@ class FHIRImmunizationPreValidators:
         CONSENT_FOR_TREATMENT_CODE) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueCoding"
             consent_code = get_generic_questionnaire_response_value(
-                values, "Consent", "code"
+                values,
+                "Consent",
+                answer_type=answer_type,
+                field_type="code",
             )
             PreValidation.for_string(
                 consent_code,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="Consent", field_type="code"
+                    link_id="Consent", answer_type=answer_type, field_type="code"
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -1084,16 +1096,20 @@ class FHIRImmunizationPreValidators:
         CONSENT_FOR_TREATMENT_DESCRIPTION) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueCoding"
             consent_display = get_generic_questionnaire_response_value(
-                values, "Consent", "display"
+                values,
+                "Consent",
+                answer_type=answer_type,
+                field_type="display",
             )
             PreValidation.for_string(
                 consent_display,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="Consent", field_type="display"
+                    link_id="Consent", answer_type=answer_type, field_type="display"
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -1106,16 +1122,20 @@ class FHIRImmunizationPreValidators:
         CARE_SETTING_TYPE_CODE) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueCoding"
             care_setting_code = get_generic_questionnaire_response_value(
-                values, "CareSetting", "code"
+                values,
+                "CareSetting",
+                answer_type=answer_type,
+                field_type="code",
             )
             PreValidation.for_string(
                 care_setting_code,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="CareSetting", field_type="code"
+                    link_id="CareSetting", answer_type=answer_type, field_type="code"
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -1128,148 +1148,138 @@ class FHIRImmunizationPreValidators:
         CARE_SETTING_TYPE_DESCRIPTION) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueCoding"
             care_setting_display = get_generic_questionnaire_response_value(
-                values, "CareSetting", "display"
+                values,
+                "CareSetting",
+                answer_type=answer_type,
+                field_type="display",
             )
             PreValidation.for_string(
                 care_setting_display,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="CareSetting", field_type="display"
+                    link_id="CareSetting", answer_type=answer_type, field_type="display"
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # change where we get ip_address_code from
-    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
-    # .item[?(@.linkId=='IpAddress')].answer[0].valueString)
-    # TODO: change name of method to match new location
     @classmethod
-    def pre_validate_ip_address_code(cls, values: dict) -> dict:
+    def pre_validate_ip_address(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='IpAddress')].answer[0].valueCoding.code (legacy CSV field name:
+        .item[?(@.linkId=='IpAddress')].answer[0].valueString (legacy CSV field name:
         IP_ADDRESS) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueString"
             ip_address_code = get_generic_questionnaire_response_value(
-                values, "IpAddress", "code"
+                values, "IpAddress", answer_type=answer_type
             )
             PreValidation.for_string(
                 ip_address_code,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="IpAddress", field_type="code"
+                    link_id="IpAddress", answer_type=answer_type
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # change where we get user_id_code from
-    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
-    # .item[?(@.linkId=='UserId')].answer[0].valueString)
-    # TODO: change name of method to match new location
     @classmethod
-    def pre_validate_user_id_code(cls, values: dict) -> dict:
+    def pre_validate_user_id(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='UserId')].answer[0].valueCoding.code (legacy CSV field name:
+        .item[?(@.linkId=='UserId')].answer[0].valueString (legacy CSV field name:
         USER_ID) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueString"
             user_id_code = get_generic_questionnaire_response_value(
-                values, "UserId", "code"
+                values, "UserId", answer_type=answer_type
             )
             PreValidation.for_string(
                 user_id_code,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="UserId", field_type="code"
+                    link_id="UserId", answer_type=answer_type
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # change where we get user_name from
-    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
-    # .item[?(@.linkId=='UserName')].answer[0].valueString)
-    # TODO: change name of method to match new location
     @classmethod
-    def pre_validate_user_name_code(cls, values: dict) -> dict:
+    def pre_validate_user_name(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='UserName')].answer[0].valueCoding.code (legacy CSV field name:
+        .item[?(@.linkId=='UserName')].answer[0].valueString (legacy CSV field name:
         USER_NAME) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueString"
             user_name_code = get_generic_questionnaire_response_value(
-                values, "UserName", "code"
+                values, "UserName", answer_type=answer_type
             )
             PreValidation.for_string(
                 user_name_code,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="UserName", field_type="code"
+                    link_id="UserName", answer_type=answer_type
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # change where we get user_email_code from
-    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
-    # .item[?(@.linkId=='UserEmail')].answer[0].valueString)
-    # TODO: change name of method to match new location
     @classmethod
-    def pre_validate_user_email_code(cls, values: dict) -> dict:
+    def pre_validate_user_email(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='UserEmail')].answer[0].valueCoding.code (legacy CSV field name:
+        .item[?(@.linkId=='UserEmail')].answer[0].valueString (legacy CSV field name:
         USER_EMAIL) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueString"
             user_email_code = get_generic_questionnaire_response_value(
-                values, "UserEmail", "code"
+                values, "UserEmail", answer_type=answer_type
             )
             PreValidation.for_string(
                 user_email_code,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="UserEmail", field_type="code"
+                    link_id="UserEmail", answer_type=answer_type
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # change where we get submitted_time_stamp_code from
-    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
-    # .item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueDateTime)
-    # TODO: change name of method to match new location
     @classmethod
-    def pre_validate_submitted_time_stamp_code(cls, values: dict) -> dict:
+    def pre_validate_submitted_time_stamp(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueCoding.code (legacy CSV field name:
+        .item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueDateTime (legacy CSV field name:
         SUBMITTED_TIMESTAMP), then it is a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or
         "YYYY-MM-DDThh:mm:ss-zz:zz" (i.e. date and time, including timezone offset in hours and
-        minutes), representing a valid datetime.
+        minutes), representing a valid datetime. Milliseconds are optional after the seconds
+        (e.g. 2021-01-01T00:00:00.000+00:00).
         """
         try:
+            answer_type = "valueDateTime"
             submitted_time_stamp_code = get_generic_questionnaire_response_value(
-                values, "SubmittedTimeStamp", "code"
+                values, "SubmittedTimeStamp", answer_type=answer_type
             )
             PreValidation.for_date_time(
                 submitted_time_stamp_code,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="SubmittedTimeStamp", field_type="code"
+                    link_id="SubmittedTimeStamp", answer_type=answer_type
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -1306,55 +1316,49 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # change where we get reduce_validation_code from
-    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
-    # .item[?(@.linkId=='ReduceValidation')].answer[0].valueBoolean)
-    # TODO: change name of method to match new location
     @classmethod
-    def pre_validate_reduce_validation_code(cls, values: dict) -> dict:
+    def pre_validate_reduce_validation(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.code (legacy CSV field name:
+        .item[?(@.linkId=='ReduceValidation')].answer[0].valueBoolean (legacy CSV field name:
         REDUCE_VALIDATION_CODE) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueBoolean"
             reduce_validation_code = get_generic_questionnaire_response_value(
-                values, "ReduceValidation", "code"
+                values, "ReduceValidation", answer_type=answer_type
             )
-            PreValidation.for_string(
+            PreValidation.for_boolean(
                 reduce_validation_code,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="ReduceValidation", field_type="code"
+                    link_id="ReduceValidation", answer_type=answer_type
                 ),
-                predefined_values=Constants.REDUCE_VALIDATION_CODES,
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
 
-    # change where we get reduce_validation_display from
-    # (to contained[?(@.resourceType=='QuestionnaireResponse')]
-    # .item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString)
-    # TODO: change name of method to match new location
     @classmethod
-    def pre_validate_reduce_validation_display(cls, values: dict) -> dict:
+    def pre_validate_reduce_validation_reason(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='ReduceValidation')].answer[0].valueCoding.display (legacy CSV field name:
+        .item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString" (legacy CSV field name:
         REDUCE_VALIDATION_REASON) exists, then it is a non-empty string
         """
         try:
+            answer_type = "valueString"
             reduce_validation_display = get_generic_questionnaire_response_value(
-                values, "ReduceValidation", "display"
+                values, "ReduceValidationReason", answer_type=answer_type
             )
             PreValidation.for_string(
                 reduce_validation_display,
                 generate_field_location_for_questionnnaire_response(
-                    link_id="ReduceValidation", field_type="display"
+                    link_id="ReduceValidationReason",
+                    answer_type=answer_type,
                 ),
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
