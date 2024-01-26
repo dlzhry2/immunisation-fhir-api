@@ -31,11 +31,8 @@ class FhirService:
 
         if patient_is_restricted:
             filtered_immunization = remove_personal_info(imms)
-            print(filtered_immunization, "<<<<<<<<<< FILTERED IMMUNZATION")
-            print(Immunization.parse_obj(filtered_immunization), "<<<<<<<<< RESTRICTED PARSED AND FILTERED IMMS")
             return Immunization.parse_obj(filtered_immunization)
         else:
-            print(Immunization.parse_obj(imms), "<<<<<<<<< PARSED IMMS")
             return Immunization.parse_obj(imms)
 
     def create_immunization(self, immunization: dict) -> Immunization:

@@ -1,7 +1,7 @@
 import json
 import unittest
 from unittest.mock import create_autospec
-
+import os
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.list import List as FhirList
 from fhir_repository import ImmunizationRepository
@@ -59,29 +59,46 @@ class TestGetImmunization(unittest.TestCase):
         self.validator = create_autospec(ImmunizationValidator)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
 
-    # def test_get_immunization_by_id(self):
-    #     """it should find an Immunization by id"""
-    #     imms_id = "an-id"
-    #     self.imms_repo.get_immunization_by_id.return_value = _create_an_immunization(imms_id).dict()
+    def test_get_immunization_by_id(self):
+        """it should find an Immunization by id"""
+        imms_id = "an-id"
+        self.imms_repo.get_immunization_by_id.return_value = _create_an_immunization(imms_id).dict()
 
-    #     # When
-    #     act_imms = self.fhir_service.get_immunization_by_id(imms_id)
+        # When
+        act_imms = self.fhir_service.get_immunization_by_id(imms_id)
 
-    #     # Then
-    #     self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
-    #     self.assertEqual(act_imms.id, imms_id)
+        # Then
+        self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
+        self.assertEqual(act_imms.id, imms_id)
 
-    # def test_immunization_not_found(self):
-    #     """it should return None if Immunization doesn't exist"""
-    #     imms_id = "none-existent-id"
-    #     self.imms_repo.get_immunization_by_id.return_value = None
+    def test_immunization_not_found(self):
+        """it should return None if Immunization doesn't exist"""
+        imms_id = "none-existent-id"
+        self.imms_repo.get_immunization_by_id.return_value = None
 
-    #     # When
-    #     act_imms = self.fhir_service.get_immunization_by_id(imms_id)
+        # When
+        act_imms = self.fhir_service.get_immunization_by_id(imms_id)
 
-    #     # Then
-    #     self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
-    #     self.assertEqual(act_imms, None)
+        # Then
+        self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
+        self.assertEqual(act_imms, None)
+    
+    def test_get_immunization_by_id_patient_restricted(self):
+        """it should return a filtered Immunization when patient is restricted"""
+        imms_id = "restricted_id"
+        with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/sample_immunization_event.json", 'r') as immunization_data_file:
+            immunization_data = json.load(immunization_data_file)
+        with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json", 'r') as filtered_immunization_data_file:
+            filtered_immunization = json.load(filtered_immunization_data_file)
+        self.imms_repo.get_immunization_by_id.return_value = immunization_data
+        patient_data = {"meta": {"security": [{"display": "restricted"}]}}
+        self.fhir_service.pds_service.get_patient_details.return_value = patient_data
+
+        # When
+        act_res = self.fhir_service.get_immunization_by_id(imms_id)
+
+        # Then
+        self.assertEqual(act_res, Immunization.parse_obj(filtered_immunization))
 
 
 class TestCreateImmunization(unittest.TestCase):
@@ -196,3 +213,9 @@ class TestSearchImmunizations(unittest.TestCase):
         # Then
         self.assertIsInstance(result, FhirList)
         self.assertListEqual([entry.id for entry in result.entry], imms_ids)
+
+if __name__ == '__main__':
+    tests = unittest.TestSuite()
+    tests.addTest(TestGetImmunization.test_get_immunization_by_id_patient_restricted)
+
+    tests.run()
