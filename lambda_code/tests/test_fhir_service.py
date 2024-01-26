@@ -6,7 +6,7 @@ from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.list import List as FhirList
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome
-from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError
+from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError, InconsistentIdError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from pydantic import ValidationError
@@ -202,6 +202,22 @@ class TestUpdateImmunization(unittest.TestCase):
         self.imms_repo.update_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
+    def test_id_not_present(self):
+        """it should populate id in the message if it is not present"""
+        req_imms_id = "an-id"
+        self.imms_repo.update_immunization.return_value = None
+        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
+
+        req_imms = _create_an_immunization_dict("we-will-remove-this-id")
+        del req_imms['id']
+
+        # When
+        self.fhir_service.update_immunization(req_imms_id, req_imms)
+
+        # Then
+        passed_imms = self.imms_repo.update_immunization.call_args.args[1]
+        self.assertEqual(passed_imms["id"], req_imms_id)
+
     def test_consistent_imms_id(self):
         """Immunization[id] should be the same as request"""
         req_imms_id = "an-id"
@@ -211,22 +227,25 @@ class TestUpdateImmunization(unittest.TestCase):
         obj_imms_id = "a-diff-id"
         req_imms = _create_an_immunization_dict(obj_imms_id)
 
-        # When
-        self.fhir_service.update_immunization(req_imms_id, req_imms)
+        with self.assertRaises(InconsistentIdError) as error:
+            # When
+            self.fhir_service.update_immunization(req_imms_id, req_imms)
 
         # Then
-        passed_imms = self.imms_repo.update_immunization.call_args.args[1]
-        self.assertEqual(passed_imms["id"], req_imms_id)
+        self.assertEqual(req_imms_id, error.exception.imms_id)
+        self.imms_repo.update_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
 
     def test_patient_error(self):
         """it should throw error when PDS can't resolve patient"""
         self.fhir_service.pds_service.get_patient_details.return_value = None
+        imms_id = "an-id"
         invalid_nhs_number = "a-bad-patient-id"
-        bad_patient_imms = _create_an_immunization_dict("an-id", invalid_nhs_number)
+        bad_patient_imms = _create_an_immunization_dict(imms_id, invalid_nhs_number)
 
         with self.assertRaises(InvalidPatientId) as e:
             # When
-            self.fhir_service.update_immunization(invalid_nhs_number, bad_patient_imms)
+            self.fhir_service.update_immunization(imms_id, bad_patient_imms)
 
         # Then
         self.assertEqual(e.exception.nhs_number, invalid_nhs_number)
