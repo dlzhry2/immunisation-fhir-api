@@ -50,7 +50,7 @@ class FhirService:
         imms = self.immunization_repo.delete_immunization(imms_id)
         return Immunization.parse_obj(imms)
 
-    def search_immunizations(self, nhs_number: str, disease_type: str):
+    def search_immunizations(self, nhs_number: str, disease_type: str) -> FhirList:
         """find all instances of Immunization(s) for a patient and specified disease type.
         Returns List[Immunization]
         """

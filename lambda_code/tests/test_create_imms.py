@@ -1,6 +1,5 @@
 import json
 import unittest
-import uuid
 from unittest.mock import create_autospec
 
 from create_imms_handler import create_immunization
@@ -32,7 +31,7 @@ class TestCreateImmunizationById(unittest.TestCase):
         error_msg = "an unhandled error"
         self.controller.create_immunization.side_effect = Exception(error_msg)
 
-        exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+        exp_error = create_operation_outcome(resource_id=None, severity=Severity.error,
                                              code=Code.server_error,
                                              diagnostics=error_msg)
 
@@ -42,8 +41,6 @@ class TestCreateImmunizationById(unittest.TestCase):
         # Then
         act_body = json.loads(act_res["body"])
         act_body["id"] = None
-        exp_body = json.loads(exp_error.json())  # to and from json so, we get from OrderedDict to Dict
-        exp_body["id"] = None
 
-        self.assertDictEqual(act_body, exp_body)
+        self.assertDictEqual(act_body, exp_error)
         self.assertEqual(act_res["statusCode"], 500)

@@ -34,14 +34,15 @@ class TestFhirController(unittest.TestCase):
 
     def test_create_response(self):
         """it should return application/fhir+json with correct status code"""
-        res = self.controller.create_response(42, "a body")
+        body = {"message": "a body"}
+        res = self.controller.create_response(42, body)
         headers = res["headers"]
 
         self.assertEqual(res["statusCode"], 42)
         self.assertDictEqual(headers, {
             "Content-Type": "application/fhir+json",
         })
-        self.assertEqual(res["body"], "a body")
+        self.assertDictEqual(json.loads(res["body"]), body)
 
 
 class TestFhirControllerGetImmunizationById(unittest.TestCase):
