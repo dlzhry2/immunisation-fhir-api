@@ -32,7 +32,7 @@ def seed_records(imms_api: ImmunisationApi, records):
 
             stored_imms = imms_api.create_immunization(imms)
             if stored_imms.status_code != 201:
-                print(stored_imms.text())
+                print(stored_imms.text)
             assert stored_imms.status_code == 201
             sleep(0.1)
 

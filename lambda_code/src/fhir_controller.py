@@ -42,7 +42,7 @@ class FhirController:
 
         resource = self.fhir_service.get_immunization_by_id(imms_id)
         if resource:
-            return FhirController.create_response(200, resource.dict())
+            return FhirController.create_response(200, resource.json())
         else:
             msg = "The requested resource was not found."
             id_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
@@ -58,7 +58,7 @@ class FhirController:
 
         try:
             resource = self.fhir_service.create_immunization(imms)
-            return self.create_response(201, resource.dict())
+            return self.create_response(201, resource.json())
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
         except UnhandledResponseError as unhandled_error:
@@ -73,7 +73,7 @@ class FhirController:
 
         try:
             resource = self.fhir_service.delete_immunization(imms_id)
-            return self.create_response(200, resource.dict())
+            return self.create_response(200, resource.json())
         except ResourceNotFoundError as not_found:
             return self.create_response(404, not_found.to_operation_outcome())
         except UnhandledResponseError as unhandled_error:
@@ -89,7 +89,7 @@ class FhirController:
 
         result = self.fhir_service.search_immunizations(params["nhsNumber"], params["diseaseType"])
 
-        return self.create_response(200, result.dict())
+        return self.create_response(200, result.json())
 
     def _validate_id(self, _id: str) -> Optional[dict]:
         if not re.match(self.immunization_id_pattern, _id):
@@ -107,11 +107,14 @@ class FhirController:
         return self.create_response(400, error)
 
     @staticmethod
-    def create_response(status_code, body: dict):
+    def create_response(status_code, body):
+        if isinstance(body, dict):
+            body = json.dumps(body)
+
         return {
             "statusCode": status_code,
             "headers": {
                 "Content-Type": "application/fhir+json",
             },
-            "body": json.dumps(body)
+            "body": body
         }
