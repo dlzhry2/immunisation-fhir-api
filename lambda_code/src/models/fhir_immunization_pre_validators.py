@@ -33,6 +33,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: To add validation that contained patient is referenced by immunization.patient
+
     @classmethod
     def pre_validate_patient_identifier(cls, values: dict) -> dict:
         """
@@ -69,6 +71,150 @@ class FHIRImmunizationPreValidators:
                 "contained[?(@.resourceType=='Patient')].identifier[0].value",
                 defined_length=10,
                 spaces_allowed=False,
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_patient_name(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].name exists,
+        then it is an array of length 1
+        """
+        try:
+            patient_name = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["name"]
+            PreValidation.for_list(
+                patient_name,
+                "contained[?(@.resourceType=='Patient')].name",
+                defined_length=1,
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_patient_name_given(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].name[0].given
+        (legacy CSV field name: PERSON_FORENAME) exists, then it is a
+        an array containing a single non-empty string
+        """
+        try:
+            patient_name_given = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["name"][0]["given"]
+            PreValidation.for_list(
+                patient_name_given,
+                "contained[?(@.resourceType=='Patient')].name[0].given",
+                defined_length=1,
+                elements_are_strings=True,
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_patient_name_family(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].name[0].family
+        (legacy CSV field name: PERSON_SURNAME) exists, then it is a
+        an array containing a single non-empty string
+        """
+        try:
+            patient_name_family = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["name"][0]["family"]
+            PreValidation.for_string(
+                patient_name_family,
+                "contained[?(@.resourceType=='Patient')].name[0].family",
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_patient_birth_date(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].birthDate
+        (legacy CSV field name: PERSON_DOB) exists, then it is a
+        string in the format YYYY-MM-DD, representing a valid date
+        """
+        try:
+            patient_birth_date = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["birthDate"]
+            PreValidation.for_date(
+                patient_birth_date, "contained[?(@.resourceType=='Patient')].birthDate"
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_patient_gender(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].gender
+        (legacy CSV field name: PERSON_GENDER_CODE) exists,
+        then it is a string, which is one of the following: male, female, other, unknown
+        """
+        try:
+            patient_gender = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["gender"]
+            PreValidation.for_string(
+                patient_gender,
+                "contained[?(@.resourceType=='Patient')].gender",
+                predefined_values=Constants.GENDERS,
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_patient_address(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].address exists, then it is
+        an array of length 1
+        """
+        try:
+            patient_address = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["address"]
+            PreValidation.for_list(
+                patient_address,
+                "contained[?(@.resourceType=='Patient')].address",
+                defined_length=1,
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_patient_address_postal_code(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].address[0].postalCode
+        (legacy CSV field name: PERSON_POSTCODE) exists, then it is a non-empty string,
+        separated into two parts by a single space
+        """
+
+        try:
+            patient_address_postal_code = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]["address"][0]["postalCode"]
+            PreValidation.for_string(
+                patient_address_postal_code,
+                "contained[?(@.resourceType=='Patient')].address[0].postalCode",
+                is_postal_code=True,
             )
         except (KeyError, IndexError):
             pass
@@ -172,6 +318,9 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    # TODO: Fix doc string.
+    # TODO: Fix this method as currently will pass if "performer" or "actor" does not
+    # exist, even if contained_practitioner_id does
     @classmethod
     def pre_validate_performer_actor_reference(cls, values: dict) -> dict:
         """
@@ -280,7 +429,7 @@ class FHIRImmunizationPreValidators:
         try:
             identifier_value = values["identifier"][0]["value"]
             PreValidation.for_string(identifier_value, "identifier[0].value")
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -294,7 +443,7 @@ class FHIRImmunizationPreValidators:
         try:
             identifier_system = values["identifier"][0]["system"]
             PreValidation.for_string(identifier_system, "identifier[0].system")
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -626,7 +775,7 @@ class FHIRImmunizationPreValidators:
                 "protocolApplied[0].doseNumberPositiveInt",
                 max_value=9,
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -1074,7 +1223,7 @@ class FHIRImmunizationPreValidators:
                 nhs_number_verification_status_code,
                 field_location,
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values
@@ -1119,7 +1268,7 @@ class FHIRImmunizationPreValidators:
                 nhs_number_verification_status_display,
                 field_location,
             )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
         return values

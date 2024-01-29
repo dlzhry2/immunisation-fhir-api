@@ -129,6 +129,85 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ],
         )
 
+    def test_model_pre_validate_patient_name(self):
+        """Test pre_validate_patient_name accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_list_value(
+            self,
+            field_location="contained[?(@.resourceType=='Patient')].name",
+            valid_lists_to_test=[[{"family": "Test"}]],
+            predefined_list_length=1,
+            valid_list_element={"family": "Test"},
+        )
+
+    def test_model_pre_validate_patient_name_given(self):
+        """Test pre_validate_patient_name_given accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_list_value(
+            self,
+            field_location="contained[?(@.resourceType=='Patient')].name[0].given",
+            valid_lists_to_test=[["Test"], ["Test test"]],
+            predefined_list_length=1,
+            valid_list_element="Test",
+            is_list_of_strings=True,
+        )
+
+    def test_model_pre_validate_patient_name_family(self):
+        """Test pre_validate_patient_name_family accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='Patient')].name[0].family",
+            valid_strings_to_test=["test"],
+        )
+
+    def test_model_pre_validate_patient_birth_date(self):
+        """Test pre_validate_patient_birth_date accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_date_value(
+            self, field_location="contained[?(@.resourceType=='Patient')].birthDate"
+        )
+
+    def test_model_pre_validate_patient_gender(self):
+        """Test pre_validate_patient_gender accepts valid values and rejects invalid values"""
+        invalid_strings_to_test = [
+            "0",
+            "1",
+            "2",
+            "9",
+            "Male",
+            "Female",
+            "Unknown",
+            "Other",
+        ]
+
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='Patient')].gender",
+            valid_strings_to_test=["male", "female", "other", "unknown"],
+            predefined_values=("male", "female", "other", "unknown"),
+            invalid_strings_to_test=invalid_strings_to_test,
+        )
+
+    def test_model_pre_validate_patient_address(self):
+        """Test pre_validate_patient_address accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_list_value(
+            self,
+            field_location="contained[?(@.resourceType=='Patient')].address",
+            valid_lists_to_test=[[{"postalCode": "AA1 1AA"}]],
+            predefined_list_length=1,
+            valid_list_element={"family": "Test"},
+        )
+
+    def test_model_pre_validate_patient_address_postal_code(self):
+        """
+        Test pre_validate_patient_address_postal_code accepts valid values and rejects
+        invalid values
+        """
+        # Test invalid data types and empty string
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='Patient')].address[0].postalCode",
+            valid_strings_to_test=["AA00 00AA", "A0 0AA"],
+            is_postal_code=True,
+        )
+
     def test_model_pre_validate_occurrence_date_time(self):
         """
         Test pre_validate_occurrence_date_time accepts valid values and rejects invalid values

@@ -40,6 +40,28 @@ class ImmunizationValidator:
             pre=True,
         )
         self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_patient_name, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_patient_name_given, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_patient_name_family, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_patient_birth_date, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_patient_gender, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_patient_address, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_patient_address_postal_code,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
             FHIRImmunizationPreValidators.pre_validate_occurrence_date_time, pre=True
         )
         self.immunization.add_root_validator(
