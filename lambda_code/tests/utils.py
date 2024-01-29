@@ -6,7 +6,6 @@ from typing import Literal, Any
 from decimal import Decimal
 from pydantic import ValidationError
 from jsonpath_ng.ext import parse
-from icecream import ic
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
 
 

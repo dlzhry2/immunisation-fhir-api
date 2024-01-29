@@ -4,7 +4,6 @@ import os
 import json
 from copy import deepcopy
 from decimal import Decimal
-from icecream import ic
 
 from models.fhir_immunization import ImmunizationValidator
 from .utils import (

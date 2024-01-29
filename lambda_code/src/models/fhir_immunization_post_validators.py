@@ -5,7 +5,6 @@ from models.utils.generic_utils import (
 
 from models.utils.post_validation_utils import PostValidation, MandatoryError
 from mappings import Mandation, vaccine_type_applicable_validations
-from icecream import ic
 
 
 class FHIRImmunizationPostValidators:
