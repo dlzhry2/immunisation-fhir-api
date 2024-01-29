@@ -6,8 +6,8 @@ from typing import Optional
 
 import boto3
 import botocore.exceptions
-from botocore.config import Config
 from boto3.dynamodb.conditions import Attr, Key
+from botocore.config import Config
 
 from models.errors import ResourceNotFoundError, UnhandledResponseError
 
