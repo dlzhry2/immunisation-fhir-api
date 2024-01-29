@@ -82,7 +82,7 @@ class TestGetImmunization(unittest.TestCase):
         # Then
         self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
         self.assertEqual(act_imms, None)
-    
+
     def test_get_immunization_by_id_patient_restricted(self):
         """it should return a filtered Immunization when patient is restricted"""
         imms_id = "restricted_id"
@@ -213,9 +213,3 @@ class TestSearchImmunizations(unittest.TestCase):
         # Then
         self.assertIsInstance(result, FhirList)
         self.assertListEqual([entry.id for entry in result.entry], imms_ids)
-
-if __name__ == '__main__':
-    tests = unittest.TestSuite()
-    tests.addTest(TestGetImmunization.test_get_immunization_by_id_patient_restricted)
-
-    tests.run()
