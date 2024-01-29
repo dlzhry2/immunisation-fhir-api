@@ -1,3 +1,5 @@
+"FHIR Immunization Pre Validators"
+
 from models.utils.generic_utils import (
     get_generic_questionnaire_response_value,
     get_generic_extension_value,
@@ -9,11 +11,11 @@ from models.constants import Constants
 
 
 class FHIRImmunizationPreValidators:
-    """Some stuff"""
-
-    # TODO: all patient and practitioner validations need to be moved into here as they are now
-    # contained resources
-    # -----------------------------------------------------------------------------------------
+    """
+    Validators which run prior to the FHIR validators and check that, where values exist, they
+    meet the NHS custom requirements. Note that validation of the existence of a value (i.e. it
+    exists if mandatory, or doesn't exist if is not applicable) is done by the post validators.
+    """
 
     @classmethod
     def pre_validate_contained(cls, values: dict) -> dict:
@@ -591,8 +593,8 @@ class FHIRImmunizationPreValidators:
     @classmethod
     def pre_validate_practitioner_identifier_system(cls, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier[0].system 
-        (legacy CSV field name: PERFORMING_PROFESSIONAL_BODY_REG_URI) exists, then it is a 
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier[0].system
+        (legacy CSV field name: PERFORMING_PROFESSIONAL_BODY_REG_URI) exists, then it is a
         non-empty string
         """
         try:
@@ -609,7 +611,7 @@ class FHIRImmunizationPreValidators:
             pass
 
         return values
-    
+
     @classmethod
     def pre_validate_performer_sds_job_role(cls, values: dict) -> dict:
         """
@@ -1157,7 +1159,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: need to validate that doseQuantity.system is "http://unitsofmeasure.org"? Check with Martin
+    # TODO: need to validate that doseQuantity.system is "http://unitsofmeasure.org"?
+    # Check with Martin
 
     @classmethod
     def pre_validate_dose_quantity_value(cls, values: dict) -> dict:

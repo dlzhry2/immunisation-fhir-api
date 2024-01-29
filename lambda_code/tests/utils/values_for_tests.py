@@ -44,6 +44,44 @@ class ValidValues:
         "display": "test",
     }
 
+    empty_practitioner_resource = {
+        "resourceType": "Practitioner",
+        "id": "Pract1",
+    }
+
+    empty_patient_resource = {
+        "resourceType": "Patient",
+        "id": "Pat1",
+    }
+
+    empty_questionnnaire_resource = {
+        "resourceType": "QuestionnaireResponse",
+        "id": "QR1",
+        "status": "completed",
+    }
+
+    questionnaire_immunisation = {
+        "linkId": "Immunisation",
+        "answer": [{"valueReference": {"reference": "#"}}],
+    }
+
+    questionnaire_reduce_validation_true = {
+        "linkId": "ReduceValidation",
+        "answer": [{"valueBoolean": True}],
+    }
+
+    questionnaire_reduce_validation_false = {
+        "linkId": "ReduceValidation",
+        "answer": [{"valueBoolean": False}],
+    }
+
+    questionnaire_ip_address = {
+        "linkId": "IpAddress",
+        "answer": [
+            {"valueString": "IP_ADDRESS"},
+        ],
+    }
+
 
 @dataclass
 class InvalidValues:
@@ -125,4 +163,15 @@ class InvalidValues:
     for_strings_with_max_100_chars = [
         "This is a really long string with more than 100 "
         + "characters to test whether the validator is working well"
+    ]
+
+    for_genders = [
+        "0",
+        "1",
+        "2",
+        "9",
+        "Male",
+        "Female",
+        "Unknown",
+        "Other",
     ]
