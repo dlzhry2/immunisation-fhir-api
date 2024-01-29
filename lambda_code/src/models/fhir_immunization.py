@@ -98,6 +98,32 @@ class ImmunizationValidator:
             FHIRImmunizationPreValidators.pre_validate_status, pre=True
         )
         self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_practitioner_name, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_practitioner_name_given, pre=True
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_practitioner_name_family,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_practitioner_identifier,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_practitioner_identifier_value,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_practitioner_identifier_system,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_performer_sds_job_role,
+            pre=True,
+        )
+        self.immunization.add_root_validator(
             FHIRImmunizationPreValidators.pre_validate_recorded, pre=True
         )
         self.immunization.add_root_validator(

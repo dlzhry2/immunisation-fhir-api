@@ -550,6 +550,99 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             is_mandatory_fhir=True,
         )
 
+    def test_model_pre_validate_practitioner_name(self):
+        """Test pre_validate_practitioner_name accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_list_value(
+            self,
+            field_location="contained[?(@.resourceType=='Practitioner')].name",
+            valid_lists_to_test=[[{"family": "Test"}]],
+            predefined_list_length=1,
+            valid_list_element={"family": "Test"},
+        )
+
+    def test_model_pre_validate_practitioner_name_given(self):
+        """
+        Test pre_validate_practitioner_name_given accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_list_value(
+            self,
+            field_location="contained[?(@.resourceType=='Practitioner')].name[0].given",
+            valid_lists_to_test=[["Test"], ["Test test"]],
+            predefined_list_length=1,
+            valid_list_element="Test",
+            is_list_of_strings=True,
+        )
+
+    def test_model_pre_validate_practitioner_name_family(self):
+        """
+        Test pre_validate_practitioner_name_family accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='Practitioner')].name[0].family",
+            valid_strings_to_test=["test"],
+        )
+
+    def test_model_pre_validate_practitioner_identifier(self):
+        """
+        Test pre_validate_practitioner_identifier accepts valid values and rejects invalid values
+        """
+
+        valid_list_element = {
+            "system": "https://supplierABC/identifiers/vacc",
+            "value": "ACME-vacc123456",
+        }
+
+        ValidatorModelTests.test_list_value(
+            self,
+            field_location="contained[?(@.resourceType=='Practitioner')].identifier",
+            valid_lists_to_test=[[valid_list_element]],
+            predefined_list_length=1,
+            valid_list_element=valid_list_element,
+        )
+
+    def test_model_pre_validate_practitioner_identifier_value(self):
+        """
+        Test pre_validate_practitioner_identifier_value accepts valid values and rejects invalid
+        values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='Practitioner')].identifier[0].value",
+            valid_strings_to_test=[
+                "e045626e-4dc5-4df3-bc35-da25263f901e",
+                "ACME-vacc123456",
+                "ACME-CUSTOMER1-vacc123456",
+            ],
+        )
+
+    def test_model_pre_validate_practitioner_identifier_system(self):
+        """
+        Test pre_validate_practitioner_identifier_system accepts valid values and rejects invalid
+        values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='Practitioner')].identifier[0].system",
+            valid_strings_to_test=[
+                "https://supplierABC/identifiers/vacc",
+                "https://supplierABC/ODSCode_NKO41/identifiers/vacc",
+            ],
+        )
+
+    def test_model_pre_validate_performer_sds_job_role(self):
+        """
+        Test pre_validate_performer_sds_job_role accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='PerformerSDSJobRole')].answer[0].valueString",
+            valid_strings_to_test=[
+                "Doctor",
+            ],
+        )
+
     def test_model_pre_validate_recorded(self):
         """Test pre_validate_recorded accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_date_value(self, field_location="recorded")

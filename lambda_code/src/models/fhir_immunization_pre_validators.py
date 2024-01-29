@@ -476,6 +476,163 @@ class FHIRImmunizationPreValidators:
 
         return values
 
+    @classmethod
+    def pre_validate_practitioner_name(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name exists,
+        then it is an array of length 1
+        """
+        try:
+            practitioner_name = [
+                x
+                for x in values["contained"]
+                if x.get("resourceType") == "Practitioner"
+            ][0]["name"]
+            PreValidation.for_list(
+                practitioner_name,
+                "contained[?(@.resourceType=='Practitioner')].name",
+                defined_length=1,
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_practitioner_name_given(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[0].given
+        (legacy CSV field name: PERSON_FORENAME) exists, then it is a
+        an array containing a single non-empty string
+        """
+        try:
+            practitioner_name_given = [
+                x
+                for x in values["contained"]
+                if x.get("resourceType") == "Practitioner"
+            ][0]["name"][0]["given"]
+            PreValidation.for_list(
+                practitioner_name_given,
+                "contained[?(@.resourceType=='Practitioner')].name[0].given",
+                defined_length=1,
+                elements_are_strings=True,
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_practitioner_name_family(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[0].family
+        (legacy CSV field name: PERSON_SURNAME) exists, then it is a
+        an array containing a single non-empty string
+        """
+        try:
+            practitioner_name_family = [
+                x
+                for x in values["contained"]
+                if x.get("resourceType") == "Practitioner"
+            ][0]["name"][0]["family"]
+            PreValidation.for_string(
+                practitioner_name_family,
+                "contained[?(@.resourceType=='Practitioner')].name[0].family",
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_practitioner_identifier(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier exists,
+        then it is a list of length 1
+        """
+        try:
+            practitioner_identifier = [
+                x
+                for x in values["contained"]
+                if x.get("resourceType") == "Practitioner"
+            ][0]["identifier"]
+            PreValidation.for_list(
+                practitioner_identifier,
+                "contained[?(@.resourceType=='Practitioner')].identifier",
+                defined_length=1,
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_practitioner_identifier_value(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier[0].value
+        (legacy CSV field name: PERFORMING_PROFESSIONAL_BODY_REG_CODE) exists, then it is a
+        non-empty string
+        """
+        try:
+            practitioner_identifier_value = [
+                x
+                for x in values["contained"]
+                if x.get("resourceType") == "Practitioner"
+            ][0]["identifier"][0]["value"]
+            PreValidation.for_string(
+                practitioner_identifier_value,
+                "contained[?(@.resourceType=='Practitioner')].identifier[0].value",
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
+    @classmethod
+    def pre_validate_practitioner_identifier_system(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier[0].system 
+        (legacy CSV field name: PERFORMING_PROFESSIONAL_BODY_REG_URI) exists, then it is a 
+        non-empty string
+        """
+        try:
+            practitioner_identifier_system = [
+                x
+                for x in values["contained"]
+                if x.get("resourceType") == "Practitioner"
+            ][0]["identifier"][0]["system"]
+            PreValidation.for_string(
+                practitioner_identifier_system,
+                "contained[?(@.resourceType=='Practitioner')].identifier[0].system",
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+    
+    @classmethod
+    def pre_validate_performer_sds_job_role(cls, values: dict) -> dict:
+        """
+        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
+        .item[?(@.linkId=='PerformerSDSJobRole')].answer[0].valueString (legacy CSV field name:
+        SDS_JOB_ROLE_NAME) exists, then it is a non-empty string
+        """
+        try:
+            answer_type = "valueString"
+            ip_address_code = get_generic_questionnaire_response_value(
+                values, "PerformerSDSJobRole", answer_type=answer_type
+            )
+            PreValidation.for_string(
+                ip_address_code,
+                generate_field_location_for_questionnnaire_response(
+                    link_id="PerformerSDSJobRole", answer_type=answer_type
+                ),
+            )
+        except (KeyError, IndexError):
+            pass
+
+        return values
+
     # TODO: Check with martin that this is still just a date and not date time
     @classmethod
     def pre_validate_recorded(cls, values: dict) -> dict:
