@@ -1,10 +1,4 @@
-import os
-import sys
-import unittest
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
-
-from s_flag_handler import remove_personal_info
+from s_flag_handler import handle_s_flag
 
 import unittest
 
@@ -80,7 +74,7 @@ class TestRemovePersonalInfo(unittest.TestCase):
             ]
         }
 
-        result = remove_personal_info(input_data)
+        result = handle_s_flag(input_data)
         self.assertEqual(result, expected_output)
 
 if __name__ == "__main__":

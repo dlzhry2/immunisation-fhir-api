@@ -8,7 +8,7 @@ from fhir_repository import ImmunizationRepository
 from models.errors import InvalidPatientId, CoarseValidationError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
-from s_flag_handler import remove_personal_info
+from s_flag_handler import handle_s_flag
 
 
 class FhirService:
@@ -27,13 +27,8 @@ class FhirService:
 
         nhs_number = imms['patient']['identifier']['value']
         patient = self.pds_service.get_patient_details(nhs_number)
-        patient_is_restricted = patient['meta']['security'][0]['display'] == "restricted"
-
-        if patient_is_restricted:
-            filtered_immunization = remove_personal_info(imms)
-            return Immunization.parse_obj(filtered_immunization)
-        else:
-            return Immunization.parse_obj(imms)
+        filtered_immunization = handle_s_flag(imms, patient)
+        return Immunization.parse_obj(filtered_immunization)
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
@@ -66,5 +61,7 @@ class FhirService:
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         resources = self.immunization_repo.find_immunizations(nhs_number, disease_type)
 
-        entries = [Immunization.parse_obj(imms) for imms in resources]
+        patient = self.pds_service.get_patient_details(nhs_number)
+
+        entries = [Immunization.parse_obj(handle_s_flag(imms, patient)) for imms in resources]
         return FhirList.construct(entry=entries)
