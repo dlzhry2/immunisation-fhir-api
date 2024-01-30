@@ -12,7 +12,6 @@ newman/
 **/*.iml
 
 __pycache__/
-.envrc
 .venv/
 .env
 smoketest-report.xml

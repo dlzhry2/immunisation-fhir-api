@@ -81,3 +81,6 @@ smoketest-prod:
 test-prod:
 	$(PROD_CMD) \
 	--junitxml=test-report.xml \
+
+setup-python-envs:
+	./setup-python-env.sh
