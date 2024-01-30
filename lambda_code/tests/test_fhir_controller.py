@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import create_autospec
 
 from fhir.resources.R4B.immunization import Immunization
-from fhir.resources.R4B.list import List
+from fhir.resources.R4B.bundle import Bundle
 from fhir_controller import FhirController
 from fhir_service import FhirService
 from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId
@@ -225,7 +225,7 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_search_immunizations(self):
         """it should search based on nhsNumber and diseaseType"""
-        search_result = List.construct()
+        search_result = Bundle.construct()
         self.service.search_immunizations.return_value = search_result
 
         nhs_number = "an-patient-id"
@@ -242,7 +242,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type)
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "List")
+        self.assertEqual(body["resourceType"], "Bundle")
 
     def test_nhs_number_is_mandatory(self):
         """nhsNumber is a mandatory query param"""

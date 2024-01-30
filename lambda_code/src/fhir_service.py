@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fhir.resources.R4B.immunization import Immunization
-from fhir.resources.R4B.list import List as FhirList
+from fhir.resources.R4B.bundle import Bundle as FhirBundle
 from pydantic import ValidationError
 
 from fhir_repository import ImmunizationRepository
@@ -59,4 +59,4 @@ class FhirService:
         resources = self.immunization_repo.find_immunizations(nhs_number, disease_type)
 
         entries = [Immunization.parse_obj(imms) for imms in resources]
-        return FhirList.construct(entry=entries)
+        return FhirBundle.construct(entry=entries)

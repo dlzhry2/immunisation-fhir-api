@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import create_autospec
 
 from fhir.resources.R4B.immunization import Immunization
-from fhir.resources.R4B.list import List as FhirList
+from fhir.resources.R4B.bundle import Bundle as FhirBundle
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService
 from models.errors import InvalidPatientId, CoarseValidationError
@@ -194,5 +194,5 @@ class TestSearchImmunizations(unittest.TestCase):
         result = self.fhir_service.search_immunizations("an-id", "a-code")
 
         # Then
-        self.assertIsInstance(result, FhirList)
+        self.assertIsInstance(result, FhirBundle)
         self.assertListEqual([entry.id for entry in result.entry], imms_ids)
