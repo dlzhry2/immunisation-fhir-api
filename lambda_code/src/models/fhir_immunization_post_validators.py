@@ -1,62 +1,77 @@
 from models.utils.generic_utils import (
+    get_generic_questionnaire_response_value_from_model,
+    get_generic_extension_value_from_model,
     generate_field_location_for_extension,
     generate_field_location_for_questionnnaire_response,
 )
 
-from models.utils.post_validation_utils import PostValidation, MandatoryError
+from models.utils.post_validation_utils import (
+    PostValidation,
+    MandatoryError,
+    NotApplicableError,
+)
 from mappings import Mandation, vaccine_type_applicable_validations
 
+check_mandation_requirements_met = PostValidation.check_mandation_requirements_met
+get_generic_field_value = PostValidation.get_generic_field_value
+get_generic_questionnaire_response_value = (
+    PostValidation.get_generic_questionnaire_response_value
+)
 
+
+# TODO: Reorder methods in this class to match order in pre-validator class (apart from those
+# which have to be out of order such as reduce_validation and vaccination_procedure_code)
 class FHIRImmunizationPostValidators:
     """FHIR Immunization Post Validators"""
 
     @classmethod
-    def set_reduce_validation_code(cls, values: dict) -> dict:
+    def set_reduce_validation(cls, values: dict) -> dict:
         """
         Set reduce_validation_code property to match the value in the JSON data.
         If the field does not exist then assume False.
         """
-
-        reduce_validation_code = "False"
+        reduce_validation_code = False
 
         # If reduce_validation_code field exists then retrieve it's value
         try:
-            for record in values["contained"]:
-                if record.resource_type == "QuestionnaireResponse":
-                    for item in record.item:
-                        if item.linkId == "ReduceValidation":
-                            if item.answer[0].valueCoding.code:
-                                reduce_validation_code = item.answer[0].valueCoding.code
-        except KeyError:
+            reduce_validation_code = (
+                get_generic_questionnaire_response_value_from_model(
+                    values, "ReduceValidation", "valueBoolean"
+                )
+            )
+        except (KeyError, IndexError, AttributeError):
             pass
+        finally:
+            # If no value is given, then ReduceValidation default value is False
+            if reduce_validation_code is None:
+                reduce_validation_code = False
 
         cls.reduce_validation_code = reduce_validation_code
 
         return values
 
     @classmethod
-    def validate_vaccination_procedure_code(cls, values: dict) -> dict:
+    def validate_and_set_vaccination_procedure_code(cls, values: dict) -> dict:
         "Validate that vaccination_procedure_code is a valid code"
         url = (
             "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
             + "VaccinationProcedure"
         )
-        field_location = generate_field_location_for_extension(url, "code")
+        system = "http://snomed.info/sct"
+        field_type = "code"
+        field_location = generate_field_location_for_extension(url, system, field_type)
+
         try:
-            vaccination_procedure_code = None
-            for record in values["extension"]:
-                if record.url == url:
-                    vaccination_procedure_code = record.valueCodeableConcept.coding[
-                        0
-                    ].code
-                    break
+            vaccination_procedure_code = get_generic_extension_value_from_model(
+                values, url, system, field_type
+            )
             if vaccination_procedure_code is None:
                 raise KeyError
             cls.vaccine_type = PostValidation.vaccination_procedure_code(
                 vaccination_procedure_code, field_location
             )
 
-        except KeyError as error:
+        except (KeyError, IndexError) as error:
             raise MandatoryError(f"{field_location} is a mandatory field") from error
 
         return values
@@ -72,59 +87,96 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_patient_identifier_value(cls, values: dict) -> dict:
         "Validate that patient_identifier_value is present or absent, as required"
-        field_location = "patient.identifier.value"
-        mandation = vaccine_type_applicable_validations["patient_identifier_value"][
-            cls.vaccine_type
-        ]
+        try:
+            contained_patient_identifier = [
+                x for x in values["contained"] if x.resource_type == "Patient"
+            ][0].identifier
 
-        PostValidation.check_attribute_exists(
-            values, "patient", "identifier.value", mandation, field_location
+            patient_identifier_value = [
+                x
+                for x in contained_patient_identifier
+                if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0].value
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            patient_identifier_value = None
+
+        check_mandation_requirements_met(
+            field_value=patient_identifier_value,
+            field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="patient_identifier_value",
         )
-
         return values
 
     @classmethod
     def validate_occurrence_date_time(cls, values: dict) -> dict:
         "Validate that occurrence_date_time is present or absent, as required"
-        field_location = "occurenceDateTime"
-        mandation = vaccine_type_applicable_validations["occurrence_date_time"][
-            cls.vaccine_type
-        ]
+        field_value = get_generic_field_value(values=values, key="occurrenceDateTime")
 
-        PostValidation.check_attribute_exists(
-            values, "occurrenceDateTime", None, mandation, field_location
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location="occurenceDateTime",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="occurrence_date_time",
         )
 
         return values
 
     @classmethod
-    def validate_site_code_code(cls, values: dict) -> dict:
-        "Validate that site_code_code is present or absent, as required"
-        field_location = generate_field_location_for_questionnnaire_response(
-            "SiteCode", "code"
-        )
-        mandation = vaccine_type_applicable_validations["site_code_code"][
-            cls.vaccine_type
-        ]
+    def validate_organization_identifier_value(cls, values: dict) -> dict:
+        """
+        Validate that performer[?(@.actor.type=='Organization')].actor.identifier.value is present
+        or absent, as required
+        """
 
-        PostValidation.check_questionnaire_link_id_exists(
-            values, "SiteCode", "code", mandation, field_location
+        def util_func(x):
+            try:
+                return x.actor.type == "Organization"
+            except AttributeError:
+                return False
+
+        try:
+            field_value = [x for x in values["performer"] if util_func(x)][
+                0
+            ].actor.identifier.value
+        except (KeyError, IndexError, AttributeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location="performer[?(@.actor.type=='Organization')].actor.identifier.value",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="organization_identifier_value",
         )
 
         return values
 
+    # TODO: Update to obtain value from new data location
     @classmethod
-    def validate_site_name_code(cls, values: dict) -> dict:
-        "Validate that site_name_code is present or absent, as required"
-        field_location = generate_field_location_for_questionnnaire_response(
-            "SiteName", "code"
-        )
-        mandation = vaccine_type_applicable_validations["site_name_code"][
-            cls.vaccine_type
-        ]
+    def validate_organization_display(cls, values: dict) -> dict:
+        """
+        Validate that performer[?@.actor.type == 'Organization'].actor.display is present or
+        absent, as required
+        """
 
-        PostValidation.check_questionnaire_link_id_exists(
-            values, "SiteName", "code", mandation, field_location
+        def util_func(x):
+            try:
+                return x.actor.type == "Organization"
+            except AttributeError:
+                return False
+
+        try:
+            field_value = [x for x in values["performer"] if util_func(x)][
+                0
+            ].actor.display
+        except (KeyError, IndexError, AttributeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location="performer[?(@.actor.type=='Organization')].actor.display",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="organization_display",
         )
 
         return values
@@ -137,7 +189,7 @@ class FHIRImmunizationPostValidators:
             cls.vaccine_type
         ]
 
-        PostValidation.check_attribute_exists(
+        PostValidation.get_generic_field_value(
             values, "identifier", "value", mandation, field_location, index=0
         )
 
@@ -151,7 +203,7 @@ class FHIRImmunizationPostValidators:
             cls.vaccine_type
         ]
 
-        PostValidation.check_attribute_exists(
+        PostValidation.get_generic_field_value(
             values, "identifier", "system", mandation, field_location, index=0
         )
 
@@ -163,7 +215,7 @@ class FHIRImmunizationPostValidators:
         field_location = "recorded"
         mandation = vaccine_type_applicable_validations["recorded"][cls.vaccine_type]
 
-        PostValidation.check_attribute_exists(
+        PostValidation.get_generic_field_value(
             values, "recorded", None, mandation, field_location
         )
 
@@ -177,7 +229,7 @@ class FHIRImmunizationPostValidators:
             cls.vaccine_type
         ]
 
-        PostValidation.check_attribute_exists(
+        PostValidation.get_generic_field_value(
             values, "primarySource", None, mandation, field_location
         )
 
@@ -195,7 +247,7 @@ class FHIRImmunizationPostValidators:
             mandation = Mandation.mandatory
 
         try:
-            PostValidation.check_attribute_exists(
+            PostValidation.get_generic_field_value(
                 values, "reportOrigin", "text", mandation, field_location
             )
         except MandatoryError as error:

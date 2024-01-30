@@ -25,7 +25,9 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         self.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
 
         # set up the sample immunization event JSON data
-        self.immunization_file_path = f"{self.data_path}/sample_immunization_event.json"
+        self.immunization_file_path = (
+            f"{self.data_path}/sample_covid_immunization_event.json"
+        )
         with open(self.immunization_file_path, "r", encoding="utf-8") as f:
             self.json_data = json.load(f, parse_float=Decimal)
 
@@ -34,16 +36,17 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         self.validator.add_custom_root_pre_validators()
         self.validator.add_custom_root_post_validators()
 
-    def test_model_post_reduce_validation_code(self):
-        """Test set_reduce_validation_code"""
+    def test_model_post_reduce_validation(self):
+        """Test set_reduce_validation"""
         valid_json_data = deepcopy(self.json_data)
-        field_location = generate_field_location_for_questionnnaire_response(
-            link_id="ReduceValidation", field_type="code"
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='ReduceValidation')].answer[0].valueBoolean"
         )
 
         # Test that reduce_validation_code property is set to the value of
         # reduce_validation_code in the JSON data, where it exists
-        for valid_value in ["True", "False"]:
+        for valid_value in [True, False]:
             valid_json_data = parse(field_location).update(valid_json_data, valid_value)
             self.validator.validate(valid_json_data)
             self.assertEqual(
@@ -54,16 +57,19 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # reduce_validation_code in the JSON data
         valid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
         self.validator.validate(valid_json_data)
-        self.assertEqual("False", self.validator.immunization.reduce_validation_code)
+        self.assertEqual(False, self.validator.immunization.reduce_validation_code)
 
     def test_model_post_vaccination_procedure_code(self):
         """
-        Test post_vaccination_procedure_code accepts valid values, rejects invalid values
-        and rejects missing data
+        Test validate_and_set_vaccination_procedure_code accepts valid values, rejects invalid
+        values and rejects missing data
         """
         valid_json_data = deepcopy(self.json_data)
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
-        field_location = generate_field_location_for_extension(url, "code")
+        field_location = (
+            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
+            + "'http://snomed.info/sct')].code"
+        )
 
         # Test that a valid COVID-19 code is accepted and vaccine_type is therefore set to COVID-19
         _test_valid_values_accepted(
@@ -120,7 +126,8 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_model_post_patient_identifier_value(self):
         """
-        Test that the JSON data is accepted whether or not it contains patient.identifier.value
+        Test that the JSON data is accepted whether or not it contains
+        contained[?(@.resourceType=='Patient')].identifier[0].value
         """
         valid_json_data = deepcopy(self.json_data)
 
@@ -129,7 +136,9 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
         MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
-            self, valid_json_data, field_location="patient.identifier.value"
+            self,
+            valid_json_data,
+            field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
         )
 
     def test_model_post_occurrence_date_time(self):
@@ -154,15 +163,14 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             is_mandatory_fhir=True,
         )
 
-    def test_model_post_site_code_code(self):
+    def test_model_post_organization_identifier_value(self):
         """
         Test that the JSON data is accepted if it contains
-        contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='SiteCode')]
-        .answer[0].valueCoding.code and rejected if not
+        performer[?(@.actor.type=='Organization').identifier.value] and rejected if not
         """
         valid_json_data = deepcopy(self.json_data)
-        field_location = generate_field_location_for_questionnnaire_response(
-            "SiteCode", "code"
+        field_location = (
+            "performer[?(@.actor.type=='Organization')].actor.identifier.value"
         )
 
         MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
@@ -177,16 +185,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             expected_error_type="value_error",
         )
 
-    def test_model_post_site_name_code(self):
+    def test_model_post_organization_display(self):
         """
         Test that the JSON data is accepted if it contains
-        contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='SiteName')]
-        .answer[0].valueCoding.code and rejected if not
+        performer[?(@.actor.type=='Organization')].actor.display and rejected if not
         """
         valid_json_data = deepcopy(self.json_data)
-        field_location = generate_field_location_for_questionnnaire_response(
-            "SiteName", "code"
-        )
+        field_location = "performer[?(@.actor.type=='Organization')].actor.display"
 
         MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
             self, valid_json_data

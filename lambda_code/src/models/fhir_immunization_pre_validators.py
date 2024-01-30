@@ -36,6 +36,13 @@ class FHIRImmunizationPreValidators:
         return values
 
     # TODO: To add validation that contained patient is referenced by immunization.patient
+    # TODO: Reject if there is a contained patient, but the contained patient
+    # has no id (so cannot be externally referenced)
+    # TODO: Reject if there is a contained patient, with a contained patient id,
+    # but this id is not referenced at all by the immunization.patient
+    # TODO: Reject there is no contained patient (note that none of the contained
+    # patient fields are mandatory), but there is an immunization.patient item such
+    # that the actor has a reference (? to where if not the contained patient)
 
     @classmethod
     def pre_validate_patient_identifier(cls, values: dict) -> dict:
@@ -60,8 +67,9 @@ class FHIRImmunizationPreValidators:
     @classmethod
     def pre_validate_patient_identifier_value(cls, values: dict) -> dict:
         """
-        Pre-validate that, if patient.identifier.value (legacy CSV field name: NHS_NUMBER)
-        exists, then it is a string of 10 characters which does not contain spaces
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].identifier[0].value (
+        legacy CSV field name: NHS_NUMBER) exists, then it is a string of 10 characters
+        which does not contain spaces
         """
         try:
             patient_identifier_value = [
@@ -323,6 +331,13 @@ class FHIRImmunizationPreValidators:
     # TODO: Fix doc string.
     # TODO: Fix this method as currently will pass if "performer" or "actor" does not
     # exist, even if contained_practitioner_id does
+    # TODO: Reject if there is a contained practitioner, but the contained practitioner
+    # has no id (so cannot be externally referenced)
+    # TODO: Reject if there is a contained practitioner, with a contained practitioner id,
+    # but this id is not referenced at all by the immunization.performer
+    # TODO: Reject there is no contained practitioner (note that none of the contained
+    # practitioner fields are mandatory), but there is an immunization.performer item such
+    # that the actor has a reference (? to where if not the contained practitioner)
     @classmethod
     def pre_validate_performer_actor_reference(cls, values: dict) -> dict:
         """
@@ -390,9 +405,8 @@ class FHIRImmunizationPreValidators:
     @classmethod
     def pre_validate_organization_display(cls, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='SiteName')].answer[0].valueCoding.code (legacy CSV field name: SITE_NAME)
-        exists, then it is a non-empty string
+        Pre-validate that, if performer[?@.actor.type == 'Organization'].actor.display
+        (legacy CSV field name: SITE_NAME) exists, then it is a non-empty string
         """
         try:
             organization_display = [

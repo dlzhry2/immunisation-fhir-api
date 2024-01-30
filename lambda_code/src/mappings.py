@@ -60,13 +60,13 @@ vaccine_type_applicable_validations = {
         DiseaseTypes.hpv: Mandation.mandatory,
         DiseaseTypes.mmr: Mandation.mandatory,
     },
-    "site_code_code": {
+    "organization_identifier_value": {
         DiseaseTypes.covid_19: Mandation.mandatory,
         DiseaseTypes.flu: Mandation.mandatory,
         DiseaseTypes.hpv: Mandation.mandatory,
         DiseaseTypes.mmr: Mandation.mandatory,
     },
-    "site_name_code": {
+    "organization_display": {
         DiseaseTypes.covid_19: Mandation.mandatory,
         DiseaseTypes.flu: Mandation.mandatory,
         DiseaseTypes.hpv: Mandation.mandatory,
