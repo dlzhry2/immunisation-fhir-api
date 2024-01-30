@@ -1,12 +1,14 @@
 import json
 import unittest
+import uuid
 from unittest.mock import create_autospec
 
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.list import List
-from fhir_controller import FhirController
+from fhir_controller import FhirController, get_service_url
 from fhir_service import FhirService
 from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId
+from tests.immunization_utils import create_an_immunization
 
 
 def _create_a_post_event(body: str) -> dict:
@@ -42,6 +44,23 @@ class TestFhirController(unittest.TestCase):
             "Content-Type": "application/fhir+json",
         })
         self.assertEqual(res["body"], "a body")
+
+    def test_get_service_url(self):
+        """it should create service url"""
+        env = "internal-dev"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://{env}.api.service.nhs.uk/{base_path}")
+        # prod should not have subdomain
+        env = "prod"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://api.service.nhs.uk/{base_path}")
+        # any other env should fall back to internal-dev (like pr-xx or per-user)
+        env = "pr-42"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://internal-dev.service.nhs.uk/{base_path}")
 
 
 class TestFhirControllerGetImmunizationById(unittest.TestCase):
@@ -102,17 +121,19 @@ class TestCreateImmunization(unittest.TestCase):
         self.controller = FhirController(self.service)
 
     def test_create_immunization(self):
-        """it should create Immunization"""
-        imms = Immunization.construct()
+        """it should create Immunization and return resource's location"""
+        imms_id = str(uuid.uuid4())
+        imms = create_an_immunization(imms_id)
         aws_event = {"body": imms.json()}
         self.service.create_immunization.return_value = imms
 
         response = self.controller.create_immunization(aws_event)
 
-        self.service.create_immunization.assert_called_once_with(imms)
+        imms_obj = json.loads(aws_event["body"])
+        self.service.create_immunization.assert_called_once_with(imms_obj)
         self.assertEqual(response["statusCode"], 201)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "Immunization")
+        self.assertIsNone(response["body"])
+        self.assertTrue(response["headers"]["Location"].endswith(f"Immunization/{imms_id}"))
 
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""

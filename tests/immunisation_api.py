@@ -1,6 +1,17 @@
+import re
 import uuid
+from typing import Optional
 
 import requests
+
+
+def parse_location(location) -> Optional[str]:
+    """parse location header and return resource ID"""
+    pattern = r"https://.*\.api\.service\.nhs\.uk/immunisation-fhir-api.*/Immunization/(.+)"
+    if match := re.search(pattern, location):
+        return match.group(1)
+    else:
+        return None
 
 
 class ImmunisationApi:

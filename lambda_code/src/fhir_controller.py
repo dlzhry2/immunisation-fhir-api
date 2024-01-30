@@ -28,6 +28,18 @@ def make_controller(pds_env: str = os.getenv("PDS_ENV", "int")):
     return FhirController(fhir_service=service)
 
 
+def get_service_url(service_env: str = os.getenv("IMMUNIZATION_ENV"),
+                    service_base_path: str = os.getenv("IMMUNIZATION_BASE_PATH")):
+    non_prod = ["internal-dev", "int", "sandbox"]
+    if service_env in non_prod:
+        subdomain = f"{service_env}."
+    if service_env == "prod":
+        subdomain = ""
+    else:
+        subdomain = "internal-dev."
+    return f"https://{subdomain}api.service.nhs.uk/{service_base_path}"
+
+
 class FhirController:
     immunization_id_pattern = r"^[A-Za-z0-9\-.]{1,64}$"
 
@@ -59,7 +71,8 @@ class FhirController:
 
         try:
             resource = self.fhir_service.create_immunization(imms)
-            return self.create_response(201, resource.json())
+            location = f"{get_service_url()}/Immunization/{resource.id}"
+            return self.create_response(201, None, {"Location": location})
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome().json())
         except UnhandledResponseError as unhandled_error:
@@ -108,11 +121,15 @@ class FhirController:
         return self.create_response(400, error.json())
 
     @staticmethod
-    def create_response(status_code, body):
+    def create_response(status_code, body, headers=None):
+        _headers = {
+            "Content-Type": "application/fhir+json",
+        }
+        if headers:
+            _headers = {**headers, **_headers}
+
         return {
             "statusCode": status_code,
-            "headers": {
-                "Content-Type": "application/fhir+json",
-            },
+            "headers": _headers,
             "body": body
         }
