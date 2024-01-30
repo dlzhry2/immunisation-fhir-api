@@ -12,30 +12,30 @@ info:
     
     ## You can:
     
-    - search for a patients record immunisation events
-    - get the details of an immunisation event
-    - update an immunisation event
-    - Identify an immunisation event as being entered in error
+    * search for a patients record immunisation events
+    * get the details of an immunisation event
+    * update an immunisation event
+    * Identify an immunisation event as being entered in error
     
     ## Recognised uses:
     
-    - Supporting a patient getting a vaccination
-    - Supporting patient managing their immunisation health
-    - Identifying those to be invited to vaccination nationally
-    - Identifying those to be invited to vaccination locally
-    - Supporting the booking of a vaccination appointment
-    - Supporting the payment reconciliation process
-    - Supporting measuring the overall success of a vaccination campaign to help inform the success of future s7a immunisation campaigns
+    * Supporting a patient getting a vaccination
+    * Supporting patient managing their immunisation health
+    * Identifying those to be invited to vaccination nationally
+    * Identifying those to be invited to vaccination locally
+    * Supporting the booking of a vaccination appointment
+    * Supporting the payment reconciliation process
+    * Supporting measuring the overall success of a vaccination campaign to help inform the success of future s7a immunisation campaigns
     
     ## You cannot currently use this API to:
     
-    - Retrieve the immunisation events of multiple patients at once
-    - Update a patients demographic details as returned from the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
+    * Retrieve the immunisation events of multiple patients at once
+    * Update a patients demographic details as returned from the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
     
     ## You can read and update the following data:
     
-    - immunisation event details for COVID, FLU, HPV
-    - patient demographic details, as captured at the point of immunisation
+    * immunisation event details for COVID, FLU, HPV
+    * patient demographic details, as captured at the point of immunisation
     
     The patient demographic details might differ from those held in the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
     Data availability, timing and quality
@@ -88,9 +88,9 @@ info:
     
     You do not need to know much about FHIR to use this API - FHIR APIs are just RESTful APIs that follow specific rules.
     In particular:
-    - resource names are capitalised and singular, and use US spellings, for example `/Immunization` not `/immunisations`
-    - array names are singular, for example `entry` not `entries` for address lines
-    - data items that are country-specific and thus not included in the FHIR global base resources are usually wrapped in an `extension` object
+    * resource names are capitalised and singular, and use US spellings, for example `/Immunization` not `/immunisations`
+    * array names are singular, for example `entry` not `entries` for address lines
+    * data items that are country-specific and thus not included in the FHIR global base resources are usually wrapped in an `extension` object
     
     There are [libraries and SDKs available](https://digital.nhs.uk/developer/guides-and-documentation/api-technologies-at-nhs-digital#fhir-libraries-and-sdks) to help with FHIR API integration.
     
