@@ -1358,47 +1358,47 @@ class TestImmunizationModelPreValidationRulesForNotDone(unittest.TestCase):
         )
 
 
-# class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCase):
-#     """
-#     Test immunization pre validation rules on the FHIR model using the status="reduce validation"
-#     data
-#     """
+class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCase):
+    """
+    Test immunization pre validation rules on the FHIR model using the status="reduce validation"
+    data
+    """
 
-#     @classmethod
-#     def setUpClass(cls):
-#         """Set up for the tests. This only runs once when the class is instantiated"""
-#         # Set up the path for the sample data
-#         cls.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
+    @classmethod
+    def setUpClass(cls):
+        """Set up for the tests. This only runs once when the class is instantiated"""
+        # Set up the path for the sample data
+        cls.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
 
-#         # set up the sample immunization event JSON data
-#         cls.immunization_file_path = (
-#             f"{cls.data_path}/sample_immunization_reduce_validation_event.json"
-#         )
-#         with open(cls.immunization_file_path, "r", encoding="utf-8") as f:
-#             cls.json_data = json.load(f, parse_float=Decimal)
+        # set up the sample immunization event JSON data
+        cls.immunization_file_path = (
+            f"{cls.data_path}/sample_immunization_reduce_validation_event.json"
+        )
+        with open(cls.immunization_file_path, "r", encoding="utf-8") as f:
+            cls.json_data = json.load(f, parse_float=Decimal)
 
-#         # set up the untouched sample immunization event JSON data
-#         cls.untouched_json_data = deepcopy(cls.json_data)
+        # set up the untouched sample immunization event JSON data
+        cls.untouched_json_data = deepcopy(cls.json_data)
 
-#         # set up the validator and add custom root validators
-#         cls.validator = ImmunizationValidator()
-#         cls.validator.add_custom_root_pre_validators()
+        # set up the validator and add custom root validators
+        cls.validator = ImmunizationValidator()
+        cls.validator.add_custom_root_pre_validators()
 
-#     def setUp(self):
-#         """Set up for each test. This runs before every test"""
-#         # Ensure that good data is not inadvertently amended by the tests
-#         self.assertEqual(self.untouched_json_data, self.json_data)
+    def setUp(self):
+        """Set up for each test. This runs before every test"""
+        # Ensure that good data is not inadvertently amended by the tests
+        self.assertEqual(self.untouched_json_data, self.json_data)
 
-#         # TODO: Create separate validation rule to check reduce validation field only and
-#         # not apply validation if this is true
+        # TODO: Create separate validation rule to check reduce validation field only and
+        # not apply validation if this is true
 
-#     # def test_pre_validate_reduce_validation_reason_answer(self):
-#     #     """
-#     #     Test pre_validate_reduce_validation_display accepts valid values and rejects invalid values
-#     #     """
-#     #     ValidatorModelTests.test_string_value(
-#     #         self,
-#     #         field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
-#     #         + ".item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString",
-#     #         valid_strings_to_test=["From DPS CSV"],
-#     #     )
+    def test_pre_validate_reduce_validation_reason_answer(self):
+        """
+        Test pre_validate_reduce_validation_display accepts valid values and rejects invalid values
+        """
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString",
+            valid_strings_to_test=["From DPS CSV"],
+        )

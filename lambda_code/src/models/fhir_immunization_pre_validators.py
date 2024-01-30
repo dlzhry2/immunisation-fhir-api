@@ -635,7 +635,6 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: Check with martin that this is still just a date and not date time
     @classmethod
     def pre_validate_recorded(cls, values: dict) -> dict:
         """

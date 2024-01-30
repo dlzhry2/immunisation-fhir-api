@@ -297,10 +297,10 @@ class ImmunizationValidator:
         self.immunization.add_root_validator(
             FHIRImmunizationPreValidators.pre_validate_reduce_validation, pre=True
         )
-        # self.immunization.add_root_validator(
-        #     FHIRImmunizationPreValidators.pre_validate_reduce_validation_reason,
-        #     pre=True,
-        # )
+        self.immunization.add_root_validator(
+            FHIRImmunizationPreValidators.pre_validate_reduce_validation_reason,
+            pre=True,
+        )
 
     def add_custom_root_post_validators(self):
         """
