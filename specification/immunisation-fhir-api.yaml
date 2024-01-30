@@ -7,55 +7,65 @@ info:
     url: URL
   description: >
     ## Overview
-      Use this API to access a patient's immunisation record.
+    
+    Use this API to access a patient's immunisation record.
+    
     ## You can:
-      - search for a patients record immunisation events
-      - get the details of an immunisation event
-      - update an immunisation event
-      - Identify an immunisation event as being entered in error
+    
+    - search for a patients record immunisation events
+    - get the details of an immunisation event
+    - update an immunisation event
+    - Identify an immunisation event as being entered in error
+    
     ## Recognised uses:
-      - Supporting a patient getting a vaccination
-      - Supporting patient managing their immunisation health
-      - Identifying those to be invited to vaccination nationally
-      - Identifying those to be invited to vaccination locally
-      - Supporting the booking of a vaccination appointment
-      - Supporting the payment reconciliation process
-      - Supporting measuring the overall success of a vaccination campaign to help inform the success of future s7a immunisation campaigns
+    
+    - Supporting a patient getting a vaccination
+    - Supporting patient managing their immunisation health
+    - Identifying those to be invited to vaccination nationally
+    - Identifying those to be invited to vaccination locally
+    - Supporting the booking of a vaccination appointment
+    - Supporting the payment reconciliation process
+    - Supporting measuring the overall success of a vaccination campaign to help inform the success of future s7a immunisation campaigns
     
     ## You cannot currently use this API to:
-      - Retrieve the immunisation events of multiple patients at once
-      - Update a patients demographic details as returned from the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
+    
+    - Retrieve the immunisation events of multiple patients at once
+    - Update a patients demographic details as returned from the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
+    
     ## You can read and update the following data:
-      - immunisation event details for COVID, FLU, HPV
-      - patient demographic details, as captured at the point of immunisation
     
-      The patient demographic details might differ from those held in the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
-      Data availability, timing and quality
-      All immunisation records are verified to ensure the NHS number is correct before making them available via the API.
-      In most cases this is automatic, and the record is available within 48 hours of the immunisation event, sometimes sooner.
-      Where automated NHS number verification fails, we send the event back to the submitting organisation for manual verification.
-      In a very small number of cases, we are unable to verify the NHS number, and we do not make the immunisation record available at all.
-      The data store is limited to vaccinations from England
-      It has been approved to be used for clinical use cases.
+    - immunisation event details for COVID, FLU, HPV
+    - patient demographic details, as captured at the point of immunisation
     
+    The patient demographic details might differ from those held in the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
+    Data availability, timing and quality
+    All immunisation records are verified to ensure the NHS number is correct before making them available via the API.
+    In most cases this is automatic, and the record is available within 48 hours of the immunisation event, sometimes sooner.
+    Where automated NHS number verification fails, we send the event back to the submitting organisation for manual verification.
+    In a very small number of cases, we are unable to verify the NHS number, and we do not make the immunisation record available at all.
+    The data store is limited to vaccinations from England
+    It has been approved to be used for clinical use cases.
     
     ## Who can use this API
-      This API can only be used where there is a legal basis to do so. Make sure you have a valid use case before you go too far with your development.
     
-      You must demonstrate you have a valid use case as part of digital onboarding.
-    
-      You must do this before you can go live (see 'Onboarding' below).
-    
+    This API can only be used where there is a legal basis to do so. Make sure you have a valid use case before you go too far with your development.
+  
+    You must demonstrate you have a valid use case as part of digital onboarding.
+  
+    You must do this before you can go live (see 'Onboarding' below).
+  
     ## Who can access immunisation history records
-      Health and care organisations in England and the Isle of Man can access immunisation history records.
     
-      Legitimate direct care examples include NHS organisations delivering healthcare, local authorities delivering care, third sector and private sector health and care organisations, and developers delivering systems to health and care organisations.
-    
-      Health and care organisations in Scotland, Northern Ireland and the Channel Islands access their own equivalents of this API.
-    
-      Patients who receive health and social care or make use of NHS services in England, Wales and the Isle of Man.
-    
+    Health and care organisations in England and the Isle of Man can access immunisation history records.
+  
+    Legitimate direct care examples include NHS organisations delivering healthcare, local authorities delivering care, third sector and private sector health and care organisations, and developers delivering systems to health and care organisations.
+  
+    Health and care organisations in Scotland, Northern Ireland and the Channel Islands access their own equivalents of this API.
+  
+    Patients who receive health and social care or make use of NHS services in England, Wales and the Isle of Man.
+  
     ## API status and roadmap
+    
     This API is [Alpha](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#statuses).
     
     To see our roadmap, or to suggest, comment or vote on features for this API, see our [interactive product backlog](https://nhs-digital-api-management.featureupvote.com/?tag=immunisation).
@@ -69,6 +79,7 @@ info:
     For more details, see [service levels](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#service-levels).
     
     ## Technology
+    
     This API is [RESTful](https://digital.nhs.uk/developer/guides-and-documentation/our-api-technologies#basic-rest).
     
     It conforms to the [FHIR](https://digital.nhs.uk/developer/guides-and-documentation/our-api-technologies#fhir) global standard for health care data exchange, specifically to [FHIR R4 (v4.0.1)](https://hl7.org/fhir/r4/), except that it does not support the [capabilities](http://hl7.org/fhir/R4/http.html#capabilities) interaction.
@@ -84,6 +95,7 @@ info:
     There are [libraries and SDKs available](https://digital.nhs.uk/developer/guides-and-documentation/api-technologies-at-nhs-digital#fhir-libraries-and-sdks) to help with FHIR API integration.
     
     ## Network access
+    
     This API is available on the internet and, indirectly, on the [Health and Social Care Network (HSCN)](https://digital.nhs.uk/services/health-and-social-care-network).
     
     For more details see [Network access for APIs](https://digital.nhs.uk/developer/guides-and-documentation/network-access-for-apis).
