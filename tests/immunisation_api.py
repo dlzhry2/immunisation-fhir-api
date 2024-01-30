@@ -31,6 +31,9 @@ class ImmunisationApi:
     def create_immunization(self, imms):
         return requests.post(f"{self.url}/Immunization", headers=self._update_headers(), json=imms)
 
+    def update_immunization(self, imms_id, imms):
+        return requests.put(f"{self.url}/Immunization/{imms_id}", headers=self._update_headers(), json=imms)
+
     def delete_immunization(self, imms_id):
         return requests.delete(f"{self.url}/Immunization/{imms_id}", headers=self._update_headers())
 

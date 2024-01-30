@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 from fhir.resources.R4B.immunization import Immunization
@@ -5,9 +6,14 @@ from fhir.resources.R4B.list import List as FhirList
 from pydantic import ValidationError
 
 from fhir_repository import ImmunizationRepository
-from models.errors import InvalidPatientId, CoarseValidationError
+from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError, InconsistentIdError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
+
+
+class UpdateOutcome(Enum):
+    UPDATE = 0
+    CREATE = 1
 
 
 class FhirService:
@@ -33,14 +39,29 @@ class FhirService:
         except ValidationError as error:
             raise CoarseValidationError(message=str(error))
 
-        # TODO: check if nhs number exists
-        nhs_number = immunization['patient']['identifier']['value']
-        patient = self.pds_service.get_patient_details(nhs_number)
-        if patient:
-            imms = self.immunization_repo.create_immunization(immunization, patient)
-            return Immunization.parse_obj(imms)
-        else:
-            raise InvalidPatientId(nhs_number=nhs_number)
+        patient = self._validate_patient(immunization)
+        imms = self.immunization_repo.create_immunization(immunization, patient)
+
+        return Immunization.parse_obj(imms)
+
+    def update_immunization(self, imms_id: str, immunization: dict) -> UpdateOutcome:
+        if immunization.get('id', imms_id) != imms_id:
+            raise InconsistentIdError(imms_id=imms_id)
+        immunization['id'] = imms_id
+
+        try:
+            self.pre_validator.validate(immunization)
+        except ValidationError as error:
+            raise CoarseValidationError(message=str(error))
+
+        patient = self._validate_patient(immunization)
+
+        try:
+            self.immunization_repo.update_immunization(imms_id, immunization, patient)
+            return UpdateOutcome.UPDATE
+        except ResourceNotFoundError:
+            self.immunization_repo.create_immunization(immunization, patient)
+            return UpdateOutcome.CREATE
 
     def delete_immunization(self, imms_id) -> Immunization:
         """Delete an Immunization if it exits and return the ID back if successful.
@@ -60,3 +81,11 @@ class FhirService:
 
         entries = [Immunization.parse_obj(imms) for imms in resources]
         return FhirList.construct(entry=entries)
+
+    def _validate_patient(self, imms: dict):
+        nhs_number = imms['patient']['identifier']['value']
+        patient = self.pds_service.get_patient_details(nhs_number)
+        if patient:
+            return patient
+        else:
+            raise InvalidPatientId(nhs_number=nhs_number)
