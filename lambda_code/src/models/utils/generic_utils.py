@@ -89,3 +89,9 @@ def generate_field_location_for_extension(
         f"extension[?(@.url=='{url}')].valueCodeableConcept."
         + f"coding[?(@.system=='{system}')].{field_type}"
     )
+
+
+def get_deep_attr(obj, attrs):
+    for attr in attrs.split("."):
+        obj = getattr(obj, attr)
+    return obj

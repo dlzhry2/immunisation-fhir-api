@@ -3,12 +3,7 @@ from datetime import datetime
 from typing import Union
 from decimal import Decimal
 from mappings import Mandation, vaccination_procedure_snomed_codes
-
-
-def get_deep_attr(obj, attrs):
-    for attr in attrs.split("."):
-        obj = getattr(obj, attr)
-    return obj
+from .generic_utils import get_deep_attr
 
 
 class MandatoryError(Exception):
