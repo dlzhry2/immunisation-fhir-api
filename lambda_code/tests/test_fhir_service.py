@@ -11,8 +11,7 @@ from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
-
-from immunization_utils import create_an_immunization, create_an_immunization_dict, valid_nhs_number
+from tests.immunization_utils import create_an_immunization, create_an_immunization_dict, valid_nhs_number
 
 
 class TestGetImmunization(unittest.TestCase):
@@ -114,15 +113,15 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_update_immunization(self):
         """it should update Immunization and validate NHS number"""
         imms_id = "an-id"
-        self.imms_repo.update_immunization.return_value = None
+        self.imms_repo.update_immunization.return_value = create_an_immunization_dict(imms_id)
         pds_patient = {"id": "a-patient-id"}
         self.fhir_service.pds_service.get_patient_details.return_value = pds_patient
 
         nhs_number = valid_nhs_number
-        req_imms = _create_an_immunization_dict(imms_id, nhs_number)
+        req_imms = create_an_immunization_dict(imms_id, nhs_number)
 
         # When
-        outcome = self.fhir_service.update_immunization(imms_id, req_imms)
+        outcome, updated_imms = self.fhir_service.update_immunization(imms_id, req_imms)
 
         # Then
         self.assertEqual(outcome, UpdateOutcome.UPDATE)
@@ -132,13 +131,14 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_none_existing_imms(self):
         """it should create a new record, if it doesn't exist"""
         imms_id = "an-id"
-        imms = _create_an_immunization_dict(imms_id, valid_nhs_number)
+        imms = create_an_immunization_dict(imms_id, valid_nhs_number)
 
         self.imms_repo.update_immunization.side_effect = ResourceNotFoundError("Immunization", imms_id)
+        self.imms_repo.create_immunization.return_value = create_an_immunization_dict(imms_id)
         self.fhir_service.pds_service.get_patient_details.return_value = {"id": "a-patient-id"}
 
         # When
-        outcome = self.fhir_service.update_immunization(imms_id, imms)
+        outcome, created_imms = self.fhir_service.update_immunization(imms_id, imms)
 
         # Then
         self.assertEqual(outcome, UpdateOutcome.CREATE)
@@ -147,7 +147,7 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_pre_validation_failed(self):
         """it should throw exception if Immunization is not valid"""
         imms_id = "an-id"
-        imms = _create_an_immunization_dict(imms_id)
+        imms = create_an_immunization_dict(imms_id)
         imms["patient"] = {"identifier": {"value": valid_nhs_number}}
 
         self.imms_repo.update_immunization.return_value = {}
@@ -168,10 +168,10 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_id_not_present(self):
         """it should populate id in the message if it is not present"""
         req_imms_id = "an-id"
-        self.imms_repo.update_immunization.return_value = None
+        self.imms_repo.update_immunization.return_value = create_an_immunization_dict(req_imms_id)
         self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
 
-        req_imms = _create_an_immunization_dict("we-will-remove-this-id")
+        req_imms = create_an_immunization_dict("we-will-remove-this-id")
         del req_imms['id']
 
         # When
@@ -188,7 +188,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
 
         obj_imms_id = "a-diff-id"
-        req_imms = _create_an_immunization_dict(obj_imms_id)
+        req_imms = create_an_immunization_dict(obj_imms_id)
 
         with self.assertRaises(InconsistentIdError) as error:
             # When
@@ -204,7 +204,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.fhir_service.pds_service.get_patient_details.return_value = None
         imms_id = "an-id"
         invalid_nhs_number = "a-bad-patient-id"
-        bad_patient_imms = _create_an_immunization_dict(imms_id, invalid_nhs_number)
+        bad_patient_imms = create_an_immunization_dict(imms_id, invalid_nhs_number)
 
         with self.assertRaises(InvalidPatientId) as e:
             # When

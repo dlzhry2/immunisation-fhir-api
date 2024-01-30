@@ -89,11 +89,12 @@ class FhirController:
             return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
 
         try:
-            outcome = self.fhir_service.update_immunization(imms_id, imms)
+            outcome, resource = self.fhir_service.update_immunization(imms_id, imms)
             if outcome == UpdateOutcome.UPDATE:
                 return self.create_response(200)
             elif outcome == UpdateOutcome.CREATE:
-                return self.create_response(201)
+                location = f"{get_service_url()}/Immunization/{resource.id}"
+                return self.create_response(201, None, {"Location": location})
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome().json())
 
@@ -105,8 +106,8 @@ class FhirController:
             return FhirController.create_response(400, json.dumps(id_error.dict()))
 
         try:
-            resource = self.fhir_service.delete_immunization(imms_id)
-            return self.create_response(200, resource.json())
+            self.fhir_service.delete_immunization(imms_id)
+            return self.create_response(204)
         except ResourceNotFoundError as not_found:
             return self.create_response(404, not_found.to_operation_outcome().json())
         except UnhandledResponseError as unhandled_error:
@@ -141,18 +142,13 @@ class FhirController:
 
     @staticmethod
     def create_response(status_code, body=None, headers=None):
-        _headers = {
+        content_type = {
             "Content-Type": "application/fhir+json",
-        }
-        if headers:
-            _headers = {**headers, **_headers}
+        } if body else {}
 
+        headers = {**headers, **content_type} if headers else content_type
         response = {
             "statusCode": status_code,
-            "headers": {},
+            "headers": headers,
         }
-        if body:
-            response["body"] = body
-            return response
-        else:
-            return response
+        return {**response, "body": body} if body else response

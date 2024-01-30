@@ -7,7 +7,7 @@ from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.list import List
 from fhir_controller import FhirController, get_service_url
 from fhir_service import FhirService, UpdateOutcome
-from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId
+from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId, CoarseValidationError
 from tests.immunization_utils import create_an_immunization
 
 
@@ -45,6 +45,12 @@ class TestFhirController(unittest.TestCase):
         })
         self.assertEqual(res["body"], "a body")
 
+    def test_no_body_no_header(self):
+        res = self.controller.create_response(42)
+        self.assertEqual(res["statusCode"], 42)
+        self.assertDictEqual(res["headers"], {})
+        self.assertTrue("body" not in res)
+
     def test_get_service_url(self):
         """it should create service url"""
         env = "internal-dev"
@@ -60,7 +66,7 @@ class TestFhirController(unittest.TestCase):
         env = "pr-42"
         base_path = "my-base-path"
         url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://internal-dev.service.nhs.uk/{base_path}")
+        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
 
 
 class TestFhirControllerGetImmunizationById(unittest.TestCase):
@@ -132,7 +138,7 @@ class TestCreateImmunization(unittest.TestCase):
         imms_obj = json.loads(aws_event["body"])
         self.service.create_immunization.assert_called_once_with(imms_obj)
         self.assertEqual(response["statusCode"], 201)
-        self.assertIsNone(response["body"])
+        self.assertTrue("body" not in response)
         self.assertTrue(response["headers"]["Location"].endswith(f"Immunization/{imms_id}"))
 
     def test_malformed_resource(self):
@@ -184,7 +190,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms = "{}"
         imms_id = "valid-id"
         aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
-        self.service.update_immunization.return_value = UpdateOutcome.UPDATE
+        self.service.update_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
 
         response = self.controller.update_immunization(aws_event)
 
@@ -194,16 +200,22 @@ class TestUpdateImmunization(unittest.TestCase):
 
     def test_create_new_imms(self):
         """it should return 201 if update creates a new record"""
-        imms = "{}"
-        imms_id = "valid-id"
-        aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
-        self.service.update_immunization.return_value = UpdateOutcome.CREATE
+        req_imms = "{}"
+        path_id = "valid-id"
+        aws_event = {"body": req_imms, "pathParameters": {"id": path_id}}
 
+        new_id = "newly-created-id"
+        created_imms = create_an_immunization(imms_id=new_id)
+        self.service.update_immunization.return_value = UpdateOutcome.CREATE, created_imms
+
+        # When
         response = self.controller.update_immunization(aws_event)
 
-        self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms))
+        # Then
+        self.service.update_immunization.assert_called_once_with(path_id, json.loads(req_imms))
         self.assertEqual(response["statusCode"], 201)
         self.assertTrue("body" not in response)
+        self.assertTrue(response["headers"]["Location"].endswith(f"Immunization/{new_id}"))
 
     def test_validation_error(self):
         """it should return 400 if Immunization is invalid"""
@@ -269,9 +281,8 @@ class TestDeleteImmunization(unittest.TestCase):
         # Then
         self.service.delete_immunization.assert_called_once_with(imms_id)
 
-        self.assertEqual(response["statusCode"], 200)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "Immunization")
+        self.assertEqual(response["statusCode"], 204)
+        self.assertTrue("body" not in response)
 
     def test_immunization_exception_not_found(self):
         """it should return not-found OperationOutcome if service throws ResourceNotFoundError"""

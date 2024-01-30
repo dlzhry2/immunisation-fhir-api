@@ -1,12 +1,15 @@
-import json
-
 from fhir.resources.R4B.immunization import Immunization
 
 valid_nhs_number = "2374658346"
 
 
 def create_an_immunization(imms_id, nhs_number=valid_nhs_number) -> Immunization:
-    base_imms = {
+    base_imms = create_an_immunization_dict(imms_id, nhs_number)
+    return Immunization.parse_obj(base_imms)
+
+
+def create_an_immunization_dict(imms_id, nhs_number=valid_nhs_number):
+    return {
         "resourceType": "Immunization",
         "id": imms_id,
         "identifier": [
@@ -33,10 +36,3 @@ def create_an_immunization(imms_id, nhs_number=valid_nhs_number) -> Immunization
             }]
         },
     }
-    return Immunization.parse_obj(base_imms)
-
-
-def create_an_immunization_dict(imms_id, nhs_number=valid_nhs_number):
-    imms = create_an_immunization(imms_id, nhs_number)
-    # Convert FHIR OrderedDict to Dict by first converting it to json and then load it again
-    return json.loads(imms.json())
