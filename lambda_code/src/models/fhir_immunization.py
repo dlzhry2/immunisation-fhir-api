@@ -28,7 +28,7 @@ class ImmunizationValidator:
         WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST.
         """
         # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
-        if not hasattr(Immunization, "pre_validate_patient_identifier_value"):
+        if not hasattr(self.immunization, "pre_validate_patient_identifier_value"):
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_patient_identifier_value,
                 pre=True,
