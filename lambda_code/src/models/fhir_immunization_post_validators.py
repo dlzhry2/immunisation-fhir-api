@@ -19,8 +19,6 @@ get_generic_questionnaire_response_value = (
 )
 
 
-# TODO: Reorder methods in this class to match order in pre-validator class (apart from those
-# which have to be out of order such as reduce_validation and vaccination_procedure_code)
 class FHIRImmunizationPostValidators:
     """FHIR Immunization Post Validators"""
 
@@ -151,7 +149,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    # TODO: Update to obtain value from new data location
     @classmethod
     def validate_organization_display(cls, values: dict) -> dict:
         """

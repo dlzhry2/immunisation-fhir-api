@@ -328,56 +328,72 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: Fix doc string.
-    # TODO: Fix this method as currently will pass if "performer" or "actor" does not
-    # exist, even if contained_practitioner_id does
-    # TODO: Reject if there is a contained practitioner, but the contained practitioner
-    # has no id (so cannot be externally referenced)
-    # TODO: Reject if there is a contained practitioner, with a contained practitioner id,
-    # but this id is not referenced at all by the immunization.performer
-    # TODO: Reject there is no contained practitioner (note that none of the contained
-    # practitioner fields are mandatory), but there is an immunization.performer item such
-    # that the actor has a reference (? to where if not the contained practitioner)
     @classmethod
     def pre_validate_performer_actor_reference(cls, values: dict) -> dict:
         """
-        Pre-validate that, if performer.actor.organisation exists, then there is only one such
-        key with the value of "Organization"
+        Pre-validate that:
+        - if performer.actor.reference exists then it is a single reference
+        - if there is no contained Practitioner resource, then there is no performer.actor.reference
+        - if there is a contained Practitioner resource, then there is a performer.actor.reference
+        - if there is a contained Practitioner resource, then it has an id
+        - If there is a contained Practitioner resource, then the performer.actor.reference is equal
+          to the ID
         """
+
+        # Obtain the performer.actor.references that are internal references (#)
+        performer_actor_internal_references = []
+        for item in values.get("performer", []):
+            reference = item.get("actor", {}).get("reference")
+            if isinstance(reference, str) and reference.startswith("#"):
+                performer_actor_internal_references.append(reference)
+
+        # Check that we have a maximum of 1 internal reference
+        if len(performer_actor_internal_references) > 1:
+            raise ValueError(
+                "performer.actor.reference must be a single reference to a "
+                + "contained Practitioner resource. References found: "
+                + f"{performer_actor_internal_references}"
+            )
+
+        # Obtain the contained practitioner resource
         try:
-            # Obtain the contained_practitioner_id
             contained_practitioner = [
                 x
                 for x in values["contained"]
                 if x.get("resourceType") == "Practitioner"
             ][0]
-            contained_practitioner_id = "#" + contained_practitioner["id"]
-
-            # Check that there is exactly one performer_actor_reference which matches the
-            # contained_practitioner_id
-            performer_actor_references = []
-            for item in values.get("performer", []):
-                # If more than one reference contains the id then raise an error
-                if (
-                    item.get("actor").get("reference") == contained_practitioner_id
-                    and item.get("actor").get("reference") in performer_actor_references
-                ):
-                    raise ValueError(
-                        f"{contained_practitioner_id} must be referenced by exactly ONE "
-                        + "performer.actor"
-                    )
-
-                performer_actor_references.append(item.get("actor").get("reference"))
-
-            # If no reference contains the id then raise an error
-            if contained_practitioner_id not in performer_actor_references:
+        except (IndexError, KeyError) as error:
+            # If there is no contained practitioner resource, and there is a
+            # reference raise an error
+            if len(performer_actor_internal_references) == 0:
+                return values
+            else:
                 raise ValueError(
-                    f"{contained_practitioner_id} must be referenced by exactly ONE "
-                    + "performer.actor"
-                )
+                    f"The reference(s) {performer_actor_internal_references} do "
+                    + "not exist in the contained Practitioner resources"
+                ) from error
 
-        except (KeyError, IndexError, AttributeError):
-            pass
+        # If there is a contained practitioner resource, but no reference raise an error
+        if len(performer_actor_internal_references) == 0:
+            raise ValueError(
+                "contained Practitioner ID must be referenced by performer.actor.reference."
+            )
+
+        # Obtain the contained practitioner resource id
+        try:
+            contained_practitioner_id = "#" + contained_practitioner["id"]
+        except KeyError as error:
+            # If the contained practitioner resource has no id raise an error
+            raise ValueError(
+                "The contained Practitioner resource must have an 'id' field"
+            ) from error
+
+        # If the referenceis not equal to the ID then raise an error
+        if contained_practitioner_id != performer_actor_internal_references[0]:
+            raise ValueError(
+                f"The reference {performer_actor_internal_references[0]} does "
+                + "not exist in the contained Practitioner resources"
+            )
 
         return values
 

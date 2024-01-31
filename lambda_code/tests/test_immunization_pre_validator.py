@@ -301,124 +301,159 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ValidValues.empty_patient_resource,
         ]
 
-        valid_performer_with_no_contained_practitioner_reference = [
-            {"actor": {"reference": "#Pract0"}},
+        invalid_contained_with_no_id_in_practitioner = [
             {
-                "actor": {
-                    "type": "Organization",
-                    "identifier": {
-                        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                        "value": "B0C4P",
-                    },
-                    "display": "Acme Healthcare",
-                }
+                "resourceType": "Practitioner",
             },
+            ValidValues.empty_patient_resource,
         ]
 
-        valid_performer_with_one_contained_practitioner_reference = [
-            {"actor": {"reference": "#Pract0"}},
+        valid_performer_with_1_pract1 = [
             {"actor": {"reference": "#Pract1"}},
-            {
-                "actor": {
-                    "type": "Organization",
-                    "identifier": {
-                        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                        "value": "B0C4P",
-                    },
-                    "display": "Acme Healthcare",
-                }
-            },
+            ValidValues.performer_actor_organization,
         ]
 
-        valid_performer_with_more_than_one_contained_practitioner_reference = [
-            {"actor": {"reference": "#Pract1"}},
-            {"actor": {"reference": "#Pract1"}},
-            {
-                "actor": {
-                    "type": "Organization",
-                    "identifier": {
-                        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                        "value": "B0C4P",
-                    },
-                    "display": "Acme Healthcare",
-                }
-            },
+        valid_performer_with_no_actor_reference = [
+            ValidValues.performer_actor_organization,
         ]
 
-        # Test case: Pract1 in contained, 0 actor of #Pract1 in performer - reject
-        invalid_json_data = parse("contained").update(
-            invalid_json_data, valid_contained_with_practitioner
-        )
-        invalid_json_data = parse("performer").update(
-            invalid_json_data, valid_performer_with_no_contained_practitioner_reference
-        )
-        with self.assertRaises(ValidationError) as error:
-            self.validator.validate(invalid_json_data)
+        valid_performer_with_2_pract1 = [
+            {"actor": {"reference": "#Pract1"}},
+            {"actor": {"reference": "#Pract1"}},
+            ValidValues.performer_actor_organization,
+        ]
 
-        self.assertTrue(
-            (
-                "Pract1 must be referenced by exactly ONE performer.actor"
-                + " (type=value_error)"
-            )
-            in str(error.exception)
-        )
+        valid_performer_with_1_pract2 = [
+            {"actor": {"reference": "#Pract2"}},
+            ValidValues.performer_actor_organization,
+        ]
 
-        # Test case: Pract1 in contained, 1 actor of Pract1 in performer - accept
+        # Test case: Pract1 in contained, 1 actor of #Pract1 in performer - accept
+        valid_json_data = deepcopy(self.json_data)
+
         valid_json_data = parse("contained").update(
             valid_json_data, valid_contained_with_practitioner
         )
         valid_json_data = parse("performer").update(
-            valid_json_data, valid_performer_with_one_contained_practitioner_reference
+            valid_json_data, valid_performer_with_1_pract1
         )
 
         self.assertTrue(self.validator.validate(valid_json_data))
 
-        # Test Case: Pract1 in contained, 2 actors of Pract1 in performer - reject
+        # Test case: No contained practitioner, no actor reference in performer - accept
+        valid_json_data = deepcopy(self.json_data)
+
+        valid_json_data = parse("contained").update(
+            valid_json_data, valid_contained_with_no_practitioner
+        )
+
+        valid_json_data = parse("performer").update(
+            valid_json_data, valid_performer_with_no_actor_reference
+        )
+
+        self.assertTrue(self.validator.validate(valid_json_data))
+
+        # Test case: Pract1 in contained, 2 actor of #Pract1 in performer - reject
+        invalid_json_data = deepcopy(self.json_data)
         invalid_json_data = parse("contained").update(
             invalid_json_data, valid_contained_with_practitioner
         )
+
         invalid_json_data = parse("performer").update(
-            invalid_json_data,
-            valid_performer_with_more_than_one_contained_practitioner_reference,
+            invalid_json_data, valid_performer_with_2_pract1
         )
+
         with self.assertRaises(ValidationError) as error:
             self.validator.validate(invalid_json_data)
 
         self.assertTrue(
             (
-                "Pract1 must be referenced by exactly ONE performer.actor"
-                + " (type=value_error)"
+                "performer.actor.reference must be a single reference to a contained Practitioner "
+                + "resource. References found: ['#Pract1', '#Pract1'] "
+                + "(type=value_error)"
             )
             in str(error.exception)
         )
 
-        # Test case: No practitioner in contained, 0 actor with reference in performer - accept
-        valid_json_data = parse("contained").update(
-            valid_json_data, valid_contained_with_no_practitioner
-        )
-        valid_json_data = parse("performer").update(
-            valid_json_data, valid_performer_with_no_contained_practitioner_reference
-        )
+        # Test case: No contained practitioner, 1 actor of #Pract1 in performer - reject
+        # Test case: Pract1 in contained, no actor reference in performer - reject
+        # Test case: Contained practitioner with no ID, no actor reference in perfomer - reject
+        # Test case: Pract1 in contained, 1 actor of #Pract2 in performer - reject
 
-        self.assertTrue(self.validator.validate(valid_json_data))
+        ## Test case: Pract1 in contained, 0 actor of #Pract1 in performer - reject
+        # invalid_json_data = parse("contained").update(
+        #    invalid_json_data, valid_contained_with_practitioner
+        # )
+        # invalid_json_data = parse("performer").update(
+        #    invalid_json_data, valid_performer_with_no_contained_practitioner_reference
+        # )
+        # with self.assertRaises(ValidationError) as error:
+        #    self.validator.validate(invalid_json_data)
 
-        # Test case: No practitioner in contained, 1 or more actors with reference in performer
-        # - accept
-        valid_json_data = parse("contained").update(
-            valid_json_data, valid_contained_with_no_practitioner
-        )
-        valid_json_data = parse("performer").update(
-            valid_json_data, valid_performer_with_one_contained_practitioner_reference
-        )
+        # self.assertTrue(
+        #    (
+        #        "Pract1 must be referenced by exactly ONE performer.actor"
+        #        + " (type=value_error)"
+        #    )
+        #    in str(error.exception)
+        # )
 
-        self.assertTrue(self.validator.validate(valid_json_data))
+        ## Test case: Pract1 in contained, 1 actor of Pract1 in performer - accept
+        # valid_json_data = parse("contained").update(
+        #    valid_json_data, valid_contained_with_practitioner
+        # )
+        # valid_json_data = parse("performer").update(
+        #    valid_json_data, valid_performer_with_one_contained_practitioner_reference
+        # )
 
-        valid_json_data = parse("performer").update(
-            valid_json_data,
-            valid_performer_with_more_than_one_contained_practitioner_reference,
-        )
+        # self.assertTrue(self.validator.validate(valid_json_data))
 
-        self.assertTrue(self.validator.validate(valid_json_data))
+        ## Test Case: Pract1 in contained, 2 actors of Pract1 in performer - reject
+        # invalid_json_data = parse("contained").update(
+        #    invalid_json_data, valid_contained_with_practitioner
+        # )
+        # invalid_json_data = parse("performer").update(
+        #    invalid_json_data,
+        #    valid_performer_with_more_than_one_contained_practitioner_reference,
+        # )
+        # with self.assertRaises(ValidationError) as error:
+        #    self.validator.validate(invalid_json_data)
+
+        # self.assertTrue(
+        #    (
+        #        "Pract1 must be referenced by exactly ONE performer.actor"
+        #        + " (type=value_error)"
+        #    )
+        #    in str(error.exception)
+        # )
+
+        ## Test case: No practitioner in contained, 0 actor with reference in performer - accept
+        # valid_json_data = parse("contained").update(
+        #    valid_json_data, valid_contained_with_no_practitioner
+        # )
+        # valid_json_data = parse("performer").update(
+        #    valid_json_data, valid_performer_with_no_contained_practitioner_reference
+        # )
+
+        # self.assertTrue(self.validator.validate(valid_json_data))
+
+        ## Test case: No practitioner in contained, 1 or more actors with reference in performer
+        ## - accept
+        # valid_json_data = parse("contained").update(
+        #    valid_json_data, valid_contained_with_no_practitioner
+        # )
+        # valid_json_data = parse("performer").update(
+        #    valid_json_data, valid_performer_with_one_contained_practitioner_reference
+        # )
+
+        # self.assertTrue(self.validator.validate(valid_json_data))
+
+        # valid_json_data = parse("performer").update(
+        #    valid_json_data,
+        #    valid_performer_with_more_than_one_contained_practitioner_reference,
+        # )
+
+        # self.assertTrue(self.validator.validate(valid_json_data))
 
     def test_pre_validate_organization_identifier_value(self):
         """

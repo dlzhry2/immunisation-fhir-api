@@ -82,6 +82,17 @@ class ValidValues:
         ],
     }
 
+    performer_actor_organization = {
+        "actor": {
+            "type": "Organization",
+            "identifier": {
+                "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                "value": "B0C4P",
+            },
+            "display": "Acme Healthcare",
+        }
+    }
+
 
 @dataclass
 class InvalidValues:
