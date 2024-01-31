@@ -1,20 +1,24 @@
 def handle_s_flag(imms, patient):
-    patient_is_restricted = patient['meta']['security'][0]['display'] == "restricted"
+    try:
+        patient_is_restricted = patient['meta']['security'][0]['display'] == "restricted"
+    except (KeyError, IndexError):
+        return imms
+
     if not patient_is_restricted:
         return imms
 
-    def recurse(imms):
-        if isinstance(imms, dict):
+    def recurse(data):
+        if isinstance(data, dict):
             keys_to_remove = ["SiteCode", "SiteName"]
 
             # Check if "item" is present and remove items with "linkId" in keys_to_remove
-            if "item" in imms:
-                imms["item"] = [item for item in imms["item"] if "linkId" not in item or item["linkId"] not in keys_to_remove]
-                if not imms["item"]:
-                    del imms["item"]
+            if "item" in data:
+                data["item"] = [item for item in data["item"] if "linkId" not in item or item["linkId"] not in keys_to_remove]
+                if not data["item"]:
+                    del data["item"]
 
             result = {}
-            for key, value in imms.items():
+            for key, value in data.items():
                 # Recursively call remove_personal_info for nested structures
                 updated_value = recurse(value)
 
@@ -23,11 +27,11 @@ def handle_s_flag(imms, patient):
                     result[key] = updated_value
 
             return result if result else None
-        elif isinstance(imms, list):
+        elif isinstance(data, list):
             # Call remove_personal_info for each element in the array and build a new list
-            result = [recurse(object) for object in imms if recurse(object) is not None]
+            result = [recurse(object) for object in data if recurse(object) is not None]
             return result if result else None
         else:
-            return imms
+            return data
 
-    recurse(imms)
+    return recurse(imms)
