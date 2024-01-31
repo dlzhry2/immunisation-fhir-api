@@ -49,21 +49,21 @@ info:
     ## Who can use this API
     
     This API can only be used where there is a legal basis to do so. Make sure you have a valid use case before you go too far with your development.
-  
+    
     You must demonstrate you have a valid use case as part of digital onboarding.
-  
+    
     You must do this before you can go live (see 'Onboarding' below).
-  
+    
     ## Who can access immunisation history records
     
     Health and care organisations in England and the Isle of Man can access immunisation history records.
-  
+    
     Legitimate direct care examples include NHS organisations delivering healthcare, local authorities delivering care, third sector and private sector health and care organisations, and developers delivering systems to health and care organisations.
-  
+    
     Health and care organisations in Scotland, Northern Ireland and the Channel Islands access their own equivalents of this API.
-  
+    
     Patients who receive health and social care or make use of NHS services in England, Wales and the Isle of Man.
-  
+    
     ## API status and roadmap
     
     This API is [Alpha](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#statuses).
@@ -145,6 +145,9 @@ paths:
       responses:
         "201":
           description: Create Immunization operation successful
+          headers:
+            Location:
+              $ref: "#/components/headers/Location"
         4XX:
           $ref: '#/components/responses/4XX-imms'
       requestBody:
@@ -223,6 +226,9 @@ paths:
           description: Update Immunization operation successful
         "201":
           description: Create Immunization operation successful (requires 'updateCreateEnabled' configuration option)
+          headers:
+            Location:
+              $ref: "#/components/headers/Location"
         4XX:
           $ref: '#/components/responses/4XX-imms'
       requestBody:
@@ -243,6 +249,12 @@ paths:
           $ref: '#/components/responses/4XX-imms'
 
 components:
+  headers:
+    Location:
+      description: The URL to the created resource
+      schema:
+        type: string
+        example: "https://int.api.service.nhs.uk/immunisation-fhir-api/Immunization/6c574dae-2e03-4dc7-87da-2b539a71a918"
   responses:
     4XX-imms:
       description: >

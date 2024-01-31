@@ -6,7 +6,7 @@ import pytest
 
 from .configuration.config import valid_nhs_number1, valid_nhs_number2
 from .example_loader import load_example
-from .immunisation_api import ImmunisationApi
+from .immunisation_api import ImmunisationApi, parse_location
 
 
 def create_immunization(imms_id, nhs_number, disease_code):
@@ -30,13 +30,13 @@ def seed_records(imms_api: ImmunisationApi, records):
         for disease in record["diseases"]:
             imms = create_immunization(str(uuid.uuid4()), nhs_number, disease)
 
-            stored_imms = imms_api.create_immunization(imms)
-            if stored_imms.status_code != 201:
-                print(stored_imms.text())
-            assert stored_imms.status_code == 201
+            create_res = imms_api.create_immunization(imms)
+            assert create_res.status_code == 201
+            imms_id = parse_location(create_res.headers["Location"])
             sleep(0.1)
+            get_res = imms_api.get_immunization_by_id(imms_id)
 
-            record["responses"].append(stored_imms.json())
+            record["responses"].append(get_res.json())
 
     return _records
 
@@ -45,9 +45,7 @@ def cleanup(imms_api: ImmunisationApi, stored_records: list):
     for record in stored_records:
         for resource in record["responses"]:
             delete_res = imms_api.delete_immunization(resource["id"])
-            if delete_res.status_code != 200:
-                print(delete_res.json())
-            assert delete_res.status_code == 200
+            assert delete_res.status_code == 204
             sleep(0.1)
 
 

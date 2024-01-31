@@ -16,15 +16,15 @@ def create_an_imms_obj(imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_nu
     return imms
 
 
-def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> dict:
+def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> str:
     imms = create_an_imms_obj()
+    res = imms_api.create_immunization(imms)
+    imms_id = parse_location(res.headers["Location"])
 
-    stored_imms = imms_api.create_immunization(imms).json()
-    imms_id = stored_imms["id"]
     res = imms_api.delete_immunization(imms_id)
-    assert res.status_code == 200
+    assert res.status_code == 204
 
-    return res.json()
+    return imms_id
 
 
 @pytest.mark.nhsd_apim_authorization(
@@ -34,7 +34,6 @@ def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> dict:
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -70,10 +69,10 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     res_body = result.json()
     assert res_body["status"] == "not-done"
 
-    # # DELETE
-    # result = imms_api.delete_immunization(imms_id)
-    #
-    # assert result.status_code == 200
+    # DELETE
+    result = imms_api.delete_immunization(imms_id)
+
+    assert result.status_code == 204
 
 
 @pytest.mark.nhsd_apim_authorization(
@@ -130,8 +129,7 @@ def test_delete_immunization_already_deleted(nhsd_apim_proxy_url, nhsd_apim_auth
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
-    imms = create_a_deleted_imms_resource(imms_api)
-    imms_id = imms["id"]
+    imms_id = create_a_deleted_imms_resource(imms_api)
 
     # Act
     result = imms_api.delete_immunization(imms_id)
@@ -154,8 +152,7 @@ def test_get_deleted_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
-    imms = create_a_deleted_imms_resource(imms_api)
-    imms_id = imms["id"]
+    imms_id = create_a_deleted_imms_resource(imms_api)
 
     # Act
     result = imms_api.get_immunization_by_id(imms_id)
@@ -228,9 +225,9 @@ def test_update_deleted_imms_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_heade
     result = imms_api.create_immunization(imms)
     assert result.status_code == 201
 
-    imms_id = result.json()["id"]
+    imms_id = parse_location(result.headers["Location"])
     result = imms_api.delete_immunization(imms_id)
-    assert result.status_code == 200
+    assert result.status_code == 204
 
     # When
     imms["id"] = imms_id
