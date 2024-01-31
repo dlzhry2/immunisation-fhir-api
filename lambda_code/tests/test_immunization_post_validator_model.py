@@ -224,6 +224,25 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             expected_error_type="value_error",
         )
 
+    def test_model_post_identifer_system(self):
+        """
+        Test that the JSON data is accepted if it contains identifier[0].system and rejected if not
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "identifier[0].system"
+
+        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
+            self, valid_json_data
+        )
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
+        )
+
     def test_model_post_recorded(self):
         """
         Test that the JSON data is accepted if it contains recorded and rejected if not

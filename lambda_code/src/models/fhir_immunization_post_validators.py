@@ -184,13 +184,15 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_identifier_value(cls, values: dict) -> dict:
         "Validate that identifier_value is present or absent, as required"
-        field_location = "identifier[0].value"
-        mandation = vaccine_type_applicable_validations["identifier_value"][
-            cls.vaccine_type
-        ]
+        field_value = get_generic_field_value(
+            values, "identifier", index=0, attribute="value"
+        )
 
-        PostValidation.get_generic_field_value(
-            values, "identifier", "value", mandation, field_location, index=0
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location="identifier[0].value",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="identifier_value",
         )
 
         return values
@@ -198,13 +200,15 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_identifier_system(cls, values: dict) -> dict:
         "Validate that identifier_system is present or absent, as required"
-        field_location = "identifier[0].system"
-        mandation = vaccine_type_applicable_validations["identifier_system"][
-            cls.vaccine_type
-        ]
+        field_value = get_generic_field_value(
+            values, "identifier", index=0, attribute="system"
+        )
 
-        PostValidation.get_generic_field_value(
-            values, "identifier", "system", mandation, field_location, index=0
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location="identifier[0].system",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="identifier_system",
         )
 
         return values
@@ -212,11 +216,16 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_recorded(cls, values: dict) -> dict:
         "Validate that recorded is present or absent, as required"
-        field_location = "recorded"
-        mandation = vaccine_type_applicable_validations["recorded"][cls.vaccine_type]
+        field_value = get_generic_field_value(
+            values,
+            "recorded",
+        )
 
-        PostValidation.get_generic_field_value(
-            values, "recorded", None, mandation, field_location
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location="recorded",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="recorded",
         )
 
         return values
@@ -224,13 +233,16 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_primary_source(cls, values: dict) -> dict:
         "Validate that primarySource is present or absent, as required"
-        field_location = "primarySource"
-        mandation = vaccine_type_applicable_validations["primary_source"][
-            cls.vaccine_type
-        ]
+        field_value = get_generic_field_value(
+            values,
+            "primarySource",
+        )
 
-        PostValidation.get_generic_field_value(
-            values, "primarySource", None, mandation, field_location
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location="primarySource",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="primary_source",
         )
 
         return values
@@ -239,6 +251,11 @@ class FHIRImmunizationPostValidators:
     def validate_report_origin_text(cls, values: dict) -> dict:
         "Validate that reportOrigin.text is present or absent, as required"
         field_location = "reportOrigin.text"
+        report_origin_text = get_generic_field_value(
+            values,
+            "reportOrigin",
+            attribute="text",
+        )
         mandation = vaccine_type_applicable_validations["report_origin_text"][
             cls.vaccine_type
         ]
@@ -246,13 +263,15 @@ class FHIRImmunizationPostValidators:
         if not values["primarySource"]:
             mandation = Mandation.mandatory
 
-        try:
-            PostValidation.get_generic_field_value(
-                values, "reportOrigin", "text", mandation, field_location
+        if report_origin_text is None:
+            if mandation == Mandation.mandatory:
+                raise MandatoryError(
+                    f"{field_location} is mandatory when primarySource is false"
+                )
+
+        if mandation == Mandation.not_applicable:
+            raise NotApplicableError(
+                f"{field_location} must not be provided for this vaccine type"
             )
-        except MandatoryError as error:
-            raise MandatoryError(
-                f"{field_location} is mandatory when primarySource is false"
-            ) from error
 
         return values

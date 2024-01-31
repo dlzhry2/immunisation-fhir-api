@@ -7,7 +7,7 @@
           "identifier": [
               {
                   "system": "PERFORMING_PROFESSIONAL_BODY_REG_URI",
-                  "value": "PERFORMING_PROFESSIONAL_BODY_REG_CODE"
+                  "value": "PERFORMING_PROFESSIONAL_BODY_REG_CODE",
               }
           ],
           "name": [
@@ -23,8 +23,7 @@
           "resourceType": "Patient",
           "id" : "Pat1",
           "identifier": [
-            {
-              "extension":  [
+              {"extension":  [
                   {
                       "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
                       "valueCodeableConcept": {
@@ -40,7 +39,7 @@
               ],
                   "system": "https://fhir.nhs.uk/Id/nhs-number",
                   "value": "NHS_NUMBER"
-            }
+              }
           ],
           "name": [
               {
@@ -105,9 +104,11 @@
                   "linkId": "LocalPatient",
                   "answer": [
                       {
-                          "valueCoding": {
-                              "system": "LOCAL_PATIENT_URI",
-                              "code": "LOCAL_PATIENT_ID"
+                          "valueReference": {
+                              "identifier": {
+                                  "system": "LOCAL_PATIENT_URI",
+                                  "value": "LOCAL_PATIENT_ID"
+                              }
                           }
                       }
                   ]
@@ -188,8 +189,7 @@
       ]
     },
     "patient": {
-      "reference" : "#Pat1",
-      "display" : "PERSON_FORENAME PERSON_SURNAME"
+      "reference" : "#Pat1"
     },
     "occurrenceDateTime": "DATE_AND_TIME",
     "recorded": "RECORDED_DATE",
@@ -229,8 +229,7 @@
     "performer": [
       {
           "actor": {
-              "reference" : "#Pract1",
-              "display" : "PERFORMING_PROFESSIONAL_FORENAME PERFORMING_PROFESSIONAL_SURNAME"
+              "reference" : "#Pract1"
           }
       },
       {
@@ -256,15 +255,6 @@
     ],
     "protocolApplied": [
       {
-          "targetDisease": [
-              {
-                  "coding": [
-                      {
-                          "code": "TARGET_DISEASE"
-                      }
-                  ]
-              }
-          ],
           "doseNumberPositiveInt": DOSE_SEQUENCE
       }
     ],
