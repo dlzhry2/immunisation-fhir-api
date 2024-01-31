@@ -321,40 +321,43 @@ class ImmunizationValidator:
         """
         # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
 
-        self.immunization.add_root_validator(
-            FHIRImmunizationPostValidators.set_reduce_validation
-        )
-        self.immunization.add_root_validator(
-            FHIRImmunizationPostValidators.validate_and_set_vaccination_procedure_code
-        )
-        self.immunization.add_root_validator(FHIRImmunizationPostValidators.set_status)
-        self.immunization.add_root_validator(
-            FHIRImmunizationPostValidators.validate_patient_identifier_value
-        )
-        self.immunization.add_root_validator(
-            FHIRImmunizationPostValidators.validate_occurrence_date_time
-        )
-        self.immunization.add_root_validator(
-            FHIRImmunizationPostValidators.validate_organization_identifier_value
-        )
-        self.immunization.add_root_validator(
-            FHIRImmunizationPostValidators.validate_organization_display
-        )
-        # self.immunization.add_root_validator(
-        #     FHIRImmunizationPostValidators.validate_identifier_value
-        # )
-        # self.immunization.add_root_validator(
-        #     FHIRImmunizationPostValidators.validate_identifier_system
-        # )
-        # self.immunization.add_root_validator(
-        #     FHIRImmunizationPostValidators.validate_recorded
-        # )
-        # self.immunization.add_root_validator(
-        #     FHIRImmunizationPostValidators.validate_primary_source
-        # )
-        # self.immunization.add_root_validator(
-        #     FHIRImmunizationPostValidators.validate_report_origin_text
-        # )
+        if not hasattr(self.immunization, "set_reduce_validation"):
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.set_reduce_validation
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_and_set_vaccination_procedure_code
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.set_status
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_patient_identifier_value
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_occurrence_date_time
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_organization_identifier_value
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_organization_display
+            )
+            # self.immunization.add_root_validator(
+            #     FHIRImmunizationPostValidators.validate_identifier_value
+            # )
+            # self.immunization.add_root_validator(
+            #     FHIRImmunizationPostValidators.validate_identifier_system
+            # )
+            # self.immunization.add_root_validator(
+            #     FHIRImmunizationPostValidators.validate_recorded
+            # )
+            # self.immunization.add_root_validator(
+            #     FHIRImmunizationPostValidators.validate_primary_source
+            # )
+            # self.immunization.add_root_validator(
+            #     FHIRImmunizationPostValidators.validate_report_origin_text
+            # )
 
     def remove_custom_root_validators(self, mode: Literal["pre", "post"]):
         """Remove custom NHS validators from the model"""
