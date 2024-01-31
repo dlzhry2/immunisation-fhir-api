@@ -2,8 +2,10 @@ from typing import Optional
 
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
+from fhir.resources.R4B.bundle import BundleEntry
+from fhir.resources.R4B.bundle import BundleLink
 from pydantic import ValidationError
-
+import os
 from fhir_repository import ImmunizationRepository
 from models.errors import InvalidPatientId, CoarseValidationError
 from models.fhir_immunization import ImmunizationValidator
@@ -11,8 +13,12 @@ from pds_service import PdsService
 
 
 class FhirService:
-    def __init__(self, imms_repo: ImmunizationRepository, pds_service: PdsService,
-                 pre_validator: ImmunizationValidator = ImmunizationValidator()):
+    def __init__(
+        self,
+        imms_repo: ImmunizationRepository,
+        pds_service: PdsService,
+        pre_validator: ImmunizationValidator = ImmunizationValidator(),
+    ):
         self.immunization_repo = imms_repo
         self.pds_service = pds_service
         self.pre_validator = pre_validator
@@ -34,7 +40,7 @@ class FhirService:
             raise CoarseValidationError(message=str(error))
 
         # TODO: check if nhs number exists
-        nhs_number = immunization['patient']['identifier']['value']
+        nhs_number = immunization["patient"]["identifier"]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
         if patient:
             imms = self.immunization_repo.create_immunization(immunization, patient)
@@ -58,5 +64,23 @@ class FhirService:
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         resources = self.immunization_repo.find_immunizations(nhs_number, disease_type)
 
-        entries = [Immunization.parse_obj(imms) for imms in resources]
-        return FhirBundle.construct(entry=entries)
+        entries = [
+            BundleEntry(resource=Immunization.parse_obj(imms)) for imms in resources
+        ]
+        print("response from service")
+        print(entries)
+        fhir_bundle = FhirBundle(
+            resourceType="Bundle",
+            type="searchset",  # Set the type to "searchset"
+            entry=entries,
+        )
+        print("bundle before")
+        print(fhir_bundle)
+        aws_domain_name = os.environ["DOMAIN_NAME_URL"]
+        url = f"{aws_domain_name}/Immunization?patient={nhs_number}&diseaseType={disease_type}"
+        print("aws_domain_name")
+        print(url)
+        fhir_bundle.link = [BundleLink(relation="self", url=url)]
+        print("bundle after")
+        print(fhir_bundle)
+        return fhir_bundle

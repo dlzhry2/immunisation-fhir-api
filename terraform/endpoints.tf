@@ -2,6 +2,7 @@
 
 locals {
     policy_path = "${path.root}/policies"
+    domain_name_url = "https://${local.service_domain_name}"
 }
 
 data "aws_iam_policy_document" "logs_policy_document" {
@@ -24,6 +25,7 @@ locals {
     imms_lambda_env_vars = {
         "DYNAMODB_TABLE_NAME" = local.imms_table_name,
         "PDS_ENV"             = local.environment == "prod" ? "prod" : "int"
+        "DOMAIN_NAME_URL"     = local.domain_name_url
     }
 }
 data "aws_iam_policy_document" "imms_policy_document" {

@@ -95,6 +95,22 @@ paths:
             application/fhir+json:
               schema:
                 type: object
+  /event/_search:
+    post:
+      x-amazon-apigateway-integration:
+        uri: "${search_event.lambda_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      responses:
+        '201':
+          description: An Immunisation search event
+          content:
+            application/fhir+json:
+              schema:
+                type: object
   /{proxy+}:
     x-amazon-apigateway-any-method:
       parameters:
