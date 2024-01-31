@@ -205,7 +205,7 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
 
     # Assert
     def get_questionnaire_item_ids(imms):
-        questionnaire = next(contained for contained in imms["contained"] \
+        questionnaire = next(contained for contained in imms["contained"]
                              if contained["questionnaire"] == "Questionnaire/1")
         return [item["linkId"] for item in questionnaire["item"]]
 
