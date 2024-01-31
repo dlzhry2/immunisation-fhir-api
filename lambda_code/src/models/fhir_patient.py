@@ -1,12 +1,7 @@
 """Patient FHIR R4B validator"""
 
 from fhir.resources.R4B.patient import Patient
-
-from models.utils import (
-    pre_validate_list,
-    pre_validate_string,
-    pre_validate_date,
-)
+from models.utils.pre_validator_utils import PreValidation
 from models.constants import Constants
 
 
@@ -24,7 +19,7 @@ class PatientValidator:
         """Pre-validate that, if name exists, then it is an array of length 1"""
         try:
             name = values["name"]
-            pre_validate_list(name, "name", defined_length=1)
+            PreValidation.for_list(name, "name", defined_length=1)
         except KeyError:
             pass
 
@@ -38,7 +33,7 @@ class PatientValidator:
         """
         try:
             name_given = values["name"][0]["given"]
-            pre_validate_list(
+            PreValidation.for_list(
                 name_given,
                 "name[0].given",
                 defined_length=1,
@@ -58,7 +53,7 @@ class PatientValidator:
 
         try:
             name_family = values["name"][0]["family"]
-            pre_validate_string(name_family, "name[0].family")
+            PreValidation.for_string(name_family, "name[0].family")
         except KeyError:
             pass
 
@@ -73,7 +68,7 @@ class PatientValidator:
 
         try:
             birth_date = values["birthDate"]
-            pre_validate_date(birth_date, "birthDate")
+            PreValidation.for_date(birth_date, "birthDate")
         except KeyError:
             pass
 
@@ -88,7 +83,9 @@ class PatientValidator:
 
         try:
             gender = values["gender"]
-            pre_validate_string(gender, "gender", predefined_values=Constants.GENDERS)
+            PreValidation.for_string(
+                gender, "gender", predefined_values=Constants.GENDERS
+            )
         except KeyError:
             pass
 
@@ -99,7 +96,9 @@ class PatientValidator:
         """Pre-validate that, if address exists, then it is an array of length 1"""
         try:
             address = values["address"]
-            pre_validate_list(address, "address", defined_length=1)
+            PreValidation.for_list(
+                address, "address", defined_length=1
+            )
         except KeyError:
             pass
 
@@ -114,7 +113,7 @@ class PatientValidator:
 
         try:
             address_postal_code = values["address"][0]["postalCode"]
-            pre_validate_string(
+            PreValidation.for_string(
                 address_postal_code, "address[0].postalCode", is_postal_code=True
             )
         except KeyError:
