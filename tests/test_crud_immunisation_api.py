@@ -191,14 +191,14 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     imms = create_an_imms_obj(nhs_number="9449310610")
     created_imms = imms_api.create_immunization(imms)
     if created_imms.status_code != 201:
-        pprint.pprint(created_imms)
+        pprint.pprint(created_imms.text)
         raise AssertionError
     created_imms_json = created_imms.json()
 
     retrieved_imms = imms_api.get_immunization_by_id(created_imms_json["id"])
-    if retrieved_imms.status_code != 201:
-        pprint.pprint(retrieved_imms)
-        raise AssertionError
+    if retrieved_imms.status_code != 200:
+        pprint.pprint(retrieved_imms.text)
+        assert retrieved_imms.status_code == 201
     retrieved_imms_json = retrieved_imms.json()
 
     imms_api.delete_immunization(created_imms_json["id"])
