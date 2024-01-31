@@ -4,7 +4,7 @@ import uuid
 
 import pytest
 
-from .configuration.config import valid_nhs_number1
+from .configuration.config import valid_nhs_number1, valid_nhs_number_with_s_flag
 from .example_loader import load_example
 from .immunisation_api import ImmunisationApi
 
@@ -188,7 +188,7 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
     # Act
-    imms = create_an_imms_obj(nhs_number="9449310610")
+    imms = create_an_imms_obj(nhs_number=valid_nhs_number_with_s_flag)
     created_imms = imms_api.create_immunization(imms)
     if created_imms.status_code != 201:
         pprint.pprint(created_imms.text)
