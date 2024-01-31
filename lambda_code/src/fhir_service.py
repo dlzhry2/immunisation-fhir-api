@@ -17,12 +17,16 @@ class UpdateOutcome(Enum):
 
 
 class FhirService:
-    def __init__(self, imms_repo: ImmunizationRepository, pds_service: PdsService,
-                 pre_validator: ImmunizationValidator = ImmunizationValidator()):
+    def __init__(
+        self,
+        imms_repo: ImmunizationRepository,
+        pds_service: PdsService,
+        pre_validator: ImmunizationValidator = ImmunizationValidator(),
+    ):
         self.immunization_repo = imms_repo
         self.pds_service = pds_service
         self.pre_validator = pre_validator
-        self.pre_validator.add_custom_root_validators()
+        self.pre_validator.add_custom_root_pre_validators()
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunization_repo.get_immunization_by_id(imms_id)

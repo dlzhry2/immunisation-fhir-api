@@ -38,7 +38,6 @@ paths:
             application/fhir+json:
               schema:
                 type: object
-  /event/{id}:
     get:
       x-amazon-apigateway-integration:
         uri: "${get_event.lambda_arn}"
@@ -70,7 +69,7 @@ paths:
               schema:
                 type: object
 
-  /event:
+  /Immunization:
     get:
       x-amazon-apigateway-integration:
         uri: "${search_event.lambda_arn}"
