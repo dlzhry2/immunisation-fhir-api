@@ -36,6 +36,9 @@ vaccination_procedure_snomed_codes = {
     "1363861000000103": DiseaseTypes.covid_19,
     "1363791000000101": DiseaseTypes.covid_19,
     "1363831000000108": DiseaseTypes.covid_19,
+    "822851000000102": DiseaseTypes.flu,  # TODO: remove this code if necessary once full list of
+    # accceptable codes is received (note that it has been copied from the sample data, to allow
+    # the sample flu data to pass the validator)
     "mockFLUcode1": DiseaseTypes.flu,
     "mockFLUcode2": DiseaseTypes.flu,
     "mockHPVcode1": DiseaseTypes.hpv,

@@ -17,7 +17,6 @@ class Constants:
     # TODO: valid_disease_types needs updated to reprent agreed list (needs to consider the
     # mapping used for converting snomed code to disease type)
     VALID_DISEASE_TYPES = {"COVID-19", "FLU"}
-    REDUCE_VALIDATION_CODES = ("True", "False")
 
     @staticmethod
     def convert_iso8601_to_datetime(iso_datetime_str):
