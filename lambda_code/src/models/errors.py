@@ -61,7 +61,7 @@ class InconsistentIdError(ValidationError):
 
     imms_id: str
 
-    def to_operation_outcome(self) -> OperationOutcome:
+    def to_operation_outcome(self) -> dict:
         msg = f"The provided id:{self.imms_id} doesn't match with the content of the message"
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)

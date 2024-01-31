@@ -68,7 +68,7 @@ class FhirController:
         imms_id = aws_event["pathParameters"]["id"]
         id_error = self._validate_id(imms_id)
         if id_error:
-            return FhirController.create_response(400, json.dumps(id_error.dict()))
+            return FhirController.create_response(400, json.dumps(id_error))
         try:
             imms = json.loads(aws_event["body"])
         except json.decoder.JSONDecodeError as e:
@@ -81,7 +81,7 @@ class FhirController:
             elif outcome == UpdateOutcome.CREATE:
                 return self.create_response(201)
         except ValidationError as error:
-            return self.create_response(400, error.to_operation_outcome().json())
+            return self.create_response(400, error.to_operation_outcome())
 
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]
