@@ -15,16 +15,19 @@ class ImmunisationApi:
         }
 
     def get_immunization_by_id(self, event_id):
-        return requests.get(f"{self.url}/event/{event_id}", headers=self._update_headers())
+        return requests.get(f"{self.url}/Immunization/{event_id}", headers=self._update_headers())
 
     def create_immunization(self, imms):
-        return requests.post(f"{self.url}/event", headers=self._update_headers(), json=imms)
+        return requests.post(f"{self.url}/Immunization", headers=self._update_headers(), json=imms)
+
+    def update_immunization(self, imms_id, imms):
+        return requests.put(f"{self.url}/Immunization/{imms_id}", headers=self._update_headers(), json=imms)
 
     def delete_immunization(self, imms_id):
-        return requests.delete(f"{self.url}/event/{imms_id}", headers=self._update_headers())
+        return requests.delete(f"{self.url}/Immunization/{imms_id}", headers=self._update_headers())
 
     def search_immunizations(self, nhs_number, disease_type):
-        return requests.get(f"{self.url}/event?nhsNumber={nhs_number}&diseaseType={disease_type}",
+        return requests.get(f"{self.url}/Immunization?nhsNumber={nhs_number}&diseaseType={disease_type}",
                             headers=self._update_headers())
 
     def _update_headers(self, headers=None):
