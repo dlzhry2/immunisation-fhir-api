@@ -34,7 +34,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
         # set up the validator and add custom root validators
         cls.validator = ImmunizationValidator()
-        cls.validator.add_custom_root_validators()
+        cls.validator.add_custom_root_pre_validators()
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
