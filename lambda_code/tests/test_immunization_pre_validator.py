@@ -6,7 +6,6 @@ from copy import deepcopy
 from decimal import Decimal
 from models.fhir_immunization import ImmunizationValidator
 from jsonpath_ng.ext import parse
-from pydantic import ValidationError
 from .utils.generic_utils import (
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
@@ -287,12 +286,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_pre_validate_performer_actor_reference(self):
         """
-        Test pre_validate_performer_actor_type accepts valid values and rejects invalid
+        Test pre_validate_performer_actor_reference accepts valid values and rejects invalid
         values
         """
-
-        valid_json_data = deepcopy(self.json_data)
-        invalid_json_data = deepcopy(self.json_data)
 
         valid_contained_with_no_practitioner = [ValidValues.empty_patient_resource]
 
@@ -329,131 +325,62 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ]
 
         # Test case: Pract1 in contained, 1 actor of #Pract1 in performer - accept
-        valid_json_data = deepcopy(self.json_data)
-
-        valid_json_data = parse("contained").update(
-            valid_json_data, valid_contained_with_practitioner
+        ValidatorModelTests.test_valid_combinations_of_contained_and_performer_accepted(
+            self,
+            valid_contained_with_practitioner,
+            valid_performer_with_1_pract1,
         )
-        valid_json_data = parse("performer").update(
-            valid_json_data, valid_performer_with_1_pract1
-        )
-
-        self.assertTrue(self.validator.validate(valid_json_data))
 
         # Test case: No contained practitioner, no actor reference in performer - accept
-        valid_json_data = deepcopy(self.json_data)
-
-        valid_json_data = parse("contained").update(
-            valid_json_data, valid_contained_with_no_practitioner
+        ValidatorModelTests.test_valid_combinations_of_contained_and_performer_accepted(
+            self,
+            valid_contained_with_no_practitioner,
+            valid_performer_with_no_actor_reference,
         )
-
-        valid_json_data = parse("performer").update(
-            valid_json_data, valid_performer_with_no_actor_reference
-        )
-
-        self.assertTrue(self.validator.validate(valid_json_data))
 
         # Test case: Pract1 in contained, 2 actor of #Pract1 in performer - reject
-        invalid_json_data = deepcopy(self.json_data)
-        invalid_json_data = parse("contained").update(
-            invalid_json_data, valid_contained_with_practitioner
-        )
-
-        invalid_json_data = parse("performer").update(
-            invalid_json_data, valid_performer_with_2_pract1
-        )
-
-        with self.assertRaises(ValidationError) as error:
-            self.validator.validate(invalid_json_data)
-
-        self.assertTrue(
-            (
-                "performer.actor.reference must be a single reference to a contained Practitioner "
-                + "resource. References found: ['#Pract1', '#Pract1'] "
-                + "(type=value_error)"
-            )
-            in str(error.exception)
+        ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
+            self,
+            valid_contained_with_practitioner,
+            valid_performer_with_2_pract1,
+            expected_error_message="performer.actor.reference must be a single reference to a "
+            + "contained Practitioner resource. References found: ['#Pract1', '#Pract1']",
         )
 
         # Test case: No contained practitioner, 1 actor of #Pract1 in performer - reject
-        # Test case: Pract1 in contained, no actor reference in performer - reject
+        ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
+            self,
+            valid_contained_with_no_practitioner,
+            valid_performer_with_1_pract1,
+            expected_error_message="The reference(s) ['#Pract1'] do not exist in the contained "
+            + "Practitioner resources",
+        )
+
         # Test case: Contained practitioner with no ID, no actor reference in perfomer - reject
+        ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
+            self,
+            invalid_contained_with_no_id_in_practitioner,
+            valid_performer_with_no_actor_reference,
+            expected_error_message="The contained Practitioner resource must have an 'id' field",
+        )
+
+        # Test case: Pract1 in contained, no actor reference in performer - reject
+        ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
+            self,
+            valid_contained_with_practitioner,
+            valid_performer_with_no_actor_reference,
+            expected_error_message="contained Practitioner ID must be referenced by "
+            + "performer.actor.reference",
+        )
+
         # Test case: Pract1 in contained, 1 actor of #Pract2 in performer - reject
-
-        ## Test case: Pract1 in contained, 0 actor of #Pract1 in performer - reject
-        # invalid_json_data = parse("contained").update(
-        #    invalid_json_data, valid_contained_with_practitioner
-        # )
-        # invalid_json_data = parse("performer").update(
-        #    invalid_json_data, valid_performer_with_no_contained_practitioner_reference
-        # )
-        # with self.assertRaises(ValidationError) as error:
-        #    self.validator.validate(invalid_json_data)
-
-        # self.assertTrue(
-        #    (
-        #        "Pract1 must be referenced by exactly ONE performer.actor"
-        #        + " (type=value_error)"
-        #    )
-        #    in str(error.exception)
-        # )
-
-        ## Test case: Pract1 in contained, 1 actor of Pract1 in performer - accept
-        # valid_json_data = parse("contained").update(
-        #    valid_json_data, valid_contained_with_practitioner
-        # )
-        # valid_json_data = parse("performer").update(
-        #    valid_json_data, valid_performer_with_one_contained_practitioner_reference
-        # )
-
-        # self.assertTrue(self.validator.validate(valid_json_data))
-
-        ## Test Case: Pract1 in contained, 2 actors of Pract1 in performer - reject
-        # invalid_json_data = parse("contained").update(
-        #    invalid_json_data, valid_contained_with_practitioner
-        # )
-        # invalid_json_data = parse("performer").update(
-        #    invalid_json_data,
-        #    valid_performer_with_more_than_one_contained_practitioner_reference,
-        # )
-        # with self.assertRaises(ValidationError) as error:
-        #    self.validator.validate(invalid_json_data)
-
-        # self.assertTrue(
-        #    (
-        #        "Pract1 must be referenced by exactly ONE performer.actor"
-        #        + " (type=value_error)"
-        #    )
-        #    in str(error.exception)
-        # )
-
-        ## Test case: No practitioner in contained, 0 actor with reference in performer - accept
-        # valid_json_data = parse("contained").update(
-        #    valid_json_data, valid_contained_with_no_practitioner
-        # )
-        # valid_json_data = parse("performer").update(
-        #    valid_json_data, valid_performer_with_no_contained_practitioner_reference
-        # )
-
-        # self.assertTrue(self.validator.validate(valid_json_data))
-
-        ## Test case: No practitioner in contained, 1 or more actors with reference in performer
-        ## - accept
-        # valid_json_data = parse("contained").update(
-        #    valid_json_data, valid_contained_with_no_practitioner
-        # )
-        # valid_json_data = parse("performer").update(
-        #    valid_json_data, valid_performer_with_one_contained_practitioner_reference
-        # )
-
-        # self.assertTrue(self.validator.validate(valid_json_data))
-
-        # valid_json_data = parse("performer").update(
-        #    valid_json_data,
-        #    valid_performer_with_more_than_one_contained_practitioner_reference,
-        # )
-
-        # self.assertTrue(self.validator.validate(valid_json_data))
+        ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
+            self,
+            valid_contained_with_practitioner,
+            valid_performer_with_1_pract2,
+            expected_error_message="The reference '#Pract2' does "
+            + "not exist in the contained Practitioner resources",
+        )
 
     def test_pre_validate_organization_identifier_value(self):
         """

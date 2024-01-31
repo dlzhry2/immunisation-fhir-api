@@ -362,38 +362,39 @@ class FHIRImmunizationPreValidators:
                 for x in values["contained"]
                 if x.get("resourceType") == "Practitioner"
             ][0]
+
+            try:
+                # Try to obtain the contained practitioner resource id
+                contained_practitioner_id = contained_practitioner["id"]
+
+                # If there is a contained practitioner resource, but no reference raise an error
+                if len(performer_actor_internal_references) == 0:
+                    raise ValueError(
+                        "contained Practitioner ID must be referenced by performer.actor.reference"
+                    )
+
+                # If the reference is not equal to the ID then raise an error
+                if (
+                    "#" + contained_practitioner_id
+                ) != performer_actor_internal_references[0]:
+                    raise ValueError(
+                        f"The reference '{performer_actor_internal_references[0]}' does "
+                        + "not exist in the contained Practitioner resources"
+                    )
+            except KeyError as error:
+                # If the contained practitioner resource has no id raise an error
+                raise ValueError(
+                    "The contained Practitioner resource must have an 'id' field"
+                ) from error
+
         except (IndexError, KeyError) as error:
-            # If there is no contained practitioner resource, and there is a
-            # reference raise an error
-            if len(performer_actor_internal_references) == 0:
-                return values
-            else:
+            # Entering this exception block implies that there is no contained practitioner resource
+            # therefore if there is a reference then raise an error
+            if len(performer_actor_internal_references) != 0:
                 raise ValueError(
                     f"The reference(s) {performer_actor_internal_references} do "
                     + "not exist in the contained Practitioner resources"
                 ) from error
-
-        # If there is a contained practitioner resource, but no reference raise an error
-        if len(performer_actor_internal_references) == 0:
-            raise ValueError(
-                "contained Practitioner ID must be referenced by performer.actor.reference."
-            )
-
-        # Obtain the contained practitioner resource id
-        try:
-            contained_practitioner_id = "#" + contained_practitioner["id"]
-        except KeyError as error:
-            # If the contained practitioner resource has no id raise an error
-            raise ValueError(
-                "The contained Practitioner resource must have an 'id' field"
-            ) from error
-
-        # If the referenceis not equal to the ID then raise an error
-        if contained_practitioner_id != performer_actor_internal_references[0]:
-            raise ValueError(
-                f"The reference {performer_actor_internal_references[0]} does "
-                + "not exist in the contained Practitioner resources"
-            )
 
         return values
 

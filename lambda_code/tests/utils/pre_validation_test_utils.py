@@ -2,6 +2,8 @@
 import unittest
 from copy import deepcopy
 from decimal import Decimal
+from jsonpath_ng.ext import parse
+from pydantic import ValidationError
 from .generic_utils import (
     test_valid_values_accepted,
     test_invalid_values_rejected,
@@ -562,4 +564,44 @@ class ValidatorModelTests:
             expected_error_message=f"{field_location} must be a number with a maximum of "
             + f"{max_decimal_places} decimal places",
             expected_error_type="value_error",
+        )
+
+    @staticmethod
+    def test_valid_combinations_of_contained_and_performer_accepted(
+        test_instance: unittest.TestCase,
+        contained: list,
+        performer: dict,
+    ):
+        """
+        Takes a valid combination of contained and performer objects and ensures that no
+        validation error is raised
+        """
+        valid_json_data = deepcopy(test_instance.json_data)
+        valid_json_data = parse("contained").update(valid_json_data, contained)
+        valid_json_data = parse("performer").update(valid_json_data, performer)
+
+        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+
+    @staticmethod
+    def test_invalid_performer_actor_reference_rejected(
+        test_instance: unittest.TestCase,
+        contained: list,
+        performer: dict,
+        expected_error_message: str,
+    ):
+        """
+        Takes a combination of contained and performer object which is invalid due to
+        either contained Practitioner ID, performer.actor.reference, or a combination of
+        the two, and checks that the appropriate error is raised
+        """
+        invalid_json_data = deepcopy(test_instance.json_data)
+        invalid_json_data = parse("contained").update(invalid_json_data, contained)
+
+        invalid_json_data = parse("performer").update(invalid_json_data, performer)
+
+        with test_instance.assertRaises(ValidationError) as error:
+            test_instance.validator.validate(invalid_json_data)
+
+        test_instance.assertTrue(
+            expected_error_message + " (type=value_error)" in str(error.exception)
         )
