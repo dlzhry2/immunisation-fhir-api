@@ -9,7 +9,7 @@ from botocore.config import Config
 
 from cache import Cache
 from fhir_repository import ImmunizationRepository, create_table
-from fhir_service import FhirService
+from fhir_service import FhirService, UpdateOutcome
 from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError, \
     ValidationError
 from pds_service import PdsService, Authenticator
@@ -64,6 +64,25 @@ class FhirController:
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
 
+    def update_immunization(self, aws_event):
+        imms_id = aws_event["pathParameters"]["id"]
+        id_error = self._validate_id(imms_id)
+        if id_error:
+            return FhirController.create_response(400, json.dumps(id_error.dict()))
+        try:
+            imms = json.loads(aws_event["body"])
+        except json.decoder.JSONDecodeError as e:
+            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+
+        try:
+            outcome = self.fhir_service.update_immunization(imms_id, imms)
+            if outcome == UpdateOutcome.UPDATE:
+                return self.create_response(200)
+            elif outcome == UpdateOutcome.CREATE:
+                return self.create_response(201)
+        except ValidationError as error:
+            return self.create_response(400, error.to_operation_outcome().json())
+
     def delete_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]
 
@@ -107,14 +126,16 @@ class FhirController:
         return self.create_response(400, error)
 
     @staticmethod
-    def create_response(status_code, body):
-        if isinstance(body, dict):
-            body = json.dumps(body)
-
-        return {
+    def create_response(status_code, body=None):
+        response = {
             "statusCode": status_code,
-            "headers": {
-                "Content-Type": "application/fhir+json",
-            },
-            "body": body
+            "headers": {},
         }
+        if body:
+            if isinstance(body, dict):
+                body = json.dumps(body)
+            response["body"] = body
+            response["headers"]["Content-Type"] = "application/fhir+json"
+            return response
+        else:
+            return response

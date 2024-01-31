@@ -142,7 +142,7 @@
         "coding": [
           {
             "system": "http://snomed.info/sct",
-            "code": "snomed",
+            "code": "1324681000000101",
             "display": "snomed"
           }
         ]

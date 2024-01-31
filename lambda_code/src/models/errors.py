@@ -55,6 +55,19 @@ class InvalidPatientId(ValidationError):
 
 
 @dataclass
+class InconsistentIdError(ValidationError):
+    """Use this when the specified id in the message is inconsistent with the path
+    see: http://hl7.org/fhir/R4/http.html#update"""
+
+    imms_id: str
+
+    def to_operation_outcome(self) -> OperationOutcome:
+        msg = f"The provided id:{self.imms_id} doesn't match with the content of the message"
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
+
+
+@dataclass
 class CoarseValidationError(ValidationError):
     """Pre validation error"""
     message: str
