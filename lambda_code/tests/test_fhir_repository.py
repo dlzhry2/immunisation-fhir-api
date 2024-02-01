@@ -205,8 +205,11 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         """Patient record should have a sort-key based on disease-type"""
         imms = _make_an_immunization()
 
-        disease_code = "a-disease-code"
-        imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = disease_code
+        vaccination_procedure_code = "1324681000000101"
+        imms["extension"][0]["valueCodeableConcept"]["coding"][0][
+            "code"
+        ] = vaccination_procedure_code
+        disease_type = vaccination_procedure_snomed_codes[vaccination_procedure_code]
 
         self.table.put_item = MagicMock(
             return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
@@ -217,7 +220,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
 
         # Then
         item = self.table.put_item.call_args.kwargs["Item"]
-        self.assertTrue(item["PatientSK"].startswith(f"{disease_code}#"))
+        self.assertTrue(item["PatientSK"].startswith(f"{disease_type}#"))
 
 
 class TestUpdateImmunization(unittest.TestCase):
