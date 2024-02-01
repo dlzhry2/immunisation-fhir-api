@@ -22,7 +22,22 @@ paths:
               schema:
                 type: object
 
-  /event/{id}:
+  /Immunization/{id}:
+    put:
+      x-amazon-apigateway-integration:
+        uri: "${update_event.lambda_arn}"
+        payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "PUT"
+        timeoutInMillis: 30000
+        type: "AWS_PROXY"
+      responses:
+        '200':
+          description: An Immunisation update event
+          content:
+            application/fhir+json:
+              schema:
+                type: object
     get:
       x-amazon-apigateway-integration:
         uri: "${get_event.lambda_arn}"
@@ -54,7 +69,7 @@ paths:
               schema:
                 type: object
 
-  /event:
+  /Immunization:
     get:
       x-amazon-apigateway-integration:
         uri: "${search_event.lambda_arn}"
