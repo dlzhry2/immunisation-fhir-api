@@ -93,7 +93,7 @@ def _create_an_immunization(imms_id, nhs_number=valid_nhs_number) -> Immunizatio
                             }
                         ],
                     },
-                    {"linkId": "ReduceValidation", "answer": [{"valueBoolean": false}]},
+                    {"linkId": "ReduceValidation", "answer": [{"valueBoolean": False}]},
                     {
                         "linkId": "LocalPatient",
                         "answer": [
