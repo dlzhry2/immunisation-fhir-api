@@ -330,4 +330,3 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
                for performer in created_imms["performer"])
     assert all(performer["actor"]["identifier"]["system"] == "https://fhir.nhs.uk/Id/ods-organization-code"
                for performer in retrieved_imms["performer"])
-
