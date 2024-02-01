@@ -3,6 +3,7 @@ import time
 import unittest
 import uuid
 from unittest.mock import MagicMock, patch, ANY
+from decimal import Decimal
 
 import botocore.exceptions
 from boto3.dynamodb.conditions import Attr, Key
@@ -27,12 +28,16 @@ class TestGetImmunization(unittest.TestCase):
         """it should find an Immunization by id"""
         imms_id = "an-id"
         resource = {"foo": "bar"}
-        self.table.get_item = MagicMock(return_value={"Item": {"Resource": json.dumps(resource)}})
+        self.table.get_item = MagicMock(
+            return_value={"Item": {"Resource": json.dumps(resource)}}
+        )
 
         imms = self.repository.get_immunization_by_id(imms_id)
 
         self.assertDictEqual(resource, imms)
-        self.table.get_item.assert_called_once_with(Key={"PK": _make_immunization_pk(imms_id)})
+        self.table.get_item.assert_called_once_with(
+            Key={"PK": _make_immunization_pk(imms_id)}
+        )
 
     def test_immunization_not_found(self):
         """it should return None if Immunization doesn't exist"""
@@ -45,50 +50,267 @@ class TestGetImmunization(unittest.TestCase):
 
 def _make_an_immunization(imms_id="an-id") -> dict:
     """create the minimum required object. Caller should override relevant fields explicitly"""
-    return {"id": imms_id,
-            "patient": {"identifier": {"system": "a-system", "value": "a-patient-id"}},
-            "protocolApplied": [{"targetDisease": [{"coding": [{"code": "a-disease-code"}]}]}]}
+    return {
+        "resourceType": "Immunization",
+        "id": imms_id,
+        "contained": [
+            {
+                "resourceType": "Practitioner",
+                "id": "Pract1",
+                "identifier": [
+                    {
+                        "system": "https://fhir.hl7.org.uk/Id/nmc-number",
+                        "value": "99A9999A",
+                    }
+                ],
+                "name": [{"family": "Nightingale", "given": ["Florence"]}],
+            },
+            {
+                "resourceType": "Patient",
+                "id": "Pat1",
+                "identifier": [
+                    {
+                        "extension": [
+                            {
+                                "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
+                                "valueCodeableConcept": {
+                                    "coding": [
+                                        {
+                                            "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
+                                            "code": "01",
+                                            "display": "Number present and verified",
+                                        }
+                                    ]
+                                },
+                            }
+                        ],
+                        "system": "https://fhir.nhs.uk/Id/nhs-number",
+                        "value": "9000000009",
+                    }
+                ],
+                "name": [{"family": "Taylor", "given": ["Sarah"]}],
+                "gender": "unknown",
+                "birthDate": "1965-02-28",
+                "address": [{"postalCode": "EC1A 1BB"}],
+            },
+            {
+                "resourceType": "QuestionnaireResponse",
+                "id": "QR1",
+                "status": "completed",
+                "item": [
+                    {
+                        "linkId": "Immunisation",
+                        "answer": [{"valueReference": {"reference": "#"}}],
+                    },
+                    {
+                        "linkId": "Consent",
+                        "answer": [
+                            {
+                                "valueCoding": {
+                                    "code": "310375005",
+                                    "system": "http://snomed.info/sct",
+                                    "display": "Immunization consent given (finding)",
+                                }
+                            }
+                        ],
+                    },
+                    {
+                        "linkId": "CareSetting",
+                        "answer": [
+                            {
+                                "valueCoding": {
+                                    "code": "413294000",
+                                    "system": "http://snomed.info/sct",
+                                    "display": "Community health services (qualifier value)",
+                                }
+                            }
+                        ],
+                    },
+                    {"linkId": "ReduceValidation", "answer": [{"valueBoolean": False}]},
+                    {
+                        "linkId": "LocalPatient",
+                        "answer": [
+                            {
+                                "valueReference": {
+                                    "identifier": {
+                                        "system": "https://ACME/identifiers/patient",
+                                        "value": "ACME-patient123456",
+                                    }
+                                }
+                            }
+                        ],
+                    },
+                    {"linkId": "IpAddress", "answer": [{"valueString": "IP_ADDRESS"}]},
+                    {"linkId": "UserId", "answer": [{"valueString": "USER_ID"}]},
+                    {"linkId": "UserName", "answer": [{"valueString": "USER_NAME"}]},
+                    {
+                        "linkId": "SubmittedTimeStamp",
+                        "answer": [{"valueDateTime": "2021-02-07T13:44:07+00:00"}],
+                    },
+                    {"linkId": "UserEmail", "answer": [{"valueString": "USER_EMAIL"}]},
+                    {
+                        "linkId": "PerformerSDSJobRole",
+                        "answer": [{"valueString": "Specialist Nurse Practitioner"}],
+                    },
+                ],
+            },
+        ],
+        "extension": [
+            {
+                "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+                "valueCodeableConcept": {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "1324681000000101",
+                            "display": "Administration of first dose of severe acute respiratory syndrome coronavirus 2 vaccine (procedure)",
+                        }
+                    ]
+                },
+            }
+        ],
+        "identifier": [
+            {
+                "system": "https://supplierABC/identifiers/vacc",
+                "value": "ACME-vacc123456",
+            }
+        ],
+        "status": "completed",
+        "vaccineCode": {
+            "coding": [
+                {
+                    "system": "http://snomed.info/sct",
+                    "code": "39114911000001105",
+                    "display": "COVID-19 Vaccine Vaxzevria (ChAdOx1 S [recombinant]) not less than 2.5x100,000,000 infectious units/0.5ml dose suspension for injection multidose vials (AstraZeneca UK Ltd) (product)",
+                }
+            ]
+        },
+        "patient": {"reference": "#Pat1"},
+        "occurrenceDateTime": "2021-02-07T13:28:17.271+00:00",
+        "recorded": "2021-02-07",
+        "primarySource": True,
+        "reportOrigin": {"text": "X99999"},
+        "manufacturer": {"display": "AstraZeneca Ltd"},
+        "location": {
+            "identifier": {
+                "value": "X99999",
+                "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+            }
+        },
+        "lotNumber": "4120Z001",
+        "expirationDate": "2021-07-02",
+        "site": {
+            "coding": [
+                {
+                    "system": "http://snomed.info/sct",
+                    "code": "368208006",
+                    "display": "Left upper arm structure (body structure)",
+                }
+            ]
+        },
+        "route": {
+            "coding": [
+                {
+                    "system": "http://snomed.info/sct",
+                    "code": "78421000",
+                    "display": "Intramuscular route (qualifier value)",
+                }
+            ]
+        },
+        "doseQuantity": {
+            "value": Decimal(0.5),
+            "unit": "milliliter",
+            "system": "http://unitsofmeasure.org",
+            "code": "ml",
+        },
+        "performer": [
+            {"actor": {"reference": "#Pract1"}},
+            {
+                "actor": {
+                    "type": "Organization",
+                    "identifier": {
+                        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                        "value": "B0C4P",
+                    },
+                    "display": "Acme Healthcare",
+                }
+            },
+        ],
+        "reasonCode": [
+            {
+                "coding": [
+                    {
+                        "code": "443684005",
+                        "system": "http://snomed.info/sct",
+                        "display": "Disease outbreak (event)",
+                    }
+                ]
+            }
+        ],
+        "protocolApplied": [{"doseNumberPositiveInt": 1}],
+    }
 
 
 def _make_a_patient(nhs_number="1234567890") -> dict:
-    return {"id": str(uuid.uuid4()), "identifier": {"system": "a-system", "value": nhs_number}}
+    return {
+        "id": str(uuid.uuid4()),
+        "identifier": {"system": "a-system", "value": nhs_number},
+    }
 
 
 class TestCreateImmunizationMainIndex(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
         self.repository = ImmunizationRepository(table=self.table)
-        self.patient = {'id': 'a-patient-id'}
+        self.patient = {"id": "a-patient-id"}
 
     def test_create_immunization(self):
         """it should create Immunization, and return created object"""
         imms = _make_an_immunization("an-id")
-        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+        self.table.put_item = MagicMock(
+            return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
+        )
 
         res_imms = self.repository.create_immunization(imms, self.patient)
 
         self.assertDictEqual(res_imms, imms)
         self.table.put_item.assert_called_once_with(
-            Item={"Resource": json.dumps(imms),
-                  "PK": ANY, "PatientPK": ANY, "PatientSK": ANY, "Patient": ANY})
+            Item={
+                "Resource": json.dumps(imms),
+                "PK": ANY,
+                "PatientPK": ANY,
+                "PatientSK": ANY,
+                "Patient": ANY,
+            }
+        )
 
     def test_add_patient(self):
         """it should store patient along the Immunization resource"""
         imms = _make_an_immunization("an-id")
-        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+        self.table.put_item = MagicMock(
+            return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
+        )
 
         res_imms = self.repository.create_immunization(imms, self.patient)
 
         self.assertDictEqual(res_imms, imms)
         self.table.put_item.assert_called_once_with(
-            Item={"Patient": self.patient,
-                  "Resource": ANY, "PK": ANY, "PatientPK": ANY, "PatientSK": ANY})
+            Item={
+                "Patient": self.patient,
+                "Resource": ANY,
+                "PK": ANY,
+                "PatientPK": ANY,
+                "PatientSK": ANY,
+            }
+        )
 
     def test_create_immunization_makes_new_id(self):
         """create should create new Logical ID even if one is already provided"""
         imms_id = "original-id-from-request"
         imms = _make_an_immunization(imms_id)
-        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+        self.table.put_item = MagicMock(
+            return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
+        )
 
         _ = self.repository.create_immunization(imms, self.patient)
 
@@ -100,7 +322,9 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
         """create should return the persisted object i.e. with new id"""
         imms_id = "original-id-from-request"
         imms = _make_an_immunization(imms_id)
-        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+        self.table.put_item = MagicMock(
+            return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
+        )
 
         response = self.repository.create_immunization(imms, self.patient)
 
@@ -136,7 +360,9 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         patient_id = {"identifier": {"system": "a-system", "value": nhs_number}}
         imms["patient"] = patient_id
 
-        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+        self.table.put_item = MagicMock(
+            return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
+        )
 
         # When
         _ = self.repository.create_immunization(imms, self.patient)
@@ -153,7 +379,9 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         disease = {"targetDisease": [{"coding": [{"code": disease_code}]}]}
         imms["protocolApplied"] = [disease]
 
-        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+        self.table.put_item = MagicMock(
+            return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
+        )
 
         # When
         _ = self.repository.create_immunization(imms, self.patient)
@@ -170,45 +398,54 @@ class TestUpdateImmunization(unittest.TestCase):
         self.patient = _make_a_patient("update-patient-id")
 
     def test_update(self):
-        """it should update record by replacing both Immunization and Patient """
+        """it should update record by replacing both Immunization and Patient"""
         imms_id = "an-imms-id"
         imms = _make_an_immunization(imms_id)
         imms["patient"] = self.patient
 
         resource = {"foo": "bar"}  # making sure we return updated imms from dynamodb
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200},
-                           "Attributes": {"Resource": json.dumps(resource)}}
+        dynamo_response = {
+            "ResponseMetadata": {"HTTPStatusCode": 200},
+            "Attributes": {"Resource": json.dumps(resource)},
+        }
         self.table.update_item = MagicMock(return_value=dynamo_response)
 
         now_epoch = 123456
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            act_resource = self.repository.update_immunization(imms_id, imms, self.patient)
+            act_resource = self.repository.update_immunization(
+                imms_id, imms, self.patient
+            )
 
         # Then
         self.assertDictEqual(act_resource, resource)
 
-        update_exp = ("SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-                      "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient")
+        update_exp = (
+            "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
+            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient"
+        )
         patient_id = self.patient["identifier"]["value"]
-        disease_type = imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"]
+        disease_type = imms["protocolApplied"][0]["targetDisease"][0]["coding"][0][
+            "code"
+        ]
         patient_sk = f"{disease_type}#{imms_id}"
 
         self.table.update_item.assert_called_once_with(
             Key={"PK": _make_immunization_pk(imms_id)},
             UpdateExpression=update_exp,
             ExpressionAttributeNames={
-                '#imms_resource': "Resource",
+                "#imms_resource": "Resource",
             },
             ExpressionAttributeValues={
-                ':timestamp': now_epoch,
-                ':patient_pk': _make_patient_pk(patient_id),
-                ':patient_sk': patient_sk,
-                ':imms_resource_val': json.dumps(imms),
-                ':patient': self.patient,
+                ":timestamp": now_epoch,
+                ":patient_pk": _make_patient_pk(patient_id),
+                ":patient_sk": patient_sk,
+                ":imms_resource_val": json.dumps(imms),
+                ":patient": self.patient,
             },
-            ReturnValues=ANY, ConditionExpression=ANY
+            ReturnValues=ANY,
+            ConditionExpression=ANY,
         )
 
     def test_update_throws_error_when_response_can_not_be_handled(self):
@@ -237,7 +474,9 @@ class TestDeleteImmunization(unittest.TestCase):
     def test_get_deleted_immunization(self):
         """it should return None if Immunization is logically deleted"""
         imms_id = "a-deleted-id"
-        self.table.get_item = MagicMock(return_value={"Item": {"Resource": "{}", "DeletedAt": time.time()}})
+        self.table.get_item = MagicMock(
+            return_value={"Item": {"Resource": "{}", "DeletedAt": time.time()}}
+        )
 
         imms = self.repository.get_immunization_by_id(imms_id)
         self.assertIsNone(imms)
@@ -245,7 +484,10 @@ class TestDeleteImmunization(unittest.TestCase):
     def test_delete_immunization(self):
         """it should logical delete Immunization by setting DeletedAt attribute"""
         imms_id = "an-id"
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Attributes": {"Resource": "{}"}}
+        dynamo_response = {
+            "ResponseMetadata": {"HTTPStatusCode": 200},
+            "Attributes": {"Resource": "{}"},
+        }
         self.table.update_item = MagicMock(return_value=dynamo_response)
 
         now_epoch = 123456
@@ -257,11 +499,12 @@ class TestDeleteImmunization(unittest.TestCase):
         # Then
         self.table.update_item.assert_called_once_with(
             Key={"PK": _make_immunization_pk(imms_id)},
-            UpdateExpression='SET DeletedAt = :timestamp',
+            UpdateExpression="SET DeletedAt = :timestamp",
             ExpressionAttributeValues={
-                ':timestamp': now_epoch,
+                ":timestamp": now_epoch,
             },
-            ReturnValues=ANY, ConditionExpression=ANY
+            ReturnValues=ANY,
+            ConditionExpression=ANY,
         )
 
     def test_delete_returns_old_resource(self):
@@ -269,8 +512,10 @@ class TestDeleteImmunization(unittest.TestCase):
 
         imms_id = "an-id"
         resource = {"foo": "bar"}
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200},
-                           "Attributes": {"Resource": json.dumps(resource)}}
+        dynamo_response = {
+            "ResponseMetadata": {"HTTPStatusCode": 200},
+            "Attributes": {"Resource": json.dumps(resource)},
+        }
         self.table.update_item = MagicMock(return_value=dynamo_response)
 
         now_epoch = 123456
@@ -281,7 +526,10 @@ class TestDeleteImmunization(unittest.TestCase):
 
         # Then
         self.table.update_item.assert_called_once_with(
-            Key=ANY, UpdateExpression=ANY, ExpressionAttributeValues=ANY, ConditionExpression=ANY,
+            Key=ANY,
+            UpdateExpression=ANY,
+            ExpressionAttributeValues=ANY,
+            ConditionExpression=ANY,
             ReturnValues="ALL_NEW",
         )
         self.assertDictEqual(act_resource, resource)
@@ -292,16 +540,20 @@ class TestDeleteImmunization(unittest.TestCase):
         imms_id = "an-id"
         error_res = {"Error": {"Code": "ConditionalCheckFailedException"}}
         self.table.update_item.side_effect = botocore.exceptions.ClientError(
-            error_response=error_res,
-            operation_name="an-op")
+            error_response=error_res, operation_name="an-op"
+        )
 
         with self.assertRaises(ResourceNotFoundError) as e:
             self.repository.delete_immunization(imms_id)
 
         # Then
         self.table.update_item.assert_called_once_with(
-            Key=ANY, UpdateExpression=ANY, ExpressionAttributeValues=ANY, ReturnValues=ANY,
-            ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id)) & Attr("DeletedAt").not_exists()
+            Key=ANY,
+            UpdateExpression=ANY,
+            ExpressionAttributeValues=ANY,
+            ReturnValues=ANY,
+            ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id))
+            & Attr("DeletedAt").not_exists(),
         )
 
         self.assertIsInstance(e.exception, ResourceNotFoundError)
