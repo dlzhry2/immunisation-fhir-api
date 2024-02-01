@@ -179,6 +179,13 @@ info:
     url: 'https://digital.nhs.uk/developer/help-and-support'
     email: api.management@nhs.net
 
+servers:
+  - url: 'https://sandbox.api.service.nhs.uk/immunisation-fhir-api'
+    description: Sandbox environment.
+  - url: 'https://int.api.service.nhs.uk/immunisation-fhir-api'
+    description: Integration test environment.
+  - url: 'https://api.service.nhs.uk/immunisation-fhir-api'
+    description: Production environment.
 paths:
   /Immunization:
     post:
