@@ -5,7 +5,6 @@ import json
 from copy import deepcopy
 from decimal import Decimal
 from models.fhir_immunization import ImmunizationValidator
-from jsonpath_ng.ext import parse
 from .utils.generic_utils import (
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
@@ -17,30 +16,16 @@ from .utils.values_for_tests import ValidValues, InvalidValues
 class TestImmunizationModelPreValidationRules(unittest.TestCase):
     """Test immunization pre validation rules on the FHIR model"""
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up for the tests. This only runs once when the class is instantiated"""
-        # Set up the path for the sample data
-        cls.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
-
-        # set up the sample immunization event JSON data
-        cls.immunization_file_path = (
-            f"{cls.data_path}/sample_covid_immunization_event.json"
-        )
-        with open(cls.immunization_file_path, "r", encoding="utf-8") as f:
-            cls.json_data = json.load(f, parse_float=Decimal)
-
-        # set up the untouched sample immunization event JSON data
-        cls.untouched_json_data = deepcopy(cls.json_data)
-
-        # set up the validator and add custom root validators
-        cls.validator = ImmunizationValidator()
-        cls.validator.add_custom_root_pre_validators()
-
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        # Ensure that good data is not inadvertently amended by the tests
-        self.assertEqual(self.untouched_json_data, self.json_data)
+        # Load the sample json data
+        data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
+        immunization_file_path = f"{data_path}/sample_covid_immunization_event.json"
+        with open(immunization_file_path, "r", encoding="utf-8") as f:
+            self.json_data = json.load(f, parse_float=Decimal)
+
+        # Set up the validator
+        self.validator = ImmunizationValidator(add_post_validators=False)
 
     def test_pre_validate_contained(self):
         """Test pre_validate_contained accepts valid values and rejects invalid values"""
@@ -52,6 +37,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 ValidValues.empty_questionnnaire_resource,
             ]
         ]
+
         invalid_list_to_test = [
             ValidValues.empty_practitioner_resource,
             ValidValues.empty_patient_resource,
@@ -1289,30 +1275,16 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 class TestImmunizationModelPreValidationRulesForNotDone(unittest.TestCase):
     """Test immunization pre validation rules on the FHIR model using the status="not-done" data"""
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up for the tests. This only runs once when the class is instantiated"""
-        # Set up the path for the sample data
-        cls.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
-
-        # set up the sample immunization event JSON data
-        cls.immunization_file_path = (
-            f"{cls.data_path}/sample_immunization_not_done_event.json"
-        )
-        with open(cls.immunization_file_path, "r", encoding="utf-8") as f:
-            cls.json_data = json.load(f, parse_float=Decimal)
-
-        # set up the untouched sample immunization event JSON data
-        cls.untouched_json_data = deepcopy(cls.json_data)
-
-        # set up the validator and add custom root validators
-        cls.validator = ImmunizationValidator()
-        cls.validator.add_custom_root_pre_validators()
-
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        # Ensure that good data is not inadvertently amended by the tests
-        self.assertEqual(self.untouched_json_data, self.json_data)
+        # Load the sample json data
+        data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
+        immunization_file_path = f"{data_path}/sample_immunization_not_done_event.json"
+        with open(immunization_file_path, "r", encoding="utf-8") as f:
+            self.json_data = json.load(f, parse_float=Decimal)
+
+        # Set up the validator
+        self.validator = ImmunizationValidator(add_post_validators=False)
 
     def test_pre_validate_vaccination_situation_code(self):
         """
@@ -1388,33 +1360,18 @@ class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCa
     data
     """
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up for the tests. This only runs once when the class is instantiated"""
-        # Set up the path for the sample data
-        cls.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
-
-        # set up the sample immunization event JSON data
-        cls.immunization_file_path = (
-            f"{cls.data_path}/sample_immunization_reduce_validation_event.json"
-        )
-        with open(cls.immunization_file_path, "r", encoding="utf-8") as f:
-            cls.json_data = json.load(f, parse_float=Decimal)
-
-        # set up the untouched sample immunization event JSON data
-        cls.untouched_json_data = deepcopy(cls.json_data)
-
-        # set up the validator and add custom root validators
-        cls.validator = ImmunizationValidator()
-        cls.validator.add_custom_root_pre_validators()
-
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        # Ensure that good data is not inadvertently amended by the tests
-        self.assertEqual(self.untouched_json_data, self.json_data)
+        # Load the sample json data
+        data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
+        immunization_file_path = (
+            f"{data_path}/sample_immunization_reduce_validation_event.json"
+        )
+        with open(immunization_file_path, "r", encoding="utf-8") as f:
+            self.json_data = json.load(f, parse_float=Decimal)
 
-        # TODO: Create separate validation rule to check reduce validation field only and
-        # not apply validation if this is true
+        # Set up the validator
+        self.validator = ImmunizationValidator(add_post_validators=False)
 
     def test_pre_validate_reduce_validation_reason_answer(self):
         """

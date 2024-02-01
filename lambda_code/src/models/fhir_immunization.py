@@ -3,6 +3,7 @@ from typing import Literal
 from fhir.resources.R4B.immunization import Immunization
 from models.fhir_immunization_pre_validators import FHIRImmunizationPreValidators
 from models.fhir_immunization_post_validators import FHIRImmunizationPostValidators
+from models.utils.generic_utils import get_generic_questionnaire_response_value
 
 
 class ImmunizationValidator:
@@ -11,7 +12,7 @@ class ImmunizationValidator:
     FHIR profile
     """
 
-    def __init__(self) -> None:
+    def __init__(self, add_post_validators: bool = True) -> None:
         class NewImmunization(Immunization):
             """
             Workaround for tests so we can instantiate our own instance of Immunization, and add
@@ -19,6 +20,8 @@ class ImmunizationValidator:
             """
 
         self.immunization = NewImmunization
+        self.reduce_validation_code = False
+        self.add_post_validators = add_post_validators
 
     def add_custom_root_pre_validators(self):
         """
@@ -315,6 +318,24 @@ class ImmunizationValidator:
                 pre=True,
             )
 
+    def set_reduce_validation_code(self, json_data):
+        """Set the reduce validation code"""
+        reduce_validation_code = False
+
+        # If reduce_validation_code field exists then retrieve it's value
+        try:
+            reduce_validation_code = get_generic_questionnaire_response_value(
+                json_data, "ReduceValidation", "valueBoolean"
+            )
+        except (KeyError, IndexError, AttributeError, TypeError):
+            pass
+        finally:
+            # If no value is given, then ReduceValidation default value is False
+            if reduce_validation_code is None:
+                reduce_validation_code = False
+
+        self.reduce_validation_code = reduce_validation_code
+
     def add_custom_root_post_validators(self):
         """
         Add custom NHS post validators to the model
@@ -323,11 +344,9 @@ class ImmunizationValidator:
         WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST.
         """
         # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
-
-        if not hasattr(self.immunization, "set_reduce_validation"):
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.set_reduce_validation
-            )
+        if not hasattr(
+            self.immunization, "validate_and_set_vaccination_procedure_code"
+        ):
             self.immunization.add_root_validator(
                 FHIRImmunizationPostValidators.validate_and_set_vaccination_procedure_code
             )
@@ -375,5 +394,9 @@ class ImmunizationValidator:
 
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
+        self.set_reduce_validation_code(json_data)
+        self.add_custom_root_pre_validators()
+        if self.add_post_validators and not self.reduce_validation_code:
+            self.add_custom_root_post_validators()
         immunization = self.immunization.parse_obj(json_data)
         return immunization

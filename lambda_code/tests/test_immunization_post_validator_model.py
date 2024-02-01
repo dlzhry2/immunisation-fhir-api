@@ -24,8 +24,8 @@ class TestImmunizationModelPostValidationRulesValidData(unittest.TestCase):
         files_to_test = [
             "sample_covid_immunization_event.json",
             "sample_flu_immunization_event.json",
-            # "sample_immunization_not_done_event.json",
-            # "sample_immunization_reduce_validation_event.json",
+            # # "sample_immunization_not_done_event.json",
+            "sample_immunization_reduce_validation_event.json",
         ]
 
         for file in files_to_test:
@@ -36,8 +36,6 @@ class TestImmunizationModelPostValidationRulesValidData(unittest.TestCase):
 
             # set up the validator and add custom root validators
             validator = ImmunizationValidator()
-            validator.add_custom_root_pre_validators()
-            validator.add_custom_root_post_validators()
 
             # Check that the data is accepted by the validator
             self.assertTrue(validator.validate(valid_json_data))
@@ -48,43 +46,14 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        # Set up the path for the sample data
-        self.data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
-
-        # set up the sample immunization event JSON data
-        self.immunization_file_path = (
-            f"{self.data_path}/sample_covid_immunization_event.json"
-        )
-        with open(self.immunization_file_path, "r", encoding="utf-8") as f:
+        # Load the sample json data
+        data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
+        immunization_file_path = f"{data_path}/sample_covid_immunization_event.json"
+        with open(immunization_file_path, "r", encoding="utf-8") as f:
             self.json_data = json.load(f, parse_float=Decimal)
 
-        # set up the validator and add custom root validators
+        # Set up the validator
         self.validator = ImmunizationValidator()
-        self.validator.add_custom_root_pre_validators()
-        self.validator.add_custom_root_post_validators()
-
-    def test_model_post_reduce_validation(self):
-        """Test set_reduce_validation"""
-        valid_json_data = deepcopy(self.json_data)
-        field_location = (
-            "contained[?(@.resourceType=='QuestionnaireResponse')]"
-            + ".item[?(@.linkId=='ReduceValidation')].answer[0].valueBoolean"
-        )
-
-        # Test that reduce_validation_code property is set to the value of
-        # reduce_validation_code in the JSON data, where it exists
-        for valid_value in [True, False]:
-            valid_json_data = parse(field_location).update(valid_json_data, valid_value)
-            self.validator.validate(valid_json_data)
-            self.assertEqual(
-                valid_value, self.validator.immunization.reduce_validation_code
-            )
-
-        # Test that reduce_validation_code property is set as False, when there is no
-        # reduce_validation_code in the JSON data
-        valid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
-        self.validator.validate(valid_json_data)
-        self.assertEqual(False, self.validator.immunization.reduce_validation_code)
 
     def test_model_post_vaccination_procedure_code(self):
         """
