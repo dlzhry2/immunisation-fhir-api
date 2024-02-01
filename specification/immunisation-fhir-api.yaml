@@ -12,30 +12,43 @@ info:
     
     ## You can:
     
-    - search for a patients record immunisation events
-    - get the details of an immunisation event
-    - update an immunisation event
-    - Identify an immunisation event as being entered in error
+    * search for a patients record immunisation events
+    
+    * get the details of an immunisation event
+    
+    * update an immunisation event
+    
+    * Identify an immunisation event as being entered in error
     
     ## Recognised uses:
     
-    - Supporting a patient getting a vaccination
-    - Supporting patient managing their immunisation health
-    - Identifying those to be invited to vaccination nationally
-    - Identifying those to be invited to vaccination locally
-    - Supporting the booking of a vaccination appointment
-    - Supporting the payment reconciliation process
-    - Supporting measuring the overall success of a vaccination campaign to help inform the success of future s7a immunisation campaigns
+    * Supporting a patient getting a vaccination
+    
+    * Supporting patient managing their immunisation health
+    
+    * Identifying those to be invited to vaccination nationally
+    
+    * Identifying those to be invited to vaccination locally
+    
+    * Supporting the booking of a vaccination appointment
+    
+    * Supporting the payment reconciliation process
+    
+    * Supporting measuring the overall success of a vaccination campaign to help inform the success of future s7a immunisation campaigns
+    
     
     ## You cannot currently use this API to:
     
-    - Retrieve the immunisation events of multiple patients at once
-    - Update a patients demographic details as returned from the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
+    * Retrieve the immunisation events of multiple patients at once
+    
+    * Update a patients demographic details as returned from the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
+    
     
     ## You can read and update the following data:
     
-    - immunisation event details for COVID, FLU, HPV
-    - patient demographic details, as captured at the point of immunisation
+    * immunisation event details for COVID, FLU, HPV
+    
+    * patient demographic details, as captured at the point of immunisation
     
     The patient demographic details might differ from those held in the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
     Data availability, timing and quality
@@ -88,9 +101,12 @@ info:
     
     You do not need to know much about FHIR to use this API - FHIR APIs are just RESTful APIs that follow specific rules.
     In particular:
-    - resource names are capitalised and singular, and use US spellings, for example `/Immunization` not `/immunisations`
-    - array names are singular, for example `entry` not `entries` for address lines
-    - data items that are country-specific and thus not included in the FHIR global base resources are usually wrapped in an `extension` object
+    * resource names are capitalised and singular, and use US spellings, for example `/Immunization` not `/immunisations`
+    
+    * array names are singular, for example `entry` not `entries` for address lines
+    
+    * data items that are country-specific and thus not included in the FHIR global base resources are usually wrapped in an `extension` object
+    
     
     There are [libraries and SDKs available](https://digital.nhs.uk/developer/guides-and-documentation/api-technologies-at-nhs-digital#fhir-libraries-and-sdks) to help with FHIR API integration.
     
@@ -103,7 +119,9 @@ info:
     ## Security and authorisation
     
     This API has two access modes:
+    
     * application-restricted access
+    
     * user-restricted access
     
     ### Application-restricted access
@@ -111,16 +129,20 @@ info:
     This access mode is [application-restricted](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation#application-restricted-apis), meaning we authenticate the calling application but not the end user.
     
     To use this access mode, use the following security pattern:
+    
     * [Application-restricted RESTful API - signed JWT authentication](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/application-restricted-restful-apis-signed-jwt-authentication)
     
     ### User-restricted access
     
     Use this [user-restricted access mode](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation#user-restricted-apis) if the end user is a patient:
     * the end user must have their identity verified to 'high' (P9) level
+    
     * the NHS number in the request must match the NHS number in the NHS login account
     
     To use this access mode, use the following security pattern:
+    
     * [User-restricted RESTful APIs - NHS login separate authentication and authorisation](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/user-restricted-restful-apis-nhs-login-separate-authentication-and-authorisation)
+    
   contact:
     name: Immunization-fhir-api API Support
     url: 'https://digital.nhs.uk/developer/help-and-support'

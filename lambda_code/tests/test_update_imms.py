@@ -6,41 +6,41 @@ from unittest.mock import create_autospec
 
 sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
-from search_imms_handler import search_imms
+from update_imms_handler import update_imms
 from fhir_controller import FhirController
 from models.errors import Severity, Code, create_operation_outcome
 
 
-class TestSearchImmunizations(unittest.TestCase):
+class TestUpdateImmunizations(unittest.TestCase):
     def setUp(self):
         self.controller = create_autospec(FhirController)
 
-    def test_search_immunizations(self):
-        """it should return a list of Immunizations"""
+    def test_update_immunization(self):
+        """it should return 200 if update is successful"""
         lambda_event = {"pathParameters": {"id": "an-id"}}
         exp_res = {"a-key": "a-value"}
 
-        self.controller.search_immunizations.return_value = exp_res
+        self.controller.update_immunization.return_value = exp_res
 
         # When
-        act_res = search_imms(lambda_event, self.controller)
+        act_res = update_imms(lambda_event, self.controller)
 
         # Then
-        self.controller.search_immunizations.assert_called_once_with(lambda_event)
+        self.controller.update_immunization.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
 
     def test_handle_exception(self):
         """unhandled exceptions should result in 500"""
         lambda_event = {"pathParameters": {"id": "an-id"}}
         error_msg = "an unhandled error"
-        self.controller.search_immunizations.side_effect = Exception(error_msg)
+        self.controller.update_immunization.side_effect = Exception(error_msg)
 
         exp_error = create_operation_outcome(resource_id=None, severity=Severity.error,
                                              code=Code.server_error,
                                              diagnostics=error_msg)
 
         # When
-        act_res = search_imms(lambda_event, self.controller)
+        act_res = update_imms(lambda_event, self.controller)
 
         # Then
         act_body = json.loads(act_res["body"])
