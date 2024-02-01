@@ -10,7 +10,7 @@ from .utils.generic_utils import (
     # these have an underscore to avoid pytest collecting them as tests
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
-    generic_validator_test_setup,
+    load_json_data_for_tests,
 )
 from .utils.mandation_test_utils import MandationTests
 
@@ -41,10 +41,10 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        generic_validator_test_setup(
-            self,
-            filename="sample_covid_immunization_event.json",
+        self.json_data = load_json_data_for_tests(
+            "sample_covid_immunization_event.json"
         )
+        self.validator = ImmunizationValidator()
 
     def test_model_post_vaccination_procedure_code(self):
         """

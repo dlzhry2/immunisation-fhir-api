@@ -15,12 +15,13 @@ class FhirService:
         self,
         imms_repo: ImmunizationRepository,
         pds_service: PdsService,
-        pre_validator: ImmunizationValidator = ImmunizationValidator(),
+        pre_validator: ImmunizationValidator = ImmunizationValidator(
+            add_post_validators=False
+        ),
     ):
         self.immunization_repo = imms_repo
         self.pds_service = pds_service
         self.pre_validator = pre_validator
-        self.pre_validator.add_custom_root_pre_validators()
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunization_repo.get_immunization_by_id(imms_id)
@@ -38,7 +39,9 @@ class FhirService:
             raise CoarseValidationError(message=str(error))
 
         # TODO: check if nhs number exists
-        nhs_number = immunization["patient"]["identifier"]["value"]
+        nhs_number = [
+            x for x in immunization["contained"] if x.get("resourceType") == "Patient"
+        ][0]["identifier"][0]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
         if patient:
             imms = self.immunization_repo.create_immunization(immunization, patient)

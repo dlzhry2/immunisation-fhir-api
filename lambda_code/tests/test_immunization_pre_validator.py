@@ -6,10 +6,11 @@ from .utils.generic_utils import (
     # these have an underscore to avoid pytest collecting them as tests
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
-    generic_validator_test_setup,
+    load_json_data_for_tests,
 )
 from .utils.pre_validation_test_utils import ValidatorModelTests
 from .utils.values_for_tests import ValidValues, InvalidValues
+from models.fhir_immunization import ImmunizationValidator
 
 
 class TestImmunizationModelPreValidationRules(unittest.TestCase):
@@ -17,11 +18,10 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        generic_validator_test_setup(
-            self,
-            filename="sample_covid_immunization_event.json",
-            add_post_validators=False,
+        self.json_data = load_json_data_for_tests(
+            filename="sample_covid_immunization_event.json"
         )
+        self.validator = ImmunizationValidator(add_post_validators=False)
 
     def test_pre_validate_contained(self):
         """Test pre_validate_contained accepts valid values and rejects invalid values"""
@@ -1141,11 +1141,10 @@ class TestImmunizationModelPreValidationRulesForNotDone(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        generic_validator_test_setup(
-            self,
-            filename="sample_immunization_not_done_event.json",
-            add_post_validators=False,
+        self.json_data = load_json_data_for_tests(
+            "sample_immunization_not_done_event.json"
         )
+        self.validator = ImmunizationValidator(add_post_validators=False)
 
     def test_pre_validate_vaccination_situation_code(self):
         """
@@ -1219,11 +1218,10 @@ class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCa
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        generic_validator_test_setup(
-            self,
-            filename="sample_immunization_reduce_validation_event.json",
-            add_post_validators=False,
+        self.json_data = load_json_data_for_tests(
+            "sample_immunization_reduce_validation_event.json"
         )
+        self.validator = ImmunizationValidator(add_post_validators=False)
 
     def test_pre_validate_reduce_validation_reason_answer(self):
         """

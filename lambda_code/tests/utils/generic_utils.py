@@ -7,19 +7,14 @@ from typing import Literal, Any
 from decimal import Decimal
 from pydantic import ValidationError
 from jsonpath_ng.ext import parse
-from models.fhir_immunization import ImmunizationValidator
 
 
-def generic_validator_test_setup(self, filename: str, add_post_validators: bool = True):
-    """Load the json data and set up the validation class for tests"""
-    # Load the sample json data
+def load_json_data_for_tests(filename: str):
+    """Load the json data"""
     data_path = f"{os.path.dirname(os.path.abspath(__file__))}/../sample_data"
     immunization_file_path = f"{data_path}/{filename}"
     with open(immunization_file_path, "r", encoding="utf-8") as f:
-        self.json_data = json.load(f, parse_float=Decimal)
-
-    # Set up the validator
-    self.validator = ImmunizationValidator(add_post_validators)
+        return json.load(f, parse_float=Decimal)
 
 
 def generate_field_location_for_questionnnaire_response(
