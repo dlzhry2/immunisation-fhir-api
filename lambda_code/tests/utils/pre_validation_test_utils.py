@@ -605,3 +605,43 @@ class ValidatorModelTests:
         test_instance.assertTrue(
             expected_error_message + " (type=value_error)" in str(error.exception)
         )
+
+    @staticmethod
+    def test_valid_combinations_of_contained_and_patient_accepted(
+        test_instance: unittest.TestCase,
+        contained: list,
+        patient: dict,
+    ):
+        """
+        Takes a valid combination of contained and patient objects and ensures that no
+        validation error is raised
+        """
+        valid_json_data = deepcopy(test_instance.json_data)
+        valid_json_data = parse("contained").update(valid_json_data, contained)
+        valid_json_data = parse("patient").update(valid_json_data, patient)
+
+        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+
+    @staticmethod
+    def test_invalid_patient_reference_rejected(
+        test_instance: unittest.TestCase,
+        contained: list,
+        patient: dict,
+        expected_error_message: str,
+    ):
+        """
+        Takes a combination of contained and patient object which is invalid due to
+        either contained Patient ID, patient.reference, or a combination of
+        the two, and checks that the appropriate error is raised
+        """
+        invalid_json_data = deepcopy(test_instance.json_data)
+        invalid_json_data = parse("contained").update(invalid_json_data, contained)
+
+        invalid_json_data = parse("patient").update(invalid_json_data, patient)
+
+        with test_instance.assertRaises(ValidationError) as error:
+            test_instance.validator.validate(invalid_json_data)
+
+        test_instance.assertTrue(
+            expected_error_message + " (type=value_error)" in str(error.exception)
+        )

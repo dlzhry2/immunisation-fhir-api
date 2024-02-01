@@ -62,6 +62,7 @@ class MandationTests:
             # Test that correct error message is raised
             with test_instance.assertRaises(ValidationError) as error:
                 test_instance.validator.validate(invalid_json_data)
+
             test_instance.assertTrue(
                 (expected_error_message + f" (type={expected_error_type})")
                 in str(error.exception)

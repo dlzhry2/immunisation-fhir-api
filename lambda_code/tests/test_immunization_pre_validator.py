@@ -70,6 +70,68 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             expected_error_message="contained[?(@.resourceType=='Patient')] must be unique",
         )
 
+    def test_pre_validate_patient_reference(self):
+        """Test pre_validate_patient_reference accepts valid values and rejects invalid values"""
+        valid_contained_with_patient = [
+            ValidValues.empty_patient_resource,
+            ValidValues.empty_practitioner_resource,
+        ]
+
+        invalid_contained_with_no_id_in_patient = [
+            {
+                "resourceType": "Patient",
+            },
+            ValidValues.empty_practitioner_resource,
+        ]
+
+        invalid_contained_with_no_patient = [
+            ValidValues.empty_practitioner_resource,
+        ]
+
+        valid_patient_pat1 = {"reference": "#Pat1"}
+        valid_patient_pat2 = {"reference": "#Pat2"}
+        invalid_patient_pat1 = {"reference": "Pat1"}
+
+        # Test case: Pat1 in contained, patient reference is #Pat1 - accept
+        ValidatorModelTests.test_valid_combinations_of_contained_and_patient_accepted(
+            self,
+            valid_contained_with_patient,
+            valid_patient_pat1,
+        )
+
+        # Test case: Pat1 in contained, patient reference is Pat1 - reject
+        ValidatorModelTests.test_invalid_patient_reference_rejected(
+            self,
+            valid_contained_with_patient,
+            invalid_patient_pat1,
+            expected_error_message="patient.reference must be a single reference to a contained "
+            + "Patient resource",
+        )
+
+        # Test case: Pat1 in contained, patient reference is #Pat2 - reject
+        ValidatorModelTests.test_invalid_patient_reference_rejected(
+            self,
+            valid_contained_with_patient,
+            valid_patient_pat2,
+            expected_error_message="The reference '#Pat2' does not exist in the contained "
+            + "Patient resources",
+        )
+        # Test case: contained Patient has no id, patient reference is #Pat1 - reject
+        ValidatorModelTests.test_invalid_patient_reference_rejected(
+            self,
+            invalid_contained_with_no_id_in_patient,
+            valid_patient_pat1,
+            expected_error_message="The contained Patient resource must have an 'id' field",
+        )
+
+        # Test case: no contained patient, patient reference is #Pat1 - reject
+        ValidatorModelTests.test_invalid_patient_reference_rejected(
+            self,
+            invalid_contained_with_no_patient,
+            valid_patient_pat1,
+            expected_error_message="contained[?(@.resourceType=='Patient')] is mandatory",
+        )
+
     def test_pre_validate_patient_identifier(self):
         """Test pre_validate_patient_identifier accepts valid values and rejects invalid values"""
         valid_list_element = {

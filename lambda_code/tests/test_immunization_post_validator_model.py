@@ -118,7 +118,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self,
             valid_json_data=valid_json_data,
             field_location="status",
-            # TODO: work out how to check for complete error message
             expected_error_message="field required",
             expected_error_type="value_error.missing",
             is_mandatory_fhir=True,

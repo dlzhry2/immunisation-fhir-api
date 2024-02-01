@@ -33,6 +33,9 @@ class ImmunizationValidator:
                 FHIRImmunizationPreValidators.pre_validate_contained, pre=True
             )
             self.immunization.add_root_validator(
+                FHIRImmunizationPreValidators.pre_validate_patient_reference, pre=True
+            )
+            self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_patient_identifier, pre=True
             )
             self.immunization.add_root_validator(

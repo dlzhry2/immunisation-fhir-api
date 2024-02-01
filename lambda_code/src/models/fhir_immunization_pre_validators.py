@@ -35,14 +35,57 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    # TODO: To add validation that contained patient is referenced by immunization.patient
-    # TODO: Reject if there is a contained patient, but the contained patient
-    # has no id (so cannot be externally referenced)
-    # TODO: Reject if there is a contained patient, with a contained patient id,
-    # but this id is not referenced at all by the immunization.patient
-    # TODO: Reject there is no contained patient (note that none of the contained
-    # patient fields are mandatory), but there is an immunization.patient item such
-    # that the actor has a reference (? to where if not the contained patient)
+    @classmethod
+    def pre_validate_patient_reference(cls, values: dict) -> dict:
+        """
+        Pre-validate that:
+        - patient.reference exists and it is a reference
+        - patient.reference matches the contained patient resource id
+        - contained Patient resource has an id
+        - there is a contained Patient resource
+        """
+
+        # Obtain the patient.reference that are internal references (#)
+        patient_reference = values.get("patient", {}).get("reference")
+
+        # Make sure we have a reference
+        if not (
+            isinstance(patient_reference, str) and patient_reference.startswith("#")
+        ):
+            raise ValueError(
+                "patient.reference must be a single reference to a contained Patient resource"
+            )
+
+        # Obtain the contained patient resource
+        try:
+            contained_patient = [
+                x for x in values["contained"] if x.get("resourceType") == "Patient"
+            ][0]
+
+            try:
+                # Try to obtain the contained practitioner resource id
+                contained_patient_id = contained_patient["id"]
+
+                # If the reference is not equal to the ID then raise an error
+                if ("#" + contained_patient_id) != patient_reference:
+                    raise ValueError(
+                        f"The reference '{patient_reference}' does "
+                        + "not exist in the contained Patient resources"
+                    )
+            except KeyError as error:
+                # If the contained Patient resource has no id raise an error
+                raise ValueError(
+                    "The contained Patient resource must have an 'id' field"
+                ) from error
+
+        except (IndexError, KeyError) as error:
+            # Entering this exception block implies that there is no contained patient resource
+            # therefore raise an error
+            raise ValueError(
+                "contained[?(@.resourceType=='Patient')] is mandatory"
+            ) from error
+
+        return values
 
     @classmethod
     def pre_validate_patient_identifier(cls, values: dict) -> dict:
