@@ -10,6 +10,7 @@ from .utils.generic_utils import (
     # these have an underscore to avoid pytest collecting them as tests
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
+    generic_validator_test_setup,
 )
 from .utils.mandation_test_utils import MandationTests
 
@@ -29,15 +30,9 @@ class TestImmunizationModelPostValidationRulesValidData(unittest.TestCase):
         ]
 
         for file in files_to_test:
-            # Load the data
-            immunization_file_path = f"{data_path}/{file}"
-            with open(immunization_file_path, "r", encoding="utf-8") as f:
+            with open(f"{data_path}/{file}", "r", encoding="utf-8") as f:
                 valid_json_data = json.load(f, parse_float=Decimal)
-
-            # set up the validator and add custom root validators
             validator = ImmunizationValidator()
-
-            # Check that the data is accepted by the validator
             self.assertTrue(validator.validate(valid_json_data))
 
 
@@ -46,14 +41,10 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        # Load the sample json data
-        data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
-        immunization_file_path = f"{data_path}/sample_covid_immunization_event.json"
-        with open(immunization_file_path, "r", encoding="utf-8") as f:
-            self.json_data = json.load(f, parse_float=Decimal)
-
-        # Set up the validator
-        self.validator = ImmunizationValidator()
+        generic_validator_test_setup(
+            self,
+            filename="sample_covid_immunization_event.json",
+        )
 
     def test_model_post_vaccination_procedure_code(self):
         """

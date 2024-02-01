@@ -44,17 +44,22 @@ class ValidValues:
         "display": "test",
     }
 
-    empty_practitioner_resource = {
+    empty_practitioner_resource_id_Pract1 = {
         "resourceType": "Practitioner",
         "id": "Pract1",
     }
 
-    empty_patient_resource = {
+    empty_patient_resource_id_Pat1 = {
         "resourceType": "Patient",
         "id": "Pat1",
     }
 
-    empty_questionnnaire_resource = {
+    empty_patient_resource_id_Pat2 = {
+        "resourceType": "Patient",
+        "id": "Pat2",
+    }
+
+    empty_questionnnaire_resource_id_QR1 = {
         "resourceType": "QuestionnaireResponse",
         "id": "QR1",
         "status": "completed",
@@ -91,6 +96,84 @@ class ValidValues:
             },
             "display": "Acme Healthcare",
         }
+    }
+
+    performer_actor_reference_internal_Pract1 = {"actor": {"reference": "#Pract1"}}
+
+    performer_actor_reference_internal_Pract2 = {"actor": {"reference": "#Pract2"}}
+
+    performer = [
+        {"actor": {"reference": "#Pract1"}},
+        {
+            "actor": {
+                "type": "Organization",
+                "display": "Acme Healthcare",
+            }
+        },
+    ]
+
+    vaccination_procedure_coding_with_one_snomed_code = [
+        {
+            "system": "http://snomed.info/sct",
+            "code": "1324681000000101",
+            "display": "Administration of first dose of severe acute "
+            + "respiratory syndrome coronavirus 2 vaccine (procedure)",
+        },
+    ]
+
+    vaccination_procedure_coding_with_snomed_and_dmd_codes = [
+        {
+            "system": "http://snomed.info/sct",
+            "code": "1324681000000101",
+            "display": "Administration of first dose of severe acute "
+            + "respiratory syndrome coronavirus 2 vaccine (procedure)",
+        },
+        {
+            "system": "dm+d url",
+            "code": "DUMMY DM+D CODE",
+            "display": "Administration of first dose of severe acute "
+            + "respiratory syndrome coronavirus 2 vaccine (procedure)",
+        },
+    ]
+
+    dummy_coding_with_one_snomed_code = [
+        {
+            "system": "http://snomed.info/sct",
+            "code": "DUMMY CODE 1",
+            "display": "DUMMY TERM 1",
+        },
+    ]
+
+    vaccination_procedure_with_one_snomed_code = {
+        "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+        "valueCodeableConcept": {
+            "coding": vaccination_procedure_coding_with_one_snomed_code
+        },
+    }
+
+    vaccination_procedure_with_snomed_and_dmd_codes = {
+        "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+        "valueCodeableConcept": {
+            "coding": vaccination_procedure_coding_with_snomed_and_dmd_codes
+        },
+    }
+
+    vaccination_situation_with_one_snomed_code = {
+        "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+        "valueCodeableConcept": {"coding": dummy_coding_with_one_snomed_code},
+    }
+
+    nhs_number_coding_item = {
+        "system": "https://fhir.hl7.org.uk/CodeSystem"
+        + "/UKCore-NHSNumberVerificationStatusEngland",
+        "code": "NHS_NUMBER_STATUS_INDICATOR_CODE",
+        "display": "NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION",
+    }
+
+    nhs_number_verification_status = {
+        "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+        + "NHSNumberVerificationStatus",
+        "valueCodeableConcept": {"coding": [nhs_number_coding_item]},
     }
 
 
@@ -186,3 +269,33 @@ class InvalidValues:
         "Unknown",
         "Other",
     ]
+
+    performer_with_two_organizations = [
+        {"actor": {"reference": "#Pract1", "type": "Organization"}},
+        {
+            "actor": {
+                "type": "Organization",
+                "display": "Acme Healthcare",
+            }
+        },
+    ]
+
+    practitioner_resource_with_no_id = {"resourceType": "Practitioner"}
+
+    dummy_coding_with_two_snomed_codes = [
+        {
+            "system": "http://snomed.info/sct",
+            "code": "DUMMY SNOMED CODE 1",
+            "display": "DUMMY SNOMED TERM 1",
+        },
+        {
+            "system": "http://snomed.info/sct",
+            "code": "DUMMY SNOMED CODE 2",
+            "display": "DUMMY SNOMED TERM 2",
+        },
+    ]
+
+    vaccination_situation_with_two_snomed_codes = {
+        "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
+        "valueCodeableConcept": {"coding": dummy_coding_with_two_snomed_codes},
+    }

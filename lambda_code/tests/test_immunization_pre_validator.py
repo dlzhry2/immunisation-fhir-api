@@ -1,51 +1,44 @@
 """Test immunization pre validation rules on the model"""
 import unittest
-import os
-import json
 from copy import deepcopy
 from decimal import Decimal
-from models.fhir_immunization import ImmunizationValidator
 from .utils.generic_utils import (
+    # these have an underscore to avoid pytest collecting them as tests
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
+    generic_validator_test_setup,
 )
 from .utils.pre_validation_test_utils import ValidatorModelTests
 from .utils.values_for_tests import ValidValues, InvalidValues
 
 
 class TestImmunizationModelPreValidationRules(unittest.TestCase):
-    """Test immunization pre validation rules on the FHIR model"""
+    """Test immunization pre validation rules on the FHIR model using the covid sample data"""
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        # Load the sample json data
-        data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
-        immunization_file_path = f"{data_path}/sample_covid_immunization_event.json"
-        with open(immunization_file_path, "r", encoding="utf-8") as f:
-            self.json_data = json.load(f, parse_float=Decimal)
-
-        # Set up the validator
-        self.validator = ImmunizationValidator(add_post_validators=False)
+        generic_validator_test_setup(
+            self,
+            filename="sample_covid_immunization_event.json",
+            add_post_validators=False,
+        )
 
     def test_pre_validate_contained(self):
         """Test pre_validate_contained accepts valid values and rejects invalid values"""
         # Test that the contained field is rejected when invalid
         valid_lists_to_test = [
             [
-                ValidValues.empty_practitioner_resource,
-                ValidValues.empty_patient_resource,
-                ValidValues.empty_questionnnaire_resource,
+                ValidValues.empty_practitioner_resource_id_Pract1,
+                ValidValues.empty_patient_resource_id_Pat1,
+                ValidValues.empty_questionnnaire_resource_id_QR1,
             ]
         ]
 
         invalid_list_to_test = [
-            ValidValues.empty_practitioner_resource,
-            ValidValues.empty_patient_resource,
-            ValidValues.empty_questionnnaire_resource,
-            {
-                "resourceType": "Patient",
-                "id": "Pat2",
-            },
+            ValidValues.empty_practitioner_resource_id_Pract1,
+            ValidValues.empty_patient_resource_id_Pat1,
+            ValidValues.empty_questionnnaire_resource_id_QR1,
+            ValidValues.empty_patient_resource_id_Pat2,
         ]
 
         ValidatorModelTests.test_unique_list(
@@ -59,19 +52,19 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
     def test_pre_validate_patient_reference(self):
         """Test pre_validate_patient_reference accepts valid values and rejects invalid values"""
         valid_contained_with_patient = [
-            ValidValues.empty_patient_resource,
-            ValidValues.empty_practitioner_resource,
+            ValidValues.empty_patient_resource_id_Pat1,
+            ValidValues.empty_practitioner_resource_id_Pract1,
         ]
 
         invalid_contained_with_no_id_in_patient = [
             {
                 "resourceType": "Patient",
             },
-            ValidValues.empty_practitioner_resource,
+            ValidValues.empty_practitioner_resource_id_Pract1,
         ]
 
         invalid_contained_with_no_patient = [
-            ValidValues.empty_practitioner_resource,
+            ValidValues.empty_practitioner_resource_id_Pract1,
         ]
 
         valid_patient_pat1 = {"reference": "#Pat1"}
@@ -292,34 +285,11 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_performer_actor_type accepts valid values and rejects invalid
         values
         """
-
         valid_json_data = deepcopy(self.json_data)
-
-        valid_performers_to_test = [
-            [
-                {"actor": {"reference": "#Pract1"}},
-                {
-                    "actor": {
-                        "type": "Organization",
-                        "display": "Acme Healthcare",
-                    }
-                },
-            ]
-        ]
-
-        invalid_performer = [
-            {"actor": {"reference": "#Pract1", "type": "Organization"}},
-            {
-                "actor": {
-                    "type": "Organization",
-                    "display": "Acme Healthcare",
-                }
-            },
-        ]
 
         # Test that valid data is accepted
         _test_valid_values_accepted(
-            self, valid_json_data, "performer", valid_performers_to_test
+            self, valid_json_data, "performer", [ValidValues.performer]
         )
 
         # Test lists with duplicate values
@@ -327,7 +297,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             valid_json_data,
             field_location="performer",
-            invalid_value=invalid_performer,
+            invalid_value=InvalidValues.performer_with_two_organizations,
             expected_error_message="performer.actor[?@.type=='Organization'] must be unique",
             expected_error_type="value_error",
         )
@@ -338,22 +308,22 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         values
         """
 
-        valid_contained_with_no_practitioner = [ValidValues.empty_patient_resource]
+        valid_contained_with_no_practitioner = [
+            ValidValues.empty_patient_resource_id_Pat1
+        ]
 
         valid_contained_with_practitioner = [
-            ValidValues.empty_practitioner_resource,
-            ValidValues.empty_patient_resource,
+            ValidValues.empty_practitioner_resource_id_Pract1,
+            ValidValues.empty_patient_resource_id_Pat1,
         ]
 
         invalid_contained_with_no_id_in_practitioner = [
-            {
-                "resourceType": "Practitioner",
-            },
-            ValidValues.empty_patient_resource,
+            InvalidValues.practitioner_resource_with_no_id,
+            ValidValues.empty_patient_resource_id_Pat1,
         ]
 
-        valid_performer_with_1_pract1 = [
-            {"actor": {"reference": "#Pract1"}},
+        valid_performer_with_one_pract1 = [
+            ValidValues.performer_actor_reference_internal_Pract1,
             ValidValues.performer_actor_organization,
         ]
 
@@ -361,14 +331,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ValidValues.performer_actor_organization,
         ]
 
-        valid_performer_with_2_pract1 = [
-            {"actor": {"reference": "#Pract1"}},
-            {"actor": {"reference": "#Pract1"}},
+        valid_performer_with_two_pract1 = [
+            ValidValues.performer_actor_reference_internal_Pract1,
+            ValidValues.performer_actor_reference_internal_Pract1,
             ValidValues.performer_actor_organization,
         ]
 
-        valid_performer_with_1_pract2 = [
-            {"actor": {"reference": "#Pract2"}},
+        valid_performer_with_one_pract2 = [
+            ValidValues.performer_actor_reference_internal_Pract2,
             ValidValues.performer_actor_organization,
         ]
 
@@ -376,7 +346,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_valid_combinations_of_contained_and_performer_accepted(
             self,
             valid_contained_with_practitioner,
-            valid_performer_with_1_pract1,
+            valid_performer_with_one_pract1,
         )
 
         # Test case: No contained practitioner, no actor reference in performer - accept
@@ -390,7 +360,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
             self,
             valid_contained_with_practitioner,
-            valid_performer_with_2_pract1,
+            valid_performer_with_two_pract1,
             expected_error_message="performer.actor.reference must be a single reference to a "
             + "contained Practitioner resource. References found: ['#Pract1', '#Pract1']",
         )
@@ -399,7 +369,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
             self,
             valid_contained_with_no_practitioner,
-            valid_performer_with_1_pract1,
+            valid_performer_with_one_pract1,
             expected_error_message="The reference(s) ['#Pract1'] do not exist in the contained "
             + "Practitioner resources",
         )
@@ -425,7 +395,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
             self,
             valid_contained_with_practitioner,
-            valid_performer_with_1_pract2,
+            valid_performer_with_one_pract2,
             expected_error_message="The reference '#Pract2' does "
             + "not exist in the contained Practitioner resources",
         )
@@ -586,9 +556,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='PerformerSDSJobRole')].answer[0].valueString",
-            valid_strings_to_test=[
-                "Doctor",
-            ],
+            valid_strings_to_test=["Doctor"],
         )
 
     def test_pre_validate_recorded(self):
@@ -617,28 +585,15 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_extension_urls accepts valid values and rejects invalid
         values
         """
-        valid_extension_item = {
-            "url": "https://fhir.hl7.org.uk/StructureDefinition"
-            + "/Extension-UKCore-VaccinationProcedure",
-            "valueCodeableConcept": {
-                "coding": [
-                    {
-                        "system": "http://snomed.info/sct",
-                        "code": "1324681000000101",
-                        "display": "Administration of first dose of severe acute "
-                        + "respiratory syndrome coronavirus 2 vaccine (procedure)",
-                    }
-                ]
-            },
-        }
-
         ValidatorModelTests.test_unique_list(
             self,
             field_location="extension",
-            valid_lists_to_test=[[valid_extension_item]],
+            valid_lists_to_test=[
+                [ValidValues.vaccination_procedure_with_one_snomed_code]
+            ],
             invalid_list_with_duplicates_to_test=[
-                valid_extension_item,
-                valid_extension_item,
+                ValidValues.vaccination_procedure_with_one_snomed_code,
+                ValidValues.vaccination_procedure_with_one_snomed_code,
             ],
             expected_error_message="extension[?(@.url=='https://fhir.hl7.org.uk"
             + "/StructureDefinition/Extension-UKCore-VaccinationProcedure')] must be unique",
@@ -649,78 +604,16 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_extension_value_codeable_concept_codings accepts valid values and rejects
         invalid values
         """
-
         valid_extension_values = [
             [
-                {
-                    "url": "https://fhir.hl7.org.uk/StructureDefinition"
-                    + "/Extension-UKCore-VaccinationProcedure",
-                    "valueCodeableConcept": {
-                        "coding": [
-                            {
-                                "system": "http://snomed.info/sct",
-                                "code": "1324681000000101",
-                                "display": "Administration of first dose of severe acute "
-                                + "respiratory syndrome coronavirus 2 vaccine (procedure)",
-                            },
-                            {
-                                "system": "dm+d url",
-                                "code": "DUMMY DM+D CODE",
-                                "display": "Administration of first dose of severe acute "
-                                + "respiratory syndrome coronavirus 2 vaccine (procedure)",
-                            },
-                        ]
-                    },
-                },
-                {
-                    "url": "https://fhir.hl7.org.uk/StructureDefinition"
-                    + "/Extension-UKCore-VaccinationSituation",
-                    "valueCodeableConcept": {
-                        "coding": [
-                            {
-                                "system": "http://snomed.info/sct",
-                                "code": "SOME DUMMY SNOMED CODE",
-                                "display": "DUMMY TERM FOR THE SNOMED CODE",
-                            }
-                        ]
-                    },
-                },
+                ValidValues.vaccination_procedure_with_snomed_and_dmd_codes,
+                ValidValues.vaccination_situation_with_one_snomed_code,
             ]
         ]
 
         invalid_extension_value = [
-            {
-                "url": "https://fhir.hl7.org.uk/StructureDefinition"
-                + "/Extension-UKCore-VaccinationProcedure",
-                "valueCodeableConcept": {
-                    "coding": [
-                        {
-                            "system": "http://snomed.info/sct",
-                            "code": "1324681000000101",
-                            "display": "Administration of first dose of severe acute "
-                            + "respiratory syndrome coronavirus 2 vaccine (procedure)",
-                        }
-                    ]
-                },
-            },
-            {
-                "url": "https://fhir.hl7.org.uk/StructureDefinition"
-                + "/Extension-UKCore-VaccinationSituation",
-                "valueCodeableConcept": {
-                    "coding": [
-                        {
-                            "system": "http://snomed.info/sct",
-                            "code": "SOME DUMMY SNOMED CODE",
-                            "display": "DUMMY TERM FOR THE SNOMED CODE",
-                        },
-                        {
-                            "system": "http://snomed.info/sct",
-                            "code": "A DIFFERENT SNOMED CODE",
-                            "display": "DUMMY TERM FOR THE SNOMED CODE",
-                        },
-                    ]
-                },
-            },
+            ValidValues.vaccination_procedure_with_one_snomed_code,
+            InvalidValues.vaccination_situation_with_two_snomed_codes,
         ]
 
         ValidatorModelTests.test_unique_list(
@@ -738,7 +631,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_vaccination_procedure_code accepts valid values and rejects invalid
         values
         """
-
         field_location = (
             "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition"
             + "/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding"
@@ -754,7 +646,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_vaccination_procedure_display accepts valid values and rejects
         invalid values
         """
-
         field_location = (
             "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition"
             + "/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding"
@@ -767,13 +658,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_pre_validate_protocol_applied(self):
         """Test pre_validate_protocol_applied accepts valid values and rejects invalid values"""
-        valid_list_element = {
-            "targetDisease": [
-                {"coding": [{"code": "ABC123"}]},
-                {"coding": [{"code": "DEF456"}]},
-            ],
-            "doseNumberPositiveInt": 1,
-        }
+        valid_list_element = {"doseNumberPositiveInt": 1}
 
         ValidatorModelTests.test_list_value(
             self,
@@ -788,7 +673,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_protocol_applied_dose_number_positive_int accepts valid values and
         rejects invalid values
         """
-        # Test invalid data types and non-positive integers
         ValidatorModelTests.test_positive_integer_value(
             self,
             field_location="protocolApplied[0].doseNumberPositiveInt",
@@ -995,34 +879,21 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_patient_identifier_extension accepts valid values and rejects invalid
         values
         """
-        valid_patient_extension_item = {
-            "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-            + "NHSNumberVerificationStatus",
-            "valueCodeableConcept": {
-                "coding": [
-                    {
-                        "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-"
-                        + "NHSNumberVerificationStatusEngland",
-                        "code": "NHS_NUMBER_STATUS_INDICATOR_CODE",
-                        "display": "NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION",
-                    }
-                ]
-            },
-        }
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension"
+        )
 
         ValidatorModelTests.test_unique_list(
             self,
-            field_location="contained[?(@.resourceType=='Patient')].identifier"
-            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension",
-            valid_lists_to_test=[[valid_patient_extension_item]],
+            field_location=field_location,
+            valid_lists_to_test=[[ValidValues.nhs_number_verification_status]],
             invalid_list_with_duplicates_to_test=[
-                valid_patient_extension_item,
-                valid_patient_extension_item,
+                ValidValues.nhs_number_verification_status,
+                ValidValues.nhs_number_verification_status,
             ],
-            expected_error_message="contained[?(@.resourceType=='Patient')].identifier"
-            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url=="
-            + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-            + "NHSNumberVerificationStatus')] must be unique",
+            expected_error_message=f"{field_location}[?(@.url=='https://fhir.hl7.org.uk"
+            + "/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')] must be unique",
         )
 
     def test_pre_validate_nhs_number_verification_status_coding(self):
@@ -1030,30 +901,23 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         Test pre_validate_nhs_number_verification_status_coding accepts valid values and rejects
         invalid values
         """
-        valid_coding_item = {
-            "system": "https://fhir.hl7.org.uk/CodeSystem"
-            + "/UKCore-NHSNumberVerificationStatusEngland",
-            "code": "NHS_NUMBER_STATUS_INDICATOR_CODE",
-            "display": "NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION",
-        }
-
-        ValidatorModelTests.test_unique_list(
-            self,
-            field_location="contained[?(@.resourceType=='Patient')].identifier"
-            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url=="
-            + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-            + "NHSNumberVerificationStatus')].valueCodeableConcept.coding",
-            valid_lists_to_test=[[valid_coding_item]],
-            invalid_list_with_duplicates_to_test=[
-                valid_coding_item,
-                valid_coding_item,
-            ],
-            expected_error_message="contained[?(@.resourceType=='Patient')].identifier"
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
             + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url=="
             + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
             + "NHSNumberVerificationStatus')].valueCodeableConcept.coding"
-            + "[?(@.system=='https://fhir.hl7.org.uk/CodeSystem/UKCore-"
-            + "NHSNumberVerificationStatusEngland')] must be unique",
+        )
+
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location=field_location,
+            valid_lists_to_test=[[ValidValues.nhs_number_coding_item]],
+            invalid_list_with_duplicates_to_test=[
+                ValidValues.nhs_number_coding_item,
+                ValidValues.nhs_number_coding_item,
+            ],
+            expected_error_message=f"{field_location}[?(@.system=='https://fhir.hl7.org.uk"
+            + "/CodeSystem/UKCore-NHSNumberVerificationStatusEngland')] must be unique",
         )
 
     def test_pre_validate_nhs_number_verification_status_code(self):
@@ -1093,7 +957,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self,
             field_location,
-            valid_strings_to_test=["01"],
+            valid_strings_to_test=["Number present and verified"],
         )
 
     def test_pre_validate_organisation_identifier_system(self):
@@ -1277,28 +1141,23 @@ class TestImmunizationModelPreValidationRulesForNotDone(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        # Load the sample json data
-        data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
-        immunization_file_path = f"{data_path}/sample_immunization_not_done_event.json"
-        with open(immunization_file_path, "r", encoding="utf-8") as f:
-            self.json_data = json.load(f, parse_float=Decimal)
-
-        # Set up the validator
-        self.validator = ImmunizationValidator(add_post_validators=False)
+        generic_validator_test_setup(
+            self,
+            filename="sample_immunization_not_done_event.json",
+            add_post_validators=False,
+        )
 
     def test_pre_validate_vaccination_situation_code(self):
         """
         Test pre_validate_vaccination_situation_code accepts valid values and rejects invalid
         values
         """
-        field_location = (
-            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition"
-            + "/Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding"
-            + "[?(@.system=='http://snomed.info/sct')].code"
-        )
-
         ValidatorModelTests.test_string_value(
-            self, field_location=field_location, valid_strings_to_test=["dummy"]
+            self,
+            field_location="extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition"
+            + "/Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding"
+            + "[?(@.system=='http://snomed.info/sct')].code",
+            valid_strings_to_test=["dummy"],
         )
 
     def test_pre_validate_vaccination_situation_display(self):
@@ -1306,14 +1165,12 @@ class TestImmunizationModelPreValidationRulesForNotDone(unittest.TestCase):
         Test pre_validate_vaccination_situation_display accepts valid values and rejects invalid
         values
         """
-        field_location = (
-            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition"
-            + "/Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding"
-            + "[?(@.system=='http://snomed.info/sct')].display"
-        )
-
         ValidatorModelTests.test_string_value(
-            self, field_location=field_location, valid_strings_to_test=["dummy"]
+            self,
+            field_location="extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition"
+            + "/Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding"
+            + "[?(@.system=='http://snomed.info/sct')].display",
+            valid_strings_to_test=["dummy"],
         )
 
     def test_pre_validate_status_reason_coding(self):
@@ -1362,16 +1219,11 @@ class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCa
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        # Load the sample json data
-        data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
-        immunization_file_path = (
-            f"{data_path}/sample_immunization_reduce_validation_event.json"
+        generic_validator_test_setup(
+            self,
+            filename="sample_immunization_reduce_validation_event.json",
+            add_post_validators=False,
         )
-        with open(immunization_file_path, "r", encoding="utf-8") as f:
-            self.json_data = json.load(f, parse_float=Decimal)
-
-        # Set up the validator
-        self.validator = ImmunizationValidator(add_post_validators=False)
 
     def test_pre_validate_reduce_validation_reason_answer(self):
         """
