@@ -187,8 +187,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         imms = _make_an_immunization()
 
         nhs_number = "1234567890"
-        patient_id = {"identifier": {"system": "a-system", "value": nhs_number}}
-        imms["patient"] = patient_id
+        imms["contained"][0]["identifier"][0]["value"] = nhs_number
 
         self.table.put_item = MagicMock(
             return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
@@ -206,8 +205,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         imms = _make_an_immunization()
 
         disease_code = "a-disease-code"
-        disease = {"targetDisease": [{"coding": [{"code": disease_code}]}]}
-        imms["protocolApplied"] = [disease]
+        imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = disease_code
 
         self.table.put_item = MagicMock(
             return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
@@ -256,9 +254,8 @@ class TestUpdateImmunization(unittest.TestCase):
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient"
         )
         patient_id = self.patient["identifier"]["value"]
-        disease_type = imms["protocolApplied"][0]["targetDisease"][0]["coding"][0][
-            "code"
-        ]
+        patient_id = imms["contained"][0]["identifier"][0]["value"]
+        disease_type = imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"]
         patient_sk = f"{disease_type}#{imms_id}"
 
         self.table.update_item.assert_called_once_with(
