@@ -5,8 +5,8 @@ import os
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.list import List as FhirList
 from fhir_repository import ImmunizationRepository
-from fhir_service import FhirService
-from models.errors import InvalidPatientId, CoarseValidationError
+from fhir_service import FhirService, UpdateOutcome
+from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError, InconsistentIdError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from pydantic import ValidationError
@@ -156,6 +156,117 @@ class TestCreateImmunization(unittest.TestCase):
         # Then
         self.assertEqual(e.exception.nhs_number, invalid_nhs_number)
         self.imms_repo.create_immunization.assert_not_called()
+
+
+class TestUpdateImmunization(unittest.TestCase):
+    def setUp(self):
+        self.imms_repo = create_autospec(ImmunizationRepository)
+        self.pds_service = create_autospec(PdsService)
+        self.validator = create_autospec(ImmunizationValidator)
+        self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
+
+    def test_update_immunization(self):
+        """it should update Immunization and validate NHS number"""
+        imms_id = "an-id"
+        self.imms_repo.update_immunization.return_value = None
+        pds_patient = {"id": "a-patient-id"}
+        self.fhir_service.pds_service.get_patient_details.return_value = pds_patient
+
+        nhs_number = valid_nhs_number
+        req_imms = _create_an_immunization_dict(imms_id, nhs_number)
+
+        # When
+        outcome = self.fhir_service.update_immunization(imms_id, req_imms)
+
+        # Then
+        self.assertEqual(outcome, UpdateOutcome.UPDATE)
+        self.imms_repo.update_immunization.assert_called_once_with(imms_id, req_imms, pds_patient)
+        self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
+
+    def test_none_existing_imms(self):
+        """it should create a new record, if it doesn't exist"""
+        imms_id = "an-id"
+        imms = _create_an_immunization_dict(imms_id, valid_nhs_number)
+
+        self.imms_repo.update_immunization.side_effect = ResourceNotFoundError("Immunization", imms_id)
+        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "a-patient-id"}
+
+        # When
+        outcome = self.fhir_service.update_immunization(imms_id, imms)
+
+        # Then
+        self.assertEqual(outcome, UpdateOutcome.CREATE)
+        self.imms_repo.create_immunization.assert_called_once()
+
+    def test_pre_validation_failed(self):
+        """it should throw exception if Immunization is not valid"""
+        imms_id = "an-id"
+        imms = _create_an_immunization_dict(imms_id)
+        imms["patient"] = {"identifier": {"value": valid_nhs_number}}
+
+        self.imms_repo.update_immunization.return_value = {}
+
+        validation_error = ValidationError([ErrorWrapper(TypeError('bad type'), '/type'), ], Immunization)
+        self.validator.validate.side_effect = validation_error
+        expected_msg = str(validation_error)
+
+        with self.assertRaises(CoarseValidationError) as error:
+            # When
+            self.fhir_service.update_immunization("an-id", imms)
+
+        # Then
+        self.assertEqual(error.exception.message, expected_msg)
+        self.imms_repo.update_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+    def test_id_not_present(self):
+        """it should populate id in the message if it is not present"""
+        req_imms_id = "an-id"
+        self.imms_repo.update_immunization.return_value = None
+        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
+
+        req_imms = _create_an_immunization_dict("we-will-remove-this-id")
+        del req_imms['id']
+
+        # When
+        self.fhir_service.update_immunization(req_imms_id, req_imms)
+
+        # Then
+        passed_imms = self.imms_repo.update_immunization.call_args.args[1]
+        self.assertEqual(passed_imms["id"], req_imms_id)
+
+    def test_consistent_imms_id(self):
+        """Immunization[id] should be the same as request"""
+        req_imms_id = "an-id"
+        self.imms_repo.update_immunization.return_value = None
+        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
+
+        obj_imms_id = "a-diff-id"
+        req_imms = _create_an_immunization_dict(obj_imms_id)
+
+        with self.assertRaises(InconsistentIdError) as error:
+            # When
+            self.fhir_service.update_immunization(req_imms_id, req_imms)
+
+        # Then
+        self.assertEqual(req_imms_id, error.exception.imms_id)
+        self.imms_repo.update_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+    def test_patient_error(self):
+        """it should throw error when PDS can't resolve patient"""
+        self.fhir_service.pds_service.get_patient_details.return_value = None
+        imms_id = "an-id"
+        invalid_nhs_number = "a-bad-patient-id"
+        bad_patient_imms = _create_an_immunization_dict(imms_id, invalid_nhs_number)
+
+        with self.assertRaises(InvalidPatientId) as e:
+            # When
+            self.fhir_service.update_immunization(imms_id, bad_patient_imms)
+
+        # Then
+        self.assertEqual(e.exception.nhs_number, invalid_nhs_number)
+        self.imms_repo.update_immunization.assert_not_called()
 
 
 class TestDeleteImmunization(unittest.TestCase):

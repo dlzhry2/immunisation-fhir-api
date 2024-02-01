@@ -2,8 +2,6 @@ import uuid
 from dataclasses import dataclass
 from enum import Enum
 
-from fhir.resources.R4B.operationoutcome import OperationOutcome
-
 
 class Severity(str, Enum):
     error = "error"
@@ -22,7 +20,7 @@ class ResourceNotFoundError(RuntimeError):
     resource_type: str
     resource_id: str
 
-    def to_operation_outcome(self) -> OperationOutcome:
+    def to_operation_outcome(self) -> dict:
         msg = f"{self.resource_type} resource does not exit. ID: {self.resource_id}"
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.not_found, diagnostics=msg)
@@ -34,14 +32,14 @@ class UnhandledResponseError(RuntimeError):
     response: dict
     message: str
 
-    def to_operation_outcome(self) -> OperationOutcome:
+    def to_operation_outcome(self) -> dict:
         msg = f"{self.message}\n{self.response}"
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
 
 
 class ValidationError(RuntimeError):
-    def to_operation_outcome(self) -> OperationOutcome:
+    def to_operation_outcome(self) -> dict:
         pass
 
 
@@ -50,8 +48,21 @@ class InvalidPatientId(ValidationError):
     """Use this when NHS Number is invalid or doesn't exist"""
     nhs_number: str
 
-    def to_operation_outcome(self) -> OperationOutcome:
+    def to_operation_outcome(self) -> dict:
         msg = f"NHS Number: {self.nhs_number} is invalid or it doesn't exist."
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
+
+
+@dataclass
+class InconsistentIdError(ValidationError):
+    """Use this when the specified id in the message is inconsistent with the path
+    see: http://hl7.org/fhir/R4/http.html#update"""
+
+    imms_id: str
+
+    def to_operation_outcome(self) -> dict:
+        msg = f"The provided id:{self.imms_id} doesn't match with the content of the message"
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
 
@@ -61,20 +72,16 @@ class CoarseValidationError(ValidationError):
     """Pre validation error"""
     message: str
 
-    def to_operation_outcome(self) -> OperationOutcome:
+    def to_operation_outcome(self) -> dict:
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
 
 
-def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> OperationOutcome:
-    model = {
+def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> dict:
+    """Create an OperationOutcome object. Do not use `fhir.resource` library since it adds unnecessary validations"""
+    return {
         "resourceType": "OperationOutcome",
         "id": resource_id,
-        "meta": {
-            "profile": [
-                "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-            ]
-        },
         "issue": [
             {
                 "severity": severity,
@@ -83,4 +90,3 @@ def create_operation_outcome(resource_id: str, severity: Severity, code: Code, d
             }
         ]
     }
-    return OperationOutcome.parse_obj(model)
