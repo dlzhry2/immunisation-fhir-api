@@ -278,7 +278,17 @@
         "reference": "Practitioner/1",
         "type": "Practitioner",
         "identifier": {
-          "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+          "system": "https://fhir.nhs.uk/Id/some-system",
+          "value": "B0C4P"
+        }
+      }
+    },
+    {
+      "actor": {
+        "reference": "Organization/1",
+        "type": "Organization",
+        "identifier": {
+          "system": "https://fhir.nhs.uk/Id/some-system",
           "value": "B0C4P"
         }
       }

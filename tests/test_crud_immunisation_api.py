@@ -1,4 +1,6 @@
 import copy
+import json
+import os
 import pprint
 import uuid
 
@@ -276,68 +278,56 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
     # Act
-    imms = create_an_imms_obj(nhs_number=valid_nhs_number_with_s_flag)
-    created_imms = imms_api.create_immunization(imms)
-    if created_imms.status_code != 201:
-        pprint.pprint(created_imms.text)
+    # TODO: Replace this with the usual specification example when it is updated.
+    current_directory = os.path.dirname(os.path.realpath(__file__))
+    with open(f"{current_directory}/../lambda_code/tests/sample_data/sample_immunization_event.json") as f:
+        imms_to_create = json.load(f)
+    imms_to_create["id"] = str(uuid.uuid4())
+    imms_to_create["patient"]["identifier"]["value"] = valid_nhs_number_with_s_flag
+
+    created_imms_result = imms_api.create_immunization(imms_to_create)
+    if created_imms_result.status_code != 201:
+        pprint.pprint(created_imms_result.text)
         raise AssertionError
-    created_imms_json = created_imms.json()
+    created_imms = created_imms_result.json()
 
-    retrieved_imms = imms_api.get_immunization_by_id(created_imms_json["id"])
-    if retrieved_imms.status_code != 200:
-        pprint.pprint(retrieved_imms.text)
-        assert retrieved_imms.status_code == 201
-    retrieved_imms_json = retrieved_imms.json()
+    retrieved_imms_result = imms_api.get_immunization_by_id(created_imms["id"])
+    if retrieved_imms_result.status_code != 200:
+        pprint.pprint(retrieved_imms_result.text)
+        assert retrieved_imms_result.status_code == 201
+    retrieved_imms = retrieved_imms_result.json()
 
-    imms_api.delete_immunization(created_imms_json["id"])
+    imms_api.delete_immunization(created_imms["id"])
 
     # Assert
-    def get_questionnaire_item_ids(imms):
+    def get_questionnaire_items(imms):
         questionnaire = next(contained for contained in imms["contained"]
                              if contained["questionnaire"] == "Questionnaire/1")
-        return [item["linkId"] for item in questionnaire["item"]]
+        return [item for item in questionnaire["item"]]
 
-    for key in ["SiteCode", "SiteName"]:
-        assert key in get_questionnaire_item_ids(created_imms_json)
-    for key in ["SiteCode", "SiteName"]:
-        assert key not in get_questionnaire_item_ids(retrieved_imms_json)
+    created_items = get_questionnaire_items(created_imms)
+    retrieved_items = get_questionnaire_items(retrieved_imms)
+    for key in ["SiteCode", "SiteName", "Consent"]:
+        assert key in [item["linkId"] for item in created_items]
+    for key in ["SiteName", "Consent"]:
+        assert key not in [item["linkId"] for item in retrieved_items]
 
+    assert "N2N9I" != next(item for item in created_items
+                           if item["linkId" == "SiteCode"])["answer"][0]["valueCoding"]["code"]
+    assert "N2N9I" == next(item for item in created_items
+                           if item["linkId" == "SiteCode"])["answer"][0]["valueCoding"]["code"]
 
-@pytest.mark.nhsd_apim_authorization(
-    {
-        "access": "healthcare_worker",
-        "level": "aal3",
-        "login_form": {"username": "656005750104"},
-    }
-)
-def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
-    # Arrange
-    token = nhsd_apim_auth_headers["Authorization"]
-    imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
+    assert hasattr(created_imms, "reportOrigin")
+    assert not hasattr(retrieved_imms, "reportOrigin")
 
-    # Act
-    imms = create_an_imms_obj(nhs_number=valid_nhs_number_with_s_flag)
-    created_imms = imms_api.create_immunization(imms)
-    if created_imms.status_code != 201:
-        pprint.pprint(created_imms.text)
-        raise AssertionError
-    created_imms_json = created_imms.json()
+    assert hasattr(created_imms, "location")
+    assert not hasattr(retrieved_imms, "location")
 
-    retrieved_imms = imms_api.get_immunization_by_id(created_imms_json["id"])
-    if retrieved_imms.status_code != 200:
-        pprint.pprint(retrieved_imms.text)
-        assert retrieved_imms.status_code == 201
-    retrieved_imms_json = retrieved_imms.json()
+    assert all(performer["actor"]["identifier"]["value"] != "N2N9I" for performer in created_imms["performer"])
+    assert all(performer["actor"]["identifier"]["value"] == "N2N9I" for performer in retrieved_imms["performer"])
 
-    imms_api.delete_immunization(created_imms_json["id"])
+    assert all(performer["actor"]["identifier"]["system"] != "https://fhir.nhs.uk/Id/ods-organization-code"
+               for performer in created_imms["performer"])
+    assert all(performer["actor"]["identifier"]["system"] == "https://fhir.nhs.uk/Id/ods-organization-code"
+               for performer in retrieved_imms["performer"])
 
-    # Assert
-    def get_questionnaire_item_ids(imms):
-        questionnaire = next(contained for contained in imms["contained"]
-                             if contained["questionnaire"] == "Questionnaire/1")
-        return [item["linkId"] for item in questionnaire["item"]]
-
-    for key in ["SiteCode", "SiteName"]:
-        assert key in get_questionnaire_item_ids(created_imms_json)
-    for key in ["SiteCode", "SiteName"]:
-        assert key not in get_questionnaire_item_ids(retrieved_imms_json)

@@ -7,6 +7,17 @@
       "status": "completed",
       "item": [
         {
+          "linkId": "SiteCode",
+          "answer": [
+            {
+              "valueCoding": {
+                "system": "snomed",
+                "code": "N2N9I"
+              }
+            }
+          ]
+        },
+        {
           "linkId": "NhsNumberStatus",
           "answer": [
             {
@@ -24,17 +35,6 @@
               "valueCoding": {
                 "system": "https://supplierABC/identifiers/patient",
                 "code": "ACME-patient123456"
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "Consent",
-          "answer": [
-            {
-              "valueCoding": {
-                "code": "snomed",
-                "display": "free text"
               }
             }
           ]
@@ -175,12 +175,6 @@
   },
   "occurrenceDateTime": "2020-12-14T10:08:15+00:00",
   "primarySource": true,
-  "location": {
-    "identifier": {
-      "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-      "value": "B0C4P"
-    }
-  },
   "site": {
     "coding": [
       {
@@ -226,9 +220,6 @@
       "doseNumberPositiveInt": 5
     }
   ],
-  "reportOrigin": {
-    "text": "sample"
-  },
   "reasonCode": [
     {
       "coding": [
@@ -258,7 +249,17 @@
         "type": "Practitioner",
         "identifier": {
           "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-          "value": "B0C4P"
+          "value": "N2N9I"
+        }
+      }
+    },
+    {
+      "actor": {
+        "reference": "Organization/1",
+        "type": "Organization",
+        "identifier": {
+          "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+          "value": "N2N9I"
         }
       }
     }

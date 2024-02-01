@@ -34,6 +34,17 @@ class TestRemovePersonalInfo(unittest.TestCase):
                         ]
                     },
                     {
+                        "linkId": "Consent",
+                        "answer": [
+                            {
+                                "valueCoding": {
+                                    "code": "snomed",
+                                    "display": "free text"
+                                }
+                            }
+                        ]
+                    },
+                    {
                         "linkId": "Example",
                         "answer": [
                             {
@@ -46,7 +57,38 @@ class TestRemovePersonalInfo(unittest.TestCase):
                     }
                 ]
             }
-        ]
+        ],
+        "performer": [
+            {
+                "actor": {
+                    "reference": "Practitioner/1",
+                    "type": "Practitioner",
+                    "identifier": {
+                        "system": "https://fhir.nhs.uk/Id/some-system",
+                        "value": "B0C4P"
+                    }
+                }
+            },
+            {
+                "actor": {
+                    "reference": "Organization/1",
+                    "type": "Organization",
+                    "identifier": {
+                        "system": "https://fhir.nhs.uk/Id/some-system",
+                        "value": "B0C4P"
+                    }
+                }
+            }
+        ],
+        "reportOrigin": {
+            "text": "sample"
+        },
+        "location": {
+            "identifier": {
+                "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                "value": "B0C4P"
+            }
+        }
     }
 
     def test_remove_personal_info(self):
@@ -58,6 +100,17 @@ class TestRemovePersonalInfo(unittest.TestCase):
                     "questionnaire": "Questionnaire/1",
                     "status": "completed",
                     "item": [
+                        {
+                            "linkId": "SiteCode",
+                            "answer": [
+                                {
+                                    "valueCoding": {
+                                        "system": "snomed",
+                                        "code": "N2N9I"
+                                    }
+                                }
+                            ]
+                        },
                         {
                             "linkId": "Example",
                             "answer": [
@@ -71,7 +124,29 @@ class TestRemovePersonalInfo(unittest.TestCase):
                         }
                     ]
                 }
-            ]
+            ],
+            "performer": [
+                {
+                    "actor": {
+                        "reference": "Practitioner/1",
+                        "type": "Practitioner",
+                        "identifier": {
+                            "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                            "value": "N2N9I"
+                        }
+                    }
+                },
+                {
+                    "actor": {
+                        "reference": "Organization/1",
+                        "type": "Organization",
+                        "identifier": {
+                            "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                            "value": "N2N9I"
+                        }
+                    }
+                }
+            ],
         }
 
         patient = {"meta": {"security": [{"display": "restricted"}]}}
