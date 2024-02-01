@@ -91,7 +91,7 @@ class TestGetImmunization(unittest.TestCase):
         with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json", 'r') as filtered_immunization_data_file:
             filtered_immunization = json.load(filtered_immunization_data_file)
         self.imms_repo.get_immunization_by_id.return_value = immunization_data
-        patient_data = {"meta": {"security": [{"display": "restricted"}]}}
+        patient_data = {"meta": {"security": [{"code": "R"}]}}
         self.fhir_service.pds_service.get_patient_details.return_value = patient_data
 
         # When

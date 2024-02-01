@@ -149,7 +149,7 @@ class TestRemovePersonalInfo(unittest.TestCase):
             ],
         }
 
-        patient = {"meta": {"security": [{"display": "restricted"}]}}
+        patient = {"meta": {"security": [{"code": "R"}]}}
 
         result = handle_s_flag(self.input_immunization, patient)
         self.assertEqual(result, expected_output)
