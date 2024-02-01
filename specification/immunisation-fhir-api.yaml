@@ -7,75 +7,84 @@ info:
     url: URL
   description: >
     ## Overview
-    
+     
     Use this API to access a patient's immunisation record.
+     
+    You can:
+     
+    * create a patient immunisation event
     
-    ## You can:
-    
-    * search for a patients record immunisation events
+    * search for a patient's immunisation events
     
     * get the details of an immunisation event
     
     * update an immunisation event
     
-    * Identify an immunisation event as being entered in error
+    * identify an immunisation event as entered in error
+     
+    You cannot currently use this API to:
+     
+    * retrieve the immunisation events of multiple patients at once
     
-    ## Recognised uses:
+    * retrieve the immunisation events for vaccinations other than for ('COVID-19'), ('FLU'), ('HPV')
     
-    * Supporting a patient getting a vaccination
+    * update a patients demographic details as returned from the Personal Demographics Service (PDS).
     
-    * Supporting patient managing their immunisation health
+    > To get demographic details from PDS, use the Personal Demographics FHIR API.
+     
+    You can create, read, update and delete the following data:
+     
+    * immunisation event details for ('COVID-19'), ('FLU'), ('HPV')
+     
+    The patient demographic details might differ from those held in the Personal Demographics Service (PDS). To get demographic details from PDS, use the [Personal Demographics FHIR API](https://digital.nhs.uk/developer/api-catalogue/personal-demographics-service-fhir).
+ 
+    ### Data availability, timing and quality
     
-    * Identifying those to be invited to vaccination nationally
-    
-    * Identifying those to be invited to vaccination locally
-    
-    * Supporting the booking of a vaccination appointment
-    
-    * Supporting the payment reconciliation process
-    
-    * Supporting measuring the overall success of a vaccination campaign to help inform the success of future s7a immunisation campaigns
-    
-    
-    ## You cannot currently use this API to:
-    
-    * Retrieve the immunisation events of multiple patients at once
-    
-    * Update a patients demographic details as returned from the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
-    
-    
-    ## You can read and update the following data:
-    
-    * immunisation event details for COVID, FLU, HPV
-    
-    * patient demographic details, as captured at the point of immunisation
-    
-    The patient demographic details might differ from those held in the Personal Demographics Service (PDS). To get demographic details from PDS, use the Personal Demographics FHIR API.
-    Data availability, timing and quality
     All immunisation records are verified to ensure the NHS number is correct before making them available via the API.
-    In most cases this is automatic, and the record is available within 48 hours of the immunisation event, sometimes sooner.
-    Where automated NHS number verification fails, we send the event back to the submitting organisation for manual verification.
-    In a very small number of cases, we are unable to verify the NHS number, and we do not make the immunisation record available at all.
-    The data store is limited to vaccinations from England
-    It has been approved to be used for clinical use cases.
     
+    In most cases this is automatic, and the record is available within 48 hours of the immunisation event, sometimes sooner.
+    
+    Where automated NHS number verification fails, we send the event back to the submitting organisation for manual verification.
+    
+    In a very small number of cases, we are unable to verify the NHS number, and we do not make the immunisation record available at all.
+    
+    The ('COVID-19') data is limited to vaccinations recorded on behalf of NHS England.
+    
+    The ('FLU') data is limited to vaccinations recorded on behalf of NHS England.
+    
+    The ('HPV') data is limited to vaccinations recorded on behalf of NHS England.
+     
     ## Who can use this API
     
     This API can only be used where there is a legal basis to do so. Make sure you have a valid use case before you go too far with your development.
-  
+   
     You must demonstrate you have a valid use case as part of digital onboarding.
-  
+   
     You must do this before you can go live (see 'Onboarding' below).
-  
-    ## Who can access immunisation history records
-    
-    Health and care organisations in England and the Isle of Man can access immunisation history records.
-  
+   
+    ### Who can access immunisation event records
+     
+    Health and care organisations in England can access immunisation history records.
+   
     Legitimate direct care examples include NHS organisations delivering healthcare, local authorities delivering care, third sector and private sector health and care organisations, and developers delivering systems to health and care organisations.
-  
-    Health and care organisations in Scotland, Northern Ireland and the Channel Islands access their own equivalents of this API.
-  
-    Patients who receive health and social care or make use of NHS services in England, Wales and the Isle of Man.
+   
+    Patients who receive health and social care or make use of NHS services in England.
+   
+    Examples of recognised uses for the immunisation event records include:
+     
+    * supporting a patient getting a vaccination
+    
+    * supporting patient managing their immunisation health
+    
+    * identifying those to be invited to vaccination nationally
+    
+    * identifying those to be invited to vaccination locally
+    
+    * supporting the booking of a vaccination appointment
+    
+    * supporting the payment reconciliation process on behalf of NHSE/BSA
+    
+    * supporting measuring the overall success of a vaccination campaign to help inform the success of future s7a immunisation campaigns on behalf of NHSE/UKHSA
   
     ## API status and roadmap
     
@@ -84,76 +93,91 @@ info:
     To see our roadmap, or to suggest, comment or vote on features for this API, see our [interactive product backlog](https://nhs-digital-api-management.featureupvote.com/?tag=immunisation).
     
     If you have any other queries, [contact us](https://digital.nhs.uk/developer/help-and-support).
-    
+     
     ## Service level
     
     This API is a gold service, meaning it is operational and supported 24 x 7 x 365.
-    
+     
     For more details, see [service levels](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#service-levels).
-    
+     
     ## Technology
-    
+     
     This API is [RESTful](https://digital.nhs.uk/developer/guides-and-documentation/our-api-technologies#basic-rest).
-    
+     
     It conforms to the [FHIR](https://digital.nhs.uk/developer/guides-and-documentation/our-api-technologies#fhir) global standard for health care data exchange, specifically to [FHIR R4 (v4.0.1)](https://hl7.org/fhir/r4/), except that it does not support the [capabilities](http://hl7.org/fhir/R4/http.html#capabilities) interaction.
-    
+     
     It includes some country-specific FHIR extensions, which conform to [FHIR UK Core](https://digital.nhs.uk/services/fhir-uk-core), specifically [fhir.r4.ukcore.stu1 0.5.1](https://simplifier.net/packages/fhir.r4.ukcore.stu1/0.5.1).
-    
+     
     You do not need to know much about FHIR to use this API - FHIR APIs are just RESTful APIs that follow specific rules.
     In particular:
+    
     * resource names are capitalised and singular, and use US spellings, for example `/Immunization` not `/immunisations`
     
     * array names are singular, for example `entry` not `entries` for address lines
     
     * data items that are country-specific and thus not included in the FHIR global base resources are usually wrapped in an `extension` object
-    
-    
+     
     There are [libraries and SDKs available](https://digital.nhs.uk/developer/guides-and-documentation/api-technologies-at-nhs-digital#fhir-libraries-and-sdks) to help with FHIR API integration.
-    
+     
     ## Network access
     
     This API is available on the internet and, indirectly, on the [Health and Social Care Network (HSCN)](https://digital.nhs.uk/services/health-and-social-care-network).
-    
+     
     For more details see [Network access for APIs](https://digital.nhs.uk/developer/guides-and-documentation/network-access-for-apis).
-    
+     
     ## Security and authorisation
-    
+     
     This API has two access modes:
-    
     * application-restricted access
     
-    * user-restricted access
-    
+    * user-restricted access search only access 
+     
     ### Application-restricted access
-    
+     
     This access mode is [application-restricted](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation#application-restricted-apis), meaning we authenticate the calling application but not the end user.
-    
+     
     To use this access mode, use the following security pattern:
-    
     * [Application-restricted RESTful API - signed JWT authentication](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/application-restricted-restful-apis-signed-jwt-authentication)
-    
+ 
+    Access may be restricted to certain functionallity based on your user need
+     
     ### User-restricted access
-    
+     
     Use this [user-restricted access mode](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation#user-restricted-apis) if the end user is a patient:
     * the end user must have their identity verified to 'high' (P9) level
     
     * the NHS number in the request must match the NHS number in the NHS login account
     
+    * the functionallity will be restricted to only allow the end user to search for thier own record
+     
     To use this access mode, use the following security pattern:
-    
     * [User-restricted RESTful APIs - NHS login separate authentication and authorisation](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/user-restricted-restful-apis-nhs-login-separate-authentication-and-authorisation)
+ 
+    ## Environments and Testing
     
+    | Environment       | Base URL                                                              |
+    | ----------------- | --------------------------------------------------------------------- |
+    |  Sandbox          | 'https://sandbox.api.service.nhs.uk/immunisation-fhir-api'            |
+    |  Integration      | 'https://int.api.service.nhs.uk/immunisation-fhir-api'                |          
+    |  Production       | 'https://api.service.nhs.uk/immunisation-fhir-api'                    |
+ 
+   ## Onboarding
+    
+   You need to get your software approved by us before it can go live with this API.
+   We call this onboarding.
+   The onboarding process can sometimes be quite long, so it is worth planning well ahead.
+ 
+   As part of this process, you need to demonstrate that you can manage risks and that your software conforms technically with the requirements for this API.
+   Information on this page might impact the design of your software.
+   For details, see [Onboarding support information](https://digital.nhs.uk/developer/api-catalogue/immunisation-history-fhir/onboarding-support-information).
+ 
+   To understand how our online digital onboarding process works, see [digital onboarding](https://digital.nhs.uk/developer/guides-and-documentation/digital-onboarding#using-the-digital-onboarding-portal).
+
   contact:
     name: Immunization-fhir-api API Support
     url: 'https://digital.nhs.uk/developer/help-and-support'
     email: api.management@nhs.net
-servers:
-  - url: 'https://sandbox.api.service.nhs.uk/immunisation-fhir-api'
-    description: Sandbox environment.
-  - url: 'https://int.api.service.nhs.uk/immunisation-fhir-api'
-    description: Integration test environment.
-  - url: 'https://api.service.nhs.uk/immunisation-fhir-api'
-    description: Production environment.
+    
 paths:
   /Immunization:
     post:
@@ -263,38 +287,38 @@ paths:
           description: Delete Immunization operation successful
         4XX:
           $ref: '#/components/responses/4XX-imms'
-
+ 
 components:
   responses:
     4XX-imms:
       description: >
         Below are examples of potential HTTP status codes and their associated
-        error codes, which could be returned in the event of a fault. 
-
-
+        error codes, which could be returned in the event of a fault.
+ 
+ 
         | HTTP status | Error code                 | Description |
-
+ 
         | ----------- | -------------------------- |
         --------------------------------------------- |
-
+ 
         | 400         | INVALID                    | The provided event ID is
         either missing or not in the expected format. |
-
+ 
         | 400         | BAD_REQUEST                | Search could not be
         processed or failed basic FHIR validation rules  |
-
+ 
         | 401         | UNAUTHORISED               | Authorization is required
         for the interaction that was attempted  |
-
+ 
         | 400         | BAD_REQUEST                | The resource could not be
         parsed or failed basic FHIR validation rules  |
-
+ 
         | 404         | NOT_FOUND                  | The requested resource was
         not found. |
-
+ 
         | 405         | NOT_ALLOWED                | The requested method is not
         allowed  |
-
+ 
         | 422         | UNPROCESSABLE_ENTITY       | The proposed resource
         violated applicable FHIR profiles or server business rules. This should
         be accompanied by an OperationOutcome resource providing additional
@@ -312,7 +336,7 @@ components:
           schema:
             $ref: '#/components/schemas/Immunization'
       required: true
-  
+   
   parameters:
     Id:
       in: path
@@ -321,9 +345,9 @@ components:
       description: >
         A required ID which you can use to identify an Immunization event
         object.
-
-
-        Mirrored back in a response header. 
+ 
+ 
+        Mirrored back in a response header.
       schema:
         type: string
         example: 29dc4e84-7e72-11ee-b962-0242ac120002
@@ -335,10 +359,10 @@ components:
         An optional ID which you can use to track transactions across multiple
         systems. It can take any value, but we recommend avoiding `.`
         characters.
-
-
+ 
+ 
         Mirrored back in a response header.
-      
+       
       schema:
         type: string
         pattern: >-
@@ -352,14 +376,14 @@ components:
         A globally unique identifier (GUID) for the request, which we use to
         de-duplicate repeated requests and to trace the request if you contact
         our helpdesk.
-
-
+ 
+ 
         Must be a universally unique identifier (UUID) (ideally version 4).
-
-
+ 
+ 
         Mirrored back in a response header.
-
-
+ 
+ 
         If you re-send a failed request, use the same value in this header.
       schema:
         type: string
@@ -545,11 +569,11 @@ components:
       properties:
         text:
           $ref: '#/components/schemas/Narrative'
-          description: A human&ndash;readable narrative that contains a summary of the resource and can be used to represent the content of the resource to a human. The narrative need not encode all the structured data, but is required to contain sufficient detail to make it "clinically safe" for a human to just read the narrative. Resource definitions may define what content should be represented in the narrative to ensure clinical safety.
+          description: A human–readable narrative that contains a summary of the resource and can be used to represent the content of the resource to a human. The narrative need not encode all the structured data, but is required to contain sufficient detail to make it "clinically safe" for a human to just read the narrative. Resource definitions may define what content should be represented in the narrative to ensure clinical safety.
         contained:
           type: array
           items:
-            description: These resources do not have an independent existence apart from the resource that contains them &ndash; they cannot be identified independently, and nor can they have their own independent transaction scope.
+            description: These resources do not have an independent existence apart from the resource that contains them – they cannot be identified independently, and nor can they have their own independent transaction scope.
             type: object
             discriminator:
               propertyName: resourceType
@@ -733,7 +757,7 @@ components:
             $ref: '#/components/schemas/Extension'
             description: |-
               May be used to represent additional information that is not part of the basic definition of the resource and that modifies the understanding of the element that contains it and/or the understanding of the containing element's descendants. Usually modifier elements provide negation or qualification. To make the use of extensions safe and manageable, there is a strict set of governance applied to the definition and use of extensions. Though any implementer is allowed to define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension. Applications processing a resource are required to check for modifier extensions.
-              
+               
               Modifier extensions SHALL NOT change the meaning of any elements on Resource or DomainResource (including cannot change the meaning of modifierExtension itself).
     Immunization:
       type: object
@@ -744,11 +768,11 @@ components:
       properties:
         text:
           $ref: '#/components/schemas/Narrative'
-          description: A human&ndash;readable narrative that contains a summary of the resource and can be used to represent the content of the resource to a human. The narrative need not encode all the structured data, but is required to contain sufficient detail to make it "clinically safe" for a human to just read the narrative. Resource definitions may define what content should be represented in the narrative to ensure clinical safety.
+          description: A human–readable narrative that contains a summary of the resource and can be used to represent the content of the resource to a human. The narrative need not encode all the structured data, but is required to contain sufficient detail to make it "clinically safe" for a human to just read the narrative. Resource definitions may define what content should be represented in the narrative to ensure clinical safety.
         contained:
           type: array
           items:
-            description: These resources do not have an independent existence apart from the resource that contains them &ndash; they cannot be identified independently, and nor can they have their own independent transaction scope.
+            description: These resources do not have an independent existence apart from the resource that contains them – they cannot be identified independently, and nor can they have their own independent transaction scope.
             type: object
             discriminator:
               propertyName: resourceType
@@ -932,7 +956,7 @@ components:
             $ref: '#/components/schemas/Extension'
             description: |-
               May be used to represent additional information that is not part of the basic definition of the resource and that modifies the understanding of the element that contains it and/or the understanding of the containing element's descendants. Usually modifier elements provide negation or qualification. To make the use of extensions safe and manageable, there is a strict set of governance applied to the definition and use of extensions. Though any implementer is allowed to define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension. Applications processing a resource are required to check for modifier extensions.
-              
+               
               Modifier extensions SHALL NOT change the meaning of any elements on Resource or DomainResource (including cannot change the meaning of modifierExtension itself).
         identifier:
           type: array
@@ -966,7 +990,7 @@ components:
         recorded:
           type: string
           pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?
-          description: The date the occurrence of the immunization was first captured in the record &ndash; potentially significantly after the occurrence of the event.
+          description: The date the occurrence of the immunization was first captured in the record – potentially significantly after the occurrence of the event.
         primarySource:
           type: boolean
           description: An indication that the content of the record is based on information from the person who administered the vaccine. This reflects the context under which the data was originally recorded.
@@ -1553,11 +1577,11 @@ components:
         type:
           type: string
           pattern: '[^\s]+(\s[^\s]+)*'
-          description: Indicates the purpose of this bundle &ndash; how it is intended to be used.
+          description: Indicates the purpose of this bundle – how it is intended to be used.
         timestamp:
           type: string
           pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))
-          description: The date/time that the bundle was assembled &ndash; i.e. when the resources were placed in the bundle.
+          description: The date/time that the bundle was assembled – i.e. when the resources were placed in the bundle.
         total:
           type: integer
           format: int32
@@ -1571,10 +1595,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Bundle_Entry'
-            description: An entry in a bundle resource &ndash; will either contain a resource or information about a resource (transactions and history only).
+            description: An entry in a bundle resource – will either contain a resource or information about a resource (transactions and history only).
         signature:
           $ref: '#/components/schemas/Signature'
-          description: Digital Signature &ndash; base64 encoded. XML&ndash;DSig or a JWT.
+          description: Digital Signature – base64 encoded. XML–DSig or a JWT.
       example:
         resourceType: Bundle
         meta:
@@ -1693,11 +1717,11 @@ components:
       properties:
         text:
           $ref: '#/components/schemas/Narrative'
-          description: A human&ndash;readable narrative that contains a summary of the resource and can be used to represent the content of the resource to a human. The narrative need not encode all the structured data, but is required to contain sufficient detail to make it "clinically safe" for a human to just read the narrative. Resource definitions may define what content should be represented in the narrative to ensure clinical safety.
+          description: A human–readable narrative that contains a summary of the resource and can be used to represent the content of the resource to a human. The narrative need not encode all the structured data, but is required to contain sufficient detail to make it "clinically safe" for a human to just read the narrative. Resource definitions may define what content should be represented in the narrative to ensure clinical safety.
         contained:
           type: array
           items:
-            description: These resources do not have an independent existence apart from the resource that contains them &ndash; they cannot be identified independently, and nor can they have their own independent transaction scope.
+            description: These resources do not have an independent existence apart from the resource that contains them – they cannot be identified independently, and nor can they have their own independent transaction scope.
             type: object
             discriminator:
               propertyName: resourceType
@@ -1881,7 +1905,7 @@ components:
             $ref: '#/components/schemas/Extension'
             description: |-
               May be used to represent additional information that is not part of the basic definition of the resource and that modifies the understanding of the element that contains it and/or the understanding of the containing element's descendants. Usually modifier elements provide negation or qualification. To make the use of extensions safe and manageable, there is a strict set of governance applied to the definition and use of extensions. Though any implementer is allowed to define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension. Applications processing a resource are required to check for modifier extensions.
-              
+               
               Modifier extensions SHALL NOT change the meaning of any elements on Resource or DomainResource (including cannot change the meaning of modifierExtension itself).
         issue:
           type: array
@@ -1946,7 +1970,7 @@ components:
             fullUrl:
               type: string
               pattern: \S*
-              description: "The Absolute URL for the resource.  The fullUrl SHALL NOT disagree with the id in the resource &ndash; i.e. if the fullUrl is not a urn:uuid, the URL shall be version&ndash;independent URL consistent with the Resource.id. The fullUrl is a version independent reference to the resource. The fullUrl element SHALL have a value except that: \n* fullUrl can be empty on a POST (although it does not need to when specifying a temporary id for reference in the bundle)\n* Results from operations might involve resources that are not identified."
+              description: "The Absolute URL for the resource.  The fullUrl SHALL NOT disagree with the id in the resource – i.e. if the fullUrl is not a urn:uuid, the URL shall be version–independent URL consistent with the Resource.id. The fullUrl is a version independent reference to the resource. The fullUrl element SHALL have a value except that: \n* fullUrl can be empty on a POST (although it does not need to when specifying a temporary id for reference in the bundle)\n* Results from operations might involve resources that are not identified."
             resource:
               description: The Resource for the entry. The purpose/meaning of the resource is determined by the Bundle.type.
             resourceType:
@@ -2178,7 +2202,7 @@ components:
             ifNoneExist:
               type: string
               pattern: '[ \r\n\t\S]+'
-              description: Instruct the server not to perform the create if a specified resource already exists. For further information, see the API documentation for ["Conditional Create"](http.html#ccreate). This is just the query portion of the URL &ndash; what follows the "?" (not including the "?").
+              description: Instruct the server not to perform the create if a specified resource already exists. For further information, see the API documentation for ["Conditional Create"](http.html#ccreate). This is just the query portion of the URL – what follows the "?" (not including the "?").
           required:
             - method
             - url
@@ -2190,7 +2214,7 @@ components:
             mode:
               type: string
               pattern: '[^\s]+(\s[^\s]+)*'
-              description: Why this entry is in the result set &ndash; whether it's included as a match or because of an _include requirement, or to convey information or warning information about the search process.
+              description: Why this entry is in the result set – whether it's included as a match or because of an _include requirement, or to convey information or warning information about the search process.
             score:
               type: number
               description: When searching, the server's search ranking score for the entry.
@@ -2202,7 +2226,7 @@ components:
             relation:
               type: string
               pattern: '[ \r\n\t\S]+'
-              description: A name which details the functional use for this link &ndash; see [http://www.iana.org/assignments/link&ndash;relations/link&ndash;relations.xhtml#link&ndash;relations&ndash;1](http://www.iana.org/assignments/link&ndash;relations/link&ndash;relations.xhtml#link&ndash;relations&ndash;1).
+              description: A name which details the functional use for this link – see [http://www.iana.org/assignments/link–relations/link–relations.xhtml#link–relations–1](http://www.iana.org/assignments/link–relations/link–relations.xhtml#link–relations–1).
             url:
               type: string
               pattern: \S*
@@ -2218,7 +2242,7 @@ components:
             series:
               type: string
               pattern: '[ \r\n\t\S]+'
-              description: One possible path to achieve presumed immunity against a disease &ndash; within the context of an authority.
+              description: One possible path to achieve presumed immunity against a disease – within the context of an authority.
             authority:
               $ref: '#/components/schemas/Reference'
               description: Indicates the authority who published the protocol (e.g. ACIP) that is being followed.
@@ -2257,7 +2281,7 @@ components:
               description: Details of the reaction.
             reported:
               type: boolean
-              description: Self&ndash;reported indicator.
+              description: Self–reported indicator.
     Immunization_Education:
       allOf:
         - $ref: '#/components/schemas/BackboneElement'
@@ -2360,7 +2384,7 @@ components:
             $ref: '#/components/schemas/Extension'
             description: |-
               May be used to represent additional information that is not part of the basic definition of the element and that modifies the understanding of the element in which it is contained and/or the understanding of the containing element's descendants. Usually modifier elements provide negation or qualification. To make the use of extensions safe and manageable, there is a strict set of governance applied to the definition and use of extensions. Though any implementer can define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension. Applications processing a resource are required to check for modifier extensions.
-              
+               
               Modifier extensions SHALL NOT change the meaning of any elements on Resource or DomainResource (including cannot change the meaning of modifierExtension itself).
     Address:
       allOf:
@@ -2374,7 +2398,7 @@ components:
             type:
               type: string
               pattern: '[^\s]+(\s[^\s]+)*'
-              description: Distinguishes between physical addresses (those you can visit) and mailing addresses (e.g. PO Boxes and care&ndash;of addresses). Most addresses are both.
+              description: Distinguishes between physical addresses (those you can visit) and mailing addresses (e.g. PO Boxes and care–of addresses). Most addresses are both.
             text:
               type: string
               pattern: '[ \r\n\t\S]+'
@@ -2396,7 +2420,7 @@ components:
             state:
               type: string
               pattern: '[ \r\n\t\S]+'
-              description: Sub&ndash;unit of a country with limited sovereignty in a federally organized country. A code may be used if codes are in common use (e.g. US 2 letter state codes).
+              description: Sub–unit of a country with limited sovereignty in a federally organized country. A code may be used if codes are in common use (e.g. US 2 letter state codes).
             postalCode:
               type: string
               pattern: '[ \r\n\t\S]+'
@@ -2404,7 +2428,7 @@ components:
             country:
               type: string
               pattern: '[ \r\n\t\S]+'
-              description: Country &ndash; a nation as commonly understood or generally accepted.
+              description: Country – a nation as commonly understood or generally accepted.
             period:
               $ref: '#/components/schemas/Period'
               description: Time period when address was/is in use.
@@ -2451,7 +2475,7 @@ components:
             data:
               type: string
               pattern: (\s*([0-9a-zA-Z\+/=]){4}\s*)+
-              description: The actual data of the attachment &ndash; a sequence of bytes, base64 encoded.
+              description: The actual data of the attachment – a sequence of bytes, base64 encoded.
             url:
               type: string
               pattern: \S*
@@ -2463,7 +2487,7 @@ components:
             hash:
               type: string
               pattern: (\s*([0-9a-zA-Z\+/=]){4}\s*)+
-              description: The calculated hash of the data using SHA&ndash;1. Represented using base64.
+              description: The calculated hash of the data using SHA–1. Represented using base64.
             title:
               type: string
               pattern: '[ \r\n\t\S]+'
@@ -2512,18 +2536,18 @@ components:
         version:
           type: string
           pattern: '[ \r\n\t\S]+'
-          description: The version of the code system which was used when choosing this code. Note that a well&ndash;maintained code system does not need the version reported, because the meaning of codes is consistent across versions. However this cannot consistently be assured, and when the meaning is not guaranteed to be consistent, the version SHOULD be exchanged.
+          description: The version of the code system which was used when choosing this code. Note that a well–maintained code system does not need the version reported, because the meaning of codes is consistent across versions. However this cannot consistently be assured, and when the meaning is not guaranteed to be consistent, the version SHOULD be exchanged.
         code:
           type: string
           pattern: '[^\s]+(\s[^\s]+)*'
-          description: A symbol in syntax defined by the system. The symbol may be a predefined code or an expression in a syntax defined by the coding system (e.g. post&ndash;coordination).
+          description: A symbol in syntax defined by the system. The symbol may be a predefined code or an expression in a syntax defined by the coding system (e.g. post–coordination).
         display:
           type: string
           pattern: '[ \r\n\t\S]+'
           description: A representation of the meaning of the code in the system, following the rules of the system.
         userSelected:
           type: boolean
-          description: Indicates that this coding was chosen by a user directly &ndash; e.g. off a pick list of available items (codes or displays).
+          description: Indicates that this coding was chosen by a user directly – e.g. off a pick list of available items (codes or displays).
     ContactPoint:
       allOf:
         - $ref: '#/components/schemas/Element'
@@ -2532,7 +2556,7 @@ components:
             system:
               type: string
               pattern: '[^\s]+(\s[^\s]+)*'
-              description: Telecommunications form for contact point &ndash; what communications system is required to make use of the contact.
+              description: Telecommunications form for contact point – what communications system is required to make use of the contact.
             value:
               type: string
               pattern: '[ \r\n\t\S]+'
@@ -2623,7 +2647,7 @@ components:
         system:
           type: string
           pattern: \S*
-          description: Establishes the namespace for the value &ndash; that is, a URL that describes a set values that are unique.
+          description: Establishes the namespace for the value – that is, a URL that describes a set values that are unique.
         value:
           type: string
           pattern: '[ \r\n\t\S]+'
@@ -2679,11 +2703,11 @@ components:
             comparator:
               type: string
               pattern: '[^\s]+(\s[^\s]+)*'
-              description: How the value should be understood and represented &ndash; whether the actual value is greater or less than the stated value due to measurement issues; e.g. if the comparator is "<" , then the real value is < stated value.
+              description: How the value should be understood and represented – whether the actual value is greater or less than the stated value due to measurement issues; e.g. if the comparator is "<" , then the real value is < stated value.
             unit:
               type: string
               pattern: '[ \r\n\t\S]+'
-              description: A human&ndash;readable form of the unit.
+              description: A human–readable form of the unit.
             system:
               type: string
               pattern: \S*
@@ -2735,7 +2759,7 @@ components:
           pattern: \S*
           description: |-
             The expected type of the target of the reference. If both Reference.type and Reference.reference are populated and Reference.reference is a FHIR URL, both SHALL be consistent.
-            
+             
             The type is the Canonical URL of Resource Definition that is the type this reference refers to. References are URLs that are relative to http://hl7.org/fhir/StructureDefinition/ e.g. "Patient" is a reference to http://hl7.org/fhir/StructureDefinition/Patient. Absolute URLs are only allowed for logical models (and can only be used in references in logical models, not resources).
         identifier:
           $ref: '#/components/schemas/Identifier'
@@ -2767,7 +2791,7 @@ components:
             dimensions:
               type: integer
               format: int32
-              description: The number of sample points at each time point. If this value is greater than one, then the dimensions will be interlaced &ndash; all the sample points for a point in time will be recorded at once.
+              description: The number of sample points at each time point. If this value is greater than one, then the dimensions will be interlaced – all the sample points for a point in time will be recorded at once.
             data:
               type: string
               pattern: '[ \r\n\t\S]+'
@@ -2798,10 +2822,10 @@ components:
               description: When the digital signature was signed.
             who:
               $ref: '#/components/schemas/Reference'
-              description: A reference to an application&ndash;usable description of the identity that signed  (e.g. the signature used their private key).
+              description: A reference to an application–usable description of the identity that signed  (e.g. the signature used their private key).
             onBehalfOf:
               $ref: '#/components/schemas/Reference'
-              description: A reference to an application&ndash;usable description of the identity that is represented by the signature.
+              description: A reference to an application–usable description of the identity that is represented by the signature.
             targetFormat:
               type: string
               pattern: '[^\s]+(\s[^\s]+)*'
@@ -2856,13 +2880,13 @@ components:
             countMax:
               type: integer
               format: int32
-              description: If present, indicates that the count is a range &ndash; so to perform the action between [count] and [countMax] times.
+              description: If present, indicates that the count is a range – so to perform the action between [count] and [countMax] times.
             duration:
               type: number
               description: How long this thing happens for when it happens. If durationMax is present, this element indicates the lower bound of the allowed range of the duration.
             durationMax:
               type: number
-              description: If present, indicates that the duration is a range &ndash; so to perform the action between [duration] and [durationMax] time length.
+              description: If present, indicates that the duration is a range – so to perform the action between [duration] and [durationMax] time length.
             durationUnit:
               type: string
               pattern: '[^\s]+(\s[^\s]+)*'
@@ -2874,13 +2898,13 @@ components:
             frequencyMax:
               type: integer
               format: int32
-              description: If present, indicates that the frequency is a range &ndash; so to repeat between [frequency] and [frequencyMax] times within the period or period range.
+              description: If present, indicates that the frequency is a range – so to repeat between [frequency] and [frequencyMax] times within the period or period range.
             period:
               type: number
               description: Indicates the duration of time over which repetitions are to occur; e.g. to express "3 times per day", 3 would be the frequency and "1 day" would be the period. If periodMax is present, this element indicates the lower bound of the allowed range of the period length.
             periodMax:
               type: number
-              description: If present, indicates that the period is a range from [period] to [periodMax], allowing expressing concepts such as "do this once every 3&ndash;5 days.
+              description: If present, indicates that the period is a range from [period] to [periodMax], allowing expressing concepts such as "do this once every 3–5 days.
             periodUnit:
               type: string
               pattern: '[^\s]+(\s[^\s]+)*'
@@ -2989,7 +3013,7 @@ components:
             lastUpdated:
               type: string
               pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))
-              description: When the resource last changed &ndash; e.g. when the version changed.
+              description: When the resource last changed – e.g. when the version changed.
             source:
               type: string
               pattern: \S*
@@ -2999,7 +3023,7 @@ components:
               items:
                 type: string
                 pattern: \S*
-                description: A list of profiles (references to [StructureDefinition](structuredefinition.html#) resources) that this resource claims to conform to. The URL is a reference to [StructureDefinition.url](structuredefinition&ndash;definitions.html#StructureDefinition.url).
+                description: A list of profiles (references to [StructureDefinition](structuredefinition.html#) resources) that this resource claims to conform to. The URL is a reference to [StructureDefinition.url](structuredefinition–definitions.html#StructureDefinition.url).
             security:
               type: array
               items:
@@ -3018,7 +3042,7 @@ components:
             status:
               type: string
               pattern: '[^\s]+(\s[^\s]+)*'
-              description: The status of the narrative &ndash; whether it's entirely generated (from just the defined data or the extensions too), or whether a human authored it and it may contain additional data.
+              description: The status of the narrative – whether it's entirely generated (from just the defined data or the extensions too), or whether a human authored it and it may contain additional data.
             div:
               type: string
               description: The actual narrative content, a stripped down version of XHTML.
@@ -3040,155 +3064,155 @@ components:
         url:
           type: string
           pattern: \S*
-          description: Source of the definition for the extension code &ndash; a logical name or a URL.
+          description: Source of the definition for the extension code – a logical name or a URL.
         valueBase64Binary:
           type: string
           pattern: (\s*([0-9a-zA-Z\+/=]){4}\s*)+
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueBoolean:
           type: boolean
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueCanonical:
           type: string
           pattern: \S*
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueCode:
           type: string
           pattern: '[^\s]+(\s[^\s]+)*'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueDate:
           type: string
           pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueDateTime:
           type: string
           pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueDecimal:
           type: number
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueId:
           type: string
           pattern: '[A-Za-z0-9\-\.]{1,64}'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueInstant:
           type: string
           pattern: ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueInteger:
           type: integer
           format: int32
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueMarkdown:
           type: string
           pattern: '[ \r\n\t\S]+'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueOid:
           type: string
           pattern: urn:oid:[0-2](\.(0|[1-9][0-9]*))+
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valuePositiveInt:
           type: integer
           format: int32
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueString:
           type: string
           pattern: '[ \r\n\t\S]+'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueTime:
           type: string
           pattern: ([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueUnsignedInt:
           type: integer
           format: int32
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueUri:
           type: string
           pattern: \S*
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueUrl:
           type: string
           pattern: \S*
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueUuid:
           type: string
           pattern: urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueAddress:
           $ref: '#/components/schemas/Address'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueAge:
           $ref: '#/components/schemas/Age'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueAnnotation:
           $ref: '#/components/schemas/Annotation'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueAttachment:
           $ref: '#/components/schemas/Attachment'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueCodeableConcept:
           $ref: '#/components/schemas/CodeableConcept'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueCoding:
           $ref: '#/components/schemas/Coding'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueContactPoint:
           $ref: '#/components/schemas/ContactPoint'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueCount:
           $ref: '#/components/schemas/Count'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueDistance:
           $ref: '#/components/schemas/Distance'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueDuration:
           $ref: '#/components/schemas/Duration'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueHumanName:
           $ref: '#/components/schemas/HumanName'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueIdentifier:
           $ref: '#/components/schemas/Identifier'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueMoney:
           $ref: '#/components/schemas/Money'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valuePeriod:
           $ref: '#/components/schemas/Period'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueQuantity:
           $ref: '#/components/schemas/Quantity'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueRange:
           $ref: '#/components/schemas/Range'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueRatio:
           $ref: '#/components/schemas/Ratio'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueReference:
           $ref: '#/components/schemas/Reference'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueSampledData:
           $ref: '#/components/schemas/SampledData'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueSignature:
           $ref: '#/components/schemas/Signature'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueTiming:
           $ref: '#/components/schemas/Timing'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueContactDetail:
           $ref: '#/components/schemas/ContactDetail'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueRelatedArtifact:
           $ref: '#/components/schemas/RelatedArtifact'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueUsageContext:
           $ref: '#/components/schemas/UsageContext'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
         valueMeta:
           $ref: '#/components/schemas/Meta'
-          description: Value of extension &ndash; must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
+          description: Value of extension – must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list).
       required:
         - url
