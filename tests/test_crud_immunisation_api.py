@@ -218,7 +218,6 @@ def test_update_inconsistent_id_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_he
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_update_deleted_imms_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     """updating deleted record will undo the delete"""
     # This behaviour is consistent. Getting a deleted record will result in a 404. An update of a non-existent record
@@ -303,25 +302,26 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     def get_questionnaire_items(imms):
         questionnaire = next(contained for contained in imms["contained"]
                              if contained["questionnaire"] == "Questionnaire/1")
-        return [item for item in questionnaire["item"]]
+        return questionnaire["item"]
 
     created_items = get_questionnaire_items(created_imms)
     retrieved_items = get_questionnaire_items(retrieved_imms)
+
     for key in ["SiteCode", "SiteName", "Consent"]:
         assert key in [item["linkId"] for item in created_items]
     for key in ["SiteName", "Consent"]:
         assert key not in [item["linkId"] for item in retrieved_items]
 
     assert "N2N9I" != next(item for item in created_items
-                           if item["linkId" == "SiteCode"])["answer"][0]["valueCoding"]["code"]
-    assert "N2N9I" == next(item for item in created_items
-                           if item["linkId" == "SiteCode"])["answer"][0]["valueCoding"]["code"]
+                           if item["linkId"] == "SiteCode")["answer"][0]["valueCoding"]["code"]
+    assert "N2N9I" == next(item for item in retrieved_items
+                           if item["linkId"] == "SiteCode")["answer"][0]["valueCoding"]["code"]
 
-    assert hasattr(created_imms, "reportOrigin")
-    assert not hasattr(retrieved_imms, "reportOrigin")
+    assert "reportOrigin" in created_imms
+    assert "reportOrigin" not in retrieved_imms
 
-    assert hasattr(created_imms, "location")
-    assert not hasattr(retrieved_imms, "location")
+    assert "location" in created_imms
+    assert "location" not in retrieved_imms
 
     assert all(performer["actor"]["identifier"]["value"] != "N2N9I" for performer in created_imms["performer"])
     assert all(performer["actor"]["identifier"]["value"] == "N2N9I" for performer in retrieved_imms["performer"])
