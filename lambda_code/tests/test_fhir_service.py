@@ -63,6 +63,7 @@ class TestGetImmunization(unittest.TestCase):
         """it should find an Immunization by id"""
         imms_id = "an-id"
         self.imms_repo.get_immunization_by_id.return_value = _create_an_immunization(imms_id).dict()
+        self.pds_service.get_patient_details.return_value = {}
 
         # When
         act_imms = self.fhir_service.get_immunization_by_id(imms_id)
@@ -317,6 +318,7 @@ class TestSearchImmunizations(unittest.TestCase):
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [_create_an_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
+        self.pds_service.get_patient_details.return_value = {}
 
         # When
         result = self.fhir_service.search_immunizations("an-id", "a-code")
