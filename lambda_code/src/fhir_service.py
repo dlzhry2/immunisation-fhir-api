@@ -41,7 +41,9 @@ class FhirService:
         if not imms:
             return None
 
-        nhs_number = imms['patient']['identifier']['value']
+        nhs_number = [
+            x for x in imms["contained"] if x.get("resourceType") == "Patient"
+        ][0]["identifier"][0]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
         filtered_immunization = handle_s_flag(imms, patient)
         return Immunization.parse_obj(filtered_immunization)
@@ -94,7 +96,9 @@ class FhirService:
 
         patient = self.pds_service.get_patient_details(nhs_number)
 
-        entries = [Immunization.parse_obj(handle_s_flag(imms, patient)) for imms in resources]
+        entries = [
+            Immunization.parse_obj(handle_s_flag(imms, patient)) for imms in resources
+        ]
         return FhirList.construct(entry=entries)
 
     def _validate_patient(self, imms: dict):
