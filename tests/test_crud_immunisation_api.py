@@ -287,13 +287,13 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
     created_imms_result = imms_api.create_immunization(imms_to_create)
     if created_imms_result.status_code != 201:
         pprint.pprint(created_imms_result.text)
-        raise AssertionError
+        assert created_imms_result.status_code == 201
     created_imms = created_imms_result.json()
 
     retrieved_get_imms_result = imms_api.get_immunization_by_id(created_imms["id"])
     if retrieved_get_imms_result.status_code != 200:
         pprint.pprint(retrieved_get_imms_result.text)
-        assert retrieved_get_imms_result.status_code == 201
+        assert retrieved_get_imms_result.status_code == 200
     retrieved_get_imms = retrieved_get_imms_result.json()
 
     sample_disease_code = 840539006
