@@ -6,7 +6,12 @@ from fhir.resources.R4B.list import List as FhirList
 from pydantic import ValidationError
 
 from fhir_repository import ImmunizationRepository
-from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError, InconsistentIdError
+from models.errors import (
+    InvalidPatientId,
+    CoarseValidationError,
+    ResourceNotFoundError,
+    InconsistentIdError,
+)
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 
@@ -50,9 +55,9 @@ class FhirService:
         return Immunization.parse_obj(imms)
 
     def update_immunization(self, imms_id: str, immunization: dict) -> UpdateOutcome:
-        if immunization.get('id', imms_id) != imms_id:
+        if immunization.get("id", imms_id) != imms_id:
             raise InconsistentIdError(imms_id=imms_id)
-        immunization['id'] = imms_id
+        immunization["id"] = imms_id
 
         try:
             self.pre_validator.validate(immunization)
@@ -88,7 +93,9 @@ class FhirService:
         return FhirList.construct(entry=entries)
 
     def _validate_patient(self, imms: dict):
-        nhs_number = imms['patient']['identifier']['value']
+        nhs_number = [
+            x for x in imms["contained"] if x.get("resourceType") == "Patient"
+        ][0]["identifier"][0]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
         if patient:
             return patient
