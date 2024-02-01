@@ -276,7 +276,7 @@ class TestGetImmunization(unittest.TestCase):
         ) as immunization_data_file:
             immunization_data = json.load(immunization_data_file)
         with open(
-            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event_NEW.json",
+            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json",
             "r",
         ) as filtered_immunization_data_file:
             filtered_immunization = json.load(filtered_immunization_data_file)
