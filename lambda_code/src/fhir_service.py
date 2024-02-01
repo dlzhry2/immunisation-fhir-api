@@ -14,6 +14,7 @@ from models.errors import (
 )
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
+from s_flag_handler import handle_s_flag
 
 
 class UpdateOutcome(Enum):
@@ -36,12 +37,14 @@ class FhirService:
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunization_repo.get_immunization_by_id(imms_id)
-        if imms:
-            # TODO: This shouldn't raise an exception since, we validate the message before storing it,
-            #  but what if the stored message is different from the requested FHIR version?
-            return Immunization.parse_obj(imms)
-        else:
+
+        if not imms:
             return None
+
+        nhs_number = imms['patient']['identifier']['value']
+        patient = self.pds_service.get_patient_details(nhs_number)
+        filtered_immunization = handle_s_flag(imms, patient)
+        return Immunization.parse_obj(filtered_immunization)
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
@@ -89,7 +92,9 @@ class FhirService:
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         resources = self.immunization_repo.find_immunizations(nhs_number, disease_type)
 
-        entries = [Immunization.parse_obj(imms) for imms in resources]
+        patient = self.pds_service.get_patient_details(nhs_number)
+
+        entries = [Immunization.parse_obj(handle_s_flag(imms, patient)) for imms in resources]
         return FhirList.construct(entry=entries)
 
     def _validate_patient(self, imms: dict):
