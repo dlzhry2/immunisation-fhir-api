@@ -8,6 +8,7 @@ import botocore.exceptions
 from boto3.dynamodb.conditions import Attr, Key
 from fhir_repository import ImmunizationRepository
 from models.errors import ResourceNotFoundError, UnhandledResponseError
+from mappings import vaccination_procedure_snomed_codes
 
 
 def _make_immunization_pk(_id):
@@ -255,7 +256,10 @@ class TestUpdateImmunization(unittest.TestCase):
         )
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][0]["identifier"][0]["value"]
-        disease_type = imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"]
+        vaccination_procedure_code = imms["extension"][0]["valueCodeableConcept"][
+            "coding"
+        ][0]["code"]
+        disease_type = vaccination_procedure_snomed_codes[vaccination_procedure_code]
         patient_sk = f"{disease_type}#{imms_id}"
 
         self.table.update_item.assert_called_once_with(
