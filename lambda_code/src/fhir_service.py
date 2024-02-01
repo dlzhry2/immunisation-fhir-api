@@ -12,6 +12,20 @@ from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 
 
+def get_service_url(
+    service_env: str = os.getenv("IMMUNIZATION_ENV"),
+    service_base_path: str = os.getenv("IMMUNIZATION_BASE_PATH"),
+):
+    non_prod = ["internal-dev", "int", "sandbox"]
+    if service_env in non_prod:
+        subdomain = f"{service_env}."
+    if service_env == "prod":
+        subdomain = ""
+    else:
+        subdomain = "internal-dev."
+    return f"https://{subdomain}api.service.nhs.uk/{service_base_path}"
+
+
 class FhirService:
     def __init__(
         self,
@@ -67,20 +81,11 @@ class FhirService:
         entries = [
             BundleEntry(resource=Immunization.parse_obj(imms)) for imms in resources
         ]
-        print("response from service")
-        print(entries)
         fhir_bundle = FhirBundle(
             resourceType="Bundle",
             type="searchset",  # Set the type to "searchset"
             entry=entries,
         )
-        print("bundle before")
-        print(fhir_bundle)
-        aws_domain_name = os.environ["DOMAIN_NAME_URL"]
-        url = f"{aws_domain_name}/Immunization?patient={nhs_number}&diseaseType={disease_type}"
-        print("aws_domain_name")
-        print(url)
+        url = f"{get_service_url()}/Immunization?patient={nhs_number}&diseaseType={disease_type}"
         fhir_bundle.link = [BundleLink(relation="self", url=url)]
-        print("bundle after")
-        print(fhir_bundle)
         return fhir_bundle

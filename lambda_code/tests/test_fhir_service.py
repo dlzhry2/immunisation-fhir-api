@@ -2,10 +2,11 @@ import json
 import unittest
 from unittest.mock import create_autospec
 
+from fhir.resources.R4B.bundle import BundleEntry
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
 from fhir_repository import ImmunizationRepository
-from fhir_service import FhirService
+from fhir_service import FhirService, get_service_url
 from models.errors import InvalidPatientId, CoarseValidationError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
@@ -146,7 +147,9 @@ class TestDeleteImmunization(unittest.TestCase):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
         self.validator = create_autospec(ImmunizationValidator)
-        self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
+        self.fhir_service = FhirService(
+            self.imms_repo, self.pds_service, self.validator
+        )
 
     def test_delete_immunization(self):
         """it should delete Immunization record"""
@@ -168,7 +171,26 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
         self.validator = create_autospec(ImmunizationValidator)
-        self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
+        self.fhir_service = FhirService(
+            self.imms_repo, self.pds_service, self.validator
+        )
+
+    def test_get_service_url(self):
+        """it should create service url"""
+        env = "internal-dev"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://{env}.api.service.nhs.uk/{base_path}")
+        # prod should not have subdomain
+        env = "prod"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://api.service.nhs.uk/{base_path}")
+        # any other env should fall back to internal-dev (like pr-xx or per-user)
+        env = "pr-42"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
 
     def test_map_disease_type_to_disease_code(self):
         """it should map disease_type to disease_code"""
@@ -177,14 +199,15 @@ class TestSearchImmunizations(unittest.TestCase):
         disease_type = "a-disease-code"
         # TODO: here we are assuming disease_type=disease_code this is because the mapping is not in place yet
         disease_code = disease_type
-
-        # When
+         # When
         _ = self.fhir_service.search_immunizations(nhs_number, disease_code)
 
         # Then
-        self.imms_repo.find_immunizations.assert_called_once_with(nhs_number, disease_code)
+        self.imms_repo.find_immunizations.assert_called_once_with(
+            nhs_number, disease_code
+        )
 
-    def test_make_fhir_list_from_search_result(self):
+    def test_make_fhir_bundle_from_search_result(self):
         """it should return a FHIR:List[Immunization] resource"""
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [_create_an_immunization_dict(imms_id) for imms_id in imms_ids]
@@ -192,7 +215,12 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # When
         result = self.fhir_service.search_immunizations("an-id", "a-code")
-
         # Then
         self.assertIsInstance(result, FhirBundle)
-        self.assertListEqual([entry.id for entry in result.entry], imms_ids)
+        self.assertEqual(result.type, "searchset")
+        self.assertEqual(len(result.entry), len(imms_ids))
+        # Assert each entry in the bundle
+        for i, entry in enumerate(result.entry):
+            self.assertIsInstance(entry, BundleEntry)
+            self.assertEqual(entry.resource.resource_type, "Immunization")
+            self.assertEqual(entry.resource.id, imms_ids[i])

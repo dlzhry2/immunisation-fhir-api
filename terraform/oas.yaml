@@ -64,12 +64,12 @@ paths:
         timeoutInMillis: 30000
         type: "AWS_PROXY"
       parameters:
-        - name: NhsNumber
+        - name: -NhsNumber
           in: query
           required: true
           schema:
             type: string
-        - name: diseaseType
+        - name: -diseaseType
           in: query
           schema:
             type: string
@@ -104,6 +104,16 @@ paths:
         httpMethod: "POST"
         timeoutInMillis: 30000
         type: "AWS_PROXY"
+      parameters:
+        - name: -NhsNumber
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: -diseaseType
+          in: query
+          schema:
+            type: string
       responses:
         '201':
           description: An Immunisation search event

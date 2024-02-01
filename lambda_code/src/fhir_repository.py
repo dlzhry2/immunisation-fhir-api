@@ -113,10 +113,7 @@ class ImmunizationRepository:
             KeyConditionExpression=condition,
             FilterExpression=is_not_deleted,
         )
-        print(condition)
         if "Items" in response:
-            print("response from repo")
-            print(response)
             return [json.loads(item["Resource"]) for item in response["Items"]]
         else:
             raise UnhandledResponseError(

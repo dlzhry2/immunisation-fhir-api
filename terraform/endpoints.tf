@@ -25,7 +25,8 @@ locals {
     imms_lambda_env_vars = {
         "DYNAMODB_TABLE_NAME" = local.imms_table_name,
         "PDS_ENV"             = local.environment == "prod" ? "prod" : "int"
-        "DOMAIN_NAME_URL"     = local.domain_name_url
+        "IMMUNIZATION_ENV"       = local.environment,
+        "IMMUNIZATION_BASE_PATH" = strcontains(local.environment, "pr-") ? "immunisation-fhir-api-${local.environment}" : "immunisation-fhir-api"
     }
 }
 data "aws_iam_policy_document" "imms_policy_document" {

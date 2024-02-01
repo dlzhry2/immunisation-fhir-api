@@ -5,6 +5,7 @@ import uuid
 from typing import Optional
 
 import boto3
+import base64
 from botocore.config import Config
 from fhir.resources.R4B.operationoutcome import OperationOutcome
 
@@ -100,44 +101,53 @@ class FhirController:
 
     def search_immunizations(self, aws_event) -> dict:
         http_method = aws_event.get("httpMethod")
-        nhsNumber = None
-        diseaseType = None
+        nhsNumberValue = None
+        diseaseTypeValue = None
+        nhsNumberParam = "-nhsNumber"
+        diseaseTypeParam = "-diseaseType"
 
         if http_method == "POST":
-            # Handle POST request
             # Check if the Content-Type is application/x-www-form-urlencoded
             content_type = aws_event.get("headers", {}).get("Content-Type")
             if content_type == "application/x-www-form-urlencoded":
                 # Parse the body of the request
                 body = aws_event["body"]
-                parsed_body = urllib.parse.parse_qs(body)
-
+                # Decode the base64-encoded body
+                decoded_body = base64.b64decode(body).decode("utf-8")
+                # Parse the decoded body as application/x-www-form-urlencoded
+                parsed_body = urllib.parse.parse_qs(decoded_body)
                 # Access individual form parameters and check if nhsNumber or diseaseType is present
-                nhsNumber = parsed_body.get("nhsNumber", [None])[0]
-                diseaseType = parsed_body.get("diseaseType", [None])[0]
+                nhsNumber_list = parsed_body.get(nhsNumberParam)
+                if nhsNumber_list:
+                    nhsNumberValue = nhsNumber_list[0]
+
+                diseaseType_list = parsed_body.get(diseaseTypeParam)
+                if diseaseType_list:
+                    diseaseTypeValue = diseaseType_list[0]
                 # Continue processing the request
 
         params = aws_event["queryStringParameters"]
         # If nhsNumber was not present in body then it should be in params irresepective of GET/POST
-        if nhsNumber is None and "nhsNumber" not in params:
-            return self._create_bad_request("Query parameter 'nhsNumber' is mandatory")
-        else:
-            nhsNumber = params["nhsNumber"]
+        if nhsNumberValue is None:
+            if params is None or nhsNumberParam not in params:
+                return self._create_bad_request(
+                    f"Search Parameter {nhsNumberParam} is mandatory"
+                )
+            else:
+                nhsNumberValue = params[nhsNumberParam]
 
         # If diseaseType was not present in body then it should be in params irresepective of GET/POST
-        if diseaseType is None and "diseaseType" not in params:
-            return self._create_bad_request(
-                "Query parameter 'diseaseType' is mandatory"
-            )
-        else:
-            diseaseType = params["diseaseType"]
+        if diseaseTypeValue is None:
+            if params is None or diseaseTypeParam not in params:
+                return self._create_bad_request(
+                        f"Search Parameter {diseaseTypeParam} is mandatory"
+                )
+            else:
+                diseaseTypeValue = params[diseaseTypeParam]
 
-        print("diseaseType:", nhsNumber)
-        print("nhsNumber:", diseaseType)
-
-        result = self.fhir_service.search_immunizations(nhsNumber, diseaseType)
-        print("response from controller")
-        print(result)
+        result = self.fhir_service.search_immunizations(
+            nhsNumberValue, diseaseTypeValue
+        )
         return self.create_response(200, result.json())
 
     def _validate_id(self, _id: str) -> Optional[OperationOutcome]:
