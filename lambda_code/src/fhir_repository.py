@@ -4,22 +4,19 @@ import time
 import uuid
 from dataclasses import dataclass
 from typing import Optional
-
 import boto3
 import botocore.exceptions
-from boto3.dynamodb.conditions import Attr, Key
 from botocore.config import Config
-
+from boto3.dynamodb.conditions import Attr, Key
+from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 from models.errors import ResourceNotFoundError, UnhandledResponseError
 
 
 def create_table(table_name=None, endpoint_url=None, region_name="eu-west-2"):
     if not table_name:
         table_name = os.environ["DYNAMODB_TABLE_NAME"]
-    config = Config(connect_timeout=1, read_timeout=1)
-    db = boto3.resource(
-        "dynamodb", endpoint_url=endpoint_url, region_name=region_name, config=config
-    )
+    config = Config(connect_timeout=1, read_timeout=1, retries={'max_attempts': 1})
+    db: DynamoDBServiceResource = boto3.resource("dynamodb", endpoint_url=endpoint_url, region_name=region_name, config=config)
     return db.Table(table_name)
 
 
@@ -54,7 +51,7 @@ class RecordAttributes:
 
 
 class ImmunizationRepository:
-    def __init__(self, table):
+    def __init__(self, table: Table):
         self.table = table
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[dict]:

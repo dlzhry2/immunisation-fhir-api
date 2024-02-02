@@ -1,8 +1,0 @@
-fhir.resources==7.0.2
-boto3==1.28.68
-moto
-requests
-responses
-pydantic
-PyJWT==2.8.0
-jsonpath-ng==1.6.0
