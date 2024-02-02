@@ -213,7 +213,6 @@ def test_update_inconsistent_id_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_he
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_update_deleted_imms_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     """updating deleted record will undo the delete"""
     # This behaviour is consistent. Getting a deleted record will result in a 404. An update of a non-existent record
