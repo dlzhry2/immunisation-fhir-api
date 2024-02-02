@@ -1,6 +1,7 @@
 import json
 import time
 import unittest
+import uuid
 from unittest.mock import MagicMock, patch, ANY
 
 import botocore.exceptions
@@ -47,6 +48,10 @@ def _make_an_immunization(imms_id="an-id") -> dict:
     return {"id": imms_id,
             "patient": {"identifier": {"system": "a-system", "value": "a-patient-id"}},
             "protocolApplied": [{"targetDisease": [{"coding": [{"code": "a-disease-code"}]}]}]}
+
+
+def _make_a_patient(nhs_number="1234567890") -> dict:
+    return {"id": str(uuid.uuid4()), "identifier": {"system": "a-system", "value": nhs_number}}
 
 
 class TestCreateImmunizationMainIndex(unittest.TestCase):
@@ -156,6 +161,72 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         # Then
         item = self.table.put_item.call_args.kwargs["Item"]
         self.assertTrue(item["PatientSK"].startswith(f"{disease_code}#"))
+
+
+class TestUpdateImmunization(unittest.TestCase):
+    def setUp(self):
+        self.table = MagicMock()
+        self.repository = ImmunizationRepository(table=self.table)
+        self.patient = _make_a_patient("update-patient-id")
+
+    def test_update(self):
+        """it should update record by replacing both Immunization and Patient """
+        imms_id = "an-imms-id"
+        imms = _make_an_immunization(imms_id)
+        imms["patient"] = self.patient
+
+        resource = {"foo": "bar"}  # making sure we return updated imms from dynamodb
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200},
+                           "Attributes": {"Resource": json.dumps(resource)}}
+        self.table.update_item = MagicMock(return_value=dynamo_response)
+
+        now_epoch = 123456
+        with patch("time.time") as mock_time:
+            mock_time.return_value = now_epoch
+            # When
+            act_resource = self.repository.update_immunization(imms_id, imms, self.patient)
+
+        # Then
+        self.assertDictEqual(act_resource, resource)
+
+        update_exp = ("SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
+                      "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient")
+        patient_id = self.patient["identifier"]["value"]
+        disease_type = imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"]
+        patient_sk = f"{disease_type}#{imms_id}"
+
+        self.table.update_item.assert_called_once_with(
+            Key={"PK": _make_immunization_pk(imms_id)},
+            UpdateExpression=update_exp,
+            ExpressionAttributeNames={
+                '#imms_resource': "Resource",
+            },
+            ExpressionAttributeValues={
+                ':timestamp': now_epoch,
+                ':patient_pk': _make_patient_pk(patient_id),
+                ':patient_sk': patient_sk,
+                ':imms_resource_val': json.dumps(imms),
+                ':patient': self.patient,
+            },
+            ReturnValues=ANY, ConditionExpression=ANY
+        )
+
+    def test_update_throws_error_when_response_can_not_be_handled(self):
+        """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+        imms_id = "an-id"
+        imms = _make_an_immunization(imms_id)
+        imms["patient"] = self.patient
+
+        bad_request = 400
+        response = {"ResponseMetadata": {"HTTPStatusCode": bad_request}}
+        self.table.update_item = MagicMock(return_value=response)
+
+        with self.assertRaises(UnhandledResponseError) as e:
+            # When
+            self.repository.update_immunization(imms_id, imms, self.patient)
+
+        # Then
+        self.assertDictEqual(e.exception.response, response)
 
 
 class TestDeleteImmunization(unittest.TestCase):

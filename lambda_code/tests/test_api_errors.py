@@ -11,7 +11,7 @@ class TestApiErrors(unittest.TestCase):
         diag = "a-diagnostic"
         error_id = "a-id"
 
-        error = create_operation_outcome(resource_id=error_id, severity=severity, code=code, diagnostics=diag).dict()
+        error = create_operation_outcome(resource_id=error_id, severity=severity, code=code, diagnostics=diag)
 
         issue = error["issue"][0]
         self.assertEqual(error["id"], error_id)
