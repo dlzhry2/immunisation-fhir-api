@@ -56,6 +56,7 @@ class FhirController:
 
     def create_immunization(self, aws_event):
         try:
+            #imms = json.loads(aws_event["body"], parse_float=Decimal)
             imms = json.loads(aws_event["body"])
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(f"Request's body contains malformed JSON: {e}")

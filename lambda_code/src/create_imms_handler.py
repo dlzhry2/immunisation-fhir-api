@@ -3,7 +3,7 @@ import pprint
 import uuid
 
 from fhir_controller import FhirController, make_controller
-from local_lambda import load_json
+from local_lambda import load_string
 from models.errors import Severity, Code, create_operation_outcome
 
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser.add_argument("path", help="Path to Immunization JSON file.", type=str)
     args = parser.parse_args()
 
-    event = {"body": load_json(args.path)}
+    event = {"body": load_string(args.path)}
 
     pprint.pprint(event)
     pprint.pprint(create_imms_handler(event, {}))

@@ -39,8 +39,7 @@ aws dynamodb create-table \
                 \"KeySchema\": [{\"AttributeName\":\"PatientPK\",\"KeyType\":\"HASH\"},
                                 {\"AttributeName\":\"PatientSK\",\"KeyType\":\"RANGE\"}],
                 \"Projection\":{
-                    \"ProjectionType\":\"INCLUDE\",
-                    \"NonKeyAttributes\":[\"Resource\"]
+                    \"ProjectionType\":\"ALL\"
                 },
                 \"ProvisionedThroughput\": {
                     \"ReadCapacityUnits\": 10,
@@ -54,10 +53,11 @@ aws dynamodb create-table \
 
 You need the following environment variables set up:
 
+- `AWS_PROFILE=apim-dev`
 - `IMMUNIZATION_ENV=local` 
-- `DYNAMODB_TABLE_NAME=local-imms-events`
+- `DYNAMODB_TABLE_NAME={table name as created above}`
 
-These are in the `.envrc` for `direnv` to use automatically in the terminal or an IDE that supports env files.
+These are in the `.envrc` for `direnv` to use automatically in the terminal or an IDE that supports it.
 
 To run from the terminal: 
 ```shell
@@ -68,7 +68,7 @@ python get_imms_handler.py 123
 If not using `direnv` then:
 ```shell
 cd lambda_code/src
-DYNAMODB_TABLE_NAME=local-imms-events IMMUNIZATION_ENV=local python get_imms_handler.py 123
+AWS_PROFILE=apim-dev DYNAMODB_TABLE_NAME=local-imms-events IMMUNIZATION_ENV=local python get_imms_handler.py 123
 ```
 
 ## Troubleshooting
