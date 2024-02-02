@@ -1,3 +1,5 @@
+import argparse
+import pprint
 import uuid
 
 from fhir_controller import FhirController, make_controller
@@ -16,3 +18,16 @@ def delete_immunization(event, controller: FhirController):
                                              code=Code.server_error,
                                              diagnostics=str(e))
         return FhirController.create_response(500, exp_error)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser("delete_imms_handler")
+    parser.add_argument("id", help="Id of Immunization.", type=str)
+    args = parser.parse_args()
+
+    event = {
+        "pathParameters": {
+            "id": args.id
+        }
+    }
+    pprint.pprint(delete_imms_handler(event, {}))

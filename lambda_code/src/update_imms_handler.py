@@ -1,6 +1,9 @@
+import argparse
+import pprint
 import uuid
 
 from fhir_controller import FhirController, make_controller
+from local_lambda import load_json
 from models.errors import Severity, Code, create_operation_outcome
 
 
@@ -16,3 +19,14 @@ def update_imms(event, controller: FhirController):
                                              code=Code.server_error,
                                              diagnostics=str(e))
         return FhirController.create_response(500, exp_error)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser("update_imms_handler")
+    parser.add_argument("path", help="Path to Immunization JSON file.", type=str)
+    args = parser.parse_args()
+
+    event = {"body": load_json(args.path)}
+
+    pprint.pprint(event)
+    pprint.pprint(update_imms_handler(event, {}))

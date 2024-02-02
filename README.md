@@ -56,7 +56,7 @@ The tests are in a separate module so in order for them to see each other we nee
 - In Project Structure add an existing virtualenv SDK for `.direnv/python-x.x.x/bin/python`.
 - Set the project SDK and the default root module SDK to the one created above.
   - Add `src` and `tests` as sources.
-  - Add `.direnv` and `terraform` as exclusions if they're not already.
+  - Add `.direnv`, `terraform/.terraform`, and `terraform/build` as exclusions if they're not already.
 - Add another existing virtualenv SDK for `lambda_code/.direnv/python-x.x.x/bin/python`.
 - Import a module pointed at the `lambda_code` directory, set the SDK created above.
   - Add the `src` and `tests` directories as sources.
@@ -71,3 +71,9 @@ The project must be opened as a multi-root workspace for VS Code to know that `l
 - Copy `lambda_code/.vscode/settings.json.default` to `lambda_code/.vscode/settings.json`, or merge the contents with your existing file.
 - Run the `Python: Configure Tests` command. Select the `lambda_code` workspace, then `unittest`, then `.`.
 
+
+### AWS
+
+TODO AWS CLI set up.
+
+`aws-mfa-update 347250048819 {your user name} {mfa code}`

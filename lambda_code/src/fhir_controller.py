@@ -15,8 +15,12 @@ from models.errors import Severity, Code, create_operation_outcome, ResourceNotF
 from pds_service import PdsService, Authenticator
 
 
-def make_controller(pds_env: str = os.getenv("PDS_ENV", "int")):
-    imms_repo = ImmunizationRepository(create_table())
+def make_controller(
+    pds_env: str = os.getenv("PDS_ENV", "int"),
+    immunization_env: str = os.getenv("IMMUNIZATION_ENV")
+):
+    endpoint_url = "http://localhost:8000" if immunization_env == "local" else None
+    imms_repo = ImmunizationRepository(create_table(endpoint_url=endpoint_url))
     boto_config = Config(region_name='eu-west-2')
     cache = Cache(directory="/tmp")
     authenticator = Authenticator(boto3.client('secretsmanager', config=boto_config), pds_env, cache)

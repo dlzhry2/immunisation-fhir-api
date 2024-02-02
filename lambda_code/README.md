@@ -5,6 +5,72 @@
 `poetry install`
 
 
+## Run locally
+
+### Start local DynamoDB
+
+```shell
+cd devtools
+docker compose -f dynamo-compose.yml up -d dynamodb-local
+```
+
+### Create table
+
+Table name here is `local-imms-events` but it can be anything.
+
+```shell
+aws dynamodb create-table \
+    --endpoint-url http://localhost:8000 \
+    --table-name local-imms-events \
+    --attribute-definitions \
+        AttributeName=PK,AttributeType=S \
+        AttributeName=PatientPK,AttributeType=S \
+        AttributeName=PatientSK,AttributeType=S \
+    --key-schema \
+        AttributeName=PK,KeyType=HASH \
+    --provisioned-throughput \
+        ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --table-class STANDARD \
+    --billing-mode PAY_PER_REQUEST \
+    --global-secondary-indexes \
+        "[
+            {
+                \"IndexName\": \"PatientGSI\",
+                \"KeySchema\": [{\"AttributeName\":\"PatientPK\",\"KeyType\":\"HASH\"},
+                                {\"AttributeName\":\"PatientSK\",\"KeyType\":\"RANGE\"}],
+                \"Projection\":{
+                    \"ProjectionType\":\"INCLUDE\",
+                    \"NonKeyAttributes\":[\"Resource\"]
+                },
+                \"ProvisionedThroughput\": {
+                    \"ReadCapacityUnits\": 10,
+                    \"WriteCapacityUnits\": 5
+                }
+            }
+        ]"
+```
+
+### Run endpoint
+
+You need the following environment variables set up:
+
+- `IMMUNIZATION_ENV=local` 
+- `DYNAMODB_TABLE_NAME=local-imms-events`
+
+These are in the `.envrc` for `direnv` to use automatically in the terminal or an IDE that supports env files.
+
+To run from the terminal: 
+```shell
+cd lambda_code/src
+python get_imms_handler.py 123
+```
+
+If not using `direnv` then:
+```shell
+cd lambda_code/src
+DYNAMODB_TABLE_NAME=local-imms-events IMMUNIZATION_ENV=local python get_imms_handler.py 123
+```
+
 ## Troubleshooting
 
 ### Tests fail with `No products grant access to proxy [...]`
