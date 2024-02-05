@@ -125,7 +125,7 @@ info:
       url: 'https://digital.nhs.uk/developer/help-and-support'
       email: api.management@nhs.net
  
-    ##Errors
+    ## Errors
     We use standard HTTP status codes to show whether an API request succeeded or not. They are usually in the range:
 
     * 200 to 299 if it succeeded, including code 202 if it was accepted by an API that needs to wait for further action
@@ -133,7 +133,7 @@ info:
     * 500 to 599 if it failed because of an error on our server
     Errors specific to each API are shown in the Endpoints section, under Response. See our [reference guide](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#http-status-codes) for more on errors.
     
-    ##Open source
+    ## Open source
 
     You might find the following [open source](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#open-source) resources useful:
 
@@ -151,8 +151,8 @@ info:
     ## Environments and Testing
     | Environment       | Base URL                                                              |
     | ----------------- | --------------------------------------------------------------------- |
-    |  Sandbox          | 'https://sandbox.api.service.nhs.uk/immunisation-fhir-api'            |
-    |  Integration      | 'https://int.api.service.nhs.uk/immunisation-fhir-api'                |          
+    |  Sandbox          | `https://sandbox.api.service.nhs.uk/immunisation-fhir-api`            |
+    |  Integration      | `https://int.api.service.nhs.uk/immunisation-fhir-api`                |          
     |  Production       | `Not yet available`                    |
  
     ## Onboarding
@@ -243,7 +243,7 @@ paths:
               properties: { }
       responses:
         "200":
-          description: Search Immunization operation successful
+          description: Search Immunisation operation successful
           content:
             application/fhir+json:
               schema:
@@ -259,6 +259,7 @@ paths:
       description: |
         ## Overview
         This endpoint allows you to retrieve the record of a single vaccination by its identifier
+        
         ## Sandbox testing
         You can test the following scenarios in our sandbox environment:
 
@@ -283,10 +284,11 @@ paths:
     put:
       tags:
         - Immunization
-      summary: Update an existing record of vaccination
+      summary: Update a record of vaccination
       operationId: updateImmunization
       description: |
         ## Overview
+        This record allows you to add a new updated record of a vaccination. If no exiting record is present then a new record will be recorded.
 
         ## Sandbox testing
         You can test the following scenarios in our sandbox environment:
