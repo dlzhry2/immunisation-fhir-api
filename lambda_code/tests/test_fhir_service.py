@@ -355,3 +355,7 @@ class TestSearchImmunizations(unittest.TestCase):
             self.assertIsInstance(entry, BundleEntry)
             self.assertEqual(entry.resource.resource_type, "Immunization")
             self.assertEqual(entry.resource.id, imms_ids[i])
+        # Assert self link
+        self.assertEqual(len(result.link), 1)  # Assert that there is only one link
+        self.assertEqual(result.link[0].relation, "self")  # Assert relation is "self"
+    
