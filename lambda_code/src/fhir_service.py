@@ -99,8 +99,9 @@ class FhirService:
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         resources = self.immunization_repo.find_immunizations(nhs_number, disease_type)
+        patient = self.pds_service.get_patient_details(nhs_number)
         entries = [
-            BundleEntry(resource=Immunization.parse_obj(imms)) for imms in resources
+            BundleEntry(resource=Immunization.parse_obj(handle_s_flag(imms, patient))) for imms in resources
         ]
         fhir_bundle = FhirBundle(
             resourceType="Bundle",
