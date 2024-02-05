@@ -10,7 +10,7 @@ from .immunisation_api import ImmunisationApi
 
 
 def create_immunization(imms_id, nhs_number, disease_code):
-    imms = copy.deepcopy(load_example("Immunization/POST-Immunization-NEW.json"))
+    imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
     imms["id"] = imms_id
     imms["contained"][1]["identifier"][0]["value"] = nhs_number
     imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = disease_code

@@ -8,87 +8,85 @@ class TestRemovePersonalInfo(unittest.TestCase):
         "resourceType": "Immunization",
         "contained": [
             {
+                "resourceType": "Practitioner",
+                "id": "Pract1",
+                "identifier": [
+                    {
+                        "system": "https://fhir.hl7.org.uk/Id/nmc-number",
+                        "value": "99A9999A",
+                    }
+                ],
+                "name": [{"family": "Nightingale", "given": ["Florence"]}],
+            },
+            {
+                "resourceType": "Patient",
+                "id": "Pat1",
+                "identifier": [
+                    {
+                        "extension": [
+                            {
+                                "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
+                                "valueCodeableConcept": {
+                                    "coding": [
+                                        {
+                                            "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
+                                            "code": "01",
+                                            "display": "Number present and verified",
+                                        }
+                                    ]
+                                },
+                            }
+                        ],
+                        "system": "https://fhir.nhs.uk/Id/nhs-number",
+                        "value": "9000000009",
+                    }
+                ],
+                "name": [{"family": "Taylor", "given": ["Sarah"]}],
+                "gender": "unknown",
+                "birthDate": "1965-02-28",
+                "address": [{"postalCode": "EC1A 1BB"}],
+            },
+            {
                 "resourceType": "QuestionnaireResponse",
                 "questionnaire": "Questionnaire/1",
                 "status": "completed",
                 "item": [
                     {
-                        "linkId": "SiteCode",
-                        "answer": [
-                            {
-                                "valueCoding": {
-                                    "system": "snomed",
-                                    "code": "M242ND"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "linkId": "SiteName",
-                        "answer": [
-                            {
-                                "valueCoding": {
-                                    "code": "dummy"
-                                }
-                            }
-                        ]
-                    },
-                    {
                         "linkId": "Consent",
                         "answer": [
-                            {
-                                "valueCoding": {
-                                    "code": "snomed",
-                                    "display": "free text"
-                                }
-                            }
-                        ]
+                            {"valueCoding": {"code": "snomed", "display": "free text"}}
+                        ],
                     },
                     {
                         "linkId": "Example",
                         "answer": [
-                            {
-                                "valueCoding": {
-                                    "system": "snomed",
-                                    "code": "M242ND"
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
-        ],
-        "performer": [
-            {
-                "actor": {
-                    "reference": "Practitioner/1",
-                    "type": "Practitioner",
-                    "identifier": {
-                        "system": "https://fhir.nhs.uk/Id/some-system",
-                        "value": "B0C4P"
-                    }
-                }
+                            {"valueCoding": {"system": "snomed", "code": "M242ND"}}
+                        ],
+                    },
+                ],
             },
+        ],
+        "patient": {"reference": "#Pat1"},
+        "performer": [
+            {"actor": {"reference": "#Pract1"}},
             {
                 "actor": {
-                    "reference": "Organization/1",
                     "type": "Organization",
                     "identifier": {
-                        "system": "https://fhir.nhs.uk/Id/some-system",
-                        "value": "B0C4P"
-                    }
+                        "system": "https://fhir.nhs.uk/Id/test-organization-code",
+                        "value": "B0C4P",
+                    },
+                    "display": "Acme Healthcare",
                 }
-            }
+            },
         ],
-        "reportOrigin": {
-            "text": "sample"
-        },
+        "reportOrigin": {"text": "sample"},
         "location": {
             "identifier": {
                 "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                "value": "B0C4P"
+                "value": "B0C4P",
             }
-        }
+        },
     }
 
     def test_remove_personal_info(self):
@@ -96,56 +94,59 @@ class TestRemovePersonalInfo(unittest.TestCase):
             "resourceType": "Immunization",
             "contained": [
                 {
+                    "resourceType": "Practitioner",
+                    "id": "Pract1",
+                },
+                {
+                    "resourceType": "Patient",
+                    "id": "Pat1",
+                    "identifier": [
+                        {
+                            "extension": [
+                                {
+                                    "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
+                                                "code": "01",
+                                                "display": "Number present and verified",
+                                            }
+                                        ]
+                                    },
+                                }
+                            ],
+                            "system": "https://fhir.nhs.uk/Id/nhs-number",
+                            "value": "9000000009",
+                        }
+                    ],
+                },
+                {
                     "resourceType": "QuestionnaireResponse",
                     "questionnaire": "Questionnaire/1",
                     "status": "completed",
                     "item": [
                         {
-                            "linkId": "SiteCode",
-                            "answer": [
-                                {
-                                    "valueCoding": {
-                                        "system": "snomed",
-                                        "code": "N2N9I"
-                                    }
-                                }
-                            ]
-                        },
-                        {
                             "linkId": "Example",
                             "answer": [
-                                {
-                                    "valueCoding": {
-                                        "system": "snomed",
-                                        "code": "M242ND"
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ],
-            "performer": [
-                {
-                    "actor": {
-                        "reference": "Practitioner/1",
-                        "type": "Practitioner",
-                        "identifier": {
-                            "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                            "value": "N2N9I"
-                        }
-                    }
+                                {"valueCoding": {"system": "snomed", "code": "M242ND"}}
+                            ],
+                        },
+                    ],
                 },
+            ],
+            "patient": {"reference": "#Pat1"},
+            "performer": [
+                {"actor": {"reference": "#Pract1"}},
                 {
                     "actor": {
-                        "reference": "Organization/1",
                         "type": "Organization",
                         "identifier": {
                             "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                            "value": "N2N9I"
-                        }
+                            "value": "N2N9I",
+                        },
                     }
-                }
+                },
             ],
         }
 

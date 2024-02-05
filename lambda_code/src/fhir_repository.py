@@ -11,6 +11,17 @@ from boto3.dynamodb.conditions import Attr, Key
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 from models.errors import ResourceNotFoundError, UnhandledResponseError
 from mappings import vaccination_procedure_snomed_codes
+from decimal import Decimal
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        # if passed in object is instance of Decimal
+        # convert it to a string
+        if isinstance(o, Decimal):
+            return float(o)
+        # otherwise use the default behavior
+        return json.JSONEncoder.default(self, o)
 
 
 def create_table(table_name=None, endpoint_url=None, region_name="eu-west-2"):
@@ -99,7 +110,7 @@ class ImmunizationRepository:
                 "PK": attr.pk,
                 "PatientPK": attr.patient_pk,
                 "PatientSK": attr.patient_sk,
-                "Resource": json.dumps(attr.resource),
+                "Resource": json.dumps(attr.resource, cls=DecimalEncoder),
                 "Patient": attr.patient,
             }
         )
@@ -132,7 +143,7 @@ class ImmunizationRepository:
                     ":timestamp": attr.timestamp,
                     ":patient_pk": attr.patient_pk,
                     ":patient_sk": attr.patient_sk,
-                    ":imms_resource_val": json.dumps(attr.resource),
+                    ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
                     ":patient": attr.patient,
                 },
                 ReturnValues="ALL_NEW",
