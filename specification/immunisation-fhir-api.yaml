@@ -18,13 +18,13 @@ info:
     ### You cannot use this API to:
      
     - retrieve the immunisation record of multiple patients at once
-    - retrieve the immunisation events for vaccinations other than for ('COVID-19'), ('FLU'), ('HPV')
+    - retrieve the immunisation events for vaccinations other than for coronavirus (`COVID-19`), influenza (`FLU`), human papillomavirus (`HPV`)
     - record a patient's demographic details
     > To get demographic details from the [Personal Demographics Service](https://digital.nhs.uk/services/personal-demographics-service), use the Personal Demographics FHIR API.
      
     You can create, read, update and delete the following data:
      
-    - immunisation event details for ('COVID-19'), ('FLU'), ('HPV')
+    - immunisation event details for `COVID-19`, `FLU`, `HPV`
       
     ### Data availability, timing and quality
  
@@ -32,11 +32,11 @@ info:
  
     If the NHS number is not present on a record then you will not be able to Search for that record and will only be able to retrieve the record by Reading it using its unique ID.
  
-    The ('COVID-19') data is limited to vaccinations recorded on behalf of NHS England.
+    The `COVID-19` data is limited to vaccinations recorded on behalf of NHS England.
  
-    The ('FLU') data is limited to vaccinations recorded on behalf of NHS England.
+    The `FLU` data is limited to vaccinations recorded on behalf of NHS England.
  
-    The ('HPV') data is limited to vaccinations recorded on behalf of NHS England.
+    The `HPV` data is limited to vaccinations recorded on behalf of NHS England.
      
     ## Who can use this API
     This API can only be used where there is a legal basis to do so. Make sure you have a valid use case before you go too far with your development.
@@ -249,7 +249,7 @@ paths:
         | ------------------------------ | ------------------------------------------------------- |
         | Application-restricted access  | Only a single unique match returned                     |
         | Healthcare worker access       | Only a single unique match returned                     |
-        | Patient access                 | It is only possible to return infomation on the patient |
+        | Patient access                 | It is only possible to return information on the patient |
 
         ## Sandbox testing
         You can test the following scenarios in our sandbox environment:
