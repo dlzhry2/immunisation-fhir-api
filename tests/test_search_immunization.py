@@ -75,7 +75,7 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
             "nhs_number": valid_nhs_number2,
             "diseases": [flu_code, mmr_code, covid_code, mmr_code],
             "responses": [],
-        }
+        },
     ]
     stored_records = seed_records(imms_api, records)
 
@@ -103,7 +103,9 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
         "login_form": {"username": "656005750104"},
     }
 )
-def test_search_immunization_ignore_deleted(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+def test_search_immunization_ignore_deleted(
+    nhsd_apim_proxy_url, nhsd_apim_auth_headers
+):
     """it should filter out deleted items"""
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -117,7 +119,7 @@ def test_search_immunization_ignore_deleted(nhsd_apim_proxy_url, nhsd_apim_auth_
             "nhs_number": valid_nhs_number1,
             "diseases": [mmr_code],
             "responses": [],
-        }
+        },
     ]
 
     stored_records = seed_records(imms_api, records)

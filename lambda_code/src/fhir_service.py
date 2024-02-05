@@ -9,6 +9,7 @@ from fhir_repository import ImmunizationRepository
 from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError, InconsistentIdError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
+from s_flag_handler import handle_s_flag
 
 
 class UpdateOutcome(Enum):
@@ -17,21 +18,27 @@ class UpdateOutcome(Enum):
 
 
 class FhirService:
-    def __init__(self, imms_repo: ImmunizationRepository, pds_service: PdsService,
-                 pre_validator: ImmunizationValidator = ImmunizationValidator()):
+    def __init__(
+        self,
+        imms_repo: ImmunizationRepository,
+        pds_service: PdsService,
+        pre_validator: ImmunizationValidator = ImmunizationValidator(),
+    ):
         self.immunization_repo = imms_repo
         self.pds_service = pds_service
         self.pre_validator = pre_validator
-        self.pre_validator.add_custom_root_validators()
+        self.pre_validator.add_custom_root_pre_validators()
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunization_repo.get_immunization_by_id(imms_id)
-        if imms:
-            # TODO: This shouldn't raise an exception since, we validate the message before storing it,
-            #  but what if the stored message is different from the requested FHIR version?
-            return Immunization.parse_obj(imms)
-        else:
+
+        if not imms:
             return None
+
+        nhs_number = imms['patient']['identifier']['value']
+        patient = self.pds_service.get_patient_details(nhs_number)
+        filtered_immunization = handle_s_flag(imms, patient)
+        return Immunization.parse_obj(filtered_immunization)
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
@@ -72,7 +79,7 @@ class FhirService:
         imms = self.immunization_repo.delete_immunization(imms_id)
         return Immunization.parse_obj(imms)
 
-    def search_immunizations(self, nhs_number: str, disease_type: str):
+    def search_immunizations(self, nhs_number: str, disease_type: str) -> FhirList:
         """find all instances of Immunization(s) for a patient and specified disease type.
         Returns List[Immunization]
         """
@@ -80,7 +87,9 @@ class FhirService:
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         resources = self.immunization_repo.find_immunizations(nhs_number, disease_type)
 
-        entries = [Immunization.parse_obj(imms) for imms in resources]
+        patient = self.pds_service.get_patient_details(nhs_number)
+
+        entries = [Immunization.parse_obj(handle_s_flag(imms, patient)) for imms in resources]
         return FhirList.construct(entry=entries)
 
     def _validate_patient(self, imms: dict):

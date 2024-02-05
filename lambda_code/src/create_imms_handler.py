@@ -15,4 +15,4 @@ def create_immunization(event, controller: FhirController):
         exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
                                              code=Code.server_error,
                                              diagnostics=str(e))
-        return FhirController.create_response(500, exp_error.json())
+        return FhirController.create_response(500, exp_error)
