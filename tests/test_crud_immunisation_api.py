@@ -287,7 +287,14 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
     if created_imms_result.status_code != 201:
         pprint.pprint(created_imms_result.text)
         assert created_imms_result.status_code == 201
-    created_imms = created_imms_result.json()
+
+    created_imms_id = parse_location(created_imms_result.headers["Location"])
+    # Read the created resource back to get the full resource
+    created_imms = imms_api.get_immunization_by_id(created_imms_id)
+    if created_imms.status_code != 200:
+        print(created_imms.text)
+        assert created_imms.status_code == 200
+    created_imms = created_imms.json()
 
     retrieved_get_imms_result = imms_api.get_immunization_by_id(created_imms["id"])
     if retrieved_get_imms_result.status_code != 200:
@@ -341,7 +348,10 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
         assert all(performer["actor"]["identifier"]["system"] == "https://fhir.nhs.uk/Id/ods-organization-code"
                    for performer in imms["performer"])
 
-    assert_is_not_filtered(created_imms)
+    if is_restricted:
+        assert_is_filtered(created_imms)
+    else:
+        assert_is_not_filtered(created_imms)
     for retrieved_imms in all_retrieved_imms:
         if is_restricted:
             assert_is_filtered(retrieved_imms)
