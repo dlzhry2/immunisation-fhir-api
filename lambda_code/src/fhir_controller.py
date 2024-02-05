@@ -141,13 +141,16 @@ class FhirController:
 
     @staticmethod
     def create_response(status_code, body=None, headers=None):
-        content_type = {
-            "Content-Type": "application/fhir+json",
-        } if body else {}
+        if body:
+            if isinstance(body, dict):
+                body = json.dumps(body)
+            if headers:
+                headers["Content-Type"] = "application/fhir+json"
+            else:
+                headers = {"Content-Type": "application/fhir+json"}
 
-        headers = {**headers, **content_type} if headers else content_type
-        response = {
+        return {
             "statusCode": status_code,
-            "headers": headers,
+            "headers": headers if headers else {},
+            **({"body": body} if body else {}),
         }
-        return {**response, "body": body} if body else response
