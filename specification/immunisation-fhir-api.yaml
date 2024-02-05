@@ -198,6 +198,9 @@ paths:
       responses:
         "201":
           description: Create Immunization operation successful
+          headers:
+            Location:
+              $ref: components/schemas/Location.yaml
         4XX:
           $ref: '#/components/responses/4XX-imms'
       requestBody:
