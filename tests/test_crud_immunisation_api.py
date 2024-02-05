@@ -11,10 +11,12 @@ from .example_loader import load_example
 from .immunisation_api import ImmunisationApi
 
 
-def create_an_imms_obj(imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1) -> dict:
+def create_an_imms_obj(
+    imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1
+) -> dict:
     imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
     imms["id"] = imms_id
-    imms["patient"]["identifier"]["value"] = nhs_number
+    imms["contained"][1]["identifier"][0]["value"] = nhs_number
 
     return imms
 
@@ -84,7 +86,9 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
         "login_form": {"username": "656005750104"},
     }
 )
-def test_get_event_by_id_not_found_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+def test_get_event_by_id_not_found_nhs_login(
+    nhsd_apim_proxy_url, nhsd_apim_auth_headers
+):
     # Arrange
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -128,7 +132,9 @@ def test_get_event_by_id_invalid_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_h
         "login_form": {"username": "656005750104"},
     }
 )
-def test_delete_immunization_already_deleted(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+def test_delete_immunization_already_deleted(
+    nhsd_apim_proxy_url, nhsd_apim_auth_headers
+):
     # Arrange
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -176,7 +182,9 @@ def test_get_deleted_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
         "login_form": {"username": "656005750104"},
     }
 )
-def test_update_none_existing_record_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+def test_update_none_existing_record_nhs_login(
+    nhsd_apim_proxy_url, nhsd_apim_auth_headers
+):
     """update a record that doesn't exist should create a new record"""
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -271,8 +279,13 @@ def test_bad_nhs_number_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.parametrize("nhs_number,is_restricted", [(valid_nhs_number_with_s_flag, True), (valid_nhs_number1, False)])
-def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_number, is_restricted):
+@pytest.mark.parametrize(
+    "nhs_number,is_restricted",
+    [(valid_nhs_number_with_s_flag, True), (valid_nhs_number1, False)],
+)
+def test_get_s_flag_patient(
+    nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_number, is_restricted
+):
     # Arrange
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -280,7 +293,9 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
     # Act
     # TODO: Replace this with the usual specification example when it is updated.
     current_directory = os.path.dirname(os.path.realpath(__file__))
-    with open(f"{current_directory}/../lambda_code/tests/sample_data/sample_immunization_event.json") as f:
+    with open(
+        f"{current_directory}/../lambda_code/tests/sample_data/sample_immunization_event.json"
+    ) as f:
         imms_to_create = json.load(f)
     imms_to_create["patient"]["identifier"]["value"] = nhs_number
 
@@ -297,12 +312,17 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
     retrieved_get_imms = retrieved_get_imms_result.json()
 
     sample_disease_code = 840539006
-    retrieved_search_imms_result = imms_api.search_immunizations(nhs_number, sample_disease_code)
+    retrieved_search_imms_result = imms_api.search_immunizations(
+        nhs_number, sample_disease_code
+    )
     if retrieved_search_imms_result.status_code != 200:
         pprint.pprint(retrieved_search_imms_result.text)
         assert retrieved_search_imms_result.status_code == 200
-    retrieved_search_imms = next(imms for imms in retrieved_search_imms_result.json()["entry"]
-                                 if imms["id"] == created_imms["id"])
+    retrieved_search_imms = next(
+        imms
+        for imms in retrieved_search_imms_result.json()["entry"]
+        if imms["id"] == created_imms["id"]
+    )
 
     all_retrieved_imms = [retrieved_get_imms, retrieved_search_imms]
 
@@ -310,8 +330,11 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
 
     # Assert
     def get_questionnaire_items(imms):
-        questionnaire = next(contained for contained in imms["contained"]
-                             if contained["questionnaire"] == "Questionnaire/1")
+        questionnaire = next(
+            contained
+            for contained in imms["contained"]
+            if contained["questionnaire"] == "Questionnaire/1"
+        )
         return questionnaire["item"]
 
     def assert_is_not_filtered(imms):
@@ -320,13 +343,23 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
         for key in ["SiteName", "Consent"]:
             assert key in [item["linkId"] for item in imms_items]
 
-        assert "N2N9I" != next(item for item in imms_items
-                               if item["linkId"] == "SiteCode")["answer"][0]["valueCoding"]["code"]
+        assert (
+            "N2N9I"
+            != next(item for item in imms_items if item["linkId"] == "SiteCode")[
+                "answer"
+            ][0]["valueCoding"]["code"]
+        )
         assert "reportOrigin" in imms
         assert "location" in imms
-        assert all(performer["actor"]["identifier"]["value"] != "N2N9I" for performer in imms["performer"])
-        assert all(performer["actor"]["identifier"]["system"] != "https://fhir.nhs.uk/Id/ods-organization-code"
-                   for performer in imms["performer"])
+        assert all(
+            performer["actor"]["identifier"]["value"] != "N2N9I"
+            for performer in imms["performer"]
+        )
+        assert all(
+            performer["actor"]["identifier"]["system"]
+            != "https://fhir.nhs.uk/Id/ods-organization-code"
+            for performer in imms["performer"]
+        )
 
     def assert_is_filtered(imms):
         imms_items = get_questionnaire_items(imms)
@@ -334,13 +367,23 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
         for key in ["SiteName", "Consent"]:
             assert key not in [item["linkId"] for item in imms_items]
 
-        assert "N2N9I" == next(item for item in imms_items
-                               if item["linkId"] == "SiteCode")["answer"][0]["valueCoding"]["code"]
+        assert (
+            "N2N9I"
+            == next(item for item in imms_items if item["linkId"] == "SiteCode")[
+                "answer"
+            ][0]["valueCoding"]["code"]
+        )
         assert "reportOrigin" not in imms
         assert "location" not in imms
-        assert all(performer["actor"]["identifier"]["value"] == "N2N9I" for performer in imms["performer"])
-        assert all(performer["actor"]["identifier"]["system"] == "https://fhir.nhs.uk/Id/ods-organization-code"
-                   for performer in imms["performer"])
+        assert all(
+            performer["actor"]["identifier"]["value"] == "N2N9I"
+            for performer in imms["performer"]
+        )
+        assert all(
+            performer["actor"]["identifier"]["system"]
+            == "https://fhir.nhs.uk/Id/ods-organization-code"
+            for performer in imms["performer"]
+        )
 
     assert_is_not_filtered(created_imms)
     for retrieved_imms in all_retrieved_imms:
