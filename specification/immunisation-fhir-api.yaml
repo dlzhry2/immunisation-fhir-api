@@ -153,7 +153,7 @@ info:
     | ----------------- | --------------------------------------------------------------------- |
     |  Sandbox          | 'https://sandbox.api.service.nhs.uk/immunisation-fhir-api'            |
     |  Integration      | 'https://int.api.service.nhs.uk/immunisation-fhir-api'                |          
-    |  Production       | 'https://api.service.nhs.uk/immunisation-fhir-api'                    |
+    |  Production       | `Not yet available`                    |
  
     ## Onboarding
       
