@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Optional
 import boto3
 import botocore.exceptions
+from botocore.exceptions import ClientError
 from botocore.config import Config
 from boto3.dynamodb.conditions import Attr, Key
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
@@ -67,18 +68,32 @@ class ImmunizationRepository:
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
 
-        response = self.table.put_item(Item={
-            'PK': attr.pk,
-            'PatientPK': attr.patient_pk,
-            'PatientSK': attr.patient_sk,
-            'Resource': json.dumps(attr.resource),
-            'Patient': attr.patient,
-        })
+        condition_expression = "attribute_not_exists(PatientPK)"
 
-        if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-            return immunization
-        else:
-            raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
+        try:
+            response = self.table.put_item(
+                Item={
+                    'PK': attr.pk,
+                    'PatientPK': attr.patient_pk,
+                    'PatientSK': attr.patient_sk,
+                    'Resource': json.dumps(attr.resource),
+                    'Patient': attr.patient,
+                },
+                ConditionExpression=condition_expression
+            )
+
+            if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+                return immunization
+            else:
+                raise UnhandledResponseError(message="Non-200 response from DynamoDB", response=response)
+
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                # The condition expression was not met, indicating an existing record with the same patient_pk
+                raise UnhandledResponseError(message=f"Record with PatientPK '{attr.patient_pk}' already exists.")
+            else:
+                # Handle other ClientErrors as needed
+                raise UnhandledResponseError(message="Error during DynamoDB operation", response=e.response)
 
     def update_immunization(self, imms_id: str, immunization: dict, patient: dict) -> dict:
         attr = RecordAttributes(immunization, patient)
