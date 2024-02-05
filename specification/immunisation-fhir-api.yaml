@@ -18,13 +18,13 @@ info:
     ### You cannot use this API to:
      
     - retrieve the immunisation record of multiple patients at once
-    - retrieve the immunisation events for vaccinations other than for coronavirus (`COVID-19`), influenza (`FLU`), human papillomavirus (`HPV`)
+    - retrieve the immunisation events for vaccinations other than for coronavirus (`COVID19`), influenza (`FLU`), human papillomavirus (`HPV`)
     - record a patient's demographic details
     > To get demographic details from the [Personal Demographics Service](https://digital.nhs.uk/services/personal-demographics-service), use the Personal Demographics FHIR API.
      
     You can create, read, update and delete the following data:
      
-    - immunisation event details for `COVID-19`, `FLU`, `HPV`
+    - immunisation event details for `COVID19`, `FLU`, `HPV`
       
     ### Data availability, timing and quality
  
@@ -32,7 +32,7 @@ info:
  
     If the NHS number is not present on a record then you will not be able to Search for that record and will only be able to retrieve the record by Reading it using its unique ID.
  
-    The `COVID-19` data is limited to vaccinations recorded on behalf of NHS England.
+    The `COVID19` data is limited to vaccinations recorded on behalf of NHS England.
  
     The `FLU` data is limited to vaccinations recorded on behalf of NHS England.
  
@@ -256,6 +256,9 @@ paths:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
         - $ref: '#/components/parameters/PatientIdentifier'
+        - $ref: '#/components/parameters/ImmunizationTarget'
+        - $ref: '#/components/parameters/DateTo'
+        - $ref: '#/components/parameters/DateFrom'
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -482,6 +485,36 @@ components:
       schema:
         type: string
         example: "https://fhir.nhs.uk/Id/nhs-number|9000000009"
+    ImmunizationTarget:
+      in: query
+      name: immunization.target
+      description: The vaccine preventable disease the dose is being administered against.
+      required: true
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - COVID19
+          - FLU
+    DateTo:
+      in: query
+      name: date.to
+      description: The latest date to be included (e.g. 2020-12-31)
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example: '9999-12-31'
+    DateFrom:
+      in: query
+      name: date.from
+      description: The earliest date to be included (e.g. 2020-01-01)
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example: '1900-01-01'
   schemas:
     Resource:
       type: object
