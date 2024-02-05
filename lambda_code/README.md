@@ -51,7 +51,7 @@ aws dynamodb create-table \
 
 ### Run endpoint
 
-Rename `.envrc.default` to `.envrc` or merge it with your file. `direnv` will use them automatically in the terminal.
+Rename `.envrc.default` to `.envrc` or merge it with your existing file. `direnv` will use them automatically in the terminal.
 
 It contains the following variables:
 

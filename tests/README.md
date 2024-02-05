@@ -5,15 +5,13 @@
 - Install and configure `get_token`
   - https://docs.apigee.com/api-platform/system-administration/auth-tools#install
   - https://docs.apigee.com/api-platform/system-administration/using-gettoken
-- Open a PR
-- Create a `.env` file like the following:
-
-```bash
-APIGEE_USERNAME={your username}
-PROXY_NAME=immunisation-fhir-api-pr-{pr number}
-APIGEE_ENVIRONMENT=internal-dev
-SERVICE_BASE_PATH=immunisation-fhir-api-pr-{pr number}
-SOURCE_COMMIT_ID=3bdc821db6d56e7215c9be37ee005482475f8a14 # TODO
-```
-
+- Open a PR, draft or regular
+- Copy `.env.default` to `.env` or merge it with your existing file
+  - Set the values for your Apigee user and your PR
 - `make run`
+
+If you need to run any pytest commands manually you can set up `direnv` here too.
+
+Just create a `.envrc` with the content `dotenv`. This will import the environment variables from the `.env` file.
+
+E.g. `echo "dotenv" >> .envrc`
