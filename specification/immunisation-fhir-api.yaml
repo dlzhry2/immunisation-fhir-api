@@ -2,10 +2,7 @@ openapi: 3.0.0
 info:
   title: Immunization-fhir-api
   version: Computed and injected at build time by `scripts/set_version.py`
-  license:
-    name: License Name
-    url: URL
-  description: >
+  description: |
     ## Overview
      
     Use this API to access a patient's immunisation record. It is part of the [Vaccinations Data Flow Management](https://digital.nhs.uk/services/vaccinations-data-flow-management) It is intended to extend and replace [Immunisation History - FHIR API](https://digital.nhs.uk/developer/api-catalogue/immunisation-history-fhir) and existing [Vaccination](https://digital.nhs.uk/developer/api-catalogue/vaccination) flows. 
