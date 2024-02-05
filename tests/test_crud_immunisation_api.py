@@ -3,7 +3,6 @@ import json
 import os
 import pprint
 import uuid
-from decimal import Decimal
 
 import pytest
 
