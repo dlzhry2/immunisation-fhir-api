@@ -45,7 +45,7 @@ class TestGetImmunization(unittest.TestCase):
 
 def _make_an_immunization(imms_id="an-id") -> dict:
     """create the minimum required object. Caller should override relevant fields explicitly"""
-    return {"id": imms_id,
+    return {"id": imms_id, "identifier":[{"value": "an-id"}],
             "patient": {"identifier": {"system": "a-system", "value": "a-patient-id"}},
             "protocolApplied": [{"targetDisease": [{"coding": [{"code": "a-disease-code"}]}]}]}
 
@@ -118,7 +118,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
 
         # Then
         self.assertDictEqual(e.exception.response, response)
-
+        
 
 class TestCreateImmunizationPatientIndex(unittest.TestCase):
     """create_immunization should create a patient record with vaccine type"""

@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Optional
 import boto3
 import botocore.exceptions
-from botocore.exceptions import ClientError
 from botocore.config import Config
 from boto3.dynamodb.conditions import Attr, Key
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
@@ -38,6 +37,7 @@ class RecordAttributes:
     patient: dict
     disease_type: str
     timestamp: int
+    identifier: str
 
     def __init__(self, imms: dict, patient: dict):
         """Create attributes that may be used in dynamodb table"""
@@ -49,6 +49,7 @@ class RecordAttributes:
         self.timestamp = int(time.time())
         self.disease_type = imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"]
         self.patient_sk = f"{self.disease_type}#{imms_id}"
+        self.identifier = imms['identifier'][0]['value']
 
 
 class ImmunizationRepository:
@@ -67,31 +68,23 @@ class ImmunizationRepository:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
+        check_identifier = self.table.get_item(Key={"SK": attr.identifier})
+        
+        if check_identifier:
+            print(f"identifier: {attr.identifier}")
 
-        condition_expression = "attribute_not_exists(PatientPK)"
+        response = self.table.put_item(Item={
+            'PK': attr.pk,
+            'PatientPK': attr.patient_pk,
+            'PatientSK': attr.patient_sk,
+            'Resource': json.dumps(attr.resource),
+            'Patient': attr.patient,
+        })
 
-        try:
-            response = self.table.put_item(
-                Item={
-                    'PK': attr.pk,
-                    'PatientPK': attr.patient_pk,
-                    'PatientSK': attr.patient_sk,
-                    'Resource': json.dumps(attr.resource),
-                    'Patient': attr.patient,
-                },
-                ConditionExpression=condition_expression
-            )
-
-            if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                return immunization
-            else:
-                raise UnhandledResponseError(message="Non-200 response from DynamoDB", response=response)
-
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-                raise UnhandledResponseError(message=f"Record with PatientPK '{attr.patient_pk}' already exists.")
-            else:
-                raise UnhandledResponseError(message="Error during DynamoDB operation", response=e.response)
+        if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+            return immunization
+        else:
+            raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
 
     def update_immunization(self, imms_id: str, immunization: dict, patient: dict) -> dict:
         attr = RecordAttributes(immunization, patient)

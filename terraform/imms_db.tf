@@ -15,11 +15,21 @@ resource "aws_dynamodb_table" "test-dynamodb-table" {
         name = "PatientSK"
         type = "S"
     }
+    attribute {
+        name = "Identifier"
+        type = "S"
+    }
 
     global_secondary_index {
         name               = "PatientGSI"
         hash_key           = "PatientPK"
         range_key          = "PatientSK"
+        projection_type    = "ALL"
+    }
+
+    global_secondary_index {
+        name               = "IdentifierGSI"
+        hash_key           = "Identifier"
         projection_type    = "ALL"
     }
 }
