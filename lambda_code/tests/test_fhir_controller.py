@@ -291,6 +291,8 @@ class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
         self.controller = FhirController(self.service)
+        self.nhsSearchParam="-nhsNumber"
+        self.diseaseTypeSearchParam="-diseaseType"
 
     def test_get_search_immunizations(self):
         """it should search based on nhsNumber and diseaseType"""
@@ -299,16 +301,17 @@ class TestSearchImmunizations(unittest.TestCase):
 
         nhs_number = "an-patient-id"
         disease_type = "a-disease-type"
+        params=f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
         lambda_event = {"queryStringParameters": {
-            "-diseaseType": disease_type,
-            "-nhsNumber": nhs_number
+            self.diseaseTypeSearchParam: disease_type,
+            self.nhsSearchParam: nhs_number
         }}
 
         # When
         response = self.controller.search_immunizations(lambda_event)
 
         # Then
-        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type)
+        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type,params)
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
@@ -320,10 +323,11 @@ class TestSearchImmunizations(unittest.TestCase):
 
         nhs_number = "an-patient-id"
         disease_type = "a-disease-type"
+        params=f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
         # Construct the application/x-www-form-urlencoded body
         body = {
-            "-nhsNumber": nhs_number,
-            "-diseaseType": disease_type
+            self.nhsSearchParam: nhs_number,
+            self.diseaseTypeSearchParam: disease_type
         }
         encoded_body = urlencode(body)
         # Base64 encode the body
@@ -336,25 +340,26 @@ class TestSearchImmunizations(unittest.TestCase):
                 "Content-Type": "application/x-www-form-urlencoded"
             },
             "body": base64_encoded_body,
-            "queryStringParameters":{"-diseaseType": disease_type,
-            "-nhsNumber": nhs_number}
+            "queryStringParameters":{self.diseaseTypeSearchParam: disease_type,
+            self.nhsSearchParam: nhs_number}
         }
         # When
         response = self.controller.search_immunizations(lambda_event)
         # Then
-        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type)
+        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type,params)
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
 
 
-    def test_repeated_params_search_immunizations(self):
+    def test_repeated_same_params_search_immunizations(self):
         """it should search based on nhsNumber and diseaseType irresepctive of their repition in params and body"""
         search_result = Bundle.construct()
         self.service.search_immunizations.return_value = search_result
 
         nhs_number = "an-patient-id"
         disease_type = "a-disease-type"
+        params=f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
         # Construct the application/x-www-form-urlencoded body
         body = {
             "-nhsNumber": nhs_number,
@@ -371,15 +376,49 @@ class TestSearchImmunizations(unittest.TestCase):
                 "Content-Type": "application/x-www-form-urlencoded"
             },
             "body": base64_encoded_body,
-            "queryStringParameters":{}
+            "queryStringParameters":{self.diseaseTypeSearchParam: disease_type,
+            self.nhsSearchParam: nhs_number}
         }
         # When
         response = self.controller.search_immunizations(lambda_event)
         # Then
-        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type)
+        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type,params)
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
+
+    def test_repeated_different_params_search_immunizations(self):
+        """it should return bad request if nhsNumber or diseaseType are different in params and body"""
+        search_result = Bundle.construct()
+        self.service.search_immunizations.return_value = search_result
+
+        nhs_number1 = "an-patient-id"
+        disease_type1 = "a-disease-type"
+        nhs_number2 = "an-patient-id2"
+        disease_type2 = "a-disease-type2"
+        # Construct the application/x-www-form-urlencoded body
+        body = {
+            "-nhsNumber": nhs_number2,
+            "-diseaseType": disease_type2
+        }
+        encoded_body = urlencode(body)
+        # Base64 encode the body
+        base64_encoded_body = base64.b64encode(encoded_body.encode("utf-8")).decode("utf-8")
+
+        # Construct the lambda event
+        lambda_event = {
+            "httpMethod": "POST",
+            "headers": {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            "body": base64_encoded_body,
+            "queryStringParameters":{self.diseaseTypeSearchParam: disease_type1,
+            self.nhsSearchParam: nhs_number1}
+        }
+        # When
+        response = self.controller.search_immunizations(lambda_event)
+        # Then
+        self.assertEqual(response["statusCode"], 400)
 
     def test_nhs_number_is_mandatory(self):
         """nhsNumber is a mandatory query param"""

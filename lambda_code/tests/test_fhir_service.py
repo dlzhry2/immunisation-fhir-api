@@ -304,6 +304,8 @@ class TestSearchImmunizations(unittest.TestCase):
         self.fhir_service = FhirService(
             self.imms_repo, self.pds_service, self.validator
         )
+        self.nhsSearchParam="-nhsNumber"
+        self.diseaseTypeSearchParam="-diseaseType"
 
     def test_get_service_url(self):
         """it should create service url"""
@@ -327,10 +329,11 @@ class TestSearchImmunizations(unittest.TestCase):
         # TODO: for this ticket we are assuming code is provided
         nhs_number = "a-patient-id"
         disease_type = "a-disease-code"
+        params=f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
         # TODO: here we are assuming disease_type=disease_code this is because the mapping is not in place yet
         disease_code = disease_type
          # When
-        _ = self.fhir_service.search_immunizations(nhs_number, disease_code)
+        _ = self.fhir_service.search_immunizations(nhs_number, disease_code,params)
 
         # Then
         self.imms_repo.find_immunizations.assert_called_once_with(
@@ -343,9 +346,11 @@ class TestSearchImmunizations(unittest.TestCase):
         imms_list = [_create_an_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
-
+        nhs_number = "an-id"
+        disease_type = "a-code"
+        params=f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
         # When
-        result = self.fhir_service.search_immunizations("an-id", "a-code")
+        result = self.fhir_service.search_immunizations(nhs_number, disease_type,params)
         # Then
         self.assertIsInstance(result, FhirBundle)
         self.assertEqual(result.type, "searchset")

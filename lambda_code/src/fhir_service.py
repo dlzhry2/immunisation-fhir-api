@@ -92,9 +92,9 @@ class FhirService:
         imms = self.immunization_repo.delete_immunization(imms_id)
         return Immunization.parse_obj(imms)
 
-    def search_immunizations(self, nhs_number: str, disease_type: str) -> FhirBundle:
+    def search_immunizations(self, nhs_number: str, disease_type: str, params:str) -> FhirBundle:
         """find all instances of Immunization(s) for a patient and specified disease type.
-        Returns List[Immunization]
+        Returns Bundle[Immunization]
         """
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
@@ -108,7 +108,7 @@ class FhirService:
             type="searchset",  # Set the type to "searchset"
             entry=entries,
         )
-        url = f"{get_service_url()}/Immunization?patient={nhs_number}&diseaseType={disease_type}"
+        url = f"{get_service_url()}/Immunization?{params}"
         fhir_bundle.link = [BundleLink(relation="self", url=url)]
         return fhir_bundle
 

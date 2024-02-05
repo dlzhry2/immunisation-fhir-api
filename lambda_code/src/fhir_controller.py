@@ -110,7 +110,6 @@ class FhirController:
         diseaseTypeValue = None
         nhsNumberParam = "-nhsNumber"
         diseaseTypeParam = "-diseaseType"
-
         if http_method == "POST":
             # Check if the Content-Type is application/x-www-form-urlencoded
             content_type = aws_event.get("headers", {}).get("Content-Type")
@@ -130,7 +129,6 @@ class FhirController:
                 if diseaseType_list:
                     diseaseTypeValue = diseaseType_list[0]
                 # Continue processing the request
-
         params = aws_event["queryStringParameters"]
         # If nhsNumber was not present in body then it should be in params irresepective of GET/POST
         if nhsNumberValue is None:
@@ -140,6 +138,13 @@ class FhirController:
                 )
             else:
                 nhsNumberValue = params[nhsNumberParam]
+        else:
+            #If NhsNumber was present in body as well as in QueryParams, then both values should be same
+            if nhsNumberParam in params:
+                if nhsNumberValue!=params[nhsNumberParam]:
+                    return self._create_bad_request(
+                    f"Search Parameter {nhsNumberParam} is different in body and QueryParams"
+                )
 
         # If diseaseType was not present in body then it should be in params irresepective of GET/POST
         if diseaseTypeValue is None:
@@ -149,9 +154,17 @@ class FhirController:
                 )
             else:
                 diseaseTypeValue = params[diseaseTypeParam]
-
+        else:
+            #If diseaseType was present in body as well as in QueryParams, then both values should be same
+            if diseaseTypeParam in params:
+                if diseaseTypeValue!=params[diseaseTypeParam]:
+                    return self._create_bad_request(
+                    f"Search Parameter {diseaseTypeParam} is different in body and QueryParams"
+                )
+        #All search params should be prepared here for Self link
+        search_params=f"{nhsNumberParam}={nhsNumberValue}&{diseaseTypeParam}={diseaseTypeValue}"
         result = self.fhir_service.search_immunizations(
-            nhsNumberValue, diseaseTypeValue
+            nhsNumberValue, diseaseTypeValue, search_params
         )
         return self.create_response(200, result.json())
 
