@@ -60,10 +60,10 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     assert res_body["id"] == imms_id
 
     # UPDATE
-    new_imms = copy.deepcopy(imms)
-    new_imms["id"] = imms_id
-    new_imms["status"] = "not-done"
-    result = imms_api.update_immunization(imms_id, new_imms)
+    update_payload = copy.deepcopy(imms)
+    update_payload["id"] = imms_id
+    update_payload["status"] = "not-done"
+    result = imms_api.update_immunization(imms_id, update_payload)
 
     assert result.status_code == 200
 
