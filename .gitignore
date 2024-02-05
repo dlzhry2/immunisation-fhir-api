@@ -14,6 +14,7 @@ newman/
 __pycache__/
 .venv/
 .env
+.envrc
 smoketest-report.xml
 lambda_typescript/**/*.js
 terraform/zips

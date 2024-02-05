@@ -51,13 +51,13 @@ aws dynamodb create-table \
 
 ### Run endpoint
 
-You need the following environment variables set up:
+Rename `.envrc.default` to `.envrc` or merge it with your file. `direnv` will use them automatically in the terminal.
+
+It contains the following variables:
 
 - `AWS_PROFILE=apim-dev`
 - `IMMUNIZATION_ENV=local` 
 - `DYNAMODB_TABLE_NAME={table name as created above}`
-
-These are in the `.envrc` for `direnv` to use automatically in the terminal or an IDE that supports it.
 
 To run from the terminal: 
 ```shell
@@ -65,7 +65,7 @@ cd lambda_code/src
 python get_imms_handler.py 123
 ```
 
-If not using `direnv` then:
+If not using `.envrc` then:
 ```shell
 cd lambda_code/src
 AWS_PROFILE=apim-dev DYNAMODB_TABLE_NAME=local-imms-events IMMUNIZATION_ENV=local python get_imms_handler.py 123
