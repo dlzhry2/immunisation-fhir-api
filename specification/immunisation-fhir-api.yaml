@@ -2,184 +2,259 @@ openapi: 3.0.0
 info:
   title: Immunization-fhir-api
   version: Computed and injected at build time by `scripts/set_version.py`
-  license:
-    name: License Name
-    url: URL
   description: |
     ## Overview
-    Use this API to access a patient's immunisation record.
-    
-    You can:
-    * create a patient immunisation event
-    * search for a patient's immunisation events
-    * get the details of an immunisation event
-    * update an immunisation event
-    * identify an immunisation event as entered in error
-    
-    You cannot currently use this API to:
-    * retrieve the immunisation events of multiple patients at once
-    * retrieve the immunisation events for vaccinations other than for ('COVID-19'), ('FLU'), ('HPV')
-    * update a patients demographic details as returned from the Personal Demographics Service (PDS).
-    
-    > To get demographic details from PDS, use the Personal Demographics FHIR API.
-    
+     
+    Use this API to access a patient's immunisation record. It is part of the [Vaccinations Data Flow Management](https://digital.nhs.uk/services/vaccinations-data-flow-management) It is intended to extend and replace [Immunisation History - FHIR API](https://digital.nhs.uk/developer/api-catalogue/immunisation-history-fhir) and existing [Vaccination](https://digital.nhs.uk/developer/api-catalogue/vaccination) flows. 
+
+    ### You can:
+     
+    - create a record a patient immunisation
+    - search for a patient's immunisation records
+    - get the details of an immunisation record
+    - update an immunisation record
+    - identify an immunisation record as entered in error
+     
+    ### You cannot use this API to:
+     
+    - retrieve the immunisation record of multiple patients at once
+    - retrieve the immunisation events for vaccinations other than for coronavirus (`COVID19`), influenza (`FLU`), human papillomavirus (`HPV`)
+    - record a patient's demographic details
+    > To get demographic details from the [Personal Demographics Service](https://digital.nhs.uk/services/personal-demographics-service), use the Personal Demographics FHIR API.
+     
     You can create, read, update and delete the following data:
-    * immunisation event details for ('COVID-19'), ('FLU'), ('HPV')
-    
-    The patient demographic details might differ from those held in the Personal Demographics Service (PDS). To get demographic details from PDS, use the [Personal Demographics FHIR API](https://digital.nhs.uk/developer/api-catalogue/personal-demographics-service-fhir).
-    
+     
+    - immunisation event details for `COVID19`, `FLU`, `HPV`
+      
     ### Data availability, timing and quality
-    All immunisation records are verified to ensure the NHS number is correct before making them available via the API.
-    In most cases this is automatic, and the record is available within 48 hours of the immunisation event, sometimes sooner.
-    Where automated NHS number verification fails, we send the event back to the submitting organisation for manual verification.
-    In a very small number of cases, we are unable to verify the NHS number, and we do not make the immunisation record available at all.
-    The ('COVID-19') data is limited to vaccinations recorded on behalf of NHS England.
-    The ('FLU') data is limited to vaccinations recorded on behalf of NHS England.
-    The ('HPV') data is limited to vaccinations recorded on behalf of NHS England.
-    
+ 
+    In most cases the record is available within 48 hours of the immunisation event, sometimes sooner.
+ 
+    If the NHS number is not present on a record then you will not be able to Search for that record and will only be able to retrieve the record by Reading it using its unique ID.
+ 
+    The `COVID19` data is limited to vaccinations recorded on behalf of NHS England.
+ 
+    The `FLU` data is limited to vaccinations recorded on behalf of NHS England.
+ 
+    The `HPV` data is limited to vaccinations recorded on behalf of NHS England.
+     
     ## Who can use this API
     This API can only be used where there is a legal basis to do so. Make sure you have a valid use case before you go too far with your development.
+   
     You must demonstrate you have a valid use case as part of digital onboarding.
+   
     You must do this before you can go live (see 'Onboarding' below).
-    
+   
     ### Who can access immunisation event records
-    Health and care organisations in England can access immunisation history records.
+     
+    Health and care organisations in England can access immunisation records.
+   
     Legitimate direct care examples include NHS organisations delivering healthcare, local authorities delivering care, third sector and private sector health and care organisations, and developers delivering systems to health and care organisations.
+   
     Patients who receive health and social care or make use of NHS services in England.
+   
     Examples of recognised uses for the immunisation event records include:
-    * supporting a patient getting a vaccination
-    * supporting patient managing their immunisation health
-    * identifying those to be invited to vaccination nationally
-    * identifying those to be invited to vaccination locally
-    * supporting the booking of a vaccination appointment
-    * supporting the payment reconciliation process on behalf of NHSE/BSA
-    * supporting measuring the overall success of a vaccination campaign to help inform the success of future s7a immunisation campaigns on behalf of NHSE/UKHSA
-    
+     
+    - supporting a patient getting a vaccination
+    - supporting patient managing their immunisation health
+    - identifying those to be invited to vaccination nationally
+    - identifying those to be invited to vaccination locally
+    - supporting the booking of a vaccination appointment
+    - supporting the payment reconciliation process on behalf of NHS England/NHS Business Services Authority
+    - supporting measuring the overall success of a vaccination campaign to help inform the success of the [NHS Vaccination Strategy](https://www.england.nhs.uk/long-read/nhs-vaccination-strategy/)
+  
     ## API status and roadmap
-    This API is [Alpha](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#statuses).
+    This API is [in development](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#statuses).
+     
     To see our roadmap, or to suggest, comment or vote on features for this API, see our [interactive product backlog](https://nhs-digital-api-management.featureupvote.com/?tag=immunisation).
+     
     If you have any other queries, [contact us](https://digital.nhs.uk/developer/help-and-support).
-    
+     
     ## Service level
-    This API is a gold service, meaning it is operational and supported 24 x 7 x 365.
+    This API will be a platinum service, meaning it is operational and supported 24 x 7 x 365.
+     
     For more details, see [service levels](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#service-levels).
-    
+     
     ## Technology
+     
     This API is [RESTful](https://digital.nhs.uk/developer/guides-and-documentation/our-api-technologies#basic-rest).
+     
     It conforms to the [FHIR](https://digital.nhs.uk/developer/guides-and-documentation/our-api-technologies#fhir) global standard for health care data exchange, specifically to [FHIR R4 (v4.0.1)](https://hl7.org/fhir/r4/), except that it does not support the [capabilities](http://hl7.org/fhir/R4/http.html#capabilities) interaction.
+     
     It includes some country-specific FHIR extensions, which conform to [FHIR UK Core](https://digital.nhs.uk/services/fhir-uk-core), specifically [fhir.r4.ukcore.stu1 0.5.1](https://simplifier.net/packages/fhir.r4.ukcore.stu1/0.5.1).
+     
     You do not need to know much about FHIR to use this API - FHIR APIs are just RESTful APIs that follow specific rules.
     In particular:
-    * resource names are capitalised and singular, and use US spellings, for example `/Immunization` not `/immunisations`
-    * array names are singular, for example `entry` not `entries` for address lines
-    * data items that are country-specific and thus not included in the FHIR global base resources are usually wrapped in an `extension` object
-    
+    - resource names are capitalised and singular, and use US spellings, for example `/Immunization` not `/immunisations`
+    - array names are singular, for example `entry` not `entries` for address lines
+    - data items that are country-specific and thus not included in the FHIR global base resources are usually wrapped in an `extension` object
+     
     There are [libraries and SDKs available](https://digital.nhs.uk/developer/guides-and-documentation/api-technologies-at-nhs-digital#fhir-libraries-and-sdks) to help with FHIR API integration.
-    
+     
     ## Network access
     This API is available on the internet and, indirectly, on the [Health and Social Care Network (HSCN)](https://digital.nhs.uk/services/health-and-social-care-network).
+     
     For more details see [Network access for APIs](https://digital.nhs.uk/developer/guides-and-documentation/network-access-for-apis).
-    
+     
     ## Security and authorisation
+     
     This API has two access modes:
-    * application-restricted access
-    * user-restricted access search only access 
-    
+    - application-restricted access
+    - user-restricted access search only access 
+     
     ### Application-restricted access
+     
     This access mode is [application-restricted](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation#application-restricted-apis), meaning we authenticate the calling application but not the end user.
-    
+     
     To use this access mode, use the following security pattern:
-    * [Application-restricted RESTful API - signed JWT authentication](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/application-restricted-restful-apis-signed-jwt-authentication)
-    
+    - [Application-restricted RESTful API - signed JWT authentication](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/application-restricted-restful-apis-signed-jwt-authentication)
+ 
     Access may be restricted to certain functionallity based on your user need
-    
+     
     ### User-restricted access
-    
+     
     Use this [user-restricted access mode](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation#user-restricted-apis) if the end user is a patient:
     * the end user must have their identity verified to 'high' (P9) level
     * the NHS number in the request must match the NHS number in the NHS login account
     * the functionallity will be restricted to only allow the end user to search for thier own record
-    
+     
     To use this access mode, use the following security pattern:
     * [User-restricted RESTful APIs - NHS login separate authentication and authorisation](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/user-restricted-restful-apis-nhs-login-separate-authentication-and-authorisation)
+    contact:
+      name: Immunization-fhir-api API Support
+      url: 'https://digital.nhs.uk/developer/help-and-support'
+      email: api.management@nhs.net
+ 
+    ## Errors
+    We use standard HTTP status codes to show whether an API request succeeded or not. They are usually in the range:
+
+    * 200 to 299 if it succeeded, including code 202 if it was accepted by an API that needs to wait for further action
+    * 400 to 499 if it failed because of a client error by your application
+    * 500 to 599 if it failed because of an error on our server
+    Errors specific to each API are shown in the Endpoints section, under Response. See our [reference guide](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#http-status-codes) for more on errors.
     
+    ## Open source
+
+    You might find the following [open source](https://digital.nhs.uk/developer/guides-and-documentation/reference-guide#open-source) resources useful:
+
+    | Resource                  | Description                                                          | Links                                                                          |
+    |---------------------------|----------------------------------------------------------------------|--------------------------------------------------------------------------------|
+    | Immunisation FHIR API     | Source code for the API proxy, sandbox and specification.            | [GitHub repo](https://github.dev/NHSDigital/immunisation-fhir-api/) |
+    | FHIR libraries and SDKs   | Various open source libraries for integrating with FHIR APIs.        | [FHIR libraries and SDKs](https://digital.nhs.uk/developer/guides-and-documentation/api-technologies-at-nhs-digital#fhir-libraries-and-sdks) |
+    | nhs-number                | Python package containing utilities for NHS numbers including validity checks, normalisation and generation. | [GitHub repo](https://github.com/uk-fci/nhs-number) \| [Python Package index](https://pypi.org/project/nhs-number/) \| [Docs](https://nhs-number.uk-fci.tech/) |
+
+    We currently don't have any open source client libraries or sample code for this API. If you think this would be useful, you can [upvote the suggestion on our Interactive Product Backlog](https://nhs-digital-api-management.featureupvote.com/suggestions/107439/client-libraries-and-reference-implementations).
+
+    The source code for the Immunisation FHIR API is not currently in the open. If you think this would be useful, you can [upvote the suggestion on our Interactive Product Backlog](https://nhs-digital-api-management.featureupvote.com/suggestions/466692/open-source-core-spine-including-pds-eps-scr-and-more).
+
+
     ## Environments and Testing
-    
     | Environment       | Base URL                                                              |
     | ----------------- | --------------------------------------------------------------------- |
-    |  Sandbox          | 'https://sandbox.api.service.nhs.uk/immunisation-fhir-api'            |
-    |  Integration      | 'https://int.api.service.nhs.uk/immunisation-fhir-api'                |          
-    |  Production       | 'https://api.service.nhs.uk/immunisation-fhir-api'                    |
+    |  Sandbox          | `https://sandbox.api.service.nhs.uk/immunisation-fhir-api`            |
+    |  Integration      | `https://int.api.service.nhs.uk/immunisation-fhir-api`                |          
+    |  Production       | `Not yet available`                    |
+
+    ### Sandbox testing
+    Our [sandbox environment](https://digital.nhs.uk/developer/guides-and-documentation/testing#sandbox-testing):
+    * is for early developer testing
+    * only covers a limited set of scenarios
+    * is stateless, so does not actually persist any updates
+    * is open access, so does not allow you to test authorisation
+
+    For details of sandbox test scenarios, or to try out the sandbox using our 'Try this API' feature, see the documentation for each endpoint.
+
+    ### Integration testing
+    Our [integration test environment](https://digital.nhs.uk/developer/guides-and-documentation/testing#integration-testing):
+    * is for formal integration testing
+    * is stateful, so persists updates
+    * includes authorisation, with options for user-restricted access (with or without [smartcards](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/nhs-smartcards-for-developers)) and application-restricted access     
     
+    For read-only testing, we will provide an Immunisation records test pack soon.
+
+    To test updating patient details, you must set up your own test data.
+
+    For more details see [integration testing with our RESTful APIs](https://digital.nhs.uk/developer/guides-and-documentation/testing#integration-testing-with-our-restful-apis).
+ 
     ## Onboarding
+      
     You need to get your software approved by us before it can go live with this API.
     We call this onboarding.
     The onboarding process can sometimes be quite long, so it is worth planning well ahead.
-    
+  
+    Whilst this API is in Alpha it is not possible to onboard to this API.
     As part of this process, you need to demonstrate that you can manage risks and that your software conforms technically with the requirements for this API.
     Information on this page might impact the design of your software.
-    For details, see [Onboarding support information](https://digital.nhs.uk/developer/api-catalogue/immunisation-history-fhir/onboarding-support-information).
-    
+  
     To understand how our online digital onboarding process works, see [digital onboarding](https://digital.nhs.uk/developer/guides-and-documentation/digital-onboarding#using-the-digital-onboarding-portal).
-
-  contact:
-    name: Immunization-fhir-api API Support
-    url: 'https://digital.nhs.uk/developer/help-and-support'
-    email: api.management@nhs.net
 
 servers:
   - url: 'https://sandbox.api.service.nhs.uk/immunisation-fhir-api'
-    description: Sandbox environment.
+    description: Sandbox Server
   - url: 'https://int.api.service.nhs.uk/immunisation-fhir-api'
-    description: Integration test environment.
-  - url: 'https://api.service.nhs.uk/immunisation-fhir-api'
-    description: Production environment.
+    description: Integration Server
 paths:
   /Immunization:
     post:
-      tags:
-        - Immunization
-      summary: Create an Immunization resource
+      summary: Record a vaccination given to a patient
       operationId: createImmunization
+      description: |
+        ## Overview
+        Use this endpoint to record the administration of a vaccination
+
+        This endpoint is not availble for when authenticated use patient access
+
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
+      requestBody:
+        $ref: '#/components/requestBodies/Immunization'
       responses:
         "201":
           description: Create Immunization operation successful
           headers:
             Location:
-              $ref: "#/components/headers/Location"
-        4XX:
-          $ref: '#/components/responses/4XX-imms'
-      requestBody:
-        $ref: '#/components/requestBodies/Immunization'
-    get:
-      tags:
-        - Immunization
-      summary: Search for Immunization resources
-      operationId: searchImmunization
-      parameters:
-        - $ref: '#/components/parameters/CorrelationID'
-        - $ref: '#/components/parameters/RequestID'
-      responses:
-        "200":
-          description: Search Immunization operation successful
-          content:
-            application/fhir+json:
-              schema:
-                $ref: '#/components/schemas/Bundle'
+              $ref: components/schemas/Location.yaml
         4XX:
           $ref: '#/components/responses/4XX-imms'
   /Immunization/_search:
     post:
-      tags:
-        - Immunization
-      summary: Search for Immunization resources
+      summary: Search for a patient's immunisation records
       operationId: searchViaPostImmunization
+      description: |
+        ## Overview
+        Use this endpoint to search for a patient using thier NHS number.
+
+        The behaviour of this endpoint depends on which access mode you are using:
+
+
+        | Access mode                    | Behaviour                                               |
+        | ------------------------------ | ------------------------------------------------------- |
+        | Application-restricted access  | Only a single unique match returned                     |
+        | Healthcare worker access       | Only a single unique match returned                     |
+        | Patient access                 | It is only possible to return information on the patient |
+
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
+        - $ref: '#/components/parameters/PatientIdentifier'
+        - $ref: '#/components/parameters/ImmunizationTarget'
+        - $ref: '#/components/parameters/DateTo'
+        - $ref: '#/components/parameters/DateFrom'
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -188,7 +263,7 @@ paths:
               properties: { }
       responses:
         "200":
-          description: Search Immunization operation successful
+          description: Search Immunisation operation successful
           content:
             application/fhir+json:
               schema:
@@ -197,10 +272,20 @@ paths:
           $ref: '#/components/responses/4XX-imms'
   /Immunization/{id}:
     get:
-      tags:
-        - Immunization
-      summary: Read an Immunization resource
+      summary: Retrieve a record of an immunisation by its unique identifier 
       operationId: readImmunization
+      description: |
+        ## Overview
+        This endpoint allows you to retrieve the record of a single vaccination by its identifier
+        
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
@@ -215,31 +300,54 @@ paths:
         4XX:
           $ref: '#/components/responses/4XX-imms'
     put:
-      tags:
-        - Immunization
-      summary: Update an existing Immunization resource
+      summary: Update a record of vaccination
       operationId: updateImmunization
+      description: |
+        ## Overview
+        This record allows you to add a new updated record of a vaccination. If no exiting record is present then a new record will be recorded.
+
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
         - $ref: '#/components/parameters/Id'
+      requestBody:
+        $ref: '#/components/requestBodies/Immunization'
       responses:
         "200":
           description: Update Immunization operation successful
+          headers:
+            Location:
+              $ref: components/schemas/Location.yaml
         "201":
           description: Create Immunization operation successful (requires 'updateCreateEnabled' configuration option)
           headers:
             Location:
-              $ref: "#/components/headers/Location"
+              $ref: components/schemas/Location.yaml
         4XX:
           $ref: '#/components/responses/4XX-imms'
-      requestBody:
-        $ref: '#/components/requestBodies/Immunization'
     delete:
-      tags:
-        - Immunization
-      summary: Delete an Immunization resource
+      summary: Mark a record of vaccination as being entered in error
       operationId: deleteImmunization
+      description: |
+        ## Overview
+        
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
+
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
@@ -247,16 +355,13 @@ paths:
       responses:
         "204":
           description: Delete Immunization operation successful
+          headers:
+            Location:
+              $ref: components/schemas/Location.yaml
         4XX:
           $ref: '#/components/responses/4XX-imms'
 
 components:
-  headers:
-    Location:
-      description: The URL to the created resource
-      schema:
-        type: string
-        example: "https://int.api.service.nhs.uk/immunisation-fhir-api/Immunization/6c574dae-2e03-4dc7-87da-2b539a71a918"
   responses:
     4XX-imms:
       description: >
@@ -358,6 +463,46 @@ components:
         pattern: >-
           ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
         example: 60E0B220-8136-4CA5-AE46-1D97EF59D068
+    PatientIdentifier:
+      in: query
+      name: patient.identifier
+      description: |
+        The patient's NHS number.
+        Expressed as `<type>|<value>` where `<type>` must be `https://fhir.nhs.uk/Id/nhs-number` and `<value>` must be a [valid NHS number](https://www.datadictionary.nhs.uk/attributes/nhs_number.html).
+      required: true
+      schema:
+        type: string
+        example: "https://fhir.nhs.uk/Id/nhs-number|9000000009"
+    ImmunizationTarget:
+      in: query
+      name: immunization.target
+      description: The vaccine preventable disease the dose is being administered against.
+      required: true
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - COVID19
+          - FLU
+    DateTo:
+      in: query
+      name: date.to
+      description: The latest date to be included (e.g. 2020-12-31)
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example: '9999-12-31'
+    DateFrom:
+      in: query
+      name: date.from
+      description: The earliest date to be included (e.g. 2020-01-01)
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example: '1900-01-01'
   schemas:
     Resource:
       type: object
