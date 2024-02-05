@@ -219,6 +219,10 @@ paths:
       responses:
         "201":
           description: Create Immunization operation successful
+          content:
+            application/fhir+json:
+              schema:
+                type: object
           headers:
             Location:
               $ref: components/schemas/Location.yaml
@@ -320,11 +324,19 @@ paths:
       responses:
         "200":
           description: Update Immunization operation successful
+          content:
+            application/fhir+json:
+              schema:
+                type: object
           headers:
             Location:
               $ref: components/schemas/Location.yaml
         "201":
           description: Create Immunization operation successful (requires 'updateCreateEnabled' configuration option)
+          content:
+            application/fhir+json:
+              schema:
+                type: object
           headers:
             Location:
               $ref: components/schemas/Location.yaml
