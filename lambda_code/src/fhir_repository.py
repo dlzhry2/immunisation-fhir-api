@@ -89,10 +89,8 @@ class ImmunizationRepository:
 
         except ClientError as e:
             if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-                # The condition expression was not met, indicating an existing record with the same patient_pk
                 raise UnhandledResponseError(message=f"Record with PatientPK '{attr.patient_pk}' already exists.")
             else:
-                # Handle other ClientErrors as needed
                 raise UnhandledResponseError(message="Error during DynamoDB operation", response=e.response)
 
     def update_immunization(self, imms_id: str, immunization: dict, patient: dict) -> dict:
