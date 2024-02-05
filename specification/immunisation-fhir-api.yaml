@@ -214,6 +214,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
+      requestBody:
+        $ref: '#/components/requestBodies/Immunization'
       responses:
         "201":
           description: Create Immunization operation successful
@@ -222,8 +224,6 @@ paths:
               $ref: components/schemas/Location.yaml
         4XX:
           $ref: '#/components/responses/4XX-imms'
-      requestBody:
-        $ref: '#/components/requestBodies/Immunization'
   /Immunization/_search:
     post:
       summary: Search for a patient's immunisation records
@@ -315,6 +315,8 @@ paths:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
         - $ref: '#/components/parameters/Id'
+      requestBody:
+        $ref: '#/components/requestBodies/Immunization'
       responses:
         "200":
           description: Update Immunization operation successful
@@ -328,8 +330,6 @@ paths:
               $ref: components/schemas/Location.yaml
         4XX:
           $ref: '#/components/responses/4XX-imms'
-      requestBody:
-        $ref: '#/components/requestBodies/Immunization'
     delete:
       summary: Mark a record of vaccination as being entered in error
       operationId: deleteImmunization
