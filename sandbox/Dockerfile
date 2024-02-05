@@ -13,7 +13,7 @@ RUN jq ".paths+=$(cat HealthStatusEndpoint.json)" immunisation-fhir-api.json > u
 
 
 #Second stage
-FROM stoplight/prism:latest
+FROM stoplight/prism:4
 #Inheriting from previous image and copying updated OAS spec file to current container
 COPY --from=0  /specification  /usr/src/prism/packages/cli/immunisation-fhir-api/specification
 COPY --from=0  /updated-spec.json  /usr/src/prism/packages/cli/immunisation-fhir-api/specification/immunisation-fhir-api.json
