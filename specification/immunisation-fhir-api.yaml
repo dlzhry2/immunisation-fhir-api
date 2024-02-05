@@ -205,33 +205,6 @@ paths:
           $ref: '#/components/responses/4XX-imms'
       requestBody:
         $ref: '#/components/requestBodies/Immunization'
-    get:
-      tags:
-        - Immunization
-      summary: Search for a patient's immunisation records
-      operationId: searchImmunization
-      description: |
-        ## Overview
-
-        ## Sandbox testing
-        You can test the following scenarios in our sandbox environment:
-
-        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
-        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
-        |                                         |                                                                                                                                                                 |                                                                         |
-
-      parameters:
-        - $ref: '#/components/parameters/CorrelationID'
-        - $ref: '#/components/parameters/RequestID'
-      responses:
-        "200":
-          description: Search Immunization operation successful
-          content:
-            application/fhir+json:
-              schema:
-                $ref: '#/components/schemas/Bundle'
-        4XX:
-          $ref: '#/components/responses/4XX-imms'
   /Immunization/_search:
     post:
       tags:
@@ -261,6 +234,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
+        - $ref: '#/components/parameters/PatientIdentifier'
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -329,8 +303,14 @@ paths:
       responses:
         "200":
           description: Update Immunization operation successful
+          headers:
+            Location:
+              $ref: components/schemas/Location.yaml
         "201":
           description: Create Immunization operation successful (requires 'updateCreateEnabled' configuration option)
+          headers:
+            Location:
+              $ref: components/schemas/Location.yaml
         4XX:
           $ref: '#/components/responses/4XX-imms'
       requestBody:
@@ -359,6 +339,9 @@ paths:
       responses:
         "204":
           description: Delete Immunization operation successful
+          headers:
+            Location:
+              $ref: components/schemas/Location.yaml
         4XX:
           $ref: '#/components/responses/4XX-imms'
 
@@ -464,6 +447,16 @@ components:
         pattern: >-
           ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
         example: 60E0B220-8136-4CA5-AE46-1D97EF59D068
+    PatientIdentifier:
+      in: query
+      name: patient.identifier
+      description: |
+        The patient's NHS number.
+        Expressed as `<type>|<value>` where `<type>` must be `https://fhir.nhs.uk/Id/nhs-number` and `<value>` must be a [valid NHS number](https://www.datadictionary.nhs.uk/attributes/nhs_number.html).
+      required: true
+      schema:
+        type: string
+        example: "https://fhir.nhs.uk/Id/nhs-number|9000000009"
   schemas:
     Resource:
       type: object
