@@ -3,6 +3,7 @@ import json
 import os
 import pprint
 import uuid
+from decimal import Decimal
 
 import pytest
 
@@ -296,7 +297,7 @@ def test_get_s_flag_patient(
     with open(
         f"{current_directory}/../lambda_code/tests/sample_data/sample_immunization_event.json"
     ) as f:
-        imms_to_create = json.load(f)
+        imms_to_create = json.load(f, parse_float=Decimal)
     imms_to_create["contained"][1]["identifier"][0]["value"] = nhs_number
 
     created_imms_result = imms_api.create_immunization(imms_to_create)
