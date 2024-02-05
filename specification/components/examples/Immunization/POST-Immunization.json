@@ -7,6 +7,141 @@
       "value": "an-id"
     }
   ],
+  "contained": [
+    {
+      "resourceType": "QuestionnaireResponse",
+      "questionnaire": "Questionnaire/1",
+      "status": "completed",
+      "item": [
+        {
+          "linkId": "SiteCode",
+          "answer": [
+            {
+              "valueCoding": {
+                "system": "snomed",
+                "code": "M242ND"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "SiteName",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "dummy"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "NhsNumberStatus",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "snomed",
+                "display": "test description"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "LocalPatient",
+          "answer": [
+            {
+              "valueCoding": {
+                "system": "https://supplierABC/identifiers/patient",
+                "code": "ACME-patient123456"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "Consent",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "snomed",
+                "display": "free text"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "CareSetting",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "1127531000000102",
+                "display": "SNOMED-CT Term description Community health services (qualifier value)"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "IpAddress",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "1.0.0.0"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "UserId",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "test123"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "UserName",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "test"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "UserEmail",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "test@gmail.com"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "SubmittedTimeStamp",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "2020-12-14T10:08:15+00:00"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "ReduceValidation",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "False",
+                "display": "test"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "status": "completed",
   "occurrenceDateTime": "2020-12-14T10:08:15+00:00",
   "patient": {

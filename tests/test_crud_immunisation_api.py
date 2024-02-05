@@ -1,9 +1,12 @@
 import copy
+import json
+import os
+import pprint
 import uuid
 
 import pytest
 
-from .configuration.config import valid_nhs_number1
+from .configuration.config import valid_nhs_number1, valid_nhs_number_with_s_flag
 from .example_loader import load_example
 from .immunisation_api import ImmunisationApi
 
@@ -88,6 +91,8 @@ def test_get_event_by_id_not_found_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth
 
     # Act
     result = imms_api.get_immunization_by_id("some-id-that-does-not-exist")
+    if result.status_code != 404:
+        print(result.text)
     res_body = result.json()
 
     # Assert
@@ -213,7 +218,6 @@ def test_update_inconsistent_id_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_he
         "login_form": {"username": "656005750104"},
     }
 )
-@pytest.mark.debug
 def test_update_deleted_imms_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     """updating deleted record will undo the delete"""
     # This behaviour is consistent. Getting a deleted record will result in a 404. An update of a non-existent record
@@ -258,3 +262,89 @@ def test_bad_nhs_number_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
 
     assert result.status_code == 400
     assert res_body["resourceType"] == "OperationOutcome"
+
+
+@pytest.mark.nhsd_apim_authorization(
+    {
+        "access": "healthcare_worker",
+        "level": "aal3",
+        "login_form": {"username": "656005750104"},
+    }
+)
+@pytest.mark.parametrize("nhs_number,is_restricted", [(valid_nhs_number_with_s_flag, True), (valid_nhs_number1, False)])
+def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_number, is_restricted):
+    # Arrange
+    token = nhsd_apim_auth_headers["Authorization"]
+    imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
+
+    # Act
+    # TODO: Replace this with the usual specification example when it is updated.
+    current_directory = os.path.dirname(os.path.realpath(__file__))
+    with open(f"{current_directory}/../lambda_code/tests/sample_data/sample_immunization_event.json") as f:
+        imms_to_create = json.load(f)
+    imms_to_create["patient"]["identifier"]["value"] = nhs_number
+
+    created_imms_result = imms_api.create_immunization(imms_to_create)
+    if created_imms_result.status_code != 201:
+        pprint.pprint(created_imms_result.text)
+        assert created_imms_result.status_code == 201
+    created_imms = created_imms_result.json()
+
+    retrieved_get_imms_result = imms_api.get_immunization_by_id(created_imms["id"])
+    if retrieved_get_imms_result.status_code != 200:
+        pprint.pprint(retrieved_get_imms_result.text)
+        assert retrieved_get_imms_result.status_code == 200
+    retrieved_get_imms = retrieved_get_imms_result.json()
+
+    sample_disease_code = 840539006
+    retrieved_search_imms_result = imms_api.search_immunizations(nhs_number, sample_disease_code)
+    if retrieved_search_imms_result.status_code != 200:
+        pprint.pprint(retrieved_search_imms_result.text)
+        assert retrieved_search_imms_result.status_code == 200
+    retrieved_search_imms = next(imms for imms in retrieved_search_imms_result.json()["entry"]
+                                 if imms["id"] == created_imms["id"])
+
+    all_retrieved_imms = [retrieved_get_imms, retrieved_search_imms]
+
+    imms_api.delete_immunization(created_imms["id"])
+
+    # Assert
+    def get_questionnaire_items(imms):
+        questionnaire = next(contained for contained in imms["contained"]
+                             if contained["questionnaire"] == "Questionnaire/1")
+        return questionnaire["item"]
+
+    def assert_is_not_filtered(imms):
+        imms_items = get_questionnaire_items(imms)
+
+        for key in ["SiteName", "Consent"]:
+            assert key in [item["linkId"] for item in imms_items]
+
+        assert "N2N9I" != next(item for item in imms_items
+                               if item["linkId"] == "SiteCode")["answer"][0]["valueCoding"]["code"]
+        assert "reportOrigin" in imms
+        assert "location" in imms
+        assert all(performer["actor"]["identifier"]["value"] != "N2N9I" for performer in imms["performer"])
+        assert all(performer["actor"]["identifier"]["system"] != "https://fhir.nhs.uk/Id/ods-organization-code"
+                   for performer in imms["performer"])
+
+    def assert_is_filtered(imms):
+        imms_items = get_questionnaire_items(imms)
+
+        for key in ["SiteName", "Consent"]:
+            assert key not in [item["linkId"] for item in imms_items]
+
+        assert "N2N9I" == next(item for item in imms_items
+                               if item["linkId"] == "SiteCode")["answer"][0]["valueCoding"]["code"]
+        assert "reportOrigin" not in imms
+        assert "location" not in imms
+        assert all(performer["actor"]["identifier"]["value"] == "N2N9I" for performer in imms["performer"])
+        assert all(performer["actor"]["identifier"]["system"] == "https://fhir.nhs.uk/Id/ods-organization-code"
+                   for performer in imms["performer"])
+
+    assert_is_not_filtered(created_imms)
+    for retrieved_imms in all_retrieved_imms:
+        if is_restricted:
+            assert_is_filtered(retrieved_imms)
+        else:
+            assert_is_not_filtered(retrieved_imms)

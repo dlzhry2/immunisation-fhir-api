@@ -1,7 +1,7 @@
 import json
 import unittest
 from unittest.mock import create_autospec
-
+import os
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.list import List as FhirList
 from fhir_repository import ImmunizationRepository
@@ -63,6 +63,7 @@ class TestGetImmunization(unittest.TestCase):
         """it should find an Immunization by id"""
         imms_id = "an-id"
         self.imms_repo.get_immunization_by_id.return_value = _create_an_immunization(imms_id).dict()
+        self.pds_service.get_patient_details.return_value = {}
 
         # When
         act_imms = self.fhir_service.get_immunization_by_id(imms_id)
@@ -82,6 +83,23 @@ class TestGetImmunization(unittest.TestCase):
         # Then
         self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
         self.assertEqual(act_imms, None)
+
+    def test_get_immunization_by_id_patient_restricted(self):
+        """it should return a filtered Immunization when patient is restricted"""
+        imms_id = "restricted_id"
+        with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/sample_immunization_event.json", 'r') as immunization_data_file:
+            immunization_data = json.load(immunization_data_file)
+        with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json", 'r') as filtered_immunization_data_file:
+            filtered_immunization = json.load(filtered_immunization_data_file)
+        self.imms_repo.get_immunization_by_id.return_value = immunization_data
+        patient_data = {"meta": {"security": [{"code": "R"}]}}
+        self.fhir_service.pds_service.get_patient_details.return_value = patient_data
+
+        # When
+        act_res = self.fhir_service.get_immunization_by_id(imms_id)
+
+        # Then
+        self.assertEqual(act_res, Immunization.parse_obj(filtered_immunization))
 
 
 class TestCreateImmunization(unittest.TestCase):
@@ -300,6 +318,7 @@ class TestSearchImmunizations(unittest.TestCase):
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [_create_an_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
+        self.pds_service.get_patient_details.return_value = {}
 
         # When
         result = self.fhir_service.search_immunizations("an-id", "a-code")
