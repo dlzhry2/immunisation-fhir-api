@@ -175,8 +175,21 @@ paths:
     post:
       tags:
         - Immunization
-      summary: Create an Immunization resource
+      summary: Record a vaccination given to a patient
       operationId: createImmunization
+      description: |
+        ## Overview
+        Use this endpoint to record the administration of a vaccination
+
+        This endpoint is not availble for when authenticated use patient access
+
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
@@ -190,8 +203,18 @@ paths:
     get:
       tags:
         - Immunization
-      summary: Search for Immunization resources
+      summary: Search for a patient's immunisation records
       operationId: searchImmunization
+      description: |
+        ## Overview
+
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
@@ -208,8 +231,28 @@ paths:
     post:
       tags:
         - Immunization
-      summary: Search for Immunization resources
+      summary: Search for a patient's immunisation records
       operationId: searchViaPostImmunization
+      description: |
+        ## Overview
+        Use this endpoint to search for a patient using thier NHS number.
+
+        The behaviour of this endpoint depends on which access mode you are using:
+
+
+        | Access mode                    | Behaviour                                               |
+        | ------------------------------ | ------------------------------------------------------- |
+        | Application-restricted access  | Only a single unique match returned                     |
+        | Healthcare worker access       | Only a single unique match returned                     |
+        | Patient access                 | It is only possible to return infomation on the patient |
+
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
@@ -232,8 +275,19 @@ paths:
     get:
       tags:
         - Immunization
-      summary: Read an Immunization resource
+      summary: Retrieve a record of an immunisation by its unique identifier 
       operationId: readImmunization
+      description: |
+        ## Overview
+        This endpoint allows you to retrieve the record of a single vaccination by its identifier
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
@@ -250,8 +304,19 @@ paths:
     put:
       tags:
         - Immunization
-      summary: Update an existing Immunization resource
+      summary: Update an existing record of vaccination
       operationId: updateImmunization
+        description: |
+        ## Overview
+
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
@@ -268,8 +333,20 @@ paths:
     delete:
       tags:
         - Immunization
-      summary: Delete an Immunization resource
+      summary: Mark a record of vaccination as being entered in error
       operationId: deleteImmunization
+      description: |
+        ## Overview
+        
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
+
+
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
