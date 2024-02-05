@@ -196,8 +196,6 @@ servers:
 paths:
   /Immunization:
     post:
-      tags:
-        - Immunization
       summary: Record a vaccination given to a patient
       operationId: createImmunization
       description: |
@@ -228,8 +226,6 @@ paths:
         $ref: '#/components/requestBodies/Immunization'
   /Immunization/_search:
     post:
-      tags:
-        - Immunization
       summary: Search for a patient's immunisation records
       operationId: searchViaPostImmunization
       description: |
@@ -273,8 +269,6 @@ paths:
           $ref: '#/components/responses/4XX-imms'
   /Immunization/{id}:
     get:
-      tags:
-        - Immunization
       summary: Retrieve a record of an immunisation by its unique identifier 
       operationId: readImmunization
       description: |
@@ -303,8 +297,6 @@ paths:
         4XX:
           $ref: '#/components/responses/4XX-imms'
     put:
-      tags:
-        - Immunization
       summary: Update a record of vaccination
       operationId: updateImmunization
       description: |
@@ -339,8 +331,6 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/Immunization'
     delete:
-      tags:
-        - Immunization
       summary: Mark a record of vaccination as being entered in error
       operationId: deleteImmunization
       description: |
