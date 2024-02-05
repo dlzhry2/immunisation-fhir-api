@@ -3,6 +3,7 @@ import os
 import re
 import uuid
 from typing import Optional
+from decimal import Decimal
 
 import boto3
 from botocore.config import Config
@@ -10,16 +11,24 @@ from botocore.config import Config
 from cache import Cache
 from fhir_repository import ImmunizationRepository, create_table
 from fhir_service import FhirService, UpdateOutcome
-from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError, \
-    ValidationError
+from models.errors import (
+    Severity,
+    Code,
+    create_operation_outcome,
+    ResourceNotFoundError,
+    UnhandledResponseError,
+    ValidationError,
+)
 from pds_service import PdsService, Authenticator
 
 
 def make_controller(pds_env: str = os.getenv("PDS_ENV", "int")):
     imms_repo = ImmunizationRepository(create_table())
-    boto_config = Config(region_name='eu-west-2')
+    boto_config = Config(region_name="eu-west-2")
     cache = Cache(directory="/tmp")
-    authenticator = Authenticator(boto3.client('secretsmanager', config=boto_config), pds_env, cache)
+    authenticator = Authenticator(
+        boto3.client("secretsmanager", config=boto_config), pds_env, cache
+    )
     pds_service = PdsService(authenticator, pds_env)
 
     service = FhirService(imms_repo=imms_repo, pds_service=pds_service)
@@ -45,16 +54,21 @@ class FhirController:
             return FhirController.create_response(200, resource.json())
         else:
             msg = "The requested resource was not found."
-            id_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                                code=Code.not_found,
-                                                diagnostics=msg)
+            id_error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.not_found,
+                diagnostics=msg,
+            )
             return FhirController.create_response(404, id_error)
 
     def create_immunization(self, aws_event):
         try:
-            imms = json.loads(aws_event["body"])
+            imms = json.loads(aws_event["body"], parse_float=Decimal)
         except json.decoder.JSONDecodeError as e:
-            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+            return self._create_bad_request(
+                f"Request's body contains malformed JSON: {e}"
+            )
 
         try:
             resource = self.fhir_service.create_immunization(imms)
@@ -72,7 +86,9 @@ class FhirController:
         try:
             imms = json.loads(aws_event["body"])
         except json.decoder.JSONDecodeError as e:
-            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+            return self._create_bad_request(
+                f"Request's body contains malformed JSON: {e}"
+            )
 
         try:
             outcome = self.fhir_service.update_immunization(imms_id, imms)
@@ -104,25 +120,37 @@ class FhirController:
         if "nhsNumber" not in params:
             return self._create_bad_request("Query parameter 'nhsNumber' is mandatory")
         if "diseaseType" not in params:
-            return self._create_bad_request("Query parameter 'diseaseType' is mandatory")
+            return self._create_bad_request(
+                "Query parameter 'diseaseType' is mandatory"
+            )
 
-        result = self.fhir_service.search_immunizations(params["nhsNumber"], params["diseaseType"])
+        result = self.fhir_service.search_immunizations(
+            params["nhsNumber"], params["diseaseType"]
+        )
 
         return self.create_response(200, result.json())
 
     def _validate_id(self, _id: str) -> Optional[dict]:
         if not re.match(self.immunization_id_pattern, _id):
-            msg = "the provided event ID is either missing or not in the expected format."
-            return create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                            code=Code.invalid,
-                                            diagnostics=msg)
+            msg = (
+                "the provided event ID is either missing or not in the expected format."
+            )
+            return create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.invalid,
+                diagnostics=msg,
+            )
         else:
             return None
 
     def _create_bad_request(self, message):
-        error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                         code=Code.invalid,
-                                         diagnostics=message)
+        error = create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.invalid,
+            diagnostics=message,
+        )
         return self.create_response(400, error)
 
     @staticmethod
