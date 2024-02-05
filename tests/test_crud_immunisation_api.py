@@ -297,7 +297,7 @@ def test_get_s_flag_patient(
         f"{current_directory}/../lambda_code/tests/sample_data/sample_immunization_event.json"
     ) as f:
         imms_to_create = json.load(f)
-    imms_to_create["patient"]["identifier"]["value"] = nhs_number
+    imms_to_create["contained"][1]["identifier"][0]["value"] = nhs_number
 
     created_imms_result = imms_api.create_immunization(imms_to_create)
     if created_imms_result.status_code != 201:
