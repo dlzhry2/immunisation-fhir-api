@@ -1,4 +1,5 @@
 """Test immunization pre validation rules on the model"""
+
 import unittest
 import os
 import json
@@ -125,6 +126,86 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self,
             valid_json_data,
             field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
+        )
+
+    def test_model_post_patient_name_given(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Patient')].name[0].given
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Patient')].name[0].given"
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
+        )
+
+    def test_model_post_patient_name_family(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Patient')].name[0].family
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Patient')].name[0].family"
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
+        )
+
+    def test_model_post_patient_birth_date(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Patient')].birthDate
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Patient')].birthDate"
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
+        )
+
+    def test_model_post_patient_gender(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Patient')].gender
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Patient')].gender"
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
+        )
+
+    def test_model_post_patient_address_postal_code(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Patient')].address[0].postalCode
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
         )
 
     def test_model_post_occurrence_date_time(self):

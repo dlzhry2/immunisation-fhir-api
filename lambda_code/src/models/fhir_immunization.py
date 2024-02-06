@@ -1,4 +1,5 @@
 """Immunization FHIR R4B validator"""
+
 from typing import Literal
 from fhir.resources.R4B.immunization import Immunization
 from models.fhir_immunization_pre_validators import FHIRImmunizationPreValidators
@@ -355,6 +356,21 @@ class ImmunizationValidator:
             )
             self.immunization.add_root_validator(
                 FHIRImmunizationPostValidators.validate_patient_identifier_value
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_patient_name_given
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_patient_name_family
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_patient_birth_date
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_patient_gender
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_patient_address_postal_code
             )
             self.immunization.add_root_validator(
                 FHIRImmunizationPostValidators.validate_occurrence_date_time
