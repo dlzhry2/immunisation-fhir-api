@@ -11,10 +11,16 @@ from botocore.config import Config
 from cache import Cache
 from fhir_repository import ImmunizationRepository, create_table
 from fhir_service import FhirService, UpdateOutcome
-from models.errors import Severity, Code, create_operation_outcome, ResourceNotFoundError, UnhandledResponseError, \
-    ValidationError
+from models.errors import (
+    Severity,
+    Code,
+    create_operation_outcome,
+    ResourceNotFoundError,
+    UnhandledResponseError,
+    ValidationError,
+)
 from pds_service import PdsService, Authenticator
-import urllib.parse
+from urllib.parse import parse_qs
 
 
 def make_controller(pds_env: str = os.getenv("PDS_ENV", "int")):
@@ -49,9 +55,12 @@ class FhirController:
             return FhirController.create_response(200, resource.json())
         else:
             msg = "The requested resource was not found."
-            id_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                                code=Code.not_found,
-                                                diagnostics=msg)
+            id_error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.not_found,
+                diagnostics=msg,
+            )
             return FhirController.create_response(404, id_error)
 
     def create_immunization(self, aws_event):
@@ -78,7 +87,9 @@ class FhirController:
         try:
             imms = json.loads(aws_event["body"])
         except json.decoder.JSONDecodeError as e:
-            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+            return self._create_bad_request(
+                f"Request's body contains malformed JSON: {e}"
+            )
 
         try:
             outcome = self.fhir_service.update_immunization(imms_id, imms)
@@ -106,65 +117,51 @@ class FhirController:
 
     def search_immunizations(self, aws_event) -> dict:
         http_method = aws_event.get("httpMethod")
-        nhsNumberValue = None
-        diseaseTypeValue = None
-        nhsNumberParam = "-nhsNumber"
-        diseaseTypeParam = "-diseaseType"
+        nhs_number_list = []
+        disease_type_list = []
+        nhs_number_param = "-nhsNumber"
+        disease_type_param = "-diseaseType"
         if http_method == "POST":
-            # Check if the Content-Type is application/x-www-form-urlencoded
             content_type = aws_event.get("headers", {}).get("Content-Type")
             if content_type == "application/x-www-form-urlencoded":
-                # Parse the body of the request
                 body = aws_event["body"]
-                # Decode the base64-encoded body
                 decoded_body = base64.b64decode(body).decode("utf-8")
-                # Parse the decoded body as application/x-www-form-urlencoded
-                parsed_body = urllib.parse.parse_qs(decoded_body)
-                # Access individual form parameters and check if nhsNumber or diseaseType is present
-                nhsNumber_list = parsed_body.get(nhsNumberParam)
-                if nhsNumber_list:
-                    nhsNumberValue = nhsNumber_list[0]
+                parsed_body = parse_qs(decoded_body)
+                nhs_number_list = parsed_body.get(nhs_number_param)
+                disease_type_list = parsed_body.get(disease_type_param)
+                
+        parsed_query_params = aws_event.get("queryStringParameters", {})
+        # AWS API Gateway doesnot support multiple query string parameters with the same name, so it will not be array
+        if not parsed_query_params.get(nhs_number_param) in nhs_number_list:
+            nhs_number_list.append(parsed_query_params.get(nhs_number_param))
 
-                diseaseType_list = parsed_body.get(diseaseTypeParam)
-                if diseaseType_list:
-                    diseaseTypeValue = diseaseType_list[0]
-                # Continue processing the request
-        params = aws_event["queryStringParameters"]
-        # If nhsNumber was not present in body then it should be in params irresepective of GET/POST
-        if nhsNumberValue is None:
-            if params is None or nhsNumberParam not in params:
-                return self._create_bad_request(
-                    f"Search Parameter {nhsNumberParam} is mandatory"
-                )
-            else:
-                nhsNumberValue = params[nhsNumberParam]
-        else:
-            #If NhsNumber was present in body as well as in QueryParams, then both values should be same
-            if nhsNumberParam in params:
-                if nhsNumberValue!=params[nhsNumberParam]:
-                    return self._create_bad_request(
-                    f"Search Parameter {nhsNumberParam} is different in body and QueryParams"
-                )
+        if not parsed_query_params.get(disease_type_param) in disease_type_list:
+            disease_type_list.append(parsed_query_params.get(disease_type_param))
 
-        # If diseaseType was not present in body then it should be in params irresepective of GET/POST
-        if diseaseTypeValue is None:
-            if params is None or diseaseTypeParam not in params:
-                return self._create_bad_request(
-                        f"Search Parameter {diseaseTypeParam} is mandatory"
-                )
-            else:
-                diseaseTypeValue = params[diseaseTypeParam]
-        else:
-            #If diseaseType was present in body as well as in QueryParams, then both values should be same
-            if diseaseTypeParam in params:
-                if diseaseTypeValue!=params[diseaseTypeParam]:
-                    return self._create_bad_request(
-                    f"Search Parameter {diseaseTypeParam} is different in body and QueryParams"
-                )
-        #All search params should be prepared here for Self link
-        search_params=f"{nhsNumberParam}={nhsNumberValue}&{diseaseTypeParam}={diseaseTypeValue}"
+        if not nhs_number_list or (
+            len(nhs_number_list) == 1 and nhs_number_list[0] is None
+        ):
+            return self._create_bad_request(
+                f"Search Parameter {nhs_number_param} is mandatory"
+            )
+        if len(nhs_number_list) > 1:
+            return self._create_bad_request(
+                f"Search Parameter {nhs_number_param} can have only one value"
+            )
+
+        if not disease_type_list or (
+            len(disease_type_list) == 1 and disease_type_list[0] is None
+        ):
+            return self._create_bad_request(
+                f"Search Parameter {disease_type_param} is mandatory"
+            )
+        if len(disease_type_list) > 1:
+            return self._create_bad_request(
+                f"Search Parameter {disease_type_param} can have only one value"
+            )
+        search_params = f"{nhs_number_param}={nhs_number_list[0]}&{disease_type_param}={disease_type_list[0]}"
         result = self.fhir_service.search_immunizations(
-            nhsNumberValue, diseaseTypeValue, search_params
+            nhs_number_list[0], disease_type_list[0], search_params
         )
         return self.create_response(200, result.json())
 
@@ -183,9 +180,12 @@ class FhirController:
             return None
 
     def _create_bad_request(self, message):
-        error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
-                                         code=Code.invalid,
-                                         diagnostics=message)
+        error = create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.invalid,
+            diagnostics=message,
+        )
         return self.create_response(400, error)
 
     @staticmethod

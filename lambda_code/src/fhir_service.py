@@ -105,7 +105,7 @@ class FhirService:
         ]
         fhir_bundle = FhirBundle(
             resourceType="Bundle",
-            type="searchset",  # Set the type to "searchset"
+            type="searchset", 
             entry=entries,
         )
         url = f"{get_service_url()}/Immunization?{params}"

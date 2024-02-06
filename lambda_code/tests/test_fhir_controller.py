@@ -291,8 +291,8 @@ class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
         self.controller = FhirController(self.service)
-        self.nhsSearchParam="-nhsNumber"
-        self.diseaseTypeSearchParam="-diseaseType"
+        self.nhs_search_param="-nhsNumber"
+        self.disease_type_search_param="-diseaseType"
 
     def test_get_search_immunizations(self):
         """it should search based on nhsNumber and diseaseType"""
@@ -301,10 +301,10 @@ class TestSearchImmunizations(unittest.TestCase):
 
         nhs_number = "an-patient-id"
         disease_type = "a-disease-type"
-        params=f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
+        params=f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_type}"
         lambda_event = {"queryStringParameters": {
-            self.diseaseTypeSearchParam: disease_type,
-            self.nhsSearchParam: nhs_number
+            self.disease_type_search_param: disease_type,
+            self.nhs_search_param: nhs_number
         }}
 
         # When
@@ -323,11 +323,11 @@ class TestSearchImmunizations(unittest.TestCase):
 
         nhs_number = "an-patient-id"
         disease_type = "a-disease-type"
-        params=f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
+        params=f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_type}"
         # Construct the application/x-www-form-urlencoded body
         body = {
-            self.nhsSearchParam: nhs_number,
-            self.diseaseTypeSearchParam: disease_type
+            self.nhs_search_param: nhs_number,
+            self.disease_type_search_param: disease_type
         }
         encoded_body = urlencode(body)
         # Base64 encode the body
@@ -340,8 +340,8 @@ class TestSearchImmunizations(unittest.TestCase):
                 "Content-Type": "application/x-www-form-urlencoded"
             },
             "body": base64_encoded_body,
-            "queryStringParameters":{self.diseaseTypeSearchParam: disease_type,
-            self.nhsSearchParam: nhs_number}
+            "queryStringParameters":{self.disease_type_search_param: disease_type,
+            self.nhs_search_param: nhs_number}
         }
         # When
         response = self.controller.search_immunizations(lambda_event)
@@ -359,11 +359,11 @@ class TestSearchImmunizations(unittest.TestCase):
 
         nhs_number = "an-patient-id"
         disease_type = "a-disease-type"
-        params=f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
+        params=f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_type}"
         # Construct the application/x-www-form-urlencoded body
         body = {
-            "-nhsNumber": nhs_number,
-            "-diseaseType": disease_type
+            self.nhs_search_param: nhs_number,
+            self.disease_type_search_param: disease_type
         }
         encoded_body = urlencode(body)
         # Base64 encode the body
@@ -376,8 +376,9 @@ class TestSearchImmunizations(unittest.TestCase):
                 "Content-Type": "application/x-www-form-urlencoded"
             },
             "body": base64_encoded_body,
-            "queryStringParameters":{self.diseaseTypeSearchParam: disease_type,
-            self.nhsSearchParam: nhs_number}
+            "queryStringParameters":{self.disease_type_search_param: disease_type,
+            self.nhs_search_param: nhs_number},
+            
         }
         # When
         response = self.controller.search_immunizations(lambda_event)
@@ -396,34 +397,33 @@ class TestSearchImmunizations(unittest.TestCase):
         disease_type1 = "a-disease-type"
         nhs_number2 = "an-patient-id2"
         disease_type2 = "a-disease-type2"
-        # Construct the application/x-www-form-urlencoded body
         body = {
-            "-nhsNumber": nhs_number2,
-            "-diseaseType": disease_type2
+            self.nhs_search_param: nhs_number2,
+            self.disease_type_search_param: disease_type2
         }
         encoded_body = urlencode(body)
-        # Base64 encode the body
         base64_encoded_body = base64.b64encode(encoded_body.encode("utf-8")).decode("utf-8")
 
-        # Construct the lambda event
         lambda_event = {
             "httpMethod": "POST",
             "headers": {
                 "Content-Type": "application/x-www-form-urlencoded"
             },
             "body": base64_encoded_body,
-            "queryStringParameters":{self.diseaseTypeSearchParam: disease_type1,
-            self.nhsSearchParam: nhs_number1}
+            "queryStringParameters":{self.disease_type_search_param: disease_type1,
+            self.nhs_search_param: nhs_number1}
         }
         # When
         response = self.controller.search_immunizations(lambda_event)
         # Then
         self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
     def test_nhs_number_is_mandatory(self):
         """nhsNumber is a mandatory query param"""
         lambda_event = {"queryStringParameters": {
-            "-diseaseType": "a-disease-type",
+            self.disease_type_search_param: "a-disease-type",
         }}
 
         response = self.controller.search_immunizations(lambda_event)
@@ -436,7 +436,7 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_diseaseType_is_mandatory(self):
         """diseaseType is a mandatory query param"""
         lambda_event = {"queryStringParameters": {
-            "-nhsNumber": "an-id",
+            self.nhs_search_param: "an-id",
         }}
 
         response = self.controller.search_immunizations(lambda_event)
