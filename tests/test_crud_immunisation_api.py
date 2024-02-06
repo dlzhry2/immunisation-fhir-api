@@ -312,7 +312,7 @@ def test_get_s_flag_patient(
         assert retrieved_get_imms_result.status_code == 200
     retrieved_get_imms = retrieved_get_imms_result.json()
 
-    sample_disease_code = 840539006
+    sample_disease_code = "COVID-19"
     retrieved_search_imms_result = imms_api.search_immunizations(
         nhs_number, sample_disease_code
     )
@@ -334,56 +334,52 @@ def test_get_s_flag_patient(
         questionnaire = next(
             contained
             for contained in imms["contained"]
-            if contained["questionnaire"] == "Questionnaire/1"
+            if contained["resourceType"] == "QuestionnaireResponse"
         )
         return questionnaire["item"]
 
     def assert_is_not_filtered(imms):
         imms_items = get_questionnaire_items(imms)
 
-        for key in ["SiteName", "Consent"]:
+        for key in ["Consent"]:
             assert key in [item["linkId"] for item in imms_items]
 
-        assert (
-            "N2N9I"
-            != next(item for item in imms_items if item["linkId"] == "SiteCode")[
-                "answer"
-            ][0]["valueCoding"]["code"]
+        performer_actor_organization = next(
+            (
+                item
+                for item in imms["performer"]
+                if item.get("actor", {}).get("type") == "Organization"
+            ),
         )
+
+        assert "N2N9I" != performer_actor_organization["actor"]["identifier"]["value"]
         assert "reportOrigin" in imms
         assert "location" in imms
-        assert all(
-            performer["actor"]["identifier"]["value"] != "N2N9I"
-            for performer in imms["performer"]
-        )
-        assert all(
-            performer["actor"]["identifier"]["system"]
-            != "https://fhir.nhs.uk/Id/ods-organization-code"
-            for performer in imms["performer"]
+        assert (
+            "https://fhir.nhs.uk/Id/ods-organization-code"
+            != performer_actor_organization["actor"]["identifier"]["system"]
         )
 
     def assert_is_filtered(imms):
         imms_items = get_questionnaire_items(imms)
 
-        for key in ["SiteName", "Consent"]:
+        for key in ["Consent"]:
             assert key not in [item["linkId"] for item in imms_items]
 
-        assert (
-            "N2N9I"
-            == next(item for item in imms_items if item["linkId"] == "SiteCode")[
-                "answer"
-            ][0]["valueCoding"]["code"]
+        performer_actor_organization = next(
+            (
+                item
+                for item in imms["performer"]
+                if item.get("actor", {}).get("type") == "Organization"
+            ),
         )
+
+        assert "N2N9I" == performer_actor_organization["actor"]["identifier"]["value"]
         assert "reportOrigin" not in imms
         assert "location" not in imms
-        assert all(
-            performer["actor"]["identifier"]["value"] == "N2N9I"
-            for performer in imms["performer"]
-        )
-        assert all(
-            performer["actor"]["identifier"]["system"]
-            == "https://fhir.nhs.uk/Id/ods-organization-code"
-            for performer in imms["performer"]
+        assert (
+            "https://fhir.nhs.uk/Id/ods-organization-code"
+            == performer_actor_organization["actor"]["identifier"]["system"]
         )
 
     assert_is_not_filtered(created_imms)
