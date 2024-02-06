@@ -392,38 +392,44 @@ class FHIRImmunizationPostValidators:
         except (KeyError, IndexError, AttributeError, MandatoryError):
             practitioner_identifier_system = None
 
+        # Set up mandation defaults
+        mandation = vaccine_type_applicable_validations[
+            "practitioner_identifier_system"
+        ]
+        mandatory_error_message = None  # If mandatory_error_message is none, a standard error message will be used
+
         # Handle conditional mandation logic
         try:
-            contained_practitioner = (
+            practitioner_identifier_value = (
                 [x for x in values["contained"] if x.resource_type == "Practitioner"][0]
                 .identifier[0]
                 .value
             )
 
-            # If practioner_identifier_value is present and vaccine type is COVID-19 or FLU,
-            # t then practitioner_identifier_system is mandatory
-            if cls.vaccine_type == "COVID-19" or cls.vaccine_type == "FLU":
-                mandation = Mandation.mandatory
-
-            if practitioner_identifier_system is None:
-                if mandation == Mandation.mandatory:
-                    raise MandatoryError(
-                        f"{field_location} is mandatory when contained"
-                        + "[?(@.resourceType=='Practitioner')].identifier[0].system is present"
-                    )
-
-            if mandation == Mandation.not_applicable:
-                raise NotApplicableError(
-                    f"{field_location} must not be provided for this vaccine type"
-                )
-
         except (KeyError, IndexError, AttributeError):
-            check_mandation_requirements_met(
-                field_value=practitioner_identifier_system,
-                field_location="contained[?(@.resourceType=='Practitioner')].identifier[0].system",
-                vaccine_type=cls.vaccine_type,
-                mandation_key="practitioner_identifier_system",
+            practitioner_identifier_value = None
+
+        # If practioner_identifier_value is present and vaccine type is COVID-19 or FLU,
+        # then practitioner_identifier_system is mandatory
+        if practitioner_identifier_value and (
+            cls.vaccine_type == "COVID-19" or cls.vaccine_type == "FLU"
+        ):
+            mandation = Mandation.mandatory
+            mandatory_error_message = (
+                f"{field_location} is mandatory when contained."
+                + "[?(@.resourceType=='Practitioner')].identifier[0].system is present"
+                + f" and vaccination type is {cls.vaccine_type}"
             )
+        else:
+            mandation = Mandation.optional
+
+        check_mandation_requirements_met(
+            field_value=practitioner_identifier_system,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation=mandation,
+            mandatory_error_message=mandatory_error_message,
+        )
 
         return values
 
@@ -496,22 +502,20 @@ class FHIRImmunizationPostValidators:
             "reportOrigin",
             attribute="text",
         )
+
+        # Handle conditional mandation logic
         mandation = vaccine_type_applicable_validations["report_origin_text"][
             cls.vaccine_type
         ]
-
         if not values["primarySource"]:
             mandation = Mandation.mandatory
 
-        if report_origin_text is None:
-            if mandation == Mandation.mandatory:
-                raise MandatoryError(
-                    f"{field_location} is mandatory when primarySource is false"
-                )
-
-        if mandation == Mandation.not_applicable:
-            raise NotApplicableError(
-                f"{field_location} must not be provided for this vaccine type"
-            )
+        check_mandation_requirements_met(
+            field_value=report_origin_text,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation=mandation,
+            mandatory_error_message=f"{field_location} is mandatory when primarySource is false",
+        )
 
         return values

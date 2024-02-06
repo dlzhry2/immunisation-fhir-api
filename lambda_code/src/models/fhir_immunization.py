@@ -396,9 +396,9 @@ class ImmunizationValidator:
             self.immunization.add_root_validator(
                 FHIRImmunizationPostValidators.validate_practitioner_identifier_value
             )
-            # self.immunization.add_root_validator(
-            #     FHIRImmunizationPostValidators.validate_practitioner_identifier_system
-            # )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_practitioner_identifier_system
+            )
             self.immunization.add_root_validator(
                 FHIRImmunizationPostValidators.validate_performer_sds_job_role
             )
