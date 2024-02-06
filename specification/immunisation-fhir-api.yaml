@@ -269,53 +269,6 @@ paths:
                 $ref: '#/components/schemas/Bundle'
         4XX:
           $ref: '#/components/responses/4XX-imms'
-    post:
-      summary: Search for a patient's immunisation records
-      operationId: searchViaPostImmunization
-      description: |
-        ## Overview
-        Use this endpoint to search for a patient using thier NHS number.
-
-        The GET method is preferred.
-
-        The behaviour of this endpoint depends on which access mode you are using:
-
-
-        | Access mode                    | Behaviour                                               |
-        | ------------------------------ | ------------------------------------------------------- |
-        | Application-restricted access  | Only a single unique match returned                     |
-        | Healthcare worker access       | Only a single unique match returned                     |
-        | Patient access                 | It is only possible to return information on the patient |
-
-        ## Sandbox testing
-        You can test the following scenarios in our sandbox environment:
-
-        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
-        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
-        |                                         |                                                                                                                                                                 |                                                                         |
-
-      parameters:
-        - $ref: '#/components/parameters/CorrelationID'
-        - $ref: '#/components/parameters/RequestID'
-        - $ref: '#/components/parameters/PatientIdentifier'
-        - $ref: '#/components/parameters/ImmunizationTarget'
-        - $ref: '#/components/parameters/DateTo'
-        - $ref: '#/components/parameters/DateFrom'
-      requestBody:
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties: { }
-      responses:
-        "200":
-          description: Search immunisation operation successful
-          content:
-            application/fhir+json:
-              schema:
-                $ref: '#/components/schemas/Bundle'
-        4XX:
-          $ref: '#/components/responses/4XX-imms'
   /Immunization/{id}:
     get:
       summary: Retrieve a record of an immunisation by its unique identifier 
