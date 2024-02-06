@@ -6,7 +6,6 @@ import uuid
 
 import pytest
 
-from decimal import Decimal
 from .configuration.config import valid_nhs_number1, valid_nhs_number_with_s_flag
 from .example_loader import load_example
 from .immunisation_api import ImmunisationApi
