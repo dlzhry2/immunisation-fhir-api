@@ -110,7 +110,7 @@ paths:
             application/fhir+json:
               schema:
                 type: object
-  /event/_search:
+  /Immunization/_search:
     post:
       x-amazon-apigateway-integration:
         uri: "${search_event.lambda_arn}"

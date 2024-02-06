@@ -129,36 +129,35 @@ class FhirController:
                 parsed_body = parse_qs(decoded_body)
                 nhs_number_list = parsed_body.get(nhs_number_param)
                 disease_type_list = parsed_body.get(disease_type_param)
-                
         parsed_query_params = aws_event.get("queryStringParameters", {})
-        # AWS API Gateway doesnot support multiple query string parameters with the same name, so it will not be array
-        if not parsed_query_params.get(nhs_number_param) in nhs_number_list:
-            nhs_number_list.append(parsed_query_params.get(nhs_number_param))
+        if parsed_query_params:
+            if parsed_query_params.get(nhs_number_param) and not parsed_query_params.get(nhs_number_param) in nhs_number_list:
+                nhs_number_list.append(parsed_query_params.get(nhs_number_param))
+            if parsed_query_params.get(disease_type_param) and not parsed_query_params.get(disease_type_param) in disease_type_list:
+                disease_type_list.append(parsed_query_params.get(disease_type_param))
+            
+            if not nhs_number_list or (
+                len(nhs_number_list) == 1 and nhs_number_list[0] is None
+            ): 
+                return self._create_bad_request(
+                    f"Search Parameter {nhs_number_param} is mandatory"
+                )
+            if len(nhs_number_list) > 1:
+                return self._create_bad_request(
+                    f"Search Parameter {nhs_number_param} can have only one value"
+                )
 
-        if not parsed_query_params.get(disease_type_param) in disease_type_list:
-            disease_type_list.append(parsed_query_params.get(disease_type_param))
-
-        if not nhs_number_list or (
-            len(nhs_number_list) == 1 and nhs_number_list[0] is None
-        ):
-            return self._create_bad_request(
-                f"Search Parameter {nhs_number_param} is mandatory"
-            )
-        if len(nhs_number_list) > 1:
-            return self._create_bad_request(
-                f"Search Parameter {nhs_number_param} can have only one value"
-            )
-
-        if not disease_type_list or (
-            len(disease_type_list) == 1 and disease_type_list[0] is None
-        ):
-            return self._create_bad_request(
-                f"Search Parameter {disease_type_param} is mandatory"
-            )
-        if len(disease_type_list) > 1:
-            return self._create_bad_request(
-                f"Search Parameter {disease_type_param} can have only one value"
-            )
+            if not disease_type_list or (
+                len(disease_type_list) == 1 and disease_type_list[0] is None
+            ):
+                return self._create_bad_request(
+                    f"Search Parameter {disease_type_param} is mandatory"
+                )
+            if len(disease_type_list) > 1:
+                return self._create_bad_request(
+                    f"Search Parameter {disease_type_param} can have only one value"
+                )
+         
         search_params = f"{nhs_number_param}={nhs_number_list[0]}&{disease_type_param}={disease_type_list[0]}"
         result = self.fhir_service.search_immunizations(
             nhs_number_list[0], disease_type_list[0], search_params

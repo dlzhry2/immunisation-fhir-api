@@ -339,9 +339,7 @@ class TestSearchImmunizations(unittest.TestCase):
             "headers": {
                 "Content-Type": "application/x-www-form-urlencoded"
             },
-            "body": base64_encoded_body,
-            "queryStringParameters":{self.disease_type_search_param: disease_type,
-            self.nhs_search_param: nhs_number}
+            "body": base64_encoded_body
         }
         # When
         response = self.controller.search_immunizations(lambda_event)
