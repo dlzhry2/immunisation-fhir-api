@@ -32,7 +32,7 @@ def get_service_url(service_env: str = os.getenv("IMMUNIZATION_ENV"),
     non_prod = ["internal-dev", "int", "sandbox"]
     if service_env in non_prod:
         subdomain = f"{service_env}."
-    if service_env == "prod":
+    elif service_env == "prod":
         subdomain = ""
     else:
         subdomain = "internal-dev."
