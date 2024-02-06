@@ -51,7 +51,7 @@ class FhirService:
 
         return Immunization.parse_obj(imms)
 
-    def update_immunization(self, imms_id: str, immunization: dict) -> UpdateOutcome:
+    def update_immunization(self, imms_id: str, immunization: dict) -> (UpdateOutcome, Immunization):
         if immunization.get('id', imms_id) != imms_id:
             raise InconsistentIdError(imms_id=imms_id)
         immunization['id'] = imms_id
@@ -64,11 +64,12 @@ class FhirService:
         patient = self._validate_patient(immunization)
 
         try:
-            self.immunization_repo.update_immunization(imms_id, immunization, patient)
-            return UpdateOutcome.UPDATE
+            imms = self.immunization_repo.update_immunization(imms_id, immunization, patient)
+            return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
         except ResourceNotFoundError:
-            self.immunization_repo.create_immunization(immunization, patient)
-            return UpdateOutcome.CREATE
+            imms = self.immunization_repo.create_immunization(immunization, patient)
+
+            return UpdateOutcome.CREATE, Immunization.parse_obj(imms)
 
     def delete_immunization(self, imms_id) -> Immunization:
         """Delete an Immunization if it exits and return the ID back if successful.

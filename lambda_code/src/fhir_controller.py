@@ -27,6 +27,18 @@ def make_controller(pds_env: str = os.getenv("PDS_ENV", "int")):
     return FhirController(fhir_service=service)
 
 
+def get_service_url(service_env: str = os.getenv("IMMUNIZATION_ENV"),
+                    service_base_path: str = os.getenv("IMMUNIZATION_BASE_PATH")):
+    non_prod = ["internal-dev", "int", "sandbox"]
+    if service_env in non_prod:
+        subdomain = f"{service_env}."
+    if service_env == "prod":
+        subdomain = ""
+    else:
+        subdomain = "internal-dev."
+    return f"https://{subdomain}api.service.nhs.uk/{service_base_path}"
+
+
 class FhirController:
     immunization_id_pattern = r"^[A-Za-z0-9\-.]{1,64}$"
 
@@ -58,7 +70,8 @@ class FhirController:
 
         try:
             resource = self.fhir_service.create_immunization(imms)
-            return self.create_response(201, resource.json())
+            location = f"{get_service_url()}/Immunization/{resource.id}"
+            return self.create_response(201, None, {"Location": location})
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
         except UnhandledResponseError as unhandled_error:
@@ -75,11 +88,12 @@ class FhirController:
             return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
 
         try:
-            outcome = self.fhir_service.update_immunization(imms_id, imms)
+            outcome, resource = self.fhir_service.update_immunization(imms_id, imms)
             if outcome == UpdateOutcome.UPDATE:
                 return self.create_response(200)
             elif outcome == UpdateOutcome.CREATE:
-                return self.create_response(201)
+                location = f"{get_service_url()}/Immunization/{resource.id}"
+                return self.create_response(201, None, {"Location": location})
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
 
@@ -91,8 +105,8 @@ class FhirController:
             return FhirController.create_response(400, id_error)
 
         try:
-            resource = self.fhir_service.delete_immunization(imms_id)
-            return self.create_response(200, resource.json())
+            self.fhir_service.delete_immunization(imms_id)
+            return self.create_response(204)
         except ResourceNotFoundError as not_found:
             return self.create_response(404, not_found.to_operation_outcome())
         except UnhandledResponseError as unhandled_error:
@@ -126,16 +140,17 @@ class FhirController:
         return self.create_response(400, error)
 
     @staticmethod
-    def create_response(status_code, body=None):
-        response = {
-            "statusCode": status_code,
-            "headers": {},
-        }
+    def create_response(status_code, body=None, headers=None):
         if body:
             if isinstance(body, dict):
                 body = json.dumps(body)
-            response["body"] = body
-            response["headers"]["Content-Type"] = "application/fhir+json"
-            return response
-        else:
-            return response
+            if headers:
+                headers["Content-Type"] = "application/fhir+json"
+            else:
+                headers = {"Content-Type": "application/fhir+json"}
+
+        return {
+            "statusCode": status_code,
+            "headers": headers if headers else {},
+            **({"body": body} if body else {}),
+        }
