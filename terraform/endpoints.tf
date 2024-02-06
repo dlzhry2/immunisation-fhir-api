@@ -23,10 +23,10 @@ locals {
     ]
     imms_table_name      = aws_dynamodb_table.test-dynamodb-table.name
     imms_lambda_env_vars = {
-        "DYNAMODB_TABLE_NAME" = local.imms_table_name,
-        "PDS_ENV"             = local.environment == "prod" ? "prod" : "int"
+        "DYNAMODB_TABLE_NAME"    = local.imms_table_name,
         "IMMUNIZATION_ENV"       = local.environment,
         "IMMUNIZATION_BASE_PATH" = strcontains(local.environment, "pr-") ? "immunisation-fhir-api-${local.environment}" : "immunisation-fhir-api"
+        "PDS_ENV"                = local.environment == "prod" ? "prod" : "int",
     }
 }
 data "aws_iam_policy_document" "imms_policy_document" {
