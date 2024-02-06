@@ -312,11 +312,147 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    # TODO: Performing professional forename
-    # TODO: Performing professional surname
-    # TODO: Performing professional body reg code
-    # TODO: Performing professional body reg uri
-    # TODO: Performing professional sds job role name
+    @classmethod
+    def validate_practitioner_name_given(cls, values: dict) -> dict:
+        "Validate that practitioner_name_given is present or absent, as required"
+        try:
+            contained_practitioner = [
+                x for x in values["contained"] if x.resource_type == "Practitioner"
+            ][0]
+
+            practitioner_name_given = contained_practitioner.name[0].given
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            practitioner_name_given = None
+
+        check_mandation_requirements_met(
+            field_value=practitioner_name_given,
+            field_location="contained[?(@.resourceType=='Practitioner')].name[0].given",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="practitioner_name_given",
+        )
+        return values
+
+    @classmethod
+    def validate_practitioner_name_family(cls, values: dict) -> dict:
+        "Validate that practitioner_name_family is present or absent, as required"
+        try:
+            contained_practitioner = [
+                x for x in values["contained"] if x.resource_type == "Practitioner"
+            ][0]
+
+            practitioner_name_family = contained_practitioner.name[0].family
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            practitioner_name_family = None
+
+        check_mandation_requirements_met(
+            field_value=practitioner_name_family,
+            field_location="contained[?(@.resourceType=='Practitioner')].name[0].family",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="practitioner_name_family",
+        )
+        return values
+
+    @classmethod
+    def validate_practitioner_identifier_value(cls, values: dict) -> dict:
+        "Validate that practitioner_identifier_value is present or absent, as required"
+        try:
+            contained_practitioner = [
+                x for x in values["contained"] if x.resource_type == "Practitioner"
+            ][0]
+
+            practitioner_identifier_value = contained_practitioner.identifier[0].value
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            practitioner_identifier_value = None
+
+        check_mandation_requirements_met(
+            field_value=practitioner_identifier_value,
+            field_location="contained[?(@.resourceType=='Practitioner')].identifier[0].value",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="practitioner_identifier_value",
+        )
+        return values
+
+    # TODO: Check with imms team r.e. Conditional mandatory logic
+    @classmethod
+    def validate_practitioner_identifier_system(cls, values: dict) -> dict:
+        "Validate that practitioner_identifier_system is present or absent, as required"
+        field_location = (
+            "contained[?(@.resourceType=='Practitioner')].identifier[0].system"
+        )
+
+        try:
+            contained_practitioner = [
+                x for x in values["contained"] if x.resource_type == "Practitioner"
+            ][0]
+
+            practitioner_identifier_system = contained_practitioner.identifier[0].system
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            practitioner_identifier_system = None
+
+        # Handle conditional mandation logic
+        try:
+            contained_practitioner = (
+                [x for x in values["contained"] if x.resource_type == "Practitioner"][0]
+                .identifier[0]
+                .value
+            )
+
+            # If practioner_identifier_value is present and vaccine type is COVID-19 or FLU,
+            # t then practitioner_identifier_system is mandatory
+            if cls.vaccine_type == "COVID-19" or cls.vaccine_type == "FLU":
+                mandation = Mandation.mandatory
+
+            if practitioner_identifier_system is None:
+                if mandation == Mandation.mandatory:
+                    raise MandatoryError(
+                        f"{field_location} is mandatory when contained"
+                        + "[?(@.resourceType=='Practitioner')].identifier[0].system is present"
+                    )
+
+            if mandation == Mandation.not_applicable:
+                raise NotApplicableError(
+                    f"{field_location} must not be provided for this vaccine type"
+                )
+
+        except (KeyError, IndexError, AttributeError):
+            check_mandation_requirements_met(
+                field_value=practitioner_identifier_system,
+                field_location="contained[?(@.resourceType=='Practitioner')].identifier[0].system",
+                vaccine_type=cls.vaccine_type,
+                mandation_key="practitioner_identifier_system",
+            )
+
+        return values
+
+    @classmethod
+    def validate_performer_sds_job_role(cls, values: dict) -> dict:
+        "Validate that performer_sds_job_role is present or absent, as required"
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='PerformerSDSJobRole')].answer[0].valueString"
+        )
+
+        try:
+            performer_sds_job_role = (
+                get_generic_questionnaire_response_value_from_model(
+                    values, "PerformerSDSJobROle", "valueString"
+                )
+            )
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            performer_sds_job_role = None
+
+        check_mandation_requirements_met(
+            field_value=performer_sds_job_role,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="performer_sds_job_role",
+        )
+        return values
 
     @classmethod
     def validate_recorded(cls, values: dict) -> dict:
