@@ -186,7 +186,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    # TODO: Person postcode
     @classmethod
     def validate_patient_address_postal_code(cls, values: dict) -> dict:
         "Validate that patient_address_postal_code is present or absent, as required"
@@ -322,7 +321,7 @@ class FHIRImmunizationPostValidators:
 
             practitioner_name_given = contained_practitioner.name[0].given
 
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             practitioner_name_given = None
 
         check_mandation_requirements_met(
@@ -343,7 +342,7 @@ class FHIRImmunizationPostValidators:
 
             practitioner_name_family = contained_practitioner.name[0].family
 
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             practitioner_name_family = None
 
         check_mandation_requirements_met(

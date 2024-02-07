@@ -23,11 +23,9 @@ class TestImmunizationModelPostValidationRulesValidData(unittest.TestCase):
         """Test that each piece of valid sample data passes post validation"""
         data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
         # TODO: Clarify rules to allow all commented out files to pass
-        # TODO: Fix the practitioner_name_family and practioner_name_given
-        # issues, which cause the flu data to fail
         files_to_test = [
             "sample_covid_immunization_event.json",
-            # "sample_flu_immunization_event.json",
+            "sample_flu_immunization_event.json",
             # # "sample_immunization_not_done_event.json",
             "sample_immunization_reduce_validation_event.json",
         ]
