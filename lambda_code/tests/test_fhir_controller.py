@@ -381,6 +381,24 @@ class TestSearchImmunizations(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
 
+    def test_post_empty_body_search_immunizations(self):
+        """it should return bad request if nhsNumber and diseaseType are neither given in body nor in queryParams"""
+        search_result = Bundle.construct()
+        self.service.search_immunizations.return_value = search_result
+        # Construct the lambda event
+        lambda_event = {
+            "httpMethod": "POST",
+            "headers": {
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+        }
+        # When
+        response = self.controller.search_immunizations(lambda_event)
+        # Then
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")
+
 
     def test_repeated_same_params_search_immunizations(self):
         """it should search based on nhsNumber and diseaseType irresepctive of their repition in params and body"""
@@ -408,6 +426,40 @@ class TestSearchImmunizations(unittest.TestCase):
             "body": base64_encoded_body,
             "queryStringParameters":{self.disease_type_search_param: disease_type,
             self.nhs_search_param: nhs_number},
+            
+        }
+        # When
+        response = self.controller.search_immunizations(lambda_event)
+        # Then
+        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type,params)
+        self.assertEqual(response["statusCode"], 200)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "Bundle")
+
+    def test_mixed_params_search_immunizations(self):
+        """it should search based on nhsNumber in body and diseaseType in params"""
+        search_result = Bundle.construct()
+        self.service.search_immunizations.return_value = search_result
+
+        nhs_number = "an-patient-id"
+        disease_type = "a-disease-type"
+        params=f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_type}"
+        # Construct the application/x-www-form-urlencoded body
+        body = {
+            self.nhs_search_param: nhs_number
+        }
+        encoded_body = urlencode(body)
+        # Base64 encode the body
+        base64_encoded_body = base64.b64encode(encoded_body.encode("utf-8")).decode("utf-8")
+
+        # Construct the lambda event
+        lambda_event = {
+            "httpMethod": "POST",
+            "headers": {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            "body": base64_encoded_body,
+            "queryStringParameters":{self.disease_type_search_param: disease_type},
             
         }
         # When
