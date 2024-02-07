@@ -12,7 +12,7 @@ class TestUpdateImmunizations(unittest.TestCase):
         self.controller = create_autospec(FhirController)
 
     def test_update_immunization(self):
-        """it should return 200 if update is successful"""
+        """it should call service update method"""
         lambda_event = {"pathParameters": {"id": "an-id"}}
         exp_res = {"a-key": "a-value"}
 
