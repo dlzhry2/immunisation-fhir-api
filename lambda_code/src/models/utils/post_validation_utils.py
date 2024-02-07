@@ -45,8 +45,8 @@ class PostValidation:
         vaccine_type,
         mandation: str = None,
         mandation_key: str = None,
-        mandatory_error_message: str = None,
-        not_applicable_error_message: str = None,
+        bespoke_mandatory_error_message: str = None,
+        bespoke_not_applicable_error_message: str = None,
     ):
         """
         Check that the field_value meets the mandation requirements (if field_value can't be found
@@ -56,22 +56,28 @@ class PostValidation:
         Generic mandatory and not-applicable error messages will be used if the appropriate optional
         arguments are not given.
         """
+
+        # Determine and set the mandation and appropriate error messages
         if not mandation:
             mandation = vaccine_type_applicable_validations[mandation_key][vaccine_type]
 
-        if not mandatory_error_message:
+        if bespoke_mandatory_error_message:
+            mandatory_error_message = bespoke_mandatory_error_message
+        else:
             mandatory_error_message = f"{field_location} is a mandatory field"
 
-        if not not_applicable_error_message:
+        if bespoke_not_applicable_error_message:
+            not_applicable_error_message = bespoke_not_applicable_error_message
+        else:
             not_applicable_error_message = (
                 f"{field_location} must not be provided for this vaccine type"
             )
 
-        if field_value is None:
-            if mandation == Mandation.mandatory:
-                raise MandatoryError(mandatory_error_message)
+        # Raise error messages where applicable
+        if field_value is None and mandation == Mandation.mandatory:
+            raise MandatoryError(mandatory_error_message)
 
-        if mandation == Mandation.not_applicable:
+        if field_value and mandation == Mandation.not_applicable:
             raise NotApplicableError(not_applicable_error_message)
 
     @staticmethod

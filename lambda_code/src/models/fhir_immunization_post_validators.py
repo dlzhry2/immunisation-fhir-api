@@ -10,7 +10,7 @@ from models.utils.post_validation_utils import (
     MandatoryError,
     NotApplicableError,
 )
-from mappings import Mandation, vaccine_type_applicable_validations
+from mappings import Mandation, VaccineTypes, vaccine_type_applicable_validations
 
 check_mandation_requirements_met = PostValidation.check_mandation_requirements_met
 get_generic_field_value = PostValidation.get_generic_field_value
@@ -374,7 +374,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    # TODO: Check with imms team r.e. Conditional mandatory logic
     @classmethod
     def validate_practitioner_identifier_system(cls, values: dict) -> dict:
         "Validate that practitioner_identifier_system is present or absent, as required"
@@ -396,7 +395,7 @@ class FHIRImmunizationPostValidators:
         mandation = vaccine_type_applicable_validations[
             "practitioner_identifier_system"
         ]
-        mandatory_error_message = None  # If mandatory_error_message is none, a standard error message will be used
+        bespoke_mandatory_error_message = None
 
         # Handle conditional mandation logic
         try:
@@ -415,7 +414,7 @@ class FHIRImmunizationPostValidators:
             cls.vaccine_type == "COVID-19" or cls.vaccine_type == "FLU"
         ):
             mandation = Mandation.mandatory
-            mandatory_error_message = (
+            bespoke_mandatory_error_message = (
                 f"{field_location} is mandatory when contained."
                 + "[?(@.resourceType=='Practitioner')].identifier[0].system is present"
                 + f" and vaccination type is {cls.vaccine_type}"
@@ -428,7 +427,7 @@ class FHIRImmunizationPostValidators:
             field_location=field_location,
             vaccine_type=cls.vaccine_type,
             mandation=mandation,
-            mandatory_error_message=mandatory_error_message,
+            bespoke_mandatory_error_message=bespoke_mandatory_error_message,
         )
 
         return values
@@ -515,7 +514,237 @@ class FHIRImmunizationPostValidators:
             field_location=field_location,
             vaccine_type=cls.vaccine_type,
             mandation=mandation,
-            mandatory_error_message=f"{field_location} is mandatory when primarySource is false",
+            bespoke_mandatory_error_message=f"{field_location} is mandatory when primarySource is false",
         )
 
         return values
+
+    @classmethod
+    def validate_vaccination_procedure_display(cls, values: dict) -> dict:
+        "Validate that vaccination_procedure_display is present or absent, as required"
+        url = (
+            "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+            + "VaccinationProcedure"
+        )
+        system = "http://snomed.info/sct"
+        field_type = "display"
+        field_location = generate_field_location_for_extension(url, system, field_type)
+
+        try:
+            vaccination_procedure_display = get_generic_extension_value_from_model(
+                values, url, system, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            vaccination_procedure_display = None
+
+        check_mandation_requirements_met(
+            field_value=vaccination_procedure_display,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="vaccination_procedure_display",
+        )
+        return values
+
+    @classmethod
+    def validate_vaccination_situation_code(cls, values: dict) -> dict:
+        "Validate that vaccination_situation_code is present or absent, as required"
+        url = (
+            "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+            + "VaccinationSituation"
+        )
+        system = "http://snomed.info/sct"
+        field_type = "code"
+        field_location = generate_field_location_for_extension(url, system, field_type)
+
+        try:
+            vaccination_situation_code = get_generic_extension_value_from_model(
+                values, url, system, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            vaccination_situation_code = None
+
+        # Handle conditional mandation logic
+        mandation = vaccine_type_applicable_validations["vaccination_situation_code"][
+            cls.vaccine_type
+        ]
+        if values["status"] == "not-done":
+            mandation = Mandation.mandatory
+        else:
+            mandation = Mandation.optional
+
+        check_mandation_requirements_met(
+            field_value=vaccination_situation_code,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation=mandation,
+            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is 'not-done'",
+        )
+
+        return values
+
+    @classmethod
+    def validate_vaccination_situation_display(cls, values: dict) -> dict:
+        "Validate that vaccination_situation_display is present or absent, as required"
+        url = (
+            "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
+            + "VaccinationSituation"
+        )
+        system = "http://snomed.info/sct"
+        field_type = "display"
+        field_location = generate_field_location_for_extension(url, system, field_type)
+
+        try:
+            vaccination_situation_display = get_generic_extension_value_from_model(
+                values, url, system, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            vaccination_situation_display = None
+
+        check_mandation_requirements_met(
+            field_value=vaccination_situation_display,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="vaccination_situation_display",
+        )
+        return values
+
+    @classmethod
+    def validate_status_reason_coding_code(cls, values: dict) -> dict:
+        "Validate that vaccination_situation_code is present or absent, as required"
+        field_location = (
+            "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
+        )
+
+        try:
+            status_reason_coding_code = [
+                x
+                for x in values["statusReason"].coding
+                if x.system == "http://snomed.info/sct"
+            ][0].code
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            status_reason_coding_code = None
+
+        # Handle conditional mandation logic
+        mandation = vaccine_type_applicable_validations["status_reason_coding_code"][
+            cls.vaccine_type
+        ]
+        if values["status"] == "not-done":
+            mandation = Mandation.mandatory
+        else:
+            mandation = Mandation.optional
+
+        check_mandation_requirements_met(
+            field_value=status_reason_coding_code,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation=mandation,
+            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is 'not-done'",
+        )
+
+        return values
+
+    @classmethod
+    def validate_status_reason_coding_display(cls, values: dict) -> dict:
+        "Validate that status_reason_coding_display is present or absent, as required"
+        field_location = (
+            "statusReason.coding[?(@.system=='http://snomed.info/sct')].display"
+        )
+
+        try:
+            status_reason_coding_display = [
+                x
+                for x in values["statusReason"].coding
+                if x.system == "http://snomed.info/sct"
+            ][0].code
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            status_reason_coding_display = None
+
+        check_mandation_requirements_met(
+            field_value=status_reason_coding_display,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="status_reason_coding_display",
+        )
+        return values
+
+    # TODO: dose_sequence
+    @classmethod
+    def validate_protocol_applied_dose_number_positive_int(cls, values: dict) -> dict:
+        "Validate that protocol_applied_dose_number_positive_int is present or absent, as required"
+        field_location = "protocolApplied[0].doseNumberPositiveInt"
+
+        try:
+            protocol_applied_dose_number_positive_int = values["protocolApplied"][
+                0
+            ].doseNumberPositiveInt
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            protocol_applied_dose_number_positive_int = None
+
+        # Handle conditional mandation logic
+        mandation = vaccine_type_applicable_validations[
+            "protocol_applied_dose_number_positive_int"
+        ][cls.vaccine_type]
+
+        mandation_table = {
+            VaccineTypes.covid_19: {
+                "completed": Mandation.mandatory,
+                "entered-in-error": Mandation.mandatory,
+                "not-done": Mandation.mandatory,
+            },
+            VaccineTypes.flu: {
+                "completed": Mandation.mandatory,
+                "entered-in-error": Mandation.mandatory,
+                "not-done": Mandation.optional,
+            },
+            VaccineTypes.hpv: {
+                "completed": Mandation.required,
+                "entered-in-error": Mandation.required,
+                "not-done": Mandation.required,
+            },
+            VaccineTypes.mmr: {
+                "completed": Mandation.required,
+                "entered-in-error": Mandation.required,
+                "not-done": Mandation.required,
+            },
+        }
+
+        mandation = mandation_table[cls.vaccine_type][values["status"]]
+
+        # Set the bespoke mandatory error messages
+        bespoke_mandatory_error_message = None
+        if cls.vaccine_type == VaccineTypes.covid_19:
+            bespoke_mandatory_error_message = (
+                f"{field_location} is mandatory when vaccination "
+                + "type is {cls.vaccine_type}"
+            )
+        if cls.vaccine_type == VaccineTypes.flu:
+            bespoke_mandatory_error_message = (
+                f"{field_location} is mandatory when status is"
+                + f" 'completed' or 'entered-in-error' and vaccination type is {cls.vaccine_type}"
+            )
+
+        check_mandation_requirements_met(
+            field_value=protocol_applied_dose_number_positive_int,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation=mandation,
+            bespoke_mandatory_error_message=bespoke_mandatory_error_message,
+        )
+
+        return values
+
+
+# TODO: vaccine_product_code
+# TODO: vaccine_product_term
+# TODO: vaccine_manufacturer
+# TODO: batch_number
+# TODO: expiry_date
+# TODO: site_of_vaccination_code
+# TODO: site_of_vaccination_term
+# TODO: route_of_vaccination_code
+# TODO: route_of_vaccination_term
+# TODO: dose_amount
+# TODO: dose_unit_code
+# TODO: dose_unit_term
+# TODO: indication_code
+# TODO: indication_term
