@@ -16,7 +16,7 @@ resource "aws_dynamodb_table" "test-dynamodb-table" {
         type = "S"
     }
     attribute {
-        name = "Identifier"
+        name = "IdentifierPK"
         type = "S"
     }
 
@@ -30,7 +30,6 @@ resource "aws_dynamodb_table" "test-dynamodb-table" {
     global_secondary_index {
         name               = "IdentifierGSI"
         hash_key           = "IdentifierPK"
-        range_key          = "IdentifierSK"
         projection_type    = "ALL"
     }
 }

@@ -68,10 +68,15 @@ class ImmunizationRepository:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
-        check_identifier = self.table.get_item(Key={"SK": attr.identifier})
+
+        identifierIndexResponse = self.table.query(
+            IndexName='IdentifierGSI',
+            KeyConditionExpression=Key('IdentifierPK').eq(attr.identifier),
+            Limit=1
+        )
         
-        if check_identifier:
-            print(f"identifier: {attr.identifier}")
+        if identifierIndexResponse.get('Count', 0) > 0: 
+            raise UnhandledResponseError(message="The identifier you are trying to create already has an existing index")
 
         response = self.table.put_item(Item={
             'PK': attr.pk,
@@ -79,6 +84,7 @@ class ImmunizationRepository:
             'PatientSK': attr.patient_sk,
             'Resource': json.dumps(attr.resource),
             'Patient': attr.patient,
+            'IdentifierPK': attr.identifier
         })
 
         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
