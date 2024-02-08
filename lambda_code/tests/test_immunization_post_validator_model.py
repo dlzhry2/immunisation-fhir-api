@@ -14,6 +14,7 @@ from .utils.generic_utils import (
     load_json_data_for_tests,
 )
 from .utils.mandation_test_utils import MandationTests
+from mappings import VaccineTypes, Mandation
 
 
 class TestImmunizationModelPostValidationRules(unittest.TestCase):
@@ -481,15 +482,28 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """
         Test that the JSON data is accepted if it contains status_reason_coding_code
         and rejected if not
-
-        NOTE: This test runs on the COVID data. Further tests for other cases are run on the
-        not-done data.
         """
-        MandationTests.test_mandation_for_mandatory_if_not_done_on_not_not_done_data(
-            self, "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
+        field_location = (
+            "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
         )
 
-        # TODO: Add not-done tests for status_reason_coding_code
+        for vaccine_type in [
+            VaccineTypes.covid_19,
+            VaccineTypes.flu,
+            VaccineTypes.hpv,
+            VaccineTypes.mmr,
+        ]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.optional,
+                mandation_when_status_entered_in_error=Mandation.optional,
+                mandation_when_status_not_done=Mandation.mandatory,
+                expected_bespoke_error_message=f"{field_location} is mandatory when status is "
+                + "'not-done'",
+                expected_error_type="MandationError",
+            )
 
     def test_post_status_reason_coding_display(self):
         """
@@ -499,38 +513,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
             self, "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
         )
-
-        # TODO: Complete this test
-
-        valid_json_data = deepcopy(self.covid_json_data)
-        field_location = "protocolApplied[0].doseNumberPositiveInt"
-
-        # Test cases for COVID-19
-        # COVID-19, status="completed", field present - accept
-        # COVID-19, status="completed", field missing - reject
-        # COVID-19, status="entered-in-error", field present - accept
-        # COVID-19, status=entered-in-error", field missing - reject
-
-        # Test cases for FLU
-        # FLU, status="completed", field present - accept
-        # FLU, status="completed", field missing - reject
-        # FLU, status="entered-in-error", field present - accept
-        # FLU, status=entered-in-error", field missing - reject
-
-        # Test cases for HPV
-        # HPV, status="completed", field present - accept
-        # HPV, status="completed", field missing - accept
-        # HPV, status="entered-in-error", field present - accept
-        # HPV, status=entered-in-error", field missing - accept
-
-        # Test cases for MMR
-        # MMR, status="completed", field present - accept
-        # MMR, status="completed", field missing - accept
-        # MMR, status="entered-in-error", field present - accept
-        # MMR, status=entered-in-error", field missing - accept
-
-        # TODO: Add not-done tests for protcol_applied_dose_number_positive_int
-        # (8 test cases - field present or missing for each of the 4 vaccine types)
 
     def test_post_vaccine_code_coding_code(self):
         """Test that the JSON data is rejected when vaccine_coding_code is absent"""
@@ -552,46 +534,33 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self, "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
         )
 
-    def test_post_manufacture_display(self):
+    def test_post_manufacturer_display(self):
         """
         Test that present or absent manufacturer_display is accepted or rejected
         as appropriate dependent on other fields
         """
-        # TODO: Complete this test
-
-        valid_json_data = deepcopy(self.covid_json_data)
         field_location = "manufacturer.display"
 
         # Test cases for COVID-19
-        # COVID-19, status="completed", field present - accept
-        # COVID-19, status="completed", field missing - reject
-        # COVID-19, status="entered-in-error", field present - accept
-        # COVID-19, status=entered-in-error", field missing - reject
-        # COVID-19, status="not-done", field present - accept
-        # COVID-19, status=not-done", field missing - accept
+        MandationTests.test_mandation_for_status_dependent_fields(
+            self,
+            field_location,
+            vaccine_type=VaccineTypes.covid_19,
+            mandation_when_status_completed=Mandation.mandatory,
+            mandation_when_status_entered_in_error=Mandation.mandatory,
+            mandation_when_status_not_done=Mandation.required,
+            expected_bespoke_error_message=f"{field_location} is mandatory when status is "
+            + f"'completed' or 'entered-in-error' and vaccination type is {VaccineTypes.covid_19}",
+            expected_error_type="MandatoryError",
+        )
 
-        # Test cases for FLU
-        # FLU, status="completed", field present - accept
-        # FLU, status="completed", field missing - accept
-        # FLU, status="entered-in-error", field present - accept
-        # FLU, status=entered-in-error", field missing - accept
-        # FLU, status="not-done", field present - accept
-        # FLU, status=not-done", field missing - accept
-
-        # Test cases for HPV
-        # HPV, status="completed", field present - accept
-        # HPV, status="completed", field missing - accept
-        # HPV, status="entered-in-error", field present - accept
-        # HPV, status=entered-in-error", field missing - accept
-        # HPV, status="not-done", field present - accept
-        # HPV, status=not-done", field missing - accept
-
-        # Test cases for MMR
-        # MMR, status="completed", field present - accept
-        # MMR, status="completed", field missing - accept
-        # MMR, status="entered-in-error", field present - accept
-        # MMR, status=entered-in-error", field missing - accept
-        # MMR, status="not-done", field present - accept
-        # MMR, status=not-done", field missing - accept
-
-        # TODO: Add not-done tests
+        # Test cases for FLU, HPV and MMR
+        for vaccine_type in [VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.required,
+                mandation_when_status_entered_in_error=Mandation.required,
+                mandation_when_status_not_done=Mandation.required,
+            )

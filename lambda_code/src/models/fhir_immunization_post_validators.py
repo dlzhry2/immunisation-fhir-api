@@ -808,7 +808,7 @@ class FHIRImmunizationPostValidators:
         if values["status"] != "not-done" and cls.vaccine_type == VaccineTypes.covid_19:
             mandation = Mandation.mandatory
             bespoke_mandatory_error_message = (
-                f"{field_location} is mandatory when status is 'not-done'"
+                f"{field_location} is mandatory when status is 'completed' or 'entered-in-error'"
                 + f" and vaccination type is {cls.vaccine_type}"
             )
         else:

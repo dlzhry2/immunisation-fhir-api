@@ -50,6 +50,13 @@ vaccination_procedure_snomed_codes = {
     "mockMENINGITIScode1": "MEN",
 }
 
+vaccine_type_to_sample_vaccination_procedure_snomed_code = {
+    VaccineTypes.covid_19: "1324681000000101",
+    VaccineTypes.flu: "mockFLUcode1",
+    VaccineTypes.hpv: "mockHPVcode1",
+    VaccineTypes.mmr: "mockMMRcode1",
+}
+
 # Dictionary of vaccine types and their applicable mandations for each field
 vaccine_type_applicable_validations = {
     "patient_identifier_value": {

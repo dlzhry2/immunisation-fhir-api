@@ -5,6 +5,11 @@ from copy import deepcopy
 from pydantic import ValidationError
 from jsonpath_ng.ext import parse
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
+from mappings import (
+    VaccineTypes,
+    Mandation,
+    vaccine_type_to_sample_vaccination_procedure_snomed_code,
+)
 
 
 class MandationTests:
@@ -151,66 +156,117 @@ class MandationTests:
             test_instance, field_location, json_data_with_status_entered_in_error
         )
 
-    # @staticmethod
-    # def test_conditional_mandation_for_field_present_or_missing(
-    #     test_instance: unittest.TestCase,
-    #     field_location_of_field_being_tested: str,
-    #     field_location_of_field_mandation_is_dependent_on: str,
-    #     vaccine_type: Literal["COVID-19", "FLU", "HPV", "MMR"],
-    #     mandation_when_field_present: Literal["M", "CM", "R", "O", "N/A"],
-    #     mandation_when_field_absent: Literal["M", "CM", "R", "O", "N/A"],
-    #     expected_mandatory_error_message: str = None,
-    #     expected_not_applicable_error_message: str = None,
-    # ):
-    #     """
-    #     Something
-    #     """
+    @staticmethod
+    def test_mandation_rule_met(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        mandation: str,
+        valid_json_data: dict,
+        expected_bespoke_error_message: str = None,
+        expected_error_type: str = "value_error",
+    ):
+        """
+        Test that the mandation rule is met (i.e. data is rejected or accepted as appropriate
+        when field is present or absent)
+        """
+        if mandation == Mandation.mandatory:
+            # Accept field present
+            MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
+                test_instance, valid_json_data
+            )
+            # Reject field absent
+            MandationTests.test_missing_mandatory_field_rejected(
+                test_instance,
+                field_location,
+                valid_json_data,
+                expected_bespoke_error_message,
+                expected_error_type,
+            )
 
-    #     vaccination_procedure_code_field_location = (
-    #         "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
-    #         + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
-    #         + "'http://snomed.info/sct')].code"
-    #     )
+        if mandation == Mandation.required or mandation == Mandation.optional:
+            # Accept field present
+            MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
+                test_instance, valid_json_data
+            )
+            # Accept field absent
+            MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+                test_instance, field_location, valid_json_data
+            )
 
-    #     valid_procedure_codes_for_testing = {
-    #         "COVID-19": "1324681000000101",
-    #         "FLU": "mockFLUcode1",
-    #         "HPV": "mockHPVcode1",
-    #         "MMR": "mockMMRcode1",
-    #     }
+        # TODO: Handle not applicable instance
+        if mandation == Mandation.not_applicable:
+            # Reject field present
+            # Accept field absent
+            pass
 
-    #     # Obtain valid vaccination procedure code
-    #     valid_procedure_code = valid_procedure_codes_for_testing[vaccine_type]
+    @staticmethod
+    def test_mandation_for_status_dependent_fields(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        vaccine_type: VaccineTypes,
+        mandation_when_status_completed: Mandation,
+        mandation_when_status_entered_in_error: Mandation,
+        mandation_when_status_not_done,
+        expected_bespoke_error_message: str = None,
+        expected_error_type: str = "value_error",
+    ):
+        """
+        Run all the test cases for status of "completed" or "entered-in-error" when the field
+        is conditionally mandatory if status is "not-done"
+        """
 
-    #     # Test cases where practitioner_identifier_value is present
-    #     valid_json_data = parse(vaccination_procedure_code_field_location).update(
-    #         deepcopy(test_instance.covid_json_data), valid_procedure_code
-    #     )
+        vaccination_procedure_code_field_location = (
+            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
+            + "'http://snomed.info/sct')].code"
+        )
 
-    #     # Test case: patient_identifier_system present - accept
-    #     MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-    #         test_instance, valid_json_data
-    #     )
+        valid_json_data = parse(vaccination_procedure_code_field_location).update(
+            deepcopy(test_instance.covid_json_data),
+            vaccine_type_to_sample_vaccination_procedure_snomed_code[vaccine_type],
+        )
 
-    #     # Test case: patient_identifier_system absent - reject
-    #     MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
-    #         test_instance, valid_json_data, field_location_of_field_being_tested
-    #     )
+        # Test case where status is "completed"
+        json_data_with_status_completed = parse("status").update(
+            deepcopy(valid_json_data), "completed"
+        )
 
-    #     # Test MMR cases where practitioner_identifier_value is absent
-    #     valid_json_data = parse(vaccination_procedure_code_field_location).update(
-    #         deepcopy(test_instance.covid_json_data), valid_procedure_code
-    #     )
-    #     valid_json_data = parse(field_location_of_field_being_tested).filter(
-    #         lambda d: True, valid_json_data
-    #     )
+        MandationTests.test_mandation_rule_met(
+            test_instance,
+            field_location,
+            mandation_when_status_completed,
+            json_data_with_status_completed,
+            expected_bespoke_error_message,
+            expected_error_type,
+        )
 
-    #     # Test case: patient_identifier_system present - accept
-    #     MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-    #         test_instance, valid_json_data
-    #     )
+        # Test case where status is "entered-in-error"
+        json_data_with_status_entered_in_error = parse("status").update(
+            deepcopy(valid_json_data), "entered-in-error"
+        )
 
-    #     # Test case: patient_identifier_system absent - accept
-    #     MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
-    #         test_instance, valid_json_data, field_location_of_field_being_tested
-    #     )
+        MandationTests.test_mandation_rule_met(
+            test_instance,
+            field_location,
+            mandation_when_status_entered_in_error,
+            json_data_with_status_entered_in_error,
+            expected_bespoke_error_message,
+            expected_error_type,
+        )
+
+        # # Test case where status is "not-done"
+        # json_data_with_status_not_done = parse(
+        #     vaccination_procedure_code_field_location
+        # ).update(
+        #     deepcopy(test_instance.not_done_json_data),
+        #     vaccine_type_to_sample_vaccination_procedure_snomed_code[vaccine_type],
+        # )
+
+        # MandationTests.test_mandation_rule_met(
+        #     test_instance,
+        #     field_location,
+        #     mandation_when_status_not_done,
+        #     json_data_with_status_not_done,
+        #     expected_bespoke_error_message,
+        #     expected_error_type,
+        # )
