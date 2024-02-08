@@ -429,6 +429,12 @@ class ImmunizationValidator:
             self.immunization.add_root_validator(
                 FHIRImmunizationPostValidators.validate_protocol_applied_dose_number_positive_int
             )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_vaccine_code_coding_code
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_vaccine_code_coding_display
+            )
 
     def remove_custom_root_validators(self, mode: Literal["pre", "post"]):
         """Remove custom NHS validators from the model"""

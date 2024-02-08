@@ -573,7 +573,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
     # TODO: Complete this test
-    def test_model_protocol_applied_dose_number_positive_int(self):
+    def test_model_post_protocol_applied_dose_number_positive_int(self):
         """
         Test that the JSON data is accepted when protocol_applied_dose_number_positive_int
         is present or absent
@@ -604,6 +604,36 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # MMR, status="completed", field missing - accept
         # MMR, status="entered-in-error", field present - accept
         # MMR, status=entered-in-error", field missing - accept
+
+    # TODO: need to check for the valid values for not-done and the invalid values
+    def test_model_post_vaccine_code_coding_code(self):
+        """
+        Test that the JSON data is accepted if it contains vaccine_code_coding_code
+        and rejected if not
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = (
+            "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code"
+        )
+
+        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
+            self, valid_json_data
+        )
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            field_location,
+            valid_json_data=valid_json_data,
+            expected_error_type="MandatoryError",
+        )
+
+    def test_model_post_vaccine_code_coding_display(self):
+        """
+        Test that the JSON data is accepted when vaccine_code_coding_display is present or absent
+        """
+        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+            self, "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
+        )
 
 
 class TestImmunizationModelPostValidationRulesForNotDone(unittest.TestCase):

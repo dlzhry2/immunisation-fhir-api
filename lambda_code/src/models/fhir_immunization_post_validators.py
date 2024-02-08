@@ -733,9 +733,67 @@ class FHIRImmunizationPostValidators:
 
         return values
 
+    # TODO: vaccine_product_code
+    @classmethod
+    def validate_vaccine_code_coding_code(cls, values: dict) -> dict:
+        "Validate that vaccineCode.coding.code is present or absent, as required"
+        vaccine_code_coding_code = [
+            x
+            for x in values["vaccineCode"].coding
+            if x.system == "http://snomed.info/sct"
+        ][0].code
 
-# TODO: vaccine_product_code
-# TODO: vaccine_product_term
+        field_location = (
+            "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code"
+        )
+
+        if cls.status == "not-done" and vaccine_code_coding_code not in (
+            "NAVU",
+            "UNC",
+            "UNK",
+            "NA",
+        ):
+            raise ValueError(
+                f"{field_location} must be 'NAVU', 'UNC', 'UNK' or 'NA' when status is 'not-done'"
+            )
+        if vaccine_code_coding_code in ("AMPP", "VMP", "VMPP"):
+            raise ValueError(f"{field_location} must not be 'AMPP', 'VMP' or 'VMPP'")
+
+        check_mandation_requirements_met(
+            field_value=vaccine_code_coding_code,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="vaccine_code_coding_code",
+        )
+
+        return values
+
+    # TODO: vaccine_product_term
+    @classmethod
+    def validate_vaccine_code_coding_display(cls, values: dict) -> dict:
+        "Validate that vaccineCode.coding.display is present or absent, as required"
+        field_location = (
+            "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
+        )
+
+        try:
+            vaccine_code_coding_display = [
+                x
+                for x in values["vaccineCode"].coding
+                if x.system == "http://snomed.info/sct"
+            ][0].display
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            vaccine_code_coding_display = None
+
+        check_mandation_requirements_met(
+            field_value=vaccine_code_coding_display,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="vaccine_code_coding_display",
+        )
+        return values
+
+
 # TODO: vaccine_manufacturer
 # TODO: batch_number
 # TODO: expiry_date
