@@ -756,8 +756,6 @@ class FHIRImmunizationPostValidators:
             raise ValueError(
                 f"{field_location} must be 'NAVU', 'UNC', 'UNK' or 'NA' when status is 'not-done'"
             )
-        if vaccine_code_coding_code in ("AMPP", "VMP", "VMPP"):
-            raise ValueError(f"{field_location} must not be 'AMPP', 'VMP' or 'VMPP'")
 
         check_mandation_requirements_met(
             field_value=vaccine_code_coding_code,
