@@ -515,7 +515,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
     def test_post_vaccine_code_coding_code(self):
-        """Test that the JSON data is rejected when vaccine_coding_code is absent"""
+        """Test that the JSON data is rejected when vaccine_code_coding_code is absent"""
         field_location = (
             "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code"
         )
@@ -529,7 +529,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # TODO: need to check for the valid values for not-done and the invalid values
 
     def test_post_vaccine_code_coding_display(self):
-        """Test that the JSON data is accepted when vaccine_coding_code is absent"""
+        """Test that the JSON data is accepted when vaccine_code_coding_display is absent"""
         MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
             self, "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
         )
@@ -563,4 +563,202 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
                 mandation_when_status_completed=Mandation.required,
                 mandation_when_status_entered_in_error=Mandation.required,
                 mandation_when_status_not_done=Mandation.required,
+            )
+
+    def test_post_lot_number(self):
+        """
+        Test that present or absent lot_number is accepted or rejected
+        as appropriate dependent on other fields
+        """
+        field_location = "lotNumber"
+
+        # Test cases for COVID-19
+        MandationTests.test_mandation_for_status_dependent_fields(
+            self,
+            field_location,
+            vaccine_type=VaccineTypes.covid_19,
+            mandation_when_status_completed=Mandation.mandatory,
+            mandation_when_status_entered_in_error=Mandation.mandatory,
+            mandation_when_status_not_done=Mandation.required,
+            expected_bespoke_error_message=f"{field_location} is mandatory when status is "
+            + f"'completed' or 'entered-in-error' and vaccination type is {VaccineTypes.covid_19}",
+            expected_error_type="MandatoryError",
+        )
+
+        # Test cases for FLU, HPV and MMR
+        for vaccine_type in [VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.required,
+                mandation_when_status_entered_in_error=Mandation.required,
+                mandation_when_status_not_done=Mandation.required,
+            )
+
+    def test_post_expiration_date(self):
+        """
+        Test that present or absent expiration_date is accepted or rejected
+        as appropriate dependent on other fields
+        """
+        field_location = "expirationDate"
+
+        # Test cases for COVID-19
+        MandationTests.test_mandation_for_status_dependent_fields(
+            self,
+            field_location,
+            vaccine_type=VaccineTypes.covid_19,
+            mandation_when_status_completed=Mandation.mandatory,
+            mandation_when_status_entered_in_error=Mandation.mandatory,
+            mandation_when_status_not_done=Mandation.required,
+            expected_bespoke_error_message=f"{field_location} is mandatory when status is "
+            + f"'completed' or 'entered-in-error' and vaccination type is {VaccineTypes.covid_19}",
+            expected_error_type="MandatoryError",
+        )
+
+        # Test cases for FLU, HPV and MMR
+        for vaccine_type in [VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.required,
+                mandation_when_status_entered_in_error=Mandation.required,
+                mandation_when_status_not_done=Mandation.required,
+            )
+
+    def test_post_site_coding_code(self):
+        """Test that the JSON data is accepted when site_coding_code is absent"""
+        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+            self, "site.coding[?(@.system=='http://snomed.info/sct')].code"
+        )
+
+    def test_post_site_coding_display(self):
+        """Test that the JSON data is accepted when site_coding_display is absent"""
+        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+            self, "site.coding[?(@.system=='http://snomed.info/sct')].display"
+        )
+
+    def test_post_route_coding_code(self):
+        """
+        Test that present or absent route_coding_code is accepted or rejected
+        as appropriate dependent on other fields
+        """
+        field_location = "route.coding[?(@.system=='http://snomed.info/sct')].code"
+
+        # Test cases for COVID-19 and FLU
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.mandatory,
+                mandation_when_status_entered_in_error=Mandation.mandatory,
+                mandation_when_status_not_done=Mandation.required,
+                expected_bespoke_error_message=f"{field_location} is mandatory when status is "
+                + f"'completed' or 'entered-in-error' and vaccination type is {vaccine_type}",
+                expected_error_type="MandatoryError",
+            )
+
+        # Test cases for HPV and MMR
+        for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.required,
+                mandation_when_status_entered_in_error=Mandation.required,
+                mandation_when_status_not_done=Mandation.required,
+            )
+
+    def test_post_route_coding_display(self):
+        """Test that the JSON data is accepted when route_coding_display is absent"""
+        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+            self, "route.coding[?(@.system=='http://snomed.info/sct')].display"
+        )
+
+    def test_post_dose_quantity_value(self):
+        """
+        Test that present or absent dose_quantity_value is accepted or rejected
+        as appropriate dependent on other fields
+        """
+        field_location = "doseQuantity.value"
+
+        # Test cases for COVID-19 and FLU
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.mandatory,
+                mandation_when_status_entered_in_error=Mandation.mandatory,
+                mandation_when_status_not_done=Mandation.required,
+                expected_bespoke_error_message=f"{field_location} is mandatory when status is "
+                + f"'completed' or 'entered-in-error' and vaccination type is {vaccine_type}",
+                expected_error_type="MandatoryError",
+            )
+
+        # Test cases for HPV and MMR
+        for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.required,
+                mandation_when_status_entered_in_error=Mandation.required,
+                mandation_when_status_not_done=Mandation.required,
+            )
+
+    def test_post_dose_quantity_code(self):
+        """
+        Test that present or absent dose_quantity_code is accepted or rejected
+        as appropriate dependent on other fields
+        """
+        field_location = "doseQuantity.code"
+
+        # Test cases for COVID-19 and FLU
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.mandatory,
+                mandation_when_status_entered_in_error=Mandation.mandatory,
+                mandation_when_status_not_done=Mandation.required,
+                expected_bespoke_error_message=f"{field_location} is mandatory when status is "
+                + f"'completed' or 'entered-in-error' and vaccination type is {vaccine_type}",
+                expected_error_type="MandatoryError",
+            )
+
+        # Test cases for HPV and MMR
+        for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.required,
+                mandation_when_status_entered_in_error=Mandation.required,
+                mandation_when_status_not_done=Mandation.required,
+            )
+
+    def test_post_dose_quantity_unit(self):
+        """Test that the JSON data is accepted when dose_quantity_unit is absent"""
+        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+            self, "doseQuantity.unit"
+        )
+
+    def test_post_reason_code_coding_code(self):
+        """Test that the JSON data is accepted when reason_code_coding_code is absent"""
+        sample_data_reason_code = self.covid_json_data["reasonCode"]
+        for index in range(len(sample_data_reason_code)):
+            MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+                self, f"reasonCode[{index}].coding[0].code"
+            )
+
+    def test_post_reason_code_coding_display(self):
+        """Test that the JSON data is accepted when reason_code_coding_display is absent"""
+        sample_data_reason_code = self.covid_json_data["reasonCode"]
+        for index in range(len(sample_data_reason_code)):
+            MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+                self, f"reasonCode[{index}].coding[0].display"
             )
