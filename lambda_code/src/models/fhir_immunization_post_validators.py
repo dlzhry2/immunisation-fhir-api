@@ -733,7 +733,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    # TODO: vaccine_product_code
     @classmethod
     def validate_vaccine_code_coding_code(cls, values: dict) -> dict:
         "Validate that vaccineCode.coding.code is present or absent, as required"
@@ -766,7 +765,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    # TODO: vaccine_product_term
     @classmethod
     def validate_vaccine_code_coding_display(cls, values: dict) -> dict:
         "Validate that vaccineCode.coding.display is present or absent, as required"
@@ -791,8 +789,41 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
+    # TODO: vaccine_manufacturer
+    @classmethod
+    def validate_manufacturer_display(cls, values: dict) -> dict:
+        "Validate that manufacturer_display is present or absent, as required"
+        field_location = "manufacturer.display"
 
-# TODO: vaccine_manufacturer
+        try:
+            manufacturer_display = values["manufacturer"].display
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            manufacturer_display = None
+
+        # Handle conditional mandation logic
+        mandation = vaccine_type_applicable_validations["manufacturer_display"][
+            cls.vaccine_type
+        ]
+        bespoke_mandatory_error_message = None
+        if values["status"] != "not-done" and cls.vaccine_type == VaccineTypes.covid_19:
+            mandation = Mandation.mandatory
+            bespoke_mandatory_error_message = (
+                f"{field_location} is mandatory when status is 'not-done'"
+                + f" and vaccination type is {cls.vaccine_type}"
+            )
+        else:
+            mandation = Mandation.required
+
+        check_mandation_requirements_met(
+            field_value=manufacturer_display,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation=mandation,
+            bespoke_mandatory_error_message=bespoke_mandatory_error_message,
+        )
+        return values
+
+
 # TODO: batch_number
 # TODO: expiry_date
 # TODO: site_of_vaccination_code

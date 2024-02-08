@@ -16,43 +16,45 @@ from .utils.generic_utils import (
 from .utils.mandation_test_utils import MandationTests
 
 
-class TestImmunizationModelPostValidationRulesValidData(unittest.TestCase):
-    """Test that each piece of valid sample data passes post validation"""
-
-    def test_sample_data(self):
-        """Test that each piece of valid sample data passes post validation"""
-        data_path = f"{os.path.dirname(os.path.abspath(__file__))}/sample_data"
-        # TODO: Clarify rules to allow all commented out files to pass
-        files_to_test = [
-            "sample_covid_immunization_event.json",
-            "sample_flu_immunization_event.json",
-            # # "sample_immunization_not_done_event.json",
-            "sample_immunization_reduce_validation_event.json",
-        ]
-
-        for file in files_to_test:
-            with open(f"{data_path}/{file}", "r", encoding="utf-8") as f:
-                valid_json_data = json.load(f, parse_float=Decimal)
-            validator = ImmunizationValidator()
-            self.assertTrue(validator.validate(valid_json_data))
-
-
 class TestImmunizationModelPostValidationRules(unittest.TestCase):
     """Test immunization post validation rules on the FHIR model"""
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        self.json_data = load_json_data_for_tests(
+        self.covid_json_data = load_json_data_for_tests(
             "sample_covid_immunization_event.json"
         )
+        self.flu_json_data = load_json_data_for_tests(
+            "sample_flu_immunization_event.json"
+        )
+        self.not_done_json_data = load_json_data_for_tests(
+            "sample_immunization_not_done_event.json"
+        )
+        self.reduce_validation_json_data = load_json_data_for_tests(
+            "sample_immunization_reduce_validation_event.json"
+        )
         self.validator = ImmunizationValidator()
+
+    def test_sample_data(self):
+        """Test that each piece of valid sample data passes post validation"""
+        # TODO: Clarify rules to allow all commented out data to pass
+        json_data_to_test = [
+            self.covid_json_data,
+            self.flu_json_data,
+            # self.not_done_json_data,
+            self.reduce_validation_json_data,
+        ]
+
+        for json_data in json_data_to_test:
+            validator = ImmunizationValidator()
+            self.assertTrue(validator.validate(json_data))
 
     def test_post_vaccination_procedure_code(self):
         """
         Test validate_and_set_vaccination_procedure_code accepts valid values, rejects invalid
         values and rejects missing data
         """
-        valid_json_data = deepcopy(self.json_data)
+        valid_json_data = deepcopy(self.covid_json_data)
         field_location = (
             "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
             + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
@@ -90,7 +92,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         Test that when status field is absent it is rejected (by FHIR validator) and when it is
         present the status property is set equal to it
         """
-        valid_json_data = deepcopy(self.json_data)
+        valid_json_data = deepcopy(self.covid_json_data)
 
         # Test that status property is set to the value of status in the JSON data, where it exists
         for valid_value in ["completed", "entered-in-error"]:
@@ -229,7 +231,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # Test COVID-19 cases where practitioner_identifier_value is present
         valid_covid_json_data = parse(vaccination_procdeure_code_field_location).update(
-            deepcopy(self.json_data), valid_covid_19_procedure_code
+            deepcopy(self.covid_json_data), valid_covid_19_procedure_code
         )
 
         # Test case: patient_identifier_system present - accept
@@ -249,7 +251,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # Test COVID-19 cases where practitioner_identifier_value is absent
         valid_covid_json_data = parse(vaccination_procdeure_code_field_location).update(
-            deepcopy(self.json_data), valid_covid_19_procedure_code
+            deepcopy(self.covid_json_data), valid_covid_19_procedure_code
         )
         valid_covid_json_data = parse(
             practitioner_identifier_value_field_location
@@ -267,7 +269,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # Test FLU cases where practitioner_identifier_value is present
         valid_flu_json_data = parse(vaccination_procdeure_code_field_location).update(
-            deepcopy(self.json_data), valid_flu_procedure_code
+            deepcopy(self.covid_json_data), valid_flu_procedure_code
         )
 
         # Test case: patient_identifier_system present - accept
@@ -287,7 +289,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # Test FLU cases where practitioner_identifier_value is absent
         valid_flu_json_data = parse(vaccination_procdeure_code_field_location).update(
-            deepcopy(self.json_data), valid_flu_procedure_code
+            deepcopy(self.covid_json_data), valid_flu_procedure_code
         )
         valid_flu_json_data = parse(
             practitioner_identifier_value_field_location
@@ -305,7 +307,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # Test HPV cases where practitioner_identifier_value is present
         valid_hpv_json_data = parse(vaccination_procdeure_code_field_location).update(
-            deepcopy(self.json_data), valid_hpv_procedure_code
+            deepcopy(self.covid_json_data), valid_hpv_procedure_code
         )
 
         # Test case: patient_identifier_system present - accept
@@ -320,7 +322,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # Test HPV cases where practitioner_identifier_value is absent
         valid_hpv_json_data = parse(vaccination_procdeure_code_field_location).update(
-            deepcopy(self.json_data), valid_hpv_procedure_code
+            deepcopy(self.covid_json_data), valid_hpv_procedure_code
         )
         valid_hpv_json_data = parse(
             practitioner_identifier_value_field_location
@@ -338,7 +340,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # Test MMR cases where practitioner_identifier_value is present
         valid_mmr_json_data = parse(vaccination_procdeure_code_field_location).update(
-            deepcopy(self.json_data), valid_mmr_procedure_code
+            deepcopy(self.covid_json_data), valid_mmr_procedure_code
         )
 
         # Test case: patient_identifier_system present - accept
@@ -353,7 +355,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # Test MMR cases where practitioner_identifier_value is absent
         valid_mmr_json_data = parse(vaccination_procdeure_code_field_location).update(
-            deepcopy(self.json_data), valid_mmr_procedure_code
+            deepcopy(self.covid_json_data), valid_mmr_procedure_code
         )
         valid_mmr_json_data = parse(
             practitioner_identifier_value_field_location
@@ -393,7 +395,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         as appropriate dependent on other fields
         """
 
-        valid_json_data = deepcopy(self.json_data)
+        valid_json_data = deepcopy(self.covid_json_data)
         field_location = "reportOrigin.text"
 
         # Test no errors are raised when primarySource is True
@@ -458,6 +460,9 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self, field_location
         )
 
+        # TODO: Run this test on not-done data once need for vaccination_procedure_code confirmed
+        # with imms team
+
     def test_post_vaccination_situation_display(self):
         """
         Test that the JSON data is accepted when vaccination_situation_display is present or absent
@@ -484,9 +489,11 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self, "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
         )
 
+        # TODO: Add not-done tests for status_reason_coding_code
+
     def test_post_status_reason_coding_display(self):
         """
-        Test that present or absent reason_coding_display is accepted or rejected
+        Test that present or absent status_reason_coding_display is accepted or rejected
         as appropriate dependent on other fields
         """
         MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
@@ -495,7 +502,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # TODO: Complete this test
 
-        valid_json_data = deepcopy(self.json_data)
+        valid_json_data = deepcopy(self.covid_json_data)
         field_location = "protocolApplied[0].doseNumberPositiveInt"
 
         # Test cases for COVID-19
@@ -522,6 +529,9 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # MMR, status="entered-in-error", field present - accept
         # MMR, status=entered-in-error", field missing - accept
 
+        # TODO: Add not-done tests for protcol_applied_dose_number_positive_int
+        # (8 test cases - field present or missing for each of the 4 vaccine types)
+
     def test_post_vaccine_code_coding_code(self):
         """Test that the JSON data is rejected when vaccine_coding_code is absent"""
         field_location = (
@@ -534,59 +544,54 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             expected_error_type="MandatoryError",
         )
 
+        # TODO: need to check for the valid values for not-done and the invalid values
+
     def test_post_vaccine_code_coding_display(self):
         """Test that the JSON data is accepted when vaccine_coding_code is absent"""
         MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
             self, "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
         )
 
-
-class TestImmunizationModelPostValidationRulesForNotDone(unittest.TestCase):
-    """Test immunization post validation rules on the FHIR model using the status="not-done" data"""
-
-    def setUp(self):
-        """Set up for each test. This runs before every test"""
-        self.json_data = load_json_data_for_tests(
-            "sample_immunization_not_done_event.json"
-        )
-        self.validator = ImmunizationValidator(add_post_validators=False)
-
-    # TODO: Run this test on not-done data once need for vaccination_procedure_code confirmed
-    # with imms team
-    def test_post_vaccination_situation_code(self):
+    def test_post_manufacture_display(self):
         """
-        Test that the JSON data is accepted if it contains vaccination_situation_code
-        and rejected if not
-
-        NOTE: This test runs on the not-done data. Further tests for other cases are run on the
-        COVID data.
+        Test that present or absent manufacturer_display is accepted or rejected
+        as appropriate dependent on other fields
         """
-        valid_json_data = deepcopy(self.json_data)
-        field_location = (
-            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
-            + "Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[?(@.system=="
-            + "'http://snomed.info/sct')].code"
-        )
-        # # Test field is present when status is "not-done"
-        # json_data_with_status_not_done = parse("status").update(
-        #     deepcopy(valid_json_data), "not-done"
-        # )
+        # TODO: Complete this test
 
-        # MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-        #     self, json_data_with_status_not_done
-        # )
+        valid_json_data = deepcopy(self.covid_json_data)
+        field_location = "manufacturer.display"
 
-        # MandationTests.test_missing_mandatory_field_rejected(
-        #     self,
-        #     json_data_with_status_not_done,
-        #     field_location,
-        #     expected_error_message=f"{field_location} is mandatory when status is 'not-done'",
-        #     expected_error_type="MandatoryError",
-        # )
+        # Test cases for COVID-19
+        # COVID-19, status="completed", field present - accept
+        # COVID-19, status="completed", field missing - reject
+        # COVID-19, status="entered-in-error", field present - accept
+        # COVID-19, status=entered-in-error", field missing - reject
+        # COVID-19, status="not-done", field present - accept
+        # COVID-19, status=not-done", field missing - accept
 
-        # TODO: Add not-done tests for status_reason_coding_code
+        # Test cases for FLU
+        # FLU, status="completed", field present - accept
+        # FLU, status="completed", field missing - accept
+        # FLU, status="entered-in-error", field present - accept
+        # FLU, status=entered-in-error", field missing - accept
+        # FLU, status="not-done", field present - accept
+        # FLU, status=not-done", field missing - accept
 
-        # TODO: Add not-done tests for protcol_applied_dose_number_positive_int
-        # (8 test cases - field present or missing for each of the 4 vaccine types)
+        # Test cases for HPV
+        # HPV, status="completed", field present - accept
+        # HPV, status="completed", field missing - accept
+        # HPV, status="entered-in-error", field present - accept
+        # HPV, status=entered-in-error", field missing - accept
+        # HPV, status="not-done", field present - accept
+        # HPV, status=not-done", field missing - accept
 
-    # TODO: need to check for the valid values for not-done and the invalid values
+        # Test cases for MMR
+        # MMR, status="completed", field present - accept
+        # MMR, status="completed", field missing - accept
+        # MMR, status="entered-in-error", field present - accept
+        # MMR, status=entered-in-error", field missing - accept
+        # MMR, status="not-done", field present - accept
+        # MMR, status=not-done", field missing - accept
+
+        # TODO: Add not-done tests
