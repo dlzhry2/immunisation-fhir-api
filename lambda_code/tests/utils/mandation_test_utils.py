@@ -2,11 +2,9 @@
 
 import unittest
 from copy import deepcopy
-from typing import Literal
 from pydantic import ValidationError
 from jsonpath_ng.ext import parse
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
-from mappings import VaccineTypes
 
 
 class MandationTests:
@@ -22,7 +20,7 @@ class MandationTests:
         """
         # Prepare the json data
         if not valid_json_data:
-            valid_json_data = deepcopy(test_instance.json_data)
+            valid_json_data = deepcopy(test_instance.covid_json_data)
         # Test that the valid data is accepted by the model
         test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
 
@@ -37,7 +35,7 @@ class MandationTests:
         """
         # Prepare the json data
         if not valid_json_data:
-            valid_json_data = deepcopy(test_instance.json_data)
+            valid_json_data = deepcopy(test_instance.covid_json_data)
         # Remove the relevant field
         valid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
         # Test that the valid data is accepted by the model
@@ -65,10 +63,7 @@ class MandationTests:
         """
         # Prepare the json data
         if not valid_json_data:
-            valid_json_data = deepcopy(test_instance.json_data)
-        from icecream import ic
-
-        ic(valid_json_data)
+            valid_json_data = deepcopy(test_instance.covid_json_data)
 
         # Set the expected error message
         if expected_bespoke_error_message:
@@ -132,7 +127,7 @@ class MandationTests:
 
         # Test no errors are raised when status is "completed"
         json_data_with_status_entered_in_error = parse("status").update(
-            deepcopy(test_instance.json_data), "completed"
+            deepcopy(test_instance.covid_json_data), "completed"
         )
 
         MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
@@ -145,7 +140,7 @@ class MandationTests:
 
         # Test no errors are raised when status is "entered-in-error"
         json_data_with_status_entered_in_error = parse("status").update(
-            deepcopy(test_instance.json_data), "entered-in-error"
+            deepcopy(test_instance.covid_json_data), "entered-in-error"
         )
 
         MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
@@ -189,7 +184,7 @@ class MandationTests:
 
     #     # Test cases where practitioner_identifier_value is present
     #     valid_json_data = parse(vaccination_procedure_code_field_location).update(
-    #         deepcopy(test_instance.json_data), valid_procedure_code
+    #         deepcopy(test_instance.covid_json_data), valid_procedure_code
     #     )
 
     #     # Test case: patient_identifier_system present - accept
@@ -204,7 +199,7 @@ class MandationTests:
 
     #     # Test MMR cases where practitioner_identifier_value is absent
     #     valid_json_data = parse(vaccination_procedure_code_field_location).update(
-    #         deepcopy(test_instance.json_data), valid_procedure_code
+    #         deepcopy(test_instance.covid_json_data), valid_procedure_code
     #     )
     #     valid_json_data = parse(field_location_of_field_being_tested).filter(
     #         lambda d: True, valid_json_data
