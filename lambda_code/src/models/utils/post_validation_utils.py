@@ -42,36 +42,41 @@ class PostValidation:
     def check_mandation_requirements_met(
         field_value,
         field_location,
-        vaccine_type,
         mandation: str = None,
+        vaccine_type: str = None,
         mandation_key: str = None,
         bespoke_mandatory_error_message: str = None,
         bespoke_not_applicable_error_message: str = None,
     ):
         """
         Check that the field_value meets the mandation requirements (if field_value can't be found
-        then the argument should be given as None).
+        then this argument should be given as None).
 
-        If mandation is not yet known, pass the mandation_key instead to allow a lookup.
+        If mandation is not yet known, pass the mandation_key and vaccine_type instead to allow a
+        lookup.
+
         Generic mandatory and not-applicable error messages will be used if the appropriate optional
         arguments are not given.
         """
 
         # Determine and set the mandation and appropriate error messages
-        if not mandation:
-            mandation = vaccine_type_applicable_validations[mandation_key][vaccine_type]
+        mandation = (
+            mandation
+            if mandation
+            else vaccine_type_applicable_validations[mandation_key][vaccine_type]
+        )
 
-        if bespoke_mandatory_error_message:
-            mandatory_error_message = bespoke_mandatory_error_message
-        else:
-            mandatory_error_message = f"{field_location} is a mandatory field"
+        mandatory_error_message = (
+            bespoke_mandatory_error_message
+            if bespoke_mandatory_error_message
+            else f"{field_location} is a mandatory field"
+        )
 
-        if bespoke_not_applicable_error_message:
-            not_applicable_error_message = bespoke_not_applicable_error_message
-        else:
-            not_applicable_error_message = (
-                f"{field_location} must not be provided for this vaccine type"
-            )
+        not_applicable_error_message = (
+            bespoke_not_applicable_error_message
+            if bespoke_not_applicable_error_message
+            else f"{field_location} must not be provided for this vaccine type"
+        )
 
         # Raise error messages where applicable
         if field_value is None and mandation == Mandation.mandatory:
@@ -90,7 +95,7 @@ class PostValidation:
         of another field.
         """
         try:
-            obj = values[key][index] if index is not None else values[key]
+            obj = values[key] if index is None else values[key][index]
             field_value = obj if attribute is None else get_deep_attr(obj, attribute)
         except (KeyError, IndexError, AttributeError):
             field_value = None

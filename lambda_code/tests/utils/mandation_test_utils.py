@@ -121,42 +121,6 @@ class MandationTests:
         )
 
     @staticmethod
-    def test_mandation_for_mandatory_if_not_done_on_not_not_done_data(
-        test_instance: unittest.TestCase,
-        field_location: str,
-    ):
-        """
-        Run all the test cases for status of "completed" or "entered-in-error" when the field
-        is conditionally mandatory if status is "not-done"
-        """
-
-        # Test no errors are raised when status is "completed"
-        json_data_with_status_entered_in_error = parse("status").update(
-            deepcopy(test_instance.covid_json_data), "completed"
-        )
-
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            test_instance, json_data_with_status_entered_in_error
-        )
-
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
-            test_instance, field_location, json_data_with_status_entered_in_error
-        )
-
-        # Test no errors are raised when status is "entered-in-error"
-        json_data_with_status_entered_in_error = parse("status").update(
-            deepcopy(test_instance.covid_json_data), "entered-in-error"
-        )
-
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            test_instance, json_data_with_status_entered_in_error
-        )
-
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
-            test_instance, field_location, json_data_with_status_entered_in_error
-        )
-
-    @staticmethod
     def test_mandation_rule_met(
         test_instance: unittest.TestCase,
         field_location: str,
@@ -206,15 +170,15 @@ class MandationTests:
         vaccine_type: VaccineTypes,
         mandation_when_status_completed: Mandation,
         mandation_when_status_entered_in_error: Mandation,
-        mandation_when_status_not_done,
+        mandation_when_status_not_done: Mandation,
         expected_bespoke_error_message: str = None,
         expected_error_type: str = "value_error",
     ):
         """
-        Run all the test cases for status of "completed" or "entered-in-error" when the field
-        is conditionally mandatory if status is "not-done"
+        Run all the test cases for the three different statuses,
+        when mandation is dependent on status
         """
-
+        # Set the vaccination procedure code based on vaccine type
         vaccination_procedure_code_field_location = (
             "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
             + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
@@ -270,3 +234,55 @@ class MandationTests:
         #     expected_bespoke_error_message,
         #     expected_error_type,
         # )
+
+    @staticmethod
+    def test_mandation_for_interdependent_fields(
+        test_instance: unittest.TestCase,
+        dependent_field_location: str,
+        dependent_on_field_location: str,
+        vaccine_type: VaccineTypes,
+        mandation_when_dependent_on_field_present: Mandation,
+        mandation_when_dependent_on_field_absent: Mandation,
+        expected_bespoke_error_message: str = None,
+        expected_error_type: str = "value_error",
+    ):
+        """
+        Run all the test cases for status of "completed" or "entered-in-error" when the field
+        is conditionally mandatory if status is "not-done"
+        """
+
+        # Set the vaccination procedure code based on vaccine type
+        vaccination_procedure_code_field_location = (
+            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
+            + "'http://snomed.info/sct')].code"
+        )
+
+        valid_json_data = parse(vaccination_procedure_code_field_location).update(
+            deepcopy(test_instance.covid_json_data),
+            vaccine_type_to_sample_vaccination_procedure_snomed_code[vaccine_type],
+        )
+
+        # Test cases where depent_on_field is present
+        MandationTests.test_mandation_rule_met(
+            test_instance,
+            field_location=dependent_field_location,
+            mandation=mandation_when_dependent_on_field_present,
+            valid_json_data=deepcopy(valid_json_data),
+            expected_bespoke_error_message=expected_bespoke_error_message,
+            expected_error_type=expected_error_type,
+        )
+
+        # Test case where depent_on_field is absent
+        valid_json_data = parse(dependent_on_field_location).filter(
+            lambda d: True, valid_json_data
+        )
+
+        MandationTests.test_mandation_rule_met(
+            test_instance,
+            field_location=dependent_field_location,
+            mandation=mandation_when_dependent_on_field_absent,
+            valid_json_data=deepcopy(valid_json_data),
+            expected_bespoke_error_message=expected_bespoke_error_message,
+            expected_error_type=expected_error_type,
+        )

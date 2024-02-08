@@ -5,9 +5,7 @@ from dataclasses import dataclass
 
 @dataclass
 class VaccineTypes:
-    """
-    Disease types
-    """
+    """Disease types"""
 
     covid_19: str = "COVID-19"
     flu: str = "FLU"
