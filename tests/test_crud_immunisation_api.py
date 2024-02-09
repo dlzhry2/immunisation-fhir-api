@@ -8,7 +8,7 @@ import pytest
 
 from .configuration.config import valid_nhs_number1, valid_nhs_number_with_s_flag
 from .example_loader import load_example
-from .immunisation_api import ImmunisationApi
+from .immunisation_api import ImmunisationApi, parse_location
 
 
 def create_an_imms_obj(imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1) -> dict:
@@ -20,15 +20,15 @@ def create_an_imms_obj(imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_nu
     return imms
 
 
-def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> dict:
+def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> str:
     imms = create_an_imms_obj()
+    res = imms_api.create_immunization(imms)
+    imms_id = parse_location(res.headers["Location"])
 
-    stored_imms = imms_api.create_immunization(imms).json()
-    imms_id = stored_imms["id"]
     res = imms_api.delete_immunization(imms_id)
-    assert res.status_code == 200
+    assert res.status_code == 204
 
-    return res.json()
+    return imms_id
 
 
 @pytest.mark.nhsd_apim_authorization(
@@ -46,24 +46,25 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
 
     # CREATE
     result = imms_api.create_immunization(imms)
-    res_body = result.json()
 
+    assert result.text == ""
     assert result.status_code == 201
-    assert res_body["resourceType"] == "Immunization"
+    assert "Location" in result.headers
 
     # READ
-    imms_id = res_body["id"]
+    imms_id = parse_location(result.headers["Location"])
 
     result = imms_api.get_immunization_by_id(imms_id)
+    res_body = result.json()
 
     assert result.status_code == 200
     assert res_body["id"] == imms_id
 
     # UPDATE
-    new_imms = copy.deepcopy(imms)
-    new_imms["id"] = imms_id
-    new_imms["status"] = "not-done"
-    result = imms_api.update_immunization(imms_id, new_imms)
+    update_payload = copy.deepcopy(imms)
+    update_payload["id"] = imms_id
+    update_payload["status"] = "not-done"
+    result = imms_api.update_immunization(imms_id, update_payload)
 
     assert result.status_code == 200
 
@@ -75,7 +76,7 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     # DELETE
     result = imms_api.delete_immunization(imms_id)
 
-    assert result.status_code == 200
+    assert result.status_code == 204
 
 
 @pytest.mark.nhsd_apim_authorization(
@@ -223,8 +224,7 @@ def test_delete_immunization_already_deleted(nhsd_apim_proxy_url, nhsd_apim_auth
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
-    imms = create_a_deleted_imms_resource(imms_api)
-    imms_id = imms["id"]
+    imms_id = create_a_deleted_imms_resource(imms_api)
 
     # Act
     result = imms_api.delete_immunization(imms_id)
@@ -247,8 +247,7 @@ def test_get_deleted_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
-    imms = create_a_deleted_imms_resource(imms_api)
-    imms_id = imms["id"]
+    imms_id = create_a_deleted_imms_resource(imms_api)
 
     # Act
     result = imms_api.get_immunization_by_id(imms_id)
@@ -321,9 +320,9 @@ def test_update_deleted_imms_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_heade
     result = imms_api.create_immunization(imms)
     assert result.status_code == 201
 
-    imms_id = result.json()["id"]
+    imms_id = parse_location(result.headers["Location"])
     result = imms_api.delete_immunization(imms_id)
-    assert result.status_code == 200
+    assert result.status_code == 204
 
     # When
     imms["id"] = imms_id
@@ -378,7 +377,14 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
     if created_imms_result.status_code != 201:
         pprint.pprint(created_imms_result.text)
         assert created_imms_result.status_code == 201
-    created_imms = created_imms_result.json()
+
+    created_imms_id = parse_location(created_imms_result.headers["Location"])
+    # Read the created resource back to get the full resource
+    created_imms = imms_api.get_immunization_by_id(created_imms_id)
+    if created_imms.status_code != 200:
+        print(created_imms.text)
+        assert created_imms.status_code == 200
+    created_imms = created_imms.json()
 
     retrieved_get_imms_result = imms_api.get_immunization_by_id(created_imms["id"])
     if retrieved_get_imms_result.status_code != 200:
@@ -392,10 +398,10 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
         pprint.pprint(retrieved_search_imms_result.text)
         assert retrieved_search_imms_result.status_code == 200
     retrieved_search_imms = next(imms for imms in retrieved_search_imms_result.json()["entry"]
-                                 if imms["id"] == created_imms["id"])
-
+                                 if imms["resource"]["id"] == created_imms["id"])
+    # Fetching Immunization resource form Bundle
+    retrieved_search_imms = retrieved_search_imms["resource"]
     all_retrieved_imms = [retrieved_get_imms, retrieved_search_imms]
-
     imms_api.delete_immunization(created_imms["id"])
 
     # Assert
@@ -432,7 +438,10 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
         assert all(performer["actor"]["identifier"]["system"] == "https://fhir.nhs.uk/Id/ods-organization-code"
                    for performer in imms["performer"])
 
-    assert_is_not_filtered(created_imms)
+    if is_restricted:
+        assert_is_filtered(created_imms)
+    else:
+        assert_is_not_filtered(created_imms)
     for retrieved_imms in all_retrieved_imms:
         if is_restricted:
             assert_is_filtered(retrieved_imms)

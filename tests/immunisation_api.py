@@ -1,6 +1,17 @@
+import re
 import uuid
+from typing import Optional
 
 import requests
+
+
+def parse_location(location) -> Optional[str]:
+    """parse location header and return resource ID"""
+    pattern = r"https://.*\.api\.service\.nhs\.uk/immunisation-fhir-api.*/Immunization/(.+)"
+    if match := re.search(pattern, location):
+        return match.group(1)
+    else:
+        return None
 
 
 class ImmunisationApi:
@@ -27,7 +38,7 @@ class ImmunisationApi:
         return requests.delete(f"{self.url}/Immunization/{imms_id}", headers=self._update_headers())
 
     def search_immunizations(self, nhs_number, disease_type):
-        return requests.get(f"{self.url}/Immunization?nhsNumber={nhs_number}&diseaseType={disease_type}",
+        return requests.get(f"{self.url}/Immunization?-nhsNumber={nhs_number}&-diseaseType={disease_type}",
                             headers=self._update_headers())
 
     def _update_headers(self, headers=None):
