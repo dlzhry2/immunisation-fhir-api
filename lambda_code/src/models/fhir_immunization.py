@@ -426,9 +426,9 @@ class ImmunizationValidator:
             self.immunization.add_root_validator(
                 FHIRImmunizationPostValidators.validate_status_reason_coding_display
             )
-            # self.immunization.add_root_validator(
-            #     FHIRImmunizationPostValidators.validate_protocol_applied_dose_number_positive_int
-            # )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_protocol_applied_dose_number_positive_int
+            )
             self.immunization.add_root_validator(
                 FHIRImmunizationPostValidators.validate_vaccine_code_coding_code
             )

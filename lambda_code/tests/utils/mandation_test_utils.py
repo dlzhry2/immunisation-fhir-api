@@ -247,10 +247,16 @@ class MandationTests:
         )
 
         # Test case where status is "not-done"
+        base_not_done_json_data = (
+            deepcopy(test_instance.not_done_covid_json_data)
+            if vaccine_type == VaccineTypes.covid_19
+            else deepcopy(test_instance.not_done_json_data)
+        )
+
         json_data_with_status_not_done = parse(
             vaccination_procedure_code_field_location
         ).update(
-            deepcopy(test_instance.not_done_json_data),
+            deepcopy(base_not_done_json_data),
             vaccine_type_to_sample_vaccination_procedure_snomed_code[vaccine_type],
         )
 

@@ -659,21 +659,25 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_vaccine_code_coding_code(cls, values: dict) -> dict:
         "Validate that vaccineCode_coding_code is present or absent, as required"
-        # TODO: Check with imms team if system should be
-        # "http://terminology.hl7.org/CodeSystem/v3-NullFlavor" when status is 'not-done'
-        # and amend not-done data accordingly
-        field_location = (
-            "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code"
-        )
+        if cls.status == "not-done":
+            system = "http://terminology.hl7.org/CodeSystem/v3-NullFlavor"
+        else:
+            system = "http://snomed.info/sct"
+        field_location = f"vaccineCode.coding[?(@.system=='{system}')].code"
 
         try:
             vaccine_code_coding_code = [
-                x
-                for x in values["vaccineCode"].coding
-                if x.system == "http://snomed.info/sct"
+                x for x in values["vaccineCode"].coding if x.system == system
             ][0].code
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccine_code_coding_code = None
+
+        check_mandation_requirements_met(
+            field_value=vaccine_code_coding_code,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="vaccine_code_coding_code",
+        )
 
         if cls.status == "not-done" and vaccine_code_coding_code not in (
             "NAVU",
@@ -684,13 +688,6 @@ class FHIRImmunizationPostValidators:
             raise ValueError(
                 f"{field_location} must be 'NAVU', 'UNC', 'UNK' or 'NA' when status is 'not-done'"
             )
-
-        check_mandation_requirements_met(
-            field_value=vaccine_code_coding_code,
-            field_location=field_location,
-            vaccine_type=cls.vaccine_type,
-            mandation_key="vaccine_code_coding_code",
-        )
 
         return values
 
