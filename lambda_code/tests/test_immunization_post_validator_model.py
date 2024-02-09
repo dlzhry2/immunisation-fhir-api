@@ -389,34 +389,56 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self, "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
         )
 
-    # def test_post_protocol_appplied_dose_number_positive_int(self):
-    #     """
-    #     Test that present or absent protocol_appplied_dose_number_positive_int is accepted or
-    #     rejected as appropriate dependent on other fields
-    #     """
-    #     field_location = "protocolApplied[0].doseNumberPositiveInt"
-    #     # TODO: Fix this test - note that doseNumberPositiveInt is FHIR mandatory if
-    #     # protocolApplied field is present
-    #     # Test cases for COVID-19
-    #     MandationTests.test_mandation_for_status_dependent_fields(
-    #         self,
-    #         field_location,
-    #         vaccine_type=VaccineTypes.covid_19,
-    #         mandation_when_status_completed=Mandation.mandatory,
-    #         mandation_when_status_entered_in_error=Mandation.mandatory,
-    #         mandation_when_status_not_done=Mandation.mandatory,
-    #     )
+    def test_post_protocol_appplied_dose_number_positive_int(self):
+        """
+        Test that present or absent protocol_appplied_dose_number_positive_int is accepted or
+        rejected as appropriate dependent on other fields
+        """
 
-    #     # # Test cases for FLU, HPV and MMR
-    #     # for vaccine_type in [VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
-    #     #     MandationTests.test_mandation_for_status_dependent_fields(
-    #     #         self,
-    #     #         field_location,
-    #     #         vaccine_type=vaccine_type,
-    #     #         mandation_when_status_completed=Mandation.required,
-    #     #         mandation_when_status_entered_in_error=Mandation.required,
-    #     #         mandation_when_status_not_done=Mandation.required,
-    #     #     )
+        field_location = "protocolApplied[0].doseNumberPositiveInt"
+        # protocol_applied_dose_number_positive_int is FHIR mandatory when protocol_applied is
+        # present, therefore to test the NHS validators when
+        # protocol_applied_dose_number_positive_int is removed, it is necessary to removed
+        # the entirety of protocol_applied
+        field_to_remove = "protocolApplied"
+
+        # Test cases for COVID-19
+        MandationTests.test_mandation_for_status_dependent_fields(
+            self,
+            field_location,
+            vaccine_type=VaccineTypes.covid_19,
+            mandation_when_status_completed=Mandation.mandatory,
+            mandation_when_status_entered_in_error=Mandation.mandatory,
+            mandation_when_status_not_done=Mandation.mandatory,
+            expected_bespoke_error_message=f"{field_location} is mandatory when vaccination "
+            + f"type is {VaccineTypes.covid_19}",
+            field_to_remove=field_to_remove,
+        )
+
+        # Test cases for FLU
+        MandationTests.test_mandation_for_status_dependent_fields(
+            self,
+            field_location,
+            vaccine_type=VaccineTypes.flu,
+            mandation_when_status_completed=Mandation.mandatory,
+            mandation_when_status_entered_in_error=Mandation.mandatory,
+            mandation_when_status_not_done=Mandation.required,
+            expected_bespoke_error_message=f"{field_location} is mandatory when status is "
+            + f"'completed' or 'entered-in-error' and vaccination type is {VaccineTypes.flu}",
+            field_to_remove=field_to_remove,
+        )
+
+        # Test cases for HPV and MMR
+        for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.required,
+                mandation_when_status_entered_in_error=Mandation.required,
+                mandation_when_status_not_done=Mandation.required,
+                field_to_remove=field_to_remove,
+            )
 
     def test_post_vaccine_code_coding_code(self):
         """Test that the JSON data is rejected when vaccine_code_coding_code is absent"""

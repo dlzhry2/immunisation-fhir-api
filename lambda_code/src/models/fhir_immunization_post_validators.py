@@ -605,7 +605,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    # TODO: Amend this validator?
     @classmethod
     def validate_protocol_applied_dose_number_positive_int(cls, values: dict) -> dict:
         "Validate that protocol_applied_dose_number_positive_int is present or absent, as required"
@@ -615,7 +614,7 @@ class FHIRImmunizationPostValidators:
             protocol_applied_dose_number_positive_int = values["protocolApplied"][
                 0
             ].doseNumberPositiveInt
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             protocol_applied_dose_number_positive_int = None
 
         # Handle conditional mandation logic
@@ -624,21 +623,22 @@ class FHIRImmunizationPostValidators:
         ][cls.vaccine_type]
         bespoke_mandatory_error_message = None
 
-        if values["status"] != "not-done" and cls.vaccine_type == VaccineTypes.flu:
-            mandation = Mandation.mandatory
-            bespoke_mandatory_error_message = (
-                f"{field_location} is mandatory when status is 'completed' or 'entered-in-error'"
-                + f" and vaccination type is {cls.vaccine_type}"
-            )
-        else:
-            mandation = Mandation.required
+        if cls.vaccine_type == VaccineTypes.flu:
+            if values["status"] != "not-done":
+                mandation = Mandation.mandatory
+                bespoke_mandatory_error_message = (
+                    f"{field_location} is mandatory when status is 'completed' or 'entered-in-error'"
+                    + f" and vaccination type is {cls.vaccine_type}"
+                )
+            else:
+                mandation = Mandation.required
 
         # Set the bespoke mandatory error messages
         bespoke_mandatory_error_message = None
         if cls.vaccine_type == VaccineTypes.covid_19:
             bespoke_mandatory_error_message = (
                 f"{field_location} is mandatory when vaccination "
-                + "type is {cls.vaccine_type}"
+                + f"type is {cls.vaccine_type}"
             )
         if cls.vaccine_type == VaccineTypes.flu:
             bespoke_mandatory_error_message = (

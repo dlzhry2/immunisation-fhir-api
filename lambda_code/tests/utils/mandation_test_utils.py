@@ -34,15 +34,26 @@ class MandationTests:
         test_instance: unittest.TestCase,
         field_location: str,
         valid_json_data: dict = None,
+        field_to_remove: str = None,
     ):
         """
         Test that JSON data which is missing a required,optional or not applicable field is accepted
+
+        NOTE: By default the field_location being tested is removed. If required, a parent
+        field can be given to the optional field_to_remove argument instead.
         """
         # Prepare the json data
         if not valid_json_data:
             valid_json_data = deepcopy(test_instance.covid_json_data)
         # Remove the relevant field
-        valid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
+        if field_to_remove:
+            valid_json_data = parse(field_to_remove).filter(
+                lambda d: True, valid_json_data
+            )
+        else:
+            valid_json_data = parse(field_location).filter(
+                lambda d: True, valid_json_data
+            )
         # Test that the valid data is accepted by the model
         test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
 
@@ -54,12 +65,16 @@ class MandationTests:
         expected_bespoke_error_message: str = None,
         expected_error_type: str = "value_error",
         is_mandatory_fhir: bool = False,
+        field_to_remove: str = None,
     ):
         """
         Test that json data which is missing a mandatory field is rejected by the model, with
         an appropriate validation error. Note that missing mandatory FHIR fields are rejected
         by the FHIR validator, whereas missing mandatory NHS fields are rejected by the custom
         validator.
+
+        NOTE: By default the field_location being tested is removed. If required, a parent
+        field can be given to the optional field_to_remove argument instead.
 
         NOTE:
         TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
@@ -76,10 +91,15 @@ class MandationTests:
         else:
             expected_error_message = f"{field_location} is a mandatory field"
 
-        # Create invalid json data by removing the relevant field
-        invalid_json_data = parse(field_location).filter(
-            lambda d: True, valid_json_data
-        )
+        if field_to_remove:
+            invalid_json_data = parse(field_to_remove).filter(
+                lambda d: True, valid_json_data
+            )
+        else:
+            # Create invalid json data by removing the relevant field
+            invalid_json_data = parse(field_location).filter(
+                lambda d: True, valid_json_data
+            )
 
         if is_mandatory_fhir:
             # Test that correct error message is raised
@@ -128,6 +148,7 @@ class MandationTests:
         valid_json_data: dict,
         expected_bespoke_error_message: str = None,
         expected_error_type: str = "value_error",
+        field_to_remove: str = None,
     ):
         """
         Test that the mandation rule is met (i.e. data is rejected or accepted as appropriate
@@ -145,6 +166,7 @@ class MandationTests:
                 valid_json_data,
                 expected_bespoke_error_message,
                 expected_error_type,
+                field_to_remove=field_to_remove,
             )
 
         if mandation == Mandation.required or mandation == Mandation.optional:
@@ -154,7 +176,10 @@ class MandationTests:
             )
             # Accept field absent
             MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
-                test_instance, field_location, valid_json_data
+                test_instance,
+                field_location,
+                valid_json_data,
+                field_to_remove=field_to_remove,
             )
 
         # TODO: Handle not applicable instance
@@ -173,6 +198,7 @@ class MandationTests:
         mandation_when_status_not_done: Mandation,
         expected_bespoke_error_message: str = None,
         expected_error_type: str = "value_error",
+        field_to_remove: str = None,
     ):
         """
         Run all the test cases for the three different statuses,
@@ -202,6 +228,7 @@ class MandationTests:
             json_data_with_status_completed,
             expected_bespoke_error_message,
             expected_error_type,
+            field_to_remove=field_to_remove,
         )
 
         # Test case where status is "entered-in-error"
@@ -216,8 +243,10 @@ class MandationTests:
             json_data_with_status_entered_in_error,
             expected_bespoke_error_message,
             expected_error_type,
+            field_to_remove=field_to_remove,
         )
 
+        # TODO: uncomment this code once not-done queries are resolved
         # # Test case where status is "not-done"
         # json_data_with_status_not_done = parse(
         #     vaccination_procedure_code_field_location
@@ -233,6 +262,7 @@ class MandationTests:
         #     json_data_with_status_not_done,
         #     expected_bespoke_error_message,
         #     expected_error_type,
+        #     field_to_remove=field_to_remove
         # )
 
     @staticmethod
