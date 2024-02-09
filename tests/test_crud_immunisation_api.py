@@ -290,7 +290,6 @@ def test_get_s_flag_patient(
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
     # Act
-    # TODO: Replace this with the usual specification example when it is updated.
     current_directory = os.path.dirname(os.path.realpath(__file__))
     with open(
         f"{current_directory}/../lambda_code/tests/sample_data/sample_immunization_event.json"
