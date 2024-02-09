@@ -327,11 +327,11 @@ def test_get_s_flag_patient(
     retrieved_search_imms = next(
         imms
         for imms in retrieved_search_imms_result.json()["entry"]
-        if imms["id"] == created_imms["id"]
+        if imms["resource"]["id"] == created_imms["id"]
     )
-
+    # Fetching Immunization resource form Bundle
+    retrieved_search_imms = retrieved_search_imms["resource"]
     all_retrieved_imms = [retrieved_get_imms, retrieved_search_imms]
-
     imms_api.delete_immunization(created_imms["id"])
 
     # Assert
