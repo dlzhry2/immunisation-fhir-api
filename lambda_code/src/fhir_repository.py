@@ -203,7 +203,6 @@ class ImmunizationRepository:
             KeyConditionExpression=condition,
             FilterExpression=is_not_deleted,
         )
-
         if "Items" in response:
             return [json.loads(item["Resource"]) for item in response["Items"]]
         else:
