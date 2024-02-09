@@ -2,6 +2,7 @@ import json
 import os
 import time
 import uuid
+import pdb
 from dataclasses import dataclass
 from typing import Optional
 import boto3
@@ -27,6 +28,16 @@ def _make_immunization_pk(_id: str):
 def _make_patient_pk(_id: str):
     return f"Patient#{_id}"
 
+
+def _query_identifier(table, index, pk, identifier):
+    queryResponse = table.query(
+            IndexName=index,
+            KeyConditionExpression=Key(pk).eq(identifier),
+            Limit=1
+        )
+    if queryResponse.get('Count', 0) > 0:
+        return queryResponse
+    
 
 @dataclass
 class RecordAttributes:
@@ -68,14 +79,8 @@ class ImmunizationRepository:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
-
-        identifierIndexResponse = self.table.query(
-            IndexName='IdentifierGSI',
-            KeyConditionExpression=Key('IdentifierPK').eq(attr.identifier),
-            Limit=1
-        )
-        
-        if identifierIndexResponse.get('Count', 0) > 0: 
+                
+        if _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier): 
             raise UnhandledResponseError(message="The identifier you are trying to create already has an existing index")
 
         response = self.table.put_item(Item={
@@ -97,6 +102,14 @@ class ImmunizationRepository:
         # "Resource" is a dynamodb reserved word
         update_exp = ("SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
                       "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient")
+
+        queryResponse = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
+        
+        if queryResponse != None:
+            items = queryResponse.get('Items', [])
+            resource_dict = json.loads(items[0]['Resource'])
+            if resource_dict['id'] != attr.resource['id']:
+                raise UnhandledResponseError(message="The identifier you are trying to update already has an existing index", response=queryResponse)
 
         try:
             response = self.table.update_item(
