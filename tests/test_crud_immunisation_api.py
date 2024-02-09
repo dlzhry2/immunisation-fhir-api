@@ -101,7 +101,7 @@ def test_create_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     assert create_response.status_code == 201
     assert create_res_body["resourceType"] == "Immunization"
-    
+
     # CREATE IMMUNIZATION WITH SAME IDENTIFIER
     failed_create_response = imms_api.create_immunization(imms)
     failed_create_res_body = failed_create_response.json()
@@ -129,7 +129,7 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     imms = create_an_imms_obj()
     imms["identifier"][0]["value"] = identifier
-    
+
     imms_2 = create_an_imms_obj()
     imms_2["identifier"][0]["value"] = str(uuid.uuid4())
 
@@ -140,7 +140,7 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     assert imms_response.status_code == 201
     assert imms_res_body["resourceType"] == "Immunization"
-    
+
     # CREATE SECOND IMMUNIZATION
     imms_2_response = imms_api.create_immunization(imms_2)
     imms_2_res_body = imms_2_response.json()
@@ -148,7 +148,7 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     assert imms_2_response.status_code == 201
     assert imms_2_res_body["resourceType"] == "Immunization"
-    
+
     # UPDATE SECOND IMMUNIZATION WITH FIRST IMMUNIZATIONS IDENTIFIER
     new_imms = copy.deepcopy(imms)
     new_imms["id"] = imms_2_id
