@@ -97,7 +97,7 @@ class PostValidation:
         try:
             obj = values[key] if index is None else values[key][index]
             field_value = obj if attribute is None else get_deep_attr(obj, attribute)
-        except (KeyError, IndexError, AttributeError):
+        except (KeyError, IndexError, AttributeError, TypeError):
             field_value = None
 
         return field_value

@@ -246,24 +246,23 @@ class MandationTests:
             field_to_remove=field_to_remove,
         )
 
-        # TODO: uncomment this code once not-done queries are resolved
-        # # Test case where status is "not-done"
-        # json_data_with_status_not_done = parse(
-        #     vaccination_procedure_code_field_location
-        # ).update(
-        #     deepcopy(test_instance.not_done_json_data),
-        #     vaccine_type_to_sample_vaccination_procedure_snomed_code[vaccine_type],
-        # )
+        # Test case where status is "not-done"
+        json_data_with_status_not_done = parse(
+            vaccination_procedure_code_field_location
+        ).update(
+            deepcopy(test_instance.not_done_json_data),
+            vaccine_type_to_sample_vaccination_procedure_snomed_code[vaccine_type],
+        )
 
-        # MandationTests.test_mandation_rule_met(
-        #     test_instance,
-        #     field_location,
-        #     mandation_when_status_not_done,
-        #     json_data_with_status_not_done,
-        #     expected_bespoke_error_message,
-        #     expected_error_type,
-        #     field_to_remove=field_to_remove
-        # )
+        MandationTests.test_mandation_rule_met(
+            test_instance,
+            field_location,
+            mandation_when_status_not_done,
+            json_data_with_status_not_done,
+            expected_bespoke_error_message,
+            expected_error_type,
+            field_to_remove=field_to_remove,
+        )
 
     @staticmethod
     def test_mandation_for_interdependent_fields(

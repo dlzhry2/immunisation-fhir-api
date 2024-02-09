@@ -40,7 +40,7 @@ class FHIRImmunizationPostValidators:
                 vaccination_procedure_code, field_location
             )
 
-        except (KeyError, IndexError) as error:
+        except (KeyError, IndexError, TypeError) as error:
             raise MandatoryError(f"{field_location} is a mandatory field") from error
 
         return values
@@ -64,7 +64,7 @@ class FHIRImmunizationPostValidators:
                 for x in contained_patient.identifier
                 if x.system == "https://fhir.nhs.uk/Id/nhs-number"
             ][0].value
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_identifier_value = None
 
         check_mandation_requirements_met(
@@ -83,7 +83,7 @@ class FHIRImmunizationPostValidators:
             patient_name_given = (
                 get_contained_resource_from_model(values, "Patient").name[0].given
             )
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_name_given = None
 
         check_mandation_requirements_met(
@@ -102,7 +102,7 @@ class FHIRImmunizationPostValidators:
             patient_name_family = (
                 get_contained_resource_from_model(values, "Patient").name[0].family
             )
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_name_family = None
 
         check_mandation_requirements_met(
@@ -120,7 +120,7 @@ class FHIRImmunizationPostValidators:
             patient_birth_date = get_contained_resource_from_model(
                 values, "Patient"
             ).birthDate
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_birth_date = None
 
         check_mandation_requirements_met(
@@ -136,7 +136,7 @@ class FHIRImmunizationPostValidators:
         "Validate that patient_gender is present or absent, as required"
         try:
             patient_gender = get_contained_resource_from_model(values, "Patient").gender
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_gender = None
 
         check_mandation_requirements_met(
@@ -156,7 +156,7 @@ class FHIRImmunizationPostValidators:
                 .address[0]
                 .postalCode
             )
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_address_postal_code = None
 
         check_mandation_requirements_met(
@@ -221,7 +221,7 @@ class FHIRImmunizationPostValidators:
             field_value = [x for x in values["performer"] if util_func(x)][
                 0
             ].actor.display
-        except (KeyError, IndexError, AttributeError):
+        except (KeyError, IndexError, AttributeError, TypeError):
             field_value = None
 
         check_mandation_requirements_met(
@@ -312,7 +312,7 @@ class FHIRImmunizationPostValidators:
                 .identifier[0]
                 .value
             )
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             practitioner_identifier_value = None
 
         check_mandation_requirements_met(
@@ -336,7 +336,7 @@ class FHIRImmunizationPostValidators:
                 .identifier[0]
                 .system
             )
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             practitioner_identifier_system = None
 
         # Set up mandation defaults
@@ -392,7 +392,7 @@ class FHIRImmunizationPostValidators:
                     values, "PerformerSDSJobROle", "valueString"
                 )
             )
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             performer_sds_job_role = None
 
         check_mandation_requirements_met(
@@ -473,7 +473,7 @@ class FHIRImmunizationPostValidators:
             vaccination_procedure_display = get_generic_extension_value_from_model(
                 values, url, system, field_type
             )
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccination_procedure_display = None
 
         check_mandation_requirements_met(
@@ -499,7 +499,7 @@ class FHIRImmunizationPostValidators:
             vaccination_situation_code = get_generic_extension_value_from_model(
                 values, url, system, field_type
             )
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccination_situation_code = None
 
         # Handle conditional mandation logic
@@ -536,7 +536,7 @@ class FHIRImmunizationPostValidators:
             vaccination_situation_display = get_generic_extension_value_from_model(
                 values, url, system, field_type
             )
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccination_situation_display = None
 
         check_mandation_requirements_met(
@@ -560,7 +560,7 @@ class FHIRImmunizationPostValidators:
                 for x in values["statusReason"].coding
                 if x.system == "http://snomed.info/sct"
             ][0].code
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             status_reason_coding_code = None
 
         # Handle conditional mandation logic
@@ -576,7 +576,8 @@ class FHIRImmunizationPostValidators:
             field_value=status_reason_coding_code,
             field_location=field_location,
             mandation=mandation,
-            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is 'not-done'",
+            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is "
+            + "'not-done'",
         )
 
         return values
@@ -594,7 +595,7 @@ class FHIRImmunizationPostValidators:
                 for x in values["statusReason"].coding
                 if x.system == "http://snomed.info/sct"
             ][0].code
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             status_reason_coding_display = None
 
         check_mandation_requirements_met(
@@ -627,8 +628,8 @@ class FHIRImmunizationPostValidators:
             if values["status"] != "not-done":
                 mandation = Mandation.mandatory
                 bespoke_mandatory_error_message = (
-                    f"{field_location} is mandatory when status is 'completed' or 'entered-in-error'"
-                    + f" and vaccination type is {cls.vaccine_type}"
+                    f"{field_location} is mandatory when status is 'completed' or "
+                    + f"'entered-in-error' and vaccination type is {cls.vaccine_type}"
                 )
             else:
                 mandation = Mandation.required
@@ -658,15 +659,21 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_vaccine_code_coding_code(cls, values: dict) -> dict:
         "Validate that vaccineCode_coding_code is present or absent, as required"
-        vaccine_code_coding_code = [
-            x
-            for x in values["vaccineCode"].coding
-            if x.system == "http://snomed.info/sct"
-        ][0].code
-
+        # TODO: Check with imms team if system should be
+        # "http://terminology.hl7.org/CodeSystem/v3-NullFlavor" when status is 'not-done'
+        # and amend not-done data accordingly
         field_location = (
             "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code"
         )
+
+        try:
+            vaccine_code_coding_code = [
+                x
+                for x in values["vaccineCode"].coding
+                if x.system == "http://snomed.info/sct"
+            ][0].code
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            vaccine_code_coding_code = None
 
         if cls.status == "not-done" and vaccine_code_coding_code not in (
             "NAVU",
@@ -700,7 +707,7 @@ class FHIRImmunizationPostValidators:
                 for x in values["vaccineCode"].coding
                 if x.system == "http://snomed.info/sct"
             ][0].display
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccine_code_coding_display = None
 
         check_mandation_requirements_met(
@@ -718,7 +725,7 @@ class FHIRImmunizationPostValidators:
 
         try:
             manufacturer_display = values["manufacturer"].display
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             manufacturer_display = None
 
         # Handle conditional mandation logic
@@ -750,7 +757,7 @@ class FHIRImmunizationPostValidators:
 
         try:
             lot_number = values["lotNumber"]
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             lot_number = None
 
         # Handle conditional mandation logic
@@ -780,7 +787,7 @@ class FHIRImmunizationPostValidators:
 
         try:
             expiration_date = values["expirationDate"]
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             expiration_date = None
 
         # Handle conditional mandation logic
@@ -814,7 +821,7 @@ class FHIRImmunizationPostValidators:
             site_coding_code = [
                 x for x in values["site"].coding if x.system == "http://snomed.info/sct"
             ][0].code
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             site_coding_code = None
 
         check_mandation_requirements_met(
@@ -834,7 +841,7 @@ class FHIRImmunizationPostValidators:
             site_coding_display = [
                 x for x in values["site"].coding if x.system == "http://snomed.info/sct"
             ][0].display
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             site_coding_display = None
 
         check_mandation_requirements_met(
@@ -856,7 +863,7 @@ class FHIRImmunizationPostValidators:
                 for x in values["route"].coding
                 if x.system == "http://snomed.info/sct"
             ][0].code
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             route_coding_code = None
 
         # Handle conditional mandation logic
@@ -895,7 +902,7 @@ class FHIRImmunizationPostValidators:
                 for x in values["route"].coding
                 if x.system == "http://snomed.info/sct"
             ][0].display
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             route_coding_display = None
 
         check_mandation_requirements_met(
@@ -913,7 +920,7 @@ class FHIRImmunizationPostValidators:
 
         try:
             dose_quantity_value = values["doseQuantity"].value
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             dose_quantity_value = None
 
         # Handle conditional mandation logic
@@ -949,7 +956,7 @@ class FHIRImmunizationPostValidators:
 
         try:
             dose_quantity_code = values["doseQuantity"].code
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             dose_quantity_code = None
 
         # Handle conditional mandation logic
@@ -982,7 +989,7 @@ class FHIRImmunizationPostValidators:
         "Validate that dose_quantity_unit is present or absent, as required"
         try:
             dose_quantity_unit = values["doseQuantity"].unit
-        except (KeyError, IndexError, AttributeError, MandatoryError):
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             dose_quantity_unit = None
 
         check_mandation_requirements_met(
@@ -997,10 +1004,14 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_reason_code_coding_code(cls, values: dict) -> dict:
         "Validate that reason_code_coding_code is present or absent, as required"
-        for index in range(len(values["reasonCode"])):
+        # The for loop must be run at least once to check for mandation, regardless of whether
+        # reasonCode exists. If there are multiple items in reasonCode, then the loop must be
+        # run over each of those items.
+        number_of_iterations = len(values["reasonCode"]) if values["reasonCode"] else 1
+        for index in range(number_of_iterations):
             try:
                 reason_code_coding_code = values["reasonCode"][index].coding[0].code
-            except (KeyError, IndexError, AttributeError, MandatoryError):
+            except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
                 reason_code_coding_code = None
 
             check_mandation_requirements_met(
@@ -1015,12 +1026,16 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_reason_code_coding_display(cls, values: dict) -> dict:
         "Validate that reason_code_coding_display is present or absent, as required"
-        for index in range(len(values["reasonCode"])):
+        # The for loop must be run at least once to check for mandation, regardless of whether
+        # reasonCode exists. If there are multiple items in reasonCode, then the loop must be
+        # run over each of those items.
+        number_of_iterations = len(values["reasonCode"]) if values["reasonCode"] else 1
+        for index in range(number_of_iterations):
             try:
                 reason_code_coding_display = (
                     values["reasonCode"][index].coding[0].display
                 )
-            except (KeyError, IndexError, AttributeError, MandatoryError):
+            except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
                 reason_code_coding_display = None
 
             check_mandation_requirements_met(
