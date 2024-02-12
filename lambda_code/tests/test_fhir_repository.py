@@ -130,12 +130,11 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
         
         self.table.query = MagicMock(return_value={"Items":[{"Resource": '{"id": "different-id"}'}], "Count": 1})
 
-        with self.assertRaises(IdentifierDuplicationError) as e_context:
+        with self.assertRaises(IdentifierDuplicationError) as e:
             # When
             self.repository.create_immunization(imms, self.patient)
-        
-        e = e_context.exception
-        self.assertEqual(e.message, "The identifier you are trying to create already has an existing index")
+
+        self.assertEqual(str(e.exception), "The provided identifier: an-id is duplicated")
         
 
 class TestCreateImmunizationPatientIndex(unittest.TestCase):
@@ -172,6 +171,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         disease = {"targetDisease": [{"coding": [{"code": disease_code}]}]}
         imms["protocolApplied"] = [disease]
 
+        self.table.query = MagicMock(return_value={"Count": 0})
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
 
         # When
@@ -257,12 +257,11 @@ class TestUpdateImmunization(unittest.TestCase):
 
         self.table.query = MagicMock(return_value={"Items":[{"Resource": '{"id": "different-id"}'}], "Count": 1})
 
-        with self.assertRaises(IdentifierDuplicationError) as e_context:
+        with self.assertRaises(IdentifierDuplicationError) as e:
             # When
             self.repository.update_immunization(imms_id, imms, self.patient)
-        
-        e = e_context.exception
-        self.assertEqual(e.message, "The identifier you are trying to update already has an existing index")
+
+        self.assertEqual(str(e.exception), "The provided identifier: an-id is duplicated")
 
 
 class TestDeleteImmunization(unittest.TestCase):

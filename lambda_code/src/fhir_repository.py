@@ -87,8 +87,7 @@ class ImmunizationRepository:
         query_response = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
                 
         if query_response != None: 
-            raise IdentifierDuplicationError(
-                message="The identifier you are trying to create already has an existing index")
+            raise IdentifierDuplicationError(identifier=attr.identifier)
 
         response = self.table.put_item(Item={
             'PK': attr.pk,
@@ -118,7 +117,7 @@ class ImmunizationRepository:
             items = queryResponse.get('Items', [])
             resource_dict = json.loads(items[0]['Resource'])
             if resource_dict['id'] != attr.resource['id']:
-                raise IdentifierDuplicationError(message="The identifier you are trying to update already has an existing index")
+                raise IdentifierDuplicationError(identifier=attr.identifier)
 
         try:
             response = self.table.update_item(
