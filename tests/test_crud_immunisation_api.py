@@ -352,10 +352,15 @@ def test_get_s_flag_patient(
             for performer in imms["performer"]
         )
         assert all(
+            organization.get("actor", {}).get("display") is not None
+            for organization in performer_actor_organizations
+        )
+        assert all(
             organization.get("actor", {}).get("identifier", {}).get("system")
             != "https://fhir.nhs.uk/Id/ods-organization-code"
             for organization in performer_actor_organizations
         )
+
         assert "reportOrigin" in imms
         assert "location" in imms
 
@@ -373,6 +378,10 @@ def test_get_s_flag_patient(
 
         assert all(
             organization.get("actor", {}).get("identifier", {}).get("value") == "N2N9I"
+            for organization in performer_actor_organizations
+        )
+        assert all(
+            organization.get("actor", {}).get("display") is None
             for organization in performer_actor_organizations
         )
         assert all(
