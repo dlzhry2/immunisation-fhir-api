@@ -143,8 +143,8 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
     imms_2_response = imms_api.create_immunization(imms_2)
     assert imms_2_response.status_code == 201
     assert "Location" in imms_2_response.headers
-    
-    #READ BOTH IMMUNIZATIONS FOR IDS
+
+    # READ BOTH IMMUNIZATIONS FOR IDS
     imms_1_id = parse_location(imms_response.headers["Location"])
     imms_2_id = parse_location(imms_2_response.headers["Location"])
     imms_1_read_response = imms_api.get_immunization_by_id(imms_1_id)
