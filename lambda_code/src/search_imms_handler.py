@@ -22,14 +22,18 @@ def search_imms(event, controller: FhirController):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("search_imms_handler")
-    parser.add_argument("nhsNumber", help="Identifier of Patient", type=str)
-    parser.add_argument("diseaseType", help="http://hl7.org/fhir/ValueSet/immunization-target-disease", type=str)
+    parser.add_argument("--nhsNumber", help="Identifier of Patient", type=str, required=True)
+    parser.add_argument(
+        "--diseaseType",
+        help="http://hl7.org/fhir/ValueSet/immunization-target-disease",
+        type=str,
+        required=True)
     args = parser.parse_args()
 
     event = {
         "queryStringParameters": {
-            "nhsNumber": args.nhsNumber,
-            "diseaseType": args.diseaseType
+            "-nhsNumber": args.nhsNumber,
+            "-diseaseType": args.diseaseType
         }
     }
     pprint.pprint(search_imms_handler(event, {}))
