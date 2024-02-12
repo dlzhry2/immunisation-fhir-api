@@ -136,39 +136,40 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     # CREATE FIRST IMMUNIZATION
     imms_response = imms_api.create_immunization(imms)
-    print(imms_response, "<<<<<<<<<<<<<<<<<<<<<<<<<,")
-    print(imms_response.content, "<><><><><><><><><><>><><><>")
-    content_type = imms_response.headers.get('Content-Type', '')
-    print(content_type, ">>>>>>>>>>>>>>>>>>>>>>>>>>")
-    imms_res_body = imms_response.json()
-    imms_id = imms_res_body["id"]
-
     assert imms_response.status_code == 201
-    assert imms_res_body["resourceType"] == "Immunization"
+    assert "Location" in imms_response.headers
 
     # CREATE SECOND IMMUNIZATION
     imms_2_response = imms_api.create_immunization(imms_2)
-    imms_2_res_body = imms_2_response.json()
-    imms_2_id = imms_2_res_body["id"]
-
     assert imms_2_response.status_code == 201
-    assert imms_2_res_body["resourceType"] == "Immunization"
+    assert "Location" in imms_2_response.headers
+    
+    #READ BOTH IMMUNIZATIONS FOR IDS
+    imms_1_id = parse_location(imms_response.headers["Location"])
+    imms_2_id = parse_location(imms_2_response.headers["Location"])
+    imms_1_read_response = imms_api.get_immunization_by_id(imms_1_id)
+    imms_2_read_response = imms_api.get_immunization_by_id(imms_2_id)
+    imms_1_res_body = imms_1_read_response.json()
+    imms_2_res_body = imms_2_read_response.json()
+
+    assert imms_1_read_response.status_code == 200
+    assert imms_2_read_response.status_code == 200
+    assert imms_1_res_body["id"] == imms_1_id
+    assert imms_2_res_body["id"] == imms_2_id
 
     # UPDATE SECOND IMMUNIZATION WITH FIRST IMMUNIZATIONS IDENTIFIER
     new_imms = copy.deepcopy(imms)
     new_imms["id"] = imms_2_id
-    new_imms["status"] = "not-done"
     new_imms["identifier"][0]["value"] = identifier
     update_response = imms_api.update_immunization(imms_2_id, new_imms)
     res_body = update_response.json()
 
     assert update_response.status_code == 500
     assert res_body["resourceType"] == "OperationOutcome"
-    print(res_body)
-    # assert res_body['diagnostics'] == "The identifier you are trying to update already has an existing index"
+    assert res_body['issue'][0]['diagnostics'] == f"The provided identifier: {identifier} is duplicated"
 
     # DELETE BOTH IMMUNIZATIONS
-    delete_imms_response = imms_api.delete_immunization(imms_id)
+    delete_imms_response = imms_api.delete_immunization(imms_1_id)
     assert delete_imms_response.status_code == 204
     delete_imms_2_response = imms_api.delete_immunization(imms_2_id)
     assert delete_imms_2_response.status_code == 204
@@ -306,6 +307,7 @@ def test_update_inconsistent_id_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_he
     assert path_id in json["issue"][0]["diagnostics"]
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
