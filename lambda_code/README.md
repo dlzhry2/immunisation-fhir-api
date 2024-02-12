@@ -71,6 +71,15 @@ cd lambda_code/src
 AWS_PROFILE=apim-dev DYNAMODB_TABLE_NAME=local-imms-events IMMUNIZATION_ENV=local python get_imms_handler.py 123
 ```
 
+### Running Test
+
+- Open `lambda_code` directory
+- Install dependencies by running this command `pip install -r requirements.txt`
+- Run tests by `make test`
+- If you want to run specific test, you can try testing one single class or single function like 
+  `python -m unittest tests.test_fhir_controller.TestSearchImmunizations        `
+  `python -m unittest tests.test_fhir_controller.TestSearchImmunizations.test_search_immunizations`
+
 ## Troubleshooting
 
 ### Tests fail with `No products grant access to proxy [...]`
