@@ -104,7 +104,7 @@ def test_create_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
     failed_create_response = imms_api.create_immunization(imms)
     failed_create_res_body = failed_create_response.json()
     failed_message = "The identifier you are trying to create already has an existing index"
-    
+
     assert failed_create_response.status_code == 500
     assert failed_create_res_body["resourceType"] == "OperationOutcome"
     assert failed_create_res_body["diagnostics"] == failed_message
