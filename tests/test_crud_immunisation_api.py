@@ -1,6 +1,4 @@
 import copy
-import json
-import os
 import pprint
 import uuid
 
@@ -211,11 +209,11 @@ def test_update_inconsistent_id_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_he
 
     path_id = str(uuid.uuid4())
     result = imms_api.update_immunization(path_id, imms)
-    json = result.json()
+    json_data = result.json()
 
     assert result.status_code == 400
-    assert json["resourceType"] == "OperationOutcome"
-    assert path_id in json["issue"][0]["diagnostics"]
+    assert json_data["resourceType"] == "OperationOutcome"
+    assert path_id in json_data["issue"][0]["diagnostics"]
 
 
 @pytest.mark.nhsd_apim_authorization(
@@ -290,12 +288,7 @@ def test_get_s_flag_patient(
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
     # Act
-    current_directory = os.path.dirname(os.path.realpath(__file__))
-    with open(
-        f"{current_directory}/../lambda_code/tests/sample_data/sample_immunization_event.json"
-    ) as f:
-        imms_to_create = json.load(f)
-    imms_to_create["contained"][1]["identifier"][0]["value"] = nhs_number
+    imms_to_create = create_an_imms_obj(nhs_number=nhs_number)
 
     created_imms_result = imms_api.create_immunization(imms_to_create)
     if created_imms_result.status_code != 201:
@@ -348,21 +341,23 @@ def test_get_s_flag_patient(
         for key in ["Consent"]:
             assert key in [item["linkId"] for item in imms_items]
 
-        performer_actor_organization = next(
-            (
-                item
-                for item in imms["performer"]
-                if item.get("actor", {}).get("type") == "Organization"
-            ),
+        performer_actor_organizations = (
+            item
+            for item in imms["performer"]
+            if item.get("actor", {}).get("type") == "Organization"
         )
 
-        assert "N2N9I" != performer_actor_organization["actor"]["identifier"]["value"]
+        assert all(
+            performer.get("actor", {}).get("identifier", {}).get("value") != "N2N9I"
+            for performer in imms["performer"]
+        )
+        assert all(
+            organization.get("actor", {}).get("identifier", {}).get("system")
+            != "https://fhir.nhs.uk/Id/ods-organization-code"
+            for organization in performer_actor_organizations
+        )
         assert "reportOrigin" in imms
         assert "location" in imms
-        assert (
-            "https://fhir.nhs.uk/Id/ods-organization-code"
-            != performer_actor_organization["actor"]["identifier"]["system"]
-        )
 
     def assert_is_filtered(imms):
         imms_items = get_questionnaire_items(imms)
@@ -370,21 +365,24 @@ def test_get_s_flag_patient(
         for key in ["Consent"]:
             assert key not in [item["linkId"] for item in imms_items]
 
-        performer_actor_organization = next(
-            (
-                item
-                for item in imms["performer"]
-                if item.get("actor", {}).get("type") == "Organization"
-            ),
+        performer_actor_organizations = (
+            item
+            for item in imms["performer"]
+            if item.get("actor", {}).get("type") == "Organization"
         )
 
-        assert "N2N9I" == performer_actor_organization["actor"]["identifier"]["value"]
+        assert all(
+            organization.get("actor", {}).get("identifier", {}).get("value") == "N2N9I"
+            for organization in performer_actor_organizations
+        )
+        assert all(
+            organization.get("actor", {}).get("identifier", {}).get("system")
+            == "https://fhir.nhs.uk/Id/ods-organization-code"
+            for organization in performer_actor_organizations
+        )
+
         assert "reportOrigin" not in imms
         assert "location" not in imms
-        assert (
-            "https://fhir.nhs.uk/Id/ods-organization-code"
-            == performer_actor_organization["actor"]["identifier"]["system"]
-        )
 
     if is_restricted:
         assert_is_filtered(created_imms)

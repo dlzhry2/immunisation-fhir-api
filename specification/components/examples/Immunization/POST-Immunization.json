@@ -250,7 +250,7 @@
       "actor": {
         "type": "Organization",
         "identifier": {
-          "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+          "system": "https://fhir.hl7.org.uk/Id/urn-school-number",
           "value": "B0C4P"
         },
         "display": "Acme Healthcare"
