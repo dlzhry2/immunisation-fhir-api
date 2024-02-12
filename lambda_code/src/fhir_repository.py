@@ -113,6 +113,8 @@ class ImmunizationRepository:
 
         queryResponse = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
         
+        print(queryResponse)
+        
         if queryResponse != None:
             items = queryResponse.get('Items', [])
             resource_dict = json.loads(items[0]['Resource'])
