@@ -36,6 +36,34 @@ steps:
       aws_account: "dev"
 
   - bash: |
+      set -ex
+      counter=0
+      endpoint="https://internal-dev.api.service.nhs.uk/immunisation-fhir-api-pr-104/_status"
+      while [ $counter -lt 10 ]; do
+        response=$(curl -s -o response.txt -w "%{http_code}" -X GET $endpoint)
+        response_code=$(tail -c 3 response.txt)
+        response_body=$(head -c -3 response.txt)
+        echo "whole Response: $response"
+        echo "Response code: $response_code"
+        echo "Response body: $response_body"
+        if [ "$response_code" -eq 200 ] && [ "$response_body" == "OK" ]; then
+            echo "Status test successful"
+            break
+        else
+            echo "Waiting for $endpoint to return a 200 response with 'OK' body..."
+            ((counter++))
+            echo "Attempt $counter"
+            sleep 80
+        fi
+      done
+      if [ $counter -eq 10 ]; then
+          echo "Status test failed: Maximum number of attempts reached"
+          exit 1
+      fi
+    displayName: Waiting for TF resources to be UP
+    workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
+
+  - bash: |
       set -e
       if ! [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
         export AWS_PROFILE=apim-dev
