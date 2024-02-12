@@ -114,7 +114,7 @@ def test_create_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
     delete_response = imms_api.delete_immunization(imms_id)
     assert delete_response.status_code == 204
 
-
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",

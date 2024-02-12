@@ -112,10 +112,10 @@ class ImmunizationRepository:
                       "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient")
 
         queryResponse = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
-        
+
         print(queryResponse)
         
-        if queryResponse != None:
+        if queryResponse != None and 'DeletedAt' not in queryResponse['items'][0]:
             items = queryResponse.get('Items', [])
             resource_dict = json.loads(items[0]['Resource'])
             if resource_dict['id'] != attr.resource['id']:
