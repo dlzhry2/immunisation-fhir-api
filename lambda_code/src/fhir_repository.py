@@ -115,11 +115,13 @@ class ImmunizationRepository:
 
         print(queryResponse)
         
-        if queryResponse != None and 'DeletedAt' not in queryResponse['Items'][0]:
+        if queryResponse != None:
             items = queryResponse.get('Items', [])
-            resource_dict = json.loads(items[0]['Resource'])
-            if resource_dict['id'] != attr.resource['id']:
-                raise IdentifierDuplicationError(identifier=attr.identifier)
+            print(items)
+            if items and 'DeletedAt' not in items[0]:
+                resource_dict = json.loads(items[0]['Resource'])
+                if resource_dict['id'] != attr.resource['id']:
+                    raise IdentifierDuplicationError(identifier=attr.identifier)
 
         try:
             response = self.table.update_item(
