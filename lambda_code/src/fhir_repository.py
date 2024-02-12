@@ -10,7 +10,7 @@ import botocore.exceptions
 from botocore.config import Config
 from boto3.dynamodb.conditions import Attr, Key
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
-from models.errors import ResourceNotFoundError, UnhandledResponseError
+from models.errors import ResourceNotFoundError, UnhandledResponseError, IdentifierDuplicationError
 
 
 def create_table(table_name=None, endpoint_url=None, region_name="eu-west-2"):
@@ -83,9 +83,12 @@ class ImmunizationRepository:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
+        
+        query_response = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
                 
-        if _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier): 
-            raise UnhandledResponseError(message="The identifier you are trying to create already has an existing index")
+        if query_response != None: 
+            raise IdentifierDuplicationError(
+                message="The identifier you are trying to create already has an existing index")
 
         response = self.table.put_item(Item={
             'PK': attr.pk,
@@ -115,7 +118,7 @@ class ImmunizationRepository:
             items = queryResponse.get('Items', [])
             resource_dict = json.loads(items[0]['Resource'])
             if resource_dict['id'] != attr.resource['id']:
-                raise UnhandledResponseError(message="The identifier you are trying to update already has an existing index", response=queryResponse)
+                raise IdentifierDuplicationError(message="The identifier you are trying to update already has an existing index")
 
         try:
             response = self.table.update_item(

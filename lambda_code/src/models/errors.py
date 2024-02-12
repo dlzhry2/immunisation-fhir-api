@@ -75,6 +75,16 @@ class CoarseValidationError(ValidationError):
     def to_operation_outcome(self) -> dict:
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
+        
+
+@dataclass
+class IdentifierDuplicationError(RuntimeError):
+    """Fine grain validation"""
+    message: str
+
+    def to_operation_outcome(self) -> dict:
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
 
 
 def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> dict:

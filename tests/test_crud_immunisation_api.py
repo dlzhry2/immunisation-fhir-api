@@ -97,11 +97,8 @@ def test_create_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     # CREATE IMMUNIZATION
     create_response = imms_api.create_immunization(imms)
-    create_res_body = create_response.json()
-    create_imms_id = create_res_body["id"]
-
     assert create_response.status_code == 201
-    assert create_res_body["resourceType"] == "Immunization"
+    assert "Location" in create_response.headers
 
     # CREATE IMMUNIZATION WITH SAME IDENTIFIER
     failed_create_response = imms_api.create_immunization(imms)
@@ -109,10 +106,13 @@ def test_create_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     assert failed_create_response.status_code == 500
     assert failed_create_res_body["resourceType"] == "OperationOutcome"
+    assert failed_create_res_body["diagnostics"] == "The identifier you are trying to create already has an existing index"
+    # READ
+    imms_id = parse_location(create_response.headers["Location"])
 
     # DELETE
-    delete_response = imms_api.delete_immunization(create_imms_id)
-    assert delete_response.status_code == 200
+    delete_response = imms_api.delete_immunization(imms_id)
+    assert delete_response.status_code == 204
 
 
 @pytest.mark.nhsd_apim_authorization(
@@ -160,12 +160,13 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     assert update_response.status_code == 500
     assert res_body["resourceType"] == "OperationOutcome"
+    assert res_body['diagnostics'] == "The identifier you are trying to update already has an existing index"
 
     # DELETE BOTH IMMUNIZATIONS
     delete_imms_response = imms_api.delete_immunization(imms_id)
-    assert delete_imms_response.status_code == 200
+    assert delete_imms_response.status_code == 204
     delete_imms_2_response = imms_api.delete_immunization(imms_2_id)
-    assert delete_imms_2_response.status_code == 200
+    assert delete_imms_2_response.status_code == 204
 
 
 @pytest.mark.nhsd_apim_authorization(

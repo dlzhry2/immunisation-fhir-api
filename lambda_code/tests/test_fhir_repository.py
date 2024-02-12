@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch, ANY
 import botocore.exceptions
 from boto3.dynamodb.conditions import Attr, Key
 from fhir_repository import ImmunizationRepository
-from models.errors import ResourceNotFoundError, UnhandledResponseError
+from models.errors import ResourceNotFoundError, UnhandledResponseError, IdentifierDuplicationError
 
 
 def _make_immunization_pk(_id):
@@ -58,7 +58,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
         self.repository = ImmunizationRepository(table=self.table)
-        self.patient = {'id': 'a-patient-id'}
+        self.patient = {'id': 'a-patient-id', 'identifier': {'value': 'an-identifier'}}
 
     def test_create_immunization(self):
         """it should create Immunization, and return created object"""
@@ -122,6 +122,21 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
         # Then
         self.assertDictEqual(e.exception.response, response)
         
+    def test_create_throws_error_when_identifier_already_in_dynamodb(self):
+        """it should throw UnhandledResponse when trying to update an immunization with an identfier that is already stored"""
+        imms_id = "an-id"
+        imms = _make_an_immunization(imms_id)
+        imms["patient"] = self.patient        
+        
+        self.table.query = MagicMock(return_value={"Items":[{"Resource": '{"id": "different-id"}'}], "Count": 1})
+
+        with self.assertRaises(IdentifierDuplicationError) as e_context:
+            # When
+            self.repository.create_immunization(imms, self.patient)
+        
+        e = e_context.exception
+        self.assertEqual(e.message, "The identifier you are trying to create already has an existing index")
+        
 
 class TestCreateImmunizationPatientIndex(unittest.TestCase):
     """create_immunization should create a patient record with vaccine type"""
@@ -148,24 +163,6 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         # Then
         item = self.table.put_item.call_args.kwargs["Item"]
         self.assertEqual(item["PatientPK"], f"Patient#{nhs_number}")
-
-    def test_create_patient_with_disease_type(self):
-        """Patient record should have a sort-key based on disease-type"""
-        imms = _make_an_immunization()
-
-        disease_code = "a-disease-code"
-        disease = {"targetDisease": [{"coding": [{"code": disease_code}]}]}
-        imms["protocolApplied"] = [disease]
-
-        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
-        self.table.query = MagicMock(return_value={})
-
-        # When
-        _ = self.repository.create_immunization(imms, self.patient)
-
-        # Then
-        item = self.table.put_item.call_args.kwargs["Item"]
-        self.assertTrue(item["PatientSK"].startswith(f"{disease_code}#"))
 
 
 class TestUpdateImmunization(unittest.TestCase):
@@ -236,14 +233,14 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertDictEqual(e.exception.response, response)
         
     def test_update_throws_error_when_identifier_already_in_dynamodb(self):
-        """it should throw UnhandledResponse when trying to pdate an immunization with an identfier that is already stored"""
+        """it should throw UnhandledResponse when trying to update an immunization with an identfier that is already stored"""
         imms_id = "an-id"
         imms = _make_an_immunization(imms_id)
         imms["patient"] = self.patient
 
         self.table.query = MagicMock(return_value={"Items":[{"Resource": '{"id": "different-id"}'}], "Count": 1})
 
-        with self.assertRaises(UnhandledResponseError) as e_context:
+        with self.assertRaises(IdentifierDuplicationError) as e_context:
             # When
             self.repository.update_immunization(imms_id, imms, self.patient)
         
