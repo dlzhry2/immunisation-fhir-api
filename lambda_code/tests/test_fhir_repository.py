@@ -163,6 +163,23 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         # Then
         item = self.table.put_item.call_args.kwargs["Item"]
         self.assertEqual(item["PatientPK"], f"Patient#{nhs_number}")
+    
+    def test_create_patient_with_disease_type(self):
+        """Patient record should have a sort-key based on disease-type"""
+        imms = _make_an_immunization()
+
+        disease_code = "a-disease-code"
+        disease = {"targetDisease": [{"coding": [{"code": disease_code}]}]}
+        imms["protocolApplied"] = [disease]
+
+        self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
+
+        # When
+        _ = self.repository.create_immunization(imms, self.patient)
+
+        # Then
+        item = self.table.put_item.call_args.kwargs["Item"]
+        self.assertTrue(item["PatientSK"].startswith(f"{disease_code}#"))
 
 
 class TestUpdateImmunization(unittest.TestCase):
