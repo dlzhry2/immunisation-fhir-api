@@ -10,7 +10,7 @@ from botocore.config import Config
 
 from cache import Cache
 from fhir_repository import ImmunizationRepository, create_table
-from fhir_service import FhirService, UpdateOutcome
+from fhir_service import FhirService, UpdateOutcome, get_service_url
 from models.errors import (
     Severity,
     Code,
@@ -35,20 +35,6 @@ def make_controller(pds_env: str = os.getenv("PDS_ENV", "int")):
     service = FhirService(imms_repo=imms_repo, pds_service=pds_service)
 
     return FhirController(fhir_service=service)
-
-
-def get_service_url(
-    service_env: str = os.getenv("IMMUNIZATION_ENV"),
-    service_base_path: str = os.getenv("IMMUNIZATION_BASE_PATH"),
-):
-    non_prod = ["internal-dev", "int", "sandbox"]
-    if service_env in non_prod:
-        subdomain = f"{service_env}."
-    elif service_env == "prod":
-        subdomain = ""
-    else:
-        subdomain = "internal-dev."
-    return f"https://{subdomain}api.service.nhs.uk/{service_base_path}"
 
 
 class FhirController:

@@ -14,7 +14,6 @@ from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 
 
-
 def get_service_url(
     service_env: str = os.getenv("IMMUNIZATION_ENV"),
     service_base_path: str = os.getenv("IMMUNIZATION_BASE_PATH"),
@@ -22,11 +21,12 @@ def get_service_url(
     non_prod = ["internal-dev", "int", "sandbox"]
     if service_env in non_prod:
         subdomain = f"{service_env}."
-    if service_env == "prod":
+    elif service_env == "prod":
         subdomain = ""
     else:
         subdomain = "internal-dev."
     return f"https://{subdomain}api.service.nhs.uk/{service_base_path}"
+
 
 class UpdateOutcome(Enum):
     UPDATE = 0

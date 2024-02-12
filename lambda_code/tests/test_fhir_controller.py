@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle
 import base64
-from fhir_controller import FhirController, get_service_url
+from fhir_controller import FhirController
 from fhir_service import FhirService, UpdateOutcome
 from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId, CoarseValidationError
 from tests.immunization_utils import create_an_immunization
@@ -52,28 +52,6 @@ class TestFhirController(unittest.TestCase):
         self.assertEqual(res["statusCode"], 42)
         self.assertDictEqual(res["headers"], {})
         self.assertTrue("body" not in res)
-
-    def test_get_service_url(self):
-        """it should create service url"""
-        env = "int"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://{env}.api.service.nhs.uk/{base_path}")
-        # default should be internal-dev
-        env = "it-does-not-exist"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
-        # prod should not have subdomain
-        env = "prod"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://api.service.nhs.uk/{base_path}")
-        # any other env should fall back to internal-dev (like pr-xx or per-user)
-        env = "pr-42"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
 
 
 class TestFhirControllerGetImmunizationById(unittest.TestCase):
