@@ -8,11 +8,11 @@ import botocore.exceptions
 from boto3.dynamodb.conditions import Attr, Key
 from fhir_repository import ImmunizationRepository
 from models.errors import ResourceNotFoundError, UnhandledResponseError, IdentifierDuplicationError
+from mappings import vaccination_procedure_snomed_codes
 
 
 def _make_immunization_pk(_id):
     return f"Immunization#{_id}"
-
 
 def _make_patient_pk(_id):
     return f"Patient#{_id}"
@@ -27,12 +27,16 @@ class TestGetImmunization(unittest.TestCase):
         """it should find an Immunization by id"""
         imms_id = "an-id"
         resource = {"foo": "bar"}
-        self.table.get_item = MagicMock(return_value={"Item": {"Resource": json.dumps(resource)}})
+        self.table.get_item = MagicMock(
+            return_value={"Item": {"Resource": json.dumps(resource)}}
+        )
 
         imms = self.repository.get_immunization_by_id(imms_id)
 
         self.assertDictEqual(resource, imms)
-        self.table.get_item.assert_called_once_with(Key={"PK": _make_immunization_pk(imms_id)})
+        self.table.get_item.assert_called_once_with(
+            Key={"PK": _make_immunization_pk(imms_id)}
+        )
 
     def test_immunization_not_found(self):
         """it should return None if Immunization doesn't exist"""
@@ -45,13 +49,43 @@ class TestGetImmunization(unittest.TestCase):
 
 def _make_an_immunization(imms_id="an-id") -> dict:
     """create the minimum required object. Caller should override relevant fields explicitly"""
-    return {"id": imms_id, "identifier":[{"value": "an-id"}],
-            "patient": {"identifier": {"system": "a-system", "value": "a-patient-id"}},
-            "protocolApplied": [{"targetDisease": [{"coding": [{"code": "a-disease-code"}]}]}]}
+    return {
+        "resourceType": "Immunization",
+        "id": imms_id,
+        "contained": [
+            {
+                "resourceType": "Patient",
+                "id": "Pat1",
+                "identifier": [
+                    {
+                        "system": "https://fhir.nhs.uk/Id/nhs-number",
+                        "value": "9000000009",
+                    }
+                ],
+            },
+        ],
+        "extension": [
+            {
+                "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
+                "valueCodeableConcept": {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "1324681000000101",
+                            "display": "Administration of first dose of severe acute respiratory syndrome coronavirus 2 vaccine (procedure)",
+                        }
+                    ]
+                },
+            }
+        ],
+    }
 
 
 def _make_a_patient(nhs_number="1234567890") -> dict:
-    return {"id": str(uuid.uuid4()), "identifier": {"system": "a-system", "value": nhs_number}}
+    return {
+        "id": str(uuid.uuid4()),
+        "identifier": {"system": "a-system", "value": nhs_number},
+    }
 
 
 class TestCreateImmunizationMainIndex(unittest.TestCase):
@@ -150,8 +184,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         imms = _make_an_immunization()
 
         nhs_number = "1234567890"
-        patient_id = {"identifier": {"system": "a-system", "value": nhs_number}}
-        imms["patient"] = patient_id
+        imms["contained"][0]["identifier"][0]["value"] = nhs_number
 
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
         self.table.query = MagicMock(return_value={})
@@ -167,9 +200,11 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         """Patient record should have a sort-key based on disease-type"""
         imms = _make_an_immunization()
 
-        disease_code = "a-disease-code"
-        disease = {"targetDisease": [{"coding": [{"code": disease_code}]}]}
-        imms["protocolApplied"] = [disease]
+        vaccination_procedure_code = "1324681000000101"
+        imms["extension"][0]["valueCodeableConcept"]["coding"][0][
+            "code"
+        ] = vaccination_procedure_code
+        disease_type = vaccination_procedure_snomed_codes[vaccination_procedure_code]
 
         self.table.query = MagicMock(return_value={"Count": 0})
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
@@ -179,7 +214,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
 
         # Then
         item = self.table.put_item.call_args.kwargs["Item"]
-        self.assertTrue(item["PatientSK"].startswith(f"{disease_code}#"))
+        self.assertTrue(item["PatientSK"].startswith(f"{disease_type}#"))
 
 
 class TestUpdateImmunization(unittest.TestCase):
@@ -189,14 +224,16 @@ class TestUpdateImmunization(unittest.TestCase):
         self.patient = _make_a_patient("update-patient-id")
 
     def test_update(self):
-        """it should update record by replacing both Immunization and Patient """
+        """it should update record by replacing both Immunization and Patient"""
         imms_id = "an-imms-id"
         imms = _make_an_immunization(imms_id)
         imms["patient"] = self.patient
 
         resource = {"foo": "bar"}  # making sure we return updated imms from dynamodb
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200},
-                           "Attributes": {"Resource": json.dumps(resource)}}
+        dynamo_response = {
+            "ResponseMetadata": {"HTTPStatusCode": 200},
+            "Attributes": {"Resource": json.dumps(resource)},
+        }
         self.table.update_item = MagicMock(return_value=dynamo_response)
         self.table.query = MagicMock(return_value={})
 
@@ -204,31 +241,40 @@ class TestUpdateImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            act_resource = self.repository.update_immunization(imms_id, imms, self.patient)
+            act_resource = self.repository.update_immunization(
+                imms_id, imms, self.patient
+            )
 
         # Then
         self.assertDictEqual(act_resource, resource)
 
-        update_exp = ("SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-                      "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient")
+        update_exp = (
+            "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
+            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient"
+        )
         patient_id = self.patient["identifier"]["value"]
-        disease_type = imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"]
+        patient_id = imms["contained"][0]["identifier"][0]["value"]
+        vaccination_procedure_code = imms["extension"][0]["valueCodeableConcept"][
+            "coding"
+        ][0]["code"]
+        disease_type = vaccination_procedure_snomed_codes[vaccination_procedure_code]
         patient_sk = f"{disease_type}#{imms_id}"
 
         self.table.update_item.assert_called_once_with(
             Key={"PK": _make_immunization_pk(imms_id)},
             UpdateExpression=update_exp,
             ExpressionAttributeNames={
-                '#imms_resource': "Resource",
+                "#imms_resource": "Resource",
             },
             ExpressionAttributeValues={
-                ':timestamp': now_epoch,
-                ':patient_pk': _make_patient_pk(patient_id),
-                ':patient_sk': patient_sk,
-                ':imms_resource_val': json.dumps(imms),
-                ':patient': self.patient,
+                ":timestamp": now_epoch,
+                ":patient_pk": _make_patient_pk(patient_id),
+                ":patient_sk": patient_sk,
+                ":imms_resource_val": json.dumps(imms),
+                ":patient": self.patient,
             },
-            ReturnValues=ANY, ConditionExpression=ANY
+            ReturnValues=ANY,
+            ConditionExpression=ANY,
         )
 
     def test_update_throws_error_when_response_can_not_be_handled(self):
@@ -272,7 +318,9 @@ class TestDeleteImmunization(unittest.TestCase):
     def test_get_deleted_immunization(self):
         """it should return None if Immunization is logically deleted"""
         imms_id = "a-deleted-id"
-        self.table.get_item = MagicMock(return_value={"Item": {"Resource": "{}", "DeletedAt": time.time()}})
+        self.table.get_item = MagicMock(
+            return_value={"Item": {"Resource": "{}", "DeletedAt": time.time()}}
+        )
 
         imms = self.repository.get_immunization_by_id(imms_id)
         self.assertIsNone(imms)
@@ -280,7 +328,10 @@ class TestDeleteImmunization(unittest.TestCase):
     def test_delete_immunization(self):
         """it should logical delete Immunization by setting DeletedAt attribute"""
         imms_id = "an-id"
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Attributes": {"Resource": "{}"}}
+        dynamo_response = {
+            "ResponseMetadata": {"HTTPStatusCode": 200},
+            "Attributes": {"Resource": "{}"},
+        }
         self.table.update_item = MagicMock(return_value=dynamo_response)
 
         now_epoch = 123456
@@ -292,11 +343,12 @@ class TestDeleteImmunization(unittest.TestCase):
         # Then
         self.table.update_item.assert_called_once_with(
             Key={"PK": _make_immunization_pk(imms_id)},
-            UpdateExpression='SET DeletedAt = :timestamp',
+            UpdateExpression="SET DeletedAt = :timestamp",
             ExpressionAttributeValues={
-                ':timestamp': now_epoch,
+                ":timestamp": now_epoch,
             },
-            ReturnValues=ANY, ConditionExpression=ANY
+            ReturnValues=ANY,
+            ConditionExpression=ANY,
         )
 
     def test_delete_returns_old_resource(self):
@@ -304,8 +356,10 @@ class TestDeleteImmunization(unittest.TestCase):
 
         imms_id = "an-id"
         resource = {"foo": "bar"}
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200},
-                           "Attributes": {"Resource": json.dumps(resource)}}
+        dynamo_response = {
+            "ResponseMetadata": {"HTTPStatusCode": 200},
+            "Attributes": {"Resource": json.dumps(resource)},
+        }
         self.table.update_item = MagicMock(return_value=dynamo_response)
 
         now_epoch = 123456
@@ -316,7 +370,10 @@ class TestDeleteImmunization(unittest.TestCase):
 
         # Then
         self.table.update_item.assert_called_once_with(
-            Key=ANY, UpdateExpression=ANY, ExpressionAttributeValues=ANY, ConditionExpression=ANY,
+            Key=ANY,
+            UpdateExpression=ANY,
+            ExpressionAttributeValues=ANY,
+            ConditionExpression=ANY,
             ReturnValues="ALL_NEW",
         )
         self.assertDictEqual(act_resource, resource)
@@ -327,16 +384,20 @@ class TestDeleteImmunization(unittest.TestCase):
         imms_id = "an-id"
         error_res = {"Error": {"Code": "ConditionalCheckFailedException"}}
         self.table.update_item.side_effect = botocore.exceptions.ClientError(
-            error_response=error_res,
-            operation_name="an-op")
+            error_response=error_res, operation_name="an-op"
+        )
 
         with self.assertRaises(ResourceNotFoundError) as e:
             self.repository.delete_immunization(imms_id)
 
         # Then
         self.table.update_item.assert_called_once_with(
-            Key=ANY, UpdateExpression=ANY, ExpressionAttributeValues=ANY, ReturnValues=ANY,
-            ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id)) & Attr("DeletedAt").not_exists()
+            Key=ANY,
+            UpdateExpression=ANY,
+            ExpressionAttributeValues=ANY,
+            ReturnValues=ANY,
+            ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id))
+            & Attr("DeletedAt").not_exists(),
         )
 
         self.assertIsInstance(e.exception, ResourceNotFoundError)

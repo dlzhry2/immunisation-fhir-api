@@ -36,6 +36,9 @@ vaccination_procedure_snomed_codes = {
     "1363861000000103": DiseaseTypes.covid_19,
     "1363791000000101": DiseaseTypes.covid_19,
     "1363831000000108": DiseaseTypes.covid_19,
+    "822851000000102": DiseaseTypes.flu,  # TODO: remove this code if necessary once full list of
+    # accceptable codes is received (note that it has been copied from the sample data, to allow
+    # the sample flu data to pass the validator)
     "mockFLUcode1": DiseaseTypes.flu,
     "mockFLUcode2": DiseaseTypes.flu,
     "mockHPVcode1": DiseaseTypes.hpv,
@@ -60,13 +63,13 @@ vaccine_type_applicable_validations = {
         DiseaseTypes.hpv: Mandation.mandatory,
         DiseaseTypes.mmr: Mandation.mandatory,
     },
-    "site_code_code": {
+    "organization_identifier_value": {
         DiseaseTypes.covid_19: Mandation.mandatory,
         DiseaseTypes.flu: Mandation.mandatory,
         DiseaseTypes.hpv: Mandation.mandatory,
         DiseaseTypes.mmr: Mandation.mandatory,
     },
-    "site_name_code": {
+    "organization_display": {
         DiseaseTypes.covid_19: Mandation.mandatory,
         DiseaseTypes.flu: Mandation.mandatory,
         DiseaseTypes.hpv: Mandation.mandatory,
