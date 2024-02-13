@@ -137,7 +137,7 @@ class ImmunizationRepository:
                         ReturnValues="ALL_NEW",
                         ConditionExpression=Attr("PK").eq(attr.pk)
                     )
-                    return self._handle_dynamo_response(response)
+                    return self._handle_dynamo_response(response)  & Attr("DeletedAt").not_exists() & attr.identifier == immunization['identifier']['value']
 
                 except botocore.exceptions.ClientError as error:
                     # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
