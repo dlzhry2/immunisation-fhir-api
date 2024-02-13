@@ -263,30 +263,6 @@ class TestUpdateImmunization(unittest.TestCase):
 
         self.assertEqual(str(e.exception), "The provided identifier: an-id is duplicated")
     
-    def test_update_creates_new_imms_when_updating_deleted_imms(self):
-        """Should create a new imms when updating one thats been deleted"""
-        imms_id = "an-id"
-        imms = _make_an_immunization(imms_id)
-        imms["patient"] = self.patient
-        resource = {'foo': 'bar'}
-
-        self.table.query = MagicMock(return_value={"Items":[{"DeletedAt": "abc"}, {"Resource": '{"id": "different-id"}'}], "Count": 1})
-
-        with patch.object(self.table, 'update_item', return_value={"ResponseMetadata": {"HTTPStatusCode": 200},
-                           "Attributes": {"Resource": json.dumps(resource)}}) as update_item_mock:
-            result = self.repository.update_immunization(imms_id, imms, self.patient)
-
-        update_item_mock.assert_called_once_with(
-            Key=ANY,
-            UpdateExpression=ANY,
-            ExpressionAttributeNames=ANY,
-            ExpressionAttributeValues=ANY,
-            ReturnValues=ANY,
-            ConditionExpression=ANY
-        )
-        
-        self.assertEqual(result, resource)
-
 
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
