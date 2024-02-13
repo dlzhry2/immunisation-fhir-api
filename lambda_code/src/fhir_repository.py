@@ -83,9 +83,9 @@ class ImmunizationRepository:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
-        
+
         query_response = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
-                
+
         if query_response != None: 
             raise IdentifierDuplicationError(identifier=attr.identifier)
 
@@ -113,43 +113,40 @@ class ImmunizationRepository:
 
         queryResponse = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
 
-        print(queryResponse)
-        
         if queryResponse != None:
             items = queryResponse.get('Items', [])
-            print(items)
-            if items and 'DeletedAt' not in items[0]:
+            if 'DeletedAt' not in items[0]:
                 resource_dict = json.loads(items[0]['Resource'])
                 if resource_dict['id'] != attr.resource['id']:
                     raise IdentifierDuplicationError(identifier=attr.identifier)
-
-        try:
-            response = self.table.update_item(
-                Key={'PK': _make_immunization_pk(imms_id)},
-                UpdateExpression=update_exp,
-                ExpressionAttributeNames={
-                    '#imms_resource': "Resource",
-                },
-                ExpressionAttributeValues={
-                    ':timestamp': attr.timestamp,
-                    ':patient_pk': attr.patient_pk,
-                    ':patient_sk': attr.patient_sk,
-                    ':imms_resource_val': json.dumps(attr.resource),
-                    ':patient': attr.patient,
-                },
-                ReturnValues="ALL_NEW",
-                ConditionExpression=Attr("PK").eq(attr.pk) & Attr("DeletedAt").not_exists()
-            )
-            return self._handle_dynamo_response(response)
-
-        except botocore.exceptions.ClientError as error:
-            # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
-            if error.response['Error']['Code'] == 'ConditionalCheckFailedException':
-                raise ResourceNotFoundError(resource_type="Immunization", resource_id=imms_id)
             else:
-                raise UnhandledResponseError(
-                    message=f"Unhandled error from dynamodb: {error.response['Error']['Code']}",
-                    response=error.response)
+                try:
+                    response = self.table.update_item(
+                        Key={'PK': _make_immunization_pk(imms_id)},
+                        UpdateExpression=update_exp,
+                        ExpressionAttributeNames={
+                            '#imms_resource': "Resource",
+                        },
+                        ExpressionAttributeValues={
+                            ':timestamp': attr.timestamp,
+                            ':patient_pk': attr.patient_pk,
+                            ':patient_sk': attr.patient_sk,
+                            ':imms_resource_val': json.dumps(attr.resource),
+                            ':patient': attr.patient,
+                        },
+                        ReturnValues="ALL_NEW",
+                        ConditionExpression=Attr("PK").eq(attr.pk)
+                    )
+                    return self._handle_dynamo_response(response)
+
+                except botocore.exceptions.ClientError as error:
+                    # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
+                    if error.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                        raise ResourceNotFoundError(resource_type="Immunization", resource_id=imms_id)
+                    else:
+                        raise UnhandledResponseError(
+                            message=f"Unhandled error from dynamodb: {error.response['Error']['Code']}",
+                            response=error.response)
 
     def delete_immunization(self, imms_id: str) -> dict:
         now_timestamp = int(time.time())
@@ -195,7 +192,7 @@ class ImmunizationRepository:
 
     @staticmethod
     def _handle_dynamo_response(response):
-        if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+        if response["ResponseMetadata"]["HTTPStatusCode"] in {200, 201}:
             return json.loads(response["Attributes"]["Resource"])
         else:
             raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
