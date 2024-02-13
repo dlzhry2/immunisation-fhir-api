@@ -71,9 +71,14 @@ steps:
   - bash: |
       set -ex
       counter=0
-      endpoint="https://internal-dev.api.service.nhs.uk/immunisation-fhir-api-pr-105/_status"
+      base_path="$(SERVICE_BASE_PATH)"
+      apigee_env="$(ENVIRONMENT)"
+
+      endpoint="https://${apigee_env}.api.service.nhs.uk/${base_path}/_status"
+      #endpoint="https://internal-dev.api.service.nhs.uk/immunisation-fhir-api-pr-105/_status"
+      echo $endpoint
       while [ $counter -lt 10 ]; do
-        response=$(curl -H "apikey: 3fed41a7-1de3-4e03-980b-5945a4c06c86" -s $endpoint)
+        response=$(curl -H "apikey: $(status-endpoint-api-key)" -s "$endpoint")
         echo "whole Response: $response"
         response_code=$(echo "$response" | jq -r '.checks.healthcheck.responseCode')
         echo "Response code: $response_code"
