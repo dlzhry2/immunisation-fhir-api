@@ -84,7 +84,6 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
         "login_form": {"username": "656005750104"},
     }
 )
-
 def test_create_immunization_with_stored_identifier_returns_error(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     """create should fail if the identifier in the record is not unique"""
     token = nhsd_apim_auth_headers["Authorization"]
