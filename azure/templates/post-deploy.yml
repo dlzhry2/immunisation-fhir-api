@@ -70,33 +70,36 @@ steps:
 
   - bash: |
       set -ex
-      counter=0
-      base_path="$(SERVICE_BASE_PATH)"
-      apigee_env="$(ENVIRONMENT)"
+      if ! [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
+        counter=0
+        base_path="$SERVICE_BASE_PATH"
+        apigee_env="$ENVIRONMENT"
 
-      endpoint="https://${apigee_env}.api.service.nhs.uk/${base_path}/_status"
-      #endpoint="https://internal-dev.api.service.nhs.uk/immunisation-fhir-api-pr-105/_status"
-      echo $endpoint
-      while [ $counter -lt 10 ]; do
-        response=$(curl -H "apikey: $(status-endpoint-api-key)" -s "$endpoint")
-        echo "whole Response: $response"
-        response_code=$(echo "$response" | jq -r '.checks.healthcheck.responseCode')
-        echo "Response code: $response_code"
-        response_body=$(echo "$response" | jq -r '.checks.healthcheck.outcome')
-        echo "Response body: $response_body"
-        if [ "$response_code" -eq 200 ] && [ "$response_body" == "OK" ]; then
-            echo "Status test successful"
-            break
-        else
-            echo "Waiting for $endpoint to return a 200 response with 'OK' body..."
-            ((counter++))
-            echo "Attempt $counter"
-            sleep 80
+        endpoint="https://${apigee_env}.api.service.nhs.uk/${base_path}/_status"
+        echo $endpoint
+        while [[ $counter -lt 10 ]]; do
+          response=$(curl -H "apikey: $(status-endpoint-api-key)" -s "$endpoint")
+          echo "whole Response: $response"
+          response_code=$(echo "$response" | jq -r '.checks.healthcheck.responseCode')
+          echo "Response code: $response_code"
+          response_body=$(echo "$response" | jq -r '.checks.healthcheck.outcome')
+          echo "Response body: $response_body"
+          if [ "$response_code" -eq 200 ] && [ "$response_body" == "OK" ]; then
+              echo "Status test successful"
+              break
+          else
+              echo "Waiting for $endpoint to return a 200 response with 'OK' body..."
+              echo "Came here in ELSEEEEEEE condition 1st"
+              ((counter=counter+1)) # Increment counter by 1
+              echo "Came here in ELSEEEEEEE condition 2nd"
+              echo "Attempt $counter"
+              sleep 80
+          fi
+        done
+        if [ $counter -eq 10 ]; then
+            echo "Status test failed: Maximum number of attempts reached"
+            exit 1
         fi
-      done
-      if [ $counter -eq 10 ]; then
-          echo "Status test failed: Maximum number of attempts reached"
-          exit 1
       fi
     displayName: Waiting for TF resources to be UP
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
