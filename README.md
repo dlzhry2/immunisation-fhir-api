@@ -38,6 +38,7 @@ These tools automate the Python version and environment creation and use, and se
 `pyenv` separates Python versions and `direnv` handles the environment.
 `direnv` uses `pyenv` to select the version and creates an environment under `.direnv/`.
 
+At this point you'll get a warning when you enter this directory, telling you to run `direnv allow`. This is fine and the next step will resolve it.
 
 ### Install Python versions and environments
 

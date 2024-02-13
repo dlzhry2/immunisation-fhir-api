@@ -1,8 +1,13 @@
 # immunisation-fhir-api lambda
 
+Paths are relative to this directory, `lambda_code`.
+
 ## Install dependencies
 
-`poetry install`
+```shell
+pip install poetry
+poetry install
+```
 
 
 ## Run locally
@@ -10,7 +15,7 @@
 ### Start local DynamoDB
 
 ```shell
-cd devtools
+cd ../devtools
 docker compose -f dynamo-compose.yml up -d dynamodb-local
 ```
 
@@ -61,24 +66,23 @@ It contains the following variables:
 
 To run from the terminal: 
 ```shell
-cd lambda_code/src
+cd src
 python get_imms_handler.py 123
 ```
 
 If not using `.envrc` then:
 ```shell
-cd lambda_code/src
+cd src
 AWS_PROFILE=apim-dev DYNAMODB_TABLE_NAME=local-imms-events IMMUNIZATION_ENV=local python get_imms_handler.py 123
 ```
 
-### Running Test
+### Running tests
 
-- Open `lambda_code` directory
-- Install dependencies by running this command `pip install -r requirements.txt`
-- Run tests by `make test`
-- If you want to run specific test, you can try testing one single class or single function like 
+- `make test`
+- If you want to run specific test, you can try testing one single class or single function with 
   `python -m unittest tests.test_fhir_controller.TestSearchImmunizations        `
   `python -m unittest tests.test_fhir_controller.TestSearchImmunizations.test_search_immunizations`
+
 
 ## Troubleshooting
 

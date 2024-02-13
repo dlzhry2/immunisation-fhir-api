@@ -1,4 +1,4 @@
-SHELL=/bin/bash -euo pipefail
+SHELL=/bin/env bash -euo pipefail
 
 #Installs dependencies using poetry.
 install-python:
@@ -83,4 +83,4 @@ test-prod:
 	--junitxml=test-report.xml \
 
 setup-python-envs:
-	./setup-python-env.sh
+	./setup-python-envs.sh
