@@ -16,12 +16,12 @@ class MandationTests:
     """Test for presence of fields with different mandation levels"""
 
     @staticmethod
-    def test_present_mandatory_or_required_or_optional_field_accepted(
+    def test_present_field_accepted(
         test_instance: unittest.TestCase,
         valid_json_data: dict = None,
     ):
         """
-        Test that JSON data is accepted when a mandatory, required or optional field is present
+        Test that JSON data is accepted when a field is present
         """
         # Prepare the json data
         if not valid_json_data:
@@ -30,7 +30,7 @@ class MandationTests:
         test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
 
     @staticmethod
-    def test_missing_required_or_optional_or_not_applicable_field_accepted(
+    def test_missing_field_accepted(
         test_instance: unittest.TestCase,
         field_location: str,
         valid_json_data: dict = None,
@@ -156,9 +156,7 @@ class MandationTests:
         """
         if mandation == Mandation.mandatory:
             # Accept field present
-            MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-                test_instance, valid_json_data
-            )
+            MandationTests.test_present_field_accepted(test_instance, valid_json_data)
             # Reject field absent
             MandationTests.test_missing_mandatory_field_rejected(
                 test_instance,
@@ -171,11 +169,9 @@ class MandationTests:
 
         if mandation == Mandation.required or mandation == Mandation.optional:
             # Accept field present
-            MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-                test_instance, valid_json_data
-            )
+            MandationTests.test_present_field_accepted(test_instance, valid_json_data)
             # Accept field absent
-            MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+            MandationTests.test_missing_field_accepted(
                 test_instance,
                 field_location,
                 valid_json_data,

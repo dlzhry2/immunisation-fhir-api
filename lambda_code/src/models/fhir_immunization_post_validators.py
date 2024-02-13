@@ -211,14 +211,14 @@ class FHIRImmunizationPostValidators:
     def validate_organization_display(cls, values: dict) -> dict:
         """Validate that organization_display is present or absent, as required"""
 
-        def util_func(x):
+        def is_organization(x):
             try:
                 return x.actor.type == "Organization"
             except AttributeError:
                 return False
 
         try:
-            field_value = [x for x in values["performer"] if util_func(x)][
+            field_value = [x for x in values["performer"] if is_organization(x)][
                 0
             ].actor.display
         except (KeyError, IndexError, AttributeError, TypeError):

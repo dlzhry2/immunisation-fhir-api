@@ -63,14 +63,14 @@ class FHIRImmunizationPreValidators:
             ][0]
 
             try:
-                # Try to obtain the contained practitioner resource id
+                # Try to obtain the contained patient resource id
                 contained_patient_id = contained_patient["id"]
 
                 # If the reference is not equal to the ID then raise an error
                 if ("#" + contained_patient_id) != patient_reference:
                     raise ValueError(
                         f"The reference '{patient_reference}' does "
-                        + "not exist in the contained Patient resources"
+                        + "not exist in the contained Patient resource"
                     )
             except KeyError as error:
                 # If the contained Patient resource has no id raise an error

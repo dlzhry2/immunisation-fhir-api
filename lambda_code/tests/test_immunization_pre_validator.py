@@ -92,7 +92,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_contained_with_patient,
             valid_patient_pat2,
             expected_error_message="The reference '#Pat2' does not exist in the contained "
-            + "Patient resources",
+            + "Patient resource",
         )
         # Test case: contained Patient has no id, patient reference is #Pat1 - reject
         ValidatorModelTests.test_invalid_patient_reference_rejected(

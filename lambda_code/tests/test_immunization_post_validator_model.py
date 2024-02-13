@@ -110,7 +110,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_post_patient_identifier_value(self):
         """Test that the JSON data is accepted when it does not contain patient_identifier_value"""
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, "contained[?(@.resourceType=='Patient')].identifier[0].value"
         )
 
@@ -185,13 +185,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_post_practitioner_name_given(self):
         """Test that the JSON data is accepted if it does not contain practitioner_name_given"""
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, "contained[?(@.resourceType=='Practitioner')].name[0].given"
         )
 
     def test_post_practitioner_name_family(self):
         """Test that the JSON data is accepted if it does not contain practitioner_name_family"""
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, "contained[?(@.resourceType=='Practitioner')].name[0].family"
         )
 
@@ -199,7 +199,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """
         Test that the JSON data is accepted if it does not contain practitioner_identifier_value
         """
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, "contained[?(@.resourceType=='Practitioner')].identifier[0].value"
         )
 
@@ -259,9 +259,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             "contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='PerformerSDSJobRole')].answer[0].valueString"
         )
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
-            self, field_location
-        )
+        MandationTests.test_missing_field_accepted(self, field_location)
 
     def test_post_recorded(self):
         """Test that the JSON data is rejected if it does not contain recorded"""
@@ -285,11 +283,11 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             deepcopy(valid_json_data), True
         )
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
+        MandationTests.test_present_field_accepted(
             self, json_data_with_primary_source_true
         )
 
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, field_location, json_data_with_primary_source_true
         )
 
@@ -298,7 +296,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             deepcopy(valid_json_data), False
         )
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
+        MandationTests.test_present_field_accepted(
             self, json_data_with_primary_source_false
         )
 
@@ -320,9 +318,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
             + "'http://snomed.info/sct')].display"
         )
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
-            self, field_location
-        )
+        MandationTests.test_missing_field_accepted(self, field_location)
 
     def test_post_vaccination_situation_code(self):
         """
@@ -356,9 +352,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             + "'http://snomed.info/sct')].display"
         )
 
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
-            self, field_location
-        )
+        MandationTests.test_missing_field_accepted(self, field_location)
 
     def test_post_status_reason_coding_code(self):
         """
@@ -392,7 +386,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         Test that present or absent status_reason_coding_display is accepted or rejected
         as appropriate dependent on other fields
         """
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
         )
 
@@ -492,7 +486,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_post_vaccine_code_coding_display(self):
         """Test that the JSON data is accepted when vaccine_code_coding_display is absent"""
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
         )
 
@@ -591,13 +585,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_post_site_coding_code(self):
         """Test that the JSON data is accepted when site_coding_code is absent"""
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, "site.coding[?(@.system=='http://snomed.info/sct')].code"
         )
 
     def test_post_site_coding_display(self):
         """Test that the JSON data is accepted when site_coding_display is absent"""
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, "site.coding[?(@.system=='http://snomed.info/sct')].display"
         )
 
@@ -635,7 +629,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_post_route_coding_display(self):
         """Test that the JSON data is accepted when route_coding_display is absent"""
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, "route.coding[?(@.system=='http://snomed.info/sct')].display"
         )
 
@@ -705,15 +699,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_post_dose_quantity_unit(self):
         """Test that the JSON data is accepted when dose_quantity_unit is absent"""
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
-            self, "doseQuantity.unit"
-        )
+        MandationTests.test_missing_field_accepted(self, "doseQuantity.unit")
 
     def test_post_reason_code_coding_code(self):
         """Test that the JSON data is accepted when reason_code_coding_code is absent"""
         sample_data_reason_code = self.covid_json_data["reasonCode"]
         for index in range(len(sample_data_reason_code)):
-            MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+            MandationTests.test_missing_field_accepted(
                 self, f"reasonCode[{index}].coding[0].code"
             )
 
@@ -721,6 +713,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """Test that the JSON data is accepted when reason_code_coding_display is absent"""
         sample_data_reason_code = self.covid_json_data["reasonCode"]
         for index in range(len(sample_data_reason_code)):
-            MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+            MandationTests.test_missing_field_accepted(
                 self, f"reasonCode[{index}].coding[0].display"
             )
