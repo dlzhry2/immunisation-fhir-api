@@ -3,7 +3,19 @@
   "contained": [
     {
       "resourceType": "Practitioner",
-      "id": "Pract1"
+      "id": "Pract1",
+      "identifier": [
+        {
+          "system": "https://fhir.hl7.org.uk/Id/nmc-number",
+          "value": "99A9999A"
+        }
+      ],
+      "name": [
+        {
+          "family": "Nightingale",
+          "given": ["Florence"]
+        }
+      ]
     },
     {
       "resourceType": "Patient",
@@ -27,6 +39,19 @@
           "system": "https://fhir.nhs.uk/Id/nhs-number",
           "value": "9000000009"
         }
+      ],
+      "name": [
+        {
+          "family": "Taylor",
+          "given": ["Sarah"]
+        }
+      ],
+      "gender": "unknown",
+      "birthDate": "1965-02-28",
+      "address": [
+        {
+          "postalCode": "EC1A 1BB"
+        }
       ]
     },
     {
@@ -40,6 +65,18 @@
             {
               "valueReference": {
                 "reference": "#"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "Consent",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "310375005",
+                "system": "http://snomed.info/sct",
+                "display": "Immunization consent given (finding)"
               }
             }
           ]
@@ -164,8 +201,17 @@
   "occurrenceDateTime": "2021-02-07T13:28:17.271+00:00",
   "recorded": "2021-02-07",
   "primarySource": true,
+  "reportOrigin": {
+    "text": "X99999"
+  },
   "manufacturer": {
     "display": "AstraZeneca Ltd"
+  },
+  "location": {
+    "identifier": {
+      "value": "X99999",
+      "system": "https://fhir.nhs.uk/Id/ods-organization-code"
+    }
   },
   "lotNumber": "4120Z001",
   "expirationDate": "2021-07-02",
@@ -204,8 +250,9 @@
         "type": "Organization",
         "identifier": {
           "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-          "value": "N2N9I"
-        }
+          "value": "B0C4P"
+        },
+        "display": "Acme Healthcare"
       }
     }
   ],
