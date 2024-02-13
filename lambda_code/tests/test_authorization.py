@@ -1,16 +1,20 @@
 import unittest
 from typing import Set
 
-from authorization_service import ImmunizationPermission as Perm, parse_permissions, ApplicationRestrictedAuthorization, \
-    PERMISSIONS_HEADER, UnknownPermission, EndpointOperation as Operation
+from authorization import Authorization, UnknownPermission, EndpointOperation as Operation, PERMISSIONS_HEADER, \
+    AUTHENTICATION_HEADER
 from models.errors import Unauthorized
 
+Perm = Authorization._Permission
+AuthType = Authorization._AuthType
 
-def _make_aws_event(permissions: Set[str]):
+
+def _make_aws_event(auth_type: AuthType, permissions: Set[str]):
     header = ",".join(permissions)
     return {
         "headers": {
-            PERMISSIONS_HEADER: header
+            PERMISSIONS_HEADER: header,
+            AUTHENTICATION_HEADER: str(auth_type)
         }
     }
 
@@ -19,43 +23,55 @@ def _full_access(exclude: Set[Perm] = None):
     return {*Perm}.difference(exclude)
 
 
-class TestPermission(unittest.TestCase):
-    def test_parse_permissions(self):
-        """it should create a set of permissions from request's headers"""
+class TestApplicationRestrictedAuthorization(unittest.TestCase):
+    def setUp(self):
+        self.authorization = Authorization()
+
+    def test_parse_permissions_header(self):
+        """it should parse the content of permissions header"""
         # test for case-insensitive, trim and duplicated
-        permissions = {"immunization:create\n", "\timmunization:update ", "Immunization:UPDATE "}
-        aws_event = _make_aws_event(permissions)
+        permissions = {"immunization:read", "immunization:read", "immunization:create\n", "\timmunization:UPDATE ",
+                       "immunization:delete", "immunization:search"}
+        aws_event = _make_aws_event(AuthType.APP_RESTRICTED, permissions)
 
-        # When
-        header = parse_permissions(aws_event["headers"])
-
-        # Then
-        exp_permissions = {Perm.CREATE, Perm.UPDATE}
-        self.assertSetEqual(header, exp_permissions)
+        # Try each operation. It's a pass if we don't get any exceptions
+        for op in [*Operation]:
+            try:
+                # When
+                self.authorization.authorize(op, aws_event)
+            except (Unauthorized, UnknownPermission):
+                self.fail()
 
     def test_unknown_permission(self):
         permissions = {"immunization:create", "bad-permission"}
-        aws_event = _make_aws_event(permissions)
+        aws_event = _make_aws_event(AuthType.APP_RESTRICTED, permissions)
 
         with self.assertRaises(UnknownPermission):
             # When
-            parse_permissions(aws_event["headers"])
+            self.authorization.authorize(Operation.CREATE, aws_event)
 
+    def test_authorization(self):
+        """it authorizes each request based on the operation"""
+        # For each operation we need to test both authorized and unauthorized scenarios.
+        #  The set of permissions to get unauthorized should be the complement of authorized
+        operations = {
+            Operation.READ: {Perm.READ},
+            Operation.CREATE: {Perm.CREATE},
+            Operation.UPDATE: {Perm.UPDATE, Perm.CREATE},
+            Operation.DELETE: {Perm.DELETE},
+            Operation.SEARCH: {Perm.SEARCH},
+        }
+        for op in operations:
+            # Authorized:
+            required_perms = operations[op]
+            aws_event = _make_aws_event(AuthType.APP_RESTRICTED, required_perms)
+            try:
+                self.authorization.authorize(op, aws_event)
+            except RuntimeError:
+                self.fail(f"Authorization test failed for operation {op}")
 
-class TestApplicationRestrictedAuthorization(unittest.TestCase):
-    def setUp(self):
-        self.authorization = ApplicationRestrictedAuthorization()
-
-    def test_get_endpoint(self):
-        """it should allow GET only if application has READ access"""
-        # Authorized
-        event = _make_aws_event({Perm.READ})
-        try:
-            self.authorization.authorize(Operation.READ, event)
-        except Unauthorized:
-            self.fail()
-
-        # Unauthorized
-        event = _make_aws_event(_full_access(exclude={Perm.READ}))
-        with self.assertRaises(Unauthorized):
-            self.authorization.authorize(Operation.READ, event)
+            # Unauthorized:
+            unauthorized_perms = _full_access(exclude=required_perms)
+            aws_event = _make_aws_event(AuthType.APP_RESTRICTED, unauthorized_perms)
+            with self.assertRaises(Unauthorized):
+                self.authorization.authorize(op, aws_event)
