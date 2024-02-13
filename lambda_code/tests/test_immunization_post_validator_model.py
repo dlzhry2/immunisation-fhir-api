@@ -118,11 +118,9 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """
         valid_json_data = deepcopy(self.json_data)
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_json_data)
 
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self,
             valid_json_data,
             field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
@@ -215,9 +213,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         valid_json_data = deepcopy(self.json_data)
         field_location = "occurrenceDateTime"
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_json_data)
 
         # This error is raised by the FHIR validator (occurrenceDateTime is a mandatory FHIR field)
         MandationTests.test_missing_mandatory_field_rejected(
@@ -240,9 +236,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             "performer[?(@.actor.type=='Organization')].actor.identifier.value"
         )
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_json_data)
 
         MandationTests.test_missing_mandatory_field_rejected(
             self,
@@ -260,9 +254,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         valid_json_data = deepcopy(self.json_data)
         field_location = "performer[?(@.actor.type=='Organization')].actor.display"
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_json_data)
 
         MandationTests.test_missing_mandatory_field_rejected(
             self,
@@ -279,9 +271,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         valid_json_data = deepcopy(self.json_data)
         field_location = "identifier[0].value"
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_json_data)
 
         MandationTests.test_missing_mandatory_field_rejected(
             self,
@@ -298,9 +288,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         valid_json_data = deepcopy(self.json_data)
         field_location = "identifier[0].system"
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_json_data)
 
         MandationTests.test_missing_mandatory_field_rejected(
             self,
@@ -536,9 +524,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         valid_json_data = deepcopy(self.json_data)
         field_location = "recorded"
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_json_data)
 
         MandationTests.test_missing_mandatory_field_rejected(
             self,
@@ -555,9 +541,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         valid_json_data = deepcopy(self.json_data)
         field_location = "primarySource"
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_json_data)
 
         MandationTests.test_missing_mandatory_field_rejected(
             self,
@@ -579,11 +563,11 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             deepcopy(valid_json_data), True
         )
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
+        MandationTests.test_present_field_accepted(
             self, json_data_with_primary_source_true
         )
 
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, json_data_with_primary_source_true, field_location
         )
 
@@ -592,7 +576,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             deepcopy(valid_json_data), False
         )
 
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
+        MandationTests.test_present_field_accepted(
             self, json_data_with_primary_source_false
         )
 

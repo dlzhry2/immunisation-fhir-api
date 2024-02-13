@@ -1,4 +1,5 @@
 """Mandation test utilities"""
+
 import unittest
 from pydantic import ValidationError
 from jsonpath_ng.ext import parse
@@ -9,24 +10,24 @@ class MandationTests:
     """Test for presence of fields with different mandation levels"""
 
     @staticmethod
-    def test_present_mandatory_or_required_or_optional_field_accepted(
+    def test_present_field_accepted(
         test_instance: unittest.TestCase,
         valid_json_data: dict,
     ):
         """
-        Test that JSON data is accepted when a mandatory, required or optional field is present
+        Test that JSON data is accepted when a field is present
         """
         # Test that the valid data is accepted by the model
         test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
 
     @staticmethod
-    def test_missing_required_or_optional_or_not_applicable_field_accepted(
+    def test_missing_field_accepted(
         test_instance: unittest.TestCase,
         valid_json_data: dict,
         field_location: str,
     ):
         """
-        Test that JSON data which is missing a required,optional or not applicable field is accepted
+        Test that JSON data which is missing a field is accepted
         """
         # Remove the relevant field
         valid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
