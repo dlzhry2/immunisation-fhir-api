@@ -42,21 +42,29 @@ At this point you'll get a warning when you enter this directory, telling you to
 
 ### Install Python versions and environments
 
-Run `make setup-python-envs`
+This will set up for both the root and `lambda_code`.
 
-This will set up everything up for both the root and `lambda_code`.
+Rename `.envrc.default` to `.envrc` or merge it with your existing file.
+Rename `.env.default` to `.env` or merge it with your existing file.
+
+Edit `.env` with your details.
+
+```shell
+make setup-python-envs
+poetry install --no-root
+```
 
 
 ### IDEs
 
-The tests are in a separate module so in order for them to see each other we need to let the IDE know about the relationship.
+The `lambda_code` tests are in a separate module so in order for them to see each other we need to let the IDE know about the relationship.
 
 #### IntelliJ
 
 - Open the root repo directory in IntelliJ.
 - In Project Structure add an existing virtualenv SDK for `.direnv/python-x.x.x/bin/python`.
 - Set the project SDK and the default root module SDK to the one created above.
-  - Add `src` and `tests` as sources.
+  - Add `tests` as sources.
   - Add `.direnv`, `terraform/.terraform`, and `terraform/build` as exclusions if they're not already.
 - Add another existing virtualenv SDK for `lambda_code/.direnv/python-x.x.x/bin/python`.
 - Import a module pointed at the `lambda_code` directory, set the SDK created above.
@@ -70,7 +78,14 @@ The project must be opened as a multi-root workspace for VS Code to know that `l
 
 - Open the workspace `immunisation-fhir-api.code-workspace`.
 - Copy `lambda_code/.vscode/settings.json.default` to `lambda_code/.vscode/settings.json`, or merge the contents with your existing file.
-- Run the `Python: Configure Tests` command. Select the `lambda_code` workspace, then `unittest`, then `.`.
+
+VS Code will automatically use the `lambda_code` environment when you're editing a file under `lambda_code`.
+
+Depending on your existing setup VS Code might automatically choose the wrong virtualenvs. Change it with `Python: Select Interpreter`.
+
+The root (immunisation-fhir-api) should be pointing at `.direnv/python-x.x.x/bin/python.`
+
+`lambda_code` should be pointing at `lambda_code/.direnv/python-x.x.x/bin/python.`
 
 
 ### AWS

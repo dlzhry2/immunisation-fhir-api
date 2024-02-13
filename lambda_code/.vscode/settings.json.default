@@ -1,11 +1,11 @@
 {
     "python.analysis.extraPaths": [
-        "./lambda_code/src"
+        "./src"
     ],
     "python.testing.unittestArgs": [
         "-v",
         "-s",
-        "./lambda_code",
+        "./",
         "-p",
         "test_*.py"
     ],

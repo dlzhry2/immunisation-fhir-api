@@ -19,6 +19,9 @@ cd ../devtools
 docker compose -f dynamo-compose.yml up -d dynamodb-local
 ```
 
+DynamoDB uses port 8000 so make sure it's free.
+
+
 ### Create table
 
 Table name here is `local-imms-events` but it can be anything.

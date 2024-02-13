@@ -1,4 +1,4 @@
-SHELL=/bin/env bash -euo pipefail
+SHELL=/usr/bin/env bash -euo pipefail
 
 #Installs dependencies using poetry.
 install-python:

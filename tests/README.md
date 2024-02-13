@@ -6,8 +6,7 @@
   - https://docs.apigee.com/api-platform/system-administration/auth-tools#install
   - https://docs.apigee.com/api-platform/system-administration/using-gettoken
 - Open a PR, draft or regular
-- Copy `.env.default` to `.env` or merge it with your existing file
-  - Set the values for your Apigee user and your PR
+- Set the values for your Apigee user and your PR in `../.env`
 - `make run`
 
 If you need to run any pytest commands manually you can set up `direnv` here too.
