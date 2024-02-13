@@ -1,11 +1,11 @@
 import json
+import os
 import unittest
 from unittest.mock import create_autospec
-from fhir.resources.R4B.bundle import BundleEntry
 
-import os
-from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
+from fhir.resources.R4B.bundle import BundleEntry
+from fhir.resources.R4B.immunization import Immunization
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome, get_service_url
 from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError, InconsistentIdError
@@ -14,6 +14,30 @@ from pds_service import PdsService
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
 from tests.immunization_utils import create_an_immunization, create_an_immunization_dict, valid_nhs_number
+
+
+class TestServiceUrl(unittest.TestCase):
+    def test_get_service_url(self):
+        """it should create service url"""
+        env = "int"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://{env}.api.service.nhs.uk/{base_path}")
+        # default should be internal-dev
+        env = "it-does-not-exist"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
+        # prod should not have subdomain
+        env = "prod"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://api.service.nhs.uk/{base_path}")
+        # any other env should fall back to internal-dev (like pr-xx or per-user)
+        env = "pr-42"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
 
 
 class TestGetImmunization(unittest.TestCase):
@@ -51,9 +75,11 @@ class TestGetImmunization(unittest.TestCase):
     def test_get_immunization_by_id_patient_restricted(self):
         """it should return a filtered Immunization when patient is restricted"""
         imms_id = "restricted_id"
-        with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/sample_immunization_event.json", 'r') as immunization_data_file:
+        with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/sample_immunization_event.json",
+                  'r') as immunization_data_file:
             immunization_data = json.load(immunization_data_file)
-        with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json", 'r') as filtered_immunization_data_file:
+        with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json",
+                  'r') as filtered_immunization_data_file:
             filtered_immunization = json.load(filtered_immunization_data_file)
         self.imms_repo.get_immunization_by_id.return_value = immunization_data
         patient_data = {"meta": {"security": [{"code": "R"}]}}
@@ -267,36 +293,19 @@ class TestSearchImmunizations(unittest.TestCase):
         self.fhir_service = FhirService(
             self.imms_repo, self.pds_service, self.validator
         )
-        self.nhsSearchParam="-nhsNumber"
-        self.diseaseTypeSearchParam="-diseaseType"
-
-    def test_get_service_url(self):
-        """it should create service url"""
-        env = "internal-dev"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://{env}.api.service.nhs.uk/{base_path}")
-        # prod should not have subdomain
-        env = "prod"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://api.service.nhs.uk/{base_path}")
-        # any other env should fall back to internal-dev (like pr-xx or per-user)
-        env = "pr-42"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
+        self.nhsSearchParam = "-nhsNumber"
+        self.diseaseTypeSearchParam = "-diseaseType"
 
     def test_map_disease_type_to_disease_code(self):
         """it should map disease_type to disease_code"""
         # TODO: for this ticket we are assuming code is provided
         nhs_number = "a-patient-id"
         disease_type = "a-disease-code"
-        params=f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
+        params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
         # TODO: here we are assuming disease_type=disease_code this is because the mapping is not in place yet
         disease_code = disease_type
-         # When
-        _ = self.fhir_service.search_immunizations(nhs_number, disease_code,params)
+        # When
+        _ = self.fhir_service.search_immunizations(nhs_number, disease_code, params)
 
         # Then
         self.imms_repo.find_immunizations.assert_called_once_with(
@@ -311,9 +320,9 @@ class TestSearchImmunizations(unittest.TestCase):
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = "an-id"
         disease_type = "a-code"
-        params=f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
+        params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
         # When
-        result = self.fhir_service.search_immunizations(nhs_number, disease_type,params)
+        result = self.fhir_service.search_immunizations(nhs_number, disease_type, params)
         # Then
         self.assertIsInstance(result, FhirBundle)
         self.assertEqual(result.type, "searchset")
@@ -325,5 +334,4 @@ class TestSearchImmunizations(unittest.TestCase):
             self.assertEqual(entry.resource.id, imms_ids[i])
         # Assert self link
         self.assertEqual(len(result.link), 1)  # Assert that there is only one link
-        self.assertEqual(result.link[0].relation, "self")  
-    
+        self.assertEqual(result.link[0].relation, "self")

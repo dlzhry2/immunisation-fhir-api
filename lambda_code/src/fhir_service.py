@@ -1,18 +1,18 @@
+import os
 from enum import Enum
 from typing import Optional
 
-from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
 from fhir.resources.R4B.bundle import BundleEntry
 from fhir.resources.R4B.bundle import BundleLink
+from fhir.resources.R4B.immunization import Immunization
 from pydantic import ValidationError
-import os
+
 from fhir_repository import ImmunizationRepository
 from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError, InconsistentIdError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
-
 
 
 def get_service_url(
@@ -22,15 +22,17 @@ def get_service_url(
     non_prod = ["internal-dev", "int", "sandbox"]
     if service_env in non_prod:
         subdomain = f"{service_env}."
-    if service_env == "prod":
+    elif service_env == "prod":
         subdomain = ""
     else:
         subdomain = "internal-dev."
     return f"https://{subdomain}api.service.nhs.uk/{service_base_path}"
 
+
 class UpdateOutcome(Enum):
     UPDATE = 0
     CREATE = 1
+
 
 class FhirService:
     def __init__(
@@ -93,7 +95,7 @@ class FhirService:
         imms = self.immunization_repo.delete_immunization(imms_id)
         return Immunization.parse_obj(imms)
 
-    def search_immunizations(self, nhs_number: str, disease_type: str, params:str) -> FhirBundle:
+    def search_immunizations(self, nhs_number: str, disease_type: str, params: str) -> FhirBundle:
         """find all instances of Immunization(s) for a patient and specified disease type.
         Returns Bundle[Immunization]
         """
@@ -106,7 +108,7 @@ class FhirService:
         ]
         fhir_bundle = FhirBundle(
             resourceType="Bundle",
-            type="searchset", 
+            type="searchset",
             entry=entries,
         )
         url = f"{get_service_url()}/Immunization?{params}"
