@@ -306,7 +306,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         valid_json_data = deepcopy(self.json_data)
         field_location = "contained[?(@.resourceType=='Practitioner')].name[0].given"
 
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, valid_json_data, field_location
         )
 
@@ -318,7 +318,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         valid_json_data = deepcopy(self.json_data)
         field_location = "contained[?(@.resourceType=='Practitioner')].name[0].family"
 
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, valid_json_data, field_location
         )
 
@@ -332,7 +332,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             "contained[?(@.resourceType=='Practitioner')].identifier[0].value"
         )
 
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, valid_json_data, field_location
         )
 
@@ -364,9 +364,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
         # Test case: patient_identifier_system present - accept
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_covid_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_covid_json_data)
 
         # Test case: patient_identifier_system absent - reject
         MandationTests.test_missing_mandatory_field_rejected(
@@ -388,12 +386,10 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         ).filter(lambda d: True, valid_covid_json_data)
 
         # Test case: patient_identifier_system present - accept
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_covid_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_covid_json_data)
 
         # Test case: patient_identifier_system absent - accept
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, valid_covid_json_data, field_location
         )
 
@@ -403,9 +399,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
         # Test case: patient_identifier_system present - accept
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_flu_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_flu_json_data)
 
         # Test case: patient_identifier_system absent - reject
         MandationTests.test_missing_mandatory_field_rejected(
@@ -427,12 +421,10 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         ).filter(lambda d: True, valid_flu_json_data)
 
         # Test case: patient_identifier_system present - accept
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_flu_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_flu_json_data)
 
         # Test case: patient_identifier_system absent - accept
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, valid_flu_json_data, field_location
         )
 
@@ -442,12 +434,10 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
         # Test case: patient_identifier_system present - accept
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_hpv_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_hpv_json_data)
 
         # Test case: patient_identifier_system absent - reject
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, valid_hpv_json_data, field_location
         )
 
@@ -460,12 +450,10 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         ).filter(lambda d: True, valid_hpv_json_data)
 
         # Test case: patient_identifier_system present - accept
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_hpv_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_hpv_json_data)
 
         # Test case: patient_identifier_system absent - accept
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, valid_hpv_json_data, field_location
         )
 
@@ -475,12 +463,10 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
         # Test case: patient_identifier_system present - accept
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_mmr_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_mmr_json_data)
 
         # Test case: patient_identifier_system absent - reject
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, valid_mmr_json_data, field_location
         )
 
@@ -493,12 +479,10 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         ).filter(lambda d: True, valid_mmr_json_data)
 
         # Test case: patient_identifier_system present - accept
-        MandationTests.test_present_mandatory_or_required_or_optional_field_accepted(
-            self, valid_mmr_json_data
-        )
+        MandationTests.test_present_field_accepted(self, valid_mmr_json_data)
 
         # Test case: patient_identifier_system absent - accept
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, valid_mmr_json_data, field_location
         )
 
@@ -513,7 +497,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             + ".item[?(@.linkId=='PerformerSDSJobRole')].answer[0].valueString"
         )
 
-        MandationTests.test_missing_required_or_optional_or_not_applicable_field_accepted(
+        MandationTests.test_missing_field_accepted(
             self, valid_json_data, field_location
         )
 
