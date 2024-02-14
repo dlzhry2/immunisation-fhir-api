@@ -59,14 +59,16 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             + "'http://snomed.info/sct')].code"
         )
 
-        # Test that a valid COVID-19 code is accepted and vaccine_type is therefore set to COVID-19
+        # Test that a valid COVID19 code is accepted and vaccine_type is therefore set to COVID19
         _test_valid_values_accepted(
             self,
             valid_json_data=valid_json_data,
             field_location=field_location,
             valid_values_to_test=["1324681000000101"],
         )
-        self.assertEqual("COVID-19", self.validator.immunization.vaccine_type)
+        self.assertEqual(
+            VaccineTypes.covid_19, self.validator.immunization.vaccine_type
+        )
 
         # Test that an invalid code is rejected
         _test_invalid_values_rejected(

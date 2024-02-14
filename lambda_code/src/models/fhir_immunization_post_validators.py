@@ -355,10 +355,11 @@ class FHIRImmunizationPostValidators:
         except (KeyError, IndexError, AttributeError):
             practitioner_identifier_value = None
 
-        # If practioner_identifier_value is present and vaccine type is COVID-19 or FLU,
+        # If practioner_identifier_value is present and vaccine type is COVID19 or FLU,
         # then practitioner_identifier_system is mandatory
         if practitioner_identifier_value and (
-            cls.vaccine_type == "COVID-19" or cls.vaccine_type == "FLU"
+            cls.vaccine_type == VaccineTypes.covid_19
+            or cls.vaccine_type == VaccineTypes.flu
         ):
             mandation = Mandation.mandatory
             bespoke_mandatory_error_message = (
