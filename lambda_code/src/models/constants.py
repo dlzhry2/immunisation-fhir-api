@@ -17,21 +17,6 @@ class Constants:
     # TODO: valid_disease_types needs updated to reprent agreed list (needs to consider the
     # mapping used for converting snomed code to disease type)
     VALID_DISEASE_TYPES = {"COVID-19", "FLU"}
-    REDUCE_VALIDATION_CODES = ("True", "False")
-
-    @staticmethod
-    def convert_snomed_code_to_target_disease_type(
-        snomed_code: str,
-    ) -> Union[str, None]:
-        """Convert a disease type snomed code to the disease type"""
-        # TODO: disease_types needs to change to be the confirmed
-        # list mapping of snomed to disease type
-        disease_types = {
-            "6142004": "FLU",
-            "840539006": "COVID-19",
-            "00000": "Invalid disease",
-        }
-        return disease_types.get(snomed_code)
 
     @staticmethod
     def convert_iso8601_to_datetime(iso_datetime_str):

@@ -19,7 +19,7 @@ def test_coarse_validation(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
     imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
-    imms["patient"]["identifier"]["value"] = valid_nhs_number1
+    imms["contained"][1]["identifier"][0]["value"] = valid_nhs_number1
     imms["occurrenceDateTime"] = "2020-12-14"
 
     response = imms_api.create_immunization(imms)
