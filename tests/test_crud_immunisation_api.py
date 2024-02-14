@@ -9,9 +9,7 @@ from .example_loader import load_example
 from .immunisation_api import ImmunisationApi, parse_location
 
 
-def create_an_imms_obj(
-    imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1
-) -> dict:
+def create_an_imms_obj(imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1) -> dict:
     imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
     imms["id"] = imms_id
     imms["identifier"][0]["value"] = str(uuid.uuid4())
@@ -42,6 +40,7 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
 
     imms = create_an_imms_obj()
+    imms["identifier"][0]["value"] = str(uuid.uuid4())
 
     # CREATE
     result = imms_api.create_immunization(imms)
@@ -309,7 +308,7 @@ def test_update_inconsistent_id_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_he
     assert path_id in json_data["issue"][0]["diagnostics"]
 
 
-@pytest.mark.debug
+
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",

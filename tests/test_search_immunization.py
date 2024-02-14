@@ -14,6 +14,7 @@ def create_immunization(imms_id, nhs_number, disease_code):
     imms["id"] = imms_id
     imms["contained"][1]["identifier"][0]["value"] = nhs_number
     imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = disease_code
+    imms['identifier'][0]['value'] = str(uuid.uuid4())
 
     return imms
 
@@ -48,7 +49,7 @@ def cleanup(imms_api: ImmunisationApi, stored_records: list):
             assert delete_res.status_code == 204
             sleep(0.1)
 
-
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -94,7 +95,7 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     for resource in stored_records[1]["responses"]:
         assert resource["id"] not in result_ids
 
-
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",

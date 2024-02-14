@@ -51,7 +51,7 @@ def _query_identifier(table, index, pk, identifier):
         )
     if queryResponse.get('Count', 0) > 0:
         return queryResponse
-    
+
 
 @dataclass
 class RecordAttributes:
@@ -117,17 +117,18 @@ class ImmunizationRepository:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
+        immunization['doseQuantity']['value'] = float(immunization['doseQuantity']['value'])
 
         query_response = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
 
-        if query_response != None and 'DeletedAt' not in query_response['Items'][0]: 
-            raise IdentifierDuplicationError(identifier=attr.identifier)
+        if query_response is not None and 'DeletedAt' not in query_response['Items'][0]:
+                raise IdentifierDuplicationError(identifier=attr.identifier)
 
         response = self.table.put_item(Item={
             'PK': attr.pk,
             'PatientPK': attr.patient_pk,
             'PatientSK': attr.patient_sk,
-            'Resource': json.dumps(attr.resource),
+            'Resource': json.dumps(attr.resource, default=str),
             'Patient': attr.patient,
             'IdentifierPK': attr.identifier
         })
@@ -139,9 +140,7 @@ class ImmunizationRepository:
                 message="Non-200 response from dynamodb", response=response
             )
 
-    def update_immunization(
-        self, imms_id: str, immunization: dict, patient: dict
-    ) -> dict:
+    def update_immunization(self, imms_id: str, immunization: dict, patient: dict) -> dict:
         attr = RecordAttributes(immunization, patient)
         # "Resource" is a dynamodb reserved word
         update_exp = (

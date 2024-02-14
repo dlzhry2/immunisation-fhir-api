@@ -78,6 +78,14 @@ def _make_an_immunization(imms_id="an-id") -> dict:
                 },
             }
         ],
+        "doseQuantity": {
+            "value": 0.5
+        },
+        "identifier": [
+            {
+                "value": str(uuid.uuid4())
+            }
+        ]
     }
 
 
@@ -168,7 +176,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
             # When
             self.repository.create_immunization(imms, self.patient)
 
-        self.assertEqual(str(e.exception), "The provided identifier: an-id is duplicated")
+        self.assertEqual(str(e.exception), f"The provided identifier: {imms['identifier'][0]['value']} is duplicated")
         
 
 class TestCreateImmunizationPatientIndex(unittest.TestCase):
@@ -307,7 +315,7 @@ class TestUpdateImmunization(unittest.TestCase):
             # When
             self.repository.update_immunization(imms_id, imms, self.patient)
 
-        self.assertEqual(str(e.exception), "The provided identifier: an-id is duplicated")
+        self.assertEqual(str(e.exception), f"The provided identifier: {imms['identifier'][0]['value']} is duplicated")
     
 
 class TestDeleteImmunization(unittest.TestCase):
