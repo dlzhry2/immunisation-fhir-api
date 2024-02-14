@@ -4,7 +4,6 @@ from time import sleep
 
 import pytest
 
-from mappings import DiseaseTypes
 from .configuration.config import valid_nhs_number1, valid_nhs_number2
 from .example_loader import load_example
 from .immunisation_api import ImmunisationApi, parse_location
@@ -81,9 +80,7 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     stored_records = seed_records(imms_api, records)
     # Tests
     # Search patient with multiple disease types
-    response = imms_api.search_immunizations(
-        stored_records[0]["nhs_number"], DiseaseTypes.mmr
-    )
+    response = imms_api.search_immunizations(stored_records[0]["nhs_number"], "MMR")
 
     cleanup(imms_api, stored_records)
 
@@ -131,7 +128,7 @@ def test_search_immunization_ignore_deleted(
     _ = imms_api.delete_immunization(id_to_delete)
 
     records = stored_records[0]
-    response = imms_api.search_immunizations(records["nhs_number"], DiseaseTypes.mmr)
+    response = imms_api.search_immunizations(records["nhs_number"], "MMR")
 
     # pop the one that we already deleted
     stored_records.pop()
