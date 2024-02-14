@@ -6,6 +6,7 @@ import json
 from copy import deepcopy
 from decimal import Decimal
 from jsonpath_ng.ext import parse
+from mappings import DiseaseTypes
 from models.fhir_immunization import ImmunizationValidator
 from .utils.generic_utils import (
     # these have an underscore to avoid pytest collecting them as tests
@@ -66,7 +67,9 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             field_location=field_location,
             valid_values_to_test=["1324681000000101"],
         )
-        self.assertEqual("COVID-19", self.validator.immunization.vaccine_type)
+        self.assertEqual(
+            DiseaseTypes.covid_19, self.validator.immunization.vaccine_type
+        )
 
         # Test that an invalid code is rejected
         _test_invalid_values_rejected(
