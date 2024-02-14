@@ -10,7 +10,7 @@ from models.utils.post_validation_utils import (
     MandatoryError,
     NotApplicableError,
 )
-from mappings import Mandation, vaccine_type_applicable_validations
+from mappings import DiseaseTypes, Mandation, vaccine_type_applicable_validations
 
 check_mandation_requirements_met = PostValidation.check_mandation_requirements_met
 get_generic_field_value = PostValidation.get_generic_field_value
@@ -409,10 +409,11 @@ class FHIRImmunizationPostValidators:
         except (KeyError, IndexError, AttributeError):
             practitioner_identifier_value = None
 
-        # If practioner_identifier_value is present and vaccine type is COVID-19 or FLU,
+        # If practioner_identifier_value is present and vaccine type is COVID19 or FLU,
         # then practitioner_identifier_system is mandatory
         if practitioner_identifier_value and (
-            cls.vaccine_type == "COVID-19" or cls.vaccine_type == "FLU"
+            cls.vaccine_type == DiseaseTypes.covid_19
+            or cls.vaccine_type == DiseaseTypes.flu
         ):
             mandation = Mandation.mandatory
             mandatory_error_message = (

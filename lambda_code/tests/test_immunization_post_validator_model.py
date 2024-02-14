@@ -60,7 +60,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             + "'http://snomed.info/sct')].code"
         )
 
-        # Test that a valid COVID-19 code is accepted and vaccine_type is therefore set to COVID-19
+        # Test that a valid COVID19 code is accepted and vaccine_type is therefore set to COVID19
         _test_valid_values_accepted(
             self,
             valid_json_data=valid_json_data,
@@ -361,7 +361,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         valid_hpv_procedure_code = "mockHPVcode1"
         valid_mmr_procedure_code = "mockMMRcode1"
 
-        # Test COVID-19 cases where practitioner_identifier_value is present
+        # Test COVID19 cases where practitioner_identifier_value is present
         valid_covid_json_data = parse(vaccination_procdeure_code_field_location).update(
             deepcopy(self.json_data), valid_covid_19_procedure_code
         )
@@ -376,11 +376,11 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             field_location,
             expected_error_message=f"{field_location} is mandatory when contained."
             + "[?(@.resourceType=='Practitioner')].identifier[0].system is present"
-            + f" and vaccination type is COVID-19",
+            + f" and vaccination type is {DiseaseTypes.covid_19}",
             expected_error_type="value_error",
         )
 
-        # Test COVID-19 cases where practitioner_identifier_value is absent
+        # Test COVID19 cases where practitioner_identifier_value is absent
         valid_covid_json_data = parse(vaccination_procdeure_code_field_location).update(
             deepcopy(self.json_data), valid_covid_19_procedure_code
         )
