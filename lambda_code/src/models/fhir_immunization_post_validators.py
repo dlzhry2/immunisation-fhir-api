@@ -5,6 +5,7 @@ from models.utils.generic_utils import (
     get_generic_extension_value_from_model,
     generate_field_location_for_extension,
     get_contained_resource_from_model,
+    is_organization,
 )
 from models.utils.post_validation_utils import (
     PostValidation,
@@ -210,13 +211,6 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_organization_display(cls, values: dict) -> dict:
         """Validate that organization_display is present or absent, as required"""
-
-        def is_organization(x):
-            try:
-                return x.actor.type == "Organization"
-            except AttributeError:
-                return False
-
         try:
             field_value = [x for x in values["performer"] if is_organization(x)][
                 0
@@ -1044,3 +1038,125 @@ class FHIRImmunizationPostValidators:
             )
 
         return values
+
+    @classmethod
+    def validate_nhs_number_verification_status_code(cls, values: dict) -> dict:
+        "Validate that nhs_number_verification_status_code is present or absent, as required"
+        url = (
+            "https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-NHSNumberVerificationStatus"
+        )
+        system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+        field_type = "code"
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + generate_field_location_for_extension(url, system, field_type)
+        )
+        try:
+            patient_identifier = get_contained_resource_from_model(
+                values, "Patient"
+            ).identifier
+
+            patient_identifier_extension_item = [
+                x
+                for x in patient_identifier
+                if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0].extension
+
+            value_codeable_concept_coding = [
+                x for x in patient_identifier_extension_item if x.url == url
+            ][0].valueCodeableConcept.coding
+
+            nhs_number_verification_status_code = [
+                x for x in value_codeable_concept_coding if x.system == system
+            ][0].code
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            nhs_number_verification_status_code = None
+
+        check_mandation_requirements_met(
+            field_value=nhs_number_verification_status_code,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="nhs_number_verification_status_code",
+        )
+
+        return values
+
+    @classmethod
+    def validate_nhs_number_verification_status_display(cls, values: dict) -> dict:
+        "Validate that nhs_number_verification_status_display is present or absent, as required"
+        url = (
+            "https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-NHSNumberVerificationStatus"
+        )
+        system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+        field_type = "display"
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + generate_field_location_for_extension(url, system, field_type)
+        )
+        try:
+            patient_identifier = get_contained_resource_from_model(
+                values, "Patient"
+            ).identifier
+
+            patient_identifier_extension_item = [
+                x
+                for x in patient_identifier
+                if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0].extension
+
+            value_codeable_concept_coding = [
+                x for x in patient_identifier_extension_item if x.url == url
+            ][0].valueCodeableConcept.coding
+
+            nhs_number_verification_status_display = [
+                x for x in value_codeable_concept_coding if x.system == system
+            ][0].display
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            nhs_number_verification_status_display = None
+
+        check_mandation_requirements_met(
+            field_value=nhs_number_verification_status_display,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="nhs_number_verification_status_display",
+        )
+
+        return values
+
+    @classmethod
+    def validate_organization_identifier_system(cls, values: dict) -> dict:
+        """Validate that organization_identifier_system is present or absent, as required"""
+        try:
+            field_value = [x for x in values["performer"] if is_organization(x)][
+                0
+            ].actor.identifier.system
+        except (KeyError, IndexError, AttributeError, TypeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location="performer[?(@.actor.type=='Organization')].actor.identifier.system",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="organization_identifier_system",
+        )
+
+        return values
+
+    # TODO: LOCAL_PATIENT_VALUE
+    # TODO: LOCAL_PATIENT_SYSTEM
+    # TODO: CONSENT_CODE
+    # TODO: CONSENT_DISPLAY
+    # TODO: CARE_SETTING_CODE
+    # TODO: CARE_SETTING_DISPLAY
+    # TODO: IP_ADDRESS
+    # TODO: USER_ID
+    # TODO: USER_NAME
+    # TODO: USER_EMAIL
+    # TODO: SUBMITTED_TIME_STAMP
+    # TODO: LOCATION_IDENTIFIER_VALUE
+    # TODO: LOCATION_IDENTIFIER_SYSTEM
+    # TODO: REDUCE_VALIDATION_REASON

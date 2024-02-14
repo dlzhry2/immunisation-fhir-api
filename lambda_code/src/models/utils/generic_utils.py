@@ -163,3 +163,10 @@ def get_deep_attr(obj, attrs):
     for attr in attrs.split("."):
         obj = getattr(obj, attr)
     return obj
+
+
+def is_organization(x):
+    try:
+        return x.actor.type == "Organization"
+    except (AttributeError, TypeError):
+        return False

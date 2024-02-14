@@ -718,3 +718,40 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             MandationTests.test_missing_field_accepted(
                 self, f"reasonCode[{index}].coding[0].display"
             )
+
+    def test_post_nhs_number_verification_status_code(self):
+        """Test that the JSON data is accepted when nhs_number_verification_status_code is absent"""
+        field_location = (
+            "contained[?(@.resourceType=='Patient')]"
+            + ".identifier[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]"
+            + ".extension[?(@.url=="
+            + "'https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-NHSNumberVerificationStatus')]"
+            + ".valueCodeableConcept.coding[?(@.system=='https://fhir.hl7.org.uk/CodeSystem/"
+            + "UKCore-NHSNumberVerificationStatusEngland')].code"
+        )
+        MandationTests.test_missing_mandatory_field_rejected(self, field_location)
+
+    def test_post_nhs_number_verification_status_display(self):
+        """
+        Test that the JSON data is accepted when nhs_number_verification_status_display is absent
+        """
+        field_location = (
+            "contained[?(@.resourceType=='Patient')]"
+            + ".identifier[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]"
+            + ".extension[?(@.url=="
+            + "'https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-NHSNumberVerificationStatus')]"
+            + ".valueCodeableConcept.coding[?(@.system=='https://fhir.hl7.org.uk/CodeSystem/"
+            + "UKCore-NHSNumberVerificationStatusEngland')].display"
+        )
+
+        MandationTests.test_missing_field_accepted(self, field_location)
+
+    def test_post_organization_identifier_system(self):
+        """
+        Test that the JSON data is rejected if it does not contain organization_identifier_system
+        """
+        MandationTests.test_missing_mandatory_field_rejected(
+            self, "performer[?(@.actor.type=='Organization')].actor.identifier.system"
+        )
