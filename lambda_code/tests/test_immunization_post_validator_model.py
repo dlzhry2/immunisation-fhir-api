@@ -755,3 +755,116 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         MandationTests.test_missing_mandatory_field_rejected(
             self, "performer[?(@.actor.type=='Organization')].actor.identifier.system"
         )
+
+    def test_post_local_patient_value(self):
+        """Test that the JSON data is rejected if it does not contain local_patient_value"""
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='LocalPatient')].answer[0].valueReference.identifier.value",
+        )
+
+    def test_post_local_patient_system(self):
+        """Test that the JSON data is rejected if it does not contain local_patient_system"""
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='LocalPatient')].answer[0].valueReference.identifier.system",
+        )
+
+    def test_post_consent_code(self):
+        """
+        Test that present or absent consent_code is accepted or rejected
+        as appropriate dependent on other fields
+        """
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')].item"
+            + "[?(@.linkId=='Consent')].answer[0].valueCoding.code"
+        )
+
+        # Test cases for COVID-19 and FLU
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.mandatory,
+                mandation_when_status_entered_in_error=Mandation.mandatory,
+                mandation_when_status_not_done=Mandation.required,
+                expected_bespoke_error_message=f"{field_location} is mandatory when status is "
+                + f"'completed' or 'entered-in-error' and vaccination type is {vaccine_type}",
+                expected_error_type="MandatoryError",
+            )
+
+        # Test cases for HPV and MMR
+        for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
+            MandationTests.test_mandation_for_status_dependent_fields(
+                self,
+                field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_status_completed=Mandation.required,
+                mandation_when_status_entered_in_error=Mandation.required,
+                mandation_when_status_not_done=Mandation.required,
+            )
+
+    def test_post_consent_display(self):
+        """
+        Test that present or absent consent_display is accepted or rejected
+        as appropriate dependent on other fields
+        """
+        MandationTests.test_missing_field_accepted(
+            self,
+            field_location="contained[?(@.resourceType=='QuestionnaireResponse')].item"
+            + "[?(@.linkId=='Consent')].answer[0].valueCoding.display",
+        )
+
+    def test_post_care_setting_code(self):
+        """
+        Test that present or absent care_setting_code is accepted or rejected
+        as appropriate dependent on other fields
+        """
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')].item"
+            + "[?(@.linkId=='CareSetting')].answer[0].valueCoding.code"
+        )
+
+        # Test cases for COVID19 and FLU
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu]:
+            valid_json_data = MandationTests.update_vaccination_procedure_code(
+                self, vaccine_type
+            )
+            MandationTests.test_missing_mandatory_field_rejected(
+                self, field_location, valid_json_data
+            )
+
+        # Test cases for HPV and MMR
+        for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
+            valid_json_data = MandationTests.update_vaccination_procedure_code(
+                self, vaccine_type
+            )
+            MandationTests.test_missing_field_accepted(
+                self, field_location, valid_json_data
+            )
+
+    def test_post_care_setting_display(self):
+        """
+        Test that present or absent care_setting_display is accepted or rejected
+        as appropriate dependent on other fields
+        """
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')].item"
+            + "[?(@.linkId=='CareSetting')].answer[0].valueCoding.display"
+        )
+
+        for vaccine_type in [
+            VaccineTypes.covid_19,
+            VaccineTypes.flu,
+            VaccineTypes.hpv,
+            VaccineTypes.mmr,
+        ]:
+            valid_json_data = MandationTests.update_vaccination_procedure_code(
+                self, vaccine_type
+            )
+            MandationTests.test_missing_field_accepted(
+                self, field_location, valid_json_data
+            )

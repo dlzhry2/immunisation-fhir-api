@@ -3,6 +3,7 @@
 from models.utils.generic_utils import (
     get_generic_questionnaire_response_value_from_model,
     get_generic_extension_value_from_model,
+    generate_field_location_for_questionnnaire_response,
     generate_field_location_for_extension,
     get_contained_resource_from_model,
     is_organization,
@@ -1146,12 +1147,175 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    # TODO: LOCAL_PATIENT_VALUE
-    # TODO: LOCAL_PATIENT_SYSTEM
-    # TODO: CONSENT_CODE
-    # TODO: CONSENT_DISPLAY
-    # TODO: CARE_SETTING_CODE
-    # TODO: CARE_SETTING_DISPLAY
+    @classmethod
+    def validate_local_patient_value(cls, values: dict) -> dict:
+        """Validate that local_patient_value is present or absent, as required"""
+        link_id = "LocalPatient"
+        answer_type = "valueReference"
+        field_type = "value"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            field_value = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, TypeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="local_patient_value",
+        )
+
+        return values
+
+    @classmethod
+    def validate_local_patient_system(cls, values: dict) -> dict:
+        """Validate that local_patient_system is present or absent, as required"""
+        link_id = "LocalPatient"
+        answer_type = "valueReference"
+        field_type = "system"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            field_value = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, TypeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="local_patient_system",
+        )
+
+        return values
+
+    @classmethod
+    def validate_consent_code(cls, values: dict) -> dict:
+        "Validate that consent_code is present or absent, as required"
+        link_id = "Consent"
+        answer_type = "valueCoding"
+        field_type = "code"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            consent_code = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            consent_code = None
+
+        # Handle conditional mandation logic
+        mandation = vaccine_type_applicable_validations["consent_code"][
+            cls.vaccine_type
+        ]
+        bespoke_mandatory_error_message = None
+        if values["status"] != "not-done" and cls.vaccine_type in (
+            VaccineTypes.covid_19,
+            VaccineTypes.flu,
+        ):
+            mandation = Mandation.mandatory
+            bespoke_mandatory_error_message = (
+                f"{field_location} is mandatory when status is 'completed' or 'entered-in-error'"
+                + f" and vaccination type is {cls.vaccine_type}"
+            )
+        else:
+            mandation = Mandation.optional
+
+        check_mandation_requirements_met(
+            field_value=consent_code,
+            field_location=field_location,
+            mandation=mandation,
+            bespoke_mandatory_error_message=bespoke_mandatory_error_message,
+        )
+        return values
+
+    @classmethod
+    def validate_consent_display(cls, values: dict) -> dict:
+        "Validate that consent_display is present or absent, as required"
+        link_id = "Consent"
+        answer_type = "valueCoding"
+        field_type = "display"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            consent_display = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            consent_display = None
+
+        check_mandation_requirements_met(
+            field_value=consent_display,
+            field_location=field_location,
+            mandation_key="consent_display",
+            vaccine_type=cls.vaccine_type,
+        )
+        return values
+
+    @classmethod
+    def validate_care_setting_code(cls, values: dict) -> dict:
+        "Validate that care_setting_code is present or absent, as required"
+        link_id = "CareSetting"
+        answer_type = "valueCoding"
+        field_type = "code"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            care_setting_code = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            care_setting_code = None
+
+        check_mandation_requirements_met(
+            field_value=care_setting_code,
+            field_location=field_location,
+            mandation_key="care_setting_code",
+            vaccine_type=cls.vaccine_type,
+        )
+        return values
+
+    @classmethod
+    def validate_care_setting_display(cls, values: dict) -> dict:
+        "Validate that care_setting_display is present or absent, as required"
+        link_id = "CareSetting"
+        answer_type = "valueCoding"
+        field_type = "display"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            care_setting_display = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            care_setting_display = None
+
+        check_mandation_requirements_met(
+            field_value=care_setting_display,
+            field_location=field_location,
+            mandation_key="care_setting_display",
+            vaccine_type=cls.vaccine_type,
+        )
+        return values
+
     # TODO: IP_ADDRESS
     # TODO: USER_ID
     # TODO: USER_NAME
