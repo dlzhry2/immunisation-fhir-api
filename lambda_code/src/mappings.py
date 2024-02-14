@@ -1,4 +1,5 @@
 """Dictionary of vaccine procedure snomed codes and their mapping to vaccine type"""
+
 from dataclasses import dataclass
 
 
@@ -8,7 +9,7 @@ class DiseaseTypes:
     Disease types
     """
 
-    covid_19: str = "COVID-19"
+    covid_19: str = "COVID19"
     flu: str = "FLU"
     hpv: str = "HPV"
     mmr: str = "MMR"
