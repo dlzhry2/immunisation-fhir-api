@@ -4,6 +4,7 @@ import uuid
 
 import pytest
 
+from mappings import DiseaseTypes
 from .configuration.config import valid_nhs_number1, valid_nhs_number_with_s_flag
 from .example_loader import load_example
 from .immunisation_api import ImmunisationApi, parse_location
@@ -309,7 +310,7 @@ def test_get_s_flag_patient(
         assert retrieved_get_imms_result.status_code == 200
     retrieved_get_imms = retrieved_get_imms_result.json()
 
-    sample_disease_code = "COVID-19"
+    sample_disease_code = DiseaseTypes.covid_19
     retrieved_search_imms_result = imms_api.search_immunizations(
         nhs_number, sample_disease_code
     )
