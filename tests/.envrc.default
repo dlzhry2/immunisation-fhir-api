@@ -1,3 +1,2 @@
-layout pyenv 3.8.10
-
-dotenv_if_exists
+source_up
+dotenv

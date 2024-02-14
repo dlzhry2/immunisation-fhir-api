@@ -44,8 +44,10 @@ At this point you'll get a warning when you enter this directory, telling you to
 
 This will set up for both the root and `lambda_code`.
 
-Rename `.envrc.default` to `.envrc` or merge it with your existing file.
 Rename `.env.default` to `.env` or merge it with your existing file.
+Rename `.envrc.default` to `.envrc` or merge it with your existing file. 
+
+These are kept separate so other tools can use `.env` if wanted.
 
 Edit `.env` with your details.
 
@@ -87,9 +89,3 @@ The root (immunisation-fhir-api) should be pointing at `.direnv/python-x.x.x/bin
 
 `lambda_code` should be pointing at `lambda_code/.direnv/python-x.x.x/bin/python.`
 
-
-### AWS
-
-TODO AWS CLI set up.
-
-`aws-mfa-update 347250048819 {your user name} {mfa code}`

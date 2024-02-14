@@ -59,13 +59,12 @@ aws dynamodb create-table \
 
 ### Run endpoint
 
+Rename `.env.default` to `.env` or merge it with your existing file. 
 Rename `.envrc.default` to `.envrc` or merge it with your existing file. `direnv` will use them automatically in the terminal.
 
-It contains the following variables:
+These are kept separate so other tools can use `.env` if wanted.
 
-- `AWS_PROFILE=apim-dev`
-- `IMMUNIZATION_ENV=local` 
-- `DYNAMODB_TABLE_NAME={table name as created above}`
+See `.env` for an explanation of the variables.
 
 To run from the terminal: 
 ```shell
