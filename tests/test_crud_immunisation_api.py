@@ -308,7 +308,6 @@ def test_update_inconsistent_id_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_he
     assert path_id in json_data["issue"][0]["diagnostics"]
 
 
-
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
