@@ -83,4 +83,4 @@ test-prod:
 	--junitxml=test-report.xml \
 
 setup-python-envs:
-	./setup-python-envs.sh
+	scripts/setup-python-envs.sh
