@@ -9,7 +9,13 @@
         </Step>
     </Request>
   </PreFlow>
-    <FaultRules>
+    <!-- <FaultRules>
+      <FaultRule name="400_bad_request">
+        <Condition>response.status.code == 400</Condition>
+        <Step>
+          <Name>AssignMessage.GenericError</Name>
+        </Step>
+    </FaultRule> -->
       <FaultRule name="401_invalid_token">
           <Condition>oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.fault.cause == "Invalid access token"</Condition>
           <Step>

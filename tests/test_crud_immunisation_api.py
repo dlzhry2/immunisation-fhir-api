@@ -1,6 +1,6 @@
-import copy
 import pprint
 import uuid
+import copy
 
 import pytest
 
@@ -78,6 +78,7 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     assert result.status_code == 204
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -103,6 +104,7 @@ def test_get_event_by_id_not_found_nhs_login(
     assert res_body["resourceType"] == "OperationOutcome"
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -124,6 +126,7 @@ def test_get_event_by_id_invalid_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_h
     assert res_body["resourceType"] == "OperationOutcome"
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -149,6 +152,7 @@ def test_delete_immunization_already_deleted(
     assert json_result["resourceType"] == "OperationOutcome"
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -192,6 +196,7 @@ def test_update_none_existing_record_nhs_login(
     assert result.status_code == 201
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -248,6 +253,7 @@ def test_update_deleted_imms_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_heade
     assert result.status_code == 201
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",

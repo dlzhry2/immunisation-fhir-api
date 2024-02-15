@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<AssignMessage async="false" continueOnError="false" enabled="true" name="AssignMessage.AddUserIdHeader">
+  <StatusCode>400</StatusCode>
+  <Set>
+    <Payload contentType="application/json">
+    {
+      "resourceType": "OperationOutcome",
+      "id": "a5abca2a-4eda-41da-b2cc-95d48c6b791d",
+      "meta": {
+        "profile": [
+          "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
+        ]
+      },
+      "issue": [
+        {
+          "severity": "error",
+          "code": "expired",
+          "details": {
+            "coding": [
+              {
+                "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
+                "code": "BAD_REQUEST"
+              }
+            ]
+          },
+          "diagnostics": "The resource could not be parsed or failed basic FHIR validation rules."
+        }
+      ]
+    }
+    </Payload>
+  </Set>
+  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+  <AssignTo createNew="false" transport="http" type="request"/>
+</AssignMessage>

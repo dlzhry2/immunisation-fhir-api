@@ -19,6 +19,9 @@ class ResourceNotFoundError(RuntimeError):
     """Return this error when the requested FHIR resource does not exist"""
     resource_type: str
     resource_id: str
+    
+    def __str__(self):
+        return f"{self.message}\n{self.response}"
 
     def to_operation_outcome(self) -> dict:
         msg = f"{self.resource_type} resource does not exit. ID: {self.resource_id}"
