@@ -1317,7 +1317,55 @@ class FHIRImmunizationPostValidators:
         return values
 
     # TODO: IP_ADDRESS
+    @classmethod
+    def validate_ip_address(cls, values: dict) -> dict:
+        "Validate that ip_address is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='IpAddress')].answer[0].valueString"
+        )
+
+        try:
+            ip_address = get_generic_questionnaire_response_value_from_model(
+                values, "IpAddress", "valueString"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            ip_address = None
+
+        check_mandation_requirements_met(
+            field_value=ip_address,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="ip_address",
+        )
+        return values
+
     # TODO: USER_ID
+    @classmethod
+    def validate_user_id(cls, values: dict) -> dict:
+        "Validate that user_id is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserId')].answer[0].valueString"
+        )
+
+        try:
+            user_id = get_generic_questionnaire_response_value_from_model(
+                values, "UserId", "valueString"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            user_id = None
+
+        check_mandation_requirements_met(
+            field_value=user_id,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="user_id",
+        )
+        return values
+
     # TODO: USER_NAME
     # TODO: USER_EMAIL
     # TODO: SUBMITTED_TIME_STAMP

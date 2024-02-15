@@ -868,3 +868,39 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             MandationTests.test_missing_field_accepted(
                 self, field_location, valid_json_data
             )
+
+    def test_post_ip_address(self):
+        """Test that the JSON data is rejected if it does not contain ip_address"""
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')].item"
+            + "[?(@.linkId=='IpAddress')].answer[0].valueString"
+        )
+
+        # Test case for COVID19
+        MandationTests.test_missing_field_accepted(self, field_location)
+
+        # Test cases for FLU, HPV and MMR
+        for vaccine_type in (VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr):
+            MandationTests.test_present_not_applicable_field_rejected(
+                self,
+                field_location=field_location,
+                vaccine_type=vaccine_type,
+            )
+
+    def test_post_user_id(self):
+        """Test that the JSON data is rejected if it does not contain user_id"""
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')].item"
+            + "[?(@.linkId=='UserId')].answer[0].valueString"
+        )
+
+        # Test case for COVID19
+        MandationTests.test_missing_field_accepted(self, field_location)
+
+        # Test cases for FLU, HPV and MMR
+        for vaccine_type in (VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr):
+            MandationTests.test_present_not_applicable_field_rejected(
+                self,
+                field_location=field_location,
+                vaccine_type=vaccine_type,
+            )

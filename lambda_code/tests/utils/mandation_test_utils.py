@@ -145,17 +145,19 @@ class MandationTests:
     @staticmethod
     def test_present_not_applicable_field_rejected(
         test_instance: unittest.TestCase,
-        invalid_json_data: dict,
         field_location: str,
+        vaccine_type: VaccineTypes,
     ):
         """
-        TODO: Test that JSON data containing a not applicable field is rejected.
-
         NOTE:
         TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
         this happens, the error message is suffixed with the type of error e.g. type_error or
         value_error. This is why the test checks for the type of error in the error message.
         """
+
+        invalid_json_data = MandationTests.update_vaccination_procedure_code(
+            test_instance, vaccine_type
+        )
 
         # Test that correct error message is raised
         with test_instance.assertRaises(NotApplicableError) as error:
