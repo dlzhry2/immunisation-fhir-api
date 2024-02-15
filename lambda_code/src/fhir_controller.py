@@ -3,6 +3,7 @@ import os
 import re
 import uuid
 from typing import Optional
+from decimal import Decimal
 
 import boto3
 import base64
@@ -23,8 +24,12 @@ from pds_service import PdsService, Authenticator
 from urllib.parse import parse_qs
 
 
-def make_controller(pds_env: str = os.getenv("PDS_ENV", "int")):
-    imms_repo = ImmunizationRepository(create_table())
+def make_controller(
+    pds_env: str = os.getenv("PDS_ENV", "int"),
+    immunization_env: str = os.getenv("IMMUNIZATION_ENV")
+):
+    endpoint_url = "http://localhost:8000" if immunization_env == "local" else None
+    imms_repo = ImmunizationRepository(create_table(endpoint_url=endpoint_url))
     boto_config = Config(region_name="eu-west-2")
     cache = Cache(directory="/tmp")
     authenticator = Authenticator(
@@ -79,7 +84,7 @@ class FhirController:
 
     def create_immunization(self, aws_event):
         try:
-            imms = json.loads(aws_event["body"])
+            imms = json.loads(aws_event["body"], parse_float=Decimal)
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(
                 f"Request's body contains malformed JSON: {e}"
@@ -100,7 +105,7 @@ class FhirController:
         if id_error:
             return FhirController.create_response(400, json.dumps(id_error))
         try:
-            imms = json.loads(aws_event["body"])
+            imms = json.loads(aws_event["body"], parse_float=Decimal)
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(
                 f"Request's body contains malformed JSON: {e}"
