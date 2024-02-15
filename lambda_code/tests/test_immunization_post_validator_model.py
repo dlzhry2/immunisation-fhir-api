@@ -60,7 +60,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             + "'http://snomed.info/sct')].code"
         )
 
-        # Test that a valid COVID-19 code is accepted and vaccine_type is therefore set to COVID-19
+        # Test that a valid COVID19 code is accepted and vaccine_type is therefore set to COVID19
         _test_valid_values_accepted(
             self,
             valid_json_data=valid_json_data,
@@ -127,6 +127,86 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self,
             valid_json_data,
             field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
+        )
+
+    def test_model_post_patient_name_given(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Patient')].name[0].given
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Patient')].name[0].given"
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
+        )
+
+    def test_model_post_patient_name_family(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Patient')].name[0].family
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Patient')].name[0].family"
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
+        )
+
+    def test_model_post_patient_birth_date(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Patient')].birthDate
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Patient')].birthDate"
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
+        )
+
+    def test_model_post_patient_gender(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Patient')].gender
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Patient')].gender"
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
+        )
+
+    def test_model_post_patient_address_postal_code(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Patient')].address[0].postalCode
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
+
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_json_data,
+            field_location=field_location,
+            expected_error_message=f"{field_location} is a mandatory field",
+            expected_error_type="value_error",
         )
 
     def test_model_post_occurrence_date_time(self):
@@ -219,6 +299,209 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             field_location,
             expected_error_message=f"{field_location} is a mandatory field",
             expected_error_type="value_error",
+        )
+
+    def test_model_post_practitioner_name_given(self):
+        """
+        Test that the JSON data is accepted if it does not contain
+        contained[?(@.resourceType=='Practitioner')].name[0].given
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].given"
+
+        MandationTests.test_missing_field_accepted(
+            self, valid_json_data, field_location
+        )
+
+    def test_model_post_practitioner_name_family(self):
+        """
+        Test that the JSON data is accepted if it does not contain
+        contained[?(@.resourceType=='Practitioner')].name[0].family
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].family"
+
+        MandationTests.test_missing_field_accepted(
+            self, valid_json_data, field_location
+        )
+
+    def test_model_post_practitioner_identifier_value(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Practitioner')].identifier[0].value
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = (
+            "contained[?(@.resourceType=='Practitioner')].identifier[0].value"
+        )
+
+        MandationTests.test_missing_field_accepted(
+            self, valid_json_data, field_location
+        )
+
+    def test_model_post_practitioner_identifier_system(self):
+        """
+        Test that the JSON data is rejected if it does not contain
+        contained[?(@.resourceType=='Practitioner')].identifier[0].system
+        """
+        field_location = (
+            "contained[?(@.resourceType=='Practitioner')].identifier[0].system"
+        )
+        vaccination_procdeure_code_field_location = (
+            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
+            + "'http://snomed.info/sct')].code"
+        )
+        practitioner_identifier_value_field_location = (
+            "contained[?(@.resourceType=='Practitioner')].identifier[0].value"
+        )
+
+        valid_covid_19_procedure_code = "1324681000000101"
+        valid_flu_procedure_code = "mockFLUcode1"
+        valid_hpv_procedure_code = "mockHPVcode1"
+        valid_mmr_procedure_code = "mockMMRcode1"
+
+        # Test COVID19 cases where practitioner_identifier_value is present
+        valid_covid_json_data = parse(vaccination_procdeure_code_field_location).update(
+            deepcopy(self.json_data), valid_covid_19_procedure_code
+        )
+
+        # Test case: patient_identifier_system present - accept
+        MandationTests.test_present_field_accepted(self, valid_covid_json_data)
+
+        # Test case: patient_identifier_system absent - reject
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_covid_json_data,
+            field_location,
+            expected_error_message=f"{field_location} is mandatory when contained."
+            + "[?(@.resourceType=='Practitioner')].identifier[0].system is present"
+            + f" and vaccination type is {DiseaseTypes.covid_19}",
+            expected_error_type="value_error",
+        )
+
+        # Test COVID19 cases where practitioner_identifier_value is absent
+        valid_covid_json_data = parse(vaccination_procdeure_code_field_location).update(
+            deepcopy(self.json_data), valid_covid_19_procedure_code
+        )
+        valid_covid_json_data = parse(
+            practitioner_identifier_value_field_location
+        ).filter(lambda d: True, valid_covid_json_data)
+
+        # Test case: patient_identifier_system present - accept
+        MandationTests.test_present_field_accepted(self, valid_covid_json_data)
+
+        # Test case: patient_identifier_system absent - accept
+        MandationTests.test_missing_field_accepted(
+            self, valid_covid_json_data, field_location
+        )
+
+        # Test FLU cases where practitioner_identifier_value is present
+        valid_flu_json_data = parse(vaccination_procdeure_code_field_location).update(
+            deepcopy(self.json_data), valid_flu_procedure_code
+        )
+
+        # Test case: patient_identifier_system present - accept
+        MandationTests.test_present_field_accepted(self, valid_flu_json_data)
+
+        # Test case: patient_identifier_system absent - reject
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            valid_flu_json_data,
+            field_location,
+            expected_error_message=f"{field_location} is mandatory when contained."
+            + "[?(@.resourceType=='Practitioner')].identifier[0].system is present"
+            + f" and vaccination type is FLU",
+            expected_error_type="value_error",
+        )
+
+        # Test FLU cases where practitioner_identifier_value is absent
+        valid_flu_json_data = parse(vaccination_procdeure_code_field_location).update(
+            deepcopy(self.json_data), valid_flu_procedure_code
+        )
+        valid_flu_json_data = parse(
+            practitioner_identifier_value_field_location
+        ).filter(lambda d: True, valid_flu_json_data)
+
+        # Test case: patient_identifier_system present - accept
+        MandationTests.test_present_field_accepted(self, valid_flu_json_data)
+
+        # Test case: patient_identifier_system absent - accept
+        MandationTests.test_missing_field_accepted(
+            self, valid_flu_json_data, field_location
+        )
+
+        # Test HPV cases where practitioner_identifier_value is present
+        valid_hpv_json_data = parse(vaccination_procdeure_code_field_location).update(
+            deepcopy(self.json_data), valid_hpv_procedure_code
+        )
+
+        # Test case: patient_identifier_system present - accept
+        MandationTests.test_present_field_accepted(self, valid_hpv_json_data)
+
+        # Test case: patient_identifier_system absent - reject
+        MandationTests.test_missing_field_accepted(
+            self, valid_hpv_json_data, field_location
+        )
+
+        # Test HPV cases where practitioner_identifier_value is absent
+        valid_hpv_json_data = parse(vaccination_procdeure_code_field_location).update(
+            deepcopy(self.json_data), valid_hpv_procedure_code
+        )
+        valid_hpv_json_data = parse(
+            practitioner_identifier_value_field_location
+        ).filter(lambda d: True, valid_hpv_json_data)
+
+        # Test case: patient_identifier_system present - accept
+        MandationTests.test_present_field_accepted(self, valid_hpv_json_data)
+
+        # Test case: patient_identifier_system absent - accept
+        MandationTests.test_missing_field_accepted(
+            self, valid_hpv_json_data, field_location
+        )
+
+        # Test MMR cases where practitioner_identifier_value is present
+        valid_mmr_json_data = parse(vaccination_procdeure_code_field_location).update(
+            deepcopy(self.json_data), valid_mmr_procedure_code
+        )
+
+        # Test case: patient_identifier_system present - accept
+        MandationTests.test_present_field_accepted(self, valid_mmr_json_data)
+
+        # Test case: patient_identifier_system absent - reject
+        MandationTests.test_missing_field_accepted(
+            self, valid_mmr_json_data, field_location
+        )
+
+        # Test MMR cases where practitioner_identifier_value is absent
+        valid_mmr_json_data = parse(vaccination_procdeure_code_field_location).update(
+            deepcopy(self.json_data), valid_mmr_procedure_code
+        )
+        valid_mmr_json_data = parse(
+            practitioner_identifier_value_field_location
+        ).filter(lambda d: True, valid_mmr_json_data)
+
+        # Test case: patient_identifier_system present - accept
+        MandationTests.test_present_field_accepted(self, valid_mmr_json_data)
+
+        # Test case: patient_identifier_system absent - accept
+        MandationTests.test_missing_field_accepted(
+            self, valid_mmr_json_data, field_location
+        )
+
+    def test_model_post_perfomer_sds_job_role(self):
+        """
+        Test that the JSON data is accepted if it does not contain contained[?(@.resourceType==
+        'QuestionnaireResponse')].item[?(@.linkId=='PerformerSDSJobRole')].answer[0].valueString"
+        """
+        valid_json_data = deepcopy(self.json_data)
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='PerformerSDSJobRole')].answer[0].valueString"
+        )
+
+        MandationTests.test_missing_field_accepted(
+            self, valid_json_data, field_location
         )
 
     def test_model_post_recorded(self):
