@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from enum import Enum
+from functools import wraps
 from typing import Set
 
-from models.errors import Unauthorized
+from models.errors import UnauthorizedError
 
 PERMISSIONS_HEADER = "Permissions"
 AUTHENTICATION_HEADER = "AuthenticationType"
@@ -29,11 +30,18 @@ class Authorization:
     """ Authorize the call based on the endpoint and the authentication type.
     This class uses the passed headers from Apigee to decide the type of authentication (Application Restricted,
     NHS Login or CIS2). Then, based on the requested operation, it authorizes the call. Unauthorized call will raise
-    Unauthorized exception. It raises UnknownPermission if there is a parse error.
+    Unauthorized exception. It raises UnknownPermission if there is a parse error from Apigee app. That means raising
+    UnknownPermission is due to proxy bad configuration, and should result in 500. Any invalid value, either
+    insufficient permissions or bad string, will result in UnauthorizedError if it comes from user.
     """
 
     def authorize(self, operation: EndpointOperation, aws_event: dict):
-        self._app_restricted(operation, aws_event)
+        auth_type = self._parse_auth_type(aws_event["headers"])
+        if auth_type == Authorization._AuthType.APP_RESTRICTED:
+            self._app_restricted(operation, aws_event)
+        # TODO: add other authentication types: Cis2, NHSLogin
+        else:
+            UnauthorizedError()
 
     class _AuthType(str, Enum):
         APP_RESTRICTED = "ApplicationRestricted",
@@ -59,11 +67,11 @@ class Authorization:
         allowed = self._parse_permissions(aws_event["headers"])
         requested = self._app_restricted_map[operation]
         if not requested.issubset(allowed):
-            raise Unauthorized()
+            raise UnauthorizedError()
 
     @staticmethod
     def _parse_permissions(headers) -> Set[_Permission]:
-        """Given headers return a set of ImmunizationPermissions. Raises UnknownPermission"""
+        """Given headers return a set of Permissions. Raises UnknownPermission"""
 
         content = headers.get(PERMISSIONS_HEADER, "")
         # comma separate the Permissions header then trim and finally convert to lower case
@@ -77,3 +85,27 @@ class Authorization:
                 raise UnknownPermission()
 
         return permissions
+
+    @staticmethod
+    def _parse_auth_type(headers) -> _AuthType:
+        try:
+            auth_type = headers[AUTHENTICATION_HEADER]
+            return Authorization._AuthType(auth_type)
+        except ValueError:
+            # The value of authentication type comes from apigee regardless of auth type. That's why
+            #  we raise UnknownPermission in case of an error and not UnauthorizedError
+            raise UnknownPermission()
+
+
+def authorize(operation: EndpointOperation):
+    def decorator(func):
+        auth = Authorization()
+
+        @wraps(func)
+        def wrapper(controller_instance, a):
+            auth.authorize(operation, a)
+            return func(controller_instance, a)
+
+        return wrapper
+
+    return decorator

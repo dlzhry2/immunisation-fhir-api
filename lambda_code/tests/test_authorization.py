@@ -2,8 +2,8 @@ import unittest
 from typing import Set
 
 from authorization import Authorization, UnknownPermission, EndpointOperation as Operation, PERMISSIONS_HEADER, \
-    AUTHENTICATION_HEADER
-from models.errors import Unauthorized
+    AUTHENTICATION_HEADER, authorize
+from models.errors import UnauthorizedError
 
 Perm = Authorization._Permission
 AuthType = Authorization._AuthType
@@ -14,13 +14,58 @@ def _make_aws_event(auth_type: AuthType, permissions: Set[str]):
     return {
         "headers": {
             PERMISSIONS_HEADER: header,
-            AUTHENTICATION_HEADER: str(auth_type)
+            AUTHENTICATION_HEADER: auth_type.value
         }
     }
 
 
 def _full_access(exclude: Set[Perm] = None):
     return {*Perm}.difference(exclude)
+
+
+class TestAuthorizeDecorator(unittest.TestCase):
+    """This is a test for the decorator itself not the authorization logic.
+    This decorator uses Authorize class internally and it has its own tests"""
+
+    class StubController:
+        @authorize(Operation.READ)
+        def read_endpoint(self, aws_event: dict):
+            _ = aws_event
+            return True
+
+    def test_decorator(self):
+        controller = TestAuthorizeDecorator.StubController()
+
+        aws_event = _make_aws_event(AuthType.APP_RESTRICTED, {Perm.READ})
+        # When authorized
+        is_called = controller.read_endpoint(aws_event)
+        self.assertTrue(is_called)
+
+        aws_event = _make_aws_event(AuthType.APP_RESTRICTED, _full_access(exclude={Perm.READ}))
+        with self.assertRaises(UnauthorizedError):
+            # When unauthorized
+            is_called = controller.read_endpoint(aws_event)
+            self.assertFalse(is_called)
+
+
+class TestAuthorization(unittest.TestCase):
+    """This class is for testing Authorization class before identifying the authentication type.
+    Each AuthenticationType has its own test class"""
+
+    def setUp(self):
+        self.authorization = Authorization()
+
+    def test_unknown_authorization(self):
+        """it should raise UnknownPermission if auth type can't be determined"""
+        aws_event = {
+            "headers": {
+                PERMISSIONS_HEADER: str(Perm.READ),
+                AUTHENTICATION_HEADER: "unknown auth type"
+            }
+        }
+
+        with self.assertRaises(UnknownPermission):
+            self.authorization.authorize(Operation.READ, aws_event)
 
 
 class TestApplicationRestrictedAuthorization(unittest.TestCase):
@@ -39,7 +84,7 @@ class TestApplicationRestrictedAuthorization(unittest.TestCase):
             try:
                 # When
                 self.authorization.authorize(op, aws_event)
-            except (Unauthorized, UnknownPermission):
+            except (UnauthorizedError, UnknownPermission):
                 self.fail()
 
     def test_unknown_permission(self):
@@ -73,5 +118,5 @@ class TestApplicationRestrictedAuthorization(unittest.TestCase):
             # Unauthorized:
             unauthorized_perms = _full_access(exclude=required_perms)
             aws_event = _make_aws_event(AuthType.APP_RESTRICTED, unauthorized_perms)
-            with self.assertRaises(Unauthorized):
+            with self.assertRaises(UnauthorizedError):
                 self.authorization.authorize(op, aws_event)

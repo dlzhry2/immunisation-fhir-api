@@ -16,7 +16,7 @@ class Code(str, Enum):
 
 
 @dataclass
-class Unauthorized(RuntimeError):
+class UnauthorizedError(RuntimeError):
     @staticmethod
     def to_operation_outcome() -> dict:
         msg = f"Unauthorized request"
