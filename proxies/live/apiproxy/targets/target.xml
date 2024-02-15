@@ -9,8 +9,8 @@
         </Step>
     </Request>
   </PreFlow>
-    <!-- <FaultRules>
-      <FaultRule name="400_bad_request">
+    <FaultRules>
+      <!-- <FaultRule name="400_bad_request">
         <Condition>response.status.code == 400</Condition>
         <Step>
           <Name>AssignMessage.GenericError</Name>
