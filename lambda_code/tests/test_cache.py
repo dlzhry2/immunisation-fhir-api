@@ -1,10 +1,6 @@
 import json
-import os
-import sys
 import tempfile
 import unittest
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from cache import Cache
 
