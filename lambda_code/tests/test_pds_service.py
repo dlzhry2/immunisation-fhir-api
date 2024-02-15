@@ -1,7 +1,5 @@
 import base64
 import json
-import os
-import sys
 import time
 import unittest
 from unittest.mock import create_autospec, MagicMock, patch, ANY
@@ -9,7 +7,6 @@ from unittest.mock import create_autospec, MagicMock, patch, ANY
 import responses
 from responses import matchers
 
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 from pds_service import PdsService
 from pds_service import Authenticator
 from models.errors import UnhandledResponseError
