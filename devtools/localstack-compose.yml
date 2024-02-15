@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+    localstack:
+        container_name: "localstack_main"
+        image: localstack/localstack:latest
+        environment:
+            - SERVICES=s3,dynamodb,sts
+            #- LAMBDA_EXECUTOR=docker_reuse
+            #- DOCKER_HOST=unix:///var/run/docker.sock
+            - DEFAULT_REGION=eu-west-2
+            - DEBUG=1
+            #- DATA_DIR=/tmp/localstack/data
+            #- LAMBDA_DOCKER_NETWORK=localstack-tutorial
+        ports:
+            #- "53:53"
+            #- "53:53/udp"
+            - "443:443"
+            - "4566:4566"
+            - "4571:4571"
+            - "8080:8080"
+            - "8000:8000"
+        #volumes:
+            #- /var/run/docker.sock:/var/run/docker.sock
+            #- localstack_data:/tmp/localstack/data
+
+volumes:
+    localstack_data:
