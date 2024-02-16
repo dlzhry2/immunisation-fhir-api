@@ -10,7 +10,7 @@ from models.utils.post_validation_utils import (
     MandatoryError,
     NotApplicableError,
 )
-from mappings import Mandation, vaccine_type_applicable_validations
+from mappings import DiseaseTypes, Mandation, vaccine_type_applicable_validations
 
 check_mandation_requirements_met = PostValidation.check_mandation_requirements_met
 get_generic_field_value = PostValidation.get_generic_field_value
@@ -103,6 +103,107 @@ class FHIRImmunizationPostValidators:
             field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
             vaccine_type=cls.vaccine_type,
             mandation_key="patient_identifier_value",
+        )
+        return values
+
+    @classmethod
+    def validate_patient_name_given(cls, values: dict) -> dict:
+        "Validate that patient_name_given is present or absent, as required"
+        try:
+            contained_patient = [
+                x for x in values["contained"] if x.resource_type == "Patient"
+            ][0]
+
+            patient_name_given = contained_patient.name[0].given
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            patient_name_given = None
+
+        check_mandation_requirements_met(
+            field_value=patient_name_given,
+            field_location="contained[?(@.resourceType=='Patient')].name[0].given",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="patient_name_given",
+        )
+        return values
+
+    @classmethod
+    def validate_patient_name_family(cls, values: dict) -> dict:
+        "Validate that patient_name_family is present or absent, as required"
+        try:
+            contained_patient = [
+                x for x in values["contained"] if x.resource_type == "Patient"
+            ][0]
+
+            patient_name_family = contained_patient.name[0].family
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            patient_name_family = None
+
+        check_mandation_requirements_met(
+            field_value=patient_name_family,
+            field_location="contained[?(@.resourceType=='Patient')].name[0].family",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="patient_name_family",
+        )
+        return values
+
+    @classmethod
+    def validate_patient_birth_date(cls, values: dict) -> dict:
+        "Validate that patient_birth_date is present or absent, as required"
+        try:
+            patient_birth_date = [
+                x for x in values["contained"] if x.resource_type == "Patient"
+            ][0].birthDate
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            patient_birth_date = None
+
+        check_mandation_requirements_met(
+            field_value=patient_birth_date,
+            field_location="contained[?(@.resourceType=='Patient')].birthDate",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="patient_birth_date",
+        )
+        return values
+
+    @classmethod
+    def validate_patient_gender(cls, values: dict) -> dict:
+        "Validate that patient_gender is present or absent, as required"
+        try:
+            patient_gender = [
+                x for x in values["contained"] if x.resource_type == "Patient"
+            ][0].gender
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            patient_gender = None
+
+        check_mandation_requirements_met(
+            field_value=patient_gender,
+            field_location="contained[?(@.resourceType=='Patient')].gender",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="patient_gender",
+        )
+        return values
+
+    @classmethod
+    def validate_patient_address_postal_code(cls, values: dict) -> dict:
+        "Validate that patient_address_postal_code is present or absent, as required"
+        try:
+            contained_patient = [
+                x for x in values["contained"] if x.resource_type == "Patient"
+            ][0]
+
+            patient_address_postal_code = contained_patient.address[0].postalCode
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            patient_address_postal_code = None
+
+        check_mandation_requirements_met(
+            field_value=patient_address_postal_code,
+            field_location="contained[?(@.resourceType=='Patient')].address[0].postalCode",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="patient_address_postal_code",
         )
         return values
 
@@ -211,6 +312,155 @@ class FHIRImmunizationPostValidators:
         return values
 
     @classmethod
+    def validate_practitioner_name_given(cls, values: dict) -> dict:
+        "Validate that practitioner_name_given is present or absent, as required"
+        try:
+            contained_practitioner = [
+                x for x in values["contained"] if x.resource_type == "Practitioner"
+            ][0]
+
+            practitioner_name_given = contained_practitioner.name[0].given
+
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            practitioner_name_given = None
+
+        check_mandation_requirements_met(
+            field_value=practitioner_name_given,
+            field_location="contained[?(@.resourceType=='Practitioner')].name[0].given",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="practitioner_name_given",
+        )
+        return values
+
+    @classmethod
+    def validate_practitioner_name_family(cls, values: dict) -> dict:
+        "Validate that practitioner_name_family is present or absent, as required"
+        try:
+            contained_practitioner = [
+                x for x in values["contained"] if x.resource_type == "Practitioner"
+            ][0]
+
+            practitioner_name_family = contained_practitioner.name[0].family
+
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            practitioner_name_family = None
+
+        check_mandation_requirements_met(
+            field_value=practitioner_name_family,
+            field_location="contained[?(@.resourceType=='Practitioner')].name[0].family",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="practitioner_name_family",
+        )
+        return values
+
+    @classmethod
+    def validate_practitioner_identifier_value(cls, values: dict) -> dict:
+        "Validate that practitioner_identifier_value is present or absent, as required"
+        try:
+            contained_practitioner = [
+                x for x in values["contained"] if x.resource_type == "Practitioner"
+            ][0]
+
+            practitioner_identifier_value = contained_practitioner.identifier[0].value
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            practitioner_identifier_value = None
+
+        check_mandation_requirements_met(
+            field_value=practitioner_identifier_value,
+            field_location="contained[?(@.resourceType=='Practitioner')].identifier[0].value",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="practitioner_identifier_value",
+        )
+        return values
+
+    # TODO: Check with imms team r.e. Conditional mandatory logic
+    @classmethod
+    def validate_practitioner_identifier_system(cls, values: dict) -> dict:
+        "Validate that practitioner_identifier_system is present or absent, as required"
+        field_location = (
+            "contained[?(@.resourceType=='Practitioner')].identifier[0].system"
+        )
+
+        try:
+            contained_practitioner = [
+                x for x in values["contained"] if x.resource_type == "Practitioner"
+            ][0]
+
+            practitioner_identifier_system = contained_practitioner.identifier[0].system
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            practitioner_identifier_system = None
+
+        # Set up mandation defaults
+        mandation = vaccine_type_applicable_validations[
+            "practitioner_identifier_system"
+        ]
+        mandatory_error_message = None  # If mandatory_error_message is none, a standard error message will be used
+
+        # Handle conditional mandation logic
+        try:
+            practitioner_identifier_value = (
+                [x for x in values["contained"] if x.resource_type == "Practitioner"][0]
+                .identifier[0]
+                .value
+            )
+
+        except (KeyError, IndexError, AttributeError):
+            practitioner_identifier_value = None
+
+        # If practioner_identifier_value is present and vaccine type is COVID19 or FLU,
+        # then practitioner_identifier_system is mandatory
+        if practitioner_identifier_value and (
+            cls.vaccine_type == DiseaseTypes.covid_19
+            or cls.vaccine_type == DiseaseTypes.flu
+        ):
+            mandation = Mandation.mandatory
+            mandatory_error_message = (
+                f"{field_location} is mandatory when contained."
+                + "[?(@.resourceType=='Practitioner')].identifier[0].system is present"
+                + f" and vaccination type is {cls.vaccine_type}"
+            )
+        else:
+            mandation = Mandation.optional
+
+        check_mandation_requirements_met(
+            field_value=practitioner_identifier_system,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation=mandation,
+            mandatory_error_message=mandatory_error_message,
+        )
+
+        return values
+
+    @classmethod
+    def validate_performer_sds_job_role(cls, values: dict) -> dict:
+        "Validate that performer_sds_job_role is present or absent, as required"
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='PerformerSDSJobRole')].answer[0].valueString"
+        )
+
+        try:
+            performer_sds_job_role = (
+                get_generic_questionnaire_response_value_from_model(
+                    values, "PerformerSDSJobROle", "valueString"
+                )
+            )
+
+        except (KeyError, IndexError, AttributeError, MandatoryError):
+            performer_sds_job_role = None
+
+        check_mandation_requirements_met(
+            field_value=performer_sds_job_role,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="performer_sds_job_role",
+        )
+        return values
+
+    @classmethod
     def validate_recorded(cls, values: dict) -> dict:
         "Validate that recorded is present or absent, as required"
         field_value = get_generic_field_value(
@@ -253,22 +503,20 @@ class FHIRImmunizationPostValidators:
             "reportOrigin",
             attribute="text",
         )
+
+        # Handle conditional mandation logic
         mandation = vaccine_type_applicable_validations["report_origin_text"][
             cls.vaccine_type
         ]
-
         if not values["primarySource"]:
             mandation = Mandation.mandatory
 
-        if report_origin_text is None:
-            if mandation == Mandation.mandatory:
-                raise MandatoryError(
-                    f"{field_location} is mandatory when primarySource is false"
-                )
-
-        if mandation == Mandation.not_applicable:
-            raise NotApplicableError(
-                f"{field_location} must not be provided for this vaccine type"
-            )
+        check_mandation_requirements_met(
+            field_value=report_origin_text,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation=mandation,
+            mandatory_error_message=f"{field_location} is mandatory when primarySource is false",
+        )
 
         return values
