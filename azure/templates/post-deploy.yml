@@ -76,27 +76,21 @@ steps:
         apigee_env="$ENVIRONMENT"
 
         endpoint="https://${apigee_env}.api.service.nhs.uk/${base_path}/_status"
-        echo $endpoint
-        while [[ $counter -lt 10 ]]; do
+        while [[ $counter -lt 11 ]]; do
           response=$(curl -H "apikey: $(status-endpoint-api-key)" -s "$endpoint")
-          echo "whole Response: $response"
-          response_code=$(echo "$response" | jq -r '.checks.healthcheck.responseCode')
-          echo "Response code: $response_code"
-          response_body=$(echo "$response" | jq -r '.checks.healthcheck.outcome')
-          echo "Response body: $response_body"
+          response_code=$(jq -r '.checks.healthcheck.responseCode' <<< "$response")
+          response_body=$(jq -r '.checks.healthcheck.outcome' <<< "$response")
           if [ "$response_code" -eq 200 ] && [ "$response_body" == "OK" ]; then
               echo "Status test successful"
               break
           else
               echo "Waiting for $endpoint to return a 200 response with 'OK' body..."
-              echo "Came here in ELSEEEEEEE condition 1st"
               ((counter=counter+1)) # Increment counter by 1
-              echo "Came here in ELSEEEEEEE condition 2nd"
               echo "Attempt $counter"
-              sleep 80
+              sleep 100
           fi
         done
-        if [ $counter -eq 10 ]; then
+        if [ $counter -eq 11 ]; then
             echo "Status test failed: Maximum number of attempts reached"
             exit 1
         fi
