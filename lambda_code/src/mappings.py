@@ -58,6 +58,36 @@ vaccine_type_applicable_validations = {
         DiseaseTypes.hpv: Mandation.required,
         DiseaseTypes.mmr: Mandation.required,
     },
+    "patient_name_given": {
+        DiseaseTypes.covid_19: Mandation.mandatory,
+        DiseaseTypes.flu: Mandation.mandatory,
+        DiseaseTypes.hpv: Mandation.mandatory,
+        DiseaseTypes.mmr: Mandation.mandatory,
+    },
+    "patient_name_family": {
+        DiseaseTypes.covid_19: Mandation.mandatory,
+        DiseaseTypes.flu: Mandation.mandatory,
+        DiseaseTypes.hpv: Mandation.mandatory,
+        DiseaseTypes.mmr: Mandation.mandatory,
+    },
+    "patient_birth_date": {
+        DiseaseTypes.covid_19: Mandation.mandatory,
+        DiseaseTypes.flu: Mandation.mandatory,
+        DiseaseTypes.hpv: Mandation.mandatory,
+        DiseaseTypes.mmr: Mandation.mandatory,
+    },
+    "patient_gender": {
+        DiseaseTypes.covid_19: Mandation.mandatory,
+        DiseaseTypes.flu: Mandation.mandatory,
+        DiseaseTypes.hpv: Mandation.mandatory,
+        DiseaseTypes.mmr: Mandation.mandatory,
+    },
+    "patient_address_postal_code": {
+        DiseaseTypes.covid_19: Mandation.mandatory,
+        DiseaseTypes.flu: Mandation.mandatory,
+        DiseaseTypes.hpv: Mandation.mandatory,
+        DiseaseTypes.mmr: Mandation.mandatory,
+    },
     "occurrence_date_time": {
         DiseaseTypes.covid_19: Mandation.mandatory,
         DiseaseTypes.flu: Mandation.mandatory,
@@ -87,6 +117,36 @@ vaccine_type_applicable_validations = {
         DiseaseTypes.flu: Mandation.mandatory,
         DiseaseTypes.hpv: Mandation.mandatory,
         DiseaseTypes.mmr: Mandation.mandatory,
+    },
+    "practitioner_name_given": {
+        DiseaseTypes.covid_19: Mandation.optional,
+        DiseaseTypes.flu: Mandation.optional,
+        DiseaseTypes.hpv: Mandation.optional,
+        DiseaseTypes.mmr: Mandation.optional,
+    },
+    "practitioner_name_family": {
+        DiseaseTypes.covid_19: Mandation.optional,
+        DiseaseTypes.flu: Mandation.optional,
+        DiseaseTypes.hpv: Mandation.optional,
+        DiseaseTypes.mmr: Mandation.optional,
+    },
+    "practitioner_identifier_value": {
+        DiseaseTypes.covid_19: Mandation.required,
+        DiseaseTypes.flu: Mandation.required,
+        DiseaseTypes.hpv: Mandation.optional,
+        DiseaseTypes.mmr: Mandation.optional,
+    },
+    "practitioner_identifier_system": {
+        DiseaseTypes.covid_19: Mandation.conditional_mandatory,
+        DiseaseTypes.flu: Mandation.conditional_mandatory,
+        DiseaseTypes.hpv: Mandation.optional,
+        DiseaseTypes.mmr: Mandation.optional,
+    },
+    "performer_sds_job_role": {
+        DiseaseTypes.covid_19: Mandation.optional,
+        DiseaseTypes.flu: Mandation.optional,
+        DiseaseTypes.hpv: Mandation.optional,
+        DiseaseTypes.mmr: Mandation.optional,
     },
     "recorded": {
         DiseaseTypes.covid_19: Mandation.mandatory,
