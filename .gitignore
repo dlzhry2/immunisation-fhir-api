@@ -27,3 +27,5 @@ openapi.json
 
 .vscode/**/*
 !.vscode/settings.json.default
+
+devtools/volume/
