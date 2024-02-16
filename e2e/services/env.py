@@ -11,7 +11,7 @@ def apigee_access_token(username: str = None):
         env["SSO_LOGIN_URL"] = env.get("SSO_LOGIN_URL", "https://login.apigee.com")
         try:
             res = subprocess.run(["get_token", "-u", username], env=env, stdout=subprocess.PIPE, text=True)
-            return res.stdout
+            return res.stdout.strip()
         except FileNotFoundError:
             logging.error("Make sure you install apigee's get_token utility and it's in your PATH. "
                           "Follow: https://docs.apigee.com/api-platform/system-administration/using-gettoken")
