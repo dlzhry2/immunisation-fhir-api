@@ -10,12 +10,6 @@
     </Request>
   </PreFlow>
     <FaultRules>
-      <!-- <FaultRule name="400_bad_request">
-        <Condition>response.status.code == 400</Condition>
-        <Step>
-          <Name>AssignMessage.GenericError</Name>
-        </Step>
-    </FaultRule> -->
       <FaultRule name="401_invalid_token">
           <Condition>oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.fault.cause == "Invalid access token"</Condition>
           <Step>
@@ -27,12 +21,6 @@
           <Step>
               <Name>AssignMessage.PermissionsError</Name>
           </Step>
-      </FaultRule>
-      <FaultRule name="500_generic_response">
-        <Condition>response.status.code == 500</Condition>
-        <Step>
-          <Name>AssignMessage.GenericError</Name>
-        </Step>
       </FaultRule>
     </FaultRules>
   <HTTPTargetConnection>
@@ -49,4 +37,16 @@
       <Property name="retain.queryparams">apikey</Property>
     </Properties>
   </HTTPTargetConnection>
+    <PostFlow>
+      <Response>
+          <FaultRules>
+              <FaultRule name="TransformToGenericError">
+                  <Condition>response.status.code == 500</Condition>
+                  <Step>
+                      <Name>AssignMessage.GenericError</Name>
+                  </Step>
+              </FaultRule>
+            </FaultRules>
+        </Response>
+    </PostFlow>
 </TargetEndpoint>
