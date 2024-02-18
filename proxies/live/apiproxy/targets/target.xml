@@ -28,6 +28,12 @@
               <Name>AssignMessage.PermissionsError</Name>
           </Step>
       </FaultRule>
+      <FaultRule name="500_generic_response">
+        <Condition>response.status.code == 500</Condition>
+        <Step>
+          <Name>AssignMessage.GenericError</Name>
+        </Step>
+      </FaultRule>
     </FaultRules>
   <HTTPTargetConnection>
     <URL>{{ DOMAIN_ENDPOINT }}</URL>

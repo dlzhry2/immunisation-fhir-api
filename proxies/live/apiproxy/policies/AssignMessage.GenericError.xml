@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AssignMessage async="false" continueOnError="false" enabled="true" name="AssignMessage.GenericError">
-  <StatusCode>400</StatusCode>
+  <StatusCode>500</StatusCode>
   <Set>
     <Payload contentType="application/json">
     {
       "resourceType": "OperationOutcome",
-      "id": "a5abca2a-4eda-41da-b2cc-95d48c6b791d",
+      "id": "{Javascript_uuid}",
       "meta": {
         "profile": [
           "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
@@ -14,21 +14,24 @@
       "issue": [
         {
           "severity": "error",
-          "code": "expired",
+          "code": "internal_server_error",
           "details": {
             "coding": [
               {
                 "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                "code": "BAD_REQUEST"
+                "code": "INTERNAL_SERVER_ERROR"
               }
             ]
           },
-          "diagnostics": "The resource could not be parsed or failed basic FHIR validation rules."
+          "diagnostics": "Unexpected internal server error."
         }
       ]
     }
     </Payload>
   </Set>
+  <Javascript name="Javascript_uuid">
+    <ResourceURL>jsc://uuid.js</ResourceURL>
+  </Javascript>
   <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
   <AssignTo createNew="false" transport="http" type="request"/>
 </AssignMessage>
