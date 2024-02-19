@@ -10,8 +10,13 @@ from fhir.resources.R4B.bundle import Bundle
 from fhir.resources.R4B.immunization import Immunization
 from fhir_controller import FhirController
 from fhir_service import FhirService, UpdateOutcome
-from models.errors import ResourceNotFoundError, UnhandledResponseError, InvalidPatientId, CoarseValidationError
-from tests.immunization_utils import create_an_immunization
+from models.errors import (
+    ResourceNotFoundError,
+    UnhandledResponseError,
+    InvalidPatientId,
+    CoarseValidationError,
+)
+from .immunization_utils import create_an_immunization
 
 
 class TestFhirController(unittest.TestCase):
@@ -27,9 +32,12 @@ class TestFhirController(unittest.TestCase):
         headers = res["headers"]
 
         self.assertEqual(res["statusCode"], 42)
-        self.assertDictEqual(headers, {
-            "Content-Type": "application/fhir+json",
-        })
+        self.assertDictEqual(
+            headers,
+            {
+                "Content-Type": "application/fhir+json",
+            },
+        )
         self.assertDictEqual(json.loads(res["body"]), body)
 
     def test_no_body_no_header(self):
@@ -111,11 +119,11 @@ class TestCreateImmunization(unittest.TestCase):
         self.service.create_immunization.assert_called_once_with(imms_obj)
         self.assertEqual(response["statusCode"], 201)
         self.assertTrue("body" not in response)
-        self.assertTrue(response["headers"]["Location"].endswith(f"Immunization/{imms_id}"))
+        self.assertTrue( response["headers"]["Location"].endswith(f"Immunization/{imms_id}"))
 
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
-        bad_json = "{foo: \"bar\"}"
+        bad_json = '{foo: "bar"}'
         aws_event = {"body": bad_json}
 
         response = self.controller.create_immunization(aws_event)

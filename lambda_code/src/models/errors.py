@@ -42,6 +42,9 @@ class UnhandledResponseError(RuntimeError):
     response: dict
     message: str
 
+    def __str__(self):
+        return f"{self.message}\n{self.response}"
+
     def to_operation_outcome(self) -> dict:
         msg = f"{self.message}\n{self.response}"
         return create_operation_outcome(

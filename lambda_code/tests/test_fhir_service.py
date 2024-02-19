@@ -8,12 +8,21 @@ from fhir.resources.R4B.bundle import BundleEntry
 from fhir.resources.R4B.immunization import Immunization
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome, get_service_url
-from models.errors import InvalidPatientId, CoarseValidationError, ResourceNotFoundError, InconsistentIdError
+from models.errors import (
+    InvalidPatientId,
+    CoarseValidationError,
+    ResourceNotFoundError,
+    InconsistentIdError,
+)
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
-from tests.immunization_utils import create_an_immunization, create_an_immunization_dict, valid_nhs_number
+from .immunization_utils import (
+    create_an_immunization,
+    create_an_immunization_dict,
+    valid_nhs_number,
+)
 
 
 class TestServiceUrl(unittest.TestCase):
@@ -75,11 +84,17 @@ class TestGetImmunization(unittest.TestCase):
     def test_get_immunization_by_id_patient_restricted(self):
         """it should return a filtered Immunization when patient is restricted"""
         imms_id = "restricted_id"
-        with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/sample_immunization_event.json",
-                  'r') as immunization_data_file:
+        with open(
+            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/sample_immunization_event.json",
+            "r",
+            encoding="utf-8",
+        ) as immunization_data_file:
             immunization_data = json.load(immunization_data_file)
-        with open(f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json",
-                  'r') as filtered_immunization_data_file:
+        with open(
+            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json",
+            "r",
+            encoding="utf-8",
+        ) as filtered_immunization_data_file:
             filtered_immunization = json.load(filtered_immunization_data_file)
         self.imms_repo.get_immunization_by_id.return_value = immunization_data
         patient_data = {"meta": {"security": [{"code": "R"}]}}
@@ -218,7 +233,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
 
         req_imms = create_an_immunization_dict("we-will-remove-this-id")
-        del req_imms['id']
+        del req_imms["id"]
 
         # When
         self.fhir_service.update_immunization(req_imms_id, req_imms)

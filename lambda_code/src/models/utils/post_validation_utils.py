@@ -1,9 +1,16 @@
 import re
 from datetime import datetime
-from typing import Union
+from typing import Union, Literal, Optional, Any
 from decimal import Decimal
-from mappings import Mandation, vaccination_procedure_snomed_codes
-from .generic_utils import get_deep_attr
+from mappings import (
+    Mandation,
+    vaccination_procedure_snomed_codes,
+    vaccine_type_applicable_validations,
+)
+from .generic_utils import (
+    get_deep_attr,
+    get_generic_questionnaire_response_value_from_model,
+)
 
 
 class MandatoryError(Exception):
@@ -32,58 +39,72 @@ class PostValidation:
         return vaccine_type
 
     @staticmethod
-    def check_attribute_exists(
-        values, key, attribute, mandation, field_location, index=None
+    def check_mandation_requirements_met(
+        field_value,
+        field_location,
+        vaccine_type,
+        mandation: str = None,
+        mandation_key: str = None,
+        mandatory_error_message: str = None,
+        not_applicable_error_message: str = None,
     ):
-        try:
-            obj = values[key][index] if index is not None else values[key]
+        """
+        Check that the field_value meets the mandation requirements (if field_value can't be found
+        then the argument should be given as None).
 
-            if attribute is not None:
-                if not get_deep_attr(obj, attribute):
-                    raise AttributeError()
-            else:
-                field_value = obj
-                if field_value is None:
-                    if mandation == Mandation.mandatory:
-                        raise MandatoryError()
+        If mandation is not yet known, pass the mandation_key instead to allow a lookup.
+        Generic mandatory and not-applicable error messages will be used if the appropriate optional
+        arguments are not given.
+        """
+        if not mandation:
+            mandation = vaccine_type_applicable_validations[mandation_key][vaccine_type]
 
-            if mandation == Mandation.not_applicable:
-                raise NotApplicableError(
-                    f"{field_location} must not be provided for this vaccine type"
-                )
+        if not mandatory_error_message:
+            mandatory_error_message = f"{field_location} is a mandatory field"
 
-        except (KeyError, AttributeError, MandatoryError) as error:
+        if not not_applicable_error_message:
+            not_applicable_error_message = (
+                f"{field_location} must not be provided for this vaccine type"
+            )
+
+        if field_value is None:
             if mandation == Mandation.mandatory:
-                raise MandatoryError(
-                    f"{field_location} is a mandatory field"
-                ) from error
+                raise MandatoryError(mandatory_error_message)
+
+        if mandation == Mandation.not_applicable:
+            raise NotApplicableError(not_applicable_error_message)
 
     @staticmethod
-    def check_questionnaire_link_id_exists(
-        values, link_id, field_type, mandation, field_location
-    ):
+    def get_generic_field_value(values, key, index=None, attribute=None):
+        """
+        Find the value of a field, using the key, index (if applicable) and attribute
+        (if applicable) in the path to obtain it from values.
+
+        NOTE: This function can only be used where the field path doesn't need to query the value
+        of another field.
+        """
         try:
-            questionnaire_response = [
-                x
-                for x in values["contained"]
-                if x.resource_type == "QuestionnaireResponse"
-            ][0]
+            obj = values[key][index] if index is not None else values[key]
+            field_value = obj if attribute is None else get_deep_attr(obj, attribute)
+        except (KeyError, IndexError, AttributeError):
+            field_value = None
 
-            item = [x for x in questionnaire_response.item if x.linkId == link_id][0]
+        return field_value
 
-            field_value = get_deep_attr(item.answer[0].valueCoding, field_type)
+    @staticmethod
+    def get_generic_questionnaire_response_value(
+        values: dict,
+        link_id: str,
+        answer_type: Literal[
+            "valueBoolean", "valueString", "valueDateTime", "valueCoding"
+        ],
+        field_type: Optional[Literal["code", "display", "system"]] = None,
+    ) -> Any:
+        try:
+            field_value = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError):
+            field_value = None
 
-            if field_value is None:
-                if mandation == Mandation.mandatory:
-                    raise MandatoryError()
-
-            if mandation == Mandation.not_applicable:
-                raise NotApplicableError(
-                    f"{field_location} must not be provided for this vaccine type"
-                )
-
-        except (KeyError, AttributeError, MandatoryError) as error:
-            if mandation == Mandation.mandatory:
-                raise MandatoryError(
-                    f"{field_location} is a mandatory field"
-                ) from error
+        return field_value

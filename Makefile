@@ -1,4 +1,4 @@
-SHELL=/bin/bash -euo pipefail
+SHELL=/usr/bin/env bash -euo pipefail
 
 #Installs dependencies using poetry.
 install-python:
@@ -81,3 +81,6 @@ smoketest-prod:
 test-prod:
 	$(PROD_CMD) \
 	--junitxml=test-report.xml \
+
+setup-python-envs:
+	scripts/setup-python-envs.sh

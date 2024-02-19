@@ -2,39 +2,44 @@
   "resourceType": "Immunization",
   "contained": [
     {
+      "resourceType": "Practitioner",
+      "id": "Pract1"
+    },
+    {
+      "resourceType": "Patient",
+      "id": "Pat1",
+      "identifier": [
+        {
+          "extension": [
+            {
+              "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
+                    "code": "01",
+                    "display": "Number present and verified"
+                  }
+                ]
+              }
+            }
+          ],
+          "system": "https://fhir.nhs.uk/Id/nhs-number",
+          "value": "9000000009"
+        }
+      ]
+    },
+    {
       "resourceType": "QuestionnaireResponse",
-      "questionnaire": "Questionnaire/1",
+      "id": "QR1",
       "status": "completed",
       "item": [
         {
-          "linkId": "SiteCode",
+          "linkId": "Immunisation",
           "answer": [
             {
-              "valueCoding": {
-                "system": "snomed",
-                "code": "N2N9I"
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "NhsNumberStatus",
-          "answer": [
-            {
-              "valueCoding": {
-                "code": "snomed",
-                "display": "test description"
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "LocalPatient",
-          "answer": [
-            {
-              "valueCoding": {
-                "system": "https://supplierABC/identifiers/patient",
-                "code": "ACME-patient123456"
+              "valueReference": {
+                "reference": "#"
               }
             }
           ]
@@ -44,58 +49,9 @@
           "answer": [
             {
               "valueCoding": {
-                "code": "1127531000000102",
-                "display": "SNOMED-CT Term description Community health services (qualifier value)"
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "IpAddress",
-          "answer": [
-            {
-              "valueCoding": {
-                "code": "1.0.0.0"
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "UserId",
-          "answer": [
-            {
-              "valueCoding": {
-                "code": "test123"
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "UserName",
-          "answer": [
-            {
-              "valueCoding": {
-                "code": "test"
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "UserEmail",
-          "answer": [
-            {
-              "valueCoding": {
-                "code": "test@gmail.com"
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "SubmittedTimeStamp",
-          "answer": [
-            {
-              "valueCoding": {
-                "code": "2020-12-14T10:08:15+00:00"
+                "code": "413294000",
+                "system": "http://snomed.info/sct",
+                "display": "Community health services (qualifier value)"
               }
             }
           ]
@@ -104,10 +60,68 @@
           "linkId": "ReduceValidation",
           "answer": [
             {
-              "valueCoding": {
-                "code": "True",
-                "display": "test"
+              "valueBoolean": false
+            }
+          ]
+        },
+        {
+          "linkId": "LocalPatient",
+          "answer": [
+            {
+              "valueReference": {
+                "identifier": {
+                  "system": "https://ACME/identifiers/patient",
+                  "value": "ACME-patient123456"
+                }
               }
+            }
+          ]
+        },
+        {
+          "linkId": "IpAddress",
+          "answer": [
+            {
+              "valueString": "IP_ADDRESS"
+            }
+          ]
+        },
+        {
+          "linkId": "UserId",
+          "answer": [
+            {
+              "valueString": "USER_ID"
+            }
+          ]
+        },
+        {
+          "linkId": "UserName",
+          "answer": [
+            {
+              "valueString": "USER_NAME"
+            }
+          ]
+        },
+        {
+          "linkId": "SubmittedTimeStamp",
+          "answer": [
+            {
+              "valueDateTime": "2021-02-07T13:44:07+00:00"
+            }
+          ]
+        },
+        {
+          "linkId": "UserEmail",
+          "answer": [
+            {
+              "valueString": "USER_EMAIL"
+            }
+          ]
+        },
+        {
+          "linkId": "PerformerSDSJobRole",
+          "answer": [
+            {
+              "valueString": "Specialist Nurse Practitioner"
             }
           ]
         }
@@ -122,19 +136,7 @@
           {
             "system": "http://snomed.info/sct",
             "code": "1324681000000101",
-            "display": "snomed"
-          }
-        ]
-      }
-    },
-    {
-      "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
-      "valueCodeableConcept": {
-        "coding": [
-          {
-            "system": "http://snomed.info/sct",
-            "code": "snomed",
-            "display": "snomed"
+            "display": "Administration of first dose of severe acute respiratory syndrome coronavirus 2 vaccine (procedure)"
           }
         ]
       }
@@ -142,45 +144,37 @@
   ],
   "identifier": [
     {
-      "system": "https://supplierABC/ODSCode",
-      "value": "e045626e-4dc5-4df3-bc35-da25263f901e"
+      "system": "https://supplierABC/identifiers/vacc",
+      "value": "ACME-vacc123456"
     }
   ],
   "status": "completed",
-  "statusReason": {
-    "coding": [
-      {
-        "system": "http://snomed.info/sct",
-        "code": "snomed",
-        "display": "snomed"
-      }
-    ]
-  },
   "vaccineCode": {
     "coding": [
       {
         "system": "http://snomed.info/sct",
-        "code": "snomed",
-        "display": "snomed"
+        "code": "39114911000001105",
+        "display": "COVID-19 Vaccine Vaxzevria (ChAdOx1 S [recombinant]) not less than 2.5x100,000,000 infectious units/0.5ml dose suspension for injection multidose vials (AstraZeneca UK Ltd) (product)"
       }
     ]
   },
-  "lotNumber": "AAJN11K",
-  "expirationDate": "2020-05-06",
   "patient": {
-    "identifier": {
-      "system": "https//fhir.nhs.uk/Id/nhs-number",
-      "value": "1234567891"
-    }
+    "reference": "#Pat1"
   },
-  "occurrenceDateTime": "2020-12-14T10:08:15+00:00",
+  "occurrenceDateTime": "2021-02-07T13:28:17.271+00:00",
+  "recorded": "2021-02-07",
   "primarySource": true,
+  "manufacturer": {
+    "display": "AstraZeneca Ltd"
+  },
+  "lotNumber": "4120Z001",
+  "expirationDate": "2021-07-02",
   "site": {
     "coding": [
       {
         "system": "http://snomed.info/sct",
-        "code": "LA",
-        "display": "left arm"
+        "code": "368208006",
+        "display": "Left upper arm structure (body structure)"
       }
     ]
   },
@@ -188,80 +182,47 @@
     "coding": [
       {
         "system": "http://snomed.info/sct",
-        "code": "IM",
-        "display": "injection, intramuscular"
+        "code": "78421000",
+        "display": "Intramuscular route (qualifier value)"
       }
     ]
   },
   "doseQuantity": {
-    "value": 5,
-    "unit": "mg",
+    "value": 0.5,
+    "unit": "milliliter",
     "system": "http://unitsofmeasure.org",
-    "code": "snomed"
-  },
-  "protocolApplied": [
-    {
-      "targetDisease": [
-        {
-          "coding": [
-            {
-              "code": "840539006"
-            }
-          ]
-        },
-        {
-          "coding": [
-            {
-              "code": "6142004"
-            }
-          ]
-        }
-      ],
-      "doseNumberPositiveInt": 5
-    }
-  ],
-  "reasonCode": [
-    {
-      "coding": [
-        {
-          "code": "snomed1",
-          "display": "test1"
-        }
-      ]
-    },
-    {
-      "coding": [
-        {
-          "code": "snomed2",
-          "display": "test2"
-        }
-      ]
-    }
-  ],
-  "recorded": "2010-05-06",
-  "manufacturer": {
-    "display": "test"
+    "code": "ml"
   },
   "performer": [
     {
       "actor": {
-        "reference": "Practitioner/1",
-        "type": "Practitioner",
-        "identifier": {
-          "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-          "value": "N2N9I"
-        }
+        "reference": "#Pract1"
       }
     },
     {
       "actor": {
-        "reference": "Organization/1",
         "type": "Organization",
         "identifier": {
           "system": "https://fhir.nhs.uk/Id/ods-organization-code",
           "value": "N2N9I"
         }
       }
+    }
+  ],
+  "reasonCode": [
+    {
+      "coding": [
+        {
+          "code": "443684005",
+          "system": "http://snomed.info/sct",
+          "display": "Disease outbreak (event)"
+        }
+      ]
+    }
+  ],
+  "protocolApplied": [
+    {
+      "doseNumberPositiveInt": 1
     }
   ]
 }
