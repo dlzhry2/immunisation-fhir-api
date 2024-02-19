@@ -73,9 +73,8 @@ steps:
       if ! [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
         counter=0
         base_path="$SERVICE_BASE_PATH"
-        apigee_env="$ENVIRONMENT"
-
-        endpoint="https://${apigee_env}.api.service.nhs.uk/${base_path}/_status"
+        
+        endpoint="https://${APIGEE_ENVIRONMENT}.api.service.nhs.uk/${base_path}/_status"
         while [[ $counter -lt 11 ]]; do
           response=$(curl -H "apikey: $(status-endpoint-api-key)" -s "$endpoint")
           response_code=$(jq -r '.checks.healthcheck.responseCode' <<< "$response")
@@ -87,7 +86,7 @@ steps:
               echo "Waiting for $endpoint to return a 200 response with 'OK' body..."
               ((counter=counter+1)) # Increment counter by 1
               echo "Attempt $counter"
-              sleep 100
+              sleep 30
           fi
         done
         if [ $counter -eq 11 ]; then
