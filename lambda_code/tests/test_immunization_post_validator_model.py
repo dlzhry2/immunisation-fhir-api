@@ -481,8 +481,8 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             valid_json_data=deepcopy(self.not_done_json_data),
             field_location=field_location,
             invalid_value="39114911000001105",
-            expected_error_message=f"{field_location} must be 'NAVU', 'UNC', 'UNK' or 'NA' "
-            + "when status is 'not-done'",
+            expected_error_message=f"{field_location} must be one of the following:"
+            + " NAVU, UNC, UNK, NA when status is 'not-done'",
             expected_error_type="value_error",
         )
 

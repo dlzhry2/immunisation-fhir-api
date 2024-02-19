@@ -1,5 +1,6 @@
 "FHIR Immunization Post Validators"
 
+from models.constants import Constants
 from models.utils.generic_utils import (
     get_generic_questionnaire_response_value_from_model,
     get_generic_extension_value_from_model,
@@ -680,14 +681,12 @@ class FHIRImmunizationPostValidators:
             mandation_key="vaccine_code_coding_code",
         )
 
-        if cls.status == "not-done" and vaccine_code_coding_code not in (
-            "NAVU",
-            "UNC",
-            "UNK",
-            "NA",
+        if (
+            cls.status == "not-done"
+            and vaccine_code_coding_code not in Constants.NOT_DONE_VACCINE_CODES
         ):
             raise ValueError(
-                f"{field_location} must be 'NAVU', 'UNC', 'UNK' or 'NA' when status is 'not-done'"
+                f"{field_location} must be one of the following: {str(', '.join(Constants.NOT_DONE_VACCINE_CODES))} when status is 'not-done'"
             )
 
         return values
