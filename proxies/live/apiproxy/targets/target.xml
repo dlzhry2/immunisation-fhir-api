@@ -8,7 +8,6 @@
             <Name>FlowCallout.ApplyRateLimiting</Name>
         </Step>
     </Request>
-  </PreFlow>
     <FaultRules>
       <FaultRule name="401_invalid_token">
           <Condition>oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.fault.cause == "Invalid access token"</Condition>
@@ -23,6 +22,19 @@
           </Step>
       </FaultRule>
     </FaultRules>
+  </PreFlow>
+  <PostFlow>
+      <Response>
+          <FaultRules>
+              <FaultRule name="TransformToGenericError">
+                  <Condition>response.status.code == 500</Condition>
+                  <Step>
+                      <Name>AssignMessage.GenericError</Name>
+                  </Step>
+              </FaultRule>
+            </FaultRules>
+        </Response>
+    </PostFlow>
   <HTTPTargetConnection>
     <URL>{{ DOMAIN_ENDPOINT }}</URL>
     <SSLInfo>
@@ -37,16 +49,4 @@
       <Property name="retain.queryparams">apikey</Property>
     </Properties>
   </HTTPTargetConnection>
-    <PostFlow>
-      <Response>
-          <FaultRules>
-              <FaultRule name="TransformToGenericError">
-                  <Condition>response.status.code == 500</Condition>
-                  <Step>
-                      <Name>AssignMessage.GenericError</Name>
-                  </Step>
-              </FaultRule>
-            </FaultRules>
-        </Response>
-    </PostFlow>
 </TargetEndpoint>
