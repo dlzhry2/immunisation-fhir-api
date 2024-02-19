@@ -6,4 +6,3 @@ NOTE: if you get errors just try to run the command that this module is running 
 class AwsService:
     def __init__(self, public_bucket: str):
         self.pub_bucket = public_bucket
-

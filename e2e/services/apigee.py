@@ -97,7 +97,7 @@ class ApigeeService:
         return self._delete(resource)
 
     def create_product(self, product: ApigeeProduct) -> dict:
-        resource = f"apiproducts"
+        resource = "apiproducts"
         return self._create(resource, product.dict())
 
     def delete_product(self, name: str):

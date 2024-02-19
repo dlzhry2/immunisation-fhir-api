@@ -57,8 +57,8 @@ def get_private_key(file_path: str = None) -> str:
         with open(file_path, "r") as f:
             return f.read()
     else:
-        logging.error(f'APP_RESTRICTED_PRIVATE_KEY_PATH is required. It should be the absolute path to your '
-                      f'application-restricted private-key')
+        logging.error('APP_RESTRICTED_PRIVATE_KEY_PATH is required. It should be the absolute path to your '
+                      'application-restricted private-key')
 
 
 def get_auth_url(apigee_env: ApigeeEnv = None) -> str:
