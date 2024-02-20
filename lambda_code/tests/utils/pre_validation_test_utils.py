@@ -1,282 +1,14 @@
-"Utils for tests"
-
+"""Pre-validation test utilities"""
 import unittest
 from copy import deepcopy
-from typing import Literal, Any
 from decimal import Decimal
-from pydantic import ValidationError
 from jsonpath_ng.ext import parse
-from models.utils.post_validation_utils import MandatoryError, NotApplicableError
-
-
-# Lists of data types for 'invalid data type' testing
-integers = [-1, 0, 1]
-floats = [-1.3, 0.0, 1.0, 2.5]
-decimals = [Decimal("-1"), Decimal("0"), Decimal("1"), Decimal("-1.3"), Decimal("2.5")]
-booleans = [True, False]
-dicts = [{}, {"InvalidKey": "InvalidValue"}]
-lists = [[], ["Invalid"]]
-strings = ["", "invalid"]
-
-
-def generate_field_location_for_questionnnaire_response(
-    link_id: str, field_type: Literal["code", "display", "system"]
-) -> str:
-    """Generate the field location string for questionnaire response items"""
-    return (
-        "contained[?(@.resourceType=='QuestionnaireResponse')]"
-        + f".item[?(@.linkId=='{link_id}')].answer[0].valueCoding.{field_type}"
-    )
-
-
-def generate_field_location_for_extension(
-    url: str, field_type: Literal["code", "display"]
-) -> str:
-    """Generate the field location string for extension items"""
-    return f"extension[?(@.url=='{url}')].valueCodeableConcept.coding[0].{field_type}"
-
-
-def test_valid_values_accepted(
-    test_instance: unittest.TestCase,
-    valid_json_data: dict,
-    field_location: str,
-    valid_values_to_test: list,
-):
-    """Test that valid json data is accepted by the model"""
-    for valid_item in valid_values_to_test:
-        # Update the value at the relevant field location to the valid value to be tested
-        valid_json_data = parse(field_location).update(valid_json_data, valid_item)
-        # Test that the valid data is accepted by the model
-        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
-
-
-def test_invalid_values_rejected(
-    test_instance: unittest.TestCase,
-    valid_json_data: dict,
-    field_location: str,
-    invalid_value: Any,
-    expected_error_message: str,
-    expected_error_type: Literal[
-        "type_error", "value_error", "type_error.none.not_allowed"
-    ],
-):
-    """
-    Test that invalid json data is rejected by the model, with an appropriate validation error
-
-    NOTE:
-    TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
-    this happens, the error message is suffixed with the type of error e.g. type_error or
-    value_error. This is why the test checks for the type of error in the error message.
-    """
-    # Create invalid json data by amending the value of the relevant field
-    invalid_json_data = parse(field_location).update(valid_json_data, invalid_value)
-
-    # Test that correct error message is raised
-    with test_instance.assertRaises(ValidationError) as error:
-        test_instance.validator.validate(invalid_json_data)
-
-    test_instance.assertTrue(
-        (expected_error_message + f" (type={expected_error_type})")
-        in str(error.exception)
-    )
-
-
-class MandationTests:
-    @staticmethod
-    def test_present_mandatory_or_required_or_optional_field_accepted(
-        test_instance: unittest.TestCase,
-        valid_json_data: dict,
-    ):
-        """
-        Test that JSON data is accepted when a mandatory, required or optional field is present
-        """
-        # Test that the valid data is accepted by the model
-        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
-
-    @staticmethod
-    def test_missing_required_or_optional_or_not_applicable_field_accepted(
-        test_instance: unittest.TestCase,
-        valid_json_data: dict,
-        field_location: str,
-    ):
-        """
-        Test that JSON data which is missing a required,optional or not applicable field is accepted
-        """
-        # Remove the relevant field
-        valid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
-        # Test that the valid data is accepted by the model
-        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
-
-    @staticmethod
-    def test_missing_mandatory_field_rejected(
-        test_instance: unittest.TestCase,
-        valid_json_data: dict,
-        field_location: str,
-        expected_error_message: str,
-        expected_error_type: str,
-        is_mandatory_fhir: bool = False,
-    ):
-        """
-        Test that json data which is missing a mandatory field is rejected by the model, with
-        an appropriate validation error. Note that missing mandatory FHIR fields are rejected
-        by the FHIR validator, whereas missing mandatory NHS fields are rejected by the custom
-        validator.
-
-        NOTE:
-        TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
-        this happens, the error message is suffixed with the type of error e.g. type_error or
-        value_error. This is why the test checks for the type of error in the error message.
-        """
-        # Create invalid json data by removing the relevant field
-        invalid_json_data = parse(field_location).filter(
-            lambda d: True, valid_json_data
-        )
-
-        if is_mandatory_fhir:
-            # Test that correct error message is raised
-            with test_instance.assertRaises(ValidationError) as error:
-                test_instance.validator.validate(invalid_json_data)
-            test_instance.assertTrue(
-                (expected_error_message + f" (type={expected_error_type})")
-                in str(error.exception)
-            )
-
-        else:
-            # Test that correct error message is raised
-            with test_instance.assertRaises(MandatoryError) as error:
-                test_instance.validator.validate(invalid_json_data)
-            test_instance.assertEqual(expected_error_message, str(error.exception))
-
-    @staticmethod
-    def test_present_not_applicable_field_rejected(
-        test_instance: unittest.TestCase,
-        invalid_json_data: dict,
-        field_location: str,
-    ):
-        """
-        TODO: Test that JSON data containing a not applicable field is rejected.
-
-        NOTE:
-        TypeErrors and ValueErrors are caught and converted to ValidationErrors by pydantic. When
-        this happens, the error message is suffixed with the type of error e.g. type_error or
-        value_error. This is why the test checks for the type of error in the error message.
-        """
-
-        # Test that correct error message is raised
-        with test_instance.assertRaises(NotApplicableError) as error:
-            test_instance.validator.validate(invalid_json_data)
-        test_instance.assertEqual(
-            f"{field_location} must not be provided for this vaccine type",
-            str(error.exception),
-        )
-
-
-class InvalidDataTypes:
-    """Store lists of invalid data types for tests"""
-
-    for_integers = [None] + floats + decimals + booleans + dicts + lists + strings
-    for_decimals_or_integers = [None] + floats + booleans + dicts + lists + strings
-    for_booleans = [None] + integers + floats + decimals + dicts + lists + strings
-    for_dicts = [None] + integers + floats + decimals + booleans + lists + strings
-    for_lists = [None] + integers + decimals + floats + booleans + dicts + strings
-    for_strings = [None] + integers + floats + decimals + booleans + dicts + lists
-
-
-class ValidValues:
-    """Store valid values for tests"""
-
-    for_date_times = [
-        "2000-01-01T00:00:00+00:00",  # Time and offset all zeroes
-        "1933-12-31T11:11:11+12:45",  # Positive offset (with hours and minutes not 0)
-        "1933-12-31T11:11:11-05:00",  # Negative offset
-    ]
-
-    # Not a valid snomed code, but is valid coding format for format testing
-    snomed_coding_element = {
-        "system": "http://snomed.info/sct",
-        "code": "ABC123",
-        "display": "test",
-    }
-
-
-class InvalidValues:
-    """Store lists of invalid values for tests"""
-
-    for_postal_codes = [
-        "SW1  1AA",  # Too many spaces in divider
-        "SW 1 1A",  # Too many space dividers
-        "AAA0000AA",  # Too few space dividers
-        " AA00 00AA",  # Invalid additional space at start
-        "AA00 00AA ",  # Invalid additional space at end
-        " AA0000AA",  # Space is incorrectly at start
-        "AA0000AA ",  # Space is incorrectly at end
-    ]
-
-    for_date_string_formats = [
-        # Strings which are not in acceptable date format
-        "",  # Empty
-        "invalid",  # With letters
-        "20000101",  # Without dashes
-        "200001-01",  # Missing first dash
-        "2000-0101",  # Missing second dash
-        "2000:01:01",  # Semi-colons instead of dashes
-        "2000-01-011",  # Extra digit at end
-        "12000-01-01",  # Extra digit at start
-        "12000-01-021",  # Extra digit at start and end
-        "99-01-01",  # Year represented without century (i.e. 2 digits instead of 4)
-        "01-01-1999",  # DD-MM-YYYY format
-        "01-01-99",  # DD-MM-YY format
-        # Strings which are in acceptable date format, but are invalid dates
-        "2000-00-01",  # Month 0
-        "2000-13-01",  # Month 13
-        "2000-01-00",  # Day 0
-        "2000-01-32",  # Day 32
-        "2000-02-30",  # Invalid combnation of month and day
-    ]
-
-    # Strings which are not in acceptable date time format
-    for_date_time_string_formats = [
-        "",  # Empty string
-        "invalid",  # Invalid format
-        "20000101",  # Date digits only (i.e. without hypens)
-        "20000101000000",  # Date and time digits only
-        "200001010000000000",  # Date, time and timezone digits only
-        "2000-01-01",  # Date only
-        "2000-01-01T00:00:00",  # Date and time only
-        "2000-01-01T00:00:00+00",  # Date and time with GMT timezone offset only in hours
-        "2000-01-01T00:00:00+01",  # Date and time with BST timezone offset only in hours
-        "12000-01-01T00:00:00+00:00",  # Extra character at start of string
-        "2000-01-01T00:00:00+00:001",  # Extra character at end of string
-        "12000-01-02T00:00:00-01:001",  # Extra characters at start and end of string
-        "2000-01-0122:22:22+00:00",  # Missing T
-        "2000-01-01T222222+00:00",  # Missing time colons
-        "2000-01-01T22:22:2200:00",  # Missing timezone indicator
-        "2000-01-01T22:22:22-0100",  # Missing timezone colon
-        "99-01-01T00:00:00+00:00",  # Missing century (i.e. only 2 digits for year)
-        "01-01-2000T00:00:00+00:00",  # Date in wrong order (DD-MM-YYYY)
-    ]
-
-    # Strings which are in acceptable date time format, but are invalid dates, times or timezones
-    for_date_times = [
-        "2000-00-01T00:00:00+00:00",  # Month 00
-        "2000-13-01T00:00:00+00:00",  # Month 13
-        "2000-01-00T00:00:00+00:00",  # Day 00
-        "2000-01-32T00:00:00+00:00",  # Day 32
-        "2000-02-30T00:00:00+00:00",  # Invalid month and day combination (30th February)
-        "2000-01-01T24:00:00+00:00",  # Hour 24
-        "2000-01-01T00:60:00+00:00",  # Minute 60
-        "2000-01-01T00:00:60+00:00",  # Second 60
-        "2000-01-01T00:00:00+24:00",  # Timezone hour +24
-        "2000-01-01T00:00:00-24:00",  # Timezone hour -24
-        "2000-01-01T00:00:00+00:60",  # Timezone minute 60
-    ]
-
-    for_lists_of_strings_of_length_1 = [[1], [False], [["Test1"]]]
-
-    for_strings_with_max_100_chars = [
-        "This is a really long string with more than 100 "
-        + "characters to test whether the validator is working well"
-    ]
+from pydantic import ValidationError
+from .generic_utils import (
+    test_valid_values_accepted,
+    test_invalid_values_rejected,
+)
+from .values_for_tests import InvalidDataTypes, InvalidValues, ValidValues
 
 
 class ValidatorModelTests:
@@ -552,6 +284,36 @@ class ValidatorModelTests:
             )
 
     @staticmethod
+    def test_unique_list(
+        test_instance: unittest.TestCase,
+        field_location: str,
+        valid_lists_to_test: list,
+        invalid_list_with_duplicates_to_test: list,
+        expected_error_message: str,
+    ):
+        """
+        Test that a FHIR model accepts valid lists with unique values and rejects the following
+        invalid values:
+        * Lists with duplicate values
+        """
+
+        valid_json_data = deepcopy(test_instance.json_data)
+
+        # Test that valid data is accepted
+        test_valid_values_accepted(
+            test_instance, valid_json_data, field_location, valid_lists_to_test
+        )
+        # Test lists with duplicate values
+        test_invalid_values_rejected(
+            test_instance,
+            valid_json_data,
+            field_location=field_location,
+            invalid_value=invalid_list_with_duplicates_to_test,
+            expected_error_message=expected_error_message,
+            expected_error_type="value_error",
+        )
+
+    @staticmethod
     def test_date_value(
         test_instance: unittest.TestCase,
         field_location: str,
@@ -653,8 +415,10 @@ class ValidatorModelTests:
                 field_location=field_location,
                 invalid_value=invalid_occurrence_date_time,
                 expected_error_message=f"{field_location} must be a string in the format "
-                + '"YYYY-MM-DDThh:mm:ss+zz:zz" or"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, '
-                + "including timezone offset in hours and minutes)",
+                + '"YYYY-MM-DDThh:mm:ss+zz:zz" or '
+                + '"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, including timezone offset in '
+                + "hours and minutes). Milliseconds are optional after the seconds "
+                + "(e.g. 2021-01-01T00:00:00.000+00:00).",
                 expected_error_type="value_error",
             )
 
@@ -800,4 +564,84 @@ class ValidatorModelTests:
             expected_error_message=f"{field_location} must be a number with a maximum of "
             + f"{max_decimal_places} decimal places",
             expected_error_type="value_error",
+        )
+
+    @staticmethod
+    def test_valid_combinations_of_contained_and_performer_accepted(
+        test_instance: unittest.TestCase,
+        contained: list,
+        performer: dict,
+    ):
+        """
+        Takes a valid combination of contained and performer objects and ensures that no
+        validation error is raised
+        """
+        valid_json_data = deepcopy(test_instance.json_data)
+        valid_json_data = parse("contained").update(valid_json_data, contained)
+        valid_json_data = parse("performer").update(valid_json_data, performer)
+
+        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+
+    @staticmethod
+    def test_invalid_performer_actor_reference_rejected(
+        test_instance: unittest.TestCase,
+        contained: list,
+        performer: dict,
+        expected_error_message: str,
+    ):
+        """
+        Takes a combination of contained and performer object which is invalid due to
+        either contained Practitioner ID, performer.actor.reference, or a combination of
+        the two, and checks that the appropriate error is raised
+        """
+        invalid_json_data = deepcopy(test_instance.json_data)
+        invalid_json_data = parse("contained").update(invalid_json_data, contained)
+
+        invalid_json_data = parse("performer").update(invalid_json_data, performer)
+
+        with test_instance.assertRaises(ValidationError) as error:
+            test_instance.validator.validate(invalid_json_data)
+
+        test_instance.assertTrue(
+            expected_error_message + " (type=value_error)" in str(error.exception)
+        )
+
+    @staticmethod
+    def test_valid_combinations_of_contained_and_patient_accepted(
+        test_instance: unittest.TestCase,
+        contained: list,
+        patient: dict,
+    ):
+        """
+        Takes a valid combination of contained and patient objects and ensures that no
+        validation error is raised
+        """
+        valid_json_data = deepcopy(test_instance.json_data)
+        valid_json_data = parse("contained").update(valid_json_data, contained)
+        valid_json_data = parse("patient").update(valid_json_data, patient)
+
+        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+
+    @staticmethod
+    def test_invalid_patient_reference_rejected(
+        test_instance: unittest.TestCase,
+        contained: list,
+        patient: dict,
+        expected_error_message: str,
+    ):
+        """
+        Takes a combination of contained and patient object which is invalid due to
+        either contained Patient ID, patient.reference, or a combination of
+        the two, and checks that the appropriate error is raised
+        """
+        invalid_json_data = deepcopy(test_instance.json_data)
+        invalid_json_data = parse("contained").update(invalid_json_data, contained)
+
+        invalid_json_data = parse("patient").update(invalid_json_data, patient)
+
+        with test_instance.assertRaises(ValidationError) as error:
+            test_instance.validator.validate(invalid_json_data)
+
+        test_instance.assertTrue(
+            expected_error_message + " (type=value_error)" in str(error.exception)
         )

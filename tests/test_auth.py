@@ -16,7 +16,7 @@ def test_invalid_access_token():
         headers={
             "Authorization": "",
             "X-Request-Id": "c1ab3fba-6bae-4ba4-b257-5a87c44d4a91",
-            "X-Correlation-Id": "9562466f-c982-4bd5-bb0e-255e9f5e6689"
+            "X-Correlation-Id": "9562466f-c982-4bd5-bb0e-255e9f5e6689",
         },
     )
 
@@ -36,7 +36,9 @@ def test_invalid_endpoint_returns_404(nhsd_apim_proxy_url, nhsd_apim_auth_header
     expected_status_code = 404
     expected_body = load_example("OperationOutcome/404-not_found.json")
 
-    response = requests.get(url=f"{nhsd_apim_proxy_url}/not_found", headers=nhsd_apim_auth_headers)
+    response = requests.get(
+        url=f"{nhsd_apim_proxy_url}/not_found", headers=nhsd_apim_auth_headers
+    )
 
     assert response.status_code == expected_status_code
     assert response.json() == expected_body
