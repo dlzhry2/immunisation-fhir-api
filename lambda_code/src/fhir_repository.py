@@ -2,7 +2,6 @@ import json
 import os
 import time
 import uuid
-import pdb
 from dataclasses import dataclass
 from typing import Optional
 import boto3
@@ -117,7 +116,6 @@ class ImmunizationRepository:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
-        immunization['doseQuantity']['value'] = float(immunization['doseQuantity']['value'])
 
         query_response = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
 
@@ -128,7 +126,7 @@ class ImmunizationRepository:
             'PK': attr.pk,
             'PatientPK': attr.patient_pk,
             'PatientSK': attr.patient_sk,
-            'Resource': json.dumps(attr.resource, default=str),
+            'Resource': json.dumps(attr.resource, cls=DecimalEncoder),
             'Patient': attr.patient,
             'IdentifierPK': attr.identifier
         })
