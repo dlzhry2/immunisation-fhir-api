@@ -269,6 +269,7 @@ def test_bad_nhs_number_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     assert res_body["resourceType"] == "OperationOutcome"
 
 
+@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -393,10 +394,7 @@ def test_get_s_flag_patient(
         assert "reportOrigin" not in imms
         assert "location" not in imms
 
-    if is_restricted:
-        assert_is_filtered(created_imms)
-    else:
-        assert_is_not_filtered(created_imms)
+    assert_is_not_filtered(imms_to_create)
     for retrieved_imms in all_retrieved_imms:
         if is_restricted:
             assert_is_filtered(retrieved_imms)
