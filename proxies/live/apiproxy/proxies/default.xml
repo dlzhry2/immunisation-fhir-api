@@ -6,7 +6,6 @@
       </Step>
     </Request>
   </PreFlow>
-  
   <Flows>
     <Flow name="OptionsPreFlight">
       <Request/>
@@ -45,6 +44,14 @@
       <Condition>(proxy.pathsuffix MatchesPath "/_status") and ((request.verb = "GET") or (request.verb = "HEAD"))</Condition>
     </Flow>
   </Flows>
+  <PostFlow>
+    <Response>
+        <Step>
+          <Condition>response.status.code == 500</Condition>
+          <Name>RaiseFault.500InternalServerError</Name>
+        </Step>
+    </Response>
+  </PostFlow>
   <PostClientFlow name="PostClientFlow">
     <Response>
       <Step>

@@ -23,18 +23,6 @@
       </FaultRule>
     </FaultRules>
   </PreFlow>
-  <PostFlow>
-      <Response>
-          <FaultRules>
-              <FaultRule name="TransformToGenericError">
-                  <Condition>response.status.code == 500</Condition>
-                  <Step>
-                      <Name>AssignMessage.GenericError</Name>
-                  </Step>
-              </FaultRule>
-            </FaultRules>
-        </Response>
-    </PostFlow>
   <HTTPTargetConnection>
     <URL>{{ DOMAIN_ENDPOINT }}</URL>
     <SSLInfo>
@@ -49,4 +37,16 @@
       <Property name="retain.queryparams">apikey</Property>
     </Properties>
   </HTTPTargetConnection>
+  <PostFlow>
+    <Response>
+        <FaultRules>
+            <FaultRule name="TransformToGenericError">
+                <Condition>response.status.code == 500</Condition>
+                <Step>
+                    <Name>AssignMessage.GenericError</Name>
+                </Step>
+            </FaultRule>
+          </FaultRules>
+      </Response>
+  </PostFlow>
 </TargetEndpoint>
