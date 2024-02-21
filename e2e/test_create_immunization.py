@@ -4,10 +4,10 @@ import os
 import unittest
 import uuid
 
-from services.apigee import ApigeeService, ApigeeConfig, ApigeeApp, ApigeeProduct
-from services.authentication import AppRestrictedConfig, AppRestrictedAuthentication, KeyManager, AuthType
-from services.cache import Cache
-from services.env import get_apigee_access_token, get_auth_url, get_apigee_username, get_apigee_env, \
+from lib.apigee import ApigeeService, ApigeeConfig, ApigeeApp, ApigeeProduct
+from lib.authentication import AppRestrictedConfig, AppRestrictedAuthentication, KeyManager, AuthType
+from lib.cache import Cache
+from lib.env import get_apigee_access_token, get_auth_url, get_apigee_username, get_apigee_env, \
     get_default_app_restricted, get_proxy_name, upload_public_key_to_s3, get_public_bucket_name, get_service_base_path
 
 
