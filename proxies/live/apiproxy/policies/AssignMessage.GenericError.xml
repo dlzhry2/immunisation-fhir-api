@@ -1,31 +1,8 @@
-<AssignMessage async="false" continueOnError="false" enabled="true" name="AssignMessage.GenericError">
+<AssignMessage async="false" continueOnError="false" enabled="true" name="AssignMessage.500InternalServreError">
   <StatusCode>500</StatusCode>
   <Set>
     <Payload contentType="application/json">
-    {
-      "resourceType": "OperationOutcome",
-      "id": "{Javascript_uuid}",
-      "meta": {
-        "profile": [
-          "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-        ]
-      },
-      "issue": [
-        {
-          "severity": "error",
-          "code": "internal_server_error",
-          "details": {
-            "coding": [
-              {
-                "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
-                "code": "INTERNAL_SERVER_ERROR"
-              }
-            ]
-          },
-          "diagnostics": "Unexpected internal server error."
-        }
-      ]
-    }
+    {Javascript.dynamic_response}
     </Payload>
   </Set>
   <Javascript name="Javascript_uuid">

@@ -22,6 +22,18 @@
             <Name>AssignMessage.PermissionsError</Name>
         </Step>
     </FaultRule>
+    <FaultRule name="422InvalidResource">
+            <Condition>response.status.code == 422</Condition>
+            <Step>
+                <Name>AssignMessage.422InvalidResource</Name>
+            </Step>
+        </FaultRule>
+    <FaultRule name="500InternalServerError">
+        <Condition>response.status.code == 500</Condition>
+        <Step>
+            <Name>AssignMessage.500InternalServreError</Name>
+        </Step>
+    </FaultRule>
   </FaultRules>
   <HTTPTargetConnection>
     <URL>{{ DOMAIN_ENDPOINT }}</URL>
@@ -37,16 +49,4 @@
       <Property name="retain.queryparams">apikey</Property>
     </Properties>
   </HTTPTargetConnection>
-  <PostFlow>
-    <Response>
-        <FaultRules>
-            <FaultRule name="TransformToGenericError">
-                <Condition>response.status.code == 500</Condition>
-                <Step>
-                    <Name>AssignMessage.GenericError</Name>
-                </Step>
-            </FaultRule>
-          </FaultRules>
-      </Response>
-  </PostFlow>
 </TargetEndpoint>
