@@ -6,7 +6,7 @@ import boto3
 sample_file = "sample_data/2023-11-29T19:04:37_immunisation-30.json"
 
 dynamodb_url = "http://localhost:4566"
-table_name = "local-imms-events"
+table_name = "imms-default-imms-events"
 
 
 class DynamoTable:
