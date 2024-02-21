@@ -20,10 +20,6 @@ def test_invalid_access_token():
         },
     )
 
-    print(response.json())
-    print("")
-    print(expected_body)
-
     assert response.status_code == expected_status_code
     assert response.json() == expected_body
 

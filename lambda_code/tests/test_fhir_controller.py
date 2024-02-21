@@ -13,6 +13,7 @@ from models.errors import (
     UnhandledResponseError,
     InvalidPatientId,
     CoarseValidationError,
+    IdentifierDuplicationError
 )
 from .immunization_utils import create_an_immunization
 
@@ -368,6 +369,7 @@ class TestDeleteImmunization(unittest.TestCase):
 
         # When
         response = self.controller.delete_immunization(lambda_event)
+
 
         # Then
         self.assertEqual(response["statusCode"], 500)

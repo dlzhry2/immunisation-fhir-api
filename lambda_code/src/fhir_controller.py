@@ -93,10 +93,10 @@ class FhirController:
             return self.create_response(201, None, {"Location": location})
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
+        except IdentifierDuplicationError as invalid_error:
+            return self.create_response(422, invalid_error.to_operation_outcome())
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
-        except IdentifierDuplicationError as error:
-            return self.create_response(422, error.to_operation_outcome())
 
     def update_immunization(self, aws_event):
         imms_id = aws_event["pathParameters"]["id"]
