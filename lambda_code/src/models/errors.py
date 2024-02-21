@@ -12,6 +12,7 @@ class Code(str, Enum):
     invalid = "invalid"
     server_error = "internal-server-error"
     invariant = "invariant"
+    invalid_resource = "invalid_resource"
 
 
 @dataclass
@@ -35,7 +36,7 @@ class UnhandledResponseError(RuntimeError):
     def to_operation_outcome(self) -> dict:
         msg = f"{self.message}\n{self.response}"
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invalid_resource, diagnostics=msg)
 
 
 class ValidationError(RuntimeError):

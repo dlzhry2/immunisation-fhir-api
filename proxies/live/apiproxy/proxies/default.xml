@@ -45,6 +45,14 @@
       <Condition>(proxy.pathsuffix MatchesPath "/_status") and ((request.verb = "GET") or (request.verb = "HEAD"))</Condition>
     </Flow>
   </Flows>
+  <PostFlow>
+    <Response>
+        <Step>
+          <Condition>response.status.code == 422</Condition>
+          <Name>RaiseFault.422InvalidResource</Name>
+        </Step>
+    </Response>
+  </PostFlow>
   <PostClientFlow name="PostClientFlow">
     <Response>
       <Step>
