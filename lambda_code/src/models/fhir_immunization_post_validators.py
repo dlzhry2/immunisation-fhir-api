@@ -1316,7 +1316,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    # TODO: IP_ADDRESS
     @classmethod
     def validate_ip_address(cls, values: dict) -> dict:
         "Validate that ip_address is present or absent, as required"
@@ -1341,7 +1340,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    # TODO: USER_ID
     @classmethod
     def validate_user_id(cls, values: dict) -> dict:
         "Validate that user_id is present or absent, as required"
@@ -1366,9 +1364,133 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    # TODO: USER_NAME
-    # TODO: USER_EMAIL
-    # TODO: SUBMITTED_TIME_STAMP
-    # TODO: LOCATION_IDENTIFIER_VALUE
-    # TODO: LOCATION_IDENTIFIER_SYSTEM
-    # TODO: REDUCE_VALIDATION_REASON
+    @classmethod
+    def validate_user_name(cls, values: dict) -> dict:
+        "Validate that user_name is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserName')].answer[0].valueString"
+        )
+
+        try:
+            user_name = get_generic_questionnaire_response_value_from_model(
+                values, "UserName", "valueString"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            user_name = None
+
+        check_mandation_requirements_met(
+            field_value=user_name,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="user_name",
+        )
+        return values
+
+    @classmethod
+    def validate_user_email(cls, values: dict) -> dict:
+        "Validate that user_email is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserEmail')].answer[0].valueString"
+        )
+
+        try:
+            user_email = get_generic_questionnaire_response_value_from_model(
+                values, "UserEmail", "valueString"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            user_email = None
+
+        check_mandation_requirements_met(
+            field_value=user_email,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="user_email",
+        )
+        return values
+
+    @classmethod
+    def validate_submitted_time_stamp(cls, values: dict) -> dict:
+        "Validate that submitted_time_stamp is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueDateTime"
+        )
+
+        try:
+            submitted_time_stamp = get_generic_questionnaire_response_value_from_model(
+                values, "SubmittedTimeStamp", "valueDateTime"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            submitted_time_stamp = None
+
+        check_mandation_requirements_met(
+            field_value=submitted_time_stamp,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="submitted_time_stamp",
+        )
+        return values
+
+    @classmethod
+    def validate_location_identifier_value(cls, values: dict) -> dict:
+        "Validate that location_identifier_value is present or absent, as required"
+
+        try:
+            location_identifier_value = values["location"].identifier.value
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            location_identifier_value = None
+
+        check_mandation_requirements_met(
+            field_value=location_identifier_value,
+            field_location="location.identifier.value",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="location_identifier_value",
+        )
+        return values
+
+    @classmethod
+    def validate_location_identifier_system(cls, values: dict) -> dict:
+        "Validate that location_identifier_system is present or absent, as required"
+
+        try:
+            location_identifier_system = values["location"].identifier.system
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            location_identifier_system = None
+
+        check_mandation_requirements_met(
+            field_value=location_identifier_system,
+            field_location="location.identifier.system",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="location_identifier_system",
+        )
+        return values
+
+    @classmethod
+    def validate_reduce_validation_reason(cls, values: dict) -> dict:
+        "Validate that reduce_validation_reason is present or absent, as required"
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString"
+        )
+
+        try:
+            reduce_validation_reason = (
+                get_generic_questionnaire_response_value_from_model(
+                    values, "ReduceValidationReason", "valueString"
+                )
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            reduce_validation_reason = None
+
+        check_mandation_requirements_met(
+            field_value=reduce_validation_reason,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="reduce_validation_reason",
+        )
+        return values

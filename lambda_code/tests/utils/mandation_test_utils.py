@@ -147,6 +147,7 @@ class MandationTests:
         test_instance: unittest.TestCase,
         field_location: str,
         vaccine_type: VaccineTypes,
+        invalid_json_data: dict = None,
     ):
         """
         NOTE:
@@ -156,7 +157,7 @@ class MandationTests:
         """
 
         invalid_json_data = MandationTests.update_vaccination_procedure_code(
-            test_instance, vaccine_type
+            test_instance, vaccine_type, valid_json_data=invalid_json_data
         )
 
         # Test that correct error message is raised
@@ -228,8 +229,21 @@ class MandationTests:
         when mandation is dependent on status
         """
         # Set the vaccination procedure code based on vaccine type
+        if vaccine_type == VaccineTypes.covid_19:
+            valid_json_data = test_instance.covid_json_data
+            base_not_done_json_data = test_instance.not_done_covid_json_data
+        elif vaccine_type == VaccineTypes.flu:
+            valid_json_data = test_instance.flu_json_data
+            base_not_done_json_data = test_instance.not_done_json_data
+        elif vaccine_type == VaccineTypes.hpv:
+            valid_json_data = test_instance.hpv_json_data
+            base_not_done_json_data = test_instance.not_done_json_data
+        elif vaccine_type == VaccineTypes.mmr:
+            valid_json_data = test_instance.mmr_json_data
+            base_not_done_json_data = test_instance.not_done_mmr_json_data
+
         valid_json_data = MandationTests.update_vaccination_procedure_code(
-            test_instance, vaccine_type
+            test_instance, vaccine_type, valid_json_data=deepcopy(valid_json_data)
         )
 
         # Test case where status is "completed"
@@ -263,11 +277,7 @@ class MandationTests:
         )
 
         # Test case where status is "not-done"
-        base_not_done_json_data = (
-            deepcopy(test_instance.not_done_covid_json_data)
-            if vaccine_type == VaccineTypes.covid_19
-            else deepcopy(test_instance.not_done_json_data)
-        )
+        base_not_done_json_data = deepcopy(base_not_done_json_data)
 
         json_data_with_status_not_done = (
             MandationTests.update_vaccination_procedure_code(
@@ -295,6 +305,7 @@ class MandationTests:
         mandation_when_dependent_on_field_absent: Mandation,
         expected_bespoke_error_message: str = None,
         expected_error_type: str = "value_error",
+        valid_json_data: dict = None,
     ):
         """
         Run all the test cases for status of "completed" or "entered-in-error" when the field
@@ -303,7 +314,7 @@ class MandationTests:
 
         # Set the vaccination procedure code based on vaccine type
         valid_json_data = MandationTests.update_vaccination_procedure_code(
-            test_instance, vaccine_type
+            test_instance, vaccine_type, valid_json_data=valid_json_data
         )
 
         # Test cases where depent_on_field is present
