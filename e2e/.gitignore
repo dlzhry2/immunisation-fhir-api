@@ -2,7 +2,8 @@
 *.pem
 *.pub
 *.iml
-
+.well-known
+.keys
 # default poetry gitignore
 *.pyc
 

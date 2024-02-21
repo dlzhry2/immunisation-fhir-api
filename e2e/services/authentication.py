@@ -1,3 +1,5 @@
+import base64
+import logging
 import uuid
 from dataclasses import dataclass
 from enum import Enum
@@ -6,9 +8,12 @@ from urllib.parse import urlparse, parse_qs
 
 import jwt
 import requests
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from lxml import html
+
+from .cache import Cache
 
 
 @dataclass
@@ -139,10 +144,35 @@ class IntNhsLoginMockAuth:
 class KeyManager:
     _key_size = 4096
 
-    def __init__(self, key_id: str):
+    def __init__(self, key_id: str, cache: Cache = None):
         self.key_id = key_id
+        if cache := cache or Cache(cache_id=key_id):
+            self.cache = cache
+
+    def get_jwks(self, pub: bytes) -> dict:
+        pub_key = serialization.load_pem_public_key(pub, backend=default_backend())
+        n = pub_key.public_numbers().n
+        n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
+        encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
+        return {
+            "keys": [
+                {
+                    "kty": "RSA",
+                    "n": encoded_n,
+                    "e": "AQAB",
+                    "alg": "RS512",
+                    "kid": self.key_id
+                }
+            ]
+        }
 
     def gen_private_public_pem(self) -> (bytes, bytes):
+        pub = self.cache.get(f"{self.key_id}.pub")
+        prv = self.cache.get(f"{self.key_id}.pem")
+        if pub and prv:
+            logging.debug("Cache: using cached value for both private and public key")
+            return prv.encode(), pub.encode()
+
         private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=self._key_size
@@ -155,6 +185,9 @@ class KeyManager:
         public_key_pem = private_key.public_key().public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo)
+
+        self.cache.put(f"{self.key_id}.pub", public_key_pem.decode())
+        self.cache.put(f"{self.key_id}.pem", private_key_pem.decode())
 
         return private_key_pem, public_key_pem
 
@@ -170,5 +203,5 @@ class KeyManager:
 
 if __name__ == '__main__':
     km = KeyManager("mykey")
-    (prv, pub) = km.gen_private_public_pem()
-    km.write(prv, pub)
+    (_prv, _pub) = km.gen_private_public_pem()
+    km.write(_prv, _pub)

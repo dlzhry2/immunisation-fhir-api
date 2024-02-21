@@ -2,8 +2,9 @@ import logging
 import os
 import subprocess
 
-from apigee import ApigeeEnv
-from authentication import AppRestrictedConfig
+from .apigee import ApigeeEnv
+from .authentication import AppRestrictedConfig
+from .cache import Cache
 
 """use functions in this module to get configs that can be read from environment variables or external processes"""
 
@@ -57,8 +58,8 @@ def get_private_key(file_path: str = None) -> str:
         with open(file_path, "r") as f:
             return f.read()
     else:
-        logging.error('APP_RESTRICTED_PRIVATE_KEY_PATH is required. It should be the absolute path to your '
-                      'application-restricted private-key')
+        raise RuntimeError('APP_RESTRICTED_PRIVATE_KEY_PATH is required. It should be the absolute path to your '
+                           'application-restricted private-key')
 
 
 def get_auth_url(apigee_env: ApigeeEnv = None) -> str:
@@ -66,12 +67,43 @@ def get_auth_url(apigee_env: ApigeeEnv = None) -> str:
         apigee_env = get_apigee_env()
 
     if apigee_env == ApigeeEnv.PROD:
-        return "https://api.service.nhs.uk/oauth2/token"
+        return "https://api.service.nhs.uk/oauth2"
     else:
-        return f"https://{apigee_env.value}.api.service.nhs.uk/oauth2/token"
+        return f"https://{apigee_env.value}.api.service.nhs.uk/oauth2"
 
 
-def upload_public_key_to_s3(bucket_name: str, key: str, file_path: str):
+def get_proxy_name() -> str:
+    if not os.getenv("PROXY_NAME"):
+        raise RuntimeError('"PROXY_NAME" is required')
+    return os.getenv("PROXY_NAME")
+
+
+def get_service_base_path(apigee_env: ApigeeEnv = None) -> str:
+    if not os.getenv("SERVICE_BASE_PATH"):
+        raise RuntimeError('"SERVICE_BASE_PATH" is required')
+    apigee_env = apigee_env if apigee_env else get_apigee_env()
+
+    base_path = os.getenv("SERVICE_BASE_PATH")
+    return f"https://{apigee_env.value}.api.service.nhs.uk/{base_path}"
+
+
+def get_cache(cache_id: str = None) -> Cache:
+    """We use a combination of the proxy name and USER for cache id by default.
+    This way cache only expires when you open a new PR
+    NOTE: choose a random value makes the cache to invalidate immediately. Useful for debugging
+    """
+    if cache_id := cache_id or f"{get_proxy_name()}_{os.getenv('USER')}":
+        return Cache(cache_id=cache_id)
+
+
+def get_public_bucket_name() -> str:
+    if not os.getenv("PUBLIC_BUCKET_NAME"):
+        raise RuntimeError('"PUBLIC_BUCKET_NAME" is required')
+    return os.getenv("PUBLIC_BUCKET_NAME")
+
+
+def upload_public_key_to_s3(bucket_name: str, key: str, file_path: str) -> str:
+    """uploads a public key file to aws s3 bucket and returns public url to the object"""
     with open(file_path, "r") as pub_key:
         content = pub_key.readline().lower()
         if "private" in content:
@@ -84,14 +116,15 @@ def upload_public_key_to_s3(bucket_name: str, key: str, file_path: str):
         res = subprocess.run(cmd, stdout=subprocess.PIPE, text=True)
         if res.returncode != 0:
             cmd_str = " ".join(cmd)
-            logging.error(f"Failed to run command: '{cmd_str}'\nDiagnostic: Try to run the same command in the "
-                          f"same terminal. Make sure you are authenticated\n{res.stdout}")
-        return res.stdout.strip()
+            raise RuntimeError(f"Failed to run command: '{cmd_str}'\nDiagnostic: Try to run the same command in the "
+                               f"same terminal. Make sure you are authenticated\n{res.stdout}")
     except FileNotFoundError:
         logging.error("Make sure you install aws cli and make sure it's in your PATH. "
                       "Follow: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html")
     except RuntimeError as e:
-        logging.error(f"failed to upload file: {file_path} to the bucket {bucket_url}\n{e}")
+        raise RuntimeError(f"failed to upload file: {file_path} to the bucket {bucket_url}\n{e}")
+
+    return f"https://{bucket_name}.s3.eu-west-2.amazonaws.com/{key}"
 
 
 def main():
