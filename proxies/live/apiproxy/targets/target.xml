@@ -37,16 +37,4 @@
       <Property name="retain.queryparams">apikey</Property>
     </Properties>
   </HTTPTargetConnection>
-  <PostFlow>
-    <Response>
-        <FaultRules>
-            <FaultRule name="422InvalidResource">
-                <Condition>response.status.code == 422</Condition>
-                <Step>
-                    <Name>AssignMessage.422InvalidResource</Name>
-                </Step>
-            </FaultRule>
-          </FaultRules>
-      </Response>
-  </PostFlow>
 </TargetEndpoint>

@@ -92,7 +92,6 @@ class IdentifierDuplicationError(RuntimeError):
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invalid_resource, diagnostics=msg)
 
 
-
 def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> dict:
     """Create an OperationOutcome object. Do not use `fhir.resource` library since it adds unnecessary validations"""
     return {
