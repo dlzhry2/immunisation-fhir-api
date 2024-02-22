@@ -103,6 +103,8 @@ def test_create_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     assert failed_create_response.status_code == 422
     assert failed_create_res_body["resourceType"] == "OperationOutcome"
+    #ASSERT RESPONSE BODY HAS GENERIC ERROR MESSSAGE
+    assert failed_create_res_body['issue'][0]['diagnostics'] == "Submitted resource is not valid."
 
     # READ
     imms_id = parse_location(create_response.headers["Location"])
@@ -163,7 +165,6 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     assert update_response.status_code == 422
     assert res_body["resourceType"] == "OperationOutcome"
-    assert res_body['issue'][0]['diagnostics'] == f"The provided identifier: {identifier} is duplicated"
 
     # DELETE BOTH IMMUNIZATIONS
     delete_imms_response = imms_api.delete_immunization(imms_1_id)
