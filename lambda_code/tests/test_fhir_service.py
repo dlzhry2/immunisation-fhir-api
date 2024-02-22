@@ -333,10 +333,15 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_get_service_url(self):
         """it should create service url"""
-        env = "internal-dev"
+        env = "int"
         base_path = "my-base-path"
         url = get_service_url(env, base_path)
         self.assertEqual(url, f"https://{env}.api.service.nhs.uk/{base_path}")
+        # default should be internal-dev
+        env = "it-does-not-exist"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
         # prod should not have subdomain
         env = "prod"
         base_path = "my-base-path"

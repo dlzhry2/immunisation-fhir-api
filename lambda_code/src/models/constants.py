@@ -2,7 +2,6 @@
 
 import re
 from datetime import datetime
-from typing import Union
 
 
 class Constants:
@@ -16,7 +15,8 @@ class Constants:
     VACCINATION_GIVEN_FLAG: str = "empty"
     # TODO: valid_disease_types needs updated to reprent agreed list (needs to consider the
     # mapping used for converting snomed code to disease type)
-    VALID_DISEASE_TYPES = {"COVID-19", "FLU"}
+    VALID_DISEASE_TYPES = {"COVID19", "FLU"}
+    NOT_DONE_VACCINE_CODES = ("NAVU", "UNC", "UNK", "NA")
 
     @staticmethod
     def convert_iso8601_to_datetime(iso_datetime_str):

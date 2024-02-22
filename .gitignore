@@ -12,9 +12,9 @@ newman/
 **/*.iml
 
 __pycache__/
-.envrc
 .venv/
 .env
+.envrc
 smoketest-report.xml
 lambda_typescript/**/*.js
 terraform/zips
@@ -27,3 +27,5 @@ openapi.json
 
 .vscode/**/*
 !.vscode/settings.json.default
+
+devtools/volume/

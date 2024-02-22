@@ -26,7 +26,7 @@ def get_service_url(
     non_prod = ["internal-dev", "int", "sandbox"]
     if service_env in non_prod:
         subdomain = f"{service_env}."
-    if service_env == "prod":
+    elif service_env == "prod":
         subdomain = ""
     else:
         subdomain = "internal-dev."
@@ -74,9 +74,7 @@ class FhirService:
 
         return Immunization.parse_obj(imms)
 
-    def update_immunization(
-        self, imms_id: str, immunization: dict
-    ) -> (UpdateOutcome, Immunization):
+    def update_immunization(self, imms_id: str, immunization: dict) -> (UpdateOutcome):
         if immunization.get("id", imms_id) != imms_id:
             raise InconsistentIdError(imms_id=imms_id)
         immunization["id"] = imms_id

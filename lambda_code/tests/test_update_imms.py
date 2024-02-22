@@ -1,10 +1,6 @@
 import json
-import os
-import sys
 import unittest
 from unittest.mock import create_autospec
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from update_imms_handler import update_imms
 from fhir_controller import FhirController
@@ -48,3 +44,9 @@ class TestUpdateImmunizations(unittest.TestCase):
 
         self.assertDictEqual(act_body, exp_error)
         self.assertEqual(act_res["statusCode"], 500)
+        
+    def test_update_imms_with_duplicated_identifier_returns_error(self):
+        """Should return an IdentifierDuplication error"""
+        
+        
+        
