@@ -1,10 +1,12 @@
+import urllib.parse
+
 import pprint
 
 import json
 import os
 import re
 import uuid
-from typing import Optional, Iterable, Tuple
+from typing import Optional, Iterable, Tuple, TypedDict
 from decimal import Decimal
 
 import boto3
@@ -125,27 +127,15 @@ class FhirController:
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
 
-    class Param:
-        ParamValue = list[int | float | bool | str]
-
-        def __init__(self, k: str, v: ParamValue):
-            self.key = k
-            self.value: FhirController.Param.ParamValue = v
-
-        def __repr__(self):
-            return repr(self.__dict__)
+    ParamValue = list[str]
+    ParamContainer = dict[str, ParamValue]
 
     @staticmethod
-    def get_all_param_values(param_list: list[Param]) -> Param.ParamValue:
-        return [v
-                for x in param_list
-                for v in x.value]
+    def process_search_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
+        def parse_multi_value_query_parameters(multi_value_params: dict) -> FhirController.ParamContainer:
+            return dict((k, v) for k, v in multi_value_params.items())
 
-    def process_search_params(self, aws_event: APIGatewayProxyEventV1) -> list[Param]:
-        def parse_multi_value_query_parameters(multi_value_params: dict) -> list[FhirController.Param]:
-            return [FhirController.Param(k, v) for k, v in multi_value_params.items()]
-
-        def parse_body_params() -> list[FhirController.Param]:
+        def parse_body_params(aws_event: APIGatewayProxyEventV1) -> FhirController.ParamContainer:
             http_method = aws_event.get("httpMethod")
             content_type = aws_event.get("headers", {}).get("Content-Type")
             if http_method == "POST" and content_type == "application/x-www-form-urlencoded":
@@ -153,73 +143,40 @@ class FhirController:
                 decoded_body = base64.b64decode(body).decode("utf-8")
                 parsed_body = parse_qs(decoded_body)
 
-                items = [FhirController.Param(k, v) for k, v in parsed_body.items()]
+                items = dict((k, v) for k, v in parsed_body.items())
                 return items
-            return []
+            return {}
 
         multi_value_params = parse_multi_value_query_parameters(aws_event.get("multiValueQueryStringParameters"))
-        body_params = parse_body_params()
-        import itertools
-        grouped: Iterable[Tuple[str, Iterable[FhirController.Param]]] = itertools.groupby(multi_value_params + body_params, lambda x: x.key)
-        return [FhirController.Param(k, FhirController.get_all_param_values(list(g))) for k, g in grouped]
+        body_params = parse_body_params(aws_event)
+        return {key: multi_value_params.get(key, []) + body_params.get(key, [])
+                for key in (multi_value_params.keys() | body_params.keys())}
 
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
         params = self.process_search_params(aws_event)
         pprint.pprint(params)
-        return {}
-        http_method = aws_event.get("httpMethod")
-        nhs_number_list = []
-        disease_type_list = []
-        nhs_number_value = None
-        disease_type_value = None
-        nhs_number_param = "-nhsNumber"
-        disease_type_param = "-diseaseType"
-        if http_method == "POST":
-            content_type = aws_event.get("headers", {}).get("Content-Type")
-            if content_type == "application/x-www-form-urlencoded":
-                body = aws_event.get("body")
-                if body:
-                    decoded_body = base64.b64decode(body).decode("utf-8")
-                    parsed_body = parse_qs(decoded_body)
-                    nhs_number_list = parsed_body.get(nhs_number_param)
-                    if nhs_number_list:
-                        nhs_number_value = nhs_number_list[0]
-                    disease_type_list = parsed_body.get(disease_type_param)
-                    if disease_type_list:
-                        disease_type_value = disease_type_list[0]
-        parsed_query_params = aws_event.get("queryStringParameters")
-        if parsed_query_params:
-            nhs_number_query_param_value = parsed_query_params.get(nhs_number_param)
-            if nhs_number_query_param_value:
-                if nhs_number_value is None:
-                    nhs_number_value = nhs_number_query_param_value
-                else:
-                    if nhs_number_query_param_value != nhs_number_value:
-                        return self._create_bad_request(
-                            f"Search Parameter {nhs_number_param} can have only one value"
-                        )
 
-            disease_type_query_param_value = parsed_query_params.get(disease_type_param)
-            if disease_type_query_param_value:
-                if disease_type_value is None:
-                    disease_type_value = disease_type_query_param_value
-                else:
-                    if disease_type_query_param_value != disease_type_value:
-                        return self._create_bad_request(
-                            f"Search Parameter {disease_type_param} can have only one value"
-                        )
-        if not nhs_number_value:
+        nhs_number_key = "-nhsNumber"
+        disease_type_key = "-diseaseType"
+
+        nhs_numbers = params.get(nhs_number_key, [])
+        nhs_number = nhs_numbers[0] if 0 < len(nhs_numbers) else None
+
+        if nhs_number is None:
             return self._create_bad_request(
-                f"Search Parameter {nhs_number_param} is mandatory"
-            )
-        if not disease_type_value:
-            return self._create_bad_request(
-                f"Search Parameter {disease_type_param} is mandatory"
+                f"Search parameter {nhs_number_key} must have one value"
             )
 
-        search_params = f"{nhs_number_param}={nhs_number_value}&{disease_type_param}={disease_type_value}"
+        disease_types = params.get(disease_type_key, [])
+        if len(disease_types) < 1:
+            return self._create_bad_request(
+                f"Search parameter {disease_type_key} must have one or more values"
+            )
+
+        search_params = urllib.parse.urlencode(params, doseq=True)
+
         result = self.fhir_service.search_immunizations(
-            nhs_number_value, disease_type_value, search_params
+            nhs_number, disease_types, search_params
         )
         return self.create_response(200, result.json())
 
