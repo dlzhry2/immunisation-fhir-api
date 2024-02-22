@@ -1,13 +1,16 @@
+import pprint
+
 import json
 import os
 import re
 import uuid
-from typing import Optional
+from typing import Optional, Iterable, Tuple
 from decimal import Decimal
 
 import boto3
 import base64
 from botocore.config import Config
+from aws_lambda_typing.events import APIGatewayProxyEventV1
 
 from cache import Cache
 from fhir_repository import ImmunizationRepository, create_table
@@ -122,7 +125,48 @@ class FhirController:
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
 
-    def search_immunizations(self, aws_event) -> dict:
+    class Param:
+        ParamValue = list[int | float | bool | str]
+
+        def __init__(self, k: str, v: ParamValue):
+            self.key = k
+            self.value: FhirController.Param.ParamValue = v
+
+        def __repr__(self):
+            return repr(self.__dict__)
+
+    @staticmethod
+    def get_all_param_values(param_list: list[Param]) -> Param.ParamValue:
+        return [v
+                for x in param_list
+                for v in x.value]
+
+    def process_search_params(self, aws_event: APIGatewayProxyEventV1) -> list[Param]:
+        def parse_multi_value_query_parameters(multi_value_params: dict) -> list[FhirController.Param]:
+            return [FhirController.Param(k, v) for k, v in multi_value_params.items()]
+
+        def parse_body_params() -> list[FhirController.Param]:
+            http_method = aws_event.get("httpMethod")
+            content_type = aws_event.get("headers", {}).get("Content-Type")
+            if http_method == "POST" and content_type == "application/x-www-form-urlencoded":
+                body = aws_event.get("body", "") or ""
+                decoded_body = base64.b64decode(body).decode("utf-8")
+                parsed_body = parse_qs(decoded_body)
+
+                items = [FhirController.Param(k, v) for k, v in parsed_body.items()]
+                return items
+            return []
+
+        multi_value_params = parse_multi_value_query_parameters(aws_event.get("multiValueQueryStringParameters"))
+        body_params = parse_body_params()
+        import itertools
+        grouped: Iterable[Tuple[str, Iterable[FhirController.Param]]] = itertools.groupby(multi_value_params + body_params, lambda x: x.key)
+        return [FhirController.Param(k, FhirController.get_all_param_values(list(g))) for k, g in grouped]
+
+    def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
+        params = self.process_search_params(aws_event)
+        pprint.pprint(params)
+        return {}
         http_method = aws_event.get("httpMethod")
         nhs_number_list = []
         disease_type_list = []
