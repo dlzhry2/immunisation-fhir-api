@@ -12,6 +12,7 @@ class Code(str, Enum):
     invalid = "invalid"
     server_error = "internal-server-error"
     invariant = "invariant"
+    invalid_resource = "invalid_resource"
 
 
 @dataclass
@@ -78,6 +79,20 @@ class CoarseValidationError(ValidationError):
     def to_operation_outcome(self) -> dict:
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
+
+
+@dataclass
+class IdentifierDuplicationError(RuntimeError):
+    """Fine grain validation"""
+    identifier: str
+
+    def __str__(self) -> str:
+        return f"The provided identifier: {self.identifier} is duplicated"
+
+    def to_operation_outcome(self) -> dict:
+        msg = self.__str__()
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invalid_resource, diagnostics=msg)
 
 
 def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> dict:
