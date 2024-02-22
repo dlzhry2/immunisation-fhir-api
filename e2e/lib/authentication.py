@@ -1,5 +1,5 @@
 import base64
-import logging
+import os
 import uuid
 from dataclasses import dataclass
 from enum import Enum
@@ -8,6 +8,7 @@ from urllib.parse import urlparse, parse_qs
 
 import jwt
 import requests
+from authlib.jose import jwk
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -33,6 +34,76 @@ class AppRestrictedConfig:
     kid: str
     private_key_content: str
     expiry_seconds: int = 30
+
+
+class JwkKeyPair:
+    private_key: bytes
+    public_key: bytes
+    key_id: str
+    _n: int
+    _encoded_n: str
+
+    def make_jwk(self) -> dict:
+        # n_bytes = self._n.to_bytes((self._n.bit_length() + 7) // 8, byteorder='big')
+        # encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
+        pub_key = serialization.load_pem_public_key(self.public_key, backend=default_backend())
+        n = pub_key.public_numbers().n
+        n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
+        encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
+        return {
+            "kty": "RSA",
+            "n": encoded_n,
+            "e": "AQAB",
+            "alg": "RS512",
+            "kid": self.key_id
+        }
+
+    def make_jwks2(self):
+        return {
+            "kty": "RSA",
+            "n": self._encoded_n,
+            "e": "AQAB",
+            "alg": "RS512",
+            "kid": self.key_id
+        }
+
+
+def read_key_pair(key_id: str) -> JwkKeyPair:
+    key_pair = JwkKeyPair()
+    key_pair.key_id = key_id
+    with open(f"{os.getcwd()}/.keys/{key_id}.key", "r") as prv:
+        key_pair.private_key = prv.read()
+
+    with open(f"{os.getcwd()}/.keys/{key_id}.key.pub", "r") as pub:
+        key_pair.public_key = pub.read()
+
+        pub_key = serialization.load_pem_public_key(bytes(pub.read(), 'ascii'), backend=default_backend())
+        n = pub_key.public_numbers().n
+        n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
+        encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
+        key_pair._encoded_n = encoded_n
+
+    return key_pair
+
+
+def make_key_pair(key_id: str, key_size=4096) -> JwkKeyPair:
+    key_pair = JwkKeyPair()
+    key_pair.key_id = key_id
+
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
+
+    key_pair.private_key = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption())
+
+    key_pair.public_key = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo)
+
+    key_pair._n = private_key.public_key().public_numbers().n
+
+    return key_pair
 
 
 class AppRestrictedAuthentication:
@@ -150,30 +221,38 @@ class KeyManager:
             self.cache = cache
 
     def get_jwks(self, pub: bytes) -> dict:
-        pub_key = serialization.load_pem_public_key(pub, backend=default_backend())
-        n = pub_key.public_numbers().n
-        n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
-        encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
+        new_key = jwk.dumps(pub.decode("ascii"), kty="RSA", crv_or_size=4096, alg="RS512")
+        new_key["kid"] = self.key_id
+        new_key["use"] = "sig"
         return {
-            "keys": [
-                {
-                    "kty": "RSA",
-                    "n": encoded_n,
-                    "e": "AQAB",
-                    "alg": "RS512",
-                    "kid": self.key_id
-                }
-            ]
+            "keys": [new_key]
         }
+        # pub_key = serialization.load_pem_public_key(pub, backend="SHA512")
+        # n = pub_key.public_numbers().n
+        # n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
+        # encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
+        # return {
+        #     "keys": [
+        #         {
+        #             "kty": "RSA",
+        #             "n": encoded_n,
+        #             "e": "AQAB",
+        #             "alg": "RS512",
+        #             "kid": self.key_id,
+        #             "use": "sig"
+        #         }
+        #     ]
+        # }
 
     def gen_private_public_pem(self) -> (bytes, bytes):
-        pub = self.cache.get(f"{self.key_id}.pub")
-        prv = self.cache.get(f"{self.key_id}.pem")
-        if pub and prv:
-            logging.debug("Cache: using cached value for both private and public key")
-            return prv.encode(), pub.encode()
+        # pub = self.cache.get(f"{self.key_id}.pub")
+        # prv = self.cache.get(f"{self.key_id}.pem")
+        # if pub and prv:
+        #     logging.debug("Cache: using cached value for both private and public key")
+        #     return prv.encode(), pub.encode()
 
         private_key = rsa.generate_private_key(
+            backend="SHA512",
             public_exponent=65537,
             key_size=self._key_size
         )
@@ -186,8 +265,8 @@ class KeyManager:
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo)
 
-        self.cache.put(f"{self.key_id}.pub", public_key_pem.decode())
-        self.cache.put(f"{self.key_id}.pem", private_key_pem.decode())
+        # self.cache.put(f"{self.key_id}.pub", public_key_pem.decode())
+        # self.cache.put(f"{self.key_id}.pem", private_key_pem.decode())
 
         return private_key_pem, public_key_pem
 

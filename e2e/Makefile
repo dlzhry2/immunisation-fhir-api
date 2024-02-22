@@ -13,7 +13,9 @@ run-int:
 run-%:
 	$(PYTEST_CMD) -m "$*"
 
-
+key-pair:
+	ssh-keygen -t rsa -b 4096 -m PEM -E SHA512 -f .keys/immunisation-fhir-api-local.key -N ""
+	openssl rsa -in  .keys/immunisation-fhir-api-local.key -pubout -outform PEM -out .keys/immunisation-fhir-api-local.key.pub
 
 
 

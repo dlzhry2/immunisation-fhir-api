@@ -102,10 +102,10 @@ def get_public_bucket_name() -> str:
     return os.getenv("PUBLIC_BUCKET_NAME")
 
 
-def upload_public_key_to_s3(bucket_name: str, key: str, file_path: str) -> str:
-    """uploads a public key file to aws s3 bucket and returns public url to the object"""
-    with open(file_path, "r") as pub_key:
-        content = pub_key.readline().lower()
+def upload_jwks_to_public_s3(bucket_name: str, key: str, file_path: str) -> str:
+    """uploads jwks file to a s3 bucket and returns the public url to the object"""
+    with open(file_path, "r") as jwks:
+        content = jwks.readline().lower()
         if "private" in content:
             logging.error("DANGER: it appears you are trying to upload private key instead of public key.\n"
                           "DO NOT share your private key and do not upload it anywhere public")
@@ -131,7 +131,7 @@ def main():
     # a = get_apigee_access_token("jalal.hosseini1@nhs.net")
     p = "/Users/jalal/projects/apim/immunisation-fhir-api/e2e/services/mykey.pem"
     bn = "immunization-fhir-api-public-key-host"
-    upload_public_key_to_s3(bn, "jalal2", p)
+    upload_jwks_to_public_s3(bn, "jalal2", p)
 
 
 if __name__ == '__main__':
