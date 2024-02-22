@@ -161,7 +161,7 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
     update_response = imms_api.update_immunization(imms_2_id, new_imms)
     res_body = update_response.json()
 
-    assert update_response.status_code == 500
+    assert update_response.status_code == 422
     assert res_body["resourceType"] == "OperationOutcome"
     assert res_body['issue'][0]['diagnostics'] == f"The provided identifier: {identifier} is duplicated"
 
