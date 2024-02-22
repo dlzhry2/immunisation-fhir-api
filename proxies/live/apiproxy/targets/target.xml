@@ -1,28 +1,33 @@
 <TargetEndpoint name="immunisation-fhir-api-target">
   <PreFlow>
     <Request>
-        <Step>
-            <Name>OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3</Name>
-        </Step>
-        <Step>
-            <Name>FlowCallout.ApplyRateLimiting</Name>
-        </Step>
+      <Step>
+        <Name>OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3</Name>
+      </Step>
+      <Step>
+        <Name>FlowCallout.ApplyRateLimiting</Name>
+      </Step>
+      <Step>
+        <Name>AssignMessage.AddAuthorizationHeaders</Name>
+      </Step>
     </Request>
   </PreFlow>
-    <FaultRules>
-      <FaultRule name="401_invalid_token">
-          <Condition>oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.fault.cause == "Invalid access token"</Condition>
-          <Step>
-              <Name>AssignMessage.InvalidAccessToken</Name>
-          </Step>
-      </FaultRule>
-      <FaultRule name="403_invalid_permissions">
-          <Condition>(oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.fault.cause != "Invalid access token") and (oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.failed == true)</Condition>
-          <Step>
-              <Name>AssignMessage.PermissionsError</Name>
-          </Step>
-      </FaultRule>
-    </FaultRules>
+  <FaultRules>
+    <FaultRule name="401_invalid_token">
+      <Condition>oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.fault.cause == "Invalid access token"</Condition>
+      <Step>
+        <Name>AssignMessage.InvalidAccessToken</Name>
+      </Step>
+    </FaultRule>
+    <FaultRule name="403_invalid_permissions">
+      <Condition>(oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.fault.cause != "Invalid access token") and
+        (oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.failed == true)
+      </Condition>
+      <Step>
+        <Name>AssignMessage.PermissionsError</Name>
+      </Step>
+    </FaultRule>
+  </FaultRules>
   <HTTPTargetConnection>
     <URL>{{ DOMAIN_ENDPOINT }}</URL>
     <SSLInfo>
@@ -30,7 +35,7 @@
       <ClientAuthEnabled>true</ClientAuthEnabled>
       <KeyStore>ref://imms-client</KeyStore>
       <KeyAlias>cert</KeyAlias>
-  </SSLInfo>
+    </SSLInfo>
     <Properties>
       <Property name="supports.http10">true</Property>
       <Property name="request.retain.headers">User-Agent,Referer,Accept-Language</Property>

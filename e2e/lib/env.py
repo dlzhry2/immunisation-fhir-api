@@ -3,7 +3,7 @@ import os
 import subprocess
 
 from .apigee import ApigeeEnv
-from .authentication import AppRestrictedConfig
+from .authentication import AppRestrictedCredentials
 from .cache import Cache
 
 """use functions in this module to get configs that can be read from environment variables or external processes"""
@@ -39,18 +39,18 @@ def get_apigee_access_token(username: str = None):
             res = subprocess.run(["get_token", "-u", username], env=env, stdout=subprocess.PIPE, text=True)
             return res.stdout.strip()
         except FileNotFoundError:
-            logging.error("Make sure you install apigee's get_token utility and make sure it's in your PATH. "
-                          "Follow: https://docs.apigee.com/api-platform/system-administration/using-gettoken")
+            raise RuntimeError("Make sure you install apigee's get_token utility and make sure it's in your PATH. "
+                               "Follow: https://docs.apigee.com/api-platform/system-administration/using-gettoken")
 
 
-def get_default_app_restricted() -> AppRestrictedConfig:
+def get_default_app_restricted_credentials() -> AppRestrictedCredentials:
     client_id = os.getenv("DEFAULT_CLIENT_ID")
-    kid = os.getenv("DEFAULT_KID")
+    kid = os.getenv("DEFAULT_APP_ID")
     if not client_id or not kid:
-        logging.error('Both "DEFAULT_CLIENT_ID" and "DEFAULT_KID" are required')
+        raise RuntimeError('Both "DEFAULT_CLIENT_ID" and "DEFAULT_APP_ID" are required')
     private_key = get_private_key()
 
-    return AppRestrictedConfig(client_id=client_id, kid=kid, private_key_content=private_key)
+    return AppRestrictedCredentials(client_id=client_id, kid=kid, private_key_content=private_key)
 
 
 def get_private_key(file_path: str = None) -> str:

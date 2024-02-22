@@ -29,7 +29,7 @@ class AuthType(str, Enum):
 
 
 @dataclass
-class AppRestrictedConfig:
+class AppRestrictedCredentials:
     client_id: str
     kid: str
     private_key_content: str
@@ -37,6 +37,28 @@ class AppRestrictedConfig:
 
 
 class JwkKeyPair:
+    private_key: str
+    public_key: str
+    key_id: str
+
+    def __init__(self, key_id: str):
+        self.key_id = key_id
+        with open("/Users/jalal/projects/apim/immunisation-fhir-api/e2e/.keys/immunisation-fhir-api-local.key",
+                  "r") as private_key:
+            self.private_key = private_key.read()
+        with open("/Users/jalal/projects/apim/immunisation-fhir-api/e2e/.keys/immunisation-fhir-api-local.key.pub",
+                  "r") as public_key:
+            self.public_key = public_key.read()
+
+    def make_jwk(self) -> dict:
+        new_key = jwk.dumps(self.public_key, kty="RSA", crv_or_size=4096, alg="RS512")
+        new_key["kid"] = self.key_id
+        new_key["use"] = "sig"
+
+        return new_key
+
+
+class JwkKeyPair2:
     private_key: bytes
     public_key: bytes
     key_id: str
@@ -87,7 +109,7 @@ def read_key_pair(key_id: str) -> JwkKeyPair:
 
 
 def make_key_pair(key_id: str, key_size=4096) -> JwkKeyPair:
-    key_pair = JwkKeyPair()
+    key_pair = JwkKeyPair(key_id)
     key_pair.key_id = key_id
 
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
@@ -107,7 +129,7 @@ def make_key_pair(key_id: str, key_size=4096) -> JwkKeyPair:
 
 
 class AppRestrictedAuthentication:
-    def __init__(self, auth_url: str, config: AppRestrictedConfig):
+    def __init__(self, auth_url: str, config: AppRestrictedCredentials):
         self.expiry = config.expiry_seconds
         self.private_key = config.private_key_content
         self.client_id = config.client_id
