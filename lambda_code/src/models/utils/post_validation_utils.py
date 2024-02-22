@@ -40,22 +40,50 @@ class PostValidation:
 
     @staticmethod
     def check_mandation_requirements_met(
-        field_value, field_location, vaccine_type, mandation_key
+        field_value,
+        field_location,
+        mandation: str = None,
+        vaccine_type: str = None,
+        mandation_key: str = None,
+        bespoke_mandatory_error_message: str = None,
+        bespoke_not_applicable_error_message: str = None,
     ):
         """
         Check that the field_value meets the mandation requirements (if field_value can't be found
-        then the argument should be given as None)
+        then this argument should be given as None).
+
+        If mandation is not yet known, pass the mandation_key and vaccine_type instead to allow a
+        lookup.
+
+        Generic mandatory and not-applicable error messages will be used if the appropriate optional
+        arguments are not given.
         """
-        mandation = vaccine_type_applicable_validations[mandation_key][vaccine_type]
 
-        if field_value is None:
-            if mandation == Mandation.mandatory:
-                raise MandatoryError(f"{field_location} is a mandatory field")
+        # Determine and set the mandation and appropriate error messages
+        mandation = (
+            mandation
+            if mandation
+            else vaccine_type_applicable_validations[mandation_key][vaccine_type]
+        )
 
-        if mandation == Mandation.not_applicable:
-            raise NotApplicableError(
-                f"{field_location} must not be provided for this vaccine type"
-            )
+        mandatory_error_message = (
+            bespoke_mandatory_error_message
+            if bespoke_mandatory_error_message
+            else f"{field_location} is a mandatory field"
+        )
+
+        not_applicable_error_message = (
+            bespoke_not_applicable_error_message
+            if bespoke_not_applicable_error_message
+            else f"{field_location} must not be provided for this vaccine type"
+        )
+
+        # Raise error messages where applicable
+        if field_value is None and mandation == Mandation.mandatory:
+            raise MandatoryError(mandatory_error_message)
+
+        if field_value and mandation == Mandation.not_applicable:
+            raise NotApplicableError(not_applicable_error_message)
 
     @staticmethod
     def get_generic_field_value(values, key, index=None, attribute=None):
@@ -67,9 +95,9 @@ class PostValidation:
         of another field.
         """
         try:
-            obj = values[key][index] if index is not None else values[key]
+            obj = values[key] if index is None else values[key][index]
             field_value = obj if attribute is None else get_deep_attr(obj, attribute)
-        except (KeyError, IndexError, AttributeError):
+        except (KeyError, IndexError, AttributeError, TypeError):
             field_value = None
 
         return field_value

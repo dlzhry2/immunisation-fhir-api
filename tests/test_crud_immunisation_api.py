@@ -401,7 +401,7 @@ def test_get_s_flag_patient(
         assert retrieved_get_imms_result.status_code == 200
     retrieved_get_imms = retrieved_get_imms_result.json()
 
-    sample_disease_code = "COVID-19"
+    sample_disease_code = "COVID19"
     retrieved_search_imms_result = imms_api.search_immunizations(
         nhs_number, sample_disease_code
     )

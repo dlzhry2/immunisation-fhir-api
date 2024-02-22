@@ -7,7 +7,7 @@ apply:
 	terraform apply -auto-approve
 
 delete-table:
-	aws dynamodb delete-table --no-cli-pager --table-name local-imms-events --region us-east-1 --endpoint-url http://localhost:4566 || true
+	aws dynamodb delete-table --no-cli-pager --table-name imms-default-imms-events --region us-east-1 --endpoint-url http://localhost:4566 || true
 gen_data:
 	python generate_data.py
 seed: delete-table apply gen_data

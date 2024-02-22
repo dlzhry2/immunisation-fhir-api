@@ -1,5 +1,7 @@
 """NHS Validator methods"""
+
 from datetime import datetime, timezone
+from mappings import VaccineTypes
 from models.constants import Constants
 
 
@@ -388,7 +390,7 @@ class NHSPractitionerValidators:
         disease_type, performing_professional_forename, performing_professional_surname
     ):
         """Validate performing professional forename"""
-        excluded_disease_types = ("HPV", "MMR")
+        excluded_disease_types = (VaccineTypes.hpv, VaccineTypes.mmr)
         if disease_type in excluded_disease_types and performing_professional_forename:
             raise ValueError(
                 " ".join(
@@ -414,7 +416,7 @@ class NHSPractitionerValidators:
         disease_type, performing_professional_surname, performing_professional_forename
     ):
         """Validate performing professional surname"""
-        excluded_disease_types = ("HPV", "MMR")
+        excluded_disease_types = (VaccineTypes.hpv, VaccineTypes.mmr)
         if disease_type in excluded_disease_types and performing_professional_surname:
             raise ValueError(
                 " ".join(

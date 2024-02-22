@@ -1,47 +1,63 @@
 # immunisation-fhir-api lambda
 
-## Setup for local dev
+Paths are relative to this directory, `lambda_code`.
 
-The tests are in a separate module so in order for them to see each other we need to let the IDE know about the relationship.
+## Install dependencies
 
-### IntelliJ
-
-- Open the root repo directory in IntelliJ.
-- Set up the SDK as you see fit.
-    - One option is direnv and pyenv with an `.envrc` of `layout pyenv 3.8.10`.
-      Then add an existing virtualenv SDK in the project settings for `.direnv/python-3.8.10/bin/python`  
-      You likely want separate environments for the root and for `lambda_code`.
-- Add a new module of the `lambda_code` directory to the Project Structure, using the SDK created above. Add the `src` and `tests` directories as sources.
+```shell
+pip install poetry
+poetry install
+pip install terraform-local
+```
 
 
-### VS Code
+## Run locally
 
-- Open the root repo directory in VS Code.
-- Copy `.vscode/settings.json.default` to `.vscode/settings.json`, or integrate the contents with your existing file.
-- Run the `Python: Configure Tests` command and when it asks for a directory give it `lambda_code`.
+### Start LocalStack
+
+```shell
+cd ../devtools
+docker compose -f localstack-compose.yml up
+```
+
+LocalStack uses port 4566 so make sure it's free.
 
 
-### Running Test
+### Create table
 
-- Open `lambda_code` directory
-- Install dependencies by running this command `pip install -r requirements.txt`
-- Run tests by `make test`
-- If you want to run specific test, you can try testing one single class or single function like 
+```shell
+cd ../terraform
+tflocal init
+tflocal apply -target=aws_dynamodb_table.test-dynamodb-table
+```
+
+### Run endpoint
+
+Rename `.env.default` to `.env` or merge it with your existing file. 
+Rename `.envrc.default` to `.envrc` or merge it with your existing file. `direnv` will use them automatically in the terminal.
+
+These are kept separate so other tools can use `.env` if wanted.
+
+See `.env` for an explanation of the variables.
+
+To run from the terminal: 
+```shell
+cd src
+python get_imms_handler.py 123
+```
+
+If not using `.envrc` then:
+```shell
+cd src
+AWS_PROFILE=apim-dev DYNAMODB_TABLE_NAME=imms-default-imms-events IMMUNIZATION_ENV=local python get_imms_handler.py 123
+```
+
+You should get a 404 as the resource doesn't exist.
+
+
+### Running tests
+
+- `make test`
+- If you want to run specific test, you can try testing one single class or single function with 
   `python -m unittest tests.test_fhir_controller.TestSearchImmunizations        `
   `python -m unittest tests.test_fhir_controller.TestSearchImmunizations.test_search_immunizations`
-
-## Troubleshooting
-
-### Tests fail with `No products grant access to proxy [...]`
-
-Products are handled by the infra template and get cleaned up periodically.
-Running `/azp run` on the PR should fix it.
-
-
-### Terraform unable to create Cloudwatch Log Group
-
-`Error: creating CloudWatch Logs Log Group (/aws/lambda/imms-pr-66_create_imms): operation error CloudWatch Logs: CreateLogGroup, https response error StatusCode: 400, RequestID: aa314084-220d-44d6-91ac-f6d8b76b428d, ResourceAlreadyExistsException: The specified log group already exists`
-
-The switch from a Lambda package to a Docker image breaks the Log Group creation.
-Seemingly because the log groups were not previously part of the state.
-Fix by manually deleting the log groups for your workspace before applying the Terraform.

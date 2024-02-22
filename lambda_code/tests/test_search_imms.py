@@ -1,10 +1,6 @@
 import json
-import os
-import sys
 import unittest
 from unittest.mock import create_autospec
-
-sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/../src")
 
 from search_imms_handler import search_imms
 from fhir_controller import FhirController
