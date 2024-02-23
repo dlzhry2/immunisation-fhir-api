@@ -40,22 +40,65 @@ class JwkKeyPair:
     private_key: str
     public_key: str
     key_id: str
+    _encoded_n: str = None
 
-    def __init__(self, key_id: str):
+    def __init__(self, key_id: str, private_key_path: str = None, public_key_path: str = None):
         self.key_id = key_id
-        with open("/Users/jalal/projects/apim/immunisation-fhir-api/e2e/.keys/immunisation-fhir-api-local.key",
-                  "r") as private_key:
-            self.private_key = private_key.read()
-        with open("/Users/jalal/projects/apim/immunisation-fhir-api/e2e/.keys/immunisation-fhir-api-local.key.pub",
-                  "r") as public_key:
-            self.public_key = public_key.read()
+        if private_key_path is None and public_key_path is None:
+            self.private_key, self.public_key, self._encoded_n = make_key_pair_n()
 
-    def make_jwk(self) -> dict:
+        else:
+            with open(private_key_path, "r") as private_key:
+                self.private_key = private_key.read()
+            with open(public_key_path, "r") as public_key:
+                self.public_key = public_key.read()
+        # with open("/Users/jalal/projects/apim/immunisation-fhir-api/e2e/.keys/immunisation-fhir-api-local.key",
+        #           "r") as private_key:
+        #     self.private_key = private_key.read()
+        # with open("/Users/jalal/projects/apim/immunisation-fhir-api/e2e/.keys/immunisation-fhir-api-local.key.pub",
+        #           "r") as public_key:
+        #     self.public_key = public_key.read()
+
+    def make_jwk2(self) -> dict:
         new_key = jwk.dumps(self.public_key, kty="RSA", crv_or_size=4096, alg="RS512")
         new_key["kid"] = self.key_id
         new_key["use"] = "sig"
 
         return new_key
+
+    def make_jwk(self) -> dict:
+        if not self._encoded_n:
+            pub_key = serialization.load_pem_public_key(self.public_key.encode(), backend=default_backend())
+            n = pub_key.public_numbers().n
+            n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
+            self._encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
+
+        return {
+            "kty": "RSA",
+            "n": self._encoded_n,
+            "e": "AQAB",
+            "alg": "RS512",
+            "kid": self.key_id
+        }
+
+
+def make_key_pair_n(key_size=4096) -> (str, str, str):
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
+
+    prv = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption())
+
+    pub = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.PKCS1)
+
+    n = private_key.public_key().public_numbers().n
+    n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
+    n_encoded = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
+
+    return prv.decode(), pub.decode(), n_encoded
 
 
 class JwkKeyPair2:
@@ -75,15 +118,6 @@ class JwkKeyPair2:
         return {
             "kty": "RSA",
             "n": encoded_n,
-            "e": "AQAB",
-            "alg": "RS512",
-            "kid": self.key_id
-        }
-
-    def make_jwks2(self):
-        return {
-            "kty": "RSA",
-            "n": self._encoded_n,
             "e": "AQAB",
             "alg": "RS512",
             "kid": self.key_id

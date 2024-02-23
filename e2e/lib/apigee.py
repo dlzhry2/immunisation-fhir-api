@@ -47,6 +47,9 @@ class ApigeeApp:
     scopes: List[str] = field(default_factory=lambda: [])
     status: str = "approved"
 
+    def add_product(self, product_name: str):
+        self.apiProducts.append(product_name)
+
     def add_attribute(self, k: str, v: str):
         self.attributes.append({"name": k, "value": v})
 
@@ -148,7 +151,6 @@ class ApigeeService:
     def add_proxy_to_product(self, product_name: str, proxy_name: str) -> dict:
         product = self.get_product(product_name)
         product["proxies"].append(proxy_name)
-        # product["apiResources"].append(base_path)
 
         resource = f"apiproducts/{product_name}"
         return self._update(resource, product)

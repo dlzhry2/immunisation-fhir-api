@@ -53,13 +53,22 @@ def get_default_app_restricted_credentials() -> AppRestrictedCredentials:
     return AppRestrictedCredentials(client_id=client_id, kid=kid, private_key_content=private_key)
 
 
+def get_private_key_path() -> str:
+    if not os.getenv("APP_RESTRICTED_PRIVATE_KEY_PATH"):
+        raise RuntimeError('"APP_RESTRICTED_PRIVATE_KEY_PATH" is required')
+    return os.getenv("APP_RESTRICTED_PRIVATE_KEY_PATH")
+
+
+def get_public_key_path() -> str:
+    if not os.getenv("APP_RESTRICTED_PUBLIC_KEY_PATH"):
+        raise RuntimeError('"APP_RESTRICTED_PUBLIC_KEY_PATH" is required')
+    return os.getenv("APP_RESTRICTED_PUBLIC_KEY_PATH")
+
+
 def get_private_key(file_path: str = None) -> str:
-    if file_path := file_path or os.getenv("APP_RESTRICTED_PRIVATE_KEY_PATH"):
-        with open(file_path, "r") as f:
-            return f.read()
-    else:
-        raise RuntimeError('APP_RESTRICTED_PRIVATE_KEY_PATH is required. It should be the absolute path to your '
-                           'application-restricted private-key')
+    file_path = file_path if file_path else get_private_key_path()
+    with open(file_path, "r") as f:
+        return f.read()
 
 
 def get_auth_url(apigee_env: ApigeeEnv = None) -> str:
