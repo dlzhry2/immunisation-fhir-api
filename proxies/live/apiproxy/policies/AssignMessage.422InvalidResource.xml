@@ -9,6 +9,6 @@
     <Javascript name="Javascript_uuid">
         <ResourceURL>jsc://DynamicPayload.js</ResourceURL>
     </Javascript>
-    <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+    <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
     <AssignTo createNew="false" transport="http" type="request"/>
 </AssignMessage>

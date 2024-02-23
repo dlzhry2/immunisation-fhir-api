@@ -1,4 +1,4 @@
-<AssignMessage async="false" continueOnError="false" enabled="true" name="AssignMessage.500InternalServreError">
+<AssignMessage async="false" continueOnError="false" enabled="true" name="AssignMessage.500InternalServerError">
   <StatusCode>500</StatusCode>
   <Set>
     <Payload contentType="application/json">
@@ -6,8 +6,8 @@
     </Payload>
   </Set>
   <Javascript name="Javascript_uuid">
-    <ResourceURL>jsc://uuid.js</ResourceURL>
+    <ResourceURL>jsc://DynamicPayload.js</ResourceURL>
   </Javascript>
-  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+  <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
   <AssignTo createNew="false" transport="http" type="request"/>
 </AssignMessage>
