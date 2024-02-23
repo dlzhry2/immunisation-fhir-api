@@ -76,7 +76,6 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     assert result.status_code == 204
 
 
-@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",
@@ -155,9 +154,9 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
     assert res_body["resourceType"] == "OperationOutcome"
 
     # DELETE BOTH IMMUNIZATIONS
-    delete_imms_response = imms_api.delete_immunization(imms['id'])
+    delete_imms_response = imms_api.delete_immunization(parse_location(imms_response.headers["Location"]))
     assert delete_imms_response.status_code == 204
-    delete_imms_2_response = imms_api.delete_immunization(imms_2['id'])
+    delete_imms_2_response = imms_api.delete_immunization(parse_location(imms_2_response.headers["Location"]))
     assert delete_imms_2_response.status_code == 204
 
 
