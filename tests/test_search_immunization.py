@@ -14,7 +14,7 @@ def create_immunization(imms_id, nhs_number, disease_code):
     imms["id"] = imms_id
     imms["contained"][1]["identifier"][0]["value"] = nhs_number
     imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = disease_code
-
+    imms['identifier'][0]['value'] = str(uuid.uuid4())
     return imms
 
 
