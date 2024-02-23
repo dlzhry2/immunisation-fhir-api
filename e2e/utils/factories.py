@@ -5,8 +5,7 @@ import uuid
 from lib.apigee import ApigeeService, ApigeeConfig, ApigeeApp, ApigeeProduct
 from lib.authentication import AppRestrictedCredentials, AppRestrictedAuthentication, JwkKeyPair
 from lib.env import get_apigee_access_token, get_auth_url, get_apigee_username, get_apigee_env, \
-    get_default_app_restricted_credentials, get_proxy_name, upload_jwks_to_public_s3, get_public_bucket_name, \
-    get_private_key_path
+    get_default_app_restricted_credentials, get_proxy_name, upload_jwks_to_public_s3, get_public_bucket_name
 
 JWKS_PATH = f"{os.getcwd()}/.well-known"
 PRIVATE_KEY_PATH = f"{os.getcwd()}/.keys"
@@ -47,9 +46,9 @@ def make_app_restricted_app(apigee: ApigeeService = None,
     else:
         key_id = get_proxy_name()
 
-        # jwks_pair = JwkKeyPair(key_id)
-        jwks_pair = JwkKeyPair(key_id, private_key_path=get_private_key_path(),
-                               public_key_path="/Users/jalal/projects/apim/immunisation-fhir-api/e2e/.keys/immunisation-fhir-api-local.key.pub")
+        jwks_pair = JwkKeyPair(key_id)
+        # jwks_pair = JwkKeyPair(key_id, private_key_path=get_private_key_path(),
+        #                        public_key_path="/Users/jalal/projects/apim/immunisation-fhir-api/e2e/.keys/immunisation-fhir-api-local.key.pub")
         jwks_file_path = _write_jwks_files(jwks_pair)
 
         jwks_s3_key = f"{os.getenv('USER')}/{key_id}.json"

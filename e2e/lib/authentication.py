@@ -1,5 +1,4 @@
 import base64
-import os
 import uuid
 from dataclasses import dataclass
 from enum import Enum
@@ -13,8 +12,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from lxml import html
-
-from .cache import Cache
 
 
 @dataclass
@@ -44,20 +41,14 @@ class JwkKeyPair:
 
     def __init__(self, key_id: str, private_key_path: str = None, public_key_path: str = None):
         self.key_id = key_id
+
         if private_key_path is None and public_key_path is None:
             self.private_key, self.public_key, self._encoded_n = make_key_pair_n()
-
         else:
             with open(private_key_path, "r") as private_key:
                 self.private_key = private_key.read()
             with open(public_key_path, "r") as public_key:
                 self.public_key = public_key.read()
-        # with open("/Users/jalal/projects/apim/immunisation-fhir-api/e2e/.keys/immunisation-fhir-api-local.key",
-        #           "r") as private_key:
-        #     self.private_key = private_key.read()
-        # with open("/Users/jalal/projects/apim/immunisation-fhir-api/e2e/.keys/immunisation-fhir-api-local.key.pub",
-        #           "r") as public_key:
-        #     self.public_key = public_key.read()
 
     def make_jwk2(self) -> dict:
         new_key = jwk.dumps(self.public_key, kty="RSA", crv_or_size=4096, alg="RS512")
@@ -83,83 +74,29 @@ class JwkKeyPair:
 
 
 def make_key_pair_n(key_size=4096) -> (str, str, str):
-    private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
+    # private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 
     prv = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.TraditionalOpenSSL,
         encryption_algorithm=serialization.NoEncryption())
 
+    # pub_key = private_key.public_key()
     pub = private_key.public_key().public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.PKCS1)
 
-    n = private_key.public_key().public_numbers().n
+    # n = private_key.public_key().public_numbers().n
+    # n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
+    # n_encoded = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
+
+    pub_key = serialization.load_pem_public_key(pub, backend=default_backend())
+    n = pub_key.public_numbers().n
     n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
     n_encoded = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
 
     return prv.decode(), pub.decode(), n_encoded
-
-
-class JwkKeyPair2:
-    private_key: bytes
-    public_key: bytes
-    key_id: str
-    _n: int
-    _encoded_n: str
-
-    def make_jwk(self) -> dict:
-        # n_bytes = self._n.to_bytes((self._n.bit_length() + 7) // 8, byteorder='big')
-        # encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
-        pub_key = serialization.load_pem_public_key(self.public_key, backend=default_backend())
-        n = pub_key.public_numbers().n
-        n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
-        encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
-        return {
-            "kty": "RSA",
-            "n": encoded_n,
-            "e": "AQAB",
-            "alg": "RS512",
-            "kid": self.key_id
-        }
-
-
-def read_key_pair(key_id: str) -> JwkKeyPair:
-    key_pair = JwkKeyPair()
-    key_pair.key_id = key_id
-    with open(f"{os.getcwd()}/.keys/{key_id}.key", "r") as prv:
-        key_pair.private_key = prv.read()
-
-    with open(f"{os.getcwd()}/.keys/{key_id}.key.pub", "r") as pub:
-        key_pair.public_key = pub.read()
-
-        pub_key = serialization.load_pem_public_key(bytes(pub.read(), 'ascii'), backend=default_backend())
-        n = pub_key.public_numbers().n
-        n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
-        encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
-        key_pair._encoded_n = encoded_n
-
-    return key_pair
-
-
-def make_key_pair(key_id: str, key_size=4096) -> JwkKeyPair:
-    key_pair = JwkKeyPair(key_id)
-    key_pair.key_id = key_id
-
-    private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
-
-    key_pair.private_key = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption())
-
-    key_pair.public_key = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo)
-
-    key_pair._n = private_key.public_key().public_numbers().n
-
-    return key_pair
 
 
 class AppRestrictedAuthentication:
@@ -266,77 +203,3 @@ class IntNhsLoginMockAuth:
         )
 
         return token_resp.json()["access_token"]
-
-
-class KeyManager:
-    _key_size = 4096
-
-    def __init__(self, key_id: str, cache: Cache = None):
-        self.key_id = key_id
-        if cache := cache or Cache(cache_id=key_id):
-            self.cache = cache
-
-    def get_jwks(self, pub: bytes) -> dict:
-        new_key = jwk.dumps(pub.decode("ascii"), kty="RSA", crv_or_size=4096, alg="RS512")
-        new_key["kid"] = self.key_id
-        new_key["use"] = "sig"
-        return {
-            "keys": [new_key]
-        }
-        # pub_key = serialization.load_pem_public_key(pub, backend="SHA512")
-        # n = pub_key.public_numbers().n
-        # n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
-        # encoded_n = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
-        # return {
-        #     "keys": [
-        #         {
-        #             "kty": "RSA",
-        #             "n": encoded_n,
-        #             "e": "AQAB",
-        #             "alg": "RS512",
-        #             "kid": self.key_id,
-        #             "use": "sig"
-        #         }
-        #     ]
-        # }
-
-    def gen_private_public_pem(self) -> (bytes, bytes):
-        # pub = self.cache.get(f"{self.key_id}.pub")
-        # prv = self.cache.get(f"{self.key_id}.pem")
-        # if pub and prv:
-        #     logging.debug("Cache: using cached value for both private and public key")
-        #     return prv.encode(), pub.encode()
-
-        private_key = rsa.generate_private_key(
-            backend="SHA512",
-            public_exponent=65537,
-            key_size=self._key_size
-        )
-        private_key_pem = private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption())
-
-        public_key_pem = private_key.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo)
-
-        # self.cache.put(f"{self.key_id}.pub", public_key_pem.decode())
-        # self.cache.put(f"{self.key_id}.pem", private_key_pem.decode())
-
-        return private_key_pem, public_key_pem
-
-    def write(self, private, public):
-        private_key_file = open(f"{self.key_id}.pem", "w")
-        private_key_file.write(private.decode())
-        private_key_file.close()
-
-        public_key_file = open(f"{self.key_id}.pub", "w")
-        public_key_file.write(public.decode())
-        public_key_file.close()
-
-
-if __name__ == '__main__':
-    km = KeyManager("mykey")
-    (_prv, _pub) = km.gen_private_public_pem()
-    km.write(_prv, _pub)
