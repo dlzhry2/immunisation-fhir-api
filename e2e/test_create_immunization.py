@@ -3,7 +3,6 @@ from utils.resource import create_an_imms_obj
 
 
 class TestCreateImmunization(ImmunizationBaseTest):
-
     def test_create_imms(self):
         """it should create a FHIR Immunization resource"""
         for imms_api in self.imms_apis:
@@ -12,10 +11,10 @@ class TestCreateImmunization(ImmunizationBaseTest):
                 imms = create_an_imms_obj()
 
                 # When
-                result = self.app_res_imms_api.create_immunization(imms)
+                result = imms_api.create_immunization(imms)
 
                 # Then
-                self.assertEqual(result.status_code, 201 , result.text)
+                self.assertEqual(result.status_code, 201, result.text)
                 self.assertEqual(result.text, "")
                 self.assertTrue("Location" in result.headers)
 
@@ -27,4 +26,3 @@ class TestCreateImmunization(ImmunizationBaseTest):
         result = self.app_res_imms_api.create_immunization(imms)
 
         self.assert_operation_outcome(result, 400, bad_nhs_number)
-

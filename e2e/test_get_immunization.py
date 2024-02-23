@@ -15,7 +15,7 @@ class TestGetImmunization(ImmunizationBaseTest):
                 imms_id = parse_location(response.headers["Location"])
 
                 # When
-                response = self.app_res_imms_api.get_immunization_by_id(imms_id)
+                response = imms_api.get_immunization_by_id(imms_id)
 
                 # Then
                 self.assertEqual(response.status_code, 200, response.text)

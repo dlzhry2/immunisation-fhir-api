@@ -2,7 +2,7 @@ import logging
 import uuid
 
 from utils.base_test import ImmunizationBaseTest
-from utils.constants import valid_nhs_number1
+from utils.constants import valid_nhs_number1, valid_nhs_number2
 from utils.resource import create_an_imms_obj
 
 flu_code = "mockFLUcode1"
@@ -27,6 +27,26 @@ class TestSearchImmunization(ImmunizationBaseTest):
         # store it in the class field so, we can clean it up after test
         self.stored_imms = list(resources)
 
+    def test_search_imms(self):
+        """it should search records given nhs-number and disease-code"""
+        for imms_api in self.imms_apis:
+            with self.subTest(imms_api):
+                # Given two patients each with one mmr
+                mmr_p1 = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, mmr_code)
+                mmr_p2 = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, flu_code)
+                self.store_records(mmr_p1, mmr_p2)
+
+                # When
+                response = self.app_res_imms_api.search_immunizations(valid_nhs_number1, "MMR")
+                # Then
+                self.assertEqual(response.status_code, 200, response.text)
+                body = response.json()
+                self.assertEqual(body["resourceType"], "Bundle")
+
+                resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
+                self.assertEqual(len(resource_ids), 1)
+                self.assertEqual(resource_ids[0], mmr_p1["id"])
+
     def test_search_patient_multiple_diseases(self):
         # Given patient has two vaccines
         mmr = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, mmr_code)
@@ -39,7 +59,6 @@ class TestSearchImmunization(ImmunizationBaseTest):
         # Then
         self.assertEqual(response.status_code, 200, response.text)
         body = response.json()
-        self.assertEqual(body["resourceType"], "Bundle")
 
         # make sure the match is the one we are expecting
         resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
