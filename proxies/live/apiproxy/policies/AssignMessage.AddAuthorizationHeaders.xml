@@ -4,7 +4,7 @@
     <Set>
         <Headers>
             <Header name="AuthenticationType">ApplicationRestricted</Header>
-            <Header name="Permissions">immunization:read,immunization:create,immunization:search,immunization:update</Header>
+            <Header name="Permissions">immunization:read,immunization:create,immunization:search,immunization:delete,immunization:update</Header>
         </Headers>
     </Set>
     <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>

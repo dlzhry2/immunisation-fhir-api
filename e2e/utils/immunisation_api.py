@@ -4,7 +4,8 @@ from typing import Optional
 
 import requests
 
-from resource_utils import create_an_imms_obj
+from lib.authentication import AuthType
+from .resource import create_an_imms_obj
 
 
 def parse_location(location) -> Optional[str]:
@@ -18,7 +19,7 @@ def parse_location(location) -> Optional[str]:
 
 class ImmunisationApi:
 
-    def __init__(self, url, token):
+    def __init__(self, url, token, auth_type: AuthType = AuthType.APP_RESTRICTED):
         self.url = url
         self.token = token
         self.headers = {
@@ -26,12 +27,15 @@ class ImmunisationApi:
             "Content-Type": "application/fhir+json",
             "Accept": "application/fhir+json",
         }
+        self.auth_type = auth_type
+
+    def __str__(self):
+        return f"ImmunizationApi: AuthType: {self.auth_type.APP_RESTRICTED.value}"
 
     def get_immunization_by_id(self, event_id):
         return requests.get(f"{self.url}/Immunization/{event_id}", headers=self._update_headers())
 
     def create_immunization(self, imms):
-        print(self._update_headers())
         return requests.post(f"{self.url}/Immunization", headers=self._update_headers(), json=imms)
 
     def update_immunization(self, imms_id, imms):

@@ -1,12 +1,13 @@
+import base64
 import json
 import os
 import re
 import uuid
-from typing import Optional
 from decimal import Decimal
+from typing import Optional
+from urllib.parse import parse_qs
 
 import boto3
-import base64
 from botocore.config import Config
 
 from authorization import Authorization, EndpointOperation, UnknownPermission
@@ -23,7 +24,6 @@ from models.errors import (
     ValidationError,
 )
 from pds_service import PdsService, Authenticator
-from urllib.parse import parse_qs
 
 
 def make_controller(
@@ -220,6 +220,7 @@ class FhirController:
         except UnauthorizedError as e:
             return self.create_response(403, e.to_operation_outcome())
         except UnknownPermission:
+            # TODO: I think when AuthenticationType is not present, then we don't get below message. Double check again
             id_error = create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
