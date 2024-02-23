@@ -4,7 +4,6 @@ import subprocess
 
 from .apigee import ApigeeEnv
 from .authentication import AppRestrictedCredentials
-from .cache import Cache
 
 """use functions in this module to get configs that can be read from environment variables or external processes"""
 
@@ -96,15 +95,6 @@ def get_service_base_path(apigee_env: ApigeeEnv = None) -> str:
     return f"https://{apigee_env.value}.api.service.nhs.uk/{base_path}"
 
 
-def get_cache(cache_id: str = None) -> Cache:
-    """We use a combination of the proxy name and USER for cache id by default.
-    This way cache only expires when you open a new PR
-    NOTE: choose a random value makes the cache to invalidate immediately. Useful for debugging
-    """
-    if cache_id := cache_id or f"{get_proxy_name()}_{os.getenv('USER')}":
-        return Cache(cache_id=cache_id)
-
-
 def get_public_bucket_name() -> str:
     if not os.getenv("PUBLIC_BUCKET_NAME"):
         raise RuntimeError('"PUBLIC_BUCKET_NAME" is required')
@@ -134,14 +124,3 @@ def upload_jwks_to_public_s3(bucket_name: str, key: str, file_path: str) -> str:
         raise RuntimeError(f"failed to upload file: {file_path} to the bucket {bucket_url}\n{e}")
 
     return f"https://{bucket_name}.s3.eu-west-2.amazonaws.com/{key}"
-
-
-def main():
-    # a = get_apigee_access_token("jalal.hosseini1@nhs.net")
-    p = "/Users/jalal/projects/apim/immunisation-fhir-api/e2e/services/mykey.pem"
-    bn = "immunization-fhir-api-public-key-host"
-    upload_jwks_to_public_s3(bn, "jalal2", p)
-
-
-if __name__ == '__main__':
-    main()

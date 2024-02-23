@@ -17,6 +17,3 @@ file = immunisation-fhir-api-local
 key-pair:
 	openssl genrsa -out .keys/$(file).key 4096
 	openssl rsa -in .keys/$(file).key -pubout -outform PEM -out .keys/$(file).key.pub
-
-
-

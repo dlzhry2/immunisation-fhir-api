@@ -50,14 +50,14 @@ class JwkKeyPair:
             with open(public_key_path, "r") as public_key:
                 self.public_key = public_key.read()
 
-    def make_jwk2(self) -> dict:
+    def make_jwk(self) -> dict:
         new_key = jwk.dumps(self.public_key, kty="RSA", crv_or_size=4096, alg="RS512")
         new_key["kid"] = self.key_id
         new_key["use"] = "sig"
 
         return new_key
 
-    def make_jwk(self) -> dict:
+    def make_jwk2(self) -> dict:
         if not self._encoded_n:
             pub_key = serialization.load_pem_public_key(self.public_key.encode(), backend=default_backend())
             n = pub_key.public_numbers().n
@@ -74,12 +74,13 @@ class JwkKeyPair:
 
 
 def make_key_pair_n(key_size=4096) -> (str, str, str):
+    # TODO: it's identity service cache causing issue.
     # private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 
     prv = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption())
 
     # pub_key = private_key.public_key()
@@ -91,8 +92,9 @@ def make_key_pair_n(key_size=4096) -> (str, str, str):
     # n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
     # n_encoded = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
 
-    pub_key = serialization.load_pem_public_key(pub, backend=default_backend())
-    n = pub_key.public_numbers().n
+    # pub_key = serialization.load_pem_public_key(pub, backend=default_backend())
+    # n = pub_key.public_numbers().n
+    n = private_key.public_key().public_numbers().n
     n_bytes = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big')
     n_encoded = base64.urlsafe_b64encode(n_bytes).decode('utf-8')
 
