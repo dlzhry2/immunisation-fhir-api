@@ -4,7 +4,7 @@
     <Set>
         <Payload contentType="application/json">
     {Javascript.dynamic_response}
-    </Payload>
+        </Payload>
     </Set>
     <Javascript name="Javascript_uuid">
         <ResourceURL>jsc://DynamicPayload.js</ResourceURL>

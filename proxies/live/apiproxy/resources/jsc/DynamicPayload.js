@@ -1,4 +1,4 @@
-var response = JSON.parse(context.getVariable("response.content"));
+var response = JSON.parse(context.getVariable("context.targetResponse"));
 
 var diagnosticsMessage = "";
 if (response.statusCode === 422) {
@@ -32,4 +32,4 @@ var dynamicPayload = {
     ]
 };
 
-context.setVariable("dynamicPayload", JSON.stringify(dynamicPayload));
+context.setVariable("context.targetResponse", JSON.stringify(dynamicPayload));
