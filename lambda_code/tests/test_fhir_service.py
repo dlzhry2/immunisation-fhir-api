@@ -1,16 +1,18 @@
+"""Tests for fhir_service.py"""
+
+import os
 import json
 import unittest
 from unittest.mock import create_autospec
 from fhir.resources.R4B.bundle import BundleEntry
 
-import os
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome, get_service_url
 from models.errors import (
     InvalidPatientId,
-    CoarseValidationError,
+    CustomValidationError,
     ResourceNotFoundError,
     InconsistentIdError,
 )
@@ -26,6 +28,8 @@ from .immunization_utils import (
 
 
 class TestGetImmunization(unittest.TestCase):
+    """Tests for FhirService.get_immunization_by_id"""
+
     def setUp(self):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
@@ -65,13 +69,15 @@ class TestGetImmunization(unittest.TestCase):
         """it should return a filtered Immunization when patient is restricted"""
         imms_id = "restricted_id"
         with open(
-            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/sample_immunization_event.json",
+            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/"
+            + "sample_immunization_event.json",
             "r",
             encoding="utf-8",
         ) as immunization_data_file:
             immunization_data = json.load(immunization_data_file)
         with open(
-            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json",
+            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/"
+            + "filtered_sample_immunization_event.json",
             "r",
             encoding="utf-8",
         ) as filtered_immunization_data_file:
@@ -88,6 +94,8 @@ class TestGetImmunization(unittest.TestCase):
 
 
 class TestCreateImmunization(unittest.TestCase):
+    """Tests for FhirService.create_immunization"""
+
     def setUp(self):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
@@ -95,6 +103,10 @@ class TestCreateImmunization(unittest.TestCase):
         self.fhir_service = FhirService(
             self.imms_repo, self.pds_service, self.validator
         )
+        # self.not_mock_validator = ImmunizationValidator
+        # self.not_mock_fhir_service = FhirService(
+        #    self.imms_repo, self.pds_service, self.not_mock_validator
+        # )
 
     def test_create_immunization(self):
         """it should create Immunization and validate it"""
@@ -132,10 +144,9 @@ class TestCreateImmunization(unittest.TestCase):
             ],
             Immunization,
         )
-        self.validator.validate.side_effect = validation_error
         expected_msg = str(validation_error)
 
-        with self.assertRaises(CoarseValidationError) as error:
+        with self.assertRaises(CustomValidationError) as error:
             # When
             self.fhir_service.create_immunization({})
 
@@ -160,6 +171,8 @@ class TestCreateImmunization(unittest.TestCase):
 
 
 class TestUpdateImmunization(unittest.TestCase):
+    """Tests for FhirService.update_immunization"""
+
     def setUp(self):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
@@ -181,7 +194,7 @@ class TestUpdateImmunization(unittest.TestCase):
         req_imms = create_an_immunization_dict(imms_id, nhs_number)
 
         # When
-        outcome, updated_imms = self.fhir_service.update_immunization(imms_id, req_imms)
+        outcome, _ = self.fhir_service.update_immunization(imms_id, req_imms)
 
         # Then
         self.assertEqual(outcome, UpdateOutcome.UPDATE)
@@ -208,7 +221,7 @@ class TestUpdateImmunization(unittest.TestCase):
         }
 
         # When
-        outcome, created_imms = self.fhir_service.update_immunization(imms_id, imms)
+        outcome, _ = self.fhir_service.update_immunization(imms_id, imms)
 
         # Then
         self.assertEqual(outcome, UpdateOutcome.CREATE)
@@ -231,7 +244,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.validator.validate.side_effect = validation_error
         expected_msg = str(validation_error)
 
-        with self.assertRaises(CoarseValidationError) as error:
+        with self.assertRaises(CustomValidationError) as error:
             # When
             self.fhir_service.update_immunization("an-id", imms)
 
@@ -297,6 +310,8 @@ class TestUpdateImmunization(unittest.TestCase):
 
 
 class TestDeleteImmunization(unittest.TestCase):
+    """Tests for FhirService.delete_immunization"""
+
     def setUp(self):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
@@ -321,6 +336,8 @@ class TestDeleteImmunization(unittest.TestCase):
 
 
 class TestSearchImmunizations(unittest.TestCase):
+    """Tests for FhirService.search_immunizations"""
+
     def setUp(self):
         self.imms_repo = create_autospec(ImmunizationRepository)
         self.pds_service = create_autospec(PdsService)
@@ -359,7 +376,8 @@ class TestSearchImmunizations(unittest.TestCase):
         nhs_number = "a-patient-id"
         disease_type = "a-disease-code"
         params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
-        # TODO: here we are assuming disease_type=disease_code this is because the mapping is not in place yet
+        # TODO: here we are assuming disease_type=disease_code this is because the mapping is not
+        # in place yet
         disease_code = disease_type
         # When
         _ = self.fhir_service.search_immunizations(nhs_number, disease_code, params)
@@ -394,3 +412,35 @@ class TestSearchImmunizations(unittest.TestCase):
         # Assert self link
         self.assertEqual(len(result.link), 1)  # Assert that there is only one link
         self.assertEqual(result.link[0].relation, "self")
+
+
+class NWTMPXXX(unittest.TestCase):
+    """Tests for NWTMPXXX"""
+
+    def setUp(self):
+        self.imms_repo = create_autospec(ImmunizationRepository)
+        self.pds_service = create_autospec(PdsService)
+
+    def test_post_validation_failed(self):
+        """it should throw exception if Immunization is not valid"""
+
+        imms = create_an_immunization_dict("1234567890")
+        imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "bad-code"
+
+        # validation_error = ValidationError(
+        #    [
+        #        ErrorWrapper(TypeError("bad type"), "/type"),
+        #    ],
+        #    Immunization,
+        # )
+        # self.validator.validate.side_effect = validation_error
+        # expected_msg = str("test")
+
+        # self.not_mock_fhir_service.create_immunization(imms)
+        fhir_service = FhirService(self.imms_repo, self.pds_service)
+        fhir_service.create_immunization(imms)
+
+        # Then
+        # self.assertEqual(error.exception.message, expected_msg)
+        # self.imms_repo.create_immunization.assert_not_called()
+        # self.pds_service.get_patient_details.assert_not_called()

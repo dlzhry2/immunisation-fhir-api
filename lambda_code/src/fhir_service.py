@@ -1,22 +1,24 @@
+import os
 from enum import Enum
 from typing import Optional
 
+from pydantic import ValidationError
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
 from fhir.resources.R4B.bundle import BundleEntry
 from fhir.resources.R4B.bundle import BundleLink
-from pydantic import ValidationError
-import os
 from fhir_repository import ImmunizationRepository
 from models.errors import (
     InvalidPatientId,
-    CoarseValidationError,
+    CustomValidationError,
     ResourceNotFoundError,
     InconsistentIdError,
 )
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
+
+from icecream import ic
 
 
 def get_service_url(
@@ -43,13 +45,11 @@ class FhirService:
         self,
         imms_repo: ImmunizationRepository,
         pds_service: PdsService,
-        pre_validator: ImmunizationValidator = ImmunizationValidator(
-            add_post_validators=False
-        ),
+        validator: ImmunizationValidator = ImmunizationValidator(),
     ):
         self.immunization_repo = imms_repo
         self.pds_service = pds_service
-        self.pre_validator = pre_validator
+        self.validator = ImmunizationValidator()
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunization_repo.get_immunization_by_id(imms_id)
@@ -66,25 +66,34 @@ class FhirService:
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
-            self.pre_validator.validate(immunization)
-        except ValidationError as error:
-            raise CoarseValidationError(message=str(error))
+            ic("about to validate")
+            self.validator.validate(immunization)
+            ic("validated")
+        except (ValidationError, ValueError) as error:
+            ic("WE HAVE AN ERROR")
+            raise CustomValidationError(message=str(error)) from error
+        except Exception as e:
+            ic(f"WE HAVE AN ERROR2: {e}")
+            raise CustomValidationError(message=str(e)) from e
+        print("carrying on")
         patient = self._validate_patient(immunization)
+
+        ic()
         imms = self.immunization_repo.create_immunization(immunization, patient)
 
         return Immunization.parse_obj(imms)
 
     def update_immunization(
         self, imms_id: str, immunization: dict
-    ) -> (UpdateOutcome, Immunization):
+    ) -> tuple[UpdateOutcome, Immunization]:
         if immunization.get("id", imms_id) != imms_id:
             raise InconsistentIdError(imms_id=imms_id)
         immunization["id"] = imms_id
 
         try:
-            self.pre_validator.validate(immunization)
+            self.validator.validate(immunization)
         except ValidationError as error:
-            raise CoarseValidationError(message=str(error))
+            raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
 
@@ -99,9 +108,10 @@ class FhirService:
             return UpdateOutcome.CREATE, Immunization.parse_obj(imms)
 
     def delete_immunization(self, imms_id) -> Immunization:
-        """Delete an Immunization if it exits and return the ID back if successful.
-        Exception will be raised if resource didn't exit. Multiple calls to this method won't change the
-        record in the database.
+        """
+        Delete an Immunization if it exits and return the ID back if successful.
+        Exception will be raised if resource didn't exit. Multiple calls to this method won't change
+        the record in the database.
         """
         imms = self.immunization_repo.delete_immunization(imms_id)
         return Immunization.parse_obj(imms)
