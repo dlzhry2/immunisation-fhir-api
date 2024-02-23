@@ -39,7 +39,7 @@ if __name__ == "__main__":
     event: events.APIGatewayProxyEventV1 = {
         "multiValueQueryStringParameters": {
             "-nhsNumber": [args.nhsNumber],
-            "-diseaseType": args.diseaseType
+            "-diseaseType": [",".join(args.diseaseType)]
         },
         "httpMethod": "POST",
         "headers": {'Content-Type': 'application/x-www-form-urlencoded'},

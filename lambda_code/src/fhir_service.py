@@ -15,6 +15,7 @@ from models.errors import (
     InconsistentIdError,
 )
 from models.fhir_immunization import ImmunizationValidator
+from models.utils.generic_utils import get_disease_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 
@@ -107,15 +108,16 @@ class FhirService:
         return Immunization.parse_obj(imms)
 
     def search_immunizations(
-        self, nhs_number: str, disease_type: str, params: str
+        self, nhs_number: str, disease_types: list[str], params: str
     ) -> FhirBundle:
         """find all instances of Immunization(s) for a patient and specified disease type.
         Returns Bundle[Immunization]
         """
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
-        resources = self.immunization_repo.find_immunizations(nhs_number, disease_type)
-        patient = self.pds_service.get_patient_details(nhs_number)
+        resources = self.immunization_repo.find_immunizations(nhs_number)
+        resources = [r for r in resources if get_disease_type(r) in disease_types]
+        patient = self.pds_service.get_patient_details(nhs_number) if len(resources) > 0 else None
         entries = [
             BundleEntry(resource=Immunization.parse_obj(handle_s_flag(imms, patient)))
             for imms in resources

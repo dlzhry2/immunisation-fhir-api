@@ -132,8 +132,18 @@ class FhirController:
 
     @staticmethod
     def process_search_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
-        def parse_multi_value_query_parameters(multi_value_params: dict) -> FhirController.ParamContainer:
-            return dict((k, v) for k, v in multi_value_params.items())
+        def split_and_flatten(input: list[str]):
+            return list(set([x
+                             for xs in input
+                             for x in xs.split(",")]))
+
+        def parse_multi_value_query_parameters(
+            multi_value_params: dict[str, list[str]]
+        ) -> FhirController.ParamContainer:
+            params = [(k, split_and_flatten(v))
+                      for k, v in multi_value_params.items()]
+
+            return dict(params)
 
         def parse_body_params(aws_event: APIGatewayProxyEventV1) -> FhirController.ParamContainer:
             http_method = aws_event.get("httpMethod")
@@ -143,12 +153,13 @@ class FhirController:
                 decoded_body = base64.b64decode(body).decode("utf-8")
                 parsed_body = parse_qs(decoded_body)
 
-                items = dict((k, v) for k, v in parsed_body.items())
+                items = dict((k, split_and_flatten(v)) for k, v in parsed_body.items())
                 return items
             return {}
 
         multi_value_params = parse_multi_value_query_parameters(aws_event.get("multiValueQueryStringParameters"))
         body_params = parse_body_params(aws_event)
+
         return {key: multi_value_params.get(key, []) + body_params.get(key, [])
                 for key in (multi_value_params.keys() | body_params.keys())}
 

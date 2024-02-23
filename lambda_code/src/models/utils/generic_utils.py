@@ -155,3 +155,24 @@ def get_deep_attr(obj, attrs):
     for attr in attrs.split("."):
         obj = getattr(obj, attr)
     return obj
+
+
+def get_disease_type(immunization: dict):
+    value_codeable_concept_coding = [
+        ext
+        for ext in immunization["extension"]
+        if ext.get("url") == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
+    ][0]["valueCodeableConcept"]["coding"]
+
+    vaccination_procedure_code = [
+        coding
+        for coding in value_codeable_concept_coding
+        if coding.get("system") == "http://snomed.info/sct"
+    ][0]["code"]
+
+    from mappings import vaccination_procedure_snomed_codes
+    disease_type = vaccination_procedure_snomed_codes.get(
+        vaccination_procedure_code, None
+    )
+
+    return disease_type

@@ -10,8 +10,9 @@ from botocore.config import Config
 from boto3.dynamodb.conditions import Attr, Key
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 from models.errors import ResourceNotFoundError, UnhandledResponseError
-from mappings import vaccination_procedure_snomed_codes
 from decimal import Decimal
+
+from models.utils.generic_utils import get_disease_type
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -64,22 +65,7 @@ class RecordAttributes:
         self.patient = patient
         self.resource = imms
         self.timestamp = int(time.time())
-        value_codeable_concept_coding = [
-            x
-            for x in imms["extension"]
-            if x.get("url")
-            == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
-        ][0]["valueCodeableConcept"]["coding"]
-
-        vaccination_procedure_code = [
-            x
-            for x in value_codeable_concept_coding
-            if x.get("system") == "http://snomed.info/sct"
-        ][0]["code"]
-
-        self.disease_type = vaccination_procedure_snomed_codes.get(
-            vaccination_procedure_code, None
-        )
+        self.disease_type = get_disease_type(imms)
 
         self.patient_sk = f"{self.disease_type}#{imms_id}"
 
@@ -191,11 +177,11 @@ class ImmunizationRepository:
                     response=error.response,
                 )
 
-    def find_immunizations(self, nhs_number: str, disease_code: str):
+    def find_immunizations(self, nhs_number: str):
         """it should find all patient's Immunization events for a specified disease_code"""
         condition = Key("PatientPK").eq(_make_patient_pk(nhs_number))
-        sort_key = f"{disease_code}#"
-        condition &= Key("PatientSK").begins_with(sort_key)
+        #sort_key = f"{disease_code}#"
+        #condition &= Key("PatientSK").begins_with(sort_key)
         is_not_deleted = Attr("DeletedAt").not_exists()
 
         response = self.table.query(
