@@ -16,7 +16,7 @@ class TestDeleteImmunization(ImmunizationBaseTest):
                 imms_id = parse_location(response.headers["Location"])
 
                 # When
-                response = self.default_imms_api.delete_immunization(imms_id)
+                response = imms_api.delete_immunization(imms_id)
 
                 # Then
                 self.assertEqual(response.status_code, 204, response.text)

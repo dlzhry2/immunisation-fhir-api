@@ -11,7 +11,7 @@ covid_code = "1324681000000101"
 
 class TestSearchImmunization(ImmunizationBaseTest):
     # NOTE: In each test, the result may contain more hits. We only assert if the resource that we created is
-    #  in the result set and assert the one that we don't expect is not preset.
+    #  in the result set and assert the one that we don't expect is not present.
     #  This is to make these tests stateless otherwise, we need to clean up the db after each test
 
     def store_records(self, *resources):
@@ -29,7 +29,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 self.store_records(mmr_p1, mmr_p2)
 
                 # When
-                response = self.default_imms_api.search_immunizations(valid_nhs_number1, "MMR")
+                response = imms_api.search_immunizations(valid_nhs_number1, "MMR")
 
                 # Then
                 self.assertEqual(response.status_code, 200, response.text)
