@@ -1,3 +1,5 @@
+from typing import List
+
 from utils.base_test import ImmunizationBaseTest
 from utils.constants import valid_nhs_number1, valid_nhs_number_with_s_flag
 from utils.immunisation_api import ImmunisationApi
@@ -105,7 +107,7 @@ class TestSearchSFlagImmunization(SFlagBaseTest):
                 # When
                 response = imms_api.search_immunizations(patient_id, disease_type)
                 # Then
-                hit_imms = self.filter_my_imms_from_search_result(response, imms1, imms2)
+                hit_imms = self.filter_my_imms_from_search_result(response.json(), imms1, imms2)
                 self.assert_is_filtered(hit_imms[0])
                 self.assert_is_filtered(hit_imms[1])
 
@@ -119,14 +121,14 @@ class TestSearchSFlagImmunization(SFlagBaseTest):
                 # When
                 response = imms_api.search_immunizations(patient_id, disease_type)
                 # Then
-                hit_imms = self.filter_my_imms_from_search_result(response, imms1, imms2)
+                hit_imms = self.filter_my_imms_from_search_result(response.json(), imms1, imms2)
                 self.assert_is_not_filtered(hit_imms[0])
                 self.assert_is_not_filtered(hit_imms[1])
 
     @staticmethod
-    def filter_my_imms_from_search_result(response, imms1, imms2) -> list:
-        results = response.json()
-        _id1 = imms1["id"]
-        _id2 = imms2["id"]
-        return [entry["resource"] for entry in results["entry"] if
-                entry["resource"]["id"] == _id1 or entry["resource"]["id"] == _id2]
+    def filter_my_imms_from_search_result(search_body: dict, *my_imms) -> List[dict]:
+        my_ids = [im["id"] for im in my_imms]
+        response_imms = [entry["resource"] for entry in search_body["entry"]]
+
+        return [_imms for _imms in response_imms if _imms["id"] in my_ids]
+

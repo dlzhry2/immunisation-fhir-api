@@ -1,4 +1,3 @@
-import logging
 import uuid
 
 from utils.base_test import ImmunizationBaseTest
@@ -11,21 +10,14 @@ covid_code = "1324681000000101"
 
 
 class TestSearchImmunization(ImmunizationBaseTest):
-    # fill this field and it'll get deleted after each test method
-    stored_imms: list
-
-    def tearDown(self):
-        for res in self.stored_imms:
-            response = self.app_res_imms_api.delete_immunization(res["id"])
-            if response.status_code != 204:
-                logging.warning(f"failed to cleanup resource: {res['id']}\n{response.text}")
+    # NOTE: In each test, the result may contain more hits. We only assert if the resource that we created is
+    #  in the result set and assert the one that we don't expect is not preset.
+    #  This is to make these tests stateless otherwise, we need to clean up the db after each test
 
     def store_records(self, *resources):
         for res in resources:
             imms_id = self.create_immunization_resource(self.app_res_imms_api, res)
             res["id"] = imms_id
-        # store it in the class field so, we can clean it up after test
-        self.stored_imms = list(resources)
 
     def test_search_imms(self):
         """it should search records given nhs-number and disease-code"""
@@ -38,14 +30,15 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
                 # When
                 response = self.app_res_imms_api.search_immunizations(valid_nhs_number1, "MMR")
+
                 # Then
                 self.assertEqual(response.status_code, 200, response.text)
                 body = response.json()
                 self.assertEqual(body["resourceType"], "Bundle")
 
                 resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
-                self.assertEqual(len(resource_ids), 1)
-                self.assertEqual(resource_ids[0], mmr_p1["id"])
+                self.assertTrue(mmr_p1["id"] in resource_ids)
+                self.assertTrue(mmr_p2["id"] not in resource_ids)
 
     def test_search_patient_multiple_diseases(self):
         # Given patient has two vaccines
@@ -60,10 +53,9 @@ class TestSearchImmunization(ImmunizationBaseTest):
         self.assertEqual(response.status_code, 200, response.text)
         body = response.json()
 
-        # make sure the match is the one we are expecting
         resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
-        self.assertEqual(len(resource_ids), 1)
-        self.assertEqual(resource_ids[0], mmr["id"])
+        self.assertTrue(mmr["id"] in resource_ids)
+        self.assertTrue(flu["id"] not in resource_ids)
 
     def test_search_ignore_deleted(self):
         # Given patient has three vaccines and the last one is deleted
@@ -79,8 +71,9 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
         # Then
         self.assertEqual(response.status_code, 200, response.text)
-
         body = response.json()
+
         resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
-        self.assertEqual(len(resource_ids), 2)
+        self.assertTrue(mmr1["id"] in resource_ids)
+        self.assertTrue(mmr2["id"] in resource_ids)
         self.assertTrue(deleted_mmr["id"] not in resource_ids)
