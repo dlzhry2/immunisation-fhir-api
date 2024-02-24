@@ -95,6 +95,16 @@ def get_service_base_path(apigee_env: ApigeeEnv = None) -> str:
     return f"https://{apigee_env.value}.api.service.nhs.uk/{base_path}"
 
 
+def get_status_endpoint_api_key() -> str:
+    if not os.getenv("STATUS_API_KEY"):
+        raise RuntimeError('"STATUS_API_KEY" is required')
+    return os.getenv("STATUS_API_KEY")
+
+
+def get_source_commit_id() -> str:
+    return os.getenv("SOURCE_COMMIT_ID")
+
+
 def get_public_bucket_name() -> str:
     if not os.getenv("PUBLIC_BUCKET_NAME"):
         raise RuntimeError('"PUBLIC_BUCKET_NAME" is required')

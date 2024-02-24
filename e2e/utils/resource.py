@@ -25,7 +25,34 @@ def create_an_imms_obj(imms_id: str = str(uuid.uuid4()),
     return imms
 
 
-def get_questionnaire_items(imms):
+def get_patient_id(imms: dict) -> str:
+    patients = [resource for resource in imms["contained"] if resource["resourceType"] == "Patient"]
+    return patients[0]["identifier"][0]["value"]
+
+
+def get_disease_type(imms: dict) -> str:
+    """find the vaccine code in the resource and map it to disease-type"""
+    disease_code_to_type_map = {
+        # Only add values that we use in the examples. See the mappings.py in the backend code for full dictionary
+        "1324681000000101": "COVID19"
+    }
+    value_codeable_concept_coding = [
+        x
+        for x in imms["extension"]
+        if x.get("url")
+           == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
+    ][0]["valueCodeableConcept"]["coding"]
+
+    vaccination_procedure_code = [
+        x
+        for x in value_codeable_concept_coding
+        if x.get("system") == "http://snomed.info/sct"
+    ][0]["code"]
+
+    return disease_code_to_type_map[vaccination_procedure_code]
+
+
+def get_questionnaire_items(imms: dict):
     questionnaire = next(
         contained
         for contained in imms["contained"]
