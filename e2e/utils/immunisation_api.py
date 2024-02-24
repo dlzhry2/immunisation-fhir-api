@@ -21,6 +21,9 @@ class ImmunisationApi:
 
     def __init__(self, url, token, auth_type: AuthType = AuthType.APP_RESTRICTED):
         self.url = url
+
+        # NOTE: this class doesn't support refresh token or expiry check.
+        #  This shouldn't be a problem in tests, just something to be aware of
         self.token = token
         self.headers = {
             "Authorization": f"Bearer {self.token}",

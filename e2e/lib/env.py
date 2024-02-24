@@ -103,34 +103,3 @@ def get_status_endpoint_api_key() -> str:
 
 def get_source_commit_id() -> str:
     return os.getenv("SOURCE_COMMIT_ID")
-
-
-def get_public_bucket_name() -> str:
-    if not os.getenv("PUBLIC_BUCKET_NAME"):
-        raise RuntimeError('"PUBLIC_BUCKET_NAME" is required')
-    return os.getenv("PUBLIC_BUCKET_NAME")
-
-
-def upload_jwks_to_public_s3(bucket_name: str, key: str, file_path: str) -> str:
-    """uploads jwks file to a s3 bucket and returns the public url to the object"""
-    with open(file_path, "r") as jwks:
-        content = jwks.readline().lower()
-        if "private" in content:
-            logging.error("DANGER: it appears you are trying to upload private key instead of public key.\n"
-                          "DO NOT share your private key and do not upload it anywhere public")
-
-    bucket_url = f"s3://{bucket_name}/{key}"
-    cmd = ["aws", "s3", "cp", file_path, bucket_url]
-    try:
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, text=True)
-        if res.returncode != 0:
-            cmd_str = " ".join(cmd)
-            raise RuntimeError(f"Failed to run command: '{cmd_str}'\nDiagnostic: Try to run the same command in the "
-                               f"same terminal. Make sure you are authenticated\n{res.stdout}")
-    except FileNotFoundError:
-        logging.error("Make sure you install aws cli and make sure it's in your PATH. "
-                      "Follow: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html")
-    except RuntimeError as e:
-        raise RuntimeError(f"failed to upload file: {file_path} to the bucket {bucket_url}\n{e}")
-
-    return f"https://{bucket_name}.s3.eu-west-2.amazonaws.com/{key}"
