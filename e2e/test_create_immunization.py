@@ -23,7 +23,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         bad_nhs_number = "7463384756"
         imms = create_an_imms_obj(nhs_number=bad_nhs_number)
 
-        result = self.app_res_imms_api.create_immunization(imms)
+        result = self.default_imms_api.create_immunization(imms)
 
         self.assert_operation_outcome(result, 400, bad_nhs_number)
 
@@ -36,7 +36,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         imms["occurrenceDateTime"] = invalid_datetime
 
         # When
-        response = self.app_res_imms_api.create_immunization(imms)
+        response = self.default_imms_api.create_immunization(imms)
 
         # Then
         self.assert_operation_outcome(response, 400, "occurrenceDateTime")

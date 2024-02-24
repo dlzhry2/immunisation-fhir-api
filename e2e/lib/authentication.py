@@ -19,7 +19,7 @@ class AuthType(str, Enum):
     CIS2 = "Cis2"
 
 
-class ApigeeAppAuthentication(ABC):
+class BaseAuthentication(ABC):
     """interface for Apigee app authentication. ApigeeService uses this to get access token"""
 
     @abstractmethod
@@ -35,13 +35,16 @@ class AppRestrictedCredentials:
     expiry_seconds: int = 30
 
 
-class AppRestrictedAuthentication(ApigeeAppAuthentication):
+class AppRestrictedAuthentication(BaseAuthentication):
     def __init__(self, auth_url: str, config: AppRestrictedCredentials):
         self.expiry = config.expiry_seconds
         self.private_key = config.private_key_content
         self.client_id = config.client_id
         self.kid = config.kid
         self.token_url = f"{auth_url}/token"
+
+    def __str__(self):
+        return AuthType.APP_RESTRICTED.value
 
     def get_access_token(self):
         now = int(time())

@@ -16,7 +16,7 @@ class TestDeleteImmunization(ImmunizationBaseTest):
                 imms_id = parse_location(response.headers["Location"])
 
                 # When
-                response = self.app_res_imms_api.delete_immunization(imms_id)
+                response = self.default_imms_api.delete_immunization(imms_id)
 
                 # Then
                 self.assertEqual(response.status_code, 204, response.text)
@@ -25,7 +25,7 @@ class TestDeleteImmunization(ImmunizationBaseTest):
 
     def test_delete_immunization_already_deleted(self):
         """it should return 404 when deleting a deleted resource"""
-        imms = self.create_a_deleted_immunization_resource(self.app_res_imms_api)
-        response = self.app_res_imms_api.delete_immunization(imms["id"])
+        imms = self.create_a_deleted_immunization_resource(self.default_imms_api)
+        response = self.default_imms_api.delete_immunization(imms["id"])
         self.assert_operation_outcome(response, 404)
 

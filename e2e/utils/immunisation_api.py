@@ -4,7 +4,7 @@ from typing import Optional
 
 import requests
 
-from lib.authentication import AuthType
+from lib.authentication import BaseAuthentication
 from .resource import create_an_imms_obj
 
 
@@ -18,22 +18,24 @@ def parse_location(location) -> Optional[str]:
 
 
 class ImmunisationApi:
+    url: str
+    headers: dict
+    auth: BaseAuthentication
 
-    def __init__(self, url, token, auth_type: AuthType = AuthType.APP_RESTRICTED):
+    def __init__(self, url, auth: BaseAuthentication):
         self.url = url
 
+        self.auth = auth
         # NOTE: this class doesn't support refresh token or expiry check.
         #  This shouldn't be a problem in tests, just something to be aware of
-        self.token = token
+        token = self.auth.get_access_token()
         self.headers = {
-            "Authorization": f"Bearer {self.token}",
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/fhir+json",
-            "Accept": "application/fhir+json",
-        }
-        self.auth_type = auth_type
+            "Accept": "application/fhir+json"}
 
     def __str__(self):
-        return f"ImmunizationApi: AuthType: {self.auth_type.APP_RESTRICTED.value}"
+        return f"ImmunizationApi: AuthType: {self.auth}"
 
     def get_immunization_by_id(self, event_id):
         return requests.get(f"{self.url}/Immunization/{event_id}", headers=self._update_headers())

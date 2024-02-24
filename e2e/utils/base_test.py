@@ -1,62 +1,74 @@
-import functools
-import logging
 import unittest
+import uuid
 from typing import List
 
 from lib.apigee import ApigeeService, ApigeeApp, ApigeeProduct
-from lib.authentication import AppRestrictedAuthentication, AuthType
+from lib.authentication import AppRestrictedAuthentication
 from lib.env import get_auth_url, get_proxy_name, get_service_base_path
-from utils.factories import make_apigee_service, make_app_restricted_app
+from utils.factories import make_apigee_service, make_app_restricted_app, make_apigee_product
 from utils.immunisation_api import ImmunisationApi, parse_location
 from utils.resource import create_an_imms_obj
 
 
 class ImmunizationBaseTest(unittest.TestCase):
-    """provides a set of utilities
-    Do not use this for keeping the state like, token, etc
-    """
+    """It provides a set of apps with for each AuthType with full permission"""
     apigee_service: ApigeeService
     product: ApigeeProduct
-    app_restricted_app: ApigeeApp
-    app_restricted_auth: AppRestrictedAuthentication
 
-    app_res_imms_api: ImmunisationApi
-    """a list of ImmunizationApi for each authentication type"""
+    # a list of ImmunizationApi for each authentication type
     imms_apis: List[ImmunisationApi]
-
-    base_url: str
-    app_token: str
+    # a list of all apps that was created, so we can delete them at the end
+    apps: List[ApigeeApp]
+    # an ImmunisationApi with default auth-type: ApplicationRestricted
+    default_imms_api: ImmunisationApi
 
     @classmethod
     def setUpClass(cls):
-        display_name = f"test-{get_proxy_name()}"
-        cls.base_url = get_service_base_path()
-
         cls.apigee_service = make_apigee_service()
-        # cls.product = make_apigee_product(cls.apigee_service, display_name=display_name)
-        # cls.app_restricted_app, app_res_cfg = make_app_restricted_app(cls.apigee_service,
-        #                                                               display_name=display_name,
-        #                                                               product_name=cls.product.name)
-        cls.app_restricted_app, app_res_cfg = make_app_restricted_app(cls.apigee_service)
-        # cls.apigee_service.add_proxy_to_product(product_name=cls.product.name, proxy_name=get_proxy_name())
-        cls.app_restricted_auth = AppRestrictedAuthentication(get_auth_url(), app_res_cfg)
-        try:
-            cls.app_token = cls.app_restricted_auth.get_access_token()
-        except Exception as e:
-            logging.warning(e)
-            pass
+        display_name = f"test-{get_proxy_name()}"
 
-        # logging.debug(f"app: {cls.app_restricted_app.name}: {cls.app_restricted_app.appId} was created successfully"
-        #               f"and it was attached to the product {cls.product.name}: {cls.product}")
+        product_data = ApigeeProduct(name=str(uuid.uuid4()),
+                                     displayName=display_name,
+                                     # we only use one single product for all auth types
+                                     # TODO(Cis2): add scopes for Cis2
+                                     # TODO(NhsLogin): add scopes for NhsLogin
+                                     scopes=[f"urn:nhsd:apim:app:level3:immunisation-fhir-api"])
+        cls.product = make_apigee_product(cls.apigee_service, product_data)
+        cls.apigee_service.add_proxy_to_product(product_name=cls.product.name, proxy_name=get_proxy_name())
 
-        cls.app_res_imms_api = ImmunisationApi(cls.base_url, cls.app_token, AuthType.APP_RESTRICTED)
-        cls.imms_apis = [cls.app_res_imms_api]
+        cls.apps = []
+        cls.imms_apis = []
+
+        def make_app_data() -> ApigeeApp:
+            _app = ApigeeApp(name=str(uuid.uuid4()))
+            _app.set_display_name(display_name)
+            _app.add_product(cls.product.name)
+            return _app
+
+        # ApplicationRestricted
+        app_data = make_app_data()
+        app_restricted_app, app_res_cfg = make_app_restricted_app(cls.apigee_service, app_data)
+        cls.apps.append(app_restricted_app)
+
+        app_res_auth = AppRestrictedAuthentication(get_auth_url(), app_res_cfg)
+        base_url = get_service_base_path()
+
+        cls.default_imms_api = ImmunisationApi(base_url, app_res_auth)
+        cls.imms_apis.append(cls.default_imms_api)
+
+        # Cis2
+        # TODO(Cis2) create an app for Cis2 and append it to the cls.apps,
+        #  then create ImmunisationApi and append it to cls.imms_apis
+
+        # NhsLogin
+        # TODO(NhsLogin) create an app for NhsLogin and append it to the cls.apps,
+        #  then create ImmunisationApi and append it to cls.imms_apis
 
     @classmethod
     def tearDownClass(cls):
-        # cls.apigee_service.delete_application(cls.app_restricted_app.name)
-        # cls.apigee_service.delete_product(cls.product.name)
-        logging.debug(f"app: {cls.app_restricted_app.name}: {cls.app_restricted_app.appId} was deleted successfully")
+        for app in cls.apps:
+            cls.apigee_service.delete_application(app.name)
+        cls.apigee_service.delete_product(cls.product.name)
 
     @staticmethod
     def create_immunization_resource(imms_api: ImmunisationApi, resource: dict = None) -> str:
@@ -83,18 +95,3 @@ class ImmunizationBaseTest(unittest.TestCase):
         self.assertEqual(response.status_code, status_code, response.text)
         self.assertEqual(body["resourceType"], "OperationOutcome")
         self.assertTrue(contains in body["issue"][0]["diagnostics"])
-
-
-def sub_test(param_list):
-    """Decorates a test case to run it as a set of subtests."""
-
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapped(self):
-            for param in param_list:
-                with self.subTest(**param):
-                    f(self, **param)
-
-        return wrapped
-
-    return decorator

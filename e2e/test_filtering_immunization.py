@@ -94,8 +94,6 @@ class TestGetSFlagImmunization(SFlagBaseTest):
 class TestSearchSFlagImmunization(SFlagBaseTest):
     """An s-flagged patient contains sensitive data that must be filtered out by backend before being returned"""
 
-    # NOTE: in these tests we're only interested in the item that we created and whether filtering is working.
-    # That's why we retrieve the values we created during test and ignore the rest of the items.
     def test_search_s_flagged_imms(self):
         """it should perform filtering for all search results"""
         for imms_api in self.imms_apis:

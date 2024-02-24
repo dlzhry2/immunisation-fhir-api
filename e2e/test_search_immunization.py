@@ -16,7 +16,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
     def store_records(self, *resources):
         for res in resources:
-            imms_id = self.create_immunization_resource(self.app_res_imms_api, res)
+            imms_id = self.create_immunization_resource(self.default_imms_api, res)
             res["id"] = imms_id
 
     def test_search_imms(self):
@@ -29,7 +29,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 self.store_records(mmr_p1, mmr_p2)
 
                 # When
-                response = self.app_res_imms_api.search_immunizations(valid_nhs_number1, "MMR")
+                response = self.default_imms_api.search_immunizations(valid_nhs_number1, "MMR")
 
                 # Then
                 self.assertEqual(response.status_code, 200, response.text)
@@ -47,7 +47,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         self.store_records(mmr, flu)
 
         # When
-        response = self.app_res_imms_api.search_immunizations(valid_nhs_number1, "MMR")
+        response = self.default_imms_api.search_immunizations(valid_nhs_number1, "MMR")
 
         # Then
         self.assertEqual(response.status_code, 200, response.text)
@@ -64,10 +64,10 @@ class TestSearchImmunization(ImmunizationBaseTest):
         self.store_records(mmr1, mmr2)
 
         to_delete_mmr = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, mmr_code)
-        deleted_mmr = self.create_a_deleted_immunization_resource(self.app_res_imms_api, to_delete_mmr)
+        deleted_mmr = self.create_a_deleted_immunization_resource(self.default_imms_api, to_delete_mmr)
 
         # When
-        response = self.app_res_imms_api.search_immunizations(valid_nhs_number1, "MMR")
+        response = self.default_imms_api.search_immunizations(valid_nhs_number1, "MMR")
 
         # Then
         self.assertEqual(response.status_code, 200, response.text)

@@ -22,7 +22,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
                 update_payload = copy.deepcopy(imms)
                 update_payload["id"] = imms_id
                 update_payload["status"] = "not-done"
-                response = self.app_res_imms_api.update_immunization(imms_id, update_payload)
+                response = self.default_imms_api.update_immunization(imms_id, update_payload)
 
                 # Then
                 self.assertEqual(response.status_code, 200, response.text)
@@ -34,7 +34,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
         imms_id = str(uuid.uuid4())
         imms = create_an_imms_obj(imms_id)
 
-        response = self.app_res_imms_api.update_immunization(imms_id, imms)
+        response = self.default_imms_api.update_immunization(imms_id, imms)
 
         self.assertEqual(response.status_code, 201, response.text)
 
@@ -44,7 +44,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
         imms = create_an_imms_obj(msg_id)
         path_id = str(uuid.uuid4())
 
-        response = self.app_res_imms_api.update_immunization(path_id, imms)
+        response = self.default_imms_api.update_immunization(path_id, imms)
 
         self.assert_operation_outcome(response, 400, contains=path_id)
 
@@ -54,10 +54,10 @@ class TestUpdateImmunization(ImmunizationBaseTest):
         #  An update of a non-existent record should result in creating a new record
         #  Therefore, the new resource's id must be different from the original one
 
-        imms = self.create_a_deleted_immunization_resource(self.app_res_imms_api)
+        imms = self.create_a_deleted_immunization_resource(self.default_imms_api)
         deleted_id = imms["id"]
 
-        response = self.app_res_imms_api.update_immunization(deleted_id, imms)
+        response = self.default_imms_api.update_immunization(deleted_id, imms)
 
         self.assertEqual(response.status_code, 201, response.text)
         new_imms_id = parse_location(response.headers["Location"])
