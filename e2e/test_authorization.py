@@ -1,13 +1,11 @@
 import uuid
-from time import sleep
 from typing import Set
 
 from lib.apigee import ApigeeApp
 from lib.authentication import AppRestrictedAuthentication
 from lib.env import get_auth_url, get_proxy_name, get_service_base_path
 from test_search_immunization import mmr_code
-from utils.authorization import ApplicationRestrictedPermission as AppResPerm, make_permissions_attribute, \
-    app_res_full_access
+from utils.authorization import ApplicationRestrictedPermission as AppResPerm, app_res_full_access
 from utils.base_test import ImmunizationBaseTest
 from utils.constants import valid_nhs_number1
 from utils.factories import make_app_restricted_app
@@ -19,47 +17,33 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
     my_app: ApigeeApp
     my_imms_api: ImmunisationApi
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # calling super setUpClass gives us everything we need which, is useful for test setup
-        #  however, we need to create a new app so, we can modify its permissions
-        #  this new app and its api are called my_app and my_imms_api, i.e. app under test
+    def make_app(self, permissions: Set[AppResPerm]):
+        # The super class gives us everything we need which, is useful for test setup
+        #  however, we need to create a new app with required permissions.
+        #  This new app and its api are called my_app and my_imms_api, i.e. app under test
         display_name = f"test-{get_proxy_name()}"
 
         def make_app_data() -> ApigeeApp:
             _app = ApigeeApp(name=str(uuid.uuid4()))
             _app.set_display_name(display_name)
-            _app.add_product(cls.product.name)
+            _app.add_product(self.product.name)
             return _app
 
         app_data = make_app_data()
-        cls.my_app, app_res_cfg = make_app_restricted_app(cls.apigee_service, app_data)
+        self.my_app, app_res_cfg = make_app_restricted_app(self.apigee_service, app_data, permissions)
 
         app_res_auth = AppRestrictedAuthentication(get_auth_url(), app_res_cfg)
         base_url = get_service_base_path()
 
-        cls.my_imms_api = ImmunisationApi(base_url, app_res_auth)
+        self.my_imms_api = ImmunisationApi(base_url, app_res_auth)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.apigee_service.delete_application(cls.my_app.name)
-        super().tearDownClass()
-
-    def setUp(self):
-        # modify app to zero access before each test
-        self.modify_permissions(set())
-        # NOTE: modifying attributes takes time and if it's not ready app uses old values
-        sleep(2)
-
-    def modify_permissions(self, permissions: Set[AppResPerm]):
-        k, v = make_permissions_attribute(permissions)
-        self.apigee_service.create_app_attribute(self.my_app.name, k, v)
+    def tearDown(self):
+        self.apigee_service.delete_application(self.my_app.name)
 
     def test_get_imms_authorised(self):
         """it should get Immunization if app has immunization:read permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
-        self.modify_permissions({AppResPerm.READ})
+        self.make_app({AppResPerm.READ})
         # When
         response = self.my_imms_api.get_immunization_by_id(imms_id)
         # Then
@@ -67,10 +51,8 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
 
     def test_get_imms_unauthorised(self):
         """it should not get Immunization if app doesn't have immunization:read permission"""
-        # imms_id = self.create_immunization_resource(self.default_imms_api)
-
-        perm = app_res_full_access(exclude={AppResPerm.READ})
-        self.modify_permissions(perm)
+        perms = app_res_full_access(exclude={AppResPerm.READ})
+        self.make_app(perms)
         # When
         response = self.my_imms_api.get_immunization_by_id("id-doesn't-matter")
         # Then
@@ -78,7 +60,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
 
     def test_create_imms_authorised(self):
         """it should create Immunization if app has immunization:create permission"""
-        self.modify_permissions({AppResPerm.CREATE})
+        self.make_app({AppResPerm.CREATE})
         # When
         imms = create_an_imms_obj()
         response = self.my_imms_api.create_immunization(imms)
@@ -87,8 +69,8 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
 
     def test_create_imms_unauthorised(self):
         """it should not create Immunization if app doesn't immunization:create permission"""
-        perm = app_res_full_access(exclude={AppResPerm.CREATE})
-        self.modify_permissions(perm)
+        perms = app_res_full_access(exclude={AppResPerm.CREATE})
+        self.make_app(perms)
         # When
         imms = create_an_imms_obj()
         result = self.my_imms_api.create_immunization(imms)
@@ -101,7 +83,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         imms_id = self.create_immunization_resource(self.default_imms_api, imms)
         imms["id"] = imms_id
 
-        self.modify_permissions({AppResPerm.CREATE, AppResPerm.UPDATE})
+        self.make_app({AppResPerm.CREATE, AppResPerm.UPDATE})
         # When
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
@@ -109,12 +91,8 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
 
     def test_update_imms_unauthorised(self):
         """it should not update Immunization if app doesn't immunization:update permission"""
-        # imms = create_an_imms_obj()
-        # imms_id = self.create_immunization_resource(self.default_imms_api, imms)
-        # imms["id"] = imms_id
-
-        perm = app_res_full_access(exclude={AppResPerm.UPDATE})
-        self.modify_permissions(perm)
+        perms = app_res_full_access(exclude={AppResPerm.UPDATE})
+        self.make_app(perms)
         # When
         response = self.my_imms_api.update_immunization("doesn't-matter", {})
         # Then
@@ -126,8 +104,8 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         imms_id = self.create_immunization_resource(self.default_imms_api, imms)
         imms["id"] = imms_id
 
-        perm = app_res_full_access(exclude={AppResPerm.CREATE})
-        self.modify_permissions(perm)
+        perms = app_res_full_access(exclude={AppResPerm.CREATE})
+        self.make_app(perms)
         # When
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
@@ -136,7 +114,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
     def test_delete_imms_authorised(self):
         """it should delete Immunization if app has immunization:delete permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
-        self.modify_permissions({AppResPerm.DELETE})
+        self.make_app({AppResPerm.DELETE})
         # When
         response = self.my_imms_api.delete_immunization(imms_id)
         # Then
@@ -144,10 +122,8 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
 
     def test_delete_imms_unauthorised(self):
         """it should not delete Immunization if app doesn't have immunization:delete permission"""
-        # imms_id = self.create_immunization_resource(self.default_imms_api)
-
-        perm = app_res_full_access(exclude={AppResPerm.DELETE})
-        self.modify_permissions(perm)
+        perms = app_res_full_access(exclude={AppResPerm.DELETE})
+        self.make_app(perms)
         # When
         response = self.my_imms_api.delete_immunization("doesn't-matter")
         # Then
@@ -158,7 +134,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         mmr = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, mmr_code)
         _ = self.create_immunization_resource(self.default_imms_api, mmr)
 
-        self.modify_permissions({AppResPerm.SEARCH})
+        self.make_app({AppResPerm.SEARCH})
         # When
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, "MMR")
         # Then
@@ -166,11 +142,8 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
 
     def test_search_imms_unauthorised(self):
         """it should not search Immunization if app doesn't immunization:search permission"""
-        # mmr = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, mmr_code)
-        # _ = self.create_immunization_resource(self.default_imms_api, mmr)
-        #
-        perm = app_res_full_access(exclude={AppResPerm.SEARCH})
-        self.modify_permissions(perm)
+        perms = app_res_full_access(exclude={AppResPerm.SEARCH})
+        self.make_app(perms)
         # When
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, "MMR")
         # Then
