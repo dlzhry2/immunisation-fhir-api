@@ -4,7 +4,7 @@ import uuid
 from typing import Set
 
 from lib.apigee import ApigeeService, ApigeeConfig, ApigeeApp, ApigeeProduct
-from lib.authentication import AppRestrictedCredentials, AppRestrictedAuthentication
+from lib.authentication import AppRestrictedCredentials, AppRestrictedAuthentication, AuthType
 from lib.env import get_apigee_access_token, get_auth_url, get_apigee_username, get_apigee_env, \
     get_default_app_restricted_credentials, get_proxy_name
 from lib.jwks import JwksData
@@ -62,6 +62,7 @@ def make_app_restricted_app(apigee: ApigeeService = None,
         if permissions := permissions or app_res_full_access():
             k, v = make_permissions_attribute(permissions)
             app.add_attribute(k, v)
+        app.add_attribute("AuthenticationType", AuthType.APP_RESTRICTED.value)
 
         resp = apigee.create_application(app)
         stored_app = ApigeeApp.from_dict(resp)

@@ -8,6 +8,9 @@
         <Name>FlowCallout.ApplyRateLimiting</Name>
       </Step>
       <Step>
+        <Name>VerifyAPIKey.CustomAttributes</Name>
+      </Step>
+      <Step>
         <Name>AssignMessage.AddAuthorizationHeaders</Name>
       </Step>
     </Request>
