@@ -114,7 +114,10 @@ steps:
       then
         echo "Sandbox env tests"
         marker="not nhsd_apim_authorization and not sandbox_int and not mtls"
-      elif [[ $APIGEE_ENVIRONMENT == "int" ]] || [[ $APIGEE_ENVIRONMENT == "ref" ]]
+      elif [[ $APIGEE_ENVIRONMENT == "ref" ]]
+      then
+        marker="smoketest or mtls"
+      elif [[ $APIGEE_ENVIRONMENT == "int" ]]
       then
         export DEFAULT_CLIENT_ID="$(INT_CLIENT_ID)"
         export DEFAULT_CLIENT_SECRET="$(INT_CLIENT_SECRET)"
