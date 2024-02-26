@@ -1,4 +1,5 @@
 import unittest
+from time import sleep
 
 import requests
 
@@ -41,5 +42,6 @@ class TestDeployment(unittest.TestCase):
             deployed_commit_id = resp.json().get("commitId")
             if status_code == 200 and deployed_commit_id == expected_commit_id:
                 return
+            sleep(3)
 
         self.fail("Timeout Error - max retries")

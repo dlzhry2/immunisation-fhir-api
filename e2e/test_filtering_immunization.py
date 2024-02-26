@@ -12,16 +12,14 @@ class SFlagBaseTest(ImmunizationBaseTest):
     def create_s_flagged_patient(self, imms_api: ImmunisationApi) -> dict:
         imms = create_an_imms_obj(nhs_number=valid_nhs_number_with_s_flag)
         imms_id = self.create_immunization_resource(imms_api, imms)
-        response = imms_api.get_immunization_by_id(imms_id)
-        assert response.status_code == 200
-        return response.json()
+        imms["id"] = imms_id
+        return imms
 
     def create_not_s_flagged_patient(self, imms_api: ImmunisationApi) -> dict:
         imms = create_an_imms_obj(nhs_number=valid_nhs_number1)
         imms_id = self.create_immunization_resource(imms_api, imms)
-        response = imms_api.get_immunization_by_id(imms_id)
-        assert response.status_code == 200
-        return response.json()
+        imms["id"] = imms_id
+        return imms
 
     def assert_is_not_filtered(self, imms):
         imms_items = get_questionnaire_items(imms)
