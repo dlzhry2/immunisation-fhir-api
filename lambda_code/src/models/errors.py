@@ -20,11 +20,13 @@ class ResourceNotFoundError(RuntimeError):
     """Return this error when the requested FHIR resource does not exist"""
     resource_type: str
     resource_id: str
+    
+    def __str__(self):
+        return f"{self.resource_type} resource does not exist. ID: {self.resource_id}"
 
     def to_operation_outcome(self) -> dict:
-        msg = f"{self.resource_type} resource does not exit. ID: {self.resource_id}"
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.not_found, diagnostics=msg)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.not_found, diagnostics=self.__str__())
 
 
 @dataclass
@@ -32,14 +34,16 @@ class UnhandledResponseError(RuntimeError):
     """Use this error when the response from an external service (ex: dynamodb) can't be handled"""
     response: dict
     message: str
+    
+    def __str__(self):
+        return f"{self.message}\n{self.response}"
 
     def __str__(self):
         return f"{self.message}\n{self.response}"
 
     def to_operation_outcome(self) -> dict:
-        msg = f"{self.message}\n{self.response}"
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=self.__str__())
 
 
 class ValidationError(RuntimeError):
@@ -51,11 +55,13 @@ class ValidationError(RuntimeError):
 class InvalidPatientId(ValidationError):
     """Use this when NHS Number is invalid or doesn't exist"""
     nhs_number: str
+    
+    def __str__(self):
+        return f"NHS Number: {self.nhs_number} is invalid or it doesn't exist."
 
     def to_operation_outcome(self) -> dict:
-        msg = f"NHS Number: {self.nhs_number} is invalid or it doesn't exist."
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=self.__str__())
 
 
 @dataclass
@@ -65,20 +71,25 @@ class InconsistentIdError(ValidationError):
 
     imms_id: str
 
+    def __str__(self):
+        return f"The provided id:{self.imms_id} doesn't match with the content of the message"
+    
     def to_operation_outcome(self) -> dict:
-        msg = f"The provided id:{self.imms_id} doesn't match with the content of the message"
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=msg)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=self.__str__())
 
 
 @dataclass
 class CoarseValidationError(ValidationError):
     """Pre validation error"""
     message: str
+    
+    def __str__(self):
+        return self.message
 
     def to_operation_outcome(self) -> dict:
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.message)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.__str__())
 
 
 @dataclass
