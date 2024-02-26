@@ -24,8 +24,7 @@
       </Step>
     </FaultRule>
     <FaultRule name="403_invalid_permissions">
-      <Condition>(oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.fault.cause != "Invalid access token") and
-        (oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.failed == true)
+      <Condition>(oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.fault.cause != "Invalid access token") and (oauthV2.OauthV2.VerifyAccessTokenAppLevel3OrCis2Aal3.failed == true)
       </Condition>
       <Step>
         <Name>AssignMessage.PermissionsError</Name>
