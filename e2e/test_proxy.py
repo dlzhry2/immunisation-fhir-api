@@ -38,6 +38,7 @@ class TestMtls(unittest.TestCase):
         """backend should reject unauthorized connections"""
         backend_url = TestMtls.get_backend_url()
         backend_health = f"https://{backend_url}/status"
+        print(f"Backend url: {backend_url}")
 
         with self.assertRaises(requests.exceptions.RequestException) as e:
             requests.get(backend_health, headers={"X-Request-ID": str(uuid.uuid4())})
@@ -46,8 +47,8 @@ class TestMtls(unittest.TestCase):
 
     @staticmethod
     def get_backend_url() -> str:
-        """The output is the backend url that terraform deployed.
-        This command runs a make target in the terraform directory"""
+        """The output is the backend url that terraform has deployed.
+        This command runs a make target in the terraform directory only if it's not in env var"""
         if url := os.getenv("AWS_DOMAIN_NAME"):
             return url
 

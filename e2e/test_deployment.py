@@ -33,7 +33,7 @@ class TestDeployment(unittest.TestCase):
 
     def check_and_retry(self, url, headers, expected_commit_id):
         for i in range(self.max_retries):
-            resp = requests.get(url)
+            resp = requests.get(url, headers)
             status_code = resp.status_code
             if status_code != 200:
                 self.fail(f"Status code {status_code}, expecting 200")
