@@ -129,4 +129,3 @@ class TestSearchSFlagImmunization(SFlagBaseTest):
         response_imms = [entry["resource"] for entry in search_body["entry"]]
 
         return [_imms for _imms in response_imms if _imms["id"] in my_ids]
-

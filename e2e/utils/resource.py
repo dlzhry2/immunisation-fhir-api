@@ -39,8 +39,7 @@ def get_disease_type(imms: dict) -> str:
     value_codeable_concept_coding = [
         x
         for x in imms["extension"]
-        if x.get("url")
-           == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
+        if x.get("url") == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
     ][0]["valueCodeableConcept"]["coding"]
 
     vaccination_procedure_code = [

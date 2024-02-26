@@ -32,7 +32,7 @@ class ImmunizationBaseTest(unittest.TestCase):
                                      # we only use one single product for all auth types
                                      # TODO(Cis2): add scopes for Cis2
                                      # TODO(NhsLogin): add scopes for NhsLogin
-                                     scopes=[f"urn:nhsd:apim:app:level3:immunisation-fhir-api"])
+                                     scopes=["urn:nhsd:apim:app:level3:immunisation-fhir-api"])
         cls.product = make_apigee_product(cls.apigee_service, product_data)
         cls.apigee_service.add_proxy_to_product(product_name=cls.product.name, proxy_name=get_proxy_name())
 

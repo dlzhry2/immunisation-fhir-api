@@ -22,7 +22,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
                 update_payload = copy.deepcopy(imms)
                 update_payload["id"] = imms_id
                 update_payload["status"] = "not-done"
-                response =imms_api.update_immunization(imms_id, update_payload)
+                response = imms_api.update_immunization(imms_id, update_payload)
 
                 # Then
                 self.assertEqual(response.status_code, 200, response.text)

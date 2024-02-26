@@ -36,4 +36,3 @@ class TestGetImmunization(ImmunizationBaseTest):
         imms = self.create_a_deleted_immunization_resource(self.default_imms_api)
         response = self.default_imms_api.get_immunization_by_id(imms["id"])
         self.assert_operation_outcome(response, 404)
-

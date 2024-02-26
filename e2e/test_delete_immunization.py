@@ -28,4 +28,3 @@ class TestDeleteImmunization(ImmunizationBaseTest):
         imms = self.create_a_deleted_immunization_resource(self.default_imms_api)
         response = self.default_imms_api.delete_immunization(imms["id"])
         self.assert_operation_outcome(response, 404)
-
