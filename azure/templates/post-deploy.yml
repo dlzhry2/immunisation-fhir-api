@@ -114,6 +114,9 @@ steps:
         echo "Sandbox env tests"
         make run-smoketest
         make run-immunization
+      elif [[ $APIGEE_ENVIRONMENT == "ref" ]]
+      then
+        make run-smoketest
       elif [[ $APIGEE_ENVIRONMENT == "int" ]]
       then
         export DEFAULT_CLIENT_ID="$(INT_CLIENT_ID)"
