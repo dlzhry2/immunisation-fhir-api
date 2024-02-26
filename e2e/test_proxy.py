@@ -72,7 +72,13 @@ class TestMtls(unittest.TestCase):
 class TestProxyAuthorization(unittest.TestCase):
     """Our apigee proxy has its own authorization.
     This class test different authorization access levels/roles authentication types that are supported"""
+    proxy_url: str
 
-    def test_app_restricted_level_0(self):
-        # TODO: add it
-        pass
+    @classmethod
+    def setUpClass(cls):
+        cls.proxy_url = get_service_base_path()
+
+    def test_invalid_access_token(self):
+        """it should return 401 if access token is invalid"""
+        response = requests.get(f"{self.proxy_url}/Immunization", headers={"X-Request-ID": str(uuid.uuid4())})
+        self.assertEqual(response.status_code, 401, response.text)
