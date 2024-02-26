@@ -29,6 +29,21 @@ class TestUpdateImmunization(ImmunizationBaseTest):
                 self.assertEqual(response.text, "")
                 self.assertTrue("Location" not in response.headers)
 
+    def test_update_non_unique_identifier(self):
+        """update a record should fail if identifier is not unique"""
+        imms = create_an_imms_obj()
+        _ = self.create_immunization_resource(self.default_imms_api, imms)
+        # NOTE: there is a difference between id and identifier.
+        # 422 is expected when identifier is the same across different ids
+        # This is why in this test we create a new id but not touching the identifier
+        new_imms_id = str(uuid.uuid4())
+        imms["id"] = new_imms_id
+
+        # When update the same object (it has the same identifier)
+        response = self.default_imms_api.update_immunization(new_imms_id, imms)
+        # Then
+        self.assert_operation_outcome(response, 422)
+
     def test_update_none_existing_record(self):
         """update should create a new Immunization if id doesn't exist"""
         imms_id = str(uuid.uuid4())

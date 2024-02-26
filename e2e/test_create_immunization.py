@@ -1,3 +1,5 @@
+import uuid
+
 from utils.base_test import ImmunizationBaseTest
 from utils.resource import create_an_imms_obj
 
@@ -11,21 +13,33 @@ class TestCreateImmunization(ImmunizationBaseTest):
                 imms = create_an_imms_obj()
 
                 # When
-                result = imms_api.create_immunization(imms)
+                response = imms_api.create_immunization(imms)
 
                 # Then
-                self.assertEqual(result.status_code, 201, result.text)
-                self.assertEqual(result.text, "")
-                self.assertTrue("Location" in result.headers)
+                self.assertEqual(response.status_code, 201, response.text)
+                self.assertEqual(response.text, "")
+                self.assertTrue("Location" in response.headers)
+
+    def test_non_unique_identifier(self):
+        """it should give 422 if the identifier is not unique"""
+        imms = create_an_imms_obj()
+        _ = self.create_immunization_resource(self.default_imms_api, imms)
+        new_id = str(uuid.uuid4())
+        imms["id"] = new_id
+
+        # When update the same object (it has the same identifier)
+        response = self.default_imms_api.create_immunization(imms)
+        # Then
+        self.assert_operation_outcome(response, 422)
 
     def test_bad_nhs_number(self):
         """it should reject the request if nhs-number does not exist"""
         bad_nhs_number = "7463384756"
         imms = create_an_imms_obj(nhs_number=bad_nhs_number)
 
-        result = self.default_imms_api.create_immunization(imms)
+        response = self.default_imms_api.create_immunization(imms)
 
-        self.assert_operation_outcome(result, 400, bad_nhs_number)
+        self.assert_operation_outcome(response, 400, bad_nhs_number)
 
     def test_validation(self):
         """it should validate Immunization"""
