@@ -9,7 +9,7 @@ import botocore.exceptions
 from botocore.config import Config
 from boto3.dynamodb.conditions import Attr, Key
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
-from models.errors import ResourceNotFoundError, UnhandledResponseError
+from models.errors import ResourceNotFoundError, UnhandledResponseError, IdentifierDuplicationError
 from decimal import Decimal
 
 from models.utils.generic_utils import get_disease_type
@@ -43,6 +43,16 @@ def _make_patient_pk(_id: str):
     return f"Patient#{_id}"
 
 
+def _query_identifier(table, index, pk, identifier):
+    queryResponse = table.query(
+            IndexName=index,
+            KeyConditionExpression=Key(pk).eq(identifier),
+            Limit=1
+        )
+    if queryResponse.get('Count', 0) > 0:
+        return queryResponse
+
+
 @dataclass
 class RecordAttributes:
     pk: str
@@ -52,6 +62,7 @@ class RecordAttributes:
     patient: dict
     disease_type: str
     timestamp: int
+    identifier: str
 
     def __init__(self, imms: dict, patient: dict):
         """Create attributes that may be used in dynamodb table"""
@@ -68,6 +79,7 @@ class RecordAttributes:
         self.disease_type = get_disease_type(imms)
 
         self.patient_sk = f"{self.disease_type}#{imms_id}"
+        self.identifier = imms['identifier'][0]['value']
 
 
 class ImmunizationRepository:
@@ -91,15 +103,19 @@ class ImmunizationRepository:
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
 
-        response = self.table.put_item(
-            Item={
-                "PK": attr.pk,
-                "PatientPK": attr.patient_pk,
-                "PatientSK": attr.patient_sk,
-                "Resource": json.dumps(attr.resource, cls=DecimalEncoder),
-                "Patient": attr.patient,
-            }
-        )
+        query_response = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
+
+        if query_response is not None and 'DeletedAt' not in query_response['Items'][0]:
+                raise IdentifierDuplicationError(identifier=attr.identifier)
+
+        response = self.table.put_item(Item={
+            'PK': attr.pk,
+            'PatientPK': attr.patient_pk,
+            'PatientSK': attr.patient_sk,
+            'Resource': json.dumps(attr.resource, cls=DecimalEncoder),
+            'Patient': attr.patient,
+            'IdentifierPK': attr.identifier
+        })
 
         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
             return immunization
@@ -108,15 +124,21 @@ class ImmunizationRepository:
                 message="Non-200 response from dynamodb", response=response
             )
 
-    def update_immunization(
-        self, imms_id: str, immunization: dict, patient: dict
-    ) -> dict:
+    def update_immunization(self, imms_id: str, immunization: dict, patient: dict) -> dict:
         attr = RecordAttributes(immunization, patient)
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient"
         )
+
+        queryResponse = _query_identifier(self.table, 'IdentifierGSI', 'IdentifierPK', attr.identifier)
+
+        if queryResponse != None:
+            items = queryResponse.get('Items', [])
+            resource_dict = json.loads(items[0]['Resource'])
+            if resource_dict['id'] != attr.resource['id'] and 'DeletedAt' not in items[0]:
+                raise IdentifierDuplicationError(identifier=attr.identifier)
 
         try:
             response = self.table.update_item(
@@ -133,8 +155,7 @@ class ImmunizationRepository:
                     ":patient": attr.patient,
                 },
                 ReturnValues="ALL_NEW",
-                ConditionExpression=Attr("PK").eq(attr.pk)
-                & Attr("DeletedAt").not_exists(),
+                ConditionExpression=Attr("PK").eq(attr.pk)& Attr("DeletedAt").not_exists()
             )
             return self._handle_dynamo_response(response)
 

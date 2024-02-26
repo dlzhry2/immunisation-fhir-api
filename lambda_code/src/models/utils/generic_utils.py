@@ -3,6 +3,14 @@
 from typing import Literal, Union, Optional, Any
 
 
+def get_contained_resource_from_model(
+    values: dict,
+    resource: Literal["patient", "practitioner", "questionnaire_response"],
+):
+    """Extract and return the requested contained resource from values model"""
+    return [x for x in values["contained"] if x.resource_type == resource][0]
+
+
 def get_generic_questionnaire_response_value(
     json_data: dict,
     link_id: str,
@@ -63,9 +71,9 @@ def get_generic_questionnaire_response_value_from_model(
         The value coding field type to be validated, must be provided for valueCoding fields
     """
 
-    questionnaire_reponse = [
-        x for x in values["contained"] if x.resource_type == "QuestionnaireResponse"
-    ][0]
+    questionnaire_reponse = get_contained_resource_from_model(
+        values, "QuestionnaireReponse"
+    )
 
     item = [x for x in questionnaire_reponse.item if x.linkId == link_id][0]
 
