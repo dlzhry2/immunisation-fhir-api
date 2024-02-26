@@ -5,7 +5,7 @@ AWS_DOMAIN_NAME=https://$(shell make -C ../terraform -s output name=service_doma
 
 cmd = APIGEE_ACCESS_TOKEN=$(APIGEE_ACCESS_TOKEN) APIGEE_USERNAME=$(APIGEE_USERNAME) poetry run python -m unittest
 
-run-immunisation:
+run-immunization:
 	$(cmd) discover -v -c -p 'test_*_immunization.py'
 
 run-authorization:
