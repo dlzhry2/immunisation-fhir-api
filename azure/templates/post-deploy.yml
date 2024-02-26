@@ -102,6 +102,7 @@ steps:
       export RELEASE_RELEASEID=$(Build.BuildId)
       export SOURCE_COMMIT_ID=$(Build.SourceVersion)
       export APIGEE_ENVIRONMENT="$(ENVIRONMENT)"
+      export APIGEE_USERNAME=apm-testing-internal-dev@nhs.net
       export SERVICE_BASE_PATH="$(SERVICE_BASE_PATH)"
       export APIGEE_ACCESS_TOKEN="$(secret.AccessToken)"
       export PROXY_NAME="$(FULLY_QUALIFIED_SERVICE_NAME)"
