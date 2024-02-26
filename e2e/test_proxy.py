@@ -38,7 +38,6 @@ class TestMtls(unittest.TestCase):
         """backend should reject unauthorized connections"""
         backend_url = TestMtls.get_backend_url()
         backend_health = f"https://{backend_url}/status"
-        print(f"Backend url: {backend_url}")
 
         with self.assertRaises(requests.exceptions.RequestException) as e:
             requests.get(backend_health, headers={"X-Request-ID": str(uuid.uuid4())})
