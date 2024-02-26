@@ -220,7 +220,7 @@ paths:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
       requestBody:
-        $ref: '#/components/requestBodies/Immunization'
+        $ref: '#/components/requestBodies/Immunization' 
       responses:
         "201":
           description: Create Immunization operation successful
@@ -229,22 +229,12 @@ paths:
               $ref: components/schemas/Location.yaml
         4XX:
           $ref: '#/components/responses/4XX-imms'
-  /Immunization/_search:
     get:
       summary: Search for a patient's immunisation records
       operationId: searchViaGetImmunization
       description: |
         ## Overview
-        Use this endpoint to search for a patient using thier NHS number.
-
-        The behaviour of this endpoint depends on which access mode you are using:
-
-
-        | Access mode                    | Behaviour                                               |
-        | ------------------------------ | ------------------------------------------------------- |
-        | Application-restricted access  | Only a single unique match returned                     |
-        | Healthcare worker access       | Only a single unique match returned                     |
-        | Patient access                 | It is only possible to return information on the patient |
+        Use this endpoint to search for a patient using thier NHS number and DiseaseType.
 
         ## Sandbox testing
         You can test the following scenarios in our sandbox environment:
@@ -258,8 +248,37 @@ paths:
         - $ref: '#/components/parameters/RequestID'
         - $ref: '#/components/parameters/PatientIdentifier'
         - $ref: '#/components/parameters/ImmunizationTarget'
-        - $ref: '#/components/parameters/DateTo'
-        - $ref: '#/components/parameters/DateFrom'
+      responses:
+        "200":
+          description: Search immunisation operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+        4XX:
+          $ref: '#/components/responses/4XX-imms'
+  /Immunization/_search:
+    post:
+      summary: Search for a patient's immunisation records
+      operationId: searchViaPOSTImmunization
+      description: |
+        ## Overview
+        Use this endpoint to search for a patient using thier NHS number and DiseaseType.
+        
+        ## Sandbox testing
+        You can test the following scenarios in our sandbox environment:
+
+        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+        |                                         |                                                                                                                                                                 |                                                                         |
+
+      parameters:
+        - $ref: '#/components/parameters/CorrelationID'
+        - $ref: '#/components/parameters/RequestID'
+        - $ref: '#/components/parameters/PatientIdentifier'
+        - $ref: '#/components/parameters/ImmunizationTarget'
+      requestBody:
+        $ref: '#/components/requestBodies/SearchImmunization' 
       responses:
         "200":
           description: Search immunisation operation successful
@@ -409,7 +428,24 @@ components:
           schema:
             $ref: '#/components/schemas/Immunization'
       required: true
-  
+    SearchImmunization:
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              -nhsNumber:
+                type: string
+                description: |
+                  The patient's NHS number.
+                  Expressed as `<value>` where`<value>` must be a [valid NHS number](https://www.datadictionary.nhs.uk/attributes/nhs_number.html).
+                example: "9000000009"
+              -diseaseType:
+                type: string
+                description: |
+                  The vaccine preventable disease the dose is being administered against.
+                  Expressed as `<value>` where`<value>` must be a valid Snomed Code.
+                example: "39114911000001105"
   parameters:
     Id:
       in: path
@@ -465,44 +501,24 @@ components:
         example: 60E0B220-8136-4CA5-AE46-1D97EF59D068
     PatientIdentifier:
       in: query
-      name: patient.identifier
+      name: -nhsNumber
       description: |
         The patient's NHS number.
-        Expressed as `<type>|<value>` where `<type>` must be `https://fhir.nhs.uk/Id/nhs-number` and `<value>` must be a [valid NHS number](https://www.datadictionary.nhs.uk/attributes/nhs_number.html).
+        Expressed as `<value>` where`<value>` must be a [valid NHS number](https://www.datadictionary.nhs.uk/attributes/nhs_number.html).
       required: true
       schema:
         type: string
-        example: "https://fhir.nhs.uk/Id/nhs-number|9000000009"
+        example: "9000000009"
     ImmunizationTarget:
       in: query
-      name: immunization.target
-      description: The vaccine preventable disease the dose is being administered against.
+      name: -diseaseType
+      description: |
+        The vaccine preventable disease the dose is being administered against.
+        Expressed as `<value>` where`<value>` must be a valid Snomed Code.
       required: true
       schema:
-        type: array
-        items:
-          type: string
-        example:
-          - COVID19
-          - FLU
-    DateTo:
-      in: query
-      name: date.to
-      description: The latest date to be included (e.g. 2020-12-31)
-      required: false
-      schema:
         type: string
-        format: date-time
-        example: '9999-12-31'
-    DateFrom:
-      in: query
-      name: date.from
-      description: The earliest date to be included (e.g. 2020-01-01)
-      required: false
-      schema:
-        type: string
-        format: date-time
-        example: '1900-01-01'
+        example: "39114911000001105"
   schemas:
     Resource:
       type: object

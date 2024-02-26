@@ -9,12 +9,16 @@ from authorization import Authorization
 from fhir.resources.R4B.bundle import Bundle
 from fhir.resources.R4B.immunization import Immunization
 from fhir_controller import FhirController
+from fhir.resources.R4B.bundle import Bundle
+import base64
+from fhir_controller import FhirController
 from fhir_service import FhirService, UpdateOutcome
 from models.errors import (
     ResourceNotFoundError,
     UnhandledResponseError,
     InvalidPatientId,
     CoarseValidationError,
+    IdentifierDuplicationError
 )
 from .immunization_utils import create_an_immunization
 
@@ -406,7 +410,6 @@ class TestSearchImmunizations(unittest.TestCase):
             "body": base64_encoded_body,
             "queryStringParameters": {self.disease_type_search_param: disease_type,
                                       self.nhs_search_param: nhs_number},
-
         }
         # When
         response = self.controller.search_immunizations(lambda_event)
@@ -440,7 +443,6 @@ class TestSearchImmunizations(unittest.TestCase):
             },
             "body": base64_encoded_body,
             "queryStringParameters": {self.disease_type_search_param: disease_type},
-
         }
         # When
         response = self.controller.search_immunizations(lambda_event)

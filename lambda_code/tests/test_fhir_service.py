@@ -311,6 +311,28 @@ class TestSearchImmunizations(unittest.TestCase):
         self.nhsSearchParam = "-nhsNumber"
         self.diseaseTypeSearchParam = "-diseaseType"
 
+    def test_get_service_url(self):
+        """it should create service url"""
+        env = "int"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://{env}.api.service.nhs.uk/{base_path}")
+        # default should be internal-dev
+        env = "it-does-not-exist"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
+        # prod should not have subdomain
+        env = "prod"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://api.service.nhs.uk/{base_path}")
+        # any other env should fall back to internal-dev (like pr-xx or per-user)
+        env = "pr-42"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
+
     def test_map_disease_type_to_disease_code(self):
         """it should map disease_type to disease_code"""
         # TODO: for this ticket we are assuming code is provided
