@@ -48,6 +48,9 @@ class TestMtls(unittest.TestCase):
     def get_backend_url() -> str:
         """The output is the backend url that terraform deployed.
         This command runs a make target in the terraform directory"""
+        if url := os.getenv("AWS_DOMAIN_NAME"):
+            return url
+
         terraform_path = f"{os.getcwd()}/../terraform"
         "make -C ../terraform -s output name=service_domain_name"
         cmd = ["make", "-C", terraform_path, "-s", "output", "name=service_domain_name"]
