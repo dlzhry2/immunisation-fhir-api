@@ -4,14 +4,23 @@ APIGEE_ACCESS_TOKEN ?= $(shell export SSO_LOGIN_URL=https://login.apigee.com && 
 AWS_DOMAIN_NAME=https://$(shell make -C ../terraform -s output name=service_domain_name || true)
 
 cmd = APIGEE_ACCESS_TOKEN=$(APIGEE_ACCESS_TOKEN) APIGEE_USERNAME=$(APIGEE_USERNAME) poetry run python -m unittest
+
+run-immunisation:
+	$(cmd) discover -v -c -p 'test_*_immunization.py'
+
+run-authorization:
+	$(cmd) -v -c test_authorization.py
+
+run-wait-for-deployment:
+	$(cmd) -v -c test_deployment.py
+
+run-proxy:
+	$(cmd) -v -c test_proxy.py
+
+run-smoketest: run-wait-for-deployment run-proxy
+
 run:
 	$(cmd)
-
-run-int:
-	$(PYTEST_CMD_INT)
-
-run-%:
-	$(PYTEST_CMD) -m "$*"
 
 file = immunisation-fhir-api-local
 key-pair:
