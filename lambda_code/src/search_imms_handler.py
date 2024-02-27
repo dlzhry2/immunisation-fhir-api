@@ -16,7 +16,6 @@ def search_imms_handler(event: events.APIGatewayProxyEventV1, context: context_)
 
 def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController):
     try:
-        pprint.pprint(event)
         return controller.search_immunizations(event)
     except Exception as e:
         exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,

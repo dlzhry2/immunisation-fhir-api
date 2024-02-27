@@ -1,6 +1,7 @@
 import copy
 import uuid
 from time import sleep
+from typing import List, Literal, NamedTuple, Optional
 
 import pytest
 
@@ -144,3 +145,91 @@ def test_search_immunization_ignore_deleted(
     for record in stored_records:
         for resource in record["responses"]:
             assert resource["id"] in result_ids
+
+
+@pytest.mark.debug
+@pytest.mark.nhsd_apim_authorization(
+    {
+        "access": "healthcare_worker",
+        "level": "aal3",
+        "login_form": {"username": "656005750104"},
+    }
+)
+def test_search_immunization_parameter_locations(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
+    """it should filter based on disease type regardless of if parameters are in the URL or content"""
+
+    # Arrange
+
+    token = nhsd_apim_auth_headers["Authorization"]
+    imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
+    records = [
+        {
+            "nhs_number": valid_nhs_number1,
+            "diseases": [mmr_code],
+            "responses": [],
+        },
+        {
+            "nhs_number": valid_nhs_number1,
+            "diseases": [flu_code],
+            "responses": [],
+        },
+        {
+            "nhs_number": valid_nhs_number2,
+            "diseases": [flu_code, mmr_code, covid_code, mmr_code],
+            "responses": [],
+        },
+    ]
+    stored_records = seed_records(imms_api, records)
+
+    created_resources = [response for resource in stored_records for response in resource["responses"]]
+    created_resource_ids = [result["id"] for result in created_resources]
+
+    # Act
+    class SearchTestParams(NamedTuple):
+        method: Literal["POST", "GET"]
+        query_string: str
+        body: Optional[str]
+        should_be_success: bool
+        returned_indexes: List[int]
+
+    searches = \
+        [SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-diseaseType=MMR", None, True, [0]),
+         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-diseaseType=MMR&-diseaseType=FLU", None, True, [0, 1]),
+         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-diseaseType=MMR", f"-nhsNumber={valid_nhs_number1}", True, [0]),  # GET does not support body.
+         SearchTestParams("POST", f"-nhsNumber={valid_nhs_number1}&-diseaseType=MMR", f"-nhsNumber={valid_nhs_number1}", False, []),
+         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-nhsNumber={valid_nhs_number1}&-diseaseType=MMR", None, False, []),
+         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-diseaseType=MMR,FLU", None, True, [0, 1])]
+
+    try:
+        for search in searches:
+
+            pprint.pprint(search)
+            response = imms_api.search_immunizations_full(search.method, search.query_string, search.body)
+
+            # Then
+            #pprint.pprint(response.text)
+            #pdb.set_trace()
+            assert response.ok == search.should_be_success
+
+            if search.should_be_success:
+                results: dict = response.json()
+                assert "entry" in results.keys()
+                result_ids = [result["resource"]["id"] for result in results["entry"]]
+                assert response.status_code == 200
+                assert results["resourceType"] == "Bundle"
+
+                expected_created_resource_ids = \
+                    [created_resource_id for i, created_resource_id in enumerate(created_resource_ids)
+                     if i in search.returned_indexes]
+
+                for expected_created_resource_id in expected_created_resource_ids:
+                    assert expected_created_resource_id in result_ids
+
+                # for resource in created_resources[0]["responses"]:
+                #     assert resource["id"] in result_ids
+                # for resource in created_resources[1]["responses"]:
+                #     assert resource["id"] not in result_ids
+
+    except AssertionError:
+        cleanup(imms_api, stored_records)
+        raise

@@ -6,7 +6,7 @@ import json
 import os
 import re
 import uuid
-from typing import Optional, Iterable, Tuple, TypedDict
+from typing import Optional
 from decimal import Decimal
 
 import boto3
@@ -138,9 +138,9 @@ class FhirController:
     @staticmethod
     def process_search_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
         def split_and_flatten(input: list[str]):
-            return list(set([x
-                             for xs in input
-                             for x in xs.split(",")]))
+            return [x
+                    for xs in input
+                    for x in xs.split(",")]
 
         def parse_multi_value_query_parameters(
             multi_value_params: dict[str, list[str]]
@@ -176,14 +176,14 @@ class FhirController:
         disease_type_key = "-diseaseType"
 
         nhs_numbers = params.get(nhs_number_key, [])
-        nhs_number = nhs_numbers[0] if 0 < len(nhs_numbers) else None
+        nhs_number = nhs_numbers[0] if len(nhs_numbers) == 1 else None
 
         if nhs_number is None:
             return self._create_bad_request(
                 f"Search parameter {nhs_number_key} must have one value"
             )
 
-        disease_types = params.get(disease_type_key, [])
+        disease_types = list(set(params.get(disease_type_key, [])))
         if len(disease_types) < 1:
             return self._create_bad_request(
                 f"Search parameter {disease_type_key} must have one or more values"

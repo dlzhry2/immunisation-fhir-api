@@ -1,6 +1,6 @@
 import re
 import uuid
-from typing import Optional
+from typing import Optional, Literal
 
 import requests
 
@@ -37,9 +37,20 @@ class ImmunisationApi:
     def delete_immunization(self, imms_id):
         return requests.delete(f"{self.url}/Immunization/{imms_id}", headers=self._update_headers())
 
-    def search_immunizations(self, nhs_number, disease_type):
+    def search_immunizations(self, nhs_number: str, disease_type: str):
         return requests.get(f"{self.url}/Immunization?-nhsNumber={nhs_number}&-diseaseType={disease_type}",
                             headers=self._update_headers())
+
+    def search_immunizations_full(self,
+                                  http_method: Literal["POST", "GET"],
+                                  query_string: Optional[str],
+                                  body: Optional[str]):
+        return requests.request(
+            http_method,
+            f"{self.url}/Immunization?{query_string}",
+            headers=self._update_headers({"Content-Type": "application/x-www-form-urlencoded"}),
+            data=body
+        )
 
     def _update_headers(self, headers=None):
         if headers is None:

@@ -349,7 +349,6 @@ def test_bad_nhs_number_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     assert res_body["resourceType"] == "OperationOutcome"
 
 
-@pytest.mark.debug
 @pytest.mark.nhsd_apim_authorization(
     {
         "access": "healthcare_worker",

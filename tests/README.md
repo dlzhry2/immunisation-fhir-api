@@ -23,6 +23,9 @@ Any mark can be used as a filter by putting it after the `-`.
 Products are handled by the infra template and get cleaned up periodically.
 Running `/azp run` on the PR should fix it.
 
+### Tests fail with `Invalid Access Token: Ensure APIGEE_ACCESS_TOKEN is valid.`
+
+Try applying the Terraform again. May have been cleaned up by a platforms script.
 
 ### Terraform unable to create Cloudwatch Log Group
 
