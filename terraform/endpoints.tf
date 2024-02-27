@@ -26,7 +26,8 @@ locals {
         "DYNAMODB_TABLE_NAME"    = local.imms_table_name,
         "IMMUNIZATION_ENV"       = local.environment,
         "IMMUNIZATION_BASE_PATH" = strcontains(local.environment, "pr-") ? "immunisation-fhir-api-${local.environment}" : "immunisation-fhir-api"
-        "PDS_ENV"                = local.environment == "prod" ? "prod" : "int",
+        # except for prod and ref, any other env uses PDS int environment
+        "PDS_ENV"                = local.environment == "prod" ? "prod" : local.environment == "ref" ? "ref" : "int",
     }
 }
 data "aws_iam_policy_document" "imms_policy_document" {
