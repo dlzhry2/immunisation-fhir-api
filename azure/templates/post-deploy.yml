@@ -115,6 +115,8 @@ steps:
       poetry install
 
       test_cmd="poetry run python -m unittest"
+      # Run test_deployment before doing anything. This will wait until deployment is ready
+      $test_cmd -c -v -k test_deployment
 
       if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
         echo "Sandbox env tests"
