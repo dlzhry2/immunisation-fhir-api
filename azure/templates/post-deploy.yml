@@ -115,7 +115,6 @@ steps:
       poetry install
 
       test_cmd="poetry run python -m unittest"
-      smoke_test_cmd = "$tes_cmd
 
       if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
         echo "Sandbox env tests"
