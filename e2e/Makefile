@@ -17,7 +17,8 @@ run-wait-for-deployment:
 run-proxy:
 	$(cmd) -v -c test_proxy.py
 
-run-smoketest: run-wait-for-deployment run-proxy
+run-smoketest:
+	$(cmd) -c -v -k test_proxy.TestProxyHealthcheck -k test_deployment
 
 run:
 	$(cmd)

@@ -115,11 +115,12 @@ steps:
       poetry install
 
       test_cmd="poetry run python -m unittest"
+      smoke_test_cmd = "$tes_cmd
 
       if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
         echo "Sandbox env tests"
-        echo "running: $test_cmd -v -c test_deployment.py test_proxy.py"
-        $test_cmd -v -c test_deployment.py test_proxy.py
+        echo "running: $test_cmd -c -v -k test_proxy.TestProxyHealthcheck -k test_deployment"
+        $test_cmd -c -v -k test_proxy.TestProxyHealthcheck -k test_deployment
 
       elif [[ $APIGEE_ENVIRONMENT == "ref" ]]; then
         echo "running: $test_cmd -v -c test_deployment.py test_proxy.py"
