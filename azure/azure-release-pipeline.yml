@@ -27,9 +27,9 @@ variables:
 extends:
   template: azure/common/apigee-deployment.yml@common
   parameters:
-    service_name: ${{ variables.service_name }} 
-    short_service_name: ${{ variables.short_service_name }} 
-    service_base_path: ${{ variables.service_base_path }} 
+    service_name: ${{ variables.service_name }}
+    short_service_name: ${{ variables.short_service_name }}
+    service_base_path: ${{ variables.service_base_path }}
     apigee_deployments:
       - environment: internal-dev
         jinja_templates:
@@ -48,6 +48,14 @@ extends:
           DOMAIN_ENDPOINT: just-dummy-value-for-successful-build
         depends_on:
           - internal_dev_sandbox
+      - environment: ref
+        depends_on:
+            - internal_dev
+            - internal_dev_sandbox
+        jinja_templates:
+            DOMAIN_ENDPOINT: https://ref.imms.dev.api.platform.nhs.uk
+        post_deploy:
+            - template: ./templates/post-deploy.yml
       - environment: int
         depends_on:
           - internal_dev

@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from jsonpath_ng.ext import parse
 
 
-def load_json_data_for_tests(filename: str):
+def load_json_data(filename: str):
     """Load the json data"""
     data_path = f"{os.path.dirname(os.path.abspath(__file__))}/../sample_data"
     immunization_file_path = f"{data_path}/{filename}"

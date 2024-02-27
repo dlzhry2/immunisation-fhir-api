@@ -55,9 +55,7 @@ class FhirService:
         if not imms:
             return None
 
-        nhs_number = [
-            x for x in imms["contained"] if x.get("resourceType") == "Patient"
-        ][0]["identifier"][0]["value"]
+        nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
         filtered_immunization = handle_s_flag(imms, patient)
         return Immunization.parse_obj(filtered_immunization)
@@ -74,9 +72,7 @@ class FhirService:
 
         return Immunization.parse_obj(imms)
 
-    def update_immunization(
-        self, imms_id: str, immunization: dict
-    ) -> tuple[UpdateOutcome, Immunization]:
+    def update_immunization(self, imms_id: str, immunization: dict) -> tuple[UpdateOutcome, Immunization]:
         if immunization.get("id", imms_id) != imms_id:
             raise InconsistentIdError(imms_id=imms_id)
         immunization["id"] = imms_id
@@ -89,9 +85,7 @@ class FhirService:
         patient = self._validate_patient(immunization)
 
         try:
-            imms = self.immunization_repo.update_immunization(
-                imms_id, immunization, patient
-            )
+            imms = self.immunization_repo.update_immunization(imms_id, immunization, patient)
             return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
         except ResourceNotFoundError:
             imms = self.immunization_repo.create_immunization(immunization, patient)
@@ -107,9 +101,7 @@ class FhirService:
         imms = self.immunization_repo.delete_immunization(imms_id)
         return Immunization.parse_obj(imms)
 
-    def search_immunizations(
-        self, nhs_number: str, disease_type: str, params: str
-    ) -> FhirBundle:
+    def search_immunizations(self, nhs_number: str, disease_type: str, params: str) -> FhirBundle:
         """find all instances of Immunization(s) for a patient and specified disease type.
         Returns Bundle[Immunization]
         """
@@ -117,10 +109,7 @@ class FhirService:
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         resources = self.immunization_repo.find_immunizations(nhs_number, disease_type)
         patient = self.pds_service.get_patient_details(nhs_number)
-        entries = [
-            BundleEntry(resource=Immunization.parse_obj(handle_s_flag(imms, patient)))
-            for imms in resources
-        ]
+        entries = [BundleEntry(resource=Immunization.parse_obj(handle_s_flag(imms, patient))) for imms in resources]
         fhir_bundle = FhirBundle(
             resourceType="Bundle",
             type="searchset",
@@ -131,9 +120,7 @@ class FhirService:
         return fhir_bundle
 
     def _validate_patient(self, imms: dict):
-        nhs_number = [
-            x for x in imms["contained"] if x.get("resourceType") == "Patient"
-        ][0]["identifier"][0]["value"]
+        nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
         if patient:
             return patient
