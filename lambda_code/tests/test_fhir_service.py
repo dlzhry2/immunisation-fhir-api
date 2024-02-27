@@ -103,10 +103,6 @@ class TestCreateImmunization(unittest.TestCase):
         self.fhir_service = FhirService(
             self.imms_repo, self.pds_service, self.validator
         )
-        # self.not_mock_validator = ImmunizationValidator
-        # self.not_mock_fhir_service = FhirService(
-        #    self.imms_repo, self.pds_service, self.not_mock_validator
-        # )
 
     def test_create_immunization(self):
         """it should create Immunization and validate it"""
@@ -152,6 +148,26 @@ class TestCreateImmunization(unittest.TestCase):
 
         # Then
         self.assertEqual(error.exception.message, expected_msg)
+        self.imms_repo.create_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+    def test_post_validation_failed(self):
+        """it should throw exception if Immunization is not valid"""
+
+        imms = create_an_immunization_dict("1234567890")
+        imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "bad-code"
+        expected_msg = (
+            "extension[?(@.url=="
+            + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')"
+            + "].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code: "
+            + "bad-code is not a valid code for this service (type=value_error)"
+        )
+        fhir_service = FhirService(self.imms_repo, self.pds_service)
+        with self.assertRaises(CustomValidationError) as error:
+            fhir_service.create_immunization(imms)
+
+        # Then
+        self.assertTrue(expected_msg in error.exception.message)
         self.imms_repo.create_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
@@ -412,35 +428,3 @@ class TestSearchImmunizations(unittest.TestCase):
         # Assert self link
         self.assertEqual(len(result.link), 1)  # Assert that there is only one link
         self.assertEqual(result.link[0].relation, "self")
-
-
-class NWTMPXXX(unittest.TestCase):
-    """Tests for NWTMPXXX"""
-
-    def setUp(self):
-        self.imms_repo = create_autospec(ImmunizationRepository)
-        self.pds_service = create_autospec(PdsService)
-
-    def test_post_validation_failed(self):
-        """it should throw exception if Immunization is not valid"""
-
-        imms = create_an_immunization_dict("1234567890")
-        imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "bad-code"
-
-        # validation_error = ValidationError(
-        #    [
-        #        ErrorWrapper(TypeError("bad type"), "/type"),
-        #    ],
-        #    Immunization,
-        # )
-        # self.validator.validate.side_effect = validation_error
-        # expected_msg = str("test")
-
-        # self.not_mock_fhir_service.create_immunization(imms)
-        fhir_service = FhirService(self.imms_repo, self.pds_service)
-        fhir_service.create_immunization(imms)
-
-        # Then
-        # self.assertEqual(error.exception.message, expected_msg)
-        # self.imms_repo.create_immunization.assert_not_called()
-        # self.pds_service.get_patient_details.assert_not_called()

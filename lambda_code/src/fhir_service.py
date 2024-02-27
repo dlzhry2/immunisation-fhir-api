@@ -18,8 +18,6 @@ from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 
-from icecream import ic
-
 
 def get_service_url(
     service_env: str = os.getenv("IMMUNIZATION_ENV"),
@@ -49,7 +47,7 @@ class FhirService:
     ):
         self.immunization_repo = imms_repo
         self.pds_service = pds_service
-        self.validator = ImmunizationValidator()
+        self.validator = validator
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
         imms = self.immunization_repo.get_immunization_by_id(imms_id)
@@ -66,19 +64,12 @@ class FhirService:
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
-            ic("about to validate")
             self.validator.validate(immunization)
-            ic("validated")
         except (ValidationError, ValueError) as error:
-            ic("WE HAVE AN ERROR")
             raise CustomValidationError(message=str(error)) from error
-        except Exception as e:
-            ic(f"WE HAVE AN ERROR2: {e}")
-            raise CustomValidationError(message=str(e)) from e
-        print("carrying on")
+
         patient = self._validate_patient(immunization)
 
-        ic()
         imms = self.immunization_repo.create_immunization(immunization, patient)
 
         return Immunization.parse_obj(imms)

@@ -1,7 +1,4 @@
-import re
-from datetime import datetime
-from typing import Union, Literal, Optional, Any
-from decimal import Decimal
+from typing import Literal, Optional, Any
 from mappings import (
     Mandation,
     vaccination_procedure_snomed_codes,
@@ -11,8 +8,6 @@ from .generic_utils import (
     get_deep_attr,
     get_generic_questionnaire_response_value_from_model,
 )
-
-from icecream import ic
 
 
 class MandatoryError(Exception):
@@ -28,13 +23,11 @@ class NotApplicableError(Exception):
 class PostValidation:
     @staticmethod
     def vaccination_procedure_code(vaccination_procedure_code: str, field_location):
-        ic(vaccination_procedure_code)
         vaccine_type = vaccination_procedure_snomed_codes.get(
             vaccination_procedure_code, None
         )
 
         if not vaccine_type:
-            ic(vaccine_type)
             raise ValueError(
                 f"{field_location}: {vaccination_procedure_code} "
                 + "is not a valid code for this service"

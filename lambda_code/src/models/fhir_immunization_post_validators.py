@@ -8,12 +8,9 @@ from models.utils.generic_utils import (
 from models.utils.post_validation_utils import (
     PostValidation,
     MandatoryError,
-    NotApplicableError,
 )
 from mappings import DiseaseTypes, Mandation, vaccine_type_applicable_validations
 from pydantic import ValidationError
-
-from icecream import ic
 
 check_mandation_requirements_met = PostValidation.check_mandation_requirements_met
 get_generic_field_value = PostValidation.get_generic_field_value
@@ -68,14 +65,12 @@ class FHIRImmunizationPostValidators:
             )
             if vaccination_procedure_code is None:
                 raise KeyError
-            cls.vaccine_type = PostValidation.vaccination_procedure_code(
-                vaccination_procedure_code, field_location
-            )
-            ic(cls.vaccine_type)
         except (KeyError, IndexError) as error:
-            ic(f"mandatory error {str(error)}")
             raise MandatoryError(f"{field_location} is a mandatory field") from error
-        ic("shouldn't get here")
+        cls.vaccine_type = PostValidation.vaccination_procedure_code(
+            vaccination_procedure_code, field_location
+        )
+
         return values
 
     @classmethod
@@ -83,7 +78,6 @@ class FHIRImmunizationPostValidators:
         "Set status property to match the value in the JSON data"
         # Note: no need to check field is present, as this is done already by the FHIR validator
         cls.status = values["status"]
-        ic(cls.status)
 
         return values
 
