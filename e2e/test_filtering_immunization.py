@@ -80,13 +80,15 @@ class TestGetSFlagImmunization(SFlagBaseTest):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 imms = self.create_s_flagged_patient(imms_api)
-                self.assert_is_filtered(imms)
+                read_imms = imms_api.get_immunization_by_id(imms["id"])
+                self.assert_is_filtered(read_imms.json())
 
     def test_get_not_s_flagged_imms(self):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 imms = self.create_not_s_flagged_patient(imms_api)
-                self.assert_is_not_filtered(imms)
+                read_imms = imms_api.get_immunization_by_id(imms["id"])
+                self.assert_is_not_filtered(read_imms.json())
 
 
 class TestSearchSFlagImmunization(SFlagBaseTest):
