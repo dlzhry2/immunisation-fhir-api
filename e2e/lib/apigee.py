@@ -13,8 +13,10 @@ class ApigeeOrg(str, Enum):
 
 class ApigeeEnv(str, Enum):
     INTERNAL_DEV = "internal-dev"
+    INTERNAL_DEV_SANDBOX = "internal-dev-sandbox"
     SANDBOX = "sandbox"
     INT = "int"
+    REF = "ref"
     PROD = "prod"
 
 
