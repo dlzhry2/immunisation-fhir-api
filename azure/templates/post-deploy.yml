@@ -73,7 +73,7 @@ steps:
       if ! [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
         counter=0
         base_path="$SERVICE_BASE_PATH"
-        
+
         endpoint="https://${APIGEE_ENVIRONMENT}.api.service.nhs.uk/${base_path}/_status"
         while [[ $counter -lt 11 ]]; do
           response=$(curl -H "apikey: $(status-endpoint-api-key)" -s "$endpoint")
@@ -114,6 +114,9 @@ steps:
       then
         echo "Sandbox env tests"
         marker="not nhsd_apim_authorization and not sandbox_int and not mtls"
+      elif [[ $APIGEE_ENVIRONMENT == "ref" ]]
+      then
+        marker="smoketest or mtls"
       elif [[ $APIGEE_ENVIRONMENT == "int" ]]
       then
         export DEFAULT_CLIENT_ID="$(INT_CLIENT_ID)"
