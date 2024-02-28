@@ -135,18 +135,21 @@ class FhirController:
     ParamValue = list[str]
     ParamContainer = dict[str, ParamValue]
 
+    nhs_number_key = "-nhsNumber"
+    disease_type_key = "-diseaseType"
+
     @staticmethod
-    def process_search_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
+    def process_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
         def split_and_flatten(input: list[str]):
             return [x
                     for xs in input
                     for x in xs.split(",")]
 
         def parse_multi_value_query_parameters(
-            multi_value_params: dict[str, list[str]]
+            multi_value_query_params: dict[str, list[str]]
         ) -> FhirController.ParamContainer:
             params = [(k, split_and_flatten(v))
-                      for k, v in multi_value_params.items()]
+                      for k, v in multi_value_query_params.items()]
 
             return dict(params)
 
@@ -162,37 +165,57 @@ class FhirController:
                 return items
             return {}
 
-        multi_value_params = parse_multi_value_query_parameters(aws_event.get("multiValueQueryStringParameters"))
+        query_params = parse_multi_value_query_parameters(aws_event.get("multiValueQueryStringParameters", {}))
         body_params = parse_body_params(aws_event)
 
-        return {key: multi_value_params.get(key, []) + body_params.get(key, [])
-                for key in (multi_value_params.keys() | body_params.keys())}
+        return {key: sorted(query_params.get(key, []) + body_params.get(key, []))
+                for key in (query_params.keys() | body_params.keys())}
 
-    def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
-        params = self.process_search_params(aws_event)
-        pprint.pprint(params)
+    class SearchParams:
+        nhs_number: str
+        disease_types: list[str]
 
-        nhs_number_key = "-nhsNumber"
-        disease_type_key = "-diseaseType"
+        def __init__(self, nhs_number: str, disease_type: list[str]):
+            self.nhs_number = nhs_number
+            self.disease_types = disease_type
 
-        nhs_numbers = params.get(nhs_number_key, [])
+    @staticmethod
+    def process_search_params(params: ParamContainer) -> tuple[Optional[SearchParams], Optional[str]]:
+        nhs_numbers = params.get(FhirController.nhs_number_key, [])
         nhs_number = nhs_numbers[0] if len(nhs_numbers) == 1 else None
 
         if nhs_number is None:
-            return self._create_bad_request(
-                f"Search parameter {nhs_number_key} must have one value"
-            )
+            return None, f"Search parameter {FhirController.nhs_number_key} must have one value"
 
-        disease_types = list(set(params.get(disease_type_key, [])))
+        params[FhirController.disease_type_key] = list(set(params.get(FhirController.disease_type_key, [])))
+        disease_types = [disease_type for disease_type in params[FhirController.disease_type_key] if disease_type is not None]
         if len(disease_types) < 1:
-            return self._create_bad_request(
-                f"Search parameter {disease_type_key} must have one or more values"
-            )
+            return None, f"Search parameter {FhirController.disease_type_key} must have one or more values"
 
-        search_params = urllib.parse.urlencode(params, doseq=True)
+        return FhirController.SearchParams(nhs_number, disease_types), None
+
+    @staticmethod
+    def get_query_string(search_params: SearchParams):
+        #params = [(f"-{k}", v) for k, v in search_params.__dict__.items()]
+        params = [
+            (FhirController.disease_type_key, search_params.disease_types),
+            (FhirController.nhs_number_key, search_params.nhs_number)
+        ]
+        search_params_qs = urllib.parse.urlencode(sorted(params, key=lambda x: x[0]), doseq=True)
+        return search_params_qs
+
+    def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
+        params = self.process_params(aws_event)
+        pprint.pprint(params)
+        search_params, err = self.process_search_params(params)
+        pprint.pprint(search_params)
+        if err is not None:
+            return self._create_bad_request(err)
+        if search_params is None:
+            raise Exception("Failed to parse parameters")
 
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, search_params
+            search_params.nhs_number, search_params.disease_types, self.get_query_string(search_params)
         )
         return self.create_response(200, result.json())
 

@@ -15,7 +15,7 @@ from models.errors import (
     CoarseValidationError,
     IdentifierDuplicationError
 )
-from .immunization_utils import create_an_immunization
+from immunization_utils import create_an_immunization
 
 
 def _create_a_post_event(body: str) -> dict:
@@ -370,17 +370,17 @@ class TestSearchImmunizations(unittest.TestCase):
 
         nhs_number = "an-patient-id"
         disease_type = "a-disease-type"
-        params=f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_type}"
-        lambda_event = {"queryStringParameters": {
-            self.disease_type_search_param: disease_type,
-            self.nhs_search_param: nhs_number
+        params=f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
+        lambda_event = {"multiValueQueryStringParameters": {
+            self.disease_type_search_param: [disease_type],
+            self.nhs_search_param: [nhs_number]
         }}
 
         # When
         response = self.controller.search_immunizations(lambda_event)
 
         # Then
-        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type,params)
+        self.service.search_immunizations.assert_called_once_with(nhs_number, [disease_type], params)
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
@@ -392,7 +392,7 @@ class TestSearchImmunizations(unittest.TestCase):
 
         nhs_number = "an-patient-id"
         disease_type = "a-disease-type"
-        params=f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_type}"
+        params = f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
         # Construct the application/x-www-form-urlencoded body
         body = {
             self.nhs_search_param: nhs_number,
@@ -413,7 +413,7 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         response = self.controller.search_immunizations(lambda_event)
         # Then
-        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type,params)
+        self.service.search_immunizations.assert_called_once_with(nhs_number, [disease_type], params)
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
@@ -436,18 +436,16 @@ class TestSearchImmunizations(unittest.TestCase):
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
-
     def test_repeated_same_params_search_immunizations(self):
-        """it should search based on nhsNumber and diseaseType irresepctive of their repition in params and body"""
+        """it should search based on nhsNumber and diseaseType when diseaseType repeated in params and body"""
         search_result = Bundle.construct()
         self.service.search_immunizations.return_value = search_result
 
         nhs_number = "an-patient-id"
         disease_type = "a-disease-type"
-        params=f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_type}"
+        params = f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
         # Construct the application/x-www-form-urlencoded body
         body = {
-            self.nhs_search_param: nhs_number,
             self.disease_type_search_param: disease_type
         }
         encoded_body = urlencode(body)
@@ -461,14 +459,15 @@ class TestSearchImmunizations(unittest.TestCase):
                 "Content-Type": "application/x-www-form-urlencoded"
             },
             "body": base64_encoded_body,
-            "queryStringParameters":{self.disease_type_search_param: disease_type,
-            self.nhs_search_param: nhs_number},
-            
+            "multiValueQueryStringParameters": {
+                self.disease_type_search_param: [disease_type],
+                self.nhs_search_param: [nhs_number]
+            },
         }
         # When
         response = self.controller.search_immunizations(lambda_event)
         # Then
-        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type,params)
+        self.service.search_immunizations.assert_called_once_with(nhs_number, [disease_type], params)
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
@@ -480,7 +479,7 @@ class TestSearchImmunizations(unittest.TestCase):
 
         nhs_number = "an-patient-id"
         disease_type = "a-disease-type"
-        params=f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_type}"
+        params=f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
         # Construct the application/x-www-form-urlencoded body
         body = {
             self.nhs_search_param: nhs_number
@@ -496,13 +495,13 @@ class TestSearchImmunizations(unittest.TestCase):
                 "Content-Type": "application/x-www-form-urlencoded"
             },
             "body": base64_encoded_body,
-            "queryStringParameters":{self.disease_type_search_param: disease_type},
-            
+            "multiValueQueryStringParameters": {self.disease_type_search_param: [disease_type]},
+
         }
         # When
         response = self.controller.search_immunizations(lambda_event)
         # Then
-        self.service.search_immunizations.assert_called_once_with(nhs_number, disease_type,params)
+        self.service.search_immunizations.assert_called_once_with(nhs_number, [disease_type], params)
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
@@ -529,8 +528,10 @@ class TestSearchImmunizations(unittest.TestCase):
                 "Content-Type": "application/x-www-form-urlencoded"
             },
             "body": base64_encoded_body,
-            "queryStringParameters":{self.disease_type_search_param: disease_type1,
-            self.nhs_search_param: nhs_number1}
+            "multiValueQueryStringParameters": {
+                self.disease_type_search_param: [disease_type1],
+                self.nhs_search_param: [nhs_number1]
+            }
         }
         # When
         response = self.controller.search_immunizations(lambda_event)
@@ -541,8 +542,8 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_nhs_number_is_mandatory(self):
         """nhsNumber is a mandatory query param"""
-        lambda_event = {"queryStringParameters": {
-            self.disease_type_search_param: "a-disease-type",
+        lambda_event = {"multiValueQueryStringParameters": {
+            self.disease_type_search_param: ["a-disease-type"],
         }}
 
         response = self.controller.search_immunizations(lambda_event)
@@ -554,8 +555,8 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_diseaseType_is_mandatory(self):
         """diseaseType is a mandatory query param"""
-        lambda_event = {"queryStringParameters": {
-            self.nhs_search_param: "an-id",
+        lambda_event = {"multiValueQueryStringParameters": {
+            self.nhs_search_param: ["an-id"],
         }}
 
         response = self.controller.search_immunizations(lambda_event)
@@ -564,3 +565,51 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(response["statusCode"], 400)
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
+
+    def test_self_link_excludes_extraneous_params(self):
+        nhs_number = "an-patient-id"
+        disease_type = "a-disease-type"
+        params = f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
+
+        lambda_event = {
+            "multiValueQueryStringParameters": {
+                self.nhs_search_param: [nhs_number],
+                self.disease_type_search_param: [disease_type],
+                "b": ["b", "a"],
+                "a": ["b", "a"],
+            },
+            "body": None,
+            "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
+            "httpMethod": "POST",
+        }
+
+        self.controller.search_immunizations(lambda_event)
+
+        self.service.search_immunizations.assert_called_once_with(nhs_number, [disease_type], params)
+
+    def test_process_search_params_is_sorted(self):
+        lambda_event = {
+            "multiValueQueryStringParameters": {
+                self.nhs_search_param: ["b", "a"],
+            },
+            "body": base64.b64encode(f"{self.disease_type_search_param}=b&{self.disease_type_search_param}=a".encode("utf-8")),
+            "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
+            "httpMethod": "POST"
+        }
+        processed_params = self.controller.process_params(lambda_event)
+
+        for (k, v) in processed_params.items():
+            assert sorted(v) == v
+
+    def test_process_search_params_does_not_process_query_string_on_get(self):
+        lambda_event = {
+            "multiValueQueryStringParameters": {
+                self.nhs_search_param: ["b", "a"],
+            },
+            "body": base64.b64encode(f"{self.disease_type_search_param}=b&{self.disease_type_search_param}=a".encode("utf-8")),
+            "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
+            "httpMethod": "GET"
+        }
+        processed_params = self.controller.process_params(lambda_event)
+
+        assert processed_params == {self.nhs_search_param: ["a", "b"]}

@@ -18,7 +18,7 @@ from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
-from .immunization_utils import (
+from immunization_utils import (
     create_an_immunization,
     create_an_immunization_dict,
     valid_nhs_number,
@@ -356,31 +356,34 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_map_disease_type_to_disease_code(self):
         """it should map disease_type to disease_code"""
         # TODO: for this ticket we are assuming code is provided
-        nhs_number = "a-patient-id"
-        disease_type = "a-disease-code"
-        params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
-        # TODO: here we are assuming disease_type=disease_code this is because the mapping is not in place yet
-        disease_code = disease_type
-        # When
-        _ = self.fhir_service.search_immunizations(nhs_number, disease_code, params)
+        imms_ids = ["imms-1", "imms-2"]
+        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        imms_list[1]["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "not-a-code"
 
-        # Then
-        self.imms_repo.find_immunizations.assert_called_once_with(
-            nhs_number, disease_code
+        self.imms_repo.find_immunizations.return_value = imms_list
+        self.pds_service.get_patient_details.return_value = {}
+        nhs_number = "an-id"
+        disease_types = ["COVID19"]
+        params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_types}"
+        # When
+        result = self.fhir_service.search_immunizations(
+            nhs_number, disease_types, params
         )
+        self.assertEqual(len(result.entry), 1)
+        self.assertEqual(result.entry[0].resource.id, imms_ids[0])
 
     def test_make_fhir_bundle_from_search_result(self):
-        """it should return a FHIR:List[Immunization] resource"""
+        """it should return a FHIR Bundle resource"""
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = "an-id"
-        disease_type = "a-code"
-        params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
+        disease_types = ["COVID19"]
+        params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_types}"
         # When
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_type, params
+            nhs_number, disease_types, params
         )
         # Then
         self.assertIsInstance(result, FhirBundle)

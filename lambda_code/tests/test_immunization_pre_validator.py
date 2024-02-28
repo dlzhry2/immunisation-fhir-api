@@ -3,14 +3,14 @@
 import unittest
 from copy import deepcopy
 from decimal import Decimal
-from .utils.generic_utils import (
+from utils.generic_utils import (
     # these have an underscore to avoid pytest collecting them as tests
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
     load_json_data,
 )
-from .utils.pre_validation_test_utils import ValidatorModelTests
-from .utils.values_for_tests import ValidValues, InvalidValues
+from utils.pre_validation_test_utils import ValidatorModelTests
+from utils.values_for_tests import ValidValues, InvalidValues
 from models.fhir_immunization import ImmunizationValidator
 
 

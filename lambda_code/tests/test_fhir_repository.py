@@ -163,13 +163,13 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
 
         # Then
         self.assertDictEqual(e.exception.response, response)
-        
+
     def test_create_throws_error_when_identifier_already_in_dynamodb(self):
         """it should throw UnhandledResponse when trying to update an immunization with an identfier that is already stored"""
         imms_id = "an-id"
         imms = _make_an_immunization(imms_id)
-        imms["patient"] = self.patient        
-        
+        imms["patient"] = self.patient
+
         self.table.query = MagicMock(return_value={"Items":[{"Resource": '{"id": "different-id"}'}], "Count": 1})
 
         with self.assertRaises(IdentifierDuplicationError) as e:
@@ -177,7 +177,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
             self.repository.create_immunization(imms, self.patient)
 
         self.assertEqual(str(e.exception), f"The provided identifier: {imms['identifier'][0]['value']} is duplicated")
-        
+
 
 class TestCreateImmunizationPatientIndex(unittest.TestCase):
     """create_immunization should create a patient record with vaccine type"""
@@ -203,7 +203,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         # Then
         item = self.table.put_item.call_args.kwargs["Item"]
         self.assertEqual(item["PatientPK"], f"Patient#{nhs_number}")
-    
+
     def test_create_patient_with_disease_type(self):
         """Patient record should have a sort-key based on disease-type"""
         imms = _make_an_immunization()
@@ -302,7 +302,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         # Then
         self.assertDictEqual(e.exception.response, response)
-        
+
     def test_update_throws_error_when_identifier_already_in_dynamodb(self):
         """it should throw IdentifierDuplicationError when trying to update an immunization with an identfier that is already stored"""
         imms_id = "an-id"
@@ -316,7 +316,7 @@ class TestUpdateImmunization(unittest.TestCase):
             self.repository.update_immunization(imms_id, imms, self.patient)
 
         self.assertEqual(str(e.exception), f"The provided identifier: {imms['identifier'][0]['value']} is duplicated")
-    
+
 
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
@@ -433,18 +433,15 @@ class TestFindImmunizations(unittest.TestCase):
         self.repository = ImmunizationRepository(table=self.table)
 
     def test_find_immunizations(self):
-        """it should find events with nhsNumber and diseaseCode(like snomed)"""
+        """it should find events with nhsNumber"""
         nhs_number = "a-patient-id"
-        disease_code = "a-snomed-code-for-disease"
         dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": []}
         self.table.query = MagicMock(return_value=dynamo_response)
 
         condition = Key("PatientPK").eq(_make_patient_pk(nhs_number))
-        sort_key = f"{disease_code}#"
-        condition &= Key("PatientSK").begins_with(sort_key)
 
         # When
-        _ = self.repository.find_immunizations(nhs_number, disease_code)
+        _ = self.repository.find_immunizations(nhs_number)
 
         # Then
         self.table.query.assert_called_once_with(
@@ -461,7 +458,7 @@ class TestFindImmunizations(unittest.TestCase):
         is_ = Attr("DeletedAt").not_exists()
 
         # When
-        _ = self.repository.find_immunizations("an-id", "a-code")
+        _ = self.repository.find_immunizations("an-id")
 
         # Then
         self.table.query.assert_called_once_with(
@@ -480,7 +477,7 @@ class TestFindImmunizations(unittest.TestCase):
         self.table.query = MagicMock(return_value=dynamo_response)
 
         # When
-        results = self.repository.find_immunizations("an-id", "a-code")
+        results = self.repository.find_immunizations("an-id")
 
         # Then
         self.assertListEqual(results, [imms1, imms2])
@@ -493,7 +490,7 @@ class TestFindImmunizations(unittest.TestCase):
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.find_immunizations("an-id", "a-code")
+            self.repository.find_immunizations("an-id")
 
         # Then
         self.assertDictEqual(e.exception.response, response)
