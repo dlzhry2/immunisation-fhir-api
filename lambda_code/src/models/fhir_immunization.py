@@ -471,6 +471,57 @@ class ImmunizationValidator:
             self.immunization.add_root_validator(
                 FHIRImmunizationPostValidators.validate_reason_code_coding_display
             )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_nhs_number_verification_status_code
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_nhs_number_verification_status_display
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_organization_identifier_system
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_local_patient_value
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_local_patient_system
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_consent_code
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_consent_display
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_care_setting_code
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_care_setting_display
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_ip_address
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_user_id
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_user_name
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_user_email
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_submitted_time_stamp
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_location_identifier_value
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_location_identifier_system
+            )
+            self.immunization.add_root_validator(
+                FHIRImmunizationPostValidators.validate_reduce_validation_reason
+            )
 
     def remove_custom_root_validators(self, mode: Literal["pre", "post"]):
         """Remove custom NHS validators from the model"""
