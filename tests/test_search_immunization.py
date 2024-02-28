@@ -10,11 +10,11 @@ from .immunisation_api import ImmunisationApi, parse_location
 
 
 def create_immunization(imms_id, nhs_number, disease_code):
-    imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
+    imms = copy.deepcopy(load_example(f"Immunization/POST-{disease_code}-Immunization.json"))
     imms["id"] = imms_id
     imms["contained"][1]["identifier"][0]["value"] = nhs_number
     imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = disease_code
-    imms['identifier'][0]['value'] = str(uuid.uuid4())
+    imms["identifier"][0]["value"] = str(uuid.uuid4())
     return imms
 
 
@@ -102,9 +102,7 @@ def test_search_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
         "login_form": {"username": "656005750104"},
     }
 )
-def test_search_immunization_ignore_deleted(
-    nhsd_apim_proxy_url, nhsd_apim_auth_headers
-):
+def test_search_immunization_ignore_deleted(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     """it should filter out deleted items"""
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
