@@ -329,7 +329,7 @@ class TestSearchImmunizations(unittest.TestCase):
             self.imms_repo, self.pds_service, self.validator
         )
         self.nhsSearchParam = "-nhsNumber"
-        self.diseaseTypeSearchParam = "-diseaseType"
+        self.diseaseTypeSearchParam = "-immunization.target"
 
     def test_get_service_url(self):
         """it should create service url"""

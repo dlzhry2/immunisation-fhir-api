@@ -16,6 +16,7 @@ from models.errors import (
     IdentifierDuplicationError
 )
 from immunization_utils import create_an_immunization
+from mappings import VaccineTypes
 
 
 def _create_a_post_event(body: str) -> dict:
@@ -361,7 +362,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.service = create_autospec(FhirService)
         self.controller = FhirController(self.service)
         self.nhs_search_param="-nhsNumber"
-        self.disease_type_search_param="-diseaseType"
+        self.disease_type_search_param="-immunization.target"
 
     def test_get_search_immunizations(self):
         """it should search based on nhsNumber and diseaseType"""
@@ -369,7 +370,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.service.search_immunizations.return_value = search_result
 
         nhs_number = "an-patient-id"
-        disease_type = "a-disease-type"
+        disease_type = VaccineTypes().all[0]
         params=f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
         lambda_event = {"multiValueQueryStringParameters": {
             self.disease_type_search_param: [disease_type],
@@ -391,7 +392,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.service.search_immunizations.return_value = search_result
 
         nhs_number = "an-patient-id"
-        disease_type = "a-disease-type"
+        disease_type = VaccineTypes().all[0]
         params = f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
         # Construct the application/x-www-form-urlencoded body
         body = {
@@ -442,7 +443,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.service.search_immunizations.return_value = search_result
 
         nhs_number = "an-patient-id"
-        disease_type = "a-disease-type"
+        disease_type = VaccineTypes().all[0]
         params = f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
         # Construct the application/x-www-form-urlencoded body
         body = {
@@ -478,8 +479,8 @@ class TestSearchImmunizations(unittest.TestCase):
         self.service.search_immunizations.return_value = search_result
 
         nhs_number = "an-patient-id"
-        disease_type = "a-disease-type"
-        params=f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
+        disease_type = VaccineTypes().all[0]
+        params = f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
         # Construct the application/x-www-form-urlencoded body
         body = {
             self.nhs_search_param: nhs_number
@@ -568,7 +569,7 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_self_link_excludes_extraneous_params(self):
         nhs_number = "an-patient-id"
-        disease_type = "a-disease-type"
+        disease_type = VaccineTypes().all[0]
         params = f"{self.disease_type_search_param}={disease_type}&{self.nhs_search_param}={nhs_number}"
 
         lambda_event = {

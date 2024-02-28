@@ -28,21 +28,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("search_imms_handler")
     parser.add_argument("--nhsNumber", help="Identifier of Patient", type=str, required=True)
     parser.add_argument(
-        "--diseaseType",
+        "--immunization.target",
         help="http://hl7.org/fhir/ValueSet/immunization-target-disease",
         type=str,
         required=True,
-        nargs="+")
+        nargs="+",
+        dest="immunization_target")
     args = parser.parse_args()
 
     event: events.APIGatewayProxyEventV1 = {
         "multiValueQueryStringParameters": {
             "-nhsNumber": [args.nhsNumber],
-            "-diseaseType": [",".join(args.diseaseType)]
+            "-immunization.target": [",".join(args.immunization_target)]
         },
         "httpMethod": "POST",
         "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
-        "body": base64.b64encode("-diseaseType=1234".encode("utf-8")),
+        "body": None,
         "resource": None,
         "isBase64Encoded": None,
         "multiValueHeaders": None,

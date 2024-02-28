@@ -193,12 +193,12 @@ def test_search_immunization_parameter_locations(nhsd_apim_proxy_url, nhsd_apim_
         returned_indexes: List[int]
 
     searches = \
-        [SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-diseaseType=MMR", None, True, [0]),
-         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-diseaseType=MMR&-diseaseType=FLU", None, True, [0, 1]),
-         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-diseaseType=MMR", f"-nhsNumber={valid_nhs_number1}", True, [0]),  # GET does not support body.
-         SearchTestParams("POST", f"-nhsNumber={valid_nhs_number1}&-diseaseType=MMR", f"-nhsNumber={valid_nhs_number1}", False, []),
-         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-nhsNumber={valid_nhs_number1}&-diseaseType=MMR", None, False, []),
-         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-diseaseType=MMR,FLU", None, True, [0, 1])]
+        [SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-immunization.target=MMR", None, True, [0]),
+         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-immunization.target=MMR&-immunization.target=FLU", None, True, [0, 1]),
+         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-immunization.target=MMR", f"-nhsNumber={valid_nhs_number1}", True, [0]),  # GET does not support body.
+         SearchTestParams("POST", f"-nhsNumber={valid_nhs_number1}&-immunization.target=MMR", f"-nhsNumber={valid_nhs_number1}", False, []),
+         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-nhsNumber={valid_nhs_number1}&-immunization.target=MMR", None, False, []),
+         SearchTestParams("GET", f"-nhsNumber={valid_nhs_number1}&-immunization.target=MMR,FLU", None, False, [0, 1])] # "and" params not supported.
 
     try:
         for search in searches:

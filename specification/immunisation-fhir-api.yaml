@@ -440,7 +440,7 @@ components:
                   The patient's NHS number.
                   Expressed as `<value>` where`<value>` must be a [valid NHS number](https://www.datadictionary.nhs.uk/attributes/nhs_number.html).
                 example: "9000000009"
-              -diseaseType:
+              -immunization.target:
                 type: string
                 description: |
                   The vaccine preventable disease the dose is being administered against.
@@ -511,7 +511,7 @@ components:
         example: "9000000009"
     ImmunizationTarget:
       in: query
-      name: -diseaseType
+      name: -immunization.target
       description: |
         The vaccine preventable disease the dose is being administered against.
         Expressed as `<value>` where`<value>` must be a valid Snomed Code.

@@ -17,6 +17,7 @@ from aws_lambda_typing.events import APIGatewayProxyEventV1
 from cache import Cache
 from fhir_repository import ImmunizationRepository, create_table
 from fhir_service import FhirService, UpdateOutcome, get_service_url
+from mappings import VaccineTypes
 from models.errors import (
     Severity,
     Code,
@@ -136,14 +137,17 @@ class FhirController:
     ParamContainer = dict[str, ParamValue]
 
     nhs_number_key = "-nhsNumber"
-    disease_type_key = "-diseaseType"
+    disease_type_key = "-immunization.target"
 
     @staticmethod
     def process_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
         def split_and_flatten(input: list[str]):
-            return [x
-                    for xs in input
-                    for x in xs.split(",")]
+            if any(["," in x for x in input]):
+                raise Exception(f"Parameters may not contain commas. \"And\" parameters are not supported.")
+            return input
+            # return [x
+            #         for xs in input
+            #         for x in xs.split(",")]
 
         def parse_multi_value_query_parameters(
             multi_value_query_params: dict[str, list[str]]
@@ -185,12 +189,14 @@ class FhirController:
         nhs_number = nhs_numbers[0] if len(nhs_numbers) == 1 else None
 
         if nhs_number is None:
-            return None, f"Search parameter {FhirController.nhs_number_key} must have one value"
+            return None, f"Search parameter {FhirController.nhs_number_key} must have one value."
 
         params[FhirController.disease_type_key] = list(set(params.get(FhirController.disease_type_key, [])))
         disease_types = [disease_type for disease_type in params[FhirController.disease_type_key] if disease_type is not None]
         if len(disease_types) < 1:
-            return None, f"Search parameter {FhirController.disease_type_key} must have one or more values"
+            return None, f"Search parameter {FhirController.disease_type_key} must have one or more values."
+        if any([x not in VaccineTypes().all for x in disease_types]):
+            raise Exception(f"immunization-target must be one of the following: {','.join(VaccineTypes().all)}")
 
         return FhirController.SearchParams(nhs_number, disease_types), None
 
@@ -212,7 +218,7 @@ class FhirController:
         if err is not None:
             return self._create_bad_request(err)
         if search_params is None:
-            raise Exception("Failed to parse parameters")
+            raise Exception("Failed to parse parameters.")
 
         result = self.fhir_service.search_immunizations(
             search_params.nhs_number, search_params.disease_types, self.get_query_string(search_params)
