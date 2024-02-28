@@ -602,7 +602,8 @@ class FHIRImmunizationPostValidators:
 
         if cls.status == "not-done" and vaccine_code_coding_code not in Constants.NOT_DONE_VACCINE_CODES:
             raise ValueError(
-                f"{field_location} must be one of the following: {str(', '.join(Constants.NOT_DONE_VACCINE_CODES))} when status is 'not-done'"
+                f"{field_location} must be one of the following: {str(', '.join(Constants.NOT_DONE_VACCINE_CODES))}"
+                + " when status is 'not-done'"
             )
 
         return values

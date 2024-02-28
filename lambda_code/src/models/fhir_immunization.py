@@ -33,12 +33,8 @@ class ImmunizationValidator:
         """
         # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
         if not hasattr(self.immunization, "pre_validate_patient_identifier_value"):
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_contained, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_patient_reference, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_contained, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_patient_reference, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_patient_identifier, pre=True
             )
@@ -46,9 +42,7 @@ class ImmunizationValidator:
                 FHIRImmunizationPreValidators.pre_validate_patient_identifier_value,
                 pre=True,
             )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_patient_name, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_patient_name, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_patient_name_given, pre=True
             )
@@ -58,12 +52,8 @@ class ImmunizationValidator:
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_patient_birth_date, pre=True
             )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_patient_gender, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_patient_address, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_patient_gender, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_patient_address, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_patient_address_postal_code,
                 pre=True,
@@ -96,21 +86,11 @@ class ImmunizationValidator:
                 FHIRImmunizationPreValidators.pre_validate_organization_display,
                 pre=True,
             )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_identifier, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_identifier_value, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_identifier_system, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_status, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_practitioner_name, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_identifier, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_identifier_value, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_identifier_system, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_status, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_practitioner_name, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_practitioner_name_given,
                 pre=True,
@@ -135,12 +115,8 @@ class ImmunizationValidator:
                 FHIRImmunizationPreValidators.pre_validate_performer_sds_job_role,
                 pre=True,
             )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_recorded, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_primary_source, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_recorded, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_primary_source, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_report_origin_text, pre=True
             )
@@ -180,9 +156,7 @@ class ImmunizationValidator:
                 FHIRImmunizationPreValidators.pre_validate_status_reason_coding_display,
                 pre=True,
             )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_protocol_applied, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_protocol_applied, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_protocol_applied_dose_number_positive_int,
                 pre=True,
@@ -202,27 +176,15 @@ class ImmunizationValidator:
                 FHIRImmunizationPreValidators.pre_validate_manufacturer_display,
                 pre=True,
             )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_lot_number, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_expiration_date, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_site_coding, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_site_coding_code, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_lot_number, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_expiration_date, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_site_coding, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_site_coding_code, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_site_coding_display, pre=True
             )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_route_coding, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_route_coding_code, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_route_coding, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_route_coding_code, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_route_coding_display,
                 pre=True,
@@ -274,31 +236,17 @@ class ImmunizationValidator:
                 FHIRImmunizationPreValidators.pre_validate_local_patient_system,
                 pre=True,
             )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_consent_code, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_consent_display, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_care_setting_code, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_consent_code, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_consent_display, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_care_setting_code, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_care_setting_display,
                 pre=True,
             )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_ip_address, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_user_id, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_user_name, pre=True
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_user_email, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_ip_address, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_user_id, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_user_name, pre=True)
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_user_email, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_submitted_time_stamp,
                 pre=True,
@@ -311,9 +259,7 @@ class ImmunizationValidator:
                 FHIRImmunizationPreValidators.pre_validate_location_identifier_system,
                 pre=True,
             )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPreValidators.pre_validate_reduce_validation, pre=True
-            )
+            self.immunization.add_root_validator(FHIRImmunizationPreValidators.pre_validate_reduce_validation, pre=True)
             self.immunization.add_root_validator(
                 FHIRImmunizationPreValidators.pre_validate_reduce_validation_reason,
                 pre=True,
@@ -345,9 +291,7 @@ class ImmunizationValidator:
         WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST.
         """
         # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
-        if not hasattr(
-            self.immunization, "validate_and_set_vaccination_procedure_code"
-        ):
+        if not hasattr(self.immunization, "validate_and_set_vaccination_procedure_code"):
             self.immunization.add_root_validator(
                 FHIRImmunizationPostValidators.validate_and_set_vaccination_procedure_code,
             )
@@ -432,64 +376,84 @@ class ImmunizationValidator:
                 skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_vaccination_procedure_display
+                FHIRImmunizationPostValidators.validate_vaccination_procedure_display,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_vaccination_situation_code
+                FHIRImmunizationPostValidators.validate_vaccination_situation_code,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_vaccination_situation_display
+                FHIRImmunizationPostValidators.validate_vaccination_situation_display,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_status_reason_coding_code
+                FHIRImmunizationPostValidators.validate_status_reason_coding_code,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_status_reason_coding_display
+                FHIRImmunizationPostValidators.validate_status_reason_coding_display,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_protocol_applied_dose_number_positive_int
+                FHIRImmunizationPostValidators.validate_protocol_applied_dose_number_positive_int,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_vaccine_code_coding_code
+                FHIRImmunizationPostValidators.validate_vaccine_code_coding_code,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_vaccine_code_coding_display
+                FHIRImmunizationPostValidators.validate_vaccine_code_coding_display,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_manufacturer_display
+                FHIRImmunizationPostValidators.validate_manufacturer_display,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_lot_number
+                FHIRImmunizationPostValidators.validate_lot_number,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_expiration_date
+                FHIRImmunizationPostValidators.validate_expiration_date,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_site_coding_code
+                FHIRImmunizationPostValidators.validate_site_coding_code,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_site_coding_display
+                FHIRImmunizationPostValidators.validate_site_coding_display,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_route_coding_code
+                FHIRImmunizationPostValidators.validate_route_coding_code,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_route_coding_display
+                FHIRImmunizationPostValidators.validate_route_coding_display,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_dose_quantity_value
+                FHIRImmunizationPostValidators.validate_dose_quantity_value,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_dose_quantity_code
+                FHIRImmunizationPostValidators.validate_dose_quantity_code,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_dose_quantity_unit
+                FHIRImmunizationPostValidators.validate_dose_quantity_unit,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_reason_code_coding_code
+                FHIRImmunizationPostValidators.validate_reason_code_coding_code,
+                skip_on_failure=True,
             )
             self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_reason_code_coding_display
+                FHIRImmunizationPostValidators.validate_reason_code_coding_display,
+                skip_on_failure=True,
             )
 
     def remove_custom_root_validators(self, mode: Literal["pre", "post"]):
