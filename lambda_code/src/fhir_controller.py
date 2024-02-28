@@ -51,6 +51,7 @@ def make_controller(
 
 class FhirController:
     immunization_id_pattern = r"^[A-Za-z0-9\-.]{1,64}$"
+    patient_identifier_system = "https://fhir.nhs.uk/Id/nhs-number"
 
     def __init__(self, fhir_service: FhirService):
         self.fhir_service = fhir_service
@@ -136,7 +137,7 @@ class FhirController:
     ParamValue = list[str]
     ParamContainer = dict[str, ParamValue]
 
-    nhs_number_key = "-patient.identifier"
+    patient_identifier_key = "-patient.identifier"
     disease_type_key = "-immunization.target"
 
     @staticmethod
@@ -186,11 +187,19 @@ class FhirController:
 
     @staticmethod
     def process_search_params(params: ParamContainer) -> tuple[Optional[SearchParams], Optional[str]]:
-        nhs_numbers = params.get(FhirController.nhs_number_key, [])
-        nhs_number = nhs_numbers[0] if len(nhs_numbers) == 1 else None
+        patient_identifiers = params.get(FhirController.patient_identifier_key, [])
+        patient_identifier = patient_identifiers[0] if len(patient_identifiers) == 1 else None
 
-        if nhs_number is None:
-            return None, f"Search parameter {FhirController.nhs_number_key} must have one value."
+        if patient_identifier is None:
+            return None, f"Search parameter {FhirController.patient_identifier_key} must have one value."
+
+        patient_identifier_parts = patient_identifier.split("|")
+        if len(patient_identifier_parts) != 2 or not patient_identifier_parts[0] == FhirController.patient_identifier_system:
+            return None, ("-patient.identifier must be in the format of "
+                          f"\"{FhirController.patient_identifier_system}|{{NHS number}}\" "
+                          f"e.g. \"{FhirController.patient_identifier_system}|9000000009\"")
+
+        patient_identifier = patient_identifier.split("|")[1]
 
         params[FhirController.disease_type_key] = list(set(params.get(FhirController.disease_type_key, [])))
         disease_types = [disease_type for disease_type in params[FhirController.disease_type_key] if disease_type is not None]
@@ -199,14 +208,14 @@ class FhirController:
         if any([x not in VaccineTypes().all for x in disease_types]):
             raise Exception(f"immunization-target must be one of the following: {','.join(VaccineTypes().all)}")
 
-        return FhirController.SearchParams(nhs_number, disease_types), None
+        return FhirController.SearchParams(patient_identifier, disease_types), None
 
     @staticmethod
     def get_query_string(search_params: SearchParams):
-        #params = [(f"-{k}", v) for k, v in search_params.__dict__.items()]
         params = [
             (FhirController.disease_type_key, search_params.disease_types),
-            (FhirController.nhs_number_key, search_params.nhs_number)
+            (FhirController.patient_identifier_key,
+                f"{FhirController.patient_identifier_system}|{search_params.nhs_number}")
         ]
         search_params_qs = urllib.parse.urlencode(sorted(params, key=lambda x: x[0]), doseq=True)
         return search_params_qs
@@ -214,10 +223,10 @@ class FhirController:
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
         params = self.process_params(aws_event)
         pprint.pprint(params)
-        search_params, err = self.process_search_params(params)
+        search_params, search_param_parse_errors = self.process_search_params(params)
         pprint.pprint(search_params)
-        if err is not None:
-            return self._create_bad_request(err)
+        if search_param_parse_errors is not None:
+            return self._create_bad_request(search_param_parse_errors)
         if search_params is None:
             raise Exception("Failed to parse parameters.")
 
