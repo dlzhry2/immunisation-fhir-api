@@ -85,7 +85,7 @@ class InconsistentIdError(ValidationError):
 
 @dataclass
 class CustomValidationError(ValidationError):
-    """Pre validation error"""
+    """Custom validation error"""
 
     message: str
 

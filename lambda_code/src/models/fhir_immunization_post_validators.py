@@ -39,7 +39,6 @@ class FHIRImmunizationPostValidators:
 
         except (KeyError, IndexError, TypeError) as error:
             raise MandatoryError(f"{field_location} is a mandatory field") from error
-        cls.vaccine_type = PostValidation.vaccination_procedure_code(vaccination_procedure_code, field_location)
 
         return values
 
@@ -413,7 +412,7 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_vaccination_procedure_display(cls, values: dict) -> dict:
         "Validate that vaccination_procedure_display is present or absent, as required"
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-" + "VaccinationProcedure"
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
         system = "http://snomed.info/sct"
         field_type = "display"
         field_location = generate_field_location_for_extension(url, system, field_type)
@@ -434,7 +433,7 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_vaccination_situation_code(cls, values: dict) -> dict:
         "Validate that vaccination_situation_code is present or absent, as required"
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-" + "VaccinationSituation"
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
         system = "http://snomed.info/sct"
         field_type = "code"
         field_location = generate_field_location_for_extension(url, system, field_type)
@@ -455,7 +454,7 @@ class FHIRImmunizationPostValidators:
             field_value=vaccination_situation_code,
             field_location=field_location,
             mandation=mandation,
-            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is " + "'not-done'",
+            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is 'not-done'",
         )
 
         return values
@@ -933,10 +932,7 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_nhs_number_verification_status_code(cls, values: dict) -> dict:
         "Validate that nhs_number_verification_status_code is present or absent, as required"
-        url = (
-            "https://fhir.hl7.org.uk/StructureDefinition/"
-            + "Extension-UKCore-NHSNumberVerificationStatus"
-        )
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
         system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
         field_type = "code"
         field_location = (
@@ -945,23 +941,19 @@ class FHIRImmunizationPostValidators:
             + generate_field_location_for_extension(url, system, field_type)
         )
         try:
-            patient_identifier = get_contained_resource_from_model(
-                values, "Patient"
-            ).identifier
+            patient_identifier = get_contained_resource_from_model(values, "Patient").identifier
 
             patient_identifier_extension_item = [
-                x
-                for x in patient_identifier
-                if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+                x for x in patient_identifier if x.system == "https://fhir.nhs.uk/Id/nhs-number"
             ][0].extension
 
-            value_codeable_concept_coding = [
-                x for x in patient_identifier_extension_item if x.url == url
-            ][0].valueCodeableConcept.coding
+            value_codeable_concept_coding = [x for x in patient_identifier_extension_item if x.url == url][
+                0
+            ].valueCodeableConcept.coding
 
-            nhs_number_verification_status_code = [
-                x for x in value_codeable_concept_coding if x.system == system
-            ][0].code
+            nhs_number_verification_status_code = [x for x in value_codeable_concept_coding if x.system == system][
+                0
+            ].code
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             nhs_number_verification_status_code = None
 
@@ -977,10 +969,7 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_nhs_number_verification_status_display(cls, values: dict) -> dict:
         "Validate that nhs_number_verification_status_display is present or absent, as required"
-        url = (
-            "https://fhir.hl7.org.uk/StructureDefinition/"
-            + "Extension-UKCore-NHSNumberVerificationStatus"
-        )
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
         system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
         field_type = "display"
         field_location = (
@@ -989,23 +978,19 @@ class FHIRImmunizationPostValidators:
             + generate_field_location_for_extension(url, system, field_type)
         )
         try:
-            patient_identifier = get_contained_resource_from_model(
-                values, "Patient"
-            ).identifier
+            patient_identifier = get_contained_resource_from_model(values, "Patient").identifier
 
             patient_identifier_extension_item = [
-                x
-                for x in patient_identifier
-                if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+                x for x in patient_identifier if x.system == "https://fhir.nhs.uk/Id/nhs-number"
             ][0].extension
 
-            value_codeable_concept_coding = [
-                x for x in patient_identifier_extension_item if x.url == url
-            ][0].valueCodeableConcept.coding
+            value_codeable_concept_coding = [x for x in patient_identifier_extension_item if x.url == url][
+                0
+            ].valueCodeableConcept.coding
 
-            nhs_number_verification_status_display = [
-                x for x in value_codeable_concept_coding if x.system == system
-            ][0].display
+            nhs_number_verification_status_display = [x for x in value_codeable_concept_coding if x.system == system][
+                0
+            ].display
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             nhs_number_verification_status_display = None
 
@@ -1022,9 +1007,7 @@ class FHIRImmunizationPostValidators:
     def validate_organization_identifier_system(cls, values: dict) -> dict:
         """Validate that organization_identifier_system is present or absent, as required"""
         try:
-            field_value = [x for x in values["performer"] if is_organization(x)][
-                0
-            ].actor.identifier.system
+            field_value = [x for x in values["performer"] if is_organization(x)][0].actor.identifier.system
         except (KeyError, IndexError, AttributeError, TypeError):
             field_value = None
 
@@ -1043,14 +1026,10 @@ class FHIRImmunizationPostValidators:
         link_id = "LocalPatient"
         answer_type = "valueReference"
         field_type = "value"
-        field_location = generate_field_location_for_questionnnaire_response(
-            link_id, answer_type, field_type
-        )
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
 
         try:
-            field_value = get_generic_questionnaire_response_value_from_model(
-                values, link_id, answer_type, field_type
-            )
+            field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
         except (KeyError, IndexError, AttributeError, TypeError):
             field_value = None
 
@@ -1069,14 +1048,10 @@ class FHIRImmunizationPostValidators:
         link_id = "LocalPatient"
         answer_type = "valueReference"
         field_type = "system"
-        field_location = generate_field_location_for_questionnnaire_response(
-            link_id, answer_type, field_type
-        )
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
 
         try:
-            field_value = get_generic_questionnaire_response_value_from_model(
-                values, link_id, answer_type, field_type
-            )
+            field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
         except (KeyError, IndexError, AttributeError, TypeError):
             field_value = None
 
@@ -1095,21 +1070,15 @@ class FHIRImmunizationPostValidators:
         link_id = "Consent"
         answer_type = "valueCoding"
         field_type = "code"
-        field_location = generate_field_location_for_questionnnaire_response(
-            link_id, answer_type, field_type
-        )
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
 
         try:
-            consent_code = get_generic_questionnaire_response_value_from_model(
-                values, link_id, answer_type, field_type
-            )
+            consent_code = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             consent_code = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations["consent_code"][
-            cls.vaccine_type
-        ]
+        mandation = vaccine_type_applicable_validations["consent_code"][cls.vaccine_type]
         bespoke_mandatory_error_message = None
         if values["status"] != "not-done" and cls.vaccine_type in (
             VaccineTypes.covid_19,
@@ -1137,9 +1106,7 @@ class FHIRImmunizationPostValidators:
         link_id = "Consent"
         answer_type = "valueCoding"
         field_type = "display"
-        field_location = generate_field_location_for_questionnnaire_response(
-            link_id, answer_type, field_type
-        )
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
 
         try:
             consent_display = get_generic_questionnaire_response_value_from_model(
@@ -1162,9 +1129,7 @@ class FHIRImmunizationPostValidators:
         link_id = "CareSetting"
         answer_type = "valueCoding"
         field_type = "code"
-        field_location = generate_field_location_for_questionnnaire_response(
-            link_id, answer_type, field_type
-        )
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
 
         try:
             care_setting_code = get_generic_questionnaire_response_value_from_model(
@@ -1187,9 +1152,7 @@ class FHIRImmunizationPostValidators:
         link_id = "CareSetting"
         answer_type = "valueCoding"
         field_type = "display"
-        field_location = generate_field_location_for_questionnnaire_response(
-            link_id, answer_type, field_type
-        )
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
 
         try:
             care_setting_display = get_generic_questionnaire_response_value_from_model(
@@ -1216,9 +1179,7 @@ class FHIRImmunizationPostValidators:
         )
 
         try:
-            ip_address = get_generic_questionnaire_response_value_from_model(
-                values, "IpAddress", "valueString"
-            )
+            ip_address = get_generic_questionnaire_response_value_from_model(values, "IpAddress", "valueString")
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             ip_address = None
 
@@ -1240,9 +1201,7 @@ class FHIRImmunizationPostValidators:
         )
 
         try:
-            user_id = get_generic_questionnaire_response_value_from_model(
-                values, "UserId", "valueString"
-            )
+            user_id = get_generic_questionnaire_response_value_from_model(values, "UserId", "valueString")
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             user_id = None
 
@@ -1264,9 +1223,7 @@ class FHIRImmunizationPostValidators:
         )
 
         try:
-            user_name = get_generic_questionnaire_response_value_from_model(
-                values, "UserName", "valueString"
-            )
+            user_name = get_generic_questionnaire_response_value_from_model(values, "UserName", "valueString")
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             user_name = None
 
@@ -1288,9 +1245,7 @@ class FHIRImmunizationPostValidators:
         )
 
         try:
-            user_email = get_generic_questionnaire_response_value_from_model(
-                values, "UserEmail", "valueString"
-            )
+            user_email = get_generic_questionnaire_response_value_from_model(values, "UserEmail", "valueString")
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             user_email = None
 
@@ -1369,10 +1324,8 @@ class FHIRImmunizationPostValidators:
         )
 
         try:
-            reduce_validation_reason = (
-                get_generic_questionnaire_response_value_from_model(
-                    values, "ReduceValidationReason", "valueString"
-                )
+            reduce_validation_reason = get_generic_questionnaire_response_value_from_model(
+                values, "ReduceValidationReason", "valueString"
             )
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             reduce_validation_reason = None

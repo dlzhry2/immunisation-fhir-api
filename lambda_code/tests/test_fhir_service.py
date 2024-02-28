@@ -21,6 +21,7 @@ from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
+from mappings import vaccination_procedure_snomed_codes
 from .immunization_utils import (
     create_an_immunization,
     create_an_immunization_dict,
@@ -72,7 +73,7 @@ class TestGetImmunization(unittest.TestCase):
         ) as immunization_data_file:
             immunization_data = json.load(immunization_data_file)
         with open(
-            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/" + "filtered_sample_immunization_event.json",
+            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json",
             "r",
             encoding="utf-8",
         ) as filtered_immunization_data_file:
@@ -186,31 +187,6 @@ class TestCreateImmunization(unittest.TestCase):
         self.imms_repo.create_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
-        # Update
-        # Invalid procedure_code
-        with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_procedure_code_imms)
-
-        self.assertTrue(bad_procedure_code_msg in error.exception.message)
-        self.imms_repo.update_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called()
-
-        # Missing patient name (Mandatory field)
-        with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_patient_name_imms)
-
-        self.assertTrue(bad_patient_name_msg in error.exception.message)
-        self.imms_repo.update_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called()
-
-        # Not Applicable field present
-        with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_na_imms)
-
-        self.assertTrue(bad_na_msg in error.exception.message)
-        self.imms_repo.update_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called()
-
     def test_patient_error(self):
         """it should throw error when PDS can't resolve patient"""
         self.fhir_service.pds_service.get_patient_details.return_value = None
@@ -292,6 +268,54 @@ class TestUpdateImmunization(unittest.TestCase):
 
         # Then
         self.assertEqual(error.exception.message, expected_msg)
+        self.imms_repo.update_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+    def test_post_validation_failed(self):
+        valid_imms = create_an_immunization_dict("an-id", valid_nhs_number)
+
+        bad_procedure_code_imms = deepcopy(valid_imms)
+        bad_procedure_code_imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "bad-code"
+        bad_procedure_code_msg = (
+            "extension[?(@.url=="
+            + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')"
+            + "].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code: "
+            + "bad-code is not a valid code for this service (type=value_error)"
+        )
+
+        bad_patient_name_imms = deepcopy(valid_imms)
+        del bad_patient_name_imms["contained"][1]["name"][0]["given"]
+        bad_patient_name_msg = "contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
+
+        bad_na_imms = deepcopy(valid_imms)
+        bad_na_imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "mockFLUcode1"
+        bad_na_msg = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='IpAddress')].answer[0].valueString must not be provided for this vaccine type"
+        )
+        fhir_service = FhirService(self.imms_repo, self.pds_service)
+
+        # Invalid procedure_code
+        with self.assertRaises(CustomValidationError) as error:
+            fhir_service.update_immunization("an-id", bad_procedure_code_imms)
+
+        self.assertTrue(bad_procedure_code_msg in error.exception.message)
+        self.imms_repo.update_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+        # Missing patient name (Mandatory field)
+        with self.assertRaises(CustomValidationError) as error:
+            fhir_service.update_immunization("an-id", bad_patient_name_imms)
+
+        self.assertTrue(bad_patient_name_msg in error.exception.message)
+        self.imms_repo.update_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+        # Not Applicable field present
+        with self.assertRaises(CustomValidationError) as error:
+            fhir_service.update_immunization("an-id", bad_na_imms)
+
+        self.assertTrue(bad_na_msg in error.exception.message)
         self.imms_repo.update_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
@@ -406,11 +430,10 @@ class TestSearchImmunizations(unittest.TestCase):
         """it should map disease_type to disease_code"""
         # TODO: for this ticket we are assuming code is provided
         nhs_number = "a-patient-id"
-        disease_type = "a-disease-code"
+        disease_type = "1324681000000101"
         params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
-        # TODO: here we are assuming disease_type=disease_code this is because the mapping is not
-        # in place yet
-        disease_code = disease_type
+
+        disease_code = vaccination_procedure_snomed_codes[disease_type]
         # When
         _ = self.fhir_service.search_immunizations(nhs_number, disease_code, params)
 
