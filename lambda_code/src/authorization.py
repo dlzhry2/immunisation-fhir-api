@@ -39,7 +39,8 @@ class Authorization:
         auth_type = self._parse_auth_type(aws_event["headers"])
         if auth_type == Authorization._AuthType.APP_RESTRICTED:
             self._app_restricted(operation, aws_event)
-        # TODO: add other authentication types: Cis2, NHSLogin
+        # TODO(Cis2_AMB-1733) add Cis2
+        # TODO(NhsLogin_AMB-1923) add NHSLogin
         else:
             UnauthorizedError()
 

@@ -30,8 +30,8 @@ class ImmunizationBaseTest(unittest.TestCase):
         product_data = ApigeeProduct(name=str(uuid.uuid4()),
                                      displayName=display_name,
                                      # we only use one single product for all auth types
-                                     # TODO(Cis2): add scopes for Cis2
-                                     # TODO(NhsLogin): add scopes for NhsLogin
+                                     # TODO(Cis2_AMB-1733) add scopes for Cis2
+                                     # TODO(NhsLogin_AMB-1923) add scopes for NhsLogin
                                      scopes=["urn:nhsd:apim:app:level3:immunisation-fhir-api"])
         cls.product = make_apigee_product(cls.apigee_service, product_data)
         cls.apigee_service.add_proxy_to_product(product_name=cls.product.name, proxy_name=get_proxy_name())
@@ -57,11 +57,11 @@ class ImmunizationBaseTest(unittest.TestCase):
         cls.imms_apis.append(cls.default_imms_api)
 
         # Cis2
-        # TODO(Cis2) create an app for Cis2 and append it to the cls.apps,
+        # TODO(Cis2_AMB-1733) create an app for Cis2 and append it to the cls.apps,
         #  then create ImmunisationApi and append it to cls.imms_apis
 
         # NhsLogin
-        # TODO(NhsLogin) create an app for NhsLogin and append it to the cls.apps,
+        # TODO(NhsLogin_AMB-1923) create an app for NhsLogin and append it to the cls.apps,
         #  then create ImmunisationApi and append it to cls.imms_apis
 
     @classmethod

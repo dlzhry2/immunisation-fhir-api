@@ -70,3 +70,15 @@ class AppRestrictedAuthentication(BaseAuthentication):
             raise AuthenticationError(f"ApplicationRestricted token POST request failed\n{token_response.text}")
 
         return token_response.json().get('access_token')
+
+
+class NhsLoginAuthentication(BaseAuthentication):
+    def get_access_token(self):
+        # TODO(NhsLogin_AMB-1923) add NHSLogin
+        pass
+
+
+class Cis2Authentication(BaseAuthentication):
+    def get_access_token(self):
+        # TODO(Cis2_AMB-1733) add Cis2
+        pass

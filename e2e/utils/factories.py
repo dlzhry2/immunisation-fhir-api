@@ -21,7 +21,7 @@ def make_apigee_service(config: ApigeeConfig = None) -> ApigeeService:
 
 
 def make_app_restricted_auth(config: AppRestrictedCredentials = None) -> AppRestrictedAuthentication:
-    """if config is None then we fall back to the default client configuration from env vars. Useful for Int env"""
+    """If config is None, then we fall back to the default client configuration from env vars. Useful for Int env"""
     config = config if config else get_default_app_restricted_credentials()
     return AppRestrictedAuthentication(auth_url=get_auth_url(), config=config)
 
@@ -48,7 +48,7 @@ def make_app_restricted_app(apigee: ApigeeService = None,
         stored_app = ApigeeApp(name="default-app")
         return stored_app, cred
     else:
-        # we use this prefix for file names. This way we don't create a separate file for each jwks
+        # We use this prefix for file names. This way we don't create a separate file for each jwks
         key_id_prefix = get_proxy_name()
         # NOTE: adding uuid is important. identity-service caches the key_id so,
         #  this way we know it'll be invalidated each time we create a new jwks
