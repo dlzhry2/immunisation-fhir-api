@@ -404,7 +404,7 @@ class FHIRImmunizationPostValidators:
             field_value=report_origin_text,
             field_location=field_location,
             mandation=mandation,
-            bespoke_mandatory_error_message=f"{field_location} is mandatory when " + "primarySource is false",
+            bespoke_mandatory_error_message=f"{field_location} is mandatory when primarySource is false",
         )
 
         return values
