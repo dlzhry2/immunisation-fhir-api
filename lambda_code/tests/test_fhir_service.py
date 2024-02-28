@@ -149,18 +149,16 @@ class TestCreateImmunization(unittest.TestCase):
             + "bad-code is not a valid code for this service (type=value_error)"
         )
 
-        bad_na_imms = deepcopy(valid_imms)
-        bad_na_imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "mockFLUcode1"
-        bad_na_msg = (
-            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')]"
-            + ".valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code: mockFLUcode1 must not be "
-            + "provided for this vaccine type (type=value_error)"
-        )
-
         bad_patient_name_imms = deepcopy(valid_imms)
         del bad_patient_name_imms["contained"][1]["name"][0]["given"]
         bad_patient_name_msg = "contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
 
+        bad_na_imms = deepcopy(valid_imms)
+        bad_na_imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "mockFLUcode1"
+        bad_na_msg = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='IpAddress')].answer[0].valueString must not be provided for this vaccine type"
+        )
         fhir_service = FhirService(self.imms_repo, self.pds_service)
 
         # Create

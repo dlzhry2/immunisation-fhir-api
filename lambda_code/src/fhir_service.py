@@ -15,7 +15,7 @@ from models.errors import (
     InconsistentIdError,
 )
 from models.fhir_immunization import ImmunizationValidator
-from models.utils.post_validation_utils import MandatoryError
+from models.utils.post_validation_utils import MandatoryError, NotApplicableError
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 
@@ -64,8 +64,11 @@ class FhirService:
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
             self.validator.validate(immunization)
-        except (ValidationError, ValueError, MandatoryError) as error:
+        except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
+        except Exception as error:
+            print(f"An error occurred: {error}")
+            raise error
 
         patient = self._validate_patient(immunization)
 
@@ -80,7 +83,7 @@ class FhirService:
 
         try:
             self.validator.validate(immunization)
-        except (ValidationError, ValueError, MandatoryError) as error:
+        except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
