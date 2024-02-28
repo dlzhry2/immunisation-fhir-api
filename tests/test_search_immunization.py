@@ -18,7 +18,7 @@ def create_immunization(imms_id, nhs_number, disease_code):
     return imms
 
 
-flu_code = "mockFLUcode1"
+flu_code = "822851000000102"
 mmr_code = "mockMMRcode1"
 covid_code = "1324681000000101"
 
