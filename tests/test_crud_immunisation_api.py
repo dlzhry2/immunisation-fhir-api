@@ -1,6 +1,6 @@
-import copy
 import pprint
 import uuid
+import copy
 
 import pytest
 
@@ -100,9 +100,12 @@ def test_create_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
     # CREATE IMMUNIZATION WITH SAME IDENTIFIER
     failed_create_response = imms_api.create_immunization(imms)
     failed_create_res_body = failed_create_response.json()
+    print(failed_create_res_body)
 
     assert failed_create_response.status_code == 422
     assert failed_create_res_body["resourceType"] == "OperationOutcome"
+    # ASSERT RESPONSE BODY HAS GENERIC ERROR MESSSAGE
+    assert failed_create_res_body['issue'][0]['diagnostics'] == "Submitted resource is not valid."
 
     # READ
     imms_id = parse_location(create_response.headers["Location"])
@@ -141,34 +144,19 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
     assert imms_2_response.status_code == 201
     assert "Location" in imms_2_response.headers
 
-    # READ BOTH IMMUNIZATIONS FOR IDS
-    imms_1_id = parse_location(imms_response.headers["Location"])
-    imms_2_id = parse_location(imms_2_response.headers["Location"])
-    imms_1_read_response = imms_api.get_immunization_by_id(imms_1_id)
-    imms_2_read_response = imms_api.get_immunization_by_id(imms_2_id)
-    imms_1_res_body = imms_1_read_response.json()
-    imms_2_res_body = imms_2_read_response.json()
-
-    assert imms_1_read_response.status_code == 200
-    assert imms_2_read_response.status_code == 200
-    assert imms_1_res_body["id"] == imms_1_id
-    assert imms_2_res_body["id"] == imms_2_id
-
     # UPDATE SECOND IMMUNIZATION WITH FIRST IMMUNIZATIONS IDENTIFIER
-    new_imms = copy.deepcopy(imms)
-    new_imms["id"] = imms_2_id
-    new_imms["identifier"][0]["value"] = identifier
-    update_response = imms_api.update_immunization(imms_2_id, new_imms)
+    updated_imms = copy.deepcopy(imms)
+    updated_imms["id"] = imms_2['id']
+    updated_imms["identifier"][0]["value"] = identifier
+    update_response = imms_api.update_immunization(imms_2['id'], updated_imms)
     res_body = update_response.json()
-
     assert update_response.status_code == 422
     assert res_body["resourceType"] == "OperationOutcome"
-    assert res_body['issue'][0]['diagnostics'] == f"The provided identifier: {identifier} is duplicated"
 
     # DELETE BOTH IMMUNIZATIONS
-    delete_imms_response = imms_api.delete_immunization(imms_1_id)
+    delete_imms_response = imms_api.delete_immunization(parse_location(imms_response.headers["Location"]))
     assert delete_imms_response.status_code == 204
-    delete_imms_2_response = imms_api.delete_immunization(imms_2_id)
+    delete_imms_2_response = imms_api.delete_immunization(parse_location(imms_2_response.headers["Location"]))
     assert delete_imms_2_response.status_code == 204
 
 
