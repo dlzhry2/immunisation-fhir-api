@@ -201,8 +201,6 @@ class ImmunizationRepository:
     def find_immunizations(self, nhs_number: str):
         """it should find all patient's Immunization events for a specified disease_code"""
         condition = Key("PatientPK").eq(_make_patient_pk(nhs_number))
-        #sort_key = f"{disease_code}#"
-        #condition &= Key("PatientSK").begins_with(sort_key)
         is_not_deleted = Attr("DeletedAt").not_exists()
 
         response = self.table.query(

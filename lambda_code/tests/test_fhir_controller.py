@@ -600,9 +600,9 @@ class TestSearchImmunizations(unittest.TestCase):
         processed_params = self.controller.process_params(lambda_event)
 
         for (k, v) in processed_params.items():
-            assert sorted(v) == v
+            self.assertEqual(sorted(v), v)
 
-    def test_process_search_params_does_not_process_query_string_on_get(self):
+    def test_process_search_params_does_not_process_body_on_get(self):
         lambda_event = {
             "multiValueQueryStringParameters": {
                 self.nhs_search_param: ["b", "a"],
@@ -613,4 +613,20 @@ class TestSearchImmunizations(unittest.TestCase):
         }
         processed_params = self.controller.process_params(lambda_event)
 
-        assert processed_params == {self.nhs_search_param: ["a", "b"]}
+        self.assertEqual(processed_params, {self.nhs_search_param: ["a", "b"]})
+
+    def test_process_search_params_does_not_allow_anded_params(self):
+        lambda_event = {
+            "multiValueQueryStringParameters": {
+                self.nhs_search_param: ["a,b"],
+                self.disease_type_search_param: ["a", "b"],
+            },
+            "body": None,
+            "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
+            "httpMethod": "POST"
+        }
+
+        with self.assertRaises(Exception) as e:
+            self.controller.process_params(lambda_event)
+
+        self.assertEqual(str(e.exception), "Parameters may not be duplicated. Use commas for \"or\".")

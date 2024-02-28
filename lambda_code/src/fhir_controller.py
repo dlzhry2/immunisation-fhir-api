@@ -142,16 +142,15 @@ class FhirController:
     @staticmethod
     def process_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
         def split_and_flatten(input: list[str]):
-            if any(["," in x for x in input]):
-                raise Exception(f"Parameters may not contain commas. \"And\" parameters are not supported.")
-            return input
-            # return [x
-            #         for xs in input
-            #         for x in xs.split(",")]
+            return [x
+                    for xs in input
+                    for x in xs.split(",")]
 
         def parse_multi_value_query_parameters(
             multi_value_query_params: dict[str, list[str]]
         ) -> FhirController.ParamContainer:
+            if any([len(v) > 1 for k, v in multi_value_query_params.items()]):
+                raise Exception("Parameters may not be duplicated. Use commas for \"or\".")
             params = [(k, split_and_flatten(v))
                       for k, v in multi_value_query_params.items()]
 
@@ -165,6 +164,8 @@ class FhirController:
                 decoded_body = base64.b64decode(body).decode("utf-8")
                 parsed_body = parse_qs(decoded_body)
 
+                if any([len(v) > 1 for k, v in parsed_body.items()]):
+                    raise Exception("Parameters may not be duplicated. Use commas for \"or\".")
                 items = dict((k, split_and_flatten(v)) for k, v in parsed_body.items())
                 return items
             return {}
