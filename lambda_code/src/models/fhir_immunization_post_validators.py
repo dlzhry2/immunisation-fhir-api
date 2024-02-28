@@ -4,8 +4,10 @@ from models.constants import Constants
 from models.utils.generic_utils import (
     get_generic_questionnaire_response_value_from_model,
     get_generic_extension_value_from_model,
+    generate_field_location_for_questionnnaire_response,
     generate_field_location_for_extension,
     get_contained_resource_from_model,
+    is_organization,
 )
 from models.utils.post_validation_utils import (
     PostValidation,
@@ -192,13 +194,6 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_organization_display(cls, values: dict) -> dict:
         """Validate that organization_display is present or absent, as required"""
-
-        def is_organization(x):
-            try:
-                return x.actor.type == "Organization"
-            except AttributeError:
-                return False
-
         try:
             field_value = [x for x in values["performer"] if is_organization(x)][0].actor.display
         except (KeyError, IndexError, AttributeError, TypeError):
@@ -933,4 +928,459 @@ class FHIRImmunizationPostValidators:
                 mandation_key="reason_code_coding_display",
             )
 
+        return values
+
+    @classmethod
+    def validate_nhs_number_verification_status_code(cls, values: dict) -> dict:
+        "Validate that nhs_number_verification_status_code is present or absent, as required"
+        url = (
+            "https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-NHSNumberVerificationStatus"
+        )
+        system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+        field_type = "code"
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + generate_field_location_for_extension(url, system, field_type)
+        )
+        try:
+            patient_identifier = get_contained_resource_from_model(
+                values, "Patient"
+            ).identifier
+
+            patient_identifier_extension_item = [
+                x
+                for x in patient_identifier
+                if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0].extension
+
+            value_codeable_concept_coding = [
+                x for x in patient_identifier_extension_item if x.url == url
+            ][0].valueCodeableConcept.coding
+
+            nhs_number_verification_status_code = [
+                x for x in value_codeable_concept_coding if x.system == system
+            ][0].code
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            nhs_number_verification_status_code = None
+
+        check_mandation_requirements_met(
+            field_value=nhs_number_verification_status_code,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="nhs_number_verification_status_code",
+        )
+
+        return values
+
+    @classmethod
+    def validate_nhs_number_verification_status_display(cls, values: dict) -> dict:
+        "Validate that nhs_number_verification_status_display is present or absent, as required"
+        url = (
+            "https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-NHSNumberVerificationStatus"
+        )
+        system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+        field_type = "display"
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + generate_field_location_for_extension(url, system, field_type)
+        )
+        try:
+            patient_identifier = get_contained_resource_from_model(
+                values, "Patient"
+            ).identifier
+
+            patient_identifier_extension_item = [
+                x
+                for x in patient_identifier
+                if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0].extension
+
+            value_codeable_concept_coding = [
+                x for x in patient_identifier_extension_item if x.url == url
+            ][0].valueCodeableConcept.coding
+
+            nhs_number_verification_status_display = [
+                x for x in value_codeable_concept_coding if x.system == system
+            ][0].display
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            nhs_number_verification_status_display = None
+
+        check_mandation_requirements_met(
+            field_value=nhs_number_verification_status_display,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="nhs_number_verification_status_display",
+        )
+
+        return values
+
+    @classmethod
+    def validate_organization_identifier_system(cls, values: dict) -> dict:
+        """Validate that organization_identifier_system is present or absent, as required"""
+        try:
+            field_value = [x for x in values["performer"] if is_organization(x)][
+                0
+            ].actor.identifier.system
+        except (KeyError, IndexError, AttributeError, TypeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location="performer[?(@.actor.type=='Organization')].actor.identifier.system",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="organization_identifier_system",
+        )
+
+        return values
+
+    @classmethod
+    def validate_local_patient_value(cls, values: dict) -> dict:
+        """Validate that local_patient_value is present or absent, as required"""
+        link_id = "LocalPatient"
+        answer_type = "valueReference"
+        field_type = "value"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            field_value = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, TypeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="local_patient_value",
+        )
+
+        return values
+
+    @classmethod
+    def validate_local_patient_system(cls, values: dict) -> dict:
+        """Validate that local_patient_system is present or absent, as required"""
+        link_id = "LocalPatient"
+        answer_type = "valueReference"
+        field_type = "system"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            field_value = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, TypeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="local_patient_system",
+        )
+
+        return values
+
+    @classmethod
+    def validate_consent_code(cls, values: dict) -> dict:
+        "Validate that consent_code is present or absent, as required"
+        link_id = "Consent"
+        answer_type = "valueCoding"
+        field_type = "code"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            consent_code = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            consent_code = None
+
+        # Handle conditional mandation logic
+        mandation = vaccine_type_applicable_validations["consent_code"][
+            cls.vaccine_type
+        ]
+        bespoke_mandatory_error_message = None
+        if values["status"] != "not-done" and cls.vaccine_type in (
+            VaccineTypes.covid_19,
+            VaccineTypes.flu,
+        ):
+            mandation = Mandation.mandatory
+            bespoke_mandatory_error_message = (
+                f"{field_location} is mandatory when status is 'completed' or 'entered-in-error'"
+                + f" and vaccination type is {cls.vaccine_type}"
+            )
+        else:
+            mandation = Mandation.optional
+
+        check_mandation_requirements_met(
+            field_value=consent_code,
+            field_location=field_location,
+            mandation=mandation,
+            bespoke_mandatory_error_message=bespoke_mandatory_error_message,
+        )
+        return values
+
+    @classmethod
+    def validate_consent_display(cls, values: dict) -> dict:
+        "Validate that consent_display is present or absent, as required"
+        link_id = "Consent"
+        answer_type = "valueCoding"
+        field_type = "display"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            consent_display = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            consent_display = None
+
+        check_mandation_requirements_met(
+            field_value=consent_display,
+            field_location=field_location,
+            mandation_key="consent_display",
+            vaccine_type=cls.vaccine_type,
+        )
+        return values
+
+    @classmethod
+    def validate_care_setting_code(cls, values: dict) -> dict:
+        "Validate that care_setting_code is present or absent, as required"
+        link_id = "CareSetting"
+        answer_type = "valueCoding"
+        field_type = "code"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            care_setting_code = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            care_setting_code = None
+
+        check_mandation_requirements_met(
+            field_value=care_setting_code,
+            field_location=field_location,
+            mandation_key="care_setting_code",
+            vaccine_type=cls.vaccine_type,
+        )
+        return values
+
+    @classmethod
+    def validate_care_setting_display(cls, values: dict) -> dict:
+        "Validate that care_setting_display is present or absent, as required"
+        link_id = "CareSetting"
+        answer_type = "valueCoding"
+        field_type = "display"
+        field_location = generate_field_location_for_questionnnaire_response(
+            link_id, answer_type, field_type
+        )
+
+        try:
+            care_setting_display = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            care_setting_display = None
+
+        check_mandation_requirements_met(
+            field_value=care_setting_display,
+            field_location=field_location,
+            mandation_key="care_setting_display",
+            vaccine_type=cls.vaccine_type,
+        )
+        return values
+
+    @classmethod
+    def validate_ip_address(cls, values: dict) -> dict:
+        "Validate that ip_address is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='IpAddress')].answer[0].valueString"
+        )
+
+        try:
+            ip_address = get_generic_questionnaire_response_value_from_model(
+                values, "IpAddress", "valueString"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            ip_address = None
+
+        check_mandation_requirements_met(
+            field_value=ip_address,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="ip_address",
+        )
+        return values
+
+    @classmethod
+    def validate_user_id(cls, values: dict) -> dict:
+        "Validate that user_id is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserId')].answer[0].valueString"
+        )
+
+        try:
+            user_id = get_generic_questionnaire_response_value_from_model(
+                values, "UserId", "valueString"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            user_id = None
+
+        check_mandation_requirements_met(
+            field_value=user_id,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="user_id",
+        )
+        return values
+
+    @classmethod
+    def validate_user_name(cls, values: dict) -> dict:
+        "Validate that user_name is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserName')].answer[0].valueString"
+        )
+
+        try:
+            user_name = get_generic_questionnaire_response_value_from_model(
+                values, "UserName", "valueString"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            user_name = None
+
+        check_mandation_requirements_met(
+            field_value=user_name,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="user_name",
+        )
+        return values
+
+    @classmethod
+    def validate_user_email(cls, values: dict) -> dict:
+        "Validate that user_email is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserEmail')].answer[0].valueString"
+        )
+
+        try:
+            user_email = get_generic_questionnaire_response_value_from_model(
+                values, "UserEmail", "valueString"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            user_email = None
+
+        check_mandation_requirements_met(
+            field_value=user_email,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="user_email",
+        )
+        return values
+
+    @classmethod
+    def validate_submitted_time_stamp(cls, values: dict) -> dict:
+        "Validate that submitted_time_stamp is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueDateTime"
+        )
+
+        try:
+            submitted_time_stamp = get_generic_questionnaire_response_value_from_model(
+                values, "SubmittedTimeStamp", "valueDateTime"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            submitted_time_stamp = None
+
+        check_mandation_requirements_met(
+            field_value=submitted_time_stamp,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="submitted_time_stamp",
+        )
+        return values
+
+    @classmethod
+    def validate_location_identifier_value(cls, values: dict) -> dict:
+        "Validate that location_identifier_value is present or absent, as required"
+
+        try:
+            location_identifier_value = values["location"].identifier.value
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            location_identifier_value = None
+
+        check_mandation_requirements_met(
+            field_value=location_identifier_value,
+            field_location="location.identifier.value",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="location_identifier_value",
+        )
+        return values
+
+    @classmethod
+    def validate_location_identifier_system(cls, values: dict) -> dict:
+        "Validate that location_identifier_system is present or absent, as required"
+
+        try:
+            location_identifier_system = values["location"].identifier.system
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            location_identifier_system = None
+
+        check_mandation_requirements_met(
+            field_value=location_identifier_system,
+            field_location="location.identifier.system",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="location_identifier_system",
+        )
+        return values
+
+    @classmethod
+    def validate_reduce_validation_reason(cls, values: dict) -> dict:
+        "Validate that reduce_validation_reason is present or absent, as required"
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString"
+        )
+
+        try:
+            reduce_validation_reason = (
+                get_generic_questionnaire_response_value_from_model(
+                    values, "ReduceValidationReason", "valueString"
+                )
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            reduce_validation_reason = None
+
+        check_mandation_requirements_met(
+            field_value=reduce_validation_reason,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="reduce_validation_reason",
+        )
         return values
