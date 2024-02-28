@@ -136,13 +136,13 @@ class FhirController:
     ParamValue = list[str]
     ParamContainer = dict[str, ParamValue]
 
-    nhs_number_key = "-nhsNumber"
+    nhs_number_key = "-patient.identifier"
     disease_type_key = "-immunization.target"
 
     @staticmethod
     def process_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
         def split_and_flatten(input: list[str]):
-            return [x
+            return [x.strip()
                     for xs in input
                     for x in xs.split(",")]
 

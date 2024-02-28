@@ -26,7 +26,11 @@ def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("search_imms_handler")
-    parser.add_argument("--nhsNumber", help="Identifier of Patient", type=str, required=True)
+    parser.add_argument(
+        "--patient.identifier",
+        help="Identifier of Patient",
+        type=str, required=True,
+        dest="patient_identifier")
     parser.add_argument(
         "--immunization.target",
         help="http://hl7.org/fhir/ValueSet/immunization-target-disease",
@@ -38,7 +42,7 @@ if __name__ == "__main__":
 
     event: events.APIGatewayProxyEventV1 = {
         "multiValueQueryStringParameters": {
-            "-nhsNumber": [args.nhsNumber],
+            "-patient.identifier": [args.patient_identifier],
             "-immunization.target": [",".join(args.immunization_target)]
         },
         "httpMethod": "POST",

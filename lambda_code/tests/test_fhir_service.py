@@ -328,8 +328,8 @@ class TestSearchImmunizations(unittest.TestCase):
         self.fhir_service = FhirService(
             self.imms_repo, self.pds_service, self.validator
         )
-        self.nhsSearchParam = "-nhsNumber"
-        self.diseaseTypeSearchParam = "-immunization.target"
+        self.nhs_search_param = "-patient.identifier"
+        self.disease_type_search_param = "-immunization.target"
 
     def test_get_service_url(self):
         """it should create service url"""
@@ -364,7 +364,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = "an-id"
         disease_types = ["COVID19"]
-        params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_types}"
+        params = f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_types}"
         # When
         result = self.fhir_service.search_immunizations(
             nhs_number, disease_types, params
@@ -380,7 +380,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = "an-id"
         disease_types = ["COVID19"]
-        params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_types}"
+        params = f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_types}"
         # When
         result = self.fhir_service.search_immunizations(
             nhs_number, disease_types, params

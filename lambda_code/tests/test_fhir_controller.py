@@ -361,7 +361,7 @@ class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
         self.controller = FhirController(self.service)
-        self.nhs_search_param="-nhsNumber"
+        self.nhs_search_param="-patient.identifier"
         self.disease_type_search_param="-immunization.target"
 
     def test_get_search_immunizations(self):
@@ -576,8 +576,8 @@ class TestSearchImmunizations(unittest.TestCase):
             "multiValueQueryStringParameters": {
                 self.nhs_search_param: [nhs_number],
                 self.disease_type_search_param: [disease_type],
-                "b": ["b", "a"],
-                "a": ["b", "a"],
+                "b": ["b,a"],
+                "a": ["b,a"],
             },
             "body": None,
             "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -591,9 +591,9 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_process_search_params_is_sorted(self):
         lambda_event = {
             "multiValueQueryStringParameters": {
-                self.nhs_search_param: ["b", "a"],
+                self.nhs_search_param: ["b,a"],
             },
-            "body": base64.b64encode(f"{self.disease_type_search_param}=b&{self.disease_type_search_param}=a".encode("utf-8")),
+            "body": base64.b64encode(f"{self.disease_type_search_param}=b,a".encode("utf-8")),
             "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
             "httpMethod": "POST"
         }
@@ -605,7 +605,7 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_process_search_params_does_not_process_body_on_get(self):
         lambda_event = {
             "multiValueQueryStringParameters": {
-                self.nhs_search_param: ["b", "a"],
+                self.nhs_search_param: ["b,a"],
             },
             "body": base64.b64encode(f"{self.disease_type_search_param}=b&{self.disease_type_search_param}=a".encode("utf-8")),
             "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
