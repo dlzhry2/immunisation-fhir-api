@@ -206,7 +206,7 @@ class FhirController:
         if len(disease_types) < 1:
             return None, f"Search parameter {FhirController.disease_type_key} must have one or more values."
         if any([x not in VaccineTypes().all for x in disease_types]):
-            raise Exception(f"immunization-target must be one of the following: {','.join(VaccineTypes().all)}")
+            return None, f"immunization-target must be one or more of the following: {','.join(VaccineTypes().all)}"
 
         return FhirController.SearchParams(patient_identifier, disease_types), None
 

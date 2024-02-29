@@ -658,3 +658,21 @@ class TestSearchImmunizations(unittest.TestCase):
 
         self.assertEqual(errors, None)
 
+    def test_process_search_params_whitelists_immunization_target(self):
+        params, errors = self.controller.process_search_params(
+            {
+                self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
+                self.immunization_target_key: ["not-a-code"]
+            }
+        )
+        self.assertEqual(errors, f"immunization-target must be one or more of the following: {','.join(VaccineTypes().all)}")
+        self.assertEqual(params, None)
+
+        params, errors = self.controller.process_search_params(
+            {
+                self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
+                self.immunization_target_key: [VaccineTypes().all[0]]
+            }
+        )
+
+        self.assertEqual(errors, None)
