@@ -213,8 +213,11 @@ class FhirController:
         if len(date_froms) > 1:
             return None, f"Search parameter {FhirController.date_from_key} may have only one value."
 
-        date_from = datetime.datetime.strptime(date_froms[0], "%Y-%m-%d").date() \
-            if len(date_froms) == 1 else datetime.date(1900, 1, 1)
+        try:
+            date_from = datetime.datetime.strptime(date_froms[0], "%Y-%m-%d").date() \
+                if len(date_froms) == 1 else datetime.date(1900, 1, 1)
+        except ValueError:
+            return None, f"Search parameter {FhirController.date_from_key} must be in format: YYYY-MM-DD"
 
         # date.to
         date_tos = params.get(FhirController.date_to_key, [])
@@ -222,8 +225,11 @@ class FhirController:
         if len(date_tos) > 1:
             return None, f"Search parameter {FhirController.date_to_key} may have only one value."
 
-        date_to = datetime.datetime.strptime(date_tos[0], "%Y-%m-%d").date() \
-            if len(date_tos) == 1 else datetime.date(9999, 12, 31)
+        try:
+            date_to = datetime.datetime.strptime(date_tos[0], "%Y-%m-%d").date() \
+                if len(date_tos) == 1 else datetime.date(9999, 12, 31)
+        except ValueError:
+            return None, f"Search parameter {FhirController.date_to_key} must be in format: YYYY-MM-DD"
 
         if date_from and date_to and date_from > date_to:
             return None, f"Search parameter {FhirController.date_from_key} must be before {FhirController.date_to_key}"
@@ -242,9 +248,7 @@ class FhirController:
 
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
         params = self.process_params(aws_event)
-        pprint.pprint(params)
         search_params, search_param_parse_errors = self.process_search_params(params)
-        pprint.pprint(search_params)
         if search_param_parse_errors is not None:
             return self._create_bad_request(search_param_parse_errors)
         if search_params is None:
