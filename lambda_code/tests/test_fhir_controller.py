@@ -3,7 +3,7 @@ import urllib
 import json
 import unittest
 import uuid
-from unittest.mock import create_autospec
+from unittest.mock import create_autospec, ANY
 from urllib.parse import urlencode
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle
@@ -365,6 +365,8 @@ class TestSearchImmunizations(unittest.TestCase):
         self.controller = FhirController(self.service)
         self.patient_identifier_key = "-patient.identifier"
         self.immunization_target_key = "-immunization.target"
+        self.date_from_key = "-date.from"
+        self.date_to_key = "-date.to"
         self.nhs_number_valid_value = "9000000009"
         self.patient_identifier_valid_value = f"{FhirController.patient_identifier_system}|{self.nhs_number_valid_value}"
 
@@ -386,7 +388,9 @@ class TestSearchImmunizations(unittest.TestCase):
         response = self.controller.search_immunizations(lambda_event)
 
         # Then
-        self.service.search_immunizations.assert_called_once_with(self.nhs_number_valid_value, [disease_type], params)
+        self.service.search_immunizations.assert_called_once_with(
+            self.nhs_number_valid_value, [disease_type], ANY, ANY, params
+        )
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
@@ -420,7 +424,9 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         response = self.controller.search_immunizations(lambda_event)
         # Then
-        self.service.search_immunizations.assert_called_once_with(self.nhs_number_valid_value, [disease_type], params)
+        self.service.search_immunizations.assert_called_once_with(
+            self.nhs_number_valid_value, [disease_type], ANY, ANY, params
+        )
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
@@ -475,7 +481,9 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         response = self.controller.search_immunizations(lambda_event)
         # Then
-        self.service.search_immunizations.assert_called_once_with(self.nhs_number_valid_value, [disease_type], params)
+        self.service.search_immunizations.assert_called_once_with(
+            self.nhs_number_valid_value, [disease_type], ANY, ANY, params
+        )
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
@@ -510,7 +518,9 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         response = self.controller.search_immunizations(lambda_event)
         # Then
-        self.service.search_immunizations.assert_called_once_with(self.nhs_number_valid_value, [disease_type], params)
+        self.service.search_immunizations.assert_called_once_with(
+            self.nhs_number_valid_value, [disease_type], ANY, ANY, params
+        )
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
@@ -595,7 +605,9 @@ class TestSearchImmunizations(unittest.TestCase):
 
         self.controller.search_immunizations(lambda_event)
 
-        self.service.search_immunizations.assert_called_once_with(self.nhs_number_valid_value, [disease_type], params)
+        self.service.search_immunizations.assert_called_once_with(
+            self.nhs_number_valid_value, [disease_type], ANY, ANY, params
+        )
 
     def test_process_params_is_sorted(self):
         lambda_event = {
@@ -677,3 +689,40 @@ class TestSearchImmunizations(unittest.TestCase):
 
         self.assertIsNone(errors)
         self.assertIsNotNone(params)
+
+    def test_search_params_date_from_must_be_before_date_to(self):
+        params, errors = self.controller.process_search_params(
+            {
+                self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
+                self.immunization_target_key: [VaccineTypes().all[0]],
+                self.date_from_key: ["2021-03-06"],
+                self.date_to_key: ["2021-03-08"]
+            }
+        )
+
+        self.assertIsNone(errors)
+        self.assertIsNotNone(params)
+
+        params, errors = self.controller.process_search_params(
+            {
+                self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
+                self.immunization_target_key: [VaccineTypes().all[0]],
+                self.date_from_key: ["2021-03-07"],
+                self.date_to_key: ["2021-03-07"]
+            }
+        )
+
+        self.assertIsNone(errors)
+        self.assertIsNotNone(params)
+
+        params, errors = self.controller.process_search_params(
+            {
+                self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
+                self.immunization_target_key: [VaccineTypes().all[0]],
+                self.date_from_key: ["2021-03-08"],
+                self.date_to_key: ["2021-03-07"]
+            }
+        )
+
+        self.assertEqual(errors, f"Search parameter {FhirController.date_from_key} must be before {FhirController.date_from_key}")
+        self.assertIsNone(params)

@@ -46,6 +46,11 @@ if __name__ == "__main__":
         type=str,
         required=False,
         dest="date_from")
+    parser.add_argument(
+        "--date.to",
+        type=str,
+        required=False,
+        dest="date_to")
 
     args = parser.parse_args()
 
@@ -53,7 +58,8 @@ if __name__ == "__main__":
         "multiValueQueryStringParameters": {
             "-patient.identifier": [args.patient_identifier],
             "-immunization.target": [",".join(args.immunization_target)],
-            "-date.from": [args.date_from]
+            "-date.from": [args.date_from] if args.date_from else [],
+            "-date.to": [args.date_to] if args.date_to else []
         },
         "httpMethod": "POST",
         "headers": {'Content-Type': 'application/x-www-form-urlencoded'},

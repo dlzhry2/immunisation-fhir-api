@@ -20,7 +20,7 @@ from models.fhir_immunization import ImmunizationValidator
 from models.utils.generic_utils import get_disease_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
-
+from models.utils.generic_utils import get_occurrence_datetime
 
 def get_service_url(
     service_env: str = os.getenv("IMMUNIZATION_ENV"),
@@ -116,21 +116,32 @@ class FhirService:
         if date_from is None:
             return True
 
-        occurrence_datetime_str: Optional[str] = immunization.get("occurrenceDateTime", None)
-        if occurrence_datetime_str is None:
+        occurrence_datetime = get_occurrence_datetime(immunization)
+        if occurrence_datetime is None:
             # TODO: Log error if no date.
             return True
 
-        occurrence_datetime = datetime.datetime.fromisoformat(occurrence_datetime_str)
-
         return occurrence_datetime.date() >= date_from
+
+    @staticmethod
+    def is_valid_date_to(immunization: dict, date_to: datetime.date):
+        if date_to is None:
+            return True
+
+        occurrence_datetime = get_occurrence_datetime(immunization)
+        if occurrence_datetime is None:
+            # TODO: Log error if no date.
+            return True
+
+        return occurrence_datetime.date() <= date_to
 
     def search_immunizations(
         self,
         nhs_number: str,
         disease_types: list[str],
         params: str,
-        date_from: datetime.date = datetime.date(1900, 1, 1)
+        date_from: datetime.date = datetime.date(1900, 1, 1),
+        date_to: datetime.date = datetime.date(9999, 12, 31)
     ) -> FhirBundle:
         """find all instances of Immunization(s) for a patient and specified disease type.
         Returns Bundle[Immunization]
@@ -142,6 +153,7 @@ class FhirService:
             r for r in resources
             if FhirService.has_valid_disease_type(r, disease_types)
             and FhirService.is_valid_date_from(r, date_from)
+            and FhirService.is_valid_date_to(r, date_to)
         ]
         patient = self.pds_service.get_patient_details(nhs_number) if len(resources) > 0 else None
         entries = [

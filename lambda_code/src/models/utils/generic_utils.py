@@ -1,4 +1,5 @@
 """Generic utilities for models"""
+import datetime
 
 from typing import Literal, Union, Optional, Any
 
@@ -184,3 +185,11 @@ def get_disease_type(immunization: dict):
     )
 
     return disease_type
+
+
+def get_occurrence_datetime(immunization: dict) -> Optional[datetime.datetime]:
+    occurrence_datetime_str: Optional[str] = immunization.get("occurrenceDateTime", None)
+    if occurrence_datetime_str is None:
+        return None
+
+    return datetime.datetime.fromisoformat(occurrence_datetime_str)

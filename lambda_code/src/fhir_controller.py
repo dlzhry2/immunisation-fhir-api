@@ -143,6 +143,7 @@ class FhirController:
     patient_identifier_key = "-patient.identifier"
     immunization_target_key = "-immunization.target"
     date_from_key = "-date.from"
+    date_to_key = "-date.to"
 
     @staticmethod
     def process_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
@@ -215,7 +216,19 @@ class FhirController:
         date_from = datetime.datetime.strptime(date_froms[0], "%Y-%m-%d").date() \
             if len(date_froms) == 1 else datetime.date(1900, 1, 1)
 
-        return SearchParams(patient_identifier, disease_types, date_from), None
+        # date.to
+        date_tos = params.get(FhirController.date_to_key, [])
+
+        if len(date_tos) > 1:
+            return None, f"Search parameter {FhirController.date_to_key} may have only one value."
+
+        date_to = datetime.datetime.strptime(date_tos[0], "%Y-%m-%d").date() \
+            if len(date_tos) == 1 else datetime.date(9999, 12, 31)
+
+        if date_from and date_to and date_from > date_to:
+            return None, f"Search parameter {FhirController.date_from_key} must be before {FhirController.date_to_key}"
+
+        return SearchParams(patient_identifier, disease_types, date_from, date_to), None
 
     @staticmethod
     def get_query_string(search_params: SearchParams):
@@ -241,6 +254,7 @@ class FhirController:
             search_params.nhs_number,
             search_params.disease_types,
             search_params.date_from,
+            search_params.date_to,
             self.get_query_string(search_params)
         )
         return self.create_response(200, result.json())
