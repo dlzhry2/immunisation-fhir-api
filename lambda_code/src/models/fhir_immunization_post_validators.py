@@ -462,7 +462,7 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_vaccination_situation_display(cls, values: dict) -> dict:
         "Validate that vaccination_situation_display is present or absent, as required"
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-" + "VaccinationSituation"
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
         system = "http://snomed.info/sct"
         field_type = "display"
         field_location = generate_field_location_for_extension(url, system, field_type)
@@ -503,7 +503,7 @@ class FHIRImmunizationPostValidators:
             field_value=status_reason_coding_code,
             field_location=field_location,
             mandation=mandation,
-            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is " + "'not-done'",
+            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is 'not-done'",
         )
 
         return values
@@ -556,7 +556,7 @@ class FHIRImmunizationPostValidators:
         bespoke_mandatory_error_message = None
         if cls.vaccine_type == VaccineTypes.covid_19:
             bespoke_mandatory_error_message = (
-                f"{field_location} is mandatory when vaccination " + f"type is {cls.vaccine_type}"
+                f"{field_location} is mandatory when vaccination type is {cls.vaccine_type}"
             )
         if cls.vaccine_type == VaccineTypes.flu:
             bespoke_mandatory_error_message = (
