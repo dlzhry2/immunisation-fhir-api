@@ -666,7 +666,7 @@ class TestSearchImmunizations(unittest.TestCase):
             }
         )
         self.assertEqual(errors, f"immunization-target must be one or more of the following: {','.join(VaccineTypes().all)}")
-        self.assertEqual(params, None)
+        self.assertIsNone(params)
 
         params, errors = self.controller.process_search_params(
             {
@@ -675,4 +675,5 @@ class TestSearchImmunizations(unittest.TestCase):
             }
         )
 
-        self.assertEqual(errors, None)
+        self.assertIsNone(errors)
+        self.assertIsNotNone(params)

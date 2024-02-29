@@ -1,3 +1,5 @@
+import datetime
+
 from enum import Enum
 from typing import Optional
 
@@ -105,8 +107,30 @@ class FhirService:
         imms = self.immunization_repo.delete_immunization(imms_id)
         return Immunization.parse_obj(imms)
 
+    @staticmethod
+    def has_valid_disease_type(immunization: dict, disease_types: list[str]):
+        return get_disease_type(immunization) in disease_types
+
+    @staticmethod
+    def is_valid_date_from(immunization: dict, date_from: datetime.date):
+        if date_from is None:
+            return True
+
+        occurrence_datetime_str: Optional[str] = immunization.get("occurrenceDateTime", None)
+        if occurrence_datetime_str is None:
+            # TODO: Log error if no date.
+            return True
+
+        occurrence_datetime = datetime.datetime.fromisoformat(occurrence_datetime_str)
+
+        return occurrence_datetime.date() >= date_from
+
     def search_immunizations(
-        self, nhs_number: str, disease_types: list[str], params: str
+        self,
+        nhs_number: str,
+        disease_types: list[str],
+        params: str,
+        date_from: datetime.date = datetime.date(1900, 1, 1)
     ) -> FhirBundle:
         """find all instances of Immunization(s) for a patient and specified disease type.
         Returns Bundle[Immunization]
@@ -114,7 +138,11 @@ class FhirService:
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         resources = self.immunization_repo.find_immunizations(nhs_number)
-        resources = [r for r in resources if get_disease_type(r) in disease_types]
+        resources = [
+            r for r in resources
+            if FhirService.has_valid_disease_type(r, disease_types)
+            and FhirService.is_valid_date_from(r, date_from)
+        ]
         patient = self.pds_service.get_patient_details(nhs_number) if len(resources) > 0 else None
         entries = [
             BundleEntry(resource=Immunization.parse_obj(handle_s_flag(imms, patient)))

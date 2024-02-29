@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import base64
 
 import argparse
@@ -29,7 +31,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--patient.identifier",
         help="Identifier of Patient",
-        type=str, required=True,
+        type=str,
+        required=True,
         dest="patient_identifier")
     parser.add_argument(
         "--immunization.target",
@@ -38,12 +41,19 @@ if __name__ == "__main__":
         required=True,
         nargs="+",
         dest="immunization_target")
+    parser.add_argument(
+        "--date.from",
+        type=str,
+        required=False,
+        dest="date_from")
+
     args = parser.parse_args()
 
     event: events.APIGatewayProxyEventV1 = {
         "multiValueQueryStringParameters": {
             "-patient.identifier": [args.patient_identifier],
-            "-immunization.target": [",".join(args.immunization_target)]
+            "-immunization.target": [",".join(args.immunization_target)],
+            "-date.from": [args.date_from]
         },
         "httpMethod": "POST",
         "headers": {'Content-Type': 'application/x-www-form-urlencoded'},

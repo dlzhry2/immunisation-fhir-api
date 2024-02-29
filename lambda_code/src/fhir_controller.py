@@ -1,3 +1,5 @@
+import datetime
+
 import urllib.parse
 
 import pprint
@@ -27,6 +29,7 @@ from models.errors import (
     ValidationError,
     IdentifierDuplicationError
 )
+from models.search import SearchParams
 from pds_service import PdsService, Authenticator
 from urllib.parse import parse_qs
 
@@ -138,7 +141,8 @@ class FhirController:
     ParamContainer = dict[str, ParamValue]
 
     patient_identifier_key = "-patient.identifier"
-    disease_type_key = "-immunization.target"
+    immunization_target_key = "-immunization.target"
+    date_from_key = "-date.from"
 
     @staticmethod
     def process_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
@@ -177,21 +181,14 @@ class FhirController:
         return {key: sorted(query_params.get(key, []) + body_params.get(key, []))
                 for key in (query_params.keys() | body_params.keys())}
 
-    class SearchParams:
-        nhs_number: str
-        disease_types: list[str]
-
-        def __init__(self, nhs_number: str, disease_type: list[str]):
-            self.nhs_number = nhs_number
-            self.disease_types = disease_type
-
     @staticmethod
     def process_search_params(params: ParamContainer) -> tuple[Optional[SearchParams], Optional[str]]:
+        # patient.identifier
         patient_identifiers = params.get(FhirController.patient_identifier_key, [])
         patient_identifier = patient_identifiers[0] if len(patient_identifiers) == 1 else None
 
         if patient_identifier is None:
-            return None, f"Search parameter {FhirController.patient_identifier_key} must have one value."
+            return None, f"Search parameter {FhirController.patient_identifier_key} may have only one value."
 
         patient_identifier_parts = patient_identifier.split("|")
         if len(patient_identifier_parts) != 2 or not patient_identifier_parts[0] == FhirController.patient_identifier_system:
@@ -201,19 +198,29 @@ class FhirController:
 
         patient_identifier = patient_identifier.split("|")[1]
 
-        params[FhirController.disease_type_key] = list(set(params.get(FhirController.disease_type_key, [])))
-        disease_types = [disease_type for disease_type in params[FhirController.disease_type_key] if disease_type is not None]
+        # immunization.target
+        params[FhirController.immunization_target_key] = list(set(params.get(FhirController.immunization_target_key, [])))
+        disease_types = [disease_type for disease_type in params[FhirController.immunization_target_key] if disease_type is not None]
         if len(disease_types) < 1:
-            return None, f"Search parameter {FhirController.disease_type_key} must have one or more values."
+            return None, f"Search parameter {FhirController.immunization_target_key} must have one or more values."
         if any([x not in VaccineTypes().all for x in disease_types]):
             return None, f"immunization-target must be one or more of the following: {','.join(VaccineTypes().all)}"
 
-        return FhirController.SearchParams(patient_identifier, disease_types), None
+        # date.from
+        date_froms = params.get(FhirController.date_from_key, [])
+
+        if len(date_froms) > 1:
+            return None, f"Search parameter {FhirController.date_from_key} may have only one value."
+
+        date_from = datetime.datetime.strptime(date_froms[0], "%Y-%m-%d").date() \
+            if len(date_froms) == 1 else datetime.date(1900, 1, 1)
+
+        return SearchParams(patient_identifier, disease_types, date_from), None
 
     @staticmethod
     def get_query_string(search_params: SearchParams):
         params = [
-            (FhirController.disease_type_key, search_params.disease_types),
+            (FhirController.immunization_target_key, search_params.disease_types),
             (FhirController.patient_identifier_key,
                 f"{FhirController.patient_identifier_system}|{search_params.nhs_number}")
         ]
@@ -231,7 +238,10 @@ class FhirController:
             raise Exception("Failed to parse parameters.")
 
         result = self.fhir_service.search_immunizations(
-            search_params.nhs_number, search_params.disease_types, self.get_query_string(search_params)
+            search_params.nhs_number,
+            search_params.disease_types,
+            search_params.date_from,
+            self.get_query_string(search_params)
         )
         return self.create_response(200, result.json())
 
