@@ -389,7 +389,7 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # Then
         self.service.search_immunizations.assert_called_once_with(
-            self.nhs_number_valid_value, [disease_type], ANY, ANY, params
+            self.nhs_number_valid_value, [disease_type], params, ANY, ANY
         )
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
@@ -425,7 +425,7 @@ class TestSearchImmunizations(unittest.TestCase):
         response = self.controller.search_immunizations(lambda_event)
         # Then
         self.service.search_immunizations.assert_called_once_with(
-            self.nhs_number_valid_value, [disease_type], ANY, ANY, params
+            self.nhs_number_valid_value, [disease_type], params, ANY, ANY
         )
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
@@ -482,7 +482,7 @@ class TestSearchImmunizations(unittest.TestCase):
         response = self.controller.search_immunizations(lambda_event)
         # Then
         self.service.search_immunizations.assert_called_once_with(
-            self.nhs_number_valid_value, [disease_type], ANY, ANY, params
+            self.nhs_number_valid_value, [disease_type], params, ANY, ANY
         )
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
@@ -519,7 +519,7 @@ class TestSearchImmunizations(unittest.TestCase):
         response = self.controller.search_immunizations(lambda_event)
         # Then
         self.service.search_immunizations.assert_called_once_with(
-            self.nhs_number_valid_value, [disease_type], ANY, ANY, params
+            self.nhs_number_valid_value, [disease_type], params, ANY, ANY
         )
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
@@ -606,7 +606,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.controller.search_immunizations(lambda_event)
 
         self.service.search_immunizations.assert_called_once_with(
-            self.nhs_number_valid_value, [disease_type], ANY, ANY, params
+            self.nhs_number_valid_value, [disease_type], params, ANY, ANY
         )
 
     def test_process_params_is_sorted(self):
@@ -724,5 +724,5 @@ class TestSearchImmunizations(unittest.TestCase):
             }
         )
 
-        self.assertEqual(errors, f"Search parameter {FhirController.date_from_key} must be before {FhirController.date_from_key}")
+        self.assertEqual(errors, f"Search parameter {FhirController.date_from_key} must be before {FhirController.date_to_key}")
         self.assertIsNone(params)

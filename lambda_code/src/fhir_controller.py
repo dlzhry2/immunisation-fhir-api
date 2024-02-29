@@ -257,9 +257,9 @@ class FhirController:
         result = self.fhir_service.search_immunizations(
             search_params.nhs_number,
             search_params.disease_types,
+            self.get_query_string(search_params),
             search_params.date_from,
             search_params.date_to,
-            self.get_query_string(search_params)
         )
         return self.create_response(200, result.json())
 
