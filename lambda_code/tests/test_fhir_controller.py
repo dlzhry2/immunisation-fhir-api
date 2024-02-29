@@ -363,7 +363,7 @@ class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
         self.controller = FhirController(self.service)
-        self.patient_identifier_key = "-patient.identifier"
+        self.patient_identifier_key = "patient.identifier"
         self.immunization_target_key = "-immunization.target"
         self.date_from_key = "-date.from"
         self.date_to_key = "-date.to"
@@ -656,7 +656,7 @@ class TestSearchImmunizations(unittest.TestCase):
         params, errors = self.controller.process_search_params(
                 {self.patient_identifier_key: ["9000000009"]}
             )
-        self.assertEqual(errors, "-patient.identifier must be in the format of "
+        self.assertEqual(errors, "patient.identifier must be in the format of "
                                            "\"https://fhir.nhs.uk/Id/nhs-number|{NHS number}\" "
                                            "e.g. \"https://fhir.nhs.uk/Id/nhs-number|9000000009\"")
         self.assertEqual(params, None)

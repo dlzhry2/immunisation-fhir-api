@@ -330,7 +330,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.fhir_service = FhirService(
             self.imms_repo, self.pds_service, self.validator
         )
-        self.nhs_search_param = "-patient.identifier"
+        self.nhs_search_param = "patient.identifier"
         self.disease_type_search_param = "-immunization.target"
 
     def test_get_service_url(self):

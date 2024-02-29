@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     event: events.APIGatewayProxyEventV1 = {
         "multiValueQueryStringParameters": {
-            "-patient.identifier": [args.patient_identifier],
+            "patient.identifier": [args.patient_identifier],
             "-immunization.target": [",".join(args.immunization_target)],
             "-date.from": [args.date_from] if args.date_from else [],
             "-date.to": [args.date_to] if args.date_to else []
