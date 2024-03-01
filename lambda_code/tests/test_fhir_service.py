@@ -435,14 +435,14 @@ class TestSearchImmunizations(unittest.TestCase):
         # TODO: for this ticket we are assuming code is provided
         nhs_number = "a-patient-id"
         disease_type = "1324681000000101"
-        params = f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_types}"
+        params = f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_type}"
 
         disease_code = vaccination_procedure_snomed_codes[disease_type]
         # When
         _ = self.fhir_service.search_immunizations(nhs_number, disease_code, params)
 
         # Then
-        self.imms_repo.find_immunizations.assert_called_once_with(nhs_number, disease_code)
+        self.imms_repo.find_immunizations.assert_called_once_with(nhs_number)
 
     def test_make_fhir_bundle_from_search_result(self):
         """it should return a FHIR Bundle resource"""
