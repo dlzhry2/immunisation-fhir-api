@@ -4,8 +4,10 @@ from models.constants import Constants
 from models.utils.generic_utils import (
     get_generic_questionnaire_response_value_from_model,
     get_generic_extension_value_from_model,
+    generate_field_location_for_questionnnaire_response,
     generate_field_location_for_extension,
     get_contained_resource_from_model,
+    is_organization,
 )
 from models.utils.post_validation_utils import (
     PostValidation,
@@ -15,9 +17,7 @@ from mappings import Mandation, VaccineTypes, vaccine_type_applicable_validation
 
 check_mandation_requirements_met = PostValidation.check_mandation_requirements_met
 get_generic_field_value = PostValidation.get_generic_field_value
-get_generic_questionnaire_response_value = (
-    PostValidation.get_generic_questionnaire_response_value
-)
+get_generic_questionnaire_response_value = PostValidation.get_generic_questionnaire_response_value
 
 
 class FHIRImmunizationPostValidators:
@@ -32,14 +32,10 @@ class FHIRImmunizationPostValidators:
         field_location = generate_field_location_for_extension(url, system, field_type)
 
         try:
-            vaccination_procedure_code = get_generic_extension_value_from_model(
-                values, url, system, field_type
-            )
+            vaccination_procedure_code = get_generic_extension_value_from_model(values, url, system, field_type)
             if vaccination_procedure_code is None:
                 raise KeyError
-            cls.vaccine_type = PostValidation.vaccination_procedure_code(
-                vaccination_procedure_code, field_location
-            )
+            cls.vaccine_type = PostValidation.vaccination_procedure_code(vaccination_procedure_code, field_location)
 
         except (KeyError, IndexError, TypeError) as error:
             raise MandatoryError(f"{field_location} is a mandatory field") from error
@@ -61,9 +57,7 @@ class FHIRImmunizationPostValidators:
             contained_patient = get_contained_resource_from_model(values, "Patient")
 
             patient_identifier_value = [
-                x
-                for x in contained_patient.identifier
-                if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+                x for x in contained_patient.identifier if x.system == "https://fhir.nhs.uk/Id/nhs-number"
             ][0].value
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_identifier_value = None
@@ -81,9 +75,7 @@ class FHIRImmunizationPostValidators:
     def validate_patient_name_given(cls, values: dict) -> dict:
         "Validate that patient_name_given is present or absent, as required"
         try:
-            patient_name_given = (
-                get_contained_resource_from_model(values, "Patient").name[0].given
-            )
+            patient_name_given = get_contained_resource_from_model(values, "Patient").name[0].given
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_name_given = None
 
@@ -100,9 +92,7 @@ class FHIRImmunizationPostValidators:
     def validate_patient_name_family(cls, values: dict) -> dict:
         "Validate that patient_name_family is present or absent, as required"
         try:
-            patient_name_family = (
-                get_contained_resource_from_model(values, "Patient").name[0].family
-            )
+            patient_name_family = get_contained_resource_from_model(values, "Patient").name[0].family
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_name_family = None
 
@@ -118,9 +108,7 @@ class FHIRImmunizationPostValidators:
     def validate_patient_birth_date(cls, values: dict) -> dict:
         "Validate that patient_birth_date is present or absent, as required"
         try:
-            patient_birth_date = get_contained_resource_from_model(
-                values, "Patient"
-            ).birthDate
+            patient_birth_date = get_contained_resource_from_model(values, "Patient").birthDate
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_birth_date = None
 
@@ -152,11 +140,7 @@ class FHIRImmunizationPostValidators:
     def validate_patient_address_postal_code(cls, values: dict) -> dict:
         "Validate that patient_address_postal_code is present or absent, as required"
         try:
-            patient_address_postal_code = (
-                get_contained_resource_from_model(values, "Patient")
-                .address[0]
-                .postalCode
-            )
+            patient_address_postal_code = get_contained_resource_from_model(values, "Patient").address[0].postalCode
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_address_postal_code = None
 
@@ -193,9 +177,7 @@ class FHIRImmunizationPostValidators:
                 return False
 
         try:
-            field_value = [x for x in values["performer"] if util_func(x)][
-                0
-            ].actor.identifier.value
+            field_value = [x for x in values["performer"] if util_func(x)][0].actor.identifier.value
         except (KeyError, IndexError, AttributeError):
             field_value = None
 
@@ -211,17 +193,8 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_organization_display(cls, values: dict) -> dict:
         """Validate that organization_display is present or absent, as required"""
-
-        def is_organization(x):
-            try:
-                return x.actor.type == "Organization"
-            except AttributeError:
-                return False
-
         try:
-            field_value = [x for x in values["performer"] if is_organization(x)][
-                0
-            ].actor.display
+            field_value = [x for x in values["performer"] if is_organization(x)][0].actor.display
         except (KeyError, IndexError, AttributeError, TypeError):
             field_value = None
 
@@ -237,9 +210,7 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_identifier_value(cls, values: dict) -> dict:
         "Validate that identifier_value is present or absent, as required"
-        field_value = get_generic_field_value(
-            values, "identifier", index=0, attribute="value"
-        )
+        field_value = get_generic_field_value(values, "identifier", index=0, attribute="value")
 
         check_mandation_requirements_met(
             field_value=field_value,
@@ -253,9 +224,7 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_identifier_system(cls, values: dict) -> dict:
         "Validate that identifier_system is present or absent, as required"
-        field_value = get_generic_field_value(
-            values, "identifier", index=0, attribute="system"
-        )
+        field_value = get_generic_field_value(values, "identifier", index=0, attribute="system")
 
         check_mandation_requirements_met(
             field_value=field_value,
@@ -270,9 +239,7 @@ class FHIRImmunizationPostValidators:
     def validate_practitioner_name_given(cls, values: dict) -> dict:
         "Validate that practitioner_name_given is present or absent, as required"
         try:
-            practitioner_name_given = (
-                get_contained_resource_from_model(values, "Practitioner").name[0].given
-            )
+            practitioner_name_given = get_contained_resource_from_model(values, "Practitioner").name[0].given
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             practitioner_name_given = None
 
@@ -289,9 +256,7 @@ class FHIRImmunizationPostValidators:
     def validate_practitioner_name_family(cls, values: dict) -> dict:
         "Validate that practitioner_name_family is present or absent, as required"
         try:
-            practitioner_name_family = (
-                get_contained_resource_from_model(values, "Practitioner").name[0].family
-            )
+            practitioner_name_family = get_contained_resource_from_model(values, "Practitioner").name[0].family
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             practitioner_name_family = None
 
@@ -309,9 +274,7 @@ class FHIRImmunizationPostValidators:
         "Validate that practitioner_identifier_value is present or absent, as required"
         try:
             practitioner_identifier_value = (
-                get_contained_resource_from_model(values, "Practitioner")
-                .identifier[0]
-                .value
+                get_contained_resource_from_model(values, "Practitioner").identifier[0].value
             )
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             practitioner_identifier_value = None
@@ -327,31 +290,23 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_practitioner_identifier_system(cls, values: dict) -> dict:
         "Validate that practitioner_identifier_system is present or absent, as required"
-        field_location = (
-            "contained[?(@.resourceType=='Practitioner')].identifier[0].system"
-        )
+        field_location = "contained[?(@.resourceType=='Practitioner')].identifier[0].system"
 
         try:
             practitioner_identifier_system = (
-                get_contained_resource_from_model(values, "Practitioner")
-                .identifier[0]
-                .system
+                get_contained_resource_from_model(values, "Practitioner").identifier[0].system
             )
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             practitioner_identifier_system = None
 
         # Set up mandation defaults
-        mandation = vaccine_type_applicable_validations[
-            "practitioner_identifier_system"
-        ]
+        mandation = vaccine_type_applicable_validations["practitioner_identifier_system"]
         bespoke_mandatory_error_message = None
 
         # Handle conditional mandation logic
         try:
             practitioner_identifier_value = (
-                get_contained_resource_from_model(values, "Practitioner")
-                .identifier[0]
-                .value
+                get_contained_resource_from_model(values, "Practitioner").identifier[0].value
             )
         except (KeyError, IndexError, AttributeError):
             practitioner_identifier_value = None
@@ -359,8 +314,7 @@ class FHIRImmunizationPostValidators:
         # If practioner_identifier_value is present and vaccine type is COVID19 or FLU,
         # then practitioner_identifier_system is mandatory
         if practitioner_identifier_value and (
-            cls.vaccine_type == VaccineTypes.covid_19
-            or cls.vaccine_type == VaccineTypes.flu
+            cls.vaccine_type == VaccineTypes.covid_19 or cls.vaccine_type == VaccineTypes.flu
         ):
             mandation = Mandation.mandatory
             bespoke_mandatory_error_message = (
@@ -389,10 +343,8 @@ class FHIRImmunizationPostValidators:
         )
 
         try:
-            performer_sds_job_role = (
-                get_generic_questionnaire_response_value_from_model(
-                    values, "PerformerSDSJobROle", "valueString"
-                )
+            performer_sds_job_role = get_generic_questionnaire_response_value_from_model(
+                values, "PerformerSDSJobROle", "valueString"
             )
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             performer_sds_job_role = None
@@ -444,9 +396,7 @@ class FHIRImmunizationPostValidators:
         )
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations["report_origin_text"][
-            cls.vaccine_type
-        ]
+        mandation = vaccine_type_applicable_validations["report_origin_text"][cls.vaccine_type]
         if not values["primarySource"]:
             mandation = Mandation.mandatory
 
@@ -454,8 +404,7 @@ class FHIRImmunizationPostValidators:
             field_value=report_origin_text,
             field_location=field_location,
             mandation=mandation,
-            bespoke_mandatory_error_message=f"{field_location} is mandatory when "
-            + "primarySource is false",
+            bespoke_mandatory_error_message=f"{field_location} is mandatory when primarySource is false",
         )
 
         return values
@@ -463,18 +412,13 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_vaccination_procedure_display(cls, values: dict) -> dict:
         "Validate that vaccination_procedure_display is present or absent, as required"
-        url = (
-            "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-            + "VaccinationProcedure"
-        )
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
         system = "http://snomed.info/sct"
         field_type = "display"
         field_location = generate_field_location_for_extension(url, system, field_type)
 
         try:
-            vaccination_procedure_display = get_generic_extension_value_from_model(
-                values, url, system, field_type
-            )
+            vaccination_procedure_display = get_generic_extension_value_from_model(values, url, system, field_type)
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccination_procedure_display = None
 
@@ -489,25 +433,18 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_vaccination_situation_code(cls, values: dict) -> dict:
         "Validate that vaccination_situation_code is present or absent, as required"
-        url = (
-            "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-            + "VaccinationSituation"
-        )
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
         system = "http://snomed.info/sct"
         field_type = "code"
         field_location = generate_field_location_for_extension(url, system, field_type)
 
         try:
-            vaccination_situation_code = get_generic_extension_value_from_model(
-                values, url, system, field_type
-            )
+            vaccination_situation_code = get_generic_extension_value_from_model(values, url, system, field_type)
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccination_situation_code = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations["vaccination_situation_code"][
-            cls.vaccine_type
-        ]
+        mandation = vaccine_type_applicable_validations["vaccination_situation_code"][cls.vaccine_type]
         if values["status"] == "not-done":
             mandation = Mandation.mandatory
         else:
@@ -517,8 +454,7 @@ class FHIRImmunizationPostValidators:
             field_value=vaccination_situation_code,
             field_location=field_location,
             mandation=mandation,
-            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is "
-            + "'not-done'",
+            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is 'not-done'",
         )
 
         return values
@@ -526,18 +462,13 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_vaccination_situation_display(cls, values: dict) -> dict:
         "Validate that vaccination_situation_display is present or absent, as required"
-        url = (
-            "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-            + "VaccinationSituation"
-        )
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
         system = "http://snomed.info/sct"
         field_type = "display"
         field_location = generate_field_location_for_extension(url, system, field_type)
 
         try:
-            vaccination_situation_display = get_generic_extension_value_from_model(
-                values, url, system, field_type
-            )
+            vaccination_situation_display = get_generic_extension_value_from_model(values, url, system, field_type)
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccination_situation_display = None
 
@@ -552,23 +483,17 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_status_reason_coding_code(cls, values: dict) -> dict:
         "Validate that vaccination_situation_code is present or absent, as required"
-        field_location = (
-            "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
-        )
+        field_location = "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
 
         try:
             status_reason_coding_code = [
-                x
-                for x in values["statusReason"].coding
-                if x.system == "http://snomed.info/sct"
+                x for x in values["statusReason"].coding if x.system == "http://snomed.info/sct"
             ][0].code
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             status_reason_coding_code = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations["status_reason_coding_code"][
-            cls.vaccine_type
-        ]
+        mandation = vaccine_type_applicable_validations["status_reason_coding_code"][cls.vaccine_type]
         if values["status"] == "not-done":
             mandation = Mandation.mandatory
         else:
@@ -578,8 +503,7 @@ class FHIRImmunizationPostValidators:
             field_value=status_reason_coding_code,
             field_location=field_location,
             mandation=mandation,
-            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is "
-            + "'not-done'",
+            bespoke_mandatory_error_message=f"{field_location} is mandatory when status is 'not-done'",
         )
 
         return values
@@ -587,15 +511,11 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_status_reason_coding_display(cls, values: dict) -> dict:
         "Validate that status_reason_coding_display is present or absent, as required"
-        field_location = (
-            "statusReason.coding[?(@.system=='http://snomed.info/sct')].display"
-        )
+        field_location = "statusReason.coding[?(@.system=='http://snomed.info/sct')].display"
 
         try:
             status_reason_coding_display = [
-                x
-                for x in values["statusReason"].coding
-                if x.system == "http://snomed.info/sct"
+                x for x in values["statusReason"].coding if x.system == "http://snomed.info/sct"
             ][0].code
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             status_reason_coding_display = None
@@ -614,16 +534,12 @@ class FHIRImmunizationPostValidators:
         field_location = "protocolApplied[0].doseNumberPositiveInt"
 
         try:
-            protocol_applied_dose_number_positive_int = values["protocolApplied"][
-                0
-            ].doseNumberPositiveInt
+            protocol_applied_dose_number_positive_int = values["protocolApplied"][0].doseNumberPositiveInt
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             protocol_applied_dose_number_positive_int = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations[
-            "protocol_applied_dose_number_positive_int"
-        ][cls.vaccine_type]
+        mandation = vaccine_type_applicable_validations["protocol_applied_dose_number_positive_int"][cls.vaccine_type]
         bespoke_mandatory_error_message = None
 
         if cls.vaccine_type == VaccineTypes.flu:
@@ -640,8 +556,7 @@ class FHIRImmunizationPostValidators:
         bespoke_mandatory_error_message = None
         if cls.vaccine_type == VaccineTypes.covid_19:
             bespoke_mandatory_error_message = (
-                f"{field_location} is mandatory when vaccination "
-                + f"type is {cls.vaccine_type}"
+                f"{field_location} is mandatory when vaccination type is {cls.vaccine_type}"
             )
         if cls.vaccine_type == VaccineTypes.flu:
             bespoke_mandatory_error_message = (
@@ -668,9 +583,7 @@ class FHIRImmunizationPostValidators:
         field_location = f"vaccineCode.coding[?(@.system=='{system}')].code"
 
         try:
-            vaccine_code_coding_code = [
-                x for x in values["vaccineCode"].coding if x.system == system
-            ][0].code
+            vaccine_code_coding_code = [x for x in values["vaccineCode"].coding if x.system == system][0].code
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccine_code_coding_code = None
 
@@ -681,12 +594,10 @@ class FHIRImmunizationPostValidators:
             mandation_key="vaccine_code_coding_code",
         )
 
-        if (
-            cls.status == "not-done"
-            and vaccine_code_coding_code not in Constants.NOT_DONE_VACCINE_CODES
-        ):
+        if cls.status == "not-done" and vaccine_code_coding_code not in Constants.NOT_DONE_VACCINE_CODES:
             raise ValueError(
-                f"{field_location} must be one of the following: {str(', '.join(Constants.NOT_DONE_VACCINE_CODES))} when status is 'not-done'"
+                f"{field_location} must be one of the following: {str(', '.join(Constants.NOT_DONE_VACCINE_CODES))}"
+                + " when status is 'not-done'"
             )
 
         return values
@@ -694,15 +605,11 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_vaccine_code_coding_display(cls, values: dict) -> dict:
         "Validate that vaccineCode_coding_display is present or absent, as required"
-        field_location = (
-            "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
-        )
+        field_location = "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
 
         try:
             vaccine_code_coding_display = [
-                x
-                for x in values["vaccineCode"].coding
-                if x.system == "http://snomed.info/sct"
+                x for x in values["vaccineCode"].coding if x.system == "http://snomed.info/sct"
             ][0].display
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccine_code_coding_display = None
@@ -726,9 +633,7 @@ class FHIRImmunizationPostValidators:
             manufacturer_display = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations["manufacturer_display"][
-            cls.vaccine_type
-        ]
+        mandation = vaccine_type_applicable_validations["manufacturer_display"][cls.vaccine_type]
         bespoke_mandatory_error_message = None
         if values["status"] != "not-done" and cls.vaccine_type == VaccineTypes.covid_19:
             mandation = Mandation.mandatory
@@ -788,9 +693,7 @@ class FHIRImmunizationPostValidators:
             expiration_date = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations["expiration_date"][
-            cls.vaccine_type
-        ]
+        mandation = vaccine_type_applicable_validations["expiration_date"][cls.vaccine_type]
         bespoke_mandatory_error_message = None
         if values["status"] != "not-done" and cls.vaccine_type == VaccineTypes.covid_19:
             mandation = Mandation.mandatory
@@ -815,9 +718,7 @@ class FHIRImmunizationPostValidators:
         field_location = "site.coding[?(@.system=='http://snomed.info/sct')].code"
 
         try:
-            site_coding_code = [
-                x for x in values["site"].coding if x.system == "http://snomed.info/sct"
-            ][0].code
+            site_coding_code = [x for x in values["site"].coding if x.system == "http://snomed.info/sct"][0].code
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             site_coding_code = None
 
@@ -835,9 +736,7 @@ class FHIRImmunizationPostValidators:
         field_location = "site.coding[?(@.system=='http://snomed.info/sct')].display"
 
         try:
-            site_coding_display = [
-                x for x in values["site"].coding if x.system == "http://snomed.info/sct"
-            ][0].display
+            site_coding_display = [x for x in values["site"].coding if x.system == "http://snomed.info/sct"][0].display
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             site_coding_display = None
 
@@ -855,18 +754,12 @@ class FHIRImmunizationPostValidators:
         field_location = "route.coding[?(@.system=='http://snomed.info/sct')].code"
 
         try:
-            route_coding_code = [
-                x
-                for x in values["route"].coding
-                if x.system == "http://snomed.info/sct"
-            ][0].code
+            route_coding_code = [x for x in values["route"].coding if x.system == "http://snomed.info/sct"][0].code
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             route_coding_code = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations["route_coding_code"][
-            cls.vaccine_type
-        ]
+        mandation = vaccine_type_applicable_validations["route_coding_code"][cls.vaccine_type]
         bespoke_mandatory_error_message = None
         if values["status"] != "not-done" and cls.vaccine_type in (
             VaccineTypes.covid_19,
@@ -894,11 +787,9 @@ class FHIRImmunizationPostValidators:
         field_location = "route.coding[?(@.system=='http://snomed.info/sct')].display"
 
         try:
-            route_coding_display = [
-                x
-                for x in values["route"].coding
-                if x.system == "http://snomed.info/sct"
-            ][0].display
+            route_coding_display = [x for x in values["route"].coding if x.system == "http://snomed.info/sct"][
+                0
+            ].display
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             route_coding_display = None
 
@@ -921,9 +812,7 @@ class FHIRImmunizationPostValidators:
             dose_quantity_value = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations["dose_quantity_value"][
-            cls.vaccine_type
-        ]
+        mandation = vaccine_type_applicable_validations["dose_quantity_value"][cls.vaccine_type]
         bespoke_mandatory_error_message = None
         if values["status"] != "not-done" and cls.vaccine_type in (
             VaccineTypes.covid_19,
@@ -957,9 +846,7 @@ class FHIRImmunizationPostValidators:
             dose_quantity_code = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations["dose_quantity_code"][
-            cls.vaccine_type
-        ]
+        mandation = vaccine_type_applicable_validations["dose_quantity_code"][cls.vaccine_type]
         bespoke_mandatory_error_message = None
         if values["status"] != "not-done" and cls.vaccine_type in (
             VaccineTypes.covid_19,
@@ -1029,9 +916,7 @@ class FHIRImmunizationPostValidators:
         number_of_iterations = len(values["reasonCode"]) if values["reasonCode"] else 1
         for index in range(number_of_iterations):
             try:
-                reason_code_coding_display = (
-                    values["reasonCode"][index].coding[0].display
-                )
+                reason_code_coding_display = values["reasonCode"][index].coding[0].display
             except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
                 reason_code_coding_display = None
 
@@ -1042,4 +927,413 @@ class FHIRImmunizationPostValidators:
                 mandation_key="reason_code_coding_display",
             )
 
+        return values
+
+    @classmethod
+    def validate_nhs_number_verification_status_code(cls, values: dict) -> dict:
+        "Validate that nhs_number_verification_status_code is present or absent, as required"
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
+        system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+        field_type = "code"
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + generate_field_location_for_extension(url, system, field_type)
+        )
+        try:
+            patient_identifier = get_contained_resource_from_model(values, "Patient").identifier
+
+            patient_identifier_extension_item = [
+                x for x in patient_identifier if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0].extension
+
+            value_codeable_concept_coding = [x for x in patient_identifier_extension_item if x.url == url][
+                0
+            ].valueCodeableConcept.coding
+
+            nhs_number_verification_status_code = [x for x in value_codeable_concept_coding if x.system == system][
+                0
+            ].code
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            nhs_number_verification_status_code = None
+
+        check_mandation_requirements_met(
+            field_value=nhs_number_verification_status_code,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="nhs_number_verification_status_code",
+        )
+
+        return values
+
+    @classmethod
+    def validate_nhs_number_verification_status_display(cls, values: dict) -> dict:
+        "Validate that nhs_number_verification_status_display is present or absent, as required"
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
+        system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+        field_type = "display"
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + generate_field_location_for_extension(url, system, field_type)
+        )
+        try:
+            patient_identifier = get_contained_resource_from_model(values, "Patient").identifier
+
+            patient_identifier_extension_item = [
+                x for x in patient_identifier if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+            ][0].extension
+
+            value_codeable_concept_coding = [x for x in patient_identifier_extension_item if x.url == url][
+                0
+            ].valueCodeableConcept.coding
+
+            nhs_number_verification_status_display = [x for x in value_codeable_concept_coding if x.system == system][
+                0
+            ].display
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            nhs_number_verification_status_display = None
+
+        check_mandation_requirements_met(
+            field_value=nhs_number_verification_status_display,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="nhs_number_verification_status_display",
+        )
+
+        return values
+
+    @classmethod
+    def validate_organization_identifier_system(cls, values: dict) -> dict:
+        """Validate that organization_identifier_system is present or absent, as required"""
+        try:
+            field_value = [x for x in values["performer"] if is_organization(x)][0].actor.identifier.system
+        except (KeyError, IndexError, AttributeError, TypeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location="performer[?(@.actor.type=='Organization')].actor.identifier.system",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="organization_identifier_system",
+        )
+
+        return values
+
+    @classmethod
+    def validate_local_patient_value(cls, values: dict) -> dict:
+        """Validate that local_patient_value is present or absent, as required"""
+        link_id = "LocalPatient"
+        answer_type = "valueReference"
+        field_type = "value"
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+
+        try:
+            field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
+        except (KeyError, IndexError, AttributeError, TypeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="local_patient_value",
+        )
+
+        return values
+
+    @classmethod
+    def validate_local_patient_system(cls, values: dict) -> dict:
+        """Validate that local_patient_system is present or absent, as required"""
+        link_id = "LocalPatient"
+        answer_type = "valueReference"
+        field_type = "system"
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+
+        try:
+            field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
+        except (KeyError, IndexError, AttributeError, TypeError):
+            field_value = None
+
+        check_mandation_requirements_met(
+            field_value=field_value,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="local_patient_system",
+        )
+
+        return values
+
+    @classmethod
+    def validate_consent_code(cls, values: dict) -> dict:
+        "Validate that consent_code is present or absent, as required"
+        link_id = "Consent"
+        answer_type = "valueCoding"
+        field_type = "code"
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+
+        try:
+            consent_code = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            consent_code = None
+
+        # Handle conditional mandation logic
+        mandation = vaccine_type_applicable_validations["consent_code"][cls.vaccine_type]
+        bespoke_mandatory_error_message = None
+        if values["status"] != "not-done" and cls.vaccine_type in (
+            VaccineTypes.covid_19,
+            VaccineTypes.flu,
+        ):
+            mandation = Mandation.mandatory
+            bespoke_mandatory_error_message = (
+                f"{field_location} is mandatory when status is 'completed' or 'entered-in-error'"
+                + f" and vaccination type is {cls.vaccine_type}"
+            )
+        else:
+            mandation = Mandation.optional
+
+        check_mandation_requirements_met(
+            field_value=consent_code,
+            field_location=field_location,
+            mandation=mandation,
+            bespoke_mandatory_error_message=bespoke_mandatory_error_message,
+        )
+        return values
+
+    @classmethod
+    def validate_consent_display(cls, values: dict) -> dict:
+        "Validate that consent_display is present or absent, as required"
+        link_id = "Consent"
+        answer_type = "valueCoding"
+        field_type = "display"
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+
+        try:
+            consent_display = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            consent_display = None
+
+        check_mandation_requirements_met(
+            field_value=consent_display,
+            field_location=field_location,
+            mandation_key="consent_display",
+            vaccine_type=cls.vaccine_type,
+        )
+        return values
+
+    @classmethod
+    def validate_care_setting_code(cls, values: dict) -> dict:
+        "Validate that care_setting_code is present or absent, as required"
+        link_id = "CareSetting"
+        answer_type = "valueCoding"
+        field_type = "code"
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+
+        try:
+            care_setting_code = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            care_setting_code = None
+
+        check_mandation_requirements_met(
+            field_value=care_setting_code,
+            field_location=field_location,
+            mandation_key="care_setting_code",
+            vaccine_type=cls.vaccine_type,
+        )
+        return values
+
+    @classmethod
+    def validate_care_setting_display(cls, values: dict) -> dict:
+        "Validate that care_setting_display is present or absent, as required"
+        link_id = "CareSetting"
+        answer_type = "valueCoding"
+        field_type = "display"
+        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+
+        try:
+            care_setting_display = get_generic_questionnaire_response_value_from_model(
+                values, link_id, answer_type, field_type
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            care_setting_display = None
+
+        check_mandation_requirements_met(
+            field_value=care_setting_display,
+            field_location=field_location,
+            mandation_key="care_setting_display",
+            vaccine_type=cls.vaccine_type,
+        )
+        return values
+
+    @classmethod
+    def validate_ip_address(cls, values: dict) -> dict:
+        "Validate that ip_address is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='IpAddress')].answer[0].valueString"
+        )
+
+        try:
+            ip_address = get_generic_questionnaire_response_value_from_model(values, "IpAddress", "valueString")
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            ip_address = None
+
+        check_mandation_requirements_met(
+            field_value=ip_address,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="ip_address",
+        )
+        return values
+
+    @classmethod
+    def validate_user_id(cls, values: dict) -> dict:
+        "Validate that user_id is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserId')].answer[0].valueString"
+        )
+
+        try:
+            user_id = get_generic_questionnaire_response_value_from_model(values, "UserId", "valueString")
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            user_id = None
+
+        check_mandation_requirements_met(
+            field_value=user_id,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="user_id",
+        )
+        return values
+
+    @classmethod
+    def validate_user_name(cls, values: dict) -> dict:
+        "Validate that user_name is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserName')].answer[0].valueString"
+        )
+
+        try:
+            user_name = get_generic_questionnaire_response_value_from_model(values, "UserName", "valueString")
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            user_name = None
+
+        check_mandation_requirements_met(
+            field_value=user_name,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="user_name",
+        )
+        return values
+
+    @classmethod
+    def validate_user_email(cls, values: dict) -> dict:
+        "Validate that user_email is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='UserEmail')].answer[0].valueString"
+        )
+
+        try:
+            user_email = get_generic_questionnaire_response_value_from_model(values, "UserEmail", "valueString")
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            user_email = None
+
+        check_mandation_requirements_met(
+            field_value=user_email,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="user_email",
+        )
+        return values
+
+    @classmethod
+    def validate_submitted_time_stamp(cls, values: dict) -> dict:
+        "Validate that submitted_time_stamp is present or absent, as required"
+
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueDateTime"
+        )
+
+        try:
+            submitted_time_stamp = get_generic_questionnaire_response_value_from_model(
+                values, "SubmittedTimeStamp", "valueDateTime"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            submitted_time_stamp = None
+
+        check_mandation_requirements_met(
+            field_value=submitted_time_stamp,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="submitted_time_stamp",
+        )
+        return values
+
+    @classmethod
+    def validate_location_identifier_value(cls, values: dict) -> dict:
+        "Validate that location_identifier_value is present or absent, as required"
+
+        try:
+            location_identifier_value = values["location"].identifier.value
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            location_identifier_value = None
+
+        check_mandation_requirements_met(
+            field_value=location_identifier_value,
+            field_location="location.identifier.value",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="location_identifier_value",
+        )
+        return values
+
+    @classmethod
+    def validate_location_identifier_system(cls, values: dict) -> dict:
+        "Validate that location_identifier_system is present or absent, as required"
+
+        try:
+            location_identifier_system = values["location"].identifier.system
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            location_identifier_system = None
+
+        check_mandation_requirements_met(
+            field_value=location_identifier_system,
+            field_location="location.identifier.system",
+            vaccine_type=cls.vaccine_type,
+            mandation_key="location_identifier_system",
+        )
+        return values
+
+    @classmethod
+    def validate_reduce_validation_reason(cls, values: dict) -> dict:
+        "Validate that reduce_validation_reason is present or absent, as required"
+        field_location = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString"
+        )
+
+        try:
+            reduce_validation_reason = get_generic_questionnaire_response_value_from_model(
+                values, "ReduceValidationReason", "valueString"
+            )
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            reduce_validation_reason = None
+
+        check_mandation_requirements_met(
+            field_value=reduce_validation_reason,
+            field_location=field_location,
+            vaccine_type=cls.vaccine_type,
+            mandation_key="reduce_validation_reason",
+        )
         return values

@@ -61,7 +61,7 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     # UPDATE
     update_payload = copy.deepcopy(imms)
     update_payload["id"] = imms_id
-    update_payload["status"] = "not-done"
+    update_payload["status"] = "entered-in-error"
     result = imms_api.update_immunization(imms_id, update_payload)
 
     assert result.status_code == 200
@@ -69,7 +69,7 @@ def test_crud_immunization_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers
     # read it back
     result = imms_api.get_immunization_by_id(imms_id)
     res_body = result.json()
-    assert res_body["status"] == "not-done"
+    assert res_body["status"] == "entered-in-error"
 
     # DELETE
     result = imms_api.delete_immunization(imms_id)
@@ -105,7 +105,7 @@ def test_create_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
     assert failed_create_response.status_code == 422
     assert failed_create_res_body["resourceType"] == "OperationOutcome"
     # ASSERT RESPONSE BODY HAS GENERIC ERROR MESSSAGE
-    assert failed_create_res_body['issue'][0]['diagnostics'] == "Submitted resource is not valid."
+    assert failed_create_res_body["issue"][0]["diagnostics"] == "Submitted resource is not valid."
 
     # READ
     imms_id = parse_location(create_response.headers["Location"])
@@ -146,9 +146,9 @@ def test_update_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
 
     # UPDATE SECOND IMMUNIZATION WITH FIRST IMMUNIZATIONS IDENTIFIER
     updated_imms = copy.deepcopy(imms)
-    updated_imms["id"] = imms_2['id']
+    updated_imms["id"] = imms_2["id"]
     updated_imms["identifier"][0]["value"] = identifier
-    update_response = imms_api.update_immunization(imms_2['id'], updated_imms)
+    update_response = imms_api.update_immunization(imms_2["id"], updated_imms)
     res_body = update_response.json()
     assert update_response.status_code == 422
     assert res_body["resourceType"] == "OperationOutcome"
@@ -211,9 +211,7 @@ def test_get_event_by_id_invalid_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_h
         "login_form": {"username": "656005750104"},
     }
 )
-def test_delete_immunization_already_deleted(
-    nhsd_apim_proxy_url, nhsd_apim_auth_headers
-):
+def test_delete_immunization_already_deleted(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     # Arrange
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -259,9 +257,7 @@ def test_get_deleted_immunization(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
         "login_form": {"username": "656005750104"},
     }
 )
-def test_update_none_existing_record_nhs_login(
-    nhsd_apim_proxy_url, nhsd_apim_auth_headers
-):
+def test_update_none_existing_record_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     """update a record that doesn't exist should create a new record"""
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -360,9 +356,7 @@ def test_bad_nhs_number_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth_headers):
     "nhs_number,is_restricted",
     [(valid_nhs_number_with_s_flag, True), (valid_nhs_number1, False)],
 )
-def test_get_s_flag_patient(
-    nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_number, is_restricted
-):
+def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_number, is_restricted):
     # Arrange
     token = nhsd_apim_auth_headers["Authorization"]
     imms_api = ImmunisationApi(nhsd_apim_proxy_url, token)
@@ -390,16 +384,12 @@ def test_get_s_flag_patient(
     retrieved_get_imms = retrieved_get_imms_result.json()
 
     sample_disease_code = "COVID19"
-    retrieved_search_imms_result = imms_api.search_immunizations(
-        nhs_number, sample_disease_code
-    )
+    retrieved_search_imms_result = imms_api.search_immunizations(nhs_number, sample_disease_code)
     if retrieved_search_imms_result.status_code != 200:
         pprint.pprint(retrieved_search_imms_result.text)
         assert retrieved_search_imms_result.status_code == 200
     retrieved_search_imms = next(
-        imms
-        for imms in retrieved_search_imms_result.json()["entry"]
-        if imms["resource"]["id"] == created_imms["id"]
+        imms for imms in retrieved_search_imms_result.json()["entry"] if imms["resource"]["id"] == created_imms["id"]
     )
     # Fetching Immunization resource form Bundle
     retrieved_search_imms = retrieved_search_imms["resource"]
@@ -409,9 +399,7 @@ def test_get_s_flag_patient(
     # Assert
     def get_questionnaire_items(imms):
         questionnaire = next(
-            contained
-            for contained in imms["contained"]
-            if contained["resourceType"] == "QuestionnaireResponse"
+            contained for contained in imms["contained"] if contained["resourceType"] == "QuestionnaireResponse"
         )
         return questionnaire["item"]
 
@@ -422,18 +410,14 @@ def test_get_s_flag_patient(
             assert key in [item["linkId"] for item in imms_items]
 
         performer_actor_organizations = (
-            item
-            for item in imms["performer"]
-            if item.get("actor", {}).get("type") == "Organization"
+            item for item in imms["performer"] if item.get("actor", {}).get("type") == "Organization"
         )
 
         assert all(
-            performer.get("actor", {}).get("identifier", {}).get("value") != "N2N9I"
-            for performer in imms["performer"]
+            performer.get("actor", {}).get("identifier", {}).get("value") != "N2N9I" for performer in imms["performer"]
         )
         assert all(
-            organization.get("actor", {}).get("display") is not None
-            for organization in performer_actor_organizations
+            organization.get("actor", {}).get("display") is not None for organization in performer_actor_organizations
         )
         assert all(
             organization.get("actor", {}).get("identifier", {}).get("system")
@@ -451,9 +435,7 @@ def test_get_s_flag_patient(
             assert key not in [item["linkId"] for item in imms_items]
 
         performer_actor_organizations = (
-            item
-            for item in imms["performer"]
-            if item.get("actor", {}).get("type") == "Organization"
+            item for item in imms["performer"] if item.get("actor", {}).get("type") == "Organization"
         )
 
         assert all(
@@ -461,8 +443,7 @@ def test_get_s_flag_patient(
             for organization in performer_actor_organizations
         )
         assert all(
-            organization.get("actor", {}).get("display") is None
-            for organization in performer_actor_organizations
+            organization.get("actor", {}).get("display") is None for organization in performer_actor_organizations
         )
         assert all(
             organization.get("actor", {}).get("identifier", {}).get("system")
