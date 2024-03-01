@@ -1,4 +1,6 @@
 import os
+import logging
+
 from enum import Enum
 from typing import Optional
 
@@ -19,6 +21,8 @@ from models.utils.post_validation_utils import MandatoryError, NotApplicableErro
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 
+logger = logging.getLogger()
+logger.setLevel("INFO")
 
 def get_service_url(
     service_env: str = os.getenv("IMMUNIZATION_ENV"),
@@ -123,6 +127,13 @@ class FhirService:
     def _validate_patient(self, imms: dict):
         nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
+
+        logger.info('## ENVIRONMENT VARIABLES')
+        logger.info(os.environ['AWS_LAMBDA_LOG_GROUP_NAME'])
+        logger.info(os.environ['AWS_LAMBDA_LOG_STREAM_NAME'])
+        logger.info('## EVENT')
+        logger.info(self)
+
         if patient:
             return patient
         else:

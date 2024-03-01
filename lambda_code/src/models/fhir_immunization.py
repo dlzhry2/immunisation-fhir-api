@@ -1,4 +1,6 @@
 """Immunization FHIR R4B validator"""
+import os
+import logging
 
 from typing import Literal
 from fhir.resources.R4B.immunization import Immunization
@@ -6,7 +8,8 @@ from models.fhir_immunization_pre_validators import FHIRImmunizationPreValidator
 from models.fhir_immunization_post_validators import FHIRImmunizationPostValidators
 from models.utils.generic_utils import get_generic_questionnaire_response_value
 
-
+logger = logging.getLogger()
+logger.setLevel("INFO")
 class ImmunizationValidator:
     """
     Validate the FHIR Immunization model against the NHS specific validators and Immunization
@@ -545,5 +548,11 @@ class ImmunizationValidator:
             self.add_custom_root_post_validators()
 
         immunization = self.immunization.parse_obj(json_data)
+
+        logger.info('## ENVIRONMENT VARIABLES')
+        logger.info(os.environ['AWS_LAMBDA_LOG_GROUP_NAME'])
+        logger.info(os.environ['AWS_LAMBDA_LOG_STREAM_NAME'])
+        logger.info('## EVENT')
+        logger.info(self)
 
         return immunization
