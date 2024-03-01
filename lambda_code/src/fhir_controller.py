@@ -188,8 +188,8 @@ class FhirController:
         patient_identifiers = params.get(FhirController.patient_identifier_key, [])
         patient_identifier = patient_identifiers[0] if len(patient_identifiers) == 1 else None
 
-        if FhirController.patient_identifier_key in params and patient_identifier is None:
-            return None, f"Search parameter {FhirController.patient_identifier_key} may have only one value."
+        if patient_identifier is None:
+            return None, f"Search parameter {FhirController.patient_identifier_key} must have one value."
 
         patient_identifier_parts = patient_identifier.split("|")
         if len(patient_identifier_parts) != 2 or not patient_identifier_parts[0] == FhirController.patient_identifier_system:
