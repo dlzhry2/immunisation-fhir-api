@@ -219,3 +219,29 @@ class TestAuthenticator(unittest.TestCase):
             "expires_at": new_now + self.authenticator.expiry
         }
         self.cache.put.assert_called_once_with(ANY, exp_cached_token)
+
+    @responses.activate
+    def test_uses_cache_for_token(self):
+        """it should use the cache for the PDS auth call"""
+
+        token = "a-new-access-token"
+        token_call = responses.add(responses.POST, self.url, status=200, json={"access_token": token})
+        values = {}
+
+        def get_side_effect(key):
+            return values.get(key, None)
+
+        def put_side_effect(key, value):
+            values[key] = value
+
+        self.cache.get.side_effect = get_side_effect
+        self.cache.put.side_effect = put_side_effect
+
+        with patch("jwt.encode") as mock_jwt:
+            mock_jwt.return_value = "a-jwt"
+            # When
+            self.assertEqual(0, token_call.call_count)
+            self.authenticator.get_access_token()
+            self.assertEqual(1, token_call.call_count)
+            self.authenticator.get_access_token()
+            self.assertEqual(1, token_call.call_count)
