@@ -128,10 +128,6 @@ class FhirService:
         nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
 
-        logger.info('## ENVIRONMENT VARIABLES')
-        logger.info(os.environ['AWS_LAMBDA_LOG_GROUP_NAME'])
-        logger.info(os.environ['AWS_LAMBDA_LOG_STREAM_NAME'])
-        logger.info('## EVENT')
         logger.info(self)
 
         if patient:
