@@ -1,6 +1,8 @@
 """Immunization FHIR R4B validator"""
-import os
 import logging
+import time
+
+from functools import wraps
 
 from typing import Literal
 from fhir.resources.R4B.immunization import Immunization
@@ -8,8 +10,23 @@ from models.fhir_immunization_pre_validators import FHIRImmunizationPreValidator
 from models.fhir_immunization_post_validators import FHIRImmunizationPostValidators
 from models.utils.generic_utils import get_generic_questionnaire_response_value
 
-logger = logging.getLogger()
-logger.setLevel("INFO")
+logging.basicConfig()
+logger = logging.getLogger("my-logger")
+logger.setLevel(logging.DEBUG)
+
+def timed(func):
+    """This decorator prints the execution time for the decorated function."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        logger.debug("{} ran in {}s".format(func.__name__, round(end - start, 2)))
+        return result
+
+    return wrapper
+
 class ImmunizationValidator:
     """
     Validate the FHIR Immunization model against the NHS specific validators and Immunization
@@ -539,6 +556,7 @@ class ImmunizationValidator:
                 if "FHIRImmunizationPostValidators" in str(validator):
                     self.immunization.__post_root_validators__.remove(validator)
 
+    @timed
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
         self.set_reduce_validation_code(json_data)
@@ -548,7 +566,5 @@ class ImmunizationValidator:
             self.add_custom_root_post_validators()
 
         immunization = self.immunization.parse_obj(json_data)
-
-        logger.info(self)
 
         return immunization

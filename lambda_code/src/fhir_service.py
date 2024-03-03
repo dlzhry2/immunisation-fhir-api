@@ -1,5 +1,8 @@
 import os
 import logging
+import time
+
+from functools import wraps
 
 from enum import Enum
 from typing import Optional
@@ -21,8 +24,22 @@ from models.utils.post_validation_utils import MandatoryError, NotApplicableErro
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 
-logger = logging.getLogger()
-logger.setLevel("INFO")
+logging.basicConfig()
+logger = logging.getLogger("my-logger")
+logger.setLevel(logging.DEBUG)
+
+def timed(func):
+    """This decorator prints the execution time for the decorated function."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        logger.debug("{} ran in {}s".format(func.__name__, round(end - start, 2)))
+        return result
+
+    return wrapper
 
 def get_service_url(
     service_env: str = os.getenv("IMMUNIZATION_ENV"),
@@ -124,11 +141,10 @@ class FhirService:
         fhir_bundle.link = [BundleLink(relation="self", url=url)]
         return fhir_bundle
 
+    @timed
     def _validate_patient(self, imms: dict):
         nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
-
-        logger.info(self)
 
         if patient:
             return patient
