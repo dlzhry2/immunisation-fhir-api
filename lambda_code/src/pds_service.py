@@ -43,7 +43,7 @@ class Authenticator:
 
     def get_access_token(self):
         now = int(time.time())
-        cached = self.cache.get("pds_token")
+        cached = self.cache.get("pds_access_token")
         if cached and cached["expires_at"] > now:
             return cached["token"]
 

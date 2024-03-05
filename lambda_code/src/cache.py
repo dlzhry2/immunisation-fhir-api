@@ -8,6 +8,7 @@ class Cache:
     def __init__(self, directory):
         filename = f"{directory}/cache.json"
         with open(filename, "a+") as self.cache_file:
+            self.cache_file.seek(0)
             content = self.cache_file.read()
         if len(content) == 0:
             self.cache = {}

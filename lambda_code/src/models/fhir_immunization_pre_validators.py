@@ -1531,19 +1531,19 @@ class FHIRImmunizationPreValidators:
     def pre_validate_local_patient_value(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.value (legacy CSV field name:
+        .item[?(@.linkId=='LocalPatient')].valueReference.identifier.value (legacy CSV field name:
         LOCAL_PATIENT_ID) exists, then it is a non-empty string
         """
         try:
             answer_type = "valueReference"
-            local_patient_code = get_generic_questionnaire_response_value(
+            local_patient_value = get_generic_questionnaire_response_value(
                 values,
                 "LocalPatient",
                 answer_type=answer_type,
                 field_type="value",
             )
             PreValidation.for_string(
-                local_patient_code,
+                local_patient_value,
                 generate_field_location_for_questionnnaire_response(
                     link_id="LocalPatient", answer_type=answer_type, field_type="value"
                 ),
@@ -1558,7 +1558,7 @@ class FHIRImmunizationPreValidators:
     def pre_validate_local_patient_system(cls, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
-        .item[?(@.linkId=='LocalPatient')].answer[0].valueCoding.system (legacy CSV field name:
+        .item[?(@.linkId=='LocalPatient')].valueReference.identifier.system (legacy CSV field name:
         LOCAL_PATIENT_URI) exists, then it is a non-empty string
         """
         try:
