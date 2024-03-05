@@ -174,7 +174,7 @@ def nhs_number_mod11_check(nhs_number: str) -> bool:
         # Divide the total by 11 and establish the remainder and subtract the remainder from 11 to give the check digit.
         # If the result is 11 then a check digit of 0 is used. If the result is 10 then the NHS NUMBER is invalid and
         # not used.
-        check_digit = 0 if (11 - (total % 11)) == 11 else (11 - (total % 11))
+        check_digit = 0 if (total % 11 == 0) else (11 - (total % 11))
         # Check the remainder matches the check digit. If it does not, the NHS NUMBER is invalid.
         is_mod11 = check_digit == int(nhs_number[-1])
 
