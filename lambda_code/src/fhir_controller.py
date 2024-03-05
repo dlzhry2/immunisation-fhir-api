@@ -25,7 +25,6 @@ from models.errors import (
     IdentifierDuplicationError
 )
 from pds_service import PdsService, Authenticator
-from urllib.parse import parse_qs
 
 
 def make_controller(

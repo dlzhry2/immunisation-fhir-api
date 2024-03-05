@@ -1,4 +1,3 @@
-import os
 import json
 import os
 import unittest
@@ -7,11 +6,13 @@ from unittest.mock import create_autospec
 
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
 from fhir.resources.R4B.bundle import BundleEntry
-
 from fhir.resources.R4B.immunization import Immunization
-from fhir.resources.R4B.bundle import Bundle as FhirBundle
+from pydantic import ValidationError
+from pydantic.error_wrappers import ErrorWrapper
+
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome, get_service_url
+from mappings import vaccination_procedure_snomed_codes
 from models.errors import (
     InvalidPatientId,
     CustomValidationError,
@@ -20,9 +21,6 @@ from models.errors import (
 )
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
-from pydantic import ValidationError
-from pydantic.error_wrappers import ErrorWrapper
-from mappings import vaccination_procedure_snomed_codes
 from .immunization_utils import (
     create_an_immunization,
     create_an_immunization_dict,
@@ -42,7 +40,7 @@ class TestServiceUrl(unittest.TestCase):
         base_path = "my-base-path"
         url = get_service_url(env, base_path)
         self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
-        # prod should not have subdomain
+        # prod should not have a subdomain
         env = "prod"
         base_path = "my-base-path"
         url = get_service_url(env, base_path)
@@ -423,28 +421,6 @@ class TestSearchImmunizations(unittest.TestCase):
         self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
         self.nhsSearchParam = "-nhsNumber"
         self.diseaseTypeSearchParam = "-diseaseType"
-
-    def test_get_service_url(self):
-        """it should create service url"""
-        env = "int"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://{env}.api.service.nhs.uk/{base_path}")
-        # default should be internal-dev
-        env = "it-does-not-exist"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
-        # prod should not have subdomain
-        env = "prod"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://api.service.nhs.uk/{base_path}")
-        # any other env should fall back to internal-dev (like pr-xx or per-user)
-        env = "pr-42"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
 
     def test_map_disease_type_to_disease_code(self):
         """it should map disease_type to disease_code"""

@@ -5,12 +5,10 @@ import uuid
 from unittest.mock import create_autospec
 from urllib.parse import urlencode
 
-from authorization import Authorization
 from fhir.resources.R4B.bundle import Bundle
 from fhir.resources.R4B.immunization import Immunization
-from fhir_controller import FhirController
-from fhir.resources.R4B.bundle import Bundle
-import base64
+
+from authorization import Authorization
 from fhir_controller import FhirController
 from fhir_service import FhirService, UpdateOutcome
 from models.errors import (
@@ -18,7 +16,6 @@ from models.errors import (
     UnhandledResponseError,
     InvalidPatientId,
     CustomValidationError,
-    IdentifierDuplicationError,
 )
 from .immunization_utils import create_an_immunization
 
