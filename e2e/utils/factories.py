@@ -30,7 +30,10 @@ def make_apigee_product(apigee: ApigeeService = None, product: ApigeeProduct = N
     if not apigee:
         apigee = make_apigee_service()
     if not product:
-        product = ApigeeProduct(name=str(uuid.uuid4()), scopes=[f"urn:nhsd:apim:app:level3:{get_proxy_name()}"])
+        proxies = [f"identity-service-{get_apigee_env()}", f"identity-service-mock-{get_apigee_env()}"]
+        product = ApigeeProduct(name=str(uuid.uuid4()),
+                                scopes=[f"urn:nhsd:apim:app:level3:{get_proxy_name()}"],
+                                proxies=proxies)
 
     resp = apigee.create_product(product)
     return ApigeeProduct.from_dict(resp)

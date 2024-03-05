@@ -90,8 +90,7 @@ class ApigeeProduct:
     description: str = "My API product"
     displayName: str = "My API product"
     environments: List[str] = field(default_factory=lambda: [ApigeeEnv.INTERNAL_DEV.value])
-    proxies: List[str] = field(default_factory=lambda: ["identity-service-internal-dev",
-                                                        "identity-service-mock-internal-dev"])
+    proxies: List[str] = field(default_factory=lambda: [])
     scopes: List[str] = field(default_factory=lambda: [])
 
     def add_proxy(self, proxy_name: str, base_path: str):

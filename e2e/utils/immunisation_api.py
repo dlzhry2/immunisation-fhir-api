@@ -65,10 +65,10 @@ class ImmunisationApi:
 
 def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> str:
     imms = create_an_imms_obj()
-    res = imms_api.create_immunization(imms)
-    imms_id = parse_location(res.headers["Location"])
+    response = imms_api.create_immunization(imms)
+    imms_id = parse_location(response.headers["Location"])
 
-    res = imms_api.delete_immunization(imms_id)
-    assert res.status_code == 204
+    response = imms_api.delete_immunization(imms_id)
+    assert response.status_code == 204, response.text
 
     return imms_id

@@ -3,7 +3,7 @@ import json
 import os
 import uuid
 
-from .constants import valid_nhs_number1
+from .constants import valid_nhs_number1, mmr_code, flu_code
 
 current_directory = os.path.dirname(os.path.realpath(__file__))
 
@@ -17,11 +17,15 @@ def create_an_imms_obj(imms_id: str = str(uuid.uuid4()),
                        nhs_number=valid_nhs_number1,
                        disease_code=None) -> dict:
     imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
+    if disease_code:
+        imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = disease_code
+        if disease_code == mmr_code:
+            imms = copy.deepcopy(load_example("Immunization/POST-mockMMRcode1-Immunization.json"))
+        if disease_code == flu_code:
+            imms = copy.deepcopy(load_example("Immunization/POST-822851000000102-Immunization.json"))
     imms["id"] = imms_id
     imms["identifier"][0]["value"] = str(uuid.uuid4())
     imms["contained"][1]["identifier"][0]["value"] = nhs_number
-    if disease_code:
-        imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = disease_code
 
     return imms
 

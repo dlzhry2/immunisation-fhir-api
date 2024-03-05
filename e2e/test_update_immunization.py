@@ -21,7 +21,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
                 # When
                 update_payload = copy.deepcopy(imms)
                 update_payload["id"] = imms_id
-                update_payload["status"] = "not-done"
+                update_payload["location"]["identifier"]["value"] = "Y11111"
                 response = imms_api.update_immunization(imms_id, update_payload)
 
                 # Then

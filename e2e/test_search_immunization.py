@@ -1,18 +1,14 @@
 import uuid
 
 from utils.base_test import ImmunizationBaseTest
-from utils.constants import valid_nhs_number1, valid_nhs_number2
+from utils.constants import valid_nhs_number1, valid_nhs_number2, mmr_code, flu_code
 from utils.resource import create_an_imms_obj
-
-flu_code = "mockFLUcode1"
-mmr_code = "mockMMRcode1"
-covid_code = "1324681000000101"
 
 
 class TestSearchImmunization(ImmunizationBaseTest):
     # NOTE: In each test, the result may contain more hits. We only assert if the resource that we created is
     #  in the result set and assert the one that we don't expect is not present.
-    #  This is to make these tests stateless otherwise, we need to clean up the db after each test
+    #  This is to make these tests stateless otherwise; we need to clean up the db after each test
 
     def store_records(self, *resources):
         for res in resources:
