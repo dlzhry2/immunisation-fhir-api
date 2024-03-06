@@ -5,7 +5,7 @@ from typing import List, Literal, NamedTuple, Optional
 
 import pytest
 
-from .configuration.config import valid_nhs_number1, valid_nhs_number2
+from .configuration.config import valid_nhs_number1, valid_nhs_number2, valid_nhs_number_param1, valid_nhs_number_param2
 from .example_loader import load_example
 from .immunisation_api import ImmunisationApi, parse_location
 
@@ -188,25 +188,29 @@ def test_search_immunization_parameter_locations(nhsd_apim_proxy_url, nhsd_apim_
         query_string: str
         body: Optional[str]
         should_be_success: bool
-        returned_indexes: List[int]
+        expected_indexes: List[int]
 
     searches = \
         [SearchTestParams("GET", "", None, False, []),
-         SearchTestParams("GET", f"-patient.identifier={valid_nhs_number1}&-immunization.target=MMR", None, True, [0]),
+         # No results.
+         SearchTestParams("GET", f"patient.identifier={valid_nhs_number_param2}&-immunization.target=MMR",
+                          None, True, []),
+         SearchTestParams("GET", f"patient.identifier={valid_nhs_number_param1}&-immunization.target=MMR",
+                          None, True, [0]),
          SearchTestParams("GET",
-                          f"-patient.identifier={valid_nhs_number1}&-immunization.target=MMR&-immunization.target=FLU",
+                          f"patient.identifier={valid_nhs_number1}&-immunization.target=MMR&-immunization.target=FLU",
                           None, True, [0, 1]),
          # GET does not support body.
-         SearchTestParams("GET", f"-patient.identifier={valid_nhs_number1}&-immunization.target=MMR",
-                          f"-patient.identifier={valid_nhs_number1}", True, [0]),
-         SearchTestParams("POST", f"-patient.identifier={valid_nhs_number1}&-immunization.target=MMR",
-                          f"-patient.identifier={valid_nhs_number1}", False, []),
+         SearchTestParams("GET", f"patient.identifier={valid_nhs_number_param1}&-immunization.target=MMR",
+                          f"patient.identifier={valid_nhs_number_param1}", True, [0]),
+         SearchTestParams("POST", f"patient.identifier={valid_nhs_number_param1}&-immunization.target=MMR",
+                          f"patient.identifier={valid_nhs_number_param1}", False, []),
          SearchTestParams("GET",
-                          f"-patient.identifier={valid_nhs_number1}&-nhsNumber={valid_nhs_number1}"
+                          f"patient.identifier={valid_nhs_number_param1}&-nhsNumber={valid_nhs_number_param1}"
                           f"&-immunization.target=MMR",
                           None, False, []),
          # "and" params not supported.
-         SearchTestParams("GET", f"-patient.identifier={valid_nhs_number1}&-immunization.target=MMR,FLU", None, False,
+         SearchTestParams("GET", f"patient.identifier={valid_nhs_number1}&-immunization.target=MMR,FLU", None, False,
                           [0, 1])]
 
     try:
@@ -225,14 +229,10 @@ def test_search_immunization_parameter_locations(nhsd_apim_proxy_url, nhsd_apim_
 
                 expected_created_resource_ids = \
                     [created_resource_id for i, created_resource_id in enumerate(created_resource_ids)
-                     if i in search.returned_indexes]
+                     if i in search.expected_indexes]
 
                 for expected_created_resource_id in expected_created_resource_ids:
                     assert expected_created_resource_id in result_ids
-            else:
-                assert "entry" in results.keys()
-                assert isinstance(results["entry"], list)
-                assert len(results["entry"]) == 0
 
     except AssertionError:
         cleanup(imms_api, stored_records)
