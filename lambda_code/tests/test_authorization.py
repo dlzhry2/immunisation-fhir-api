@@ -5,8 +5,8 @@ from authorization import Authorization, UnknownPermission, EndpointOperation as
     AUTHENTICATION_HEADER, authorize
 from models.errors import UnauthorizedError
 
-Perm = Authorization._Permission
-AuthType = Authorization._AuthType
+Perm = Authorization.Permission
+AuthType = Authorization.AuthType
 
 
 def _make_aws_event(auth_type: AuthType, permissions: Set[str]):

@@ -82,3 +82,49 @@ class Cis2Authentication(BaseAuthentication):
     def get_access_token(self):
         # TODO(Cis2_AMB-1733) add Cis2
         pass
+
+# def get_access_token_via_user_restricted_flow_separate_auth(
+#     identity_service_base_url,
+#     keycloak_client_credentials,
+#     login_form,
+#     apigee_client_id,
+#     jwt_private_key,
+#     jwt_kid,
+#     auth_scope: Literal["nhs-login", "nhs-cis2"],
+#     apigee_environment,
+# ):
+#     if auth_scope == "nhs-cis2":
+#         # Get token from keycloak
+#         config = KeycloakUserConfig(
+#             realm=f"Cis2-mock-{apigee_environment}",
+#             client_id=keycloak_client_credentials["cis2"]["client_id"],
+#             client_secret=keycloak_client_credentials["cis2"]["client_secret"],
+#             login_form=login_form,
+#         )
+#         authenticator = KeycloakUserAuthenticator(config=config)
+#         id_token = authenticator.get_token()["id_token"]
+#
+#     else:
+#         # Get token from keycloak
+#         config = KeycloakUserConfig(
+#             realm=f"NHS-Login-mock-{apigee_environment}",
+#             client_id=keycloak_client_credentials["nhs-login"]["client_id"],
+#             client_secret=keycloak_client_credentials["nhs-login"]["client_secret"],
+#             login_form=login_form,
+#         )
+#         authenticator = KeycloakUserAuthenticator(config=config)
+#         id_token = authenticator.get_token()["id_token"]
+#
+#     # Exchange token
+#     config = TokenExchangeConfig(
+#         environment=apigee_environment,
+#         identity_service_base_url=identity_service_base_url,
+#         client_id=apigee_client_id,
+#         jwt_private_key=jwt_private_key,
+#         jwt_kid=jwt_kid,
+#         id_token=id_token,
+#     )
+#     authenticator = TokenExchangeAuthenticator(config=config)
+#     return authenticator.get_token()
+#
+#
