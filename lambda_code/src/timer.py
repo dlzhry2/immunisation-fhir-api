@@ -4,8 +4,8 @@ import time
 from functools import wraps
 
 logging.basicConfig()
-logger = logging.getLogger("my-logger")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger()
+logger.setLevel("INFO")
 
 
 def timed(func):
@@ -16,7 +16,7 @@ def timed(func):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
-        logger.debug("{} ran in {}s".format(func.__name__, round(end - start, 4)))
+        logger.info(time = {"{} ran in {}s".format(func.__name__, round(end - start, 4))})
         return result
 
     return wrapper
