@@ -1,8 +1,4 @@
 import os
-import logging
-import time
-
-from functools import wraps
 
 from enum import Enum
 from typing import Optional
@@ -23,23 +19,8 @@ from models.fhir_immunization import ImmunizationValidator
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
+from timer import timed
 
-logging.basicConfig()
-logger = logging.getLogger("my-logger")
-logger.setLevel(logging.DEBUG)
-
-def timed(func):
-    """This decorator prints the execution time for the decorated function."""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        start = time.time()
-        result = func(*args, **kwargs)
-        end = time.time()
-        logger.debug("{} ran in {}s".format(func.__name__, round(end - start, 2)))
-        return result
-
-    return wrapper
 
 def get_service_url(
     service_env: str = os.getenv("IMMUNIZATION_ENV"),
