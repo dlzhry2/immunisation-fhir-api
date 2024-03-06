@@ -85,7 +85,7 @@ resource "aws_lambda_function" "delta_sync_lambda" {
       DELTA_TABLE_NAME      = aws_dynamodb_table.delta-dynamodb-table.name
       SOURCE = "IEDS"
     }
-  } 
+  }
 }
 
 
