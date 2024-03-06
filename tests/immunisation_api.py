@@ -4,6 +4,8 @@ from typing import Optional, Literal
 
 import requests
 
+from .configuration.config import patient_identifier_system
+
 
 def parse_location(location) -> Optional[str]:
     """parse location header and return resource ID"""
@@ -38,16 +40,21 @@ class ImmunisationApi:
         return requests.delete(f"{self.url}/Immunization/{imms_id}", headers=self._update_headers())
 
     def search_immunizations(self, nhs_number: str, disease_type: str):
-        return requests.get(f"{self.url}/Immunization?-nhsNumber={nhs_number}&-immunization.target={disease_type}",
+        return requests.get(f"{self.url}/Immunization?patient.identifier={patient_identifier_system}|{nhs_number}"
+                            f"&-immunization.target={disease_type}",
                             headers=self._update_headers())
 
     def search_immunizations_full(self,
                                   http_method: Literal["POST", "GET"],
                                   query_string: Optional[str],
                                   body: Optional[str]):
+        if http_method == "POST":
+            url = f"{self.url}/Immunization/_search?{query_string}"
+        else:
+            url = f"{self.url}/Immunization?{query_string}"
         return requests.request(
             http_method,
-            f"{self.url}/Immunization?{query_string}",
+            url,
             headers=self._update_headers({"Content-Type": "application/x-www-form-urlencoded"}),
             data=body
         )

@@ -7,6 +7,7 @@ from typing import Optional
 from pydantic import ValidationError
 from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
+from fhir.resources.R4B.bundle import BundleEntrySearch
 from fhir.resources.R4B.bundle import BundleEntry
 from fhir.resources.R4B.bundle import BundleLink
 from fhir_repository import ImmunizationRepository
@@ -132,6 +133,12 @@ class FhirService:
 
         return occurrence_datetime.date() <= date_to
 
+    @staticmethod
+    def process_patient_for_include(patient: dict):
+        fields_to_keep = ["id", "resourceType", "identifier", "birthDate"]
+        new_patient = {k: v for k, v in patient.items() if k in fields_to_keep}
+        return new_patient
+
     def search_immunizations(
         self,
         nhs_number: str,
@@ -154,8 +161,14 @@ class FhirService:
         ]
         patient = self.pds_service.get_patient_details(nhs_number) if len(resources) > 0 else None
         entries = [
-            BundleEntry(resource=Immunization.parse_obj(handle_s_flag(imms, patient)))
-            for imms in resources
+            *[BundleEntry(
+                resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
+                search=BundleEntrySearch(mode="match")
+            ) for imms in resources],
+            BundleEntry(
+                resource=FhirService.process_patient_for_include(patient),
+                search=BundleEntrySearch(mode="include")
+            )
         ]
         fhir_bundle = FhirBundle(
             resourceType="Bundle",

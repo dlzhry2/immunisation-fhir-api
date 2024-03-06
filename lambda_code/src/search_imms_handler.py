@@ -1,3 +1,5 @@
+import json
+
 from datetime import datetime
 
 import base64
@@ -59,7 +61,8 @@ if __name__ == "__main__":
             "patient.identifier": [args.patient_identifier],
             "-immunization.target": [",".join(args.immunization_target)],
             "-date.from": [args.date_from] if args.date_from else [],
-            "-date.to": [args.date_to] if args.date_to else []
+            "-date.to": [args.date_to] if args.date_to else [],
+            "_include": ["Immunization:patient"]
         },
         "httpMethod": "POST",
         "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -72,4 +75,9 @@ if __name__ == "__main__":
         "queryStringParameters": None,
         "requestContext": None,
     }
-    pprint.pprint(search_imms_handler(event, {}))
+
+    result = search_imms_handler(event, {})
+    if "body" in result:
+        pprint.pprint(json.loads(result["body"]))
+    else:
+        pprint.pprint(result)

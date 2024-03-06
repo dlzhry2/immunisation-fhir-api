@@ -155,6 +155,8 @@ class FhirController:
         def parse_multi_value_query_parameters(
             multi_value_query_params: dict[str, list[str]]
         ) -> FhirController.ParamContainer:
+            if any([isinstance(v, list) is False for _, v in multi_value_query_params.items()]):
+                raise Exception("Parameter values must be lists.")
             if any([len(v) > 1 for k, v in multi_value_query_params.items()]):
                 raise Exception("Parameters may not be duplicated. Use commas for \"or\".")
             params = [(k, split_and_flatten(v))
@@ -170,6 +172,8 @@ class FhirController:
                 decoded_body = base64.b64decode(body).decode("utf-8")
                 parsed_body = parse_qs(decoded_body)
 
+                if any([isinstance(v, list) is False for _, v in parsed_body.items()]):
+                    raise Exception("Parameter values must be lists.")
                 if any([len(v) > 1 for k, v in parsed_body.items()]):
                     raise Exception("Parameters may not be duplicated. Use commas for \"or\".")
                 items = dict((k, split_and_flatten(v)) for k, v in parsed_body.items())
@@ -237,7 +241,7 @@ class FhirController:
         return SearchParams(patient_identifier, disease_types, date_from, date_to), None
 
     @staticmethod
-    def get_query_string(search_params: SearchParams):
+    def create_query_string(search_params: SearchParams):
         params = [
             (FhirController.immunization_target_key, search_params.disease_types),
             (FhirController.patient_identifier_key,
@@ -257,7 +261,7 @@ class FhirController:
         result = self.fhir_service.search_immunizations(
             search_params.nhs_number,
             search_params.disease_types,
-            self.get_query_string(search_params),
+            self.create_query_string(search_params),
             search_params.date_from,
             search_params.date_to,
         )
