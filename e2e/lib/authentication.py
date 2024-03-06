@@ -3,9 +3,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from time import time
+from urllib.parse import urlparse, parse_qs
 
 import jwt
 import requests
+from lxml import html
 
 
 @dataclass
@@ -33,6 +35,19 @@ class AppRestrictedCredentials:
     kid: str
     private_key_content: str
     expiry_seconds: int = 30
+
+
+@dataclass
+class UserRestrictedCredentials:
+    client_id: str
+    client_secret: str
+    callback_url: str = "https://oauth.pstmn.io/v1/callback"
+
+
+@dataclass
+class LoginUser:
+    username: str
+    password: str = ""
 
 
 class AppRestrictedAuthentication(BaseAuthentication):
@@ -72,59 +87,91 @@ class AppRestrictedAuthentication(BaseAuthentication):
         return token_response.json().get('access_token')
 
 
+class AuthCodeFlow:
+    def __init__(self, base_auth_url, app_credentials: UserRestrictedCredentials) -> None:
+        self.app_creds = app_credentials
+        self.auth_url = f"{base_auth_url}/authorize"
+        self.token_url = f"{base_auth_url}/token"
+
+    @staticmethod
+    def extract_code(response) -> str:
+        qs = urlparse(response.history[-1].headers["Location"]).query
+        auth_code = parse_qs(qs)["code"]
+        if isinstance(auth_code, list):
+            # in case there's multiple, this was a bug at one stage
+            auth_code = auth_code[0]
+
+        return auth_code
+
+    def get_access_token(self, scope: str, user_cred: LoginUser) -> str:
+        login_session = requests.session()
+
+        client_id = self.app_creds.client_id
+        client_secret = self.app_creds.client_secret
+        callback_url = self.app_creds.callback_url
+        username = user_cred.username
+
+        # Step1: login page
+        authorize_resp = login_session.get(
+            self.auth_url,
+            params={
+                "client_id": client_id,
+                "redirect_uri": callback_url,
+                "response_type": "code",
+                "scope": scope,
+                "state": str(uuid.uuid4()),
+            },
+        )
+        assert authorize_resp.status_code == 200, authorize_resp.text
+
+        # Step2: Submit the login form
+        tree = html.fromstring(authorize_resp.content.decode())
+        auth_form = tree.forms[0]
+
+        form_url = auth_form.action
+        form_data = {"username": username}
+
+        code_resp = login_session.post(url=form_url, data=form_data)
+        assert code_resp.status_code == 200, code_resp.text
+
+        # Step3: extract code from redirect url
+        auth_code = self.extract_code(code_resp)
+
+        # Step4: Post the code to get access token
+        token_resp = login_session.post(
+            self.token_url,
+            data={
+                "grant_type": "authorization_code",
+                "code": auth_code,
+                "redirect_uri": callback_url,
+                "client_id": client_id,
+                "client_secret": client_secret,
+            },
+        )
+        assert token_resp.status_code == 200, token_resp.text
+
+        return token_resp.json()["access_token"]
+
+
 class NhsLoginAuthentication(BaseAuthentication):
-    def get_access_token(self):
+    def __str__(self):
+        return AuthType.NHS_LOGIN.value
+
+    def get_access_token(self) -> str:
         # TODO(NhsLogin_AMB-1923) add NHSLogin
         pass
 
 
 class Cis2Authentication(BaseAuthentication):
-    def get_access_token(self):
-        # TODO(Cis2_AMB-1733) add Cis2
-        pass
+    def __init__(self, auth_url: str, config: UserRestrictedCredentials, default_user: LoginUser):
+        self.code_flow = AuthCodeFlow(auth_url, config)
+        self.user = default_user
 
-# def get_access_token_via_user_restricted_flow_separate_auth(
-#     identity_service_base_url,
-#     keycloak_client_credentials,
-#     login_form,
-#     apigee_client_id,
-#     jwt_private_key,
-#     jwt_kid,
-#     auth_scope: Literal["nhs-login", "nhs-cis2"],
-#     apigee_environment,
-# ):
-#     if auth_scope == "nhs-cis2":
-#         # Get token from keycloak
-#         config = KeycloakUserConfig(
-#             realm=f"Cis2-mock-{apigee_environment}",
-#             client_id=keycloak_client_credentials["cis2"]["client_id"],
-#             client_secret=keycloak_client_credentials["cis2"]["client_secret"],
-#             login_form=login_form,
-#         )
-#         authenticator = KeycloakUserAuthenticator(config=config)
-#         id_token = authenticator.get_token()["id_token"]
-#
-#     else:
-#         # Get token from keycloak
-#         config = KeycloakUserConfig(
-#             realm=f"NHS-Login-mock-{apigee_environment}",
-#             client_id=keycloak_client_credentials["nhs-login"]["client_id"],
-#             client_secret=keycloak_client_credentials["nhs-login"]["client_secret"],
-#             login_form=login_form,
-#         )
-#         authenticator = KeycloakUserAuthenticator(config=config)
-#         id_token = authenticator.get_token()["id_token"]
-#
-#     # Exchange token
-#     config = TokenExchangeConfig(
-#         environment=apigee_environment,
-#         identity_service_base_url=identity_service_base_url,
-#         client_id=apigee_client_id,
-#         jwt_private_key=jwt_private_key,
-#         jwt_kid=jwt_kid,
-#         id_token=id_token,
-#     )
-#     authenticator = TokenExchangeAuthenticator(config=config)
-#     return authenticator.get_token()
-#
-#
+    def __str__(self):
+        return AuthType.CIS2.value
+
+    def set_user(self, user: LoginUser):
+        self.user = user
+
+    def get_access_token(self) -> str:
+        return self.code_flow.get_access_token("nhs-cis2", self.user)
