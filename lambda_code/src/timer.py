@@ -3,10 +3,7 @@ import time
 
 from functools import wraps
 
-logging.basicConfig()
 logger = logging.getLogger()
-logger.setLevel("INFO")
-
 
 def timed(func):
     """This decorator prints the execution time for the decorated function."""
