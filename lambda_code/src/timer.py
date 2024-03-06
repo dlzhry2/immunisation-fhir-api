@@ -3,7 +3,10 @@ import time
 
 from functools import wraps
 
+logging.basicConfig()
 logger = logging.getLogger()
+logger.setLevel("INFO")
+
 
 def timed(func):
     """This decorator prints the execution time for the decorated function."""
@@ -13,9 +16,8 @@ def timed(func):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
-        logger.info("python logging",
-                    extra={"runtime":"{} ran in {}s".format(func.__name__, round(end - start, 4))}
-                    )
+        log = "{} ran in {}s".format(func.__name__, round(end - start, 5))
+        logger.info(log)
         return result
 
     return wrapper
