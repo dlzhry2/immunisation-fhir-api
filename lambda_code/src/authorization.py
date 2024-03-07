@@ -61,7 +61,8 @@ class Authorization:
         auth_type = self._parse_auth_type(aws_event["headers"])
         if auth_type == AuthType.APP_RESTRICTED:
             self._app_restricted(operation, aws_event)
-        # TODO(Cis2_AMB-1733) add Cis2
+        if auth_type == AuthType.CIS2:
+            self._cis2(operation, aws_event)
         # TODO(NhsLogin_AMB-1923) add NHSLogin
         else:
             UnauthorizedError()
@@ -79,6 +80,10 @@ class Authorization:
         requested = self._app_restricted_map[operation]
         if not requested.issubset(allowed):
             raise UnauthorizedError()
+
+    def _cis2(self, operation: EndpointOperation, aws_event: dict) -> None:
+        # Cis2 works exactly the same as ApplicationRestricted
+        self._app_restricted(operation, aws_event)
 
     @staticmethod
     def _parse_permissions(headers) -> Set[Permission]:
