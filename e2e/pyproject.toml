@@ -8,13 +8,13 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~3.8"
-lxml = "^5.1.0"
 
 
 [tool.poetry.group.dev.dependencies]
 requests = "^2.31.0"
 pyjwt = "^2.8.0"
 cryptography = "^42.0.3"
+lxml = "~4.9.0"
 
 [build-system]
 requires = ["poetry-core"]
