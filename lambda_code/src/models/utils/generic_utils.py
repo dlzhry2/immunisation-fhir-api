@@ -31,11 +31,7 @@ def get_generic_questionnaire_response_value(
         The value coding field type to be validated, must be provided for valueCoding fields
     """
 
-    questionnaire_reponse = [
-        x
-        for x in json_data["contained"]
-        if x.get("resourceType") == "QuestionnaireResponse"
-    ][0]
+    questionnaire_reponse = [x for x in json_data["contained"] if x.get("resourceType") == "QuestionnaireResponse"][0]
 
     item = [x for x in questionnaire_reponse["item"] if x.get("linkId") == link_id][0]
 
@@ -70,9 +66,7 @@ def get_generic_questionnaire_response_value_from_model(
     value_coding_field_type: Optional[Literal["code", "display", "system"]]
         The value coding field type to be validated, must be provided for valueCoding fields
     """
-    questionnaire_reponse = get_contained_resource_from_model(
-        values, "QuestionnaireResponse"
-    )
+    questionnaire_reponse = get_contained_resource_from_model(values, "QuestionnaireResponse")
 
     item = [x for x in questionnaire_reponse.item if x.linkId == link_id][0]
 
@@ -97,13 +91,11 @@ def get_generic_extension_value(
     """
     Get the value of an extension field, given its url, field_type, and system
     """
-    value_codeable_concept_coding = [
-        x for x in json_data["extension"] if x.get("url") == url
-    ][0]["valueCodeableConcept"]["coding"]
+    value_codeable_concept_coding = [x for x in json_data["extension"] if x.get("url") == url][0][
+        "valueCodeableConcept"
+    ]["coding"]
 
-    value = [x for x in value_codeable_concept_coding if x.get("system") == system][0][
-        field_type
-    ]
+    value = [x for x in value_codeable_concept_coding if x.get("system") == system][0][field_type]
 
     return value
 
@@ -117,9 +109,7 @@ def get_generic_extension_value_from_model(
     """
     Get the value of an extension field, given its url, field_type, and system
     """
-    value_codeable_concept_coding = [x for x in values["extension"] if x.url == url][
-        0
-    ].valueCodeableConcept.coding
+    value_codeable_concept_coding = [x for x in values["extension"] if x.url == url][0].valueCodeableConcept.coding
 
     value = getattr(
         [x for x in value_codeable_concept_coding if x.system == system][0],
@@ -136,10 +126,7 @@ def generate_field_location_for_questionnnaire_response(
     field_type: Literal["code", "display", "system"] = None,
 ) -> str:
     """Generate the field location string for questionnaire response items"""
-    location = (
-        "contained[?(@.resourceType=='QuestionnaireResponse')]"
-        + f".item[?(@.linkId=='{link_id}')].answer[0]"
-    )
+    location = "contained[?(@.resourceType=='QuestionnaireResponse')]" + f".item[?(@.linkId=='{link_id}')].answer[0]"
     if answer_type == "valueCoding":
         return f"{location}.{answer_type}.{field_type}"
     if answer_type == "valueReference":
@@ -148,14 +135,9 @@ def generate_field_location_for_questionnnaire_response(
         return f"{location}.{answer_type}"
 
 
-def generate_field_location_for_extension(
-    url: str, system: str, field_type: Literal["code", "display"]
-) -> str:
+def generate_field_location_for_extension(url: str, system: str, field_type: Literal["code", "display"]) -> str:
     """Generate the field location string for extension items"""
-    return (
-        f"extension[?(@.url=='{url}')].valueCodeableConcept."
-        + f"coding[?(@.system=='{system}')].{field_type}"
-    )
+    return f"extension[?(@.url=='{url}')].valueCodeableConcept." + f"coding[?(@.system=='{system}')].{field_type}"
 
 
 def get_deep_attr(obj, attrs):
@@ -169,3 +151,22 @@ def is_organization(x):
         return x.actor.type == "Organization"
     except (AttributeError, TypeError):
         return False
+
+
+def get_nhs_number_verification_status_code(imms: dict) -> Union[str, None]:
+    """Get the NHS number verification status code from the contained Patient resource"""
+    try:
+        patient_identifier = next(x for x in imms["contained"] if x.get("resourceType") == "Patient").get("identifier")
+        patient_identifier_extension_item = next(
+            x for x in patient_identifier if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
+        )
+        verification_status_code = get_generic_extension_value(
+            patient_identifier_extension_item,
+            "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
+            "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
+            "code",
+        )
+    except (StopIteration, KeyError, IndexError):
+        verification_status_code = None
+
+    return verification_status_code

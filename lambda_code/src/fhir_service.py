@@ -16,6 +16,7 @@ from models.errors import (
 )
 from models.fhir_immunization import ImmunizationValidator
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
+from models.utils.generic_utils import get_nhs_number_verification_status_code
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 
@@ -66,7 +67,6 @@ class FhirService:
             self.validator.validate(immunization)
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
-
         patient = self._validate_patient(immunization)
 
         imms = self.immunization_repo.create_immunization(immunization, patient)
@@ -122,8 +122,15 @@ class FhirService:
 
     def _validate_patient(self, imms: dict):
         nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
-        patient = self.pds_service.get_patient_details(nhs_number)
+
+        if not nhs_number:
+            verification_status_code = get_nhs_number_verification_status_code(imms)
+            if verification_status_code == "04":
+                patient = {}
+            else:
+                raise CustomValidationError(message="NHS number is mandatory unless verification status is '04'")
+        else:
+            patient = self.pds_service.get_patient_details(nhs_number)
         if patient:
             return patient
-        else:
-            raise InvalidPatientId(nhs_number=nhs_number)
+        raise InvalidPatientId(nhs_number=nhs_number)
