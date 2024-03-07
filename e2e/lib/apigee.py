@@ -44,7 +44,7 @@ class ApigeeApp:
     appId: str = None
     credentials: List[dict] = field(default_factory=lambda: [])
     attributes: List[dict] = field(default_factory=lambda: [])
-    apiProducts: List[str] = field(default_factory=lambda: ["identity-service-internal-dev"])
+    apiProducts: List[str] = field(default_factory=lambda: [])
     callbackUrl: str = "www.example.com"
     scopes: List[str] = field(default_factory=lambda: [])
     status: str = "approved"
