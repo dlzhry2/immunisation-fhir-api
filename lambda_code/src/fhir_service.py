@@ -2,11 +2,12 @@ import os
 from enum import Enum
 from typing import Optional
 
-from pydantic import ValidationError
-from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
 from fhir.resources.R4B.bundle import BundleEntry
 from fhir.resources.R4B.bundle import BundleLink
+from fhir.resources.R4B.immunization import Immunization
+from pydantic import ValidationError
+
 from fhir_repository import ImmunizationRepository
 from models.errors import (
     InvalidPatientId,
@@ -74,7 +75,7 @@ class FhirService:
 
         return Immunization.parse_obj(imms)
 
-    def update_immunization(self, imms_id: str, immunization: dict) -> tuple[UpdateOutcome, Immunization]:
+    def update_immunization(self, imms_id: str, immunization: dict) -> (UpdateOutcome, Immunization):
         if immunization.get("id", imms_id) != imms_id:
             raise InconsistentIdError(imms_id=imms_id)
         immunization["id"] = imms_id
