@@ -68,6 +68,8 @@ def make_app_restricted_app(apigee: ApigeeService = None,
             app.add_attribute(k, v)
         app.add_attribute("AuthenticationType", AuthType.APP_RESTRICTED.value)
 
+        app.add_product(f"identity-service-{get_apigee_env()}")
+
         resp = apigee.create_application(app)
         stored_app = ApigeeApp.from_dict(resp)
 
