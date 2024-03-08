@@ -8,17 +8,108 @@ from models.utils.generic_utils import (
 )
 from models.utils.pre_validator_utils import PreValidation
 from models.constants import Constants
+from pydantic import ValidationError
 
 
-class FHIRImmunizationPreValidators:
+class PreValidators:
     """
     Validators which run prior to the FHIR validators and check that, where values exist, they
     meet the NHS custom requirements. Note that validation of the existence of a value (i.e. it
     exists if mandatory, or doesn't exist if is not applicable) is done by the post validators.
     """
+    def __init__(self, values: dict):
+        self.values = values
+    
+    def validate(self):
+        """
+        Run all pre-validation checks.
+        """
+        try:
+            self.pre_validate_contained(self.values)
+            self.pre_validate_patient_reference(self.values)
+            self.pre_validate_patient_identifier(self.values)
+            self.pre_validate_patient_identifier_value(self.values)
+            self.pre_validate_patient_name(self.values)
+            self.pre_validate_patient_name_given(self.values)
+            self.pre_validate_patient_name_family(self.values)
+            self.pre_validate_patient_birth_date(self.values)
+            self.pre_validate_patient_gender(self.values)
+            self.pre_validate_patient_address(self.values)
+            self.pre_validate_patient_address_postal_code(self.values)
+            self.pre_validate_occurrence_date_time(self.values)
+            self.pre_validate_questionnaire_response_item(self.values)
+            self.pre_validate_questionnaire_answers(self.values)
+            self.pre_validate_performer_actor_type(self.values)
+            self.pre_validate_performer_actor_reference(self.values)
+            self.pre_validate_organization_identifier_value(self.values)
+            self.pre_validate_organization_display(self.values)
+            self.pre_validate_identifier(self.values)
+            self.pre_validate_identifier_value(self.values)
+            self.pre_validate_identifier_system(self.values)
+            self.pre_validate_status(self.values)
+            self.pre_validate_practitioner_name(self.values)
+            self.pre_validate_practitioner_name_given(self.values)
+            self.pre_validate_practitioner_name_family(self.values)
+            self.pre_validate_practitioner_identifier(self.values)
+            self.pre_validate_practitioner_identifier_value(self.values)
+            self.pre_validate_practitioner_identifier_system(self.values)
+            self.pre_validate_performer_sds_job_role(self.values)
+            self.pre_validate_recorded(self.values)
+            self.pre_validate_primary_source(self.values)
+            self.pre_validate_report_origin_text(self.values)
+            self.pre_validate_extension_urls(self.values)
+            self.pre_validate_extension_value_codeable_concept_codings(self.values)
+            self.pre_validate_vaccination_procedure_code(self.values)
+            self.pre_validate_vaccination_procedure_display(self.values)
+            self.pre_validate_vaccination_situation_code(self.values)
+            self.pre_validate_vaccination_situation_display(self.values)
+            self.pre_validate_status_reason_coding(self.values)
+            self.pre_validate_status_reason_coding_code(self.values)
+            self.pre_validate_status_reason_coding_display(self.values)
+            self.pre_validate_protocol_applied(self.values)
+            self.pre_validate_protocol_applied_dose_number_positive_int(self.values)
+            self.pre_validate_vaccine_code_coding(self.values)
+            self.pre_validate_vaccine_code_coding_code(self.values)
+            self.pre_validate_vaccine_code_coding_display(self.values)
+            self.pre_validate_manufacturer_display(self.values)
+            self.pre_validate_lot_number(self.values)
+            self.pre_validate_expiration_date(self.values)
+            self.pre_validate_site_coding(self.values)
+            self.pre_validate_site_coding_code(self.values)
+            self.pre_validate_site_coding_display(self.values)
+            self.pre_validate_route_coding(self.values)
+            self.pre_validate_route_coding_code(self.values)
+            self.pre_validate_route_coding_display(self.values)
+            self.pre_validate_dose_quantity_value(self.values)
+            self.pre_validate_dose_quantity_code(self.values)
+            self.pre_validate_dose_quantity_unit(self.values)
+            self.pre_validate_reason_code_codings(self.values)
+            self.pre_validate_reason_code_coding_codes(self.values)
+            self.pre_validate_reason_code_coding_displays(self.values)
+            self.pre_validate_patient_identifier_extension(self.values)
+            self.pre_validate_nhs_number_verification_status_coding(self.values)
+            self.pre_validate_nhs_number_verification_status_code(self.values)
+            self.pre_validate_nhs_number_verification_status_display(self.values)
+            self.pre_validate_organization_identifier_system(self.values)
+            self.pre_validate_local_patient_value(self.values)
+            self.pre_validate_local_patient_system(self.values)
+            self.pre_validate_consent_code(self.values)
+            self.pre_validate_consent_display(self.values)
+            self.pre_validate_care_setting_code(self.values)
+            self.pre_validate_care_setting_display(self.values)
+            self.pre_validate_ip_address(self.values)
+            self.pre_validate_user_id(self.values)
+            self.pre_validate_user_name(self.values)
+            self.pre_validate_user_email(self.values)
+            self.pre_validate_submitted_time_stamp(self.values)
+            self.pre_validate_location_identifier_value(self.values)
+            self.pre_validate_location_identifier_system(self.values)
+            self.pre_validate_reduce_validation(self.values)
+            self.pre_validate_reduce_validation_reason(self.values)
+        except Exception as error:
+            raise ValueError(error)
 
-    @classmethod
-    def pre_validate_contained(cls, values: dict) -> dict:
+    def pre_validate_contained(self, values: dict) -> dict:
         """
         Pre-validate that, if contained exists, then  each resourceType is unique
         """
@@ -35,8 +126,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_reference(cls, values: dict) -> dict:
+    def pre_validate_patient_reference(self, values: dict) -> dict:
         """
         Pre-validate that:
         - patient.reference exists and it is a reference
@@ -87,8 +177,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_identifier(cls, values: dict) -> dict:
+    def pre_validate_patient_identifier(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].identifier exists, then it
         is a list of length 1
@@ -107,8 +196,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_identifier_value(cls, values: dict) -> dict:
+    def pre_validate_patient_identifier_value(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].identifier[0].value (
         legacy CSV field name: NHS_NUMBER) exists, then it is a string of 10 characters
@@ -130,8 +218,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_name(cls, values: dict) -> dict:
+    def pre_validate_patient_name(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].name exists,
         then it is an array of length 1
@@ -150,8 +237,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_name_given(cls, values: dict) -> dict:
+    def pre_validate_patient_name_given(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].name[0].given
         (legacy CSV field name: PERSON_FORENAME) exists, then it is a
@@ -172,8 +258,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_name_family(cls, values: dict) -> dict:
+    def pre_validate_patient_name_family(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].name[0].family
         (legacy CSV field name: PERSON_SURNAME) exists, then it is a
@@ -192,8 +277,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_birth_date(cls, values: dict) -> dict:
+    def pre_validate_patient_birth_date(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].birthDate
         (legacy CSV field name: PERSON_DOB) exists, then it is a
@@ -211,8 +295,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_gender(cls, values: dict) -> dict:
+    def pre_validate_patient_gender(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].gender
         (legacy CSV field name: PERSON_GENDER_CODE) exists,
@@ -232,8 +315,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_address(cls, values: dict) -> dict:
+    def pre_validate_patient_address(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].address exists, then it is
         an array of length 1
@@ -252,8 +334,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_address_postal_code(cls, values: dict) -> dict:
+    def pre_validate_patient_address_postal_code(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].address[0].postalCode
         (legacy CSV field name: PERSON_POSTCODE) exists, then it is a non-empty string,
@@ -274,8 +355,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_occurrence_date_time(cls, values: dict) -> dict:
+    def pre_validate_occurrence_date_time(self, values: dict) -> dict:
         """
         Pre-validate that, if occurrenceDateTime exists (legacy CSV field name: DATE_AND_TIME),
         then it is a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz"
@@ -293,8 +373,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_questionnaire_response_item(cls, values: dict) -> dict:
+    def pre_validate_questionnaire_response_item(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item exists,
         then each linkId is unique
@@ -318,8 +397,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_questionnaire_answers(cls, values: dict) -> dict:
+    def pre_validate_questionnaire_answers(self, values: dict) -> dict:
         """
         Pre-validate that, if they exist, each
         contained[?(@.resourceType=='QuestionnaireResponse')].item[index].answer
@@ -347,8 +425,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_performer_actor_type(cls, values: dict) -> dict:
+    def pre_validate_performer_actor_type(self, values: dict) -> dict:
         """
         Pre-validate that, if performer.actor.organisation exists, then there is only one such
         key with the value of "Organization"
@@ -371,8 +448,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_performer_actor_reference(cls, values: dict) -> dict:
+    def pre_validate_performer_actor_reference(self, values: dict) -> dict:
         """
         Pre-validate that:
         - if performer.actor.reference exists then it is a single reference
@@ -441,8 +517,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_organization_identifier_value(cls, values: dict) -> dict:
+    def pre_validate_organization_identifier_value(self, values: dict) -> dict:
         """
         Pre-validate that, if performer[?(@.actor.type=='Organization').identifier.value]
         (legacy CSV field name: SITE_CODE) exists, then it is a non-empty string
@@ -462,8 +537,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_organization_display(cls, values: dict) -> dict:
+    def pre_validate_organization_display(self, values: dict) -> dict:
         """
         Pre-validate that, if performer[?@.actor.type == 'Organization'].actor.display
         (legacy CSV field name: SITE_NAME) exists, then it is a non-empty string
@@ -483,8 +557,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_identifier(cls, values: dict) -> dict:
+    def pre_validate_identifier(self, values: dict) -> dict:
         """
         Pre-validate that, if identifier exists, then it is a list of length 1
         """
@@ -496,8 +569,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_identifier_value(cls, values: dict) -> dict:
+    def pre_validate_identifier_value(self, values: dict) -> dict:
         """
         Pre-validate that, if identifier[0].value (legacy CSV field name: UNIQUE_ID) exists,
         then it is a non-empty string
@@ -510,8 +582,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_identifier_system(cls, values: dict) -> dict:
+    def pre_validate_identifier_system(self, values: dict) -> dict:
         """
         Pre-validate that, if identifier[0].system (legacy CSV field name: UNIQUE_ID_URI) exists,
         then it is a non-empty string
@@ -524,8 +595,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_status(cls, values: dict) -> dict:
+    def pre_validate_status(self, values: dict) -> dict:
         """
         Pre-validate that, if status (legacy CSV field names ACTION_FLAG or NOT_GIVEN) exists,
         then it is a non-empty string which is one of the following: completed, entered-in-error,
@@ -552,8 +622,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_practitioner_name(cls, values: dict) -> dict:
+    def pre_validate_practitioner_name(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name exists,
         then it is an array of length 1
@@ -574,8 +643,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_practitioner_name_given(cls, values: dict) -> dict:
+    def pre_validate_practitioner_name_given(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[0].given
         (legacy CSV field name: PERSON_FORENAME) exists, then it is a
@@ -598,8 +666,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_practitioner_name_family(cls, values: dict) -> dict:
+    def pre_validate_practitioner_name_family(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[0].family
         (legacy CSV field name: PERSON_SURNAME) exists, then it is a
@@ -620,8 +687,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_practitioner_identifier(cls, values: dict) -> dict:
+    def pre_validate_practitioner_identifier(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier exists,
         then it is a list of length 1
@@ -642,8 +708,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_practitioner_identifier_value(cls, values: dict) -> dict:
+    def pre_validate_practitioner_identifier_value(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier[0].value
         (legacy CSV field name: PERFORMING_PROFESSIONAL_BODY_REG_CODE) exists, then it is a
@@ -664,8 +729,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_practitioner_identifier_system(cls, values: dict) -> dict:
+    def pre_validate_practitioner_identifier_system(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier[0].system
         (legacy CSV field name: PERFORMING_PROFESSIONAL_BODY_REG_URI) exists, then it is a
@@ -686,8 +750,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_performer_sds_job_role(cls, values: dict) -> dict:
+    def pre_validate_performer_sds_job_role(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='PerformerSDSJobRole')].answer[0].valueString (legacy CSV field name:
@@ -709,8 +772,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_recorded(cls, values: dict) -> dict:
+    def pre_validate_recorded(self, values: dict) -> dict:
         """
         Pre-validate that, if recorded (legacy CSV field name: RECORDED_DATE) exists, then it is a
         string in the format YYYY-MM-DD, representing a valid date
@@ -723,8 +785,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_primary_source(cls, values: dict) -> dict:
+    def pre_validate_primary_source(self, values: dict) -> dict:
         """
         Pre-validate that, if primarySource (legacy CSV field name: PRIMARY_SOURCE) exists,
         then it is a boolean
@@ -737,8 +798,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_report_origin_text(cls, values: dict) -> dict:
+    def pre_validate_report_origin_text(self, values: dict) -> dict:
         """
         Pre-validate that, if reportOrigin.text (legacy CSV field name: REPORT_ORIGIN_TEXT)
         exists, then it is a non-empty string with maximum length 100 characters
@@ -754,8 +814,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_extension_urls(cls, values: dict) -> dict:
+    def pre_validate_extension_urls(self, values: dict) -> dict:
         """
         Pre-validate that, if extension exists, then each url is unique
         """
@@ -770,9 +829,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
     def pre_validate_extension_value_codeable_concept_codings(
-        cls, values: dict
+        self, values: dict
     ) -> dict:
         """
         Pre-validate that, if they exist, each extension[{index}].valueCodeableConcept.coding.system
@@ -798,8 +856,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_vaccination_procedure_code(cls, values: dict) -> dict:
+    def pre_validate_vaccination_procedure_code(self, values: dict) -> dict:
         """
         Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
         Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system==
@@ -828,8 +885,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_vaccination_procedure_display(cls, values: dict) -> dict:
+    def pre_validate_vaccination_procedure_display(self, values: dict) -> dict:
         """
         Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
         Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system==
@@ -858,8 +914,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_vaccination_situation_code(cls, values: dict) -> dict:
+    def pre_validate_vaccination_situation_code(self, values: dict) -> dict:
         """
         Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
         Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[?(@.system==
@@ -885,8 +940,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_vaccination_situation_display(cls, values: dict) -> dict:
+    def pre_validate_vaccination_situation_display(self, values: dict) -> dict:
         """
         Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/
         Extension-UKCore-VaccinationSituation')].valueCodeableConcept.coding[?(@.system==
@@ -912,8 +966,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_status_reason_coding(cls, values: dict) -> dict:
+    def pre_validate_status_reason_coding(self, values: dict) -> dict:
         """
         Pre-validate that, if statusReason.coding (legacy CSV field name: REASON_GIVEN_CODE)
         exists, then each coding system value is unique
@@ -931,8 +984,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_status_reason_coding_code(cls, values: dict) -> dict:
+    def pre_validate_status_reason_coding_code(self, values: dict) -> dict:
         """
         Pre-validate that, if statusReason.coding[?(@.system==
         'http://snomed.info/sct')].code (legacy CSV field location:
@@ -953,8 +1005,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_status_reason_coding_display(cls, values: dict) -> dict:
+    def pre_validate_status_reason_coding_display(self, values: dict) -> dict:
         """
         Pre-validate that, if statusReason.coding[?(@.system==
         'http://snomed.info/sct')].display (legacy CSV field name:
@@ -975,8 +1026,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_protocol_applied(cls, values: dict) -> dict:
+    def pre_validate_protocol_applied(self, values: dict) -> dict:
         """Pre-validate that, if protocolApplied exists, then it is a list of length 1"""
         try:
             protocol_applied = values["protocolApplied"]
@@ -990,9 +1040,8 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
     def pre_validate_protocol_applied_dose_number_positive_int(
-        cls, values: dict
+        self, values: dict
     ) -> dict:
         """
         Pre-validate that, if protocolApplied[0].doseNumberPositiveInt (legacy CSV fidose_sequence)
@@ -1012,8 +1061,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_vaccine_code_coding(cls, values: dict) -> dict:
+    def pre_validate_vaccine_code_coding(self, values: dict) -> dict:
         """Pre-validate that, if vaccineCode.coding exists, then each code system is unique"""
         try:
             vaccine_code_coding = values["vaccineCode"]["coding"]
@@ -1028,8 +1076,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_vaccine_code_coding_code(cls, values: dict) -> dict:
+    def pre_validate_vaccine_code_coding_code(self, values: dict) -> dict:
         """
         Pre-validate that, if vaccineCode.coding[?(@.system==
         'http://snomed.info/sct')].code (legacy CSV field location:
@@ -1050,8 +1097,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_vaccine_code_coding_display(cls, values: dict) -> dict:
+    def pre_validate_vaccine_code_coding_display(self, values: dict) -> dict:
         """
         Pre-validate that, if vaccineCode.coding[?(@.system==
         'http://snomed.info/sct')].display (legacy CSV field name:
@@ -1072,8 +1118,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_manufacturer_display(cls, values: dict) -> dict:
+    def pre_validate_manufacturer_display(self, values: dict) -> dict:
         """
         Pre-validate that, if manufacturer.display (legacy CSV field name: VACCINE_MANUFACTURER)
         exists, then it is a non-empty string
@@ -1086,8 +1131,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_lot_number(cls, values: dict) -> dict:
+    def pre_validate_lot_number(self, values: dict) -> dict:
         """
         Pre-validate that, if lotNumber (legacy CSV field name: BATCH_NUMBER) exists,
         then it is a non-empty string
@@ -1100,8 +1144,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_expiration_date(cls, values: dict) -> dict:
+    def pre_validate_expiration_date(self, values: dict) -> dict:
         """
         Pre-validate that, if expirationDate (legacy CSV field name: EXPIRY_DATE) exists,
         then it is a string in the format YYYY-MM-DD, representing a valid date
@@ -1114,8 +1157,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_site_coding(cls, values: dict) -> dict:
+    def pre_validate_site_coding(self, values: dict) -> dict:
         """Pre-validate that, if site.coding exists, then each code system is unique"""
         try:
             coding = values["site"]["coding"]
@@ -1130,8 +1172,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_site_coding_code(cls, values: dict) -> dict:
+    def pre_validate_site_coding_code(self, values: dict) -> dict:
         """
         Pre-validate that, if site.coding[?(@.system=='http://snomed.info/sct')].code
         (legacy CSV field name: SITE_OF_VACCINATION_CODE) exists, then it is a non-empty string
@@ -1151,8 +1192,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_site_coding_display(cls, values: dict) -> dict:
+    def pre_validate_site_coding_display(self, values: dict) -> dict:
         """
         Pre-validate that, if site.coding[?(@.system=='http://snomed.info/sct')].display
         (legacy CSV field name: SITE_OF_VACCINATION_TERM) exists, then it is a non-empty string
@@ -1173,8 +1213,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_route_coding(cls, values: dict) -> dict:
+    def pre_validate_route_coding(self, values: dict) -> dict:
         """Pre-validate that, if route.coding exists, then each code system is unique"""
         try:
             coding = values["route"]["coding"]
@@ -1189,8 +1228,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_route_coding_code(cls, values: dict) -> dict:
+    def pre_validate_route_coding_code(self, values: dict) -> dict:
         """
         Pre-validate that, if route.coding[?(@.system=='http://snomed.info/sct')].code
         (legacy CSV field name: ROUTE_OF_VACCINATION_CODE) exists, then it is a non-empty string
@@ -1210,8 +1248,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_route_coding_display(cls, values: dict) -> dict:
+    def pre_validate_route_coding_display(self, values: dict) -> dict:
         """
         Pre-validate that, if route.coding[?(@.system=='http://snomed.info/sct')].display
         (legacy CSV field name: ROUTE_OF_VACCINATION_TERM) exists, then it is a non-empty string
@@ -1235,8 +1272,7 @@ class FHIRImmunizationPreValidators:
     # TODO: need to validate that doseQuantity.system is "http://unitsofmeasure.org"?
     # Check with Martin
 
-    @classmethod
-    def pre_validate_dose_quantity_value(cls, values: dict) -> dict:
+    def pre_validate_dose_quantity_value(self, values: dict) -> dict:
         """
         Pre-validate that, if doseQuantity.value (legacy CSV field name: DOSE_AMOUNT) exists,
         then it is a number representing an integer or decimal with
@@ -1257,8 +1293,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_dose_quantity_code(cls, values: dict) -> dict:
+    def pre_validate_dose_quantity_code(self, values: dict) -> dict:
         """
         Pre-validate that, if doseQuantity.code (legacy CSV field name: DOSE_UNIT_CODE) exists,
         then it is a non-empty string
@@ -1271,8 +1306,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_dose_quantity_unit(cls, values: dict) -> dict:
+    def pre_validate_dose_quantity_unit(self, values: dict) -> dict:
         """
         Pre-validate that, if doseQuantity.unit (legacy CSV field name: DOSE_UNIT_TERM) exists,
         then it is a non-empty string
@@ -1285,8 +1319,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_reason_code_codings(cls, values: dict) -> dict:
+    def pre_validate_reason_code_codings(self, values: dict) -> dict:
         """
         Pre-validate that, if they exist, each reasonCode[{index}].coding is a list of length 1
         """
@@ -1306,8 +1339,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_reason_code_coding_codes(cls, values: dict) -> dict:
+    def pre_validate_reason_code_coding_codes(self, values: dict) -> dict:
         """
         Pre-validate that, if they exist, each reasonCode[{index}].coding[0].code
         (legacy CSV field name: INDICATION_CODE) is a non-empty string
@@ -1326,8 +1358,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_reason_code_coding_displays(cls, values: dict) -> dict:
+    def pre_validate_reason_code_coding_displays(self, values: dict) -> dict:
         """
         Pre-validate that, if they exist, each reasonCode[{index}].coding[0].display
         (legacy CSV field name: INDICATION_TERM) is a non-empty string
@@ -1347,8 +1378,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_patient_identifier_extension(cls, values: dict) -> dict:
+    def pre_validate_patient_identifier_extension(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].identifier
         [?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension exists, then each url is unique
@@ -1375,8 +1405,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_nhs_number_verification_status_coding(cls, values: dict) -> dict:
+    def pre_validate_nhs_number_verification_status_coding(self, values: dict) -> dict:
         """
         Pre-validate that, if "contained[?(@.resourceType=='Patient')].identifier
         [?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url==
@@ -1416,8 +1445,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_nhs_number_verification_status_code(cls, values: dict) -> dict:
+    def pre_validate_nhs_number_verification_status_code(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].extension[?(@.url==
         'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]
@@ -1461,8 +1489,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_nhs_number_verification_status_display(cls, values: dict) -> dict:
+    def pre_validate_nhs_number_verification_status_display(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].extension[?(@.url==
         'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]
@@ -1506,8 +1533,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_organization_identifier_system(cls, values: dict) -> dict:
+    def pre_validate_organization_identifier_system(self, values: dict) -> dict:
         """
         Pre-validate that, if performer[?(@.actor.type=='Organization').identifier.system]
         (legacy CSV field name: SITE_CODE_TYPE_URI) exists, then it is a non-empty string
@@ -1527,8 +1553,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_local_patient_value(cls, values: dict) -> dict:
+    def pre_validate_local_patient_value(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='LocalPatient')].valueReference.identifier.value (legacy CSV field name:
@@ -1554,8 +1579,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_local_patient_system(cls, values: dict) -> dict:
+    def pre_validate_local_patient_system(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='LocalPatient')].valueReference.identifier.system (legacy CSV field name:
@@ -1580,8 +1604,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_consent_code(cls, values: dict) -> dict:
+    def pre_validate_consent_code(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='Consent')].answer[0].valueCoding.code (legacy CSV field name:
@@ -1606,8 +1629,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_consent_display(cls, values: dict) -> dict:
+    def pre_validate_consent_display(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='Consent')].answer[0].valueCoding.display (legacy CSV field name:
@@ -1632,8 +1654,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_care_setting_code(cls, values: dict) -> dict:
+    def pre_validate_care_setting_code(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='CareSetting')].answer[0].valueCoding.code (legacy CSV field name:
@@ -1658,8 +1679,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_care_setting_display(cls, values: dict) -> dict:
+    def pre_validate_care_setting_display(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='CareSetting')].answer[0].valueCoding.display (legacy CSV field name:
@@ -1684,8 +1704,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_ip_address(cls, values: dict) -> dict:
+    def pre_validate_ip_address(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='IpAddress')].answer[0].valueString (legacy CSV field name:
@@ -1707,8 +1726,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_user_id(cls, values: dict) -> dict:
+    def pre_validate_user_id(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='UserId')].answer[0].valueString (legacy CSV field name:
@@ -1730,8 +1748,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_user_name(cls, values: dict) -> dict:
+    def pre_validate_user_name(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='UserName')].answer[0].valueString (legacy CSV field name:
@@ -1753,8 +1770,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_user_email(cls, values: dict) -> dict:
+    def pre_validate_user_email(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='UserEmail')].answer[0].valueString (legacy CSV field name:
@@ -1776,8 +1792,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_submitted_time_stamp(cls, values: dict) -> dict:
+    def pre_validate_submitted_time_stamp(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='SubmittedTimeStamp')].answer[0].valueDateTime (legacy CSV field name:
@@ -1802,8 +1817,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_location_identifier_value(cls, values: dict) -> dict:
+    def pre_validate_location_identifier_value(self, values: dict) -> dict:
         """
         Pre-validate that, if location.identifier.value (legacy CSV field name: LOCATION_CODE)
         exists, then it is a non-empty string
@@ -1818,8 +1832,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_location_identifier_system(cls, values: dict) -> dict:
+    def pre_validate_location_identifier_system(self, values: dict) -> dict:
         """
         Pre-validate that, if location.identifier.system (legacy CSV field name:
         LOCATION_CODE_TYPE_URI) exists, then it is a non-empty string
@@ -1834,8 +1847,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_reduce_validation(cls, values: dict) -> dict:
+    def pre_validate_reduce_validation(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='ReduceValidation')].answer[0].valueBoolean (legacy CSV field name:
@@ -1857,8 +1869,7 @@ class FHIRImmunizationPreValidators:
 
         return values
 
-    @classmethod
-    def pre_validate_reduce_validation_reason(cls, values: dict) -> dict:
+    def pre_validate_reduce_validation_reason(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')]
         .item[?(@.linkId=='ReduceValidationReason')].answer[0].valueString" (legacy CSV field name:

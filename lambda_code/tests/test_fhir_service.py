@@ -124,7 +124,7 @@ class TestCreateImmunization(unittest.TestCase):
         """it should throw exception if Immunization is not valid"""
         imms = create_an_immunization_dict("an-id", "12345")
         expected_msg = (
-            "contained[?(@.resourceType=='Patient')].identifier[0].value must be 10 characters (type=value_error)"
+            "contained[?(@.resourceType=='Patient')].identifier[0].value must be 10 characters"
         )
 
         with self.assertRaises(CustomValidationError) as error:

@@ -23,7 +23,6 @@ get_generic_questionnaire_response_value = PostValidation.get_generic_questionna
 class FHIRImmunizationPostValidators:
     """FHIR Immunization Post Validators"""
 
-    @classmethod
     def validate_and_set_vaccination_procedure_code(cls, values: dict) -> dict:
         "Validate that vaccination_procedure_code is a valid code"
         url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
@@ -42,7 +41,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def set_status(cls, values: dict) -> dict:
         "Set status property to match the value in the JSON data"
         # Note: no need to check field is present, as this is done already by the FHIR validator
@@ -50,7 +48,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_patient_identifier_value(cls, values: dict) -> dict:
         "Validate that patient_identifier_value is present or absent, as required"
         try:
@@ -71,7 +68,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_patient_name_given(cls, values: dict) -> dict:
         "Validate that patient_name_given is present or absent, as required"
         try:
@@ -88,7 +84,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_patient_name_family(cls, values: dict) -> dict:
         "Validate that patient_name_family is present or absent, as required"
         try:
@@ -104,7 +99,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_patient_birth_date(cls, values: dict) -> dict:
         "Validate that patient_birth_date is present or absent, as required"
         try:
@@ -120,7 +114,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_patient_gender(cls, values: dict) -> dict:
         "Validate that patient_gender is present or absent, as required"
         try:
@@ -136,7 +129,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_patient_address_postal_code(cls, values: dict) -> dict:
         "Validate that patient_address_postal_code is present or absent, as required"
         try:
@@ -152,7 +144,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_occurrence_date_time(cls, values: dict) -> dict:
         "Validate that occurrence_date_time is present or absent, as required"
         occurrence_date_time = get_generic_field_value(values, key="occurrenceDateTime")
@@ -166,7 +157,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_organization_identifier_value(cls, values: dict) -> dict:
         """Validate that organization_identifier_value is present or absent, as required"""
 
@@ -190,7 +180,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_organization_display(cls, values: dict) -> dict:
         """Validate that organization_display is present or absent, as required"""
         try:
@@ -207,7 +196,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_identifier_value(cls, values: dict) -> dict:
         "Validate that identifier_value is present or absent, as required"
         field_value = get_generic_field_value(values, "identifier", index=0, attribute="value")
@@ -221,7 +209,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_identifier_system(cls, values: dict) -> dict:
         "Validate that identifier_system is present or absent, as required"
         field_value = get_generic_field_value(values, "identifier", index=0, attribute="system")
@@ -235,7 +222,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_practitioner_name_given(cls, values: dict) -> dict:
         "Validate that practitioner_name_given is present or absent, as required"
         try:
@@ -252,7 +238,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_practitioner_name_family(cls, values: dict) -> dict:
         "Validate that practitioner_name_family is present or absent, as required"
         try:
@@ -269,7 +254,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_practitioner_identifier_value(cls, values: dict) -> dict:
         "Validate that practitioner_identifier_value is present or absent, as required"
         try:
@@ -287,7 +271,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_practitioner_identifier_system(cls, values: dict) -> dict:
         "Validate that practitioner_identifier_system is present or absent, as required"
         field_location = "contained[?(@.resourceType=='Practitioner')].identifier[0].system"
@@ -334,7 +317,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_performer_sds_job_role(cls, values: dict) -> dict:
         "Validate that performer_sds_job_role is present or absent, as required"
         field_location = (
@@ -357,7 +339,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_recorded(cls, values: dict) -> dict:
         "Validate that recorded is present or absent, as required"
         field_value = get_generic_field_value(values, key="recorded")
@@ -371,7 +352,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_primary_source(cls, values: dict) -> dict:
         "Validate that primary_source is present or absent, as required"
         field_value = get_generic_field_value(values, key="primarySource")
@@ -385,7 +365,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_report_origin_text(cls, values: dict) -> dict:
         "Validate that report_origin_text is present or absent, as required"
         field_location = "reportOrigin.text"
@@ -409,7 +388,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_vaccination_procedure_display(cls, values: dict) -> dict:
         "Validate that vaccination_procedure_display is present or absent, as required"
         url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
@@ -430,7 +408,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_vaccination_situation_code(cls, values: dict) -> dict:
         "Validate that vaccination_situation_code is present or absent, as required"
         url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
@@ -459,7 +436,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_vaccination_situation_display(cls, values: dict) -> dict:
         "Validate that vaccination_situation_display is present or absent, as required"
         url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
@@ -480,7 +456,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_status_reason_coding_code(cls, values: dict) -> dict:
         "Validate that vaccination_situation_code is present or absent, as required"
         field_location = "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
@@ -508,7 +483,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_status_reason_coding_display(cls, values: dict) -> dict:
         "Validate that status_reason_coding_display is present or absent, as required"
         field_location = "statusReason.coding[?(@.system=='http://snomed.info/sct')].display"
@@ -528,7 +502,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_protocol_applied_dose_number_positive_int(cls, values: dict) -> dict:
         "Validate that protocol_applied_dose_number_positive_int is present or absent, as required"
         field_location = "protocolApplied[0].doseNumberPositiveInt"
@@ -573,7 +546,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_vaccine_code_coding_code(cls, values: dict) -> dict:
         "Validate that vaccineCode_coding_code is present or absent, as required"
         if cls.status == "not-done":
@@ -602,7 +574,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_vaccine_code_coding_display(cls, values: dict) -> dict:
         "Validate that vaccineCode_coding_display is present or absent, as required"
         field_location = "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
@@ -622,7 +593,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_manufacturer_display(cls, values: dict) -> dict:
         "Validate that manufacturer_display is present or absent, as required"
         field_location = "manufacturer.display"
@@ -652,7 +622,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_lot_number(cls, values: dict) -> dict:
         "Validate that lot_number is present or absent, as required"
         field_location = "lotNumber"
@@ -682,7 +651,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_expiration_date(cls, values: dict) -> dict:
         "Validate that expiration_date is present or absent, as required"
         field_location = "expirationDate"
@@ -712,7 +680,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_site_coding_code(cls, values: dict) -> dict:
         "Validate that site_coding_code is present or absent, as required"
         field_location = "site.coding[?(@.system=='http://snomed.info/sct')].code"
@@ -730,7 +697,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_site_coding_display(cls, values: dict) -> dict:
         "Validate that site.coding.display is present or absent, as required"
         field_location = "site.coding[?(@.system=='http://snomed.info/sct')].display"
@@ -748,7 +714,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_route_coding_code(cls, values: dict) -> dict:
         "Validate that route_coding_code is present or absent, as required"
         field_location = "route.coding[?(@.system=='http://snomed.info/sct')].code"
@@ -781,7 +746,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_route_coding_display(cls, values: dict) -> dict:
         "Validate that route_coding_display is present or absent, as required"
         field_location = "route.coding[?(@.system=='http://snomed.info/sct')].display"
@@ -801,7 +765,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_dose_quantity_value(cls, values: dict) -> dict:
         "Validate that dose_quantity_value is present or absent, as required"
         field_location = "doseQuantity.value"
@@ -835,7 +798,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_dose_quantity_code(cls, values: dict) -> dict:
         "Validate that dose_quantity_code is present or absent, as required"
         field_location = "doseQuantity.code"
@@ -868,7 +830,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_dose_quantity_unit(cls, values: dict) -> dict:
         "Validate that dose_quantity_unit is present or absent, as required"
         try:
@@ -885,7 +846,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_reason_code_coding_code(cls, values: dict) -> dict:
         "Validate that reason_code_coding_code is present or absent, as required"
         # The for loop must be run at least once to check for mandation, regardless of whether
@@ -907,7 +867,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_reason_code_coding_display(cls, values: dict) -> dict:
         "Validate that reason_code_coding_display is present or absent, as required"
         # The for loop must be run at least once to check for mandation, regardless of whether
@@ -929,7 +888,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_nhs_number_verification_status_code(cls, values: dict) -> dict:
         "Validate that nhs_number_verification_status_code is present or absent, as required"
         url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
@@ -966,7 +924,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_nhs_number_verification_status_display(cls, values: dict) -> dict:
         "Validate that nhs_number_verification_status_display is present or absent, as required"
         url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
@@ -1003,7 +960,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_organization_identifier_system(cls, values: dict) -> dict:
         """Validate that organization_identifier_system is present or absent, as required"""
         try:
@@ -1020,7 +976,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_local_patient_value(cls, values: dict) -> dict:
         """Validate that local_patient_value is present or absent, as required"""
         link_id = "LocalPatient"
@@ -1042,7 +997,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_local_patient_system(cls, values: dict) -> dict:
         """Validate that local_patient_system is present or absent, as required"""
         link_id = "LocalPatient"
@@ -1064,7 +1018,6 @@ class FHIRImmunizationPostValidators:
 
         return values
 
-    @classmethod
     def validate_consent_code(cls, values: dict) -> dict:
         "Validate that consent_code is present or absent, as required"
         link_id = "Consent"
@@ -1100,7 +1053,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_consent_display(cls, values: dict) -> dict:
         "Validate that consent_display is present or absent, as required"
         link_id = "Consent"
@@ -1123,7 +1075,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_care_setting_code(cls, values: dict) -> dict:
         "Validate that care_setting_code is present or absent, as required"
         link_id = "CareSetting"
@@ -1146,7 +1097,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_care_setting_display(cls, values: dict) -> dict:
         "Validate that care_setting_display is present or absent, as required"
         link_id = "CareSetting"
@@ -1169,7 +1119,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_ip_address(cls, values: dict) -> dict:
         "Validate that ip_address is present or absent, as required"
 
@@ -1191,7 +1140,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_user_id(cls, values: dict) -> dict:
         "Validate that user_id is present or absent, as required"
 
@@ -1213,7 +1161,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_user_name(cls, values: dict) -> dict:
         "Validate that user_name is present or absent, as required"
 
@@ -1235,7 +1182,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_user_email(cls, values: dict) -> dict:
         "Validate that user_email is present or absent, as required"
 
@@ -1257,7 +1203,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_submitted_time_stamp(cls, values: dict) -> dict:
         "Validate that submitted_time_stamp is present or absent, as required"
 
@@ -1281,7 +1226,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_location_identifier_value(cls, values: dict) -> dict:
         "Validate that location_identifier_value is present or absent, as required"
 
@@ -1298,7 +1242,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_location_identifier_system(cls, values: dict) -> dict:
         "Validate that location_identifier_system is present or absent, as required"
 
@@ -1315,7 +1258,6 @@ class FHIRImmunizationPostValidators:
         )
         return values
 
-    @classmethod
     def validate_reduce_validation_reason(cls, values: dict) -> dict:
         "Validate that reduce_validation_reason is present or absent, as required"
         field_location = (
