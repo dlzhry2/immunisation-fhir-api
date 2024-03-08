@@ -425,7 +425,7 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_map_disease_type_to_disease_code(self):
         """it should map disease_type to disease_code"""
         # TODO: for this ticket we are assuming code is provided
-        nhs_number = "a-patient-id"
+        nhs_number = "9990548609"
         disease_type = "1324681000000101"
         params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
 
@@ -442,7 +442,7 @@ class TestSearchImmunizations(unittest.TestCase):
         imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
-        nhs_number = "an-id"
+        nhs_number = "9990548609"
         disease_type = "a-code"
         params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
         # When
