@@ -4,12 +4,13 @@ import os
 from enum import Enum
 from typing import Optional
 
-from pydantic import ValidationError
-from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
 from fhir.resources.R4B.bundle import BundleEntrySearch
 from fhir.resources.R4B.bundle import BundleEntry
 from fhir.resources.R4B.bundle import BundleLink
+from fhir.resources.R4B.immunization import Immunization
+from pydantic import ValidationError
+
 from fhir_repository import ImmunizationRepository
 from models.errors import (
     InvalidPatientId,
@@ -19,6 +20,7 @@ from models.errors import (
 )
 from models.fhir_immunization import ImmunizationValidator
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
+from models.utils.generic_utils import nhs_number_mod11_check
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from models.utils.generic_utils import get_occurrence_datetime, get_disease_type
@@ -76,7 +78,7 @@ class FhirService:
 
         return Immunization.parse_obj(imms)
 
-    def update_immunization(self, imms_id: str, immunization: dict) -> tuple[UpdateOutcome, Immunization]:
+    def update_immunization(self, imms_id: str, immunization: dict) -> (UpdateOutcome, Immunization):
         if immunization.get("id", imms_id) != imms_id:
             raise InconsistentIdError(imms_id=imms_id)
         immunization["id"] = imms_id
@@ -152,6 +154,8 @@ class FhirService:
         """
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
+        if not nhs_number_mod11_check(nhs_number):
+            raise InvalidPatientId(nhs_number=nhs_number)
         resources = self.immunization_repo.find_immunizations(nhs_number)
         resources = [
             r for r in resources
