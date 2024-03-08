@@ -1,10 +1,12 @@
 import unittest
 import uuid
+import boto3
 from typing import List
-
+from botocore.config import Config
+from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 from lib.apigee import ApigeeService, ApigeeApp, ApigeeProduct
 from lib.authentication import AppRestrictedAuthentication
-from lib.env import get_auth_url, get_proxy_name, get_service_base_path
+from lib.env import get_auth_url, get_proxy_name, get_service_base_path, get_imms_delta_table_name
 from utils.factories import make_apigee_service, make_app_restricted_app, make_apigee_product
 from utils.immunisation_api import ImmunisationApi, parse_location
 from utils.resource import create_an_imms_obj
@@ -21,6 +23,7 @@ class ImmunizationBaseTest(unittest.TestCase):
     apps: List[ApigeeApp]
     # an ImmunisationApi with default auth-type: ApplicationRestricted
     default_imms_api: ImmunisationApi
+    imms_delta_table: Table
 
     @classmethod
     def setUpClass(cls):
@@ -45,16 +48,22 @@ class ImmunizationBaseTest(unittest.TestCase):
             _app.add_product(cls.product.name)
             return _app
 
+        def getDeltaTable(region_name="eu-west-2"):
+            config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
+            db: DynamoDBServiceResource = boto3.resource(
+                "dynamodb", region_name=region_name, config=config
+            )
+            return db.Table(get_imms_delta_table_name())
         # ApplicationRestricted
         app_data = make_app_data()
         app_restricted_app, app_res_cfg = make_app_restricted_app(cls.apigee_service, app_data)
         cls.apps.append(app_restricted_app)
-
         app_res_auth = AppRestrictedAuthentication(get_auth_url(), app_res_cfg)
         base_url = get_service_base_path()
 
         cls.default_imms_api = ImmunisationApi(base_url, app_res_auth)
         cls.imms_apis.append(cls.default_imms_api)
+        cls.imms_delta_table = getDeltaTable()
 
         # Cis2
         # TODO(Cis2_AMB-1733) create an app for Cis2 and append it to the cls.apps,
