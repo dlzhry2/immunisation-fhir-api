@@ -48,7 +48,7 @@ class ImmunizationBaseTest(unittest.TestCase):
             _app.add_product(cls.product.name)
             return _app
 
-        def getDeltaTable(region_name="eu-west-2"):
+        def get_delta_table(region_name="eu-west-2") -> Table:
             config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
             db: DynamoDBServiceResource = boto3.resource(
                 "dynamodb", region_name=region_name, config=config
@@ -63,7 +63,7 @@ class ImmunizationBaseTest(unittest.TestCase):
 
         cls.default_imms_api = ImmunisationApi(base_url, app_res_auth)
         cls.imms_apis.append(cls.default_imms_api)
-        cls.imms_delta_table = getDeltaTable()
+        cls.imms_delta_table = get_delta_table()
 
         # Cis2
         # TODO(Cis2_AMB-1733) create an app for Cis2 and append it to the cls.apps,

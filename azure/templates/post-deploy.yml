@@ -59,12 +59,12 @@ steps:
           cd terraform
 
         make init
-          make apply aws_account_no=${aws_account_no} environment=$workspace
+        make apply aws_account_no=${aws_account_no} environment=$workspace
 
-          AWS_DOMAIN_NAME=$(make -s output name=service_domain_name)
-          IMMS_DELTA_TABLE_NAME=$(make -s output name=imms_delta_table_name)
-          echo "##vso[task.setvariable variable=AWS_DOMAIN_NAME]$AWS_DOMAIN_NAME"
-          echo "##vso[task.setvariable variable=IMMS_DELTA_TABLE_NAME]$IMMS_DELTA_TABLE_NAME"
+        AWS_DOMAIN_NAME=$(make -s output name=service_domain_name)
+        IMMS_DELTA_TABLE_NAME=$(make -s output name=imms_delta_table_name)
+        echo "##vso[task.setvariable variable=AWS_DOMAIN_NAME]$AWS_DOMAIN_NAME"
+        echo "##vso[task.setvariable variable=IMMS_DELTA_TABLE_NAME]$IMMS_DELTA_TABLE_NAME"
       fi
     displayName: Apply Terraform
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
