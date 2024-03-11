@@ -131,7 +131,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
             valid_strings_to_test=["9990548609"],
-            defined_length=10,
             invalid_length_strings_to_test=["999054860", "99905486091", ""],
             spaces_allowed=False,
             invalid_strings_with_spaces_to_test=[
