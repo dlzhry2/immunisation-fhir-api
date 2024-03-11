@@ -129,7 +129,12 @@ class FhirService:
 
     @timed
     def _validate_patient(self, imms: dict):
-        nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
+        try:
+            nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0][
+                "value"
+            ]
+        except (KeyError, IndexError):
+            nhs_number = None
 
         if not nhs_number:
             print("NO NHS NUMBER")
