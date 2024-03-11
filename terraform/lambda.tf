@@ -1,5 +1,5 @@
 locals {
-    lambda_dir    = abspath("${path.root}/../lambda_code")
+    lambda_dir    = abspath("${path.root}/../backend")
     source_path   = local.lambda_dir
     path_include  = ["**"]
     path_exclude  = ["**/__pycache__/**"]
