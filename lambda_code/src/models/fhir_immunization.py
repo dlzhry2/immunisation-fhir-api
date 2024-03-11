@@ -5,7 +5,7 @@ from fhir.resources.R4B.immunization import Immunization
 from models.fhir_immunization_pre_validators import FHIRImmunizationPreValidators
 from models.fhir_immunization_post_validators import FHIRImmunizationPostValidators
 from models.utils.generic_utils import get_generic_questionnaire_response_value
-
+from timer import timed
 
 class ImmunizationValidator:
     """
@@ -536,6 +536,7 @@ class ImmunizationValidator:
                 if "FHIRImmunizationPostValidators" in str(validator):
                     self.immunization.__post_root_validators__.remove(validator)
 
+    @timed
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
         self.set_reduce_validation_code(json_data)

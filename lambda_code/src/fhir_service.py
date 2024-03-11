@@ -1,4 +1,5 @@
 import os
+
 from enum import Enum
 from typing import Optional
 
@@ -17,8 +18,10 @@ from models.errors import (
 )
 from models.fhir_immunization import ImmunizationValidator
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
+from models.utils.generic_utils import nhs_number_mod11_check
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
+from timer import timed
 
 
 def get_service_url(
@@ -109,6 +112,8 @@ class FhirService:
         """
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
+        if not nhs_number_mod11_check(nhs_number):
+            raise InvalidPatientId(nhs_number=nhs_number)
         resources = self.immunization_repo.find_immunizations(nhs_number, disease_type)
         patient = self.pds_service.get_patient_details(nhs_number)
         entries = [BundleEntry(resource=Immunization.parse_obj(handle_s_flag(imms, patient))) for imms in resources]
@@ -121,9 +126,11 @@ class FhirService:
         fhir_bundle.link = [BundleLink(relation="self", url=url)]
         return fhir_bundle
 
+    @timed
     def _validate_patient(self, imms: dict):
         nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
+
         if patient:
             return patient
         else:
