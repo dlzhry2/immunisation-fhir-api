@@ -137,15 +137,16 @@ class FhirService:
             nhs_number = None
 
         if not nhs_number:
-            print("NO NHS NUMBER")
             verification_status_code = get_nhs_number_verification_status_code(imms)
             if verification_status_code == "04":
-                print("VERIFICATION STATUS IS 04")
                 patient = {}
+                return patient
             else:
                 raise CustomValidationError(message="NHS number is mandatory unless verification status is '04'")
         else:
             patient = self.pds_service.get_patient_details(nhs_number)
+
         if patient:
             return patient
+
         raise InvalidPatientId(nhs_number=nhs_number)

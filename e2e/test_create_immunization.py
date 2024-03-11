@@ -55,11 +55,23 @@ class TestCreateImmunization(ImmunizationBaseTest):
         # Then
         self.assert_operation_outcome(response, 400, "occurrenceDateTime")
 
-    def test_no_nhs_number(self):
+    def test_no_nhs_number_incorrect_status(self):
         """it should reject the request if nhs-number is missing and verifaction status is not 04"""
         imms = create_an_imms_obj()
         del imms["contained"][1]["identifier"][0]["value"]
 
         response = self.default_imms_api.create_immunization(imms)
 
-        self.assert_operation_outcome(response, 400, "nhs-number")
+        self.assert_operation_outcome(response, 400, "NHS number is mandatory unless verification status is '04'")
+
+    def test_no_nhs_number_correct_status(self):
+        """it should accept the request if nhs-number is missing and verifaction status is 04"""
+        imms = create_an_imms_obj()
+        del imms["contained"][1]["identifier"][0]["value"]
+        imms["contained"][1]["identifier"][0]["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "04"
+
+        response = self.default_imms_api.create_immunization(imms)
+
+        self.assertEqual(response.status_code, 201, response.text)
+        self.assertEqual(response.text, "")
+        self.assertTrue("Location" in response.headers)
