@@ -49,18 +49,12 @@ class FHIRImmunizationPreValidators:
         patient_reference = values.get("patient", {}).get("reference")
 
         # Make sure we have a reference
-        if not (
-            isinstance(patient_reference, str) and patient_reference.startswith("#")
-        ):
-            raise ValueError(
-                "patient.reference must be a single reference to a contained Patient resource"
-            )
+        if not (isinstance(patient_reference, str) and patient_reference.startswith("#")):
+            raise ValueError("patient.reference must be a single reference to a contained Patient resource")
 
         # Obtain the contained patient resource
         try:
-            contained_patient = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]
+            contained_patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]
 
             try:
                 # Try to obtain the contained patient resource id
@@ -69,21 +63,16 @@ class FHIRImmunizationPreValidators:
                 # If the reference is not equal to the ID then raise an error
                 if ("#" + contained_patient_id) != patient_reference:
                     raise ValueError(
-                        f"The reference '{patient_reference}' does "
-                        + "not exist in the contained Patient resource"
+                        f"The reference '{patient_reference}' does " + "not exist in the contained Patient resource"
                     )
             except KeyError as error:
                 # If the contained Patient resource has no id raise an error
-                raise ValueError(
-                    "The contained Patient resource must have an 'id' field"
-                ) from error
+                raise ValueError("The contained Patient resource must have an 'id' field") from error
 
         except (IndexError, KeyError) as error:
             # Entering this exception block implies that there is no contained patient resource
             # therefore raise an error
-            raise ValueError(
-                "contained[?(@.resourceType=='Patient')] is mandatory"
-            ) from error
+            raise ValueError("contained[?(@.resourceType=='Patient')] is mandatory") from error
 
         return values
 
@@ -94,9 +83,7 @@ class FHIRImmunizationPreValidators:
         is a list of length 1
         """
         try:
-            patient_identifier = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["identifier"]
+            patient_identifier = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["identifier"]
             PreValidation.for_list(
                 patient_identifier,
                 "contained[?(@.resourceType=='Patient')].identifier",
@@ -115,15 +102,19 @@ class FHIRImmunizationPreValidators:
         which does not contain spaces
         """
         try:
-            patient_identifier_value = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["identifier"][0]["value"]
+            patient_identifier_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0][
+                "identifier"
+            ][0]["value"]
 
             PreValidation.for_string(
                 patient_identifier_value,
                 "contained[?(@.resourceType=='Patient')].identifier[0].value",
                 defined_length=10,
                 spaces_allowed=False,
+            )
+
+            PreValidation.for_nhs_number(
+                patient_identifier_value, "contained[?(@.resourceType=='Patient')].identifier[0].value"
             )
         except (KeyError, IndexError):
             pass
@@ -137,9 +128,7 @@ class FHIRImmunizationPreValidators:
         then it is an array of length 1
         """
         try:
-            patient_name = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["name"]
+            patient_name = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["name"]
             PreValidation.for_list(
                 patient_name,
                 "contained[?(@.resourceType=='Patient')].name",
@@ -158,9 +147,9 @@ class FHIRImmunizationPreValidators:
         an array containing a single non-empty string
         """
         try:
-            patient_name_given = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["name"][0]["given"]
+            patient_name_given = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["name"][0][
+                "given"
+            ]
             PreValidation.for_list(
                 patient_name_given,
                 "contained[?(@.resourceType=='Patient')].name[0].given",
@@ -180,9 +169,9 @@ class FHIRImmunizationPreValidators:
         an array containing a single non-empty string
         """
         try:
-            patient_name_family = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["name"][0]["family"]
+            patient_name_family = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["name"][0][
+                "family"
+            ]
             PreValidation.for_string(
                 patient_name_family,
                 "contained[?(@.resourceType=='Patient')].name[0].family",
@@ -200,12 +189,8 @@ class FHIRImmunizationPreValidators:
         string in the format YYYY-MM-DD, representing a valid date
         """
         try:
-            patient_birth_date = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["birthDate"]
-            PreValidation.for_date(
-                patient_birth_date, "contained[?(@.resourceType=='Patient')].birthDate"
-            )
+            patient_birth_date = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["birthDate"]
+            PreValidation.for_date(patient_birth_date, "contained[?(@.resourceType=='Patient')].birthDate")
         except (KeyError, IndexError):
             pass
 
@@ -219,9 +204,7 @@ class FHIRImmunizationPreValidators:
         then it is a string, which is one of the following: male, female, other, unknown
         """
         try:
-            patient_gender = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["gender"]
+            patient_gender = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["gender"]
             PreValidation.for_string(
                 patient_gender,
                 "contained[?(@.resourceType=='Patient')].gender",
@@ -239,9 +222,7 @@ class FHIRImmunizationPreValidators:
         an array of length 1
         """
         try:
-            patient_address = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["address"]
+            patient_address = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["address"]
             PreValidation.for_list(
                 patient_address,
                 "contained[?(@.resourceType=='Patient')].address",
@@ -261,9 +242,9 @@ class FHIRImmunizationPreValidators:
         """
 
         try:
-            patient_address_postal_code = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["address"][0]["postalCode"]
+            patient_address_postal_code = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0][
+                "address"
+            ][0]["postalCode"]
             PreValidation.for_string(
                 patient_address_postal_code,
                 "contained[?(@.resourceType=='Patient')].address[0].postalCode",
@@ -301,16 +282,13 @@ class FHIRImmunizationPreValidators:
         """
         try:
             questionnaire_response_item = [
-                x
-                for x in values["contained"]
-                if x.get("resourceType") == "QuestionnaireResponse"
+                x for x in values["contained"] if x.get("resourceType") == "QuestionnaireResponse"
             ][0]["item"]
 
             PreValidation.for_unique_list(
                 questionnaire_response_item,
                 "linkId",
-                "contained[?(@.resourceType=='QuestionnaireResponse')]"
-                + ".item[?(@.linkId=='FIELD_TO_REPLACE')]",
+                "contained[?(@.resourceType=='QuestionnaireResponse')]" + ".item[?(@.linkId=='FIELD_TO_REPLACE')]",
             )
 
         except (KeyError, IndexError):
@@ -326,18 +304,15 @@ class FHIRImmunizationPreValidators:
         is a list of length 1
         """
         try:
-            questionnaire_items = [
-                x
-                for x in values["contained"]
-                if x.get("resourceType") == "QuestionnaireResponse"
-            ][0]["item"]
+            questionnaire_items = [x for x in values["contained"] if x.get("resourceType") == "QuestionnaireResponse"][
+                0
+            ]["item"]
             for index, value in enumerate(questionnaire_items):
                 try:
                     questionnaire_answer = value["answer"]
                     PreValidation.for_list(
                         questionnaire_answer,
-                        "contained[?(@.resourceType=='QuestionnaireResponse')]"
-                        + f".item[{index}].answer",
+                        "contained[?(@.resourceType=='QuestionnaireResponse')]" + f".item[{index}].answer",
                         defined_length=1,
                     )
                 except KeyError:
@@ -356,13 +331,8 @@ class FHIRImmunizationPreValidators:
         try:
             found = []
             for item in values["performer"]:
-                if (
-                    item.get("actor").get("type") == "Organization"
-                    and item.get("actor").get("type") in found
-                ):
-                    raise ValueError(
-                        "performer.actor[?@.type=='Organization'] must be unique"
-                    )
+                if item.get("actor").get("type") == "Organization" and item.get("actor").get("type") in found:
+                    raise ValueError("performer.actor[?@.type=='Organization'] must be unique")
 
                 found.append(item.get("actor").get("type"))
 
@@ -400,11 +370,7 @@ class FHIRImmunizationPreValidators:
 
         # Obtain the contained practitioner resource
         try:
-            contained_practitioner = [
-                x
-                for x in values["contained"]
-                if x.get("resourceType") == "Practitioner"
-            ][0]
+            contained_practitioner = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]
 
             try:
                 # Try to obtain the contained practitioner resource id
@@ -412,23 +378,17 @@ class FHIRImmunizationPreValidators:
 
                 # If there is a contained practitioner resource, but no reference raise an error
                 if len(performer_actor_internal_references) == 0:
-                    raise ValueError(
-                        "contained Practitioner ID must be referenced by performer.actor.reference"
-                    )
+                    raise ValueError("contained Practitioner ID must be referenced by performer.actor.reference")
 
                 # If the reference is not equal to the ID then raise an error
-                if (
-                    "#" + contained_practitioner_id
-                ) != performer_actor_internal_references[0]:
+                if ("#" + contained_practitioner_id) != performer_actor_internal_references[0]:
                     raise ValueError(
                         f"The reference '{performer_actor_internal_references[0]}' does "
                         + "not exist in the contained Practitioner resources"
                     )
             except KeyError as error:
                 # If the contained practitioner resource has no id raise an error
-                raise ValueError(
-                    "The contained Practitioner resource must have an 'id' field"
-                ) from error
+                raise ValueError("The contained Practitioner resource must have an 'id' field") from error
 
         except (IndexError, KeyError) as error:
             # Entering this exception block implies that there is no contained practitioner resource
@@ -449,9 +409,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             organization_identifier_value = [
-                x
-                for x in values["performer"]
-                if x.get("actor").get("type") == "Organization"
+                x for x in values["performer"] if x.get("actor").get("type") == "Organization"
             ][0]["actor"]["identifier"]["value"]
             PreValidation.for_string(
                 organization_identifier_value,
@@ -469,11 +427,9 @@ class FHIRImmunizationPreValidators:
         (legacy CSV field name: SITE_NAME) exists, then it is a non-empty string
         """
         try:
-            organization_display = [
-                x
-                for x in values["performer"]
-                if x.get("actor").get("type") == "Organization"
-            ][0]["actor"]["display"]
+            organization_display = [x for x in values["performer"] if x.get("actor").get("type") == "Organization"][0][
+                "actor"
+            ]["display"]
             PreValidation.for_string(
                 organization_display,
                 "performer[?@.actor.type == 'Organization'].actor.display",
@@ -544,9 +500,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             status = values["status"]
-            PreValidation.for_string(
-                status, "status", predefined_values=Constants.STATUSES
-            )
+            PreValidation.for_string(status, "status", predefined_values=Constants.STATUSES)
         except KeyError:
             pass
 
@@ -559,11 +513,7 @@ class FHIRImmunizationPreValidators:
         then it is an array of length 1
         """
         try:
-            practitioner_name = [
-                x
-                for x in values["contained"]
-                if x.get("resourceType") == "Practitioner"
-            ][0]["name"]
+            practitioner_name = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["name"]
             PreValidation.for_list(
                 practitioner_name,
                 "contained[?(@.resourceType=='Practitioner')].name",
@@ -582,11 +532,9 @@ class FHIRImmunizationPreValidators:
         an array containing a single non-empty string
         """
         try:
-            practitioner_name_given = [
-                x
-                for x in values["contained"]
-                if x.get("resourceType") == "Practitioner"
-            ][0]["name"][0]["given"]
+            practitioner_name_given = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0][
+                "name"
+            ][0]["given"]
             PreValidation.for_list(
                 practitioner_name_given,
                 "contained[?(@.resourceType=='Practitioner')].name[0].given",
@@ -606,11 +554,9 @@ class FHIRImmunizationPreValidators:
         an array containing a single non-empty string
         """
         try:
-            practitioner_name_family = [
-                x
-                for x in values["contained"]
-                if x.get("resourceType") == "Practitioner"
-            ][0]["name"][0]["family"]
+            practitioner_name_family = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0][
+                "name"
+            ][0]["family"]
             PreValidation.for_string(
                 practitioner_name_family,
                 "contained[?(@.resourceType=='Practitioner')].name[0].family",
@@ -627,11 +573,9 @@ class FHIRImmunizationPreValidators:
         then it is a list of length 1
         """
         try:
-            practitioner_identifier = [
-                x
-                for x in values["contained"]
-                if x.get("resourceType") == "Practitioner"
-            ][0]["identifier"]
+            practitioner_identifier = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0][
+                "identifier"
+            ]
             PreValidation.for_list(
                 practitioner_identifier,
                 "contained[?(@.resourceType=='Practitioner')].identifier",
@@ -650,11 +594,9 @@ class FHIRImmunizationPreValidators:
         non-empty string
         """
         try:
-            practitioner_identifier_value = [
-                x
-                for x in values["contained"]
-                if x.get("resourceType") == "Practitioner"
-            ][0]["identifier"][0]["value"]
+            practitioner_identifier_value = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][
+                0
+            ]["identifier"][0]["value"]
             PreValidation.for_string(
                 practitioner_identifier_value,
                 "contained[?(@.resourceType=='Practitioner')].identifier[0].value",
@@ -673,9 +615,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             practitioner_identifier_system = [
-                x
-                for x in values["contained"]
-                if x.get("resourceType") == "Practitioner"
+                x for x in values["contained"] if x.get("resourceType") == "Practitioner"
             ][0]["identifier"][0]["system"]
             PreValidation.for_string(
                 practitioner_identifier_system,
@@ -746,9 +686,7 @@ class FHIRImmunizationPreValidators:
         try:
             report_origin_text = values["reportOrigin"]["text"]
 
-            PreValidation.for_string(
-                report_origin_text, "reportOrigin.text", max_length=100
-            )
+            PreValidation.for_string(report_origin_text, "reportOrigin.text", max_length=100)
         except KeyError:
             pass
 
@@ -771,9 +709,7 @@ class FHIRImmunizationPreValidators:
         return values
 
     @classmethod
-    def pre_validate_extension_value_codeable_concept_codings(
-        cls, values: dict
-    ) -> dict:
+    def pre_validate_extension_value_codeable_concept_codings(cls, values: dict) -> dict:
         """
         Pre-validate that, if they exist, each extension[{index}].valueCodeableConcept.coding.system
         is unique
@@ -781,9 +717,7 @@ class FHIRImmunizationPreValidators:
         try:
             for i in range(len(values["extension"])):
                 try:
-                    extension_value_codeable_concept_coding = values["extension"][i][
-                        "valueCodeableConcept"
-                    ]["coding"]
+                    extension_value_codeable_concept_coding = values["extension"][i]["valueCodeableConcept"]["coding"]
 
                     PreValidation.for_unique_list(
                         extension_value_codeable_concept_coding,
@@ -807,10 +741,7 @@ class FHIRImmunizationPreValidators:
         (legacy CSV field name: VACCINATION_PROCEDURE_CODE) exists, then it is a non-empty string
         """
         try:
-            url = (
-                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-                + "VaccinationProcedure"
-            )
+            url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-" + "VaccinationProcedure"
             system = "http://snomed.info/sct"
             field_type = "code"
             vaccination_procedure_code = get_generic_extension_value(
@@ -837,10 +768,7 @@ class FHIRImmunizationPreValidators:
         (legacy CSV field name: VACCINATION_PROCEDURE_TERM) exists, then it is a non-empty string
         """
         try:
-            url = (
-                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-                + "VaccinationProcedure"
-            )
+            url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-" + "VaccinationProcedure"
             system = "http://snomed.info/sct"
             field_type = "display"
             vaccination_procedure_display = get_generic_extension_value(
@@ -867,15 +795,10 @@ class FHIRImmunizationPreValidators:
         (legacy CSV field name: VACCINATION_SITUATION_CODE) exists, then it is a non-empty string
         """
         try:
-            url = (
-                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-                + "VaccinationSituation"
-            )
+            url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-" + "VaccinationSituation"
             system = "http://snomed.info/sct"
             field_type = "code"
-            vaccination_situation_code = get_generic_extension_value(
-                values, url, system, field_type
-            )
+            vaccination_situation_code = get_generic_extension_value(values, url, system, field_type)
             PreValidation.for_string(
                 vaccination_situation_code,
                 generate_field_location_for_extension(url, system, field_type),
@@ -894,15 +817,10 @@ class FHIRImmunizationPreValidators:
         (legacy CSV field name: VACCINATION_SITUATION_TERM) exists, then it is a non-empty string
         """
         try:
-            url = (
-                "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-                + "VaccinationSituation"
-            )
+            url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-" + "VaccinationSituation"
             system = "http://snomed.info/sct"
             field_type = "display"
-            vaccination_situation_display = get_generic_extension_value(
-                values, url, system, field_type
-            )
+            vaccination_situation_display = get_generic_extension_value(values, url, system, field_type)
             PreValidation.for_string(
                 vaccination_situation_display,
                 generate_field_location_for_extension(url, system, field_type),
@@ -940,9 +858,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             status_reason_coding_code = [
-                x
-                for x in values["statusReason"]["coding"]
-                if x.get("system") == "http://snomed.info/sct"
+                x for x in values["statusReason"]["coding"] if x.get("system") == "http://snomed.info/sct"
             ][0]["code"]
             PreValidation.for_string(
                 status_reason_coding_code,
@@ -962,9 +878,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             status_reason_coding_display = [
-                x
-                for x in values["statusReason"]["coding"]
-                if x.get("system") == "http://snomed.info/sct"
+                x for x in values["statusReason"]["coding"] if x.get("system") == "http://snomed.info/sct"
             ][0]["display"]
             PreValidation.for_string(
                 status_reason_coding_display,
@@ -991,17 +905,13 @@ class FHIRImmunizationPreValidators:
         return values
 
     @classmethod
-    def pre_validate_protocol_applied_dose_number_positive_int(
-        cls, values: dict
-    ) -> dict:
+    def pre_validate_protocol_applied_dose_number_positive_int(cls, values: dict) -> dict:
         """
         Pre-validate that, if protocolApplied[0].doseNumberPositiveInt (legacy CSV fidose_sequence)
         exists, then it is an integer from 1 to 9
         """
         try:
-            protocol_applied_dose_number_positive_int = values["protocolApplied"][0][
-                "doseNumberPositiveInt"
-            ]
+            protocol_applied_dose_number_positive_int = values["protocolApplied"][0]["doseNumberPositiveInt"]
             PreValidation.for_positive_integer(
                 protocol_applied_dose_number_positive_int,
                 "protocolApplied[0].doseNumberPositiveInt",
@@ -1037,9 +947,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             status_reason_coding_code = [
-                x
-                for x in values["vaccineCode"]["coding"]
-                if x.get("system") == "http://snomed.info/sct"
+                x for x in values["vaccineCode"]["coding"] if x.get("system") == "http://snomed.info/sct"
             ][0]["code"]
             PreValidation.for_string(
                 status_reason_coding_code,
@@ -1059,9 +967,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             vaccine_code_coding_display = [
-                x
-                for x in values["vaccineCode"]["coding"]
-                if x.get("system") == "http://snomed.info/sct"
+                x for x in values["vaccineCode"]["coding"] if x.get("system") == "http://snomed.info/sct"
             ][0]["display"]
             PreValidation.for_string(
                 vaccine_code_coding_display,
@@ -1137,11 +1043,9 @@ class FHIRImmunizationPreValidators:
         (legacy CSV field name: SITE_OF_VACCINATION_CODE) exists, then it is a non-empty string
         """
         try:
-            site_coding_code = [
-                x
-                for x in values["site"]["coding"]
-                if x.get("system") == "http://snomed.info/sct"
-            ][0]["code"]
+            site_coding_code = [x for x in values["site"]["coding"] if x.get("system") == "http://snomed.info/sct"][0][
+                "code"
+            ]
             PreValidation.for_string(
                 site_coding_code,
                 "site.coding[?(@.system=='http://snomed.info/sct')].code",
@@ -1158,11 +1062,9 @@ class FHIRImmunizationPreValidators:
         (legacy CSV field name: SITE_OF_VACCINATION_TERM) exists, then it is a non-empty string
         """
         try:
-            site_coding_display = [
-                x
-                for x in values["site"]["coding"]
-                if x.get("system") == "http://snomed.info/sct"
-            ][0]["display"]
+            site_coding_display = [x for x in values["site"]["coding"] if x.get("system") == "http://snomed.info/sct"][
+                0
+            ]["display"]
 
             PreValidation.for_string(
                 site_coding_display,
@@ -1196,11 +1098,9 @@ class FHIRImmunizationPreValidators:
         (legacy CSV field name: ROUTE_OF_VACCINATION_CODE) exists, then it is a non-empty string
         """
         try:
-            route_coding_code = [
-                x
-                for x in values["route"]["coding"]
-                if x.get("system") == "http://snomed.info/sct"
-            ][0]["code"]
+            route_coding_code = [x for x in values["route"]["coding"] if x.get("system") == "http://snomed.info/sct"][
+                0
+            ]["code"]
             PreValidation.for_string(
                 route_coding_code,
                 "route.coding[?(@.system=='http://snomed.info/sct')].code",
@@ -1218,9 +1118,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             route_coding_display = [
-                x
-                for x in values["route"]["coding"]
-                if x.get("system") == "http://snomed.info/sct"
+                x for x in values["route"]["coding"] if x.get("system") == "http://snomed.info/sct"
             ][0]["display"]
 
             PreValidation.for_string(
@@ -1249,9 +1147,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             dose_quantity_value = values["doseQuantity"]["value"]
-            PreValidation.for_integer_or_decimal(
-                dose_quantity_value, "doseQuantity.value", max_decimal_places=4
-            )
+            PreValidation.for_integer_or_decimal(dose_quantity_value, "doseQuantity.value", max_decimal_places=4)
         except KeyError:
             pass
 
@@ -1316,9 +1212,7 @@ class FHIRImmunizationPreValidators:
             for index, value in enumerate(values["reasonCode"]):
                 try:
                     reason_code_coding_code = value["coding"][0]["code"]
-                    PreValidation.for_string(
-                        reason_code_coding_code, f"reasonCode[{index}].coding[0].code"
-                    )
+                    PreValidation.for_string(reason_code_coding_code, f"reasonCode[{index}].coding[0].code")
                 except KeyError:
                     pass
         except KeyError:
@@ -1354,13 +1248,9 @@ class FHIRImmunizationPreValidators:
         [?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension exists, then each url is unique
         """
         try:
-            patient_identifier = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["identifier"]
+            patient_identifier = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["identifier"]
             patient_extension = [
-                x
-                for x in patient_identifier
-                if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
+                x for x in patient_identifier if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
             ][0]["extension"]
 
             PreValidation.for_unique_list(
@@ -1384,22 +1274,17 @@ class FHIRImmunizationPreValidators:
         NHSNumberVerificationStatus')].valueCodeableConcept.coding exists, then each url is unique
         """
         try:
-            patient_identifier = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["identifier"]
+            patient_identifier = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["identifier"]
 
             patient_extension = [
-                x
-                for x in patient_identifier
-                if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
+                x for x in patient_identifier if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
             ][0]["extension"]
 
             nhs_number_verification_status_coding = [
                 x
                 for x in patient_extension
                 if x.get("url")
-                == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-                + "NHSNumberVerificationStatus"
+                == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-" + "NHSNumberVerificationStatus"
             ][0]["valueCodeableConcept"]["coding"]
 
             PreValidation.for_unique_list(
@@ -1425,21 +1310,14 @@ class FHIRImmunizationPreValidators:
         NHS_NUMBER_STATUS_INDICATOR_CODE) exists, then it is a non-empty string
         """
         try:
-            url = (
-                "https://fhir.hl7.org.uk/StructureDefinition/Extension-"
-                + "UKCore-NHSNumberVerificationStatus"
-            )
+            url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-" + "UKCore-NHSNumberVerificationStatus"
             system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
             field_type = "code"
 
-            patient_identifier = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["identifier"]
+            patient_identifier = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["identifier"]
 
             patient_identifier_extension_item = [
-                x
-                for x in patient_identifier
-                if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
+                x for x in patient_identifier if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
             ][0]
 
             nhs_number_verification_status_code = get_generic_extension_value(
@@ -1470,21 +1348,14 @@ class FHIRImmunizationPreValidators:
         NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION) exists, then it is a non-empty string
         """
         try:
-            url = (
-                "https://fhir.hl7.org.uk/StructureDefinition/Extension-"
-                + "UKCore-NHSNumberVerificationStatus"
-            )
+            url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-" + "UKCore-NHSNumberVerificationStatus"
             system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
             field_type = "display"
 
-            patient_identifier = [
-                x for x in values["contained"] if x.get("resourceType") == "Patient"
-            ][0]["identifier"]
+            patient_identifier = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["identifier"]
 
             patient_identifier_extension_item = [
-                x
-                for x in patient_identifier
-                if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
+                x for x in patient_identifier if x.get("system") == "https://fhir.nhs.uk/Id/nhs-number"
             ][0]
 
             nhs_number_verification_status_display = get_generic_extension_value(
@@ -1514,9 +1385,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             organization_identifier_system = [
-                x
-                for x in values["performer"]
-                if x.get("actor").get("type") == "Organization"
+                x for x in values["performer"] if x.get("actor").get("type") == "Organization"
             ][0]["actor"]["identifier"]["system"]
             PreValidation.for_string(
                 organization_identifier_system,
@@ -1693,14 +1562,10 @@ class FHIRImmunizationPreValidators:
         """
         try:
             answer_type = "valueString"
-            ip_address_code = get_generic_questionnaire_response_value(
-                values, "IpAddress", answer_type=answer_type
-            )
+            ip_address_code = get_generic_questionnaire_response_value(values, "IpAddress", answer_type=answer_type)
             PreValidation.for_string(
                 ip_address_code,
-                generate_field_location_for_questionnnaire_response(
-                    link_id="IpAddress", answer_type=answer_type
-                ),
+                generate_field_location_for_questionnnaire_response(link_id="IpAddress", answer_type=answer_type),
             )
         except (KeyError, IndexError):
             pass
@@ -1716,14 +1581,10 @@ class FHIRImmunizationPreValidators:
         """
         try:
             answer_type = "valueString"
-            user_id_code = get_generic_questionnaire_response_value(
-                values, "UserId", answer_type=answer_type
-            )
+            user_id_code = get_generic_questionnaire_response_value(values, "UserId", answer_type=answer_type)
             PreValidation.for_string(
                 user_id_code,
-                generate_field_location_for_questionnnaire_response(
-                    link_id="UserId", answer_type=answer_type
-                ),
+                generate_field_location_for_questionnnaire_response(link_id="UserId", answer_type=answer_type),
             )
         except (KeyError, IndexError):
             pass
@@ -1739,14 +1600,10 @@ class FHIRImmunizationPreValidators:
         """
         try:
             answer_type = "valueString"
-            user_name_code = get_generic_questionnaire_response_value(
-                values, "UserName", answer_type=answer_type
-            )
+            user_name_code = get_generic_questionnaire_response_value(values, "UserName", answer_type=answer_type)
             PreValidation.for_string(
                 user_name_code,
-                generate_field_location_for_questionnnaire_response(
-                    link_id="UserName", answer_type=answer_type
-                ),
+                generate_field_location_for_questionnnaire_response(link_id="UserName", answer_type=answer_type),
             )
         except (KeyError, IndexError):
             pass
@@ -1762,14 +1619,10 @@ class FHIRImmunizationPreValidators:
         """
         try:
             answer_type = "valueString"
-            user_email_code = get_generic_questionnaire_response_value(
-                values, "UserEmail", answer_type=answer_type
-            )
+            user_email_code = get_generic_questionnaire_response_value(values, "UserEmail", answer_type=answer_type)
             PreValidation.for_string(
                 user_email_code,
-                generate_field_location_for_questionnnaire_response(
-                    link_id="UserEmail", answer_type=answer_type
-                ),
+                generate_field_location_for_questionnnaire_response(link_id="UserEmail", answer_type=answer_type),
             )
         except (KeyError, IndexError):
             pass
@@ -1810,9 +1663,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             location_identifier_value = values["location"]["identifier"]["value"]
-            PreValidation.for_string(
-                location_identifier_value, "location.identifier.value"
-            )
+            PreValidation.for_string(location_identifier_value, "location.identifier.value")
         except KeyError:
             pass
 
@@ -1826,9 +1677,7 @@ class FHIRImmunizationPreValidators:
         """
         try:
             location_identifier_system = values["location"]["identifier"]["system"]
-            PreValidation.for_string(
-                location_identifier_system, "location.identifier.system"
-            )
+            PreValidation.for_string(location_identifier_system, "location.identifier.system")
         except KeyError:
             pass
 
