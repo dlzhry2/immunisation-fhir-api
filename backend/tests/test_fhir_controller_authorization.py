@@ -4,14 +4,19 @@ import uuid
 from typing import Set
 from unittest.mock import create_autospec
 
-from authorization import Authorization, UnknownPermission, EndpointOperation, PERMISSIONS_HEADER, AUTHENTICATION_HEADER
+from authorization import (
+    Authorization,
+    UnknownPermission,
+    EndpointOperation,
+    AuthType,
+    Permission,
+    AUTHENTICATION_HEADER,
+    PERMISSIONS_HEADER,
+)
 from fhir_controller import FhirController
 from fhir_service import FhirService, UpdateOutcome
 from models.errors import UnauthorizedError
 from tests.immunization_utils import create_an_immunization
-
-Permission = Authorization._Permission
-AuthType = Authorization._AuthType
 
 
 def full_access(exclude: Set[Permission] = None) -> Set[Permission]:
@@ -32,7 +37,7 @@ def make_aws_event(auth_type: AuthType, permissions=None) -> dict:
 
 
 class TestFhirControllerAuthorization(unittest.TestCase):
-    """For each endpoint we need to test 3 scenarios.
+    """For each endpoint, we need to test three scenarios.
         1- Happy path test: make sure authorize() receives correct EndpointOperation, and we pass aws_event
         2- Unauthorized test: make sure we send a 403 OperationOutcome
         3- UnknownPermission test: make sure we send a 500 OperationOutcome
