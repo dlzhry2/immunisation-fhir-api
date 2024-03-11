@@ -70,6 +70,7 @@ class FhirService:
             self.validator.validate(immunization)
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             print(f"Error: {error}")
+            print(immunization)
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
 
@@ -131,8 +132,10 @@ class FhirService:
         nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
 
         if not nhs_number:
+            print("NO NHS NUMBER")
             verification_status_code = get_nhs_number_verification_status_code(imms)
             if verification_status_code == "04":
+                print("VERIFICATION STATUS IS 04")
                 patient = {}
             else:
                 raise CustomValidationError(message="NHS number is mandatory unless verification status is '04'")
