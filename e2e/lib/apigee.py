@@ -45,7 +45,7 @@ class ApigeeApp:
     credentials: List[dict] = field(default_factory=lambda: [])
     attributes: List[dict] = field(default_factory=lambda: [])
     apiProducts: List[str] = field(default_factory=lambda: [])
-    callbackUrl: str = "www.example.com"
+    callbackUrl: str = "https://oauth.pstmn.io/v1/callback"
     scopes: List[str] = field(default_factory=lambda: [])
     status: str = "approved"
 
@@ -190,7 +190,8 @@ class ApigeeService:
     def _delete(self, path: str) -> dict:
         url = f"{self.base_url}/{path}"
         resp = requests.delete(url=url, headers=self.default_headers)
-        if resp.status_code != 200:
+        # 404 is a valid response for delete
+        if resp.status_code != 200 and resp.status_code != 404:
             raise ApigeeError(
                 f"DELETE request to {resp.url} failed with status_code: {resp.status_code}, "
                 f"Reason: {resp.reason} and Content: {resp.text}")
