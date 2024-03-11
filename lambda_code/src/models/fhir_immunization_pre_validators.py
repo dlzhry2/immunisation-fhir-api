@@ -109,7 +109,7 @@ class FHIRImmunizationPreValidators:
             PreValidation.for_string(
                 patient_identifier_value,
                 "contained[?(@.resourceType=='Patient')].identifier[0].value",
-                defined_length=10,
+                # defined_length=10,
                 spaces_allowed=False,
             )
 

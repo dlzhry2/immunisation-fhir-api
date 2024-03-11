@@ -74,7 +74,7 @@ class FhirService:
 
         return Immunization.parse_obj(imms)
 
-    def update_immunization(self, imms_id: str, immunization: dict) -> (UpdateOutcome, Immunization):
+    def update_immunization(self, imms_id: str, immunization: dict) -> tuple[UpdateOutcome, Immunization]:
         if immunization.get("id", imms_id) != imms_id:
             raise InconsistentIdError(imms_id=imms_id)
         immunization["id"] = imms_id

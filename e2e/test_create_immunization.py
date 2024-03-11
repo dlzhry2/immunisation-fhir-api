@@ -54,3 +54,16 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
         # Then
         self.assert_operation_outcome(response, 400, "occurrenceDateTime")
+
+    def test_no_nhs_number(self):
+        """it should reject the request if nhs-number is missing and verifaction status is not 04"""
+        imms = create_an_imms_obj()
+        del imms["contained"][1]["identifier"][0]["value"]
+
+        response = self.default_imms_api.create_immunization(imms)
+
+        from icecream import ic
+
+        ic(response.text)
+
+        self.assert_operation_outcome(response, 400, "nhs-number")
