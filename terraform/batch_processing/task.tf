@@ -23,7 +23,6 @@ resource "aws_ecs_task_definition" "mock-receiver" {
             image     = "${aws_ecr_repository.batch_processing_repository.repository_url}:${local.image_tag}"
             essential = true
 
-
             logConfiguration : {
                 "logDriver" : "awslogs",
                 "options" : {
@@ -31,7 +30,7 @@ resource "aws_ecs_task_definition" "mock-receiver" {
                     "awslogs-group" : aws_cloudwatch_log_group.batch_task_log_group.name
                     "awslogs-region" : "eu-west-2",
                     // TODO: Fargate creates it's own stream. Do we need to create our own? -> set awslogs-create-group to false and see if we can use our own stream which has retention
-                    "awslogs-stream-prefix" : aws_cloudwatch_log_stream.container_log_stream.name
+                    "awslogs-stream-prefix" : "batch"
                 }
             }
         }

@@ -17,6 +17,11 @@ resource "aws_iam_role" "task_role" {
 EOF
 }
 
+resource "aws_iam_role_policy_attachment" "task_policy" {
+    role       = aws_iam_role.task_role.name
+    policy_arn = var.task_policy_arn
+}
+
 resource "aws_iam_role" "task_execution_role" {
     name               = "${local.prefix}-execution-role"
     assume_role_policy = <<EOF
@@ -35,12 +40,13 @@ resource "aws_iam_role" "task_execution_role" {
 }
 EOF
 }
-resource "aws_iam_role_policy_attachment" "task_execution_role_policy_attachment" {
-  role       = aws_iam_role.task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+
+resource "aws_iam_role_policy_attachment" "task_execution_ecr_policy" {
+    role       = aws_iam_role.task_execution_role.name
+    policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
-resource "aws_iam_role_policy" "main_ecs_tasks" {
+resource "aws_iam_role_policy" "task_execution_log_policy" {
     name = "${local.prefix}-policy"
     role = aws_iam_role.task_execution_role.id
 
@@ -50,22 +56,10 @@ resource "aws_iam_role_policy" "main_ecs_tasks" {
     "Statement": [
         {
             "Effect": "Allow",
-            "Action": [
-                "s3:Get*",
-                "s3:List*"
-            ],
-            "Resource": ["*"]
-        },
-        {
-            "Effect": "Allow",
             "Resource": [
               "*"
             ],
             "Action": [
-                "ecr:GetAuthorizationToken",
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:BatchGetImage",
                 "logs:CreateLogStream",
                 "logs:PutLogEvents",
                 "logs:CreateLogGroup",
