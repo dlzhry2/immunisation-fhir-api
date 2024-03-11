@@ -1,11 +1,29 @@
+import boto3
 import json
 import os
 import uuid
+from boto3 import resource
 from time import time
 
-from boto3 import resource
 from immunisation_api import ImmunisationApi
 from mesh import S3Service
+
+
+def batch_processing(s3_client, source_bucket: str, destination_bucket: str, key: str):
+    resp = client.get_object(Bucket=source_bucket, Key=key)
+    print(resp)
+    content = resp["Body"].read().decode("utf-8")
+    report = f"content: {content} | errors: []"
+    resp = client.put_object(Bucket=destination_bucket, Key=key, Body=report)
+    print(resp)
+
+
+if __name__ == '__main__':
+    print(f"source-bucket: {os.getenv('SOURCE_BUCKET_NAME')} "
+          f"destination-bucket: {os.getenv('DESTINATION_BUCKET_NAME')} key: {os.getenv('OBJECT_KEY')}")
+    client = boto3.client("s3")
+    batch_processing(s3_client=client, source_bucket=os.getenv('SOURCE_BUCKET_NAME'),
+                     destination_bucket=os.getenv('DESTINATION_BUCKET_NAME'), key=os.getenv('OBJECT_KEY'))
 
 
 def batch_processing_handler3(event, context, api):
@@ -115,11 +133,11 @@ def batch_processing_handler(event, context):
     imms_api = ImmunisationApi(imms_api_url)
     s3_service = S3Service
 
-    status = batch_processing(event, context, s3_service, imms_api)
-    return status
+    # status = batch_processing(event, context, s3_service, imms_api)
+    # return status
 
 
-def batch_processing(event, context, s3_service, imms_api):
+def batch_processing_2(event, context, s3_service, imms_api):
     def todo():
         # for each record in the lambda event do:
         #   in = MeshInput(event_record)

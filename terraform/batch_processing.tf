@@ -89,7 +89,11 @@ resource "aws_cloudwatch_event_target" "serverlessland-s3-event-ecs-event-target
       "name": "${module.batch_processing.container_name}",
       "environment" : [
         {
-          "name" : "BUCKET_NAME",
+          "name" : "DESTINATION_BUCKET_NAME",
+          "value" : "${aws_s3_bucket.batch_data_destination_bucket.bucket}"
+        },
+        {
+          "name" : "SOURCE_BUCKET_NAME",
           "value" : <bucket_name>
         },
         {

@@ -16,6 +16,7 @@ module "docker_image" {
 
     create_ecr_repo = true
     ecr_repo        = "${local.prefix}-lambda-repo"
+    docker_file_path = "lambda.Dockerfile"
     ecr_repo_lifecycle_policy = jsonencode({
         "rules" : [
             {
@@ -45,10 +46,3 @@ data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 data "aws_ecr_authorization_token" "token" {}
 
-provider "docker" {
-    registry_auth  {
-        address  = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com"
-        username = data.aws_ecr_authorization_token.token.user_name
-        password = data.aws_ecr_authorization_token.token.password
-    }
-}
