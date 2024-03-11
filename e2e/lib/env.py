@@ -77,7 +77,7 @@ def get_auth_url(apigee_env: ApigeeEnv = None) -> str:
     if apigee_env == ApigeeEnv.PROD:
         return "https://api.service.nhs.uk/oauth2"
     else:
-        return f"https://{apigee_env.value}.api.service.nhs.uk/oauth2"
+        return f"https://{apigee_env.value}.api.service.nhs.uk/oauth2-mock"
 
 
 def get_proxy_name() -> str:
