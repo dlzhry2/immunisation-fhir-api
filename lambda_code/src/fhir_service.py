@@ -1,4 +1,5 @@
 import os
+
 from enum import Enum
 from typing import Optional
 
@@ -20,6 +21,7 @@ from models.utils.post_validation_utils import MandatoryError, NotApplicableErro
 from models.utils.generic_utils import nhs_number_mod11_check
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
+from timer import timed
 
 
 def get_service_url(
@@ -124,9 +126,11 @@ class FhirService:
         fhir_bundle.link = [BundleLink(relation="self", url=url)]
         return fhir_bundle
 
+    @timed
     def _validate_patient(self, imms: dict):
         nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
         patient = self.pds_service.get_patient_details(nhs_number)
+
         if patient:
             return patient
         else:
