@@ -35,6 +35,10 @@ resource "aws_iam_role" "task_execution_role" {
 }
 EOF
 }
+resource "aws_iam_role_policy_attachment" "task_execution_role_policy_attachment" {
+  role       = aws_iam_role.task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
 
 resource "aws_iam_role_policy" "main_ecs_tasks" {
     name = "${local.prefix}-policy"

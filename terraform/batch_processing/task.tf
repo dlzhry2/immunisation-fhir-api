@@ -12,6 +12,10 @@ resource "aws_ecs_task_definition" "mock-receiver" {
     requires_compatibilities = ["FARGATE"]
     cpu                      = 256
     memory                   = 512
+    runtime_platform {
+        operating_system_family = "LINUX"
+        cpu_architecture        = "X86_64"
+    }
 
     container_definitions = jsonencode([
         {
@@ -20,16 +24,16 @@ resource "aws_ecs_task_definition" "mock-receiver" {
             essential = true
 
 
-            #            logConfiguration : {
-            #                "logDriver" : "awslogs",
-            #                "options" : {
-            #                    "awslogs-create-group" : "true",
-            #                    "awslogs-group" : aws_cloudwatch_log_group.container_log_group.name
-            #                    "awslogs-region" : "eu-west-2",
-            #                    // TODO: Fargate creates it's own stream. Do we need to create our own? -> set awslogs-create-group to false and see if we can use our own stream which has retention
-            #                    "awslogs-stream-prefix" : aws_cloudwatch_log_stream.container_log_stream.name
-            #                }
-            #            }
+            logConfiguration : {
+                "logDriver" : "awslogs",
+                "options" : {
+                    #                    "awslogs-create-group" : "false",
+                    "awslogs-group" : aws_cloudwatch_log_group.batch_task_log_group.name
+                    "awslogs-region" : "eu-west-2",
+                    // TODO: Fargate creates it's own stream. Do we need to create our own? -> set awslogs-create-group to false and see if we can use our own stream which has retention
+                    "awslogs-stream-prefix" : aws_cloudwatch_log_stream.container_log_stream.name
+                }
+            }
         }
     ])
 }

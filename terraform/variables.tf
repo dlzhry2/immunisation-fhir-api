@@ -9,6 +9,9 @@ variable "project_short_name" {
 variable "service" {
   default = "fhir-api"
 }
+variable "default_vpc_id" {
+    default = "vpc-03fbdb9adda98081b"
+}
 
 locals {
   root_domain = "dev.api.platform.nhs.uk"
