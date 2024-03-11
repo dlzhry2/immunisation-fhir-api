@@ -67,6 +67,7 @@ class FhirService:
         try:
             self.validator.validate(immunization)
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
+            print(f"Error: {error}")
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
 

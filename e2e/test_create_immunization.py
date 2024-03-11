@@ -62,8 +62,4 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
         response = self.default_imms_api.create_immunization(imms)
 
-        from icecream import ic
-
-        ic(response.text)
-
         self.assert_operation_outcome(response, 400, "nhs-number")
