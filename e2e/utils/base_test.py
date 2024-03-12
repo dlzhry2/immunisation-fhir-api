@@ -1,9 +1,6 @@
 import unittest
 import uuid
-import boto3
 from typing import List
-from botocore.config import Config
-from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 from lib.apigee import ApigeeService, ApigeeApp, ApigeeProduct
 from lib.authentication import (
     AppRestrictedAuthentication,
@@ -14,7 +11,6 @@ from lib.env import (
     get_auth_url,
     get_proxy_name,
     get_service_base_path,
-    get_imms_delta_table_name,
 )
 from utils.constants import cis2_user
 from utils.factories import (
@@ -39,7 +35,6 @@ class ImmunizationBaseTest(unittest.TestCase):
     apps: List[ApigeeApp]
     # an ImmunisationApi with default auth-type: ApplicationRestricted
     default_imms_api: ImmunisationApi
-    imms_delta_table: Table
 
     @classmethod
     def setUpClass(cls):
@@ -68,15 +63,6 @@ class ImmunizationBaseTest(unittest.TestCase):
                 _app.add_product(cls.product.name)
                 return _app
 
-            def get_delta_table(region_name="eu-west-2") -> Table:
-                config = Config(
-                    connect_timeout=1, read_timeout=1, retries={"max_attempts": 1}
-                )
-                db: DynamoDBServiceResource = boto3.resource(
-                    "dynamodb", region_name=region_name, config=config
-                )
-                return db.Table(get_imms_delta_table_name())
-
             # ApplicationRestricted
             app_data = make_app_data()
             app_res_app, app_res_cfg = make_app_restricted_app(
@@ -88,7 +74,6 @@ class ImmunizationBaseTest(unittest.TestCase):
 
             cls.default_imms_api = ImmunisationApi(base_url, app_res_auth)
             cls.imms_apis.append(cls.default_imms_api)
-            cls.imms_delta_table = get_delta_table()
 
             # Cis2
             app_data = make_app_data()

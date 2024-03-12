@@ -4,6 +4,7 @@ from botocore.config import Config
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 import os
 from datetime import datetime, timedelta
+import uuid
 
 def get_delta_table(table_name, region_name="eu-west-2"):
     config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
@@ -27,6 +28,7 @@ def handler(event, context):
             new_image = record['dynamodb']['NewImage']
             imms_id = new_image['PK']['S'].split("#")[1]
             response = delta_table.put_item(Item={
+                'PK' : str(uuid.uuid4()),
                 'ImmsID' :imms_id,
                 'Operation': new_image['Operation']['S'],
                 'DateTimeStamp' : approximate_creation_time.isoformat(),

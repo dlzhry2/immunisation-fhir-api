@@ -103,7 +103,3 @@ def get_status_endpoint_api_key() -> str:
 
 def get_source_commit_id() -> str:
     return os.getenv("SOURCE_COMMIT_ID")
-
-
-def get_imms_delta_table_name() -> str:
-    return os.getenv("IMMS_DELTA_TABLE_NAME")
