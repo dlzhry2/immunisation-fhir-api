@@ -126,7 +126,14 @@ class FhirService:
         return fhir_bundle
 
     @timed
-    def _validate_patient(self, imms: dict):
+    def _validate_patient(self, imms: dict) -> dict:
+        """
+        Get the NHS number from the contained Patient resource and validate it with PDS.
+
+        If the NHS number doesn't exist, check the verification status code to make sure it's "04".
+        If the verification status code is "04", return an empty dict. If the NHS number exists, get the patient details
+        from PDS and return the patient details.
+        """
         try:
             nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
         except (KeyError, IndexError):
@@ -135,8 +142,7 @@ class FhirService:
         if not nhs_number:
             verification_status_code = get_nhs_number_verification_status_code(imms)
             if verification_status_code == "04":
-                patient = {}
-                return patient
+                return {}
             raise CustomValidationError(message="NHS number is mandatory unless verification status is '04'")
 
         patient = self.pds_service.get_patient_details(nhs_number)
