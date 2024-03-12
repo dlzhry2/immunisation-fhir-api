@@ -1,16 +1,18 @@
-"""Tests for fhir_service.py"""
-
-import os
 import json
+import os
 import unittest
 from copy import deepcopy
 from unittest.mock import create_autospec
-from fhir.resources.R4B.bundle import BundleEntry
 
-from fhir.resources.R4B.immunization import Immunization
 from fhir.resources.R4B.bundle import Bundle as FhirBundle
+from fhir.resources.R4B.bundle import BundleEntry
+from fhir.resources.R4B.immunization import Immunization
+from pydantic import ValidationError
+from pydantic.error_wrappers import ErrorWrapper
+
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome, get_service_url
+from mappings import vaccination_procedure_snomed_codes
 from models.errors import (
     InvalidPatientId,
     CustomValidationError,
@@ -19,14 +21,35 @@ from models.errors import (
 )
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
-from pydantic import ValidationError
-from pydantic.error_wrappers import ErrorWrapper
-from mappings import vaccination_procedure_snomed_codes
 from .immunization_utils import (
     create_an_immunization,
     create_an_immunization_dict,
     valid_nhs_number,
 )
+
+
+class TestServiceUrl(unittest.TestCase):
+    def test_get_service_url(self):
+        """it should create service url"""
+        env = "int"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://{env}.api.service.nhs.uk/{base_path}")
+        # default should be internal-dev
+        env = "it-does-not-exist"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
+        # prod should not have a subdomain
+        env = "prod"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://api.service.nhs.uk/{base_path}")
+        # any other env should fall back to internal-dev (like pr-xx or per-user)
+        env = "pr-42"
+        base_path = "my-base-path"
+        url = get_service_url(env, base_path)
+        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
 
 
 class TestGetImmunization(unittest.TestCase):
@@ -253,12 +276,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         self.imms_repo.update_immunization.return_value = {}
 
-        validation_error = ValidationError(
-            [
-                ErrorWrapper(TypeError("bad type"), "/type"),
-            ],
-            Immunization,
-        )
+        validation_error = ValidationError([ErrorWrapper(TypeError('bad type'), '/type'), ], Immunization)
         self.validator.validate.side_effect = validation_error
         expected_msg = str(validation_error)
 
@@ -404,32 +422,10 @@ class TestSearchImmunizations(unittest.TestCase):
         self.nhsSearchParam = "-nhsNumber"
         self.diseaseTypeSearchParam = "-diseaseType"
 
-    def test_get_service_url(self):
-        """it should create service url"""
-        env = "int"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://{env}.api.service.nhs.uk/{base_path}")
-        # default should be internal-dev
-        env = "it-does-not-exist"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
-        # prod should not have subdomain
-        env = "prod"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://api.service.nhs.uk/{base_path}")
-        # any other env should fall back to internal-dev (like pr-xx or per-user)
-        env = "pr-42"
-        base_path = "my-base-path"
-        url = get_service_url(env, base_path)
-        self.assertEqual(url, f"https://internal-dev.api.service.nhs.uk/{base_path}")
-
     def test_map_disease_type_to_disease_code(self):
         """it should map disease_type to disease_code"""
         # TODO: for this ticket we are assuming code is provided
-        nhs_number = "a-patient-id"
+        nhs_number = "9990548609"
         disease_type = "1324681000000101"
         params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
 
@@ -446,7 +442,7 @@ class TestSearchImmunizations(unittest.TestCase):
         imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
-        nhs_number = "an-id"
+        nhs_number = "9990548609"
         disease_type = "a-code"
         params = f"{self.nhsSearchParam}={nhs_number}&{self.diseaseTypeSearchParam}={disease_type}"
         # When

@@ -5,8 +5,8 @@ from fhir.resources.R4B.immunization import Immunization
 from models.fhir_immunization_pre_validators import PreValidators
 from models.fhir_immunization_post_validators import FHIRImmunizationPostValidators
 from models.utils.generic_utils import get_generic_questionnaire_response_value, get_generic_extension_value_from_model
-from pydantic import ValidationError
 from mappings import vaccination_procedure_snomed_codes
+from models.utils.generic_utils import get_generic_questionnaire_response_value
 
 
 class ImmunizationValidator:
