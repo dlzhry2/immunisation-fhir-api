@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Set
 
 
-class ApplicationRestrictedPermission(str, Enum):
+class Permission(str, Enum):
     READ = "immunization:read"
     CREATE = "immunization:create"
     UPDATE = "immunization:update"
@@ -10,11 +10,11 @@ class ApplicationRestrictedPermission(str, Enum):
     SEARCH = "immunization:search"
 
 
-def make_permissions_attribute(permissions: Set[ApplicationRestrictedPermission]) -> (str, str):
-    """it generates an attribute value for application restricted app. It returns key and value"""
+def make_permissions_attribute(permissions: Set[Permission]) -> (str, str):
+    """It generates an attribute value for an application restricted app. It returns key and value"""
     return "Permissions", ",".join(permissions)
 
 
-def app_res_full_access(exclude: Set[ApplicationRestrictedPermission] = None) -> Set[ApplicationRestrictedPermission]:
+def app_full_access(exclude: Set[Permission] = None) -> Set[Permission]:
     exclude = exclude if exclude else {}
-    return {*ApplicationRestrictedPermission}.difference(exclude)
+    return {*Permission}.difference(exclude)
