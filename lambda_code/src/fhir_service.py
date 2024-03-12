@@ -172,10 +172,10 @@ class FhirService:
                 resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
                 search=BundleEntrySearch(mode="match")
             ) for imms in resources],
-            BundleEntry(
+            *(BundleEntry(
                 resource=FhirService.process_patient_for_include(patient),
                 search=BundleEntrySearch(mode="include")
-            )
+            ) if patient else [])
         ]
         fhir_bundle = FhirBundle(
             resourceType="Bundle",
