@@ -10,6 +10,7 @@ import uuid
 
 from aws_lambda_typing import context as context_, events
 
+from authorization import Authorization
 from fhir_controller import FhirController, make_controller
 from models.errors import Severity, Code, create_operation_outcome
 
@@ -65,7 +66,17 @@ if __name__ == "__main__":
             "_include": ["Immunization:patient"]
         },
         "httpMethod": "POST",
-        "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
+        "headers": {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'AuthenticationType': 'ApplicationRestricted',
+            'Permissions': (','.join([
+                Authorization._Permission.READ,
+                Authorization._Permission.CREATE,
+                Authorization._Permission.UPDATE,
+                Authorization._Permission.DELETE,
+                Authorization._Permission.SEARCH
+            ]))
+        },
         "body": None,
         "resource": None,
         "isBase64Encoded": None,

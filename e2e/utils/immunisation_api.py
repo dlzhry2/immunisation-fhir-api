@@ -5,9 +5,7 @@ from typing import Optional, Literal
 import requests
 
 from lib.authentication import BaseAuthentication
-from .resource import create_an_imms_obj
-
-from .configuration.config import patient_identifier_system
+from .constants import patient_identifier_system
 
 
 def parse_location(location) -> Optional[str]:
@@ -79,14 +77,3 @@ class ImmunisationApi:
             "X-Request-ID": str(uuid.uuid4()),
         }}
         return {**updated, **headers}
-
-
-def create_a_deleted_imms_resource(imms_api: ImmunisationApi) -> str:
-    imms = create_an_imms_obj()
-    response = imms_api.create_immunization(imms)
-    imms_id = parse_location(response.headers["Location"])
-
-    response = imms_api.delete_immunization(imms_id)
-    assert response.status_code == 204, response.text
-
-    return imms_id

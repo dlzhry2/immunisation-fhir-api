@@ -46,7 +46,7 @@ class Authorization:
 
     class _AuthType(str, Enum):
         APP_RESTRICTED = "ApplicationRestricted",
-        NHS_LOGIN = "NnsLogin",
+        NHS_LOGIN = "NhsLogin",
         CIS2 = "Cis2",
 
     class _Permission(str, Enum):
