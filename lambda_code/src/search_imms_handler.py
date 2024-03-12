@@ -1,6 +1,6 @@
-import json
+import traceback
 
-from datetime import datetime
+import json
 
 import base64
 
@@ -10,7 +10,7 @@ import uuid
 
 from aws_lambda_typing import context as context_, events
 
-from authorization import Authorization
+from authorization import Permission
 from fhir_controller import FhirController, make_controller
 from models.errors import Severity, Code, create_operation_outcome
 
@@ -23,9 +23,10 @@ def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController
     try:
         return controller.search_immunizations(event)
     except Exception as e:
-        exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
+        exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()),
+                                             severity=Severity.error,
                                              code=Code.server_error,
-                                             diagnostics=str(e))
+                                             diagnostics=traceback.format_exc())
         return FhirController.create_response(500, exp_error)
 
 
@@ -70,11 +71,11 @@ if __name__ == "__main__":
             'Content-Type': 'application/x-www-form-urlencoded',
             'AuthenticationType': 'ApplicationRestricted',
             'Permissions': (','.join([
-                Authorization._Permission.READ,
-                Authorization._Permission.CREATE,
-                Authorization._Permission.UPDATE,
-                Authorization._Permission.DELETE,
-                Authorization._Permission.SEARCH
+                Permission.READ,
+                Permission.CREATE,
+                Permission.UPDATE,
+                Permission.DELETE,
+                Permission.SEARCH
             ]))
         },
         "body": None,

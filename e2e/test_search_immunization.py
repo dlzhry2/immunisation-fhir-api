@@ -90,10 +90,9 @@ class TestSearchImmunization(ImmunizationBaseTest):
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, covid_code)
         ]
 
-        self.store_records(stored_records)
+        self.store_records(*stored_records)
 
-        created_resources = [response for resource in stored_records for response in resource["responses"]]
-        created_resource_ids = [result["id"] for result in created_resources]
+        created_resource_ids = [result["id"] for result in stored_records]
 
         # Act
         class SearchTestParams(NamedTuple):

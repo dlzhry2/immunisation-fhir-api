@@ -190,7 +190,7 @@ class FhirController:
                 return items
             return {}
 
-        query_params = parse_multi_value_query_parameters(aws_event.get("multiValueQueryStringParameters", {}))
+        query_params = parse_multi_value_query_parameters(aws_event.get("multiValueQueryStringParameters", {}) or {})
         body_params = parse_body_params(aws_event)
 
         return {key: sorted(query_params.get(key, []) + body_params.get(key, []))
