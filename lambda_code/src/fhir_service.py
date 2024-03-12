@@ -128,9 +128,7 @@ class FhirService:
     @timed
     def _validate_patient(self, imms: dict):
         try:
-            nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0][
-                "value"
-            ]
+            nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
         except (KeyError, IndexError):
             nhs_number = None
 
@@ -139,10 +137,9 @@ class FhirService:
             if verification_status_code == "04":
                 patient = {}
                 return patient
-            else:
-                raise CustomValidationError(message="NHS number is mandatory unless verification status is '04'")
-        else:
-            patient = self.pds_service.get_patient_details(nhs_number)
+            raise CustomValidationError(message="NHS number is mandatory unless verification status is '04'")
+
+        patient = self.pds_service.get_patient_details(nhs_number)
 
         if patient:
             return patient
