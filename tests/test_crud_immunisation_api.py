@@ -100,7 +100,6 @@ def test_create_immunization_with_stored_identifier_returns_error(nhsd_apim_prox
     # CREATE IMMUNIZATION WITH SAME IDENTIFIER
     failed_create_response = imms_api.create_immunization(imms)
     failed_create_res_body = failed_create_response.json()
-    print(failed_create_res_body)
 
     assert failed_create_response.status_code == 422
     assert failed_create_res_body["resourceType"] == "OperationOutcome"

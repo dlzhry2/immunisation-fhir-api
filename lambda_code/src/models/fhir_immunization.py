@@ -4,8 +4,9 @@ from typing import Literal
 from fhir.resources.R4B.immunization import Immunization
 from models.fhir_immunization_pre_validators import PreValidators
 from models.fhir_immunization_post_validators import FHIRImmunizationPostValidators
-from models.utils.generic_utils import get_generic_questionnaire_response_value
+from models.utils.generic_utils import get_generic_questionnaire_response_value, get_generic_extension_value_from_model
 from pydantic import ValidationError
+from mappings import vaccination_procedure_snomed_codes
 
 
 class ImmunizationValidator:
@@ -19,6 +20,7 @@ class ImmunizationValidator:
         self.reduce_validation_code = False
         self.add_post_validators = add_post_validators
         self.pre_validators = None
+        self.post_validators = None
         
     def initialize_immunization(self, json_data):
         self.immunization = Immunization.parse_obj(json_data)
@@ -27,11 +29,19 @@ class ImmunizationValidator:
         """Initialize pre validators with data."""
         self.pre_validators = PreValidators(immunization)
         
+    def initialize_post_validators(self, immunization):
+        """Initialize post validators with data"""
+        self.post_validators = FHIRImmunizationPostValidators(immunization)
+        
     def add_custom_root_pre_validators(self):
-        """
-        Run custom pre validators to the data.
-        """
+        """Run custom pre validators to the data"""
         error = self.pre_validators.validate()
+        if error:
+            raise ValueError(error)
+    
+    def add_custom_root_post_validators(self):
+        """Run custom pre validators to the data"""
+        error = self.post_validators.validate()
         if error:
             raise ValueError(error)
 
@@ -52,248 +62,16 @@ class ImmunizationValidator:
                 reduce_validation_code = False
 
         self.reduce_validation_code = reduce_validation_code
-
-    def add_custom_root_post_validators(self):
-        """
-        Add custom NHS post validators to the model
-
-        NOTE: THE ORDER IN WHICH THE VALIDATORS ARE ADDED IS IMPORTANT! DO NOT CHANGE THE ORDER
-        WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST.
-        """
-        skip_on_failure = True
-        # DO NOT CHANGE THE ORDER WITHOUT UNDERSTANDING THE IMPACT ON OTHER VALIDATORS IN THE LIST
-        if not hasattr(self.immunization, "validate_and_set_vaccination_procedure_code"):
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_and_set_vaccination_procedure_code,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.set_status,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_patient_identifier_value,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_patient_name_given,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_patient_name_family,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_patient_birth_date,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_patient_gender,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_patient_address_postal_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_occurrence_date_time,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_organization_identifier_value,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_organization_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_identifier_value,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_identifier_system,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_practitioner_name_given,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_practitioner_name_family,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_practitioner_identifier_value,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_practitioner_identifier_system,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_performer_sds_job_role,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_recorded,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_primary_source,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_report_origin_text,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_vaccination_procedure_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_vaccination_situation_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_vaccination_situation_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_status_reason_coding_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_status_reason_coding_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_protocol_applied_dose_number_positive_int,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_vaccine_code_coding_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_vaccine_code_coding_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_manufacturer_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_lot_number,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_expiration_date,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_site_coding_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_site_coding_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_route_coding_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_route_coding_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_dose_quantity_value,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_dose_quantity_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_dose_quantity_unit,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_reason_code_coding_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_reason_code_coding_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_nhs_number_verification_status_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_nhs_number_verification_status_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_organization_identifier_system,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_local_patient_value,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_local_patient_system,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_consent_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_consent_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_care_setting_code,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_care_setting_display,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_ip_address,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_user_id,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_user_name,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_user_email,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_submitted_time_stamp,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_location_identifier_value,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_location_identifier_system,
-                skip_on_failure=skip_on_failure,
-            )
-            self.immunization.add_root_validator(
-                FHIRImmunizationPostValidators.validate_reduce_validation_reason,
-                skip_on_failure=skip_on_failure,
-            )
+    
+    def set_vaccine_type(self, immunization):
+        """Set vaccine type"""
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
+        system = "http://snomed.info/sct"
+        field_type = "code"
+        vaccination_procedure_code = get_generic_extension_value_from_model(immunization, url, system, field_type)
+        self.vaccine_type = vaccination_procedure_snomed_codes.get(
+            vaccination_procedure_code, None
+        )
 
     def remove_custom_root_validators(self, mode: Literal["pre", "post"]):
         """Remove custom NHS validators from the model"""
@@ -320,8 +98,10 @@ class ImmunizationValidator:
             raise e
         
         self.initialize_immunization(json_data)
+        self.set_vaccine_type(self.immunization)
 
         if self.add_post_validators and not self.reduce_validation_code:
+            self.initialize_post_validators(self.immunization)
             self.add_custom_root_post_validators() 
 
         return self.immunization
