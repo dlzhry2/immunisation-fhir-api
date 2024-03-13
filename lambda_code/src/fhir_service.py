@@ -55,14 +55,22 @@ class FhirService:
         self.validator = validator
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
+        """
+        Get an Immunization by its ID. Return None if not found. If the patient doesn't have an NHS number,
+        return the Immunization without calling PDS or checking S flag.
+        """
         imms = self.immunization_repo.get_immunization_by_id(imms_id)
 
         if not imms:
             return None
 
-        nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
-        patient = self.pds_service.get_patient_details(nhs_number)
-        filtered_immunization = handle_s_flag(imms, patient)
+        try:
+            nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
+        except (KeyError, IndexError):
+            filtered_immunization = imms
+        else:
+            patient = self.pds_service.get_patient_details(nhs_number)
+            filtered_immunization = handle_s_flag(imms, patient)
         return Immunization.parse_obj(filtered_immunization)
 
     def create_immunization(self, immunization: dict) -> Immunization:

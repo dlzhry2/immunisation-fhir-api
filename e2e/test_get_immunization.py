@@ -36,3 +36,18 @@ class TestGetImmunization(ImmunizationBaseTest):
         imms = self.create_a_deleted_immunization_resource(self.default_imms_api)
         response = self.default_imms_api.get_immunization_by_id(imms["id"])
         self.assert_operation_outcome(response, 404)
+
+    def test_get_imms_with_tbc_pk(self):
+        """it should get a FHIR Immunization resource if the nhs number is TBC"""
+        imms = create_an_imms_obj()
+        del imms["contained"][1]["identifier"][0]["value"]
+        imms["contained"][1]["identifier"][0]["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "04"
+
+        response = self.default_imms_api.create_immunization(imms)
+        self.assertTrue(response.status_code == 201, response.text)
+
+        imms_id = parse_location(response.headers["Location"])
+        response = self.default_imms_api.get_immunization_by_id(imms_id)
+
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["id"], imms_id)
