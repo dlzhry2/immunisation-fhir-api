@@ -7,7 +7,7 @@ resource "aws_s3_bucket" "batch_data_source_bucket" {
     bucket        = "${local.prefix}-batch-data-source"
     force_destroy = local.is_temp
 }
-resource "aws_s3_bucket_notification" "sourc_bucket_notification" {
+resource "aws_s3_bucket_notification" "source_bucket_notification" {
     bucket      = aws_s3_bucket.batch_data_source_bucket.bucket
     eventbridge = true
 }
