@@ -20,7 +20,7 @@ get_generic_field_value = PostValidation.get_generic_field_value
 get_generic_questionnaire_response_value = PostValidation.get_generic_questionnaire_response_value
 
 
-class FHIRImmunizationPostValidators:
+class PostValidators:
     """FHIR Immunization Post Validators"""
     def __init__(self, immunization):
         self.values = immunization
@@ -623,10 +623,8 @@ class FHIRImmunizationPostValidators:
         field_location = f"vaccineCode.coding[?(@.system=='{system}')].code"
         
         try:
-            for x in values.vaccineCode.coding:
-                if x.system == system:
-                    vaccine_code_coding_code = x.code
-            # vaccine_code_coding_code = [x for x in values.vaccineCode.coding if x.system == system][0].code
+            vaccine_code_coding_code = next((x.code for x in values.vaccineCode.coding if x.system == system), None)
+
 
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccine_code_coding_code = None

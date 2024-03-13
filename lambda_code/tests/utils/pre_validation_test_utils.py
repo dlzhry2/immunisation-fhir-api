@@ -62,18 +62,6 @@ class ValidatorModelTests:
             test_instance, valid_json_data, field_location, valid_strings_to_test
         )
 
-        """Could be moved to mandatory fhir validation"""
-        # If is mandatory FHIR, then for none type the model raises an
-        # exception prior to running NHS pre-validators
-        # if is_mandatory_fhir:
-        #     test_invalid_values_rejected(
-        #         test_instance,
-        #         valid_json_data,
-        #         field_location=field_location,
-        #         invalid_value=None,
-        #         expected_error_message="none is not an allowed value"
-        #     )
-
         # Set list of invalid data types to test
         invalid_data_types_for_strings = InvalidDataTypes.for_strings
         if is_mandatory_fhir:
@@ -359,19 +347,6 @@ class ValidatorModelTests:
         test_valid_values_accepted(
             test_instance, valid_json_data, field_location, ValidValues.for_date_times
         )
-
-        """Another Mandatory test which could be reassigned"""
-        # If is occurrenceDateTime, then for none type the model raises an exception prior to
-        # running NHS pre-validators, because occurrenceDateTime is a mandatory FHIR field
-        # if is_occurrence_date_time:
-        #     test_invalid_values_rejected(
-        #         test_instance,
-        #         valid_json_data,
-        #         field_location=field_location,
-        #         invalid_value=None,
-        #         expected_error_message="Expect any of field value from this list "
-        #         + "['occurrenceDateTime', 'occurrenceString']."
-        #     )
 
         # Set list of invalid data types to test
         invalid_data_types_for_strings = InvalidDataTypes.for_strings
