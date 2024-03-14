@@ -43,7 +43,7 @@ class TestGetImmunization(ImmunizationBaseTest):
         del imms["contained"][1]["identifier"][0]["value"]
         imms["contained"][1]["identifier"][0]["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "04"
 
-        response = self.default_imms_api.create_immunization(imms)
+        response = self.create_immunization_resource(self.default_imms_api, imms)
         self.assertTrue(response.status_code == 201, response.text)
 
         imms_id = parse_location(response.headers["Location"])
