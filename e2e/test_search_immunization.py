@@ -85,4 +85,4 @@ class TestSearchImmunization(ImmunizationBaseTest):
         response = self.default_imms_api.search_immunizations("TBC", "MMR")
 
         # Then
-        self.assert_operation_outcome(response.status_code, 500, response.text)
+        self.assert_operation_outcome(response, 500)
