@@ -8,7 +8,7 @@ def get_contained_resource_from_model(
     resource: Literal["Patient", "Practitioner", "QuestionnaireResponse"],
 ):
     """Extract and return the requested contained resource from values model"""
-    return [x for x in values["contained"] if x.resource_type == resource][0]
+    return [x for x in values.contained if x.resource_type == resource][0]
 
 
 def get_generic_questionnaire_response_value(
@@ -109,7 +109,9 @@ def get_generic_extension_value_from_model(
     """
     Get the value of an extension field, given its url, field_type, and system
     """
-    value_codeable_concept_coding = [x for x in values["extension"] if x.url == url][0].valueCodeableConcept.coding
+    value_codeable_concept_coding = [x for x in values.extension if x.url == url][
+        0
+    ].valueCodeableConcept.coding
 
     value = getattr(
         [x for x in value_codeable_concept_coding if x.system == system][0],

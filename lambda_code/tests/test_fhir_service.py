@@ -147,7 +147,7 @@ class TestCreateImmunization(unittest.TestCase):
         """it should throw exception if Immunization is not valid"""
         imms = create_an_immunization_dict("an-id", "12345")
         expected_msg = (
-            "contained[?(@.resourceType=='Patient')].identifier[0].value must be 10 characters (type=value_error)"
+            "contained[?(@.resourceType=='Patient')].identifier[0].value must be 10 characters"
         )
 
         with self.assertRaises(CustomValidationError) as error:
@@ -170,7 +170,7 @@ class TestCreateImmunization(unittest.TestCase):
             "extension[?(@.url=="
             + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')"
             + "].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code: "
-            + "bad-code is not a valid code for this service (type=value_error)"
+            + "bad-code is not a valid code for this service"
         )
 
         bad_patient_name_imms = deepcopy(valid_imms)
@@ -190,7 +190,7 @@ class TestCreateImmunization(unittest.TestCase):
         with self.assertRaises(CustomValidationError) as error:
             fhir_service.create_immunization(bad_procedure_code_imms)
 
-        self.assertTrue(bad_procedure_code_msg in error.exception.message)
+        self.assertEqual(bad_procedure_code_msg, error.exception.message)
         self.imms_repo.create_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
@@ -298,7 +298,7 @@ class TestUpdateImmunization(unittest.TestCase):
             "extension[?(@.url=="
             + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')"
             + "].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code: "
-            + "bad-code is not a valid code for this service (type=value_error)"
+            + "bad-code is not a valid code for this service"
         )
 
         bad_patient_name_imms = deepcopy(valid_imms)
@@ -317,7 +317,7 @@ class TestUpdateImmunization(unittest.TestCase):
         with self.assertRaises(CustomValidationError) as error:
             fhir_service.update_immunization("an-id", bad_procedure_code_imms)
 
-        self.assertTrue(bad_procedure_code_msg in error.exception.message)
+        self.assertEqual(bad_procedure_code_msg, error.exception.message)
         self.imms_repo.update_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
