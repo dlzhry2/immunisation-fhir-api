@@ -72,13 +72,9 @@ class MandationTests:
             valid_json_data = deepcopy(test_instance.covid_json_data)
         # Remove the relevant field
         if field_to_remove:
-            valid_json_data = parse(field_to_remove).filter(
-                lambda d: True, valid_json_data
-            )
+            valid_json_data = parse(field_to_remove).filter(lambda d: True, valid_json_data)
         else:
-            valid_json_data = parse(field_location).filter(
-                lambda d: True, valid_json_data
-            )
+            valid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
         # Test that the valid data is accepted by the model
         test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
 
@@ -117,14 +113,10 @@ class MandationTests:
             expected_error_message = f"{field_location} is a mandatory field"
 
         if field_to_remove:
-            invalid_json_data = parse(field_to_remove).filter(
-                lambda d: True, valid_json_data
-            )
+            invalid_json_data = parse(field_to_remove).filter(lambda d: True, valid_json_data)
         else:
             # Create invalid json data by removing the relevant field
-            invalid_json_data = parse(field_location).filter(
-                lambda d: True, valid_json_data
-            )
+            invalid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
 
         if is_mandatory_fhir:
             # Test that correct error message is raised
@@ -132,8 +124,7 @@ class MandationTests:
                 test_instance.validator.validate(invalid_json_data)
 
             test_instance.assertTrue(
-                (expected_bespoke_error_message + f" (type={expected_error_type})")
-                in str(error.exception)
+                (expected_bespoke_error_message + f" (type={expected_error_type})") in str(error.exception)
             )
 
         else:
@@ -247,9 +238,7 @@ class MandationTests:
         )
 
         # Test case where status is "completed"
-        json_data_with_status_completed = parse("status").update(
-            deepcopy(valid_json_data), "completed"
-        )
+        json_data_with_status_completed = parse("status").update(deepcopy(valid_json_data), "completed")
 
         MandationTests.test_mandation_rule_met(
             test_instance,
@@ -262,9 +251,7 @@ class MandationTests:
         )
 
         # Test case where status is "entered-in-error"
-        json_data_with_status_entered_in_error = parse("status").update(
-            deepcopy(valid_json_data), "entered-in-error"
-        )
+        json_data_with_status_entered_in_error = parse("status").update(deepcopy(valid_json_data), "entered-in-error")
 
         MandationTests.test_mandation_rule_met(
             test_instance,
@@ -279,10 +266,8 @@ class MandationTests:
         # Test case where status is "not-done"
         base_not_done_json_data = deepcopy(base_not_done_json_data)
 
-        json_data_with_status_not_done = (
-            MandationTests.update_vaccination_procedure_code(
-                test_instance, vaccine_type, base_not_done_json_data
-            )
+        json_data_with_status_not_done = MandationTests.update_vaccination_procedure_code(
+            test_instance, vaccine_type, base_not_done_json_data
         )
 
         MandationTests.test_mandation_rule_met(
@@ -328,9 +313,7 @@ class MandationTests:
         )
 
         # Test case where depent_on_field is absent
-        valid_json_data = parse(dependent_on_field_location).filter(
-            lambda d: True, valid_json_data
-        )
+        valid_json_data = parse(dependent_on_field_location).filter(lambda d: True, valid_json_data)
 
         MandationTests.test_mandation_rule_met(
             test_instance,

@@ -4,10 +4,11 @@ from models.constants import Constants
 from models.utils.generic_utils import (
     get_generic_questionnaire_response_value_from_model,
     get_generic_extension_value_from_model,
-    generate_field_location_for_questionnnaire_response,
+    generate_field_location_for_questionnaire_response,
     generate_field_location_for_extension,
     get_contained_resource_from_model,
     is_organization,
+    get_nhs_number_verification_status_code,
 )
 from models.utils.post_validation_utils import (
     PostValidation,
@@ -53,18 +54,23 @@ class FHIRImmunizationPostValidators:
     @classmethod
     def validate_patient_identifier_value(cls, values: dict) -> dict:
         "Validate that patient_identifier_value is present or absent, as required"
+        field_location = "contained[?(@.resourceType=='Patient')].identifier[0].value"
         try:
             contained_patient = get_contained_resource_from_model(values, "Patient")
 
-            patient_identifier_value = [
+            patient_identifier_value = next(
                 x for x in contained_patient.identifier if x.system == "https://fhir.nhs.uk/Id/nhs-number"
-            ][0].value
+            ).value
+            verification_status_code = get_nhs_number_verification_status_code(values)
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_identifier_value = None
 
+        if not patient_identifier_value and verification_status_code != "04":
+            raise MandatoryError(f"{field_location} is mandatory when verification status is not 04")
+
         check_mandation_requirements_met(
             field_value=patient_identifier_value,
-            field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
+            field_location=field_location,
             vaccine_type=cls.vaccine_type,
             mandation_key="patient_identifier_value",
         )
@@ -1026,7 +1032,7 @@ class FHIRImmunizationPostValidators:
         link_id = "LocalPatient"
         answer_type = "valueReference"
         field_type = "value"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
@@ -1048,7 +1054,7 @@ class FHIRImmunizationPostValidators:
         link_id = "LocalPatient"
         answer_type = "valueReference"
         field_type = "system"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
@@ -1070,7 +1076,7 @@ class FHIRImmunizationPostValidators:
         link_id = "Consent"
         answer_type = "valueCoding"
         field_type = "code"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             consent_code = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
@@ -1106,7 +1112,7 @@ class FHIRImmunizationPostValidators:
         link_id = "Consent"
         answer_type = "valueCoding"
         field_type = "display"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             consent_display = get_generic_questionnaire_response_value_from_model(
@@ -1129,7 +1135,7 @@ class FHIRImmunizationPostValidators:
         link_id = "CareSetting"
         answer_type = "valueCoding"
         field_type = "code"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             care_setting_code = get_generic_questionnaire_response_value_from_model(
@@ -1152,7 +1158,7 @@ class FHIRImmunizationPostValidators:
         link_id = "CareSetting"
         answer_type = "valueCoding"
         field_type = "display"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             care_setting_display = get_generic_questionnaire_response_value_from_model(

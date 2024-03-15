@@ -23,14 +23,11 @@ class NotApplicableError(Exception):
 class PostValidation:
     @staticmethod
     def vaccination_procedure_code(vaccination_procedure_code: str, field_location):
-        vaccine_type = vaccination_procedure_snomed_codes.get(
-            vaccination_procedure_code, None
-        )
+        vaccine_type = vaccination_procedure_snomed_codes.get(vaccination_procedure_code, None)
 
         if not vaccine_type:
             raise ValueError(
-                f"{field_location}: {vaccination_procedure_code} "
-                + "is not a valid code for this service"
+                f"{field_location}: {vaccination_procedure_code} " + "is not a valid code for this service"
             )
 
         return vaccine_type
@@ -57,11 +54,7 @@ class PostValidation:
         """
 
         # Determine and set the mandation and appropriate error messages
-        mandation = (
-            mandation
-            if mandation
-            else vaccine_type_applicable_validations[mandation_key][vaccine_type]
-        )
+        mandation = mandation if mandation else vaccine_type_applicable_validations[mandation_key][vaccine_type]
 
         mandatory_error_message = (
             bespoke_mandatory_error_message
@@ -103,15 +96,11 @@ class PostValidation:
     def get_generic_questionnaire_response_value(
         values: dict,
         link_id: str,
-        answer_type: Literal[
-            "valueBoolean", "valueString", "valueDateTime", "valueCoding"
-        ],
+        answer_type: Literal["valueBoolean", "valueString", "valueDateTime", "valueCoding"],
         field_type: Optional[Literal["code", "display", "system"]] = None,
     ) -> Any:
         try:
-            field_value = get_generic_questionnaire_response_value_from_model(
-                values, link_id, answer_type, field_type
-            )
+            field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
         except (KeyError, IndexError, AttributeError):
             field_value = None
 

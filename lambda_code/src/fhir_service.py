@@ -18,7 +18,7 @@ from models.errors import (
 )
 from models.fhir_immunization import ImmunizationValidator
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
-from models.utils.generic_utils import get_nhs_number_verification_status_code, nhs_number_mod11_check
+from models.utils.generic_utils import nhs_number_mod11_check
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
@@ -138,9 +138,8 @@ class FhirService:
         """
         Get the NHS number from the contained Patient resource and validate it with PDS.
 
-        If the NHS number doesn't exist, check the verification status code to make sure it's "04".
-        If the verification status code is "04", return an empty dict. If the NHS number exists, get the patient details
-        from PDS and return the patient details.
+        If the NHS number doesn't exist, return an empty dict.
+        If the NHS number exists, get the patient details from PDS and return the patient details.
         """
         try:
             nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
@@ -148,10 +147,7 @@ class FhirService:
             nhs_number = None
 
         if not nhs_number:
-            verification_status_code = get_nhs_number_verification_status_code(imms)
-            if verification_status_code == "04":
-                return {}
-            raise CustomValidationError(message="NHS number is mandatory unless verification status is '04'")
+            return {}
 
         patient = self.pds_service.get_patient_details(nhs_number)
 

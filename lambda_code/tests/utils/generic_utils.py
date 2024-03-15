@@ -17,7 +17,7 @@ def load_json_data(filename: str):
         return json.load(f, parse_float=Decimal)
 
 
-def generate_field_location_for_questionnnaire_response(
+def generate_field_location_for_questionnaire_response(
     link_id: str, field_type: Literal["code", "display", "system"]
 ) -> str:
     """Generate the field location string for questionnaire response items"""
@@ -27,14 +27,9 @@ def generate_field_location_for_questionnnaire_response(
     )
 
 
-def generate_field_location_for_extension(
-    url: str, system: str, field_type: Literal["code", "display"]
-) -> str:
+def generate_field_location_for_extension(url: str, system: str, field_type: Literal["code", "display"]) -> str:
     """Generate the field location string for extension items"""
-    return (
-        f"extension[?(@.url=='{url}')].valueCodeableConcept."
-        + f"coding[?(@.system=='{system}')].{field_type}"
-    )
+    return f"extension[?(@.url=='{url}')].valueCodeableConcept." + f"coding[?(@.system=='{system}')].{field_type}"
 
 
 def test_valid_values_accepted(
@@ -57,9 +52,7 @@ def test_invalid_values_rejected(
     field_location: str,
     invalid_value: Any,
     expected_error_message: str,
-    expected_error_type: Literal[
-        "type_error", "value_error", "type_error.none.not_allowed"
-    ],
+    expected_error_type: Literal["type_error", "value_error", "type_error.none.not_allowed"],
 ):
     """
     Test that invalid json data is rejected by the model, with an appropriate validation error
@@ -76,7 +69,4 @@ def test_invalid_values_rejected(
     with test_instance.assertRaises(ValidationError) as error:
         test_instance.validator.validate(invalid_json_data)
 
-    test_instance.assertTrue(
-        (expected_error_message + f" (type={expected_error_type})")
-        in str(error.exception)
-    )
+    test_instance.assertTrue((expected_error_message + f" (type={expected_error_type})") in str(error.exception))

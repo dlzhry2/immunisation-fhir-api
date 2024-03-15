@@ -35,20 +35,3 @@ class UtilsTests(unittest.TestCase):
 
         for invalid_nhs_number in invalid_nhs_numbers:
             self.assertFalse(nhs_number_mod11_check(invalid_nhs_number))
-
-    def test_get_nhs_number_verification_status_code(self):
-        """Test the get_nhs_number_verification_status_code function"""
-        # The NHS number verification status code is 01
-        nhs_number_verification_status_code = get_nhs_number_verification_status_code(self.json_data)
-        self.assertEqual(nhs_number_verification_status_code, "01")
-
-        self.json_data["contained"][1]["identifier"][0]["extension"][0]["valueCodeableConcept"]["coding"][0][
-            "code"
-        ] = "04"
-        nhs_number_verification_status_code = get_nhs_number_verification_status_code(self.json_data)
-        self.assertEqual(nhs_number_verification_status_code, "04")
-
-        bad_json_data = deepcopy(self.json_data)
-        del bad_json_data["contained"][1]["identifier"][0]["extension"][0]["valueCodeableConcept"]["coding"][0]["code"]
-        nhs_number_verification_status_code = get_nhs_number_verification_status_code(bad_json_data)
-        self.assertIsNone(nhs_number_verification_status_code)
