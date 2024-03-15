@@ -21,6 +21,7 @@ class ImmunizationValidator:
         self.add_post_validators = add_post_validators
         self.pre_validators = None
         self.post_validators = None
+        self.errors = []
         
     def initialize_immunization(self, json_data):
         self.immunization = Immunization.parse_obj(json_data)

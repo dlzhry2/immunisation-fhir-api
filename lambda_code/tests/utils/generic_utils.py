@@ -5,7 +5,6 @@ import os
 import json
 from typing import Literal, Any
 from decimal import Decimal
-from pydantic import ValidationError
 from jsonpath_ng.ext import parse
 
 
@@ -68,9 +67,10 @@ def test_invalid_values_rejected(
     """
     # Create invalid json data by amending the value of the relevant field
     invalid_json_data = parse(field_location).update(valid_json_data, invalid_value)
-
     # Test that correct error type is raised
     with test_instance.assertRaises(ValueError or TypeError) as error:
         test_instance.validator.validate(invalid_json_data)
-
-    test_instance.assertEqual(expected_error_message, str(error.exception))
+        
+    full_error_message = str(error.exception)
+    actual_error_messages = full_error_message.replace('Validation errors: ', '').split('; ')
+    test_instance.assertIn(expected_error_message, actual_error_messages)
