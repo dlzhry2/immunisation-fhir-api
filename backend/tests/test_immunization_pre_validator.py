@@ -13,6 +13,7 @@ from .utils.generic_utils import (
 )
 from .utils.pre_validation_test_utils import ValidatorModelTests
 from .utils.values_for_tests import ValidValues, InvalidValues
+from src.models.fhir_immunization import ImmunizationValidator
 
 
 class TestImmunizationModelPreValidationRules(unittest.TestCase):
@@ -291,8 +292,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_json_data,
             field_location="performer",
             invalid_value=InvalidValues.performer_with_two_organizations,
-            expected_error_message="performer.actor[?@.type=='Organization'] must be unique",
-            expected_error_type="value_error",
+            expected_error_message="performer.actor[?@.type=='Organization'] must be unique"
         )
 
     def test_pre_validate_performer_actor_reference(self):

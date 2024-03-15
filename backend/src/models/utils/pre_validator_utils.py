@@ -21,6 +21,7 @@ class PreValidation:
         Apply pre-validation to a string field to ensure it is a non-empty string which meets
         the length requirements and predefined values requirements
         """
+            
         if not isinstance(field_value, str):
             raise TypeError(f"{field_location} must be a string")
 
