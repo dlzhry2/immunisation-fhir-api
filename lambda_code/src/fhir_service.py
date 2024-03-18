@@ -168,15 +168,18 @@ class FhirService:
         ]
         patient = self.pds_service.get_patient_details(nhs_number) if len(resources) > 0 else None
         entries = [
-            *[BundleEntry(
-                resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
-                search=BundleEntrySearch(mode="match")
-            ) for imms in resources],
-            *([BundleEntry(
-                resource=FhirService.process_patient_for_include(patient),
-                search=BundleEntrySearch(mode="include")
-            )] if patient else [])
-        ]
+                BundleEntry(
+                    resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
+                    search=BundleEntrySearch(mode="match")
+                ) for imms in resources
+            ]
+        if patient:
+            entries.append(
+                BundleEntry(
+                    resource=FhirService.process_patient_for_include(patient),
+                    search=BundleEntrySearch(mode="include")
+                )
+            )
         fhir_bundle = FhirBundle(
             resourceType="Bundle",
             type="searchset",
