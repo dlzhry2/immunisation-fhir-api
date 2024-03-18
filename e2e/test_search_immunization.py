@@ -97,7 +97,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         # Act
         class SearchTestParams(NamedTuple):
             method: Literal["POST", "GET"]
-            query_string: str
+            query_string: Optional[str]
             body: Optional[str]
             should_be_success: bool
             expected_indexes: List[int]
@@ -115,8 +115,9 @@ class TestSearchImmunization(ImmunizationBaseTest):
              # GET does not support body.
              SearchTestParams("GET", f"patient.identifier={valid_nhs_number_param1}&-immunization.target=MMR",
                               f"patient.identifier={valid_nhs_number_param1}", True, [0]),
-             SearchTestParams("POST", "",
+             SearchTestParams("POST", None,
                               f"patient.identifier={valid_nhs_number_param1}&-immunization.target=MMR", True, [0]),
+             # Duplicated NHS number not allowed, spread across query and content.
              SearchTestParams("POST", f"patient.identifier={valid_nhs_number_param1}&-immunization.target=MMR",
                               f"patient.identifier={valid_nhs_number_param1}", False, []),
              SearchTestParams("GET",

@@ -172,15 +172,15 @@ class FhirService:
                 resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
                 search=BundleEntrySearch(mode="match")
             ) for imms in resources],
-            *(BundleEntry(
+            *([BundleEntry(
                 resource=FhirService.process_patient_for_include(patient),
                 search=BundleEntrySearch(mode="include")
-            ) if patient else [])
+            )] if patient else [])
         ]
         fhir_bundle = FhirBundle(
             resourceType="Bundle",
             type="searchset",
-            entry=entries,
+            entry=entries
         )
         url = f"{get_service_url()}/Immunization?{params}"
         fhir_bundle.link = [BundleLink(relation="self", url=url)]

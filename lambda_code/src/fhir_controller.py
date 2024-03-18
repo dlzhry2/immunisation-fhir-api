@@ -155,7 +155,13 @@ class FhirController:
             search_params.date_from,
             search_params.date_to,
         )
-        return self.create_response(200, result.json())
+
+        # Workaround for fhir.resources JSON removing the empty "entry" list.
+        result_json_dict: dict = json.loads(result.json())
+        #result_bundle = {k: v for k, v in result_json_dict.items() if v is not None}
+        if "entry" not in result_json_dict:
+            result_json_dict["entry"] = []
+        return self.create_response(200, json.dumps(result_json_dict))
 
     def _validate_id(self, _id: str) -> Optional[dict]:
         if not re.match(self.immunization_id_pattern, _id):
