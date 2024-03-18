@@ -234,7 +234,7 @@ paths:
       operationId: searchViaGetImmunization
       description: |
         ## Overview
-        Use this endpoint to search for a patient using thier NHS number and DiseaseType.
+        Use this endpoint to search for a patient using their NHS number and DiseaseType.
 
         ## Sandbox testing
         You can test the following scenarios in our sandbox environment:
@@ -248,6 +248,9 @@ paths:
         - $ref: '#/components/parameters/RequestID'
         - $ref: '#/components/parameters/PatientIdentifier'
         - $ref: '#/components/parameters/ImmunizationTarget'
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+        - $ref: '#/components/parameters/Include'
       responses:
         "200":
           description: Search immunisation operation successful
@@ -277,6 +280,9 @@ paths:
         - $ref: '#/components/parameters/RequestID'
         - $ref: '#/components/parameters/PatientIdentifier'
         - $ref: '#/components/parameters/ImmunizationTarget'
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+        - $ref: '#/components/parameters/Include'
       requestBody:
         $ref: '#/components/requestBodies/SearchImmunization' 
       responses:
@@ -434,7 +440,7 @@ components:
           schema:
             type: object
             properties:
-              -nhsNumber:
+              patient-identifier:
                 type: string
                 description: |
                   The patient's NHS number.
@@ -446,6 +452,21 @@ components:
                   The vaccine preventable disease the dose is being administered against.
                   Expressed as `<value>` where`<value>` must be a valid Snomed Code.
                 example: "39114911000001105"
+              -date.from:
+                type: string
+                format: date
+                description: "The earliest date to be included (e.g. 2020-01-01)"
+                default: "1900-01-01"
+              -date.to:
+                type: string
+                format: date
+                description: "The latest date to be included (e.g. 2020-12-31)"
+                default: "9999-12-31"
+              _include:
+                description: "Specifies other resources to be included in the response along with the immunisations.\nMust be `Immunization:patient`, which will include patient demographic details."
+                required: true
+                type: string
+                default: "Immunization:patient"
   parameters:
     Id:
       in: path
@@ -501,14 +522,14 @@ components:
         example: 60E0B220-8136-4CA5-AE46-1D97EF59D068
     PatientIdentifier:
       in: query
-      name: -nhsNumber
+      name: patient.identifier
       description: |
         The patient's NHS number.
-        Expressed as `<value>` where`<value>` must be a [valid NHS number](https://www.datadictionary.nhs.uk/attributes/nhs_number.html).
+        Expressed as `<type>|<value>` where `<type>` must be `https://fhir.nhs.uk/Id/nhs-number` and `<value>` must be a [valid NHS number](https://www.datadictionary.nhs.uk/attributes/nhs_number.html).
       required: true
       schema:
         type: string
-        example: "9000000009"
+        example: "https://fhir.nhs.uk/Id/nhs-number|9000000009"
     ImmunizationTarget:
       in: query
       name: -immunization.target
@@ -519,6 +540,30 @@ components:
       schema:
         type: string
         example: "39114911000001105"
+    DateFrom:
+      in: query
+      name: -date.from
+      description: "The earliest date to be included (e.g. 2020-01-01)"
+      schema:
+        type: string
+        format: date
+        default: "1900-01-01"
+    DateTo:
+      in: query
+      name: -date.to
+      description: "The latest date to be included (e.g. 2020-12-31)"
+      schema:
+        type: string
+        format: date
+        default: "9999-12-31"
+    Include:
+      in: query
+      name: _include
+      description: "Specifies other resources to be included in the response along with the immunisations.\nMust be `Immunization:patient`, which will include patient demographic details."
+      required: true
+      schema:
+        type: string
+        default: "Immunization:patient"
   schemas:
     Resource:
       type: object
