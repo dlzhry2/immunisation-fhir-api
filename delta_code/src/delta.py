@@ -5,6 +5,7 @@ from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 import os
 from datetime import datetime, timedelta
 import uuid
+import logging
 
 def get_delta_table(table_name, region_name="eu-west-2"):
     config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
@@ -18,6 +19,9 @@ def handler(event, context):
     try:
         delta_table = get_delta_table(os.environ["DELTA_TABLE_NAME"])
         delta_source = os.environ["SOURCE"]
+        logging.basicConfig()
+        logger = logging.getLogger()
+        logger.setLevel("INFO")
         #Converting ApproximateCreationDateTime directly to string will give Unix timestamp
         #I am converting it to isofformat for filtering purpose. This can be changed accordingly
 
@@ -38,9 +42,10 @@ def handler(event, context):
             })
             
             if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                    print("Record Successfullyl created")
+                    log = f"Record Successfully created for {imms_id}"
             else:
-                    print("NOT created")  
+                    log = f"Record NOT created for {imms_id}"
+            logger.info(log)
         return {
                 'statusCode': 200,
                 'body': json.dumps('Records processed successfully and tested')
@@ -48,17 +53,5 @@ def handler(event, context):
     
     except Exception as e:
         # Send the failed event to the DLQ
-        print("Came in exception")
-        print(e)
-        '''
-        print(event)
-        sqs = boto3.client('sqs')
-        sqs_queue_url = os.environ.get("DELTA_DEAD_LETTER_QUEUE_URL")
-        print(sqs_queue_url)
-        sqs.send_message(
-            QueueUrl=sqs_queue_url,
-            MessageBody=json.dumps(event),
-        )
-        print("Msg sent successful")
-        raise e
-        '''
+        log = f"Record NOT created due to Exception {e}"
+        logger.info(log)

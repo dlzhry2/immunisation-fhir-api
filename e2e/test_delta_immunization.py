@@ -14,6 +14,7 @@ class TestDeltaImmunization(ImmunizationBaseTest):
     CREATE_OPERATION = "CREATE"
     UPDATE_OPERATION = "UPDATE"
     DELETE_OPERATION = "DELETE"
+    DPS_SOURCE = "DPS"
 
     def get_delta_table(self):
         config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
@@ -31,9 +32,13 @@ class TestDeltaImmunization(ImmunizationBaseTest):
         # It should add 4 rows in Delta Storage table
         create_update_imms = create_an_imms_obj()
         create_delete_imms = create_an_imms_obj()
-        create_update_response = self.default_imms_api.create_immunization(create_update_imms)
+        create_update_response = self.default_imms_api.create_immunization(
+            create_update_imms
+        )
 
-        create_delete_response = self.default_imms_api.create_immunization(create_delete_imms)
+        create_delete_response = self.default_imms_api.create_immunization(
+            create_delete_imms
+        )
         assert create_update_response.status_code == 201
         assert create_delete_response.status_code == 201
         create_update_imms_id = parse_location(
@@ -53,7 +58,9 @@ class TestDeltaImmunization(ImmunizationBaseTest):
         )
         self.assertEqual(create_update_response.status_code, 200)
 
-        create_delete_response = self.default_imms_api.delete_immunization(create_delete_imms_id)
+        create_delete_response = self.default_imms_api.delete_immunization(
+            create_delete_imms_id
+        )
         self.assertEqual(create_delete_response.status_code, 204)
 
         # Then
@@ -65,40 +72,50 @@ class TestDeltaImmunization(ImmunizationBaseTest):
             self.DELETE_OPERATION,
             self.UPDATE_OPERATION,
         ]
-
+        delta_imms_query_response = []
         for operation in operations:
             expression_attribute_values = {
                 ":start": start_timestamp,
                 ":end": end_timestamp,
                 ":operation": operation,
+                ":DPS": self.DPS_SOURCE,
             }
 
-        key_condition_expression = (
-            "Operation = :operation AND DateTimeStamp BETWEEN :start AND :end"
-        )
-        response = imms_delta_table.query(
-            IndexName="SearchIndex",
-            KeyConditionExpression=key_condition_expression,
-            ExpressionAttributeValues=expression_attribute_values,
-        )
-        delta_imms_info = [
-            (entity["ImmsID"], entity["Operation"]) for entity in response["Items"]
-        ]
+            key_condition_expression = (
+                "Operation = :operation AND DateTimeStamp BETWEEN :start AND :end "
+            )
+            expression_attribute_names = {
+                "#Source": "Source"
+            }  # Define an alias for the reserved attribute name
+            is_not_DPS = "#Source <> :DPS"
+            response = imms_delta_table.query(
+                IndexName="SearchIndex",
+                KeyConditionExpression=key_condition_expression,
+                ExpressionAttributeValues=expression_attribute_values,
+                ExpressionAttributeNames=expression_attribute_names,
+                FilterExpression=is_not_DPS,
+            )
+            delta_imms_query_response.extend(
+                (entity["ImmsID"], entity["Operation"]) for entity in response["Items"]
+            )
         if operation == self.CREATE_OPERATION:
             self.assertTrue(
-                create_update_imms_id,
-                self.CREATE_OPERATION,
-            ) in delta_imms_info and (
-                create_delete_imms_id,
-                self.CREATE_OPERATION,
-            ) in delta_imms_info
+                (
+                    (create_update_imms_id, self.CREATE_OPERATION)
+                    in delta_imms_query_response
+                )
+                and (
+                    (create_delete_imms_id, self.CREATE_OPERATION)
+                    in delta_imms_query_response
+                )
+            )
         elif operation == self.UPDATE_OPERATION:
             self.assertTrue(
-                create_update_imms_id,
-                self.UPDATE_OPERATION,
-            ) in delta_imms_info
+                (create_update_imms_id, self.UPDATE_OPERATION)
+                in delta_imms_query_response
+            )
         elif operation == self.DELETE_OPERATION:
             self.assertTrue(
-                create_delete_imms_id,
-                self.DELETE_OPERATION,
-            ) in delta_imms_info
+                (create_delete_imms_id, self.DELETE_OPERATION)
+                in delta_imms_query_response
+            )

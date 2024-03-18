@@ -5,7 +5,6 @@ locals {
     function_name = "delta"
 }
 
-#resource "docker_image" "lambda_function_docker" {
 module "delta_docker_image" {
     source = "terraform-aws-modules/lambda/aws//modules/docker-build"
 
@@ -92,5 +91,5 @@ resource "aws_lambda_function" "delta_sync_lambda" {
 resource "aws_lambda_event_source_mapping" "delta_trigger" {
     event_source_arn = aws_dynamodb_table.test-dynamodb-table.stream_arn
     function_name    = aws_lambda_function.delta_sync_lambda.function_name
-    starting_position = "LATEST"
+    starting_position = "TRIM_HORIZON"
 }
