@@ -14,7 +14,7 @@ from models.utils.post_validation_utils import (
     PostValidation,
     MandatoryError
 )
-from mappings import Mandation, VaccineTypes, vaccine_type_applicable_validationsc
+from mappings import Mandation, VaccineTypes
 
 check_mandation_requirements_met = PostValidation.check_mandation_requirements_met
 get_generic_field_value = PostValidation.get_generic_field_value
@@ -36,11 +36,11 @@ class PostValidators:
         try:
             self.validate_and_set_vaccination_procedure_code(self.values)
             self.validate_occurrence_date_time(self.values)
+            self.set_status(self.values)
         except (ValueError, TypeError, IndexError, AttributeError, MandatoryError) as e:
             raise ValueError(str(e))
 
         validation_methods = [
-            self.set_status,
             self.validate_patient_identifier_value,
             self.validate_patient_name_given,
             self.validate_patient_name_family,
