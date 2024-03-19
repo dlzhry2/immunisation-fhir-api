@@ -6,13 +6,13 @@ from copy import deepcopy
 from jsonpath_ng.ext import parse
 from mappings import VaccineTypes, Mandation
 from models.fhir_immunization import ImmunizationValidator
-from utils.generic_utils import (
+from tests.utils.generic_utils import (
     # these have an underscore to avoid pytest collecting them as tests
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
     load_json_data,
 )
-from utils.mandation_test_utils import MandationTests
+from tests.utils.mandation_test_utils import MandationTests
 
 
 class TestImmunizationModelPostValidationRules(unittest.TestCase):

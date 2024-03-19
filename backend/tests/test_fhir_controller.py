@@ -18,7 +18,7 @@ from models.errors import (
     InvalidPatientId,
     CustomValidationError,
 )
-from immunization_utils import create_an_immunization
+from tests.immunization_utils import create_an_immunization
 from mappings import VaccineTypes
 from search_params import patient_identifier_system
 

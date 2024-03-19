@@ -20,7 +20,7 @@ from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
-from .immunization_utils import (
+from tests.immunization_utils import (
     create_an_immunization,
     create_an_immunization_dict,
     valid_nhs_number,
