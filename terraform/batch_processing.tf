@@ -81,6 +81,8 @@ resource "aws_cloudwatch_event_target" "serverlessland-s3-event-ecs-event-target
         input_paths = {
             bucket_name = "$.detail.bucket.name",
             object_key  = "$.detail.object.key",
+            event_time  = "$.time",
+            event_id    = "$.id"
         }
         input_template = <<EOF
 {
@@ -99,6 +101,18 @@ resource "aws_cloudwatch_event_target" "serverlessland-s3-event-ecs-event-target
         {
           "name" : "OBJECT_KEY",
           "value" : <object_key>
+        },
+        {
+          "name" : "EVENT_TIME",
+          "value" : <event_time>
+        },
+        {
+          "name" : "EVENT_ID",
+          "value" : <event_id>
+        },
+        {
+          "name" : "ENVIRONMENT",
+          "value" : "${local.environment}"
         }
       ]
     }

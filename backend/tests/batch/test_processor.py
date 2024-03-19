@@ -3,19 +3,33 @@ from unittest.mock import create_autospec
 
 from batch.immunization_api import ImmunizationApi
 from batch.parser import DataParser
-from batch.processor import BatchProcessor
+from batch.processor import BatchProcessor, BatchData
+from batch.report import ReportGenerator
 from batch.transformer import DataRecordTransformer
 
 
 class TestBatchProcessor(unittest.TestCase):
     def setUp(self):
+        self.batch_data = BatchData(
+            object_key="an_object_key",
+            event_timestamp=1,
+            process_timestamp=2,
+            environment="a_env",
+            source_bucket="a_source_bucket",
+            destination_bucket="a_destination_bucket",
+            event_id="an_event_id",
+            batch_id="a_batch_id",
+        )
         self.transformer = create_autospec(DataRecordTransformer)
         self.parser = create_autospec(DataParser)
         self.api = create_autospec(ImmunizationApi)
+        self.report_gen = create_autospec(ReportGenerator)
         self.processor = BatchProcessor(
+            batch_data=self.batch_data,
             row_transformer=self.transformer,
             parser=self.parser,
-            api=self.api
+            api=self.api,
+            report_generator=self.report_gen,
         )
 
     def test_create_dict_record(self):

@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from batch.errors import DecoratorError, TransformerFieldError, TransformerRowError, \
-    DecoratorUnhandledError
+    TransformerUnhandledError
 from batch.transformer import DataRecordTransformer
 
 
@@ -75,7 +75,7 @@ class TestDatRecordTransformer(unittest.TestCase):
         self.decorator1.side_effect = decorator_1
 
         # When
-        with self.assertRaises(DecoratorUnhandledError) as e:
+        with self.assertRaises(TransformerUnhandledError) as e:
             self.transformer.transform(OrderedDict([]))
 
         # Then
