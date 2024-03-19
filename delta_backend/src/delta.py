@@ -54,4 +54,4 @@ def handler(event, context):
     except Exception as e:
         # Send the failed event to the DLQ
         log = f"Record NOT created due to Exception {e}"
-        logger.info(log)
+        logger.exception(log)
