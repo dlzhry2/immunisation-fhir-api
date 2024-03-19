@@ -86,7 +86,6 @@ class TestSearchImmunization(ImmunizationBaseTest):
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, flu_code),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, covid_code, "2024-01-30T13:28:17.271+00:00"),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, flu_code),
-            create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, mmr_code),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, covid_code)
         ]
 
@@ -146,16 +145,15 @@ class TestSearchImmunization(ImmunizationBaseTest):
             results: dict = response.json()
             if search.should_be_success:
                 assert "entry" in results.keys()
-                result_ids = [result["resource"]["id"] for result in results["entry"]]
                 assert response.status_code == 200
                 assert results["resourceType"] == "Bundle"
 
-                expected_created_resource_ids = \
-                    [created_resource_id for i, created_resource_id in enumerate(created_resource_ids)
-                     if i in search.expected_indexes]
+                result_ids = [result["resource"]["id"] for result in results["entry"]]
 
-                for expected_created_resource_id in expected_created_resource_ids:
-                    assert expected_created_resource_id in result_ids
+                created_and_returned_ids = list(set(result_ids) & set(created_resource_ids))
+                assert len(created_and_returned_ids) == len(search.expected_indexes)
+                for expected_index in search.expected_indexes:
+                    assert created_resource_ids[expected_index] in result_ids
 
     def test_search_immunization_accepts_include_and_provides_patient(self):
         """it should accept the _include parameter of "Immunization:patient" and return the """
