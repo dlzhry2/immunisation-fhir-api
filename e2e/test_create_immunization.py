@@ -1,5 +1,4 @@
 import uuid
-import pytest
 from utils.base_test import ImmunizationBaseTest
 from utils.resource import create_an_imms_obj
 
@@ -41,7 +40,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
         self.assert_operation_outcome(response, 400, bad_nhs_number)
 
-    @pytest.mark.debug
     def test_validation(self):
         """it should validate Immunization"""
         # NOTE: This e2e test is here to prove validation logic is wired to the backend.
