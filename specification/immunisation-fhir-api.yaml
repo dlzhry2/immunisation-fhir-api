@@ -464,7 +464,6 @@ components:
                 default: "9999-12-31"
               _include:
                 description: "Specifies other resources to be included in the response along with the immunisations.\nMust be `Immunization:patient`, which will include patient demographic details."
-                required: true
                 type: string
                 default: "Immunization:patient"
   parameters:
