@@ -115,7 +115,7 @@ class MandationTests:
             expected_error_message = expected_bespoke_error_message
         else:
             expected_error_message = f"{field_location} is a mandatory field"
-
+            
         if field_to_remove:
             invalid_json_data = parse(field_to_remove).filter(
                 lambda d: True, valid_json_data
@@ -125,7 +125,7 @@ class MandationTests:
             invalid_json_data = parse(field_location).filter(
                 lambda d: True, valid_json_data
             )
-
+        
         if is_mandatory_fhir:
             # Test that correct error message is raised
             with test_instance.assertRaises(ValidationError) as error:
@@ -138,7 +138,7 @@ class MandationTests:
 
         else:
             # Test that correct error message is raised
-            with test_instance.assertRaises(MandatoryError) as error:
+            with test_instance.assertRaises(ValueError) as error:
                 test_instance.validator.validate(invalid_json_data)
             test_instance.assertEqual(expected_error_message, str(error.exception))
 
