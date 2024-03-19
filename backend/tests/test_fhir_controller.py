@@ -508,6 +508,8 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
     def test_self_link_excludes_extraneous_params(self):
+        search_result = Bundle.construct()
+        self.service.search_immunizations.return_value = search_result
         disease_type = VaccineTypes().all[0]
         params = (f"{self.immunization_target_key}={disease_type}&"
                   + urllib.parse.urlencode(
