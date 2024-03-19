@@ -132,7 +132,6 @@ def main():
     workspaces = list_pr_workspaces("pr")
     print(f"Available Workspaces: {workspaces}")
     # Store results for all workspaces
-    
     for workspace in workspaces:
         workspace_name, result = destroy_workspace_wrapper(
             workspace, project_name, project_short_name
@@ -143,7 +142,7 @@ def main():
     print("Results:")
     for workspace_name, result in results:
         print(f"Workspace: {workspace_name}, Result: {result}")
-    
+
 
 if __name__ == "__main__":
     main()
