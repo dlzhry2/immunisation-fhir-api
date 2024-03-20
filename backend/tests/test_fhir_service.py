@@ -424,7 +424,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.disease_type_search_param = "-immunization.target"
 
     def test_map_disease_type_to_disease_code(self):
-        """it should map disease_type to disease_code"""
+        """It should map disease_type to disease_code"""
         # TODO: for this ticket we are assuming code is provided
         nhs_number = valid_nhs_number
         disease_type = "1324681000000101"
@@ -438,7 +438,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo.find_immunizations.assert_called_once_with(nhs_number)
 
     def test_make_fhir_bundle_from_search_result(self):
-        """it should return a FHIR Bundle resource"""
+        """It should return a FHIR Bundle resource"""
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
@@ -464,7 +464,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(result.link[0].relation, "self")
 
     def test_date_from_is_used_to_filter(self):
-        """it should return only Immunizations after date_from"""
+        """It should return only Immunizations after date_from"""
         imms = [("imms-1", "2021-02-07T13:28:17.271+00:00"), ("imms-2", "2021-02-08T13:28:17.271+00:00")]
         imms_list = [create_an_immunization_dict(imms_id, occurrence_date_time=occcurrence_date_time)
                      for (imms_id, occcurrence_date_time) in imms]
@@ -520,7 +520,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(0, len(searched_imms))
 
     def test_date_from_is_optional(self):
-        """it should return everything when no date_from is specified"""
+        """It should return everything when no date_from is specified"""
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
@@ -549,7 +549,7 @@ class TestSearchImmunizations(unittest.TestCase):
             self.assertEqual(entry.resource.id, imms_ids[i])
 
     def test_date_to_is_used_to_filter(self):
-        """it should return only Immunizations before date_to"""
+        """It should return only Immunizations before date_to"""
         imms = [("imms-1", "2021-02-07T13:28:17.271+00:00"), ("imms-2", "2021-02-08T13:28:17.271+00:00")]
         imms_list = [create_an_immunization_dict(imms_id, occurrence_date_time=occcurrence_date_time)
                      for (imms_id, occcurrence_date_time) in imms]
@@ -605,7 +605,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(len(searched_imms), 0)
 
     def test_date_to_is_optional(self):
-        """it should return everything when no date_to is specified"""
+        """It should return everything when no date_to is specified"""
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
@@ -632,3 +632,26 @@ class TestSearchImmunizations(unittest.TestCase):
         # Then
         for i, entry in enumerate(searched_imms):
             self.assertEqual(entry.resource.id, imms_ids[i])
+
+    def test_matches_contain_fullUrl(self):
+        """All matches must have a fullUrl consisting of their id.
+        See http://hl7.org/fhir/R4B/bundle-definitions.html#Bundle.entry.fullUrl.
+        Tested because fhir.resources validation doesn't check this as mandatory."""
+
+        imms_ids = ["imms-1", "imms-2"]
+        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        self.imms_repo.find_immunizations.return_value = imms_list
+        self.pds_service.get_patient_details.return_value = {}
+        nhs_number = valid_nhs_number
+        disease_types = ["COVID19"]
+
+        # When
+        result = self.fhir_service.search_immunizations(
+            nhs_number, disease_types, ""
+        )
+        entries = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
+
+        # Then
+        for i, entry in enumerate(entries):
+            self.assertEqual(entry.fullUrl, f"urn:uuid:{imms_ids[i]}")
+

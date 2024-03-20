@@ -90,6 +90,6 @@ if __name__ == "__main__":
 
     result = search_imms_handler(event, {})
     if "body" in result:
-        pprint.pprint(json.loads(result["body"]))
+        print(json.dumps(json.loads(result["body"]), indent=2))
     else:
         pprint.pprint(result)

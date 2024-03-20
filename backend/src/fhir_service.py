@@ -165,7 +165,8 @@ class FhirService:
         entries = [
                 BundleEntry(
                     resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
-                    search=BundleEntrySearch(mode="match")
+                    search=BundleEntrySearch(mode="match"),
+                    fullUrl=f"urn:uuid:{imms['id']}"
                 ) for imms in resources
             ]
         if patient:
