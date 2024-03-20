@@ -12,7 +12,8 @@ class VaccineTypes:
     hpv: str = "HPV"
     mmr: str = "MMR"
 
-    all: list[str] = field(default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr])
+    all: list[str] = \
+        field(default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr])
 
 
 @dataclass

@@ -1,5 +1,7 @@
 import base64
 import datetime
+from dataclasses import dataclass
+
 from aws_lambda_typing.events import APIGatewayProxyEventV1
 from typing import Optional
 from urllib.parse import parse_qs, urlencode
@@ -15,24 +17,17 @@ patient_identifier_system = "https://fhir.nhs.uk/Id/nhs-number"
 patient_identifier_key = "patient.identifier"
 immunization_target_key = "-immunization.target"
 date_from_key = "-date.from"
+date_from_default = datetime.date(1900, 1, 1)
 date_to_key = "-date.to"
+date_to_default = datetime.date(9999, 12, 31)
 
 
+@dataclass
 class SearchParams:
     nhs_number: str
     disease_types: list[str]
     date_from: Optional[datetime.date]
     date_to: Optional[datetime.date]
-
-    def __init__(self,
-                 nhs_number: str,
-                 disease_type: list[str],
-                 date_from: Optional[datetime.date],
-                 date_to: Optional[datetime.date]):
-        self.nhs_number = nhs_number
-        self.disease_types = disease_type
-        self.date_from = date_from
-        self.date_to = date_to
 
     def __repr__(self):
         return str(self.__dict__)
@@ -122,7 +117,7 @@ def process_search_params(params: ParamContainer) -> SearchParams:
 
     try:
         date_from = datetime.datetime.strptime(date_froms[0], "%Y-%m-%d").date() \
-            if len(date_froms) == 1 else datetime.date(1900, 1, 1)
+            if len(date_froms) == 1 else date_from_default
     except ValueError:
         raise ParameterException(f"Search parameter {date_from_key} must be in format: YYYY-MM-DD")
 
@@ -134,7 +129,7 @@ def process_search_params(params: ParamContainer) -> SearchParams:
 
     try:
         date_to = datetime.datetime.strptime(date_tos[0], "%Y-%m-%d").date() \
-            if len(date_tos) == 1 else datetime.date(9999, 12, 31)
+            if len(date_tos) == 1 else date_to_default
     except ValueError:
         raise ParameterException(f"Search parameter {date_to_key} must be in format: YYYY-MM-DD")
 
@@ -144,11 +139,15 @@ def process_search_params(params: ParamContainer) -> SearchParams:
     return SearchParams(patient_identifier, disease_types, date_from, date_to)
 
 
-def create_query_string(search_params: SearchParams):
+def create_query_string(search_params: SearchParams) -> str:
     params = [
         (immunization_target_key, search_params.disease_types),
         (patient_identifier_key,
-         f"{patient_identifier_system}|{search_params.nhs_number}")
+         f"{patient_identifier_system}|{search_params.nhs_number}"),
+        *([(date_from_key, search_params.date_from.isoformat())]
+          if search_params.date_from != date_from_default else []),
+        *([(date_from_key, search_params.date_to.isoformat())]
+          if search_params.date_to != date_to_default else []),
     ]
     search_params_qs = urlencode(sorted(params, key=lambda x: x[0]), doseq=True)
     return search_params_qs
