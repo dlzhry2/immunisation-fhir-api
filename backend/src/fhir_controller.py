@@ -22,10 +22,10 @@ from models.errors import (
     ResourceNotFoundError,
     UnhandledResponseError,
     ValidationError,
-    IdentifierDuplicationError
+    IdentifierDuplicationError, ParameterException
 )
 from pds_service import PdsService, Authenticator
-from search_params import process_params, process_search_params, create_query_string
+from parameter_parser import process_params, process_search_params, create_query_string
 
 
 def make_controller(
@@ -142,10 +142,10 @@ class FhirController:
         if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
             return response
 
-        params = process_params(aws_event)
-        search_params, search_param_parse_errors = process_search_params(params)
-        if search_param_parse_errors is not None:
-            return self._create_bad_request(search_param_parse_errors)
+        try:
+            search_params = process_search_params(process_params(aws_event))
+        except ParameterException as e:
+            return self._create_bad_request(e.message)
         if search_params is None:
             raise Exception("Failed to parse parameters.")
 

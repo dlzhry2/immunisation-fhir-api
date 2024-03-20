@@ -131,3 +131,11 @@ def create_operation_outcome(resource_id: str, severity: Severity, code: Code, d
         "id": resource_id,
         "issue": [{"severity": severity, "code": code, "diagnostics": diagnostics}],
     }
+
+
+@dataclass
+class ParameterException(RuntimeError):
+    message: str
+
+    def __str__(self):
+        return self.message

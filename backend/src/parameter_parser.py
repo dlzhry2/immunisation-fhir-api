@@ -5,6 +5,7 @@ from typing import Optional
 from urllib.parse import parse_qs, urlencode
 
 from mappings import VaccineTypes
+from models.errors import ParameterException
 
 ParamValue = list[str]
 ParamContainer = dict[str, ParamValue]
@@ -38,6 +39,8 @@ class SearchParams:
 
 
 def process_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
+    """Combines query string and content parameters. Duplicates not allowed. Splits on a comma."""
+
     def split_and_flatten(input: list[str]):
         return [x.strip()
                 for xs in input
@@ -46,10 +49,8 @@ def process_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
     def parse_multi_value_query_parameters(
         multi_value_query_params: dict[str, list[str]]
     ) -> ParamContainer:
-        if any([isinstance(v, list) is False for _, v in multi_value_query_params.items()]):
-            raise Exception("Parameter values must be lists.")
         if any([len(v) > 1 for k, v in multi_value_query_params.items()]):
-            raise Exception("Parameters may not be duplicated. Use commas for \"or\".")
+            raise ParameterException("Parameters may not be duplicated. Use commas for \"or\".")
         params = [(k, split_and_flatten(v))
                   for k, v in multi_value_query_params.items()]
 
@@ -63,10 +64,8 @@ def process_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
             decoded_body = base64.b64decode(body).decode("utf-8")
             parsed_body = parse_qs(decoded_body)
 
-            if any([isinstance(v, list) is False for _, v in parsed_body.items()]):
-                raise Exception("Parameter values must be lists.")
             if any([len(v) > 1 for k, v in parsed_body.items()]):
-                raise Exception("Parameters may not be duplicated. Use commas for \"or\".")
+                raise ParameterException("Parameters may not be duplicated. Use commas for \"or\".")
             items = dict((k, split_and_flatten(v)) for k, v in parsed_body.items())
             return items
         return {}
@@ -74,22 +73,32 @@ def process_params(aws_event: APIGatewayProxyEventV1) -> ParamContainer:
     query_params = parse_multi_value_query_parameters(aws_event.get("multiValueQueryStringParameters", {}) or {})
     body_params = parse_body_params(aws_event)
 
-    return {key: sorted(query_params.get(key, []) + body_params.get(key, []))
-            for key in (query_params.keys() | body_params.keys())}
+    if len(set(query_params.keys()) & set(body_params.keys())) > 0:
+        raise ParameterException("Parameters may not be duplicated. Use commas for \"or\".")
+
+    parsed_params = {key: sorted(query_params.get(key, []) + body_params.get(key, []))
+                     for key in (query_params.keys() | body_params.keys())}
+
+    return parsed_params
 
 
-def process_search_params(params: ParamContainer) -> tuple[Optional[SearchParams], Optional[str]]:
+def process_search_params(params: ParamContainer) -> SearchParams:
+    """Validate and parse search parameters.
+
+    :raises ParameterException:
+    """
+
     # patient.identifier
     patient_identifiers = params.get(patient_identifier_key, [])
     patient_identifier = patient_identifiers[0] if len(patient_identifiers) == 1 else None
 
     if patient_identifier is None:
-        return None, f"Search parameter {patient_identifier_key} must have one value."
+        raise ParameterException(f"Search parameter {patient_identifier_key} must have one value.")
 
     patient_identifier_parts = patient_identifier.split("|")
     if len(patient_identifier_parts) != 2 or not patient_identifier_parts[
                                                      0] == patient_identifier_system:
-        return None, ("patient.identifier must be in the format of "
+        raise ParameterException("patient.identifier must be in the format of "
                       f"\"{patient_identifier_system}|{{NHS number}}\" "
                       f"e.g. \"{patient_identifier_system}|9000000009\"")
 
@@ -100,38 +109,39 @@ def process_search_params(params: ParamContainer) -> tuple[Optional[SearchParams
     disease_types = [disease_type for disease_type in params[immunization_target_key] if
                      disease_type is not None]
     if len(disease_types) < 1:
-        return None, f"Search parameter {immunization_target_key} must have one or more values."
+        raise ParameterException(f"Search parameter {immunization_target_key} must have one or more values.")
     if any([x not in VaccineTypes().all for x in disease_types]):
-        return None, f"immunization-target must be one or more of the following: {','.join(VaccineTypes().all)}"
+        raise ParameterException(
+            f"immunization-target must be one or more of the following: {','.join(VaccineTypes().all)}")
 
     # date.from
     date_froms = params.get(date_from_key, [])
 
     if len(date_froms) > 1:
-        return None, f"Search parameter {date_from_key} may have only one value."
+        raise ParameterException(f"Search parameter {date_from_key} may have only one value.")
 
     try:
         date_from = datetime.datetime.strptime(date_froms[0], "%Y-%m-%d").date() \
             if len(date_froms) == 1 else datetime.date(1900, 1, 1)
     except ValueError:
-        return None, f"Search parameter {date_from_key} must be in format: YYYY-MM-DD"
+        raise ParameterException(f"Search parameter {date_from_key} must be in format: YYYY-MM-DD")
 
     # date.to
     date_tos = params.get(date_to_key, [])
 
     if len(date_tos) > 1:
-        return None, f"Search parameter {date_to_key} may have only one value."
+        raise ParameterException(f"Search parameter {date_to_key} may have only one value.")
 
     try:
         date_to = datetime.datetime.strptime(date_tos[0], "%Y-%m-%d").date() \
             if len(date_tos) == 1 else datetime.date(9999, 12, 31)
     except ValueError:
-        return None, f"Search parameter {date_to_key} must be in format: YYYY-MM-DD"
+        raise ParameterException(f"Search parameter {date_to_key} must be in format: YYYY-MM-DD")
 
     if date_from and date_to and date_from > date_to:
-        return None, f"Search parameter {date_from_key} must be before {date_to_key}"
+        raise ParameterException(f"Search parameter {date_from_key} must be before {date_to_key}")
 
-    return SearchParams(patient_identifier, disease_types, date_from, date_to), None
+    return SearchParams(patient_identifier, disease_types, date_from, date_to)
 
 
 def create_query_string(search_params: SearchParams):

@@ -20,7 +20,7 @@ from models.errors import (
 )
 from tests.immunization_utils import create_an_immunization
 from mappings import VaccineTypes
-from search_params import patient_identifier_system
+from parameter_parser import patient_identifier_system
 
 
 class TestFhirController(unittest.TestCase):
@@ -391,7 +391,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
     def test_repeated_same_params_search_immunizations(self):
-        """it should search based on nhsNumber and diseaseType when diseaseType repeated in params and body"""
+        """it should fail when diseaseType repeated in params and body"""
         search_result = Bundle.construct()
         self.service.search_immunizations.return_value = search_result
 
@@ -420,12 +420,8 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         response = self.controller.search_immunizations(lambda_event)
         # Then
-        self.service.search_immunizations.assert_called_once_with(
-            self.nhs_number_valid_value, [disease_type], params, ANY, ANY
-        )
-        self.assertEqual(response["statusCode"], 200)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "Bundle")
+        self.service.search_immunizations.assert_not_called()
+        self.assertEqual(response["statusCode"], 400)
 
     def test_mixed_params_search_immunizations(self):
         """it should search based on nhsNumber in body and diseaseType in params"""

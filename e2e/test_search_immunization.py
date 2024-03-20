@@ -1,5 +1,4 @@
 import datetime
-import pdb
 import pprint
 import uuid
 from typing import NamedTuple, Literal, Optional, List
@@ -55,8 +54,8 @@ class TestSearchImmunization(ImmunizationBaseTest):
         body = response.json()
 
         resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
-        self.assertTrue(mmr["id"] in resource_ids)
-        self.assertTrue(flu["id"] not in resource_ids)
+        self.assertIn(mmr["id"], resource_ids)
+        self.assertNotIn(flu["id"], resource_ids)
 
     def test_search_ignore_deleted(self):
         # Given patient has three vaccines and the last one is deleted
@@ -94,7 +93,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
         created_resource_ids = [result["id"] for result in stored_records]
 
-        # Act
+        # When
         class SearchTestParams(NamedTuple):
             method: Literal["POST", "GET"]
             query_string: Optional[str]
@@ -107,8 +106,10 @@ class TestSearchImmunization(ImmunizationBaseTest):
              # No results.
              SearchTestParams("GET", f"patient.identifier={valid_nhs_number_param2}&-immunization.target=MMR",
                               None, True, []),
+             # Basic success.
              SearchTestParams("GET", f"patient.identifier={valid_nhs_number_param1}&-immunization.target=MMR",
                               None, True, [0]),
+             # "Or" params.
              SearchTestParams("GET",
                               f"patient.identifier={valid_nhs_number_param1}&-immunization.target=MMR,FLU",
                               None, True, [0, 1]),
@@ -125,11 +126,12 @@ class TestSearchImmunization(ImmunizationBaseTest):
                               f"&patient.identifier={valid_nhs_number_param1}"
                               f"&-immunization.target=MMR",
                               None, False, []),
-             # "and" params not supported.
+             # "And" params not supported.
              SearchTestParams("GET",
                               f"patient.identifier={valid_nhs_number_param1}&-immunization.target=MMR"
                               f"&-immunization.target=FLU",
-                              None, False, [0, 1]),
+                              None, False, []),
+             # Date
              SearchTestParams("GET",
                               f"patient.identifier={valid_nhs_number_param1}&-immunization.target=COVID19"
                               f"&-date.from=2023-12-31&-date.to=2024-01-31",
@@ -137,7 +139,6 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
         for search in searches:
             pprint.pprint(search)
-            #pdb.set_trace()
             response = self.default_imms_api.search_immunizations_full(
                 search.method, search.query_string, search.body)
 
