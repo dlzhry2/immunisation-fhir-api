@@ -1,4 +1,5 @@
 import datetime
+import pdb
 import pprint
 import uuid
 from typing import NamedTuple, Literal, Optional, List
@@ -136,6 +137,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
         for search in searches:
             pprint.pprint(search)
+            #pdb.set_trace()
             response = self.default_imms_api.search_immunizations_full(
                 search.method, search.query_string, search.body)
 
@@ -156,8 +158,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                     assert created_resource_ids[expected_index] in result_ids
 
     def test_search_immunization_accepts_include_and_provides_patient(self):
-        """it should accept the _include parameter of "Immunization:patient" and return the patient.
-        Matches Immunisation History API in that it doesn't matter if you don't pass "_include"."""
+        """it should accept the _include parameter of "Immunization:patient" and return the patient."""
 
         # Arrange
         imms_obj = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, mmr_code)
@@ -182,3 +183,14 @@ class TestSearchImmunization(ImmunizationBaseTest):
         assert patient_entry["resource"]["identifier"][0]["value"] == valid_nhs_number1
 
         datetime.datetime.strptime(patient_entry["resource"]["birthDate"], "%Y-%m-%d").date()
+
+        response_without_include = self.default_imms_api.search_immunizations_full(
+            "POST",
+            f"patient.identifier={valid_nhs_number_param1}&-immunization.target=MMR",
+            None)
+
+        assert response_without_include.ok
+        result_without_include = response_without_include.json()
+
+        # Matches Immunisation History API in that it doesn't matter if you don't pass "_include".
+        assert result == result_without_include
