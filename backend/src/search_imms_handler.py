@@ -1,11 +1,7 @@
-import traceback
-
-import json
-
-import base64
-
 import argparse
+import json
 import pprint
+import traceback
 import uuid
 
 from aws_lambda_typing import context as context_, events
@@ -70,13 +66,7 @@ if __name__ == "__main__":
         "headers": {
             'Content-Type': 'application/x-www-form-urlencoded',
             'AuthenticationType': 'ApplicationRestricted',
-            'Permissions': (','.join([
-                Permission.READ,
-                Permission.CREATE,
-                Permission.UPDATE,
-                Permission.DELETE,
-                Permission.SEARCH
-            ]))
+            'Permissions': (','.join([Permission.SEARCH]))
         },
         "body": None,
         "resource": None,

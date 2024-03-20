@@ -6,11 +6,10 @@ from decimal import Decimal
 from typing import Optional
 
 import boto3
-from botocore.config import Config
 from aws_lambda_typing.events import APIGatewayProxyEventV1
+from botocore.config import Config
 
 from authorization import Authorization, EndpointOperation, UnknownPermission
-from botocore.config import Config
 from cache import Cache
 from fhir_repository import ImmunizationRepository, create_table
 from fhir_service import FhirService, UpdateOutcome, get_service_url
@@ -159,7 +158,6 @@ class FhirController:
 
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
-        #result_bundle = {k: v for k, v in result_json_dict.items() if v is not None}
         if "entry" not in result_json_dict:
             result_json_dict["entry"] = []
         return self.create_response(200, json.dumps(result_json_dict))

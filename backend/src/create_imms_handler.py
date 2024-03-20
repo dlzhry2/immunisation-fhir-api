@@ -32,13 +32,7 @@ if __name__ == "__main__":
         "headers": {
             'Content-Type': 'application/x-www-form-urlencoded',
             'AuthenticationType': 'ApplicationRestricted',
-            'Permissions': (','.join([
-                Permission.READ,
-                Permission.CREATE,
-                Permission.UPDATE,
-                Permission.DELETE,
-                Permission.SEARCH
-            ]))
+            'Permissions': (','.join([Permission.CREATE]))
         }
     }
 
