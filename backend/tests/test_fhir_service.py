@@ -655,3 +655,76 @@ class TestSearchImmunizations(unittest.TestCase):
         for i, entry in enumerate(entries):
             self.assertEqual(entry.fullUrl, f"urn:uuid:{imms_ids[i]}")
 
+    def test_patient_included(self):
+        """Patient is included in the results."""
+
+        imms_ids = ["imms-1", "imms-2"]
+        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        patient = next(contained for contained in imms_list[0]["contained"] if contained["resourceType"] == "Patient")
+        self.imms_repo.find_immunizations.return_value = imms_list
+        self.pds_service.get_patient_details.return_value = patient
+        nhs_number = valid_nhs_number
+        disease_types = ["COVID19"]
+
+        # When
+        result = self.fhir_service.search_immunizations(
+            nhs_number, disease_types, ""
+        )
+
+        # Then
+        patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"), None)
+        self.assertIsNotNone(patient_entry)
+
+    @unittest.skip("Patient fullUrl not implemented")
+    def test_patient_contains_fullUrl(self):
+        """Patient must have a fullUrl consisting of its id.
+        See http://hl7.org/fhir/R4B/bundle-definitions.html#Bundle.entry.fullUrl.
+        Tested because fhir.resources validation doesn't check this as mandatory."""
+
+        imms_ids = ["imms-1", "imms-2"]
+        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        self.imms_repo.find_immunizations.return_value = imms_list
+        self.pds_service.get_patient_details.return_value = {}
+        nhs_number = valid_nhs_number
+        disease_types = ["COVID19"]
+
+        # When
+        result = self.fhir_service.search_immunizations(
+            nhs_number, disease_types, ""
+        )
+
+        # Then
+        patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"), None)
+        self.assertEqual(patient_entry.fullUrl, "???")
+
+    def test_patient_is_stripped(self):
+        """The included Patient is a subset of the data. Matches Immunisation History API."""
+
+        imms_ids = ["imms-1", "imms-2"]
+        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        patient = next(contained for contained in imms_list[0]["contained"] if contained["resourceType"] == "Patient")
+        self.imms_repo.find_immunizations.return_value = imms_list
+        self.pds_service.get_patient_details.return_value = patient
+        nhs_number = valid_nhs_number
+        disease_types = ["COVID19"]
+
+        # When
+        result = self.fhir_service.search_immunizations(
+            nhs_number, disease_types, ""
+        )
+
+        # Then
+        patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"), None)
+        patient_entry_resource = patient_entry.resource
+        fields_to_keep = ["id", "resource_type", "identifier", "birthDate"]
+        #self.assertListEqual(sorted(vars(patient_entry.resource).keys()), sorted(fields_to_keep))
+        #self.assertGreater(len(patient), len(fields_to_keep))
+        for field in fields_to_keep:
+            self.assertTrue(hasattr(patient_entry_resource, field), f"{field} in Patient")
+            self.assertIsNotNone(getattr(patient_entry_resource, field))
+
+        for k, v in vars(patient_entry_resource).items():
+            if k not in fields_to_keep:
+                self.assertIsNone(v)
+
+

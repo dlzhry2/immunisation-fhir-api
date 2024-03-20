@@ -149,14 +149,15 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 assert results["resourceType"] == "Bundle"
 
                 result_ids = [result["resource"]["id"] for result in results["entry"]]
-
                 created_and_returned_ids = list(set(result_ids) & set(created_resource_ids))
+
                 assert len(created_and_returned_ids) == len(search.expected_indexes)
                 for expected_index in search.expected_indexes:
                     assert created_resource_ids[expected_index] in result_ids
 
     def test_search_immunization_accepts_include_and_provides_patient(self):
-        """it should accept the _include parameter of "Immunization:patient" and return the """
+        """it should accept the _include parameter of "Immunization:patient" and return the patient.
+        Matches Immunisation History API in that it doesn't matter if you don't pass "_include"."""
 
         # Arrange
         imms_obj = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, mmr_code)
