@@ -490,10 +490,23 @@ class TestSearchImmunizations(unittest.TestCase):
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
-    def test_nhs_number_is_mandatory(self):
+    def test_patient_identifier_is_mandatory(self):
         """nhsNumber is a mandatory query param"""
         lambda_event = {"multiValueQueryStringParameters": {
             self.immunization_target_key: ["a-disease-type"],
+        }}
+
+        response = self.controller.search_immunizations(lambda_event)
+
+        self.assertEqual(self.service.search_immunizations.call_count, 0)
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")
+
+    def test_immunization_target_is_mandatory(self):
+        """nhsNumber is a mandatory query param"""
+        lambda_event = {"multiValueQueryStringParameters": {
+            self.patient_identifier_key: ["a-disease-type"],
         }}
 
         response = self.controller.search_immunizations(lambda_event)
