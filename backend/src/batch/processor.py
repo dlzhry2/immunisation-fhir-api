@@ -88,7 +88,6 @@ class BatchProcessor:
             data["type"] = "api_success"
             data["request"] = data
             data["response"] = response.json()
-            logging.log(logging.ERROR, data)
 
         except ImmunizationApiError as e:
             report_entry = ReportEntry(message=str(e.response))

@@ -7,6 +7,7 @@ import uuid
 from enum import Enum
 
 from cache import Cache
+from models.errors import UnhandledResponseError
 
 
 class Service(Enum):
@@ -65,6 +66,9 @@ class AppRestrictedAuth:
             'client_assertion': _jwt
         }
         token_response = requests.post(self.token_url, data=data, headers=headers)
+        if token_response.status_code != 200:
+            raise UnhandledResponseError(response=token_response.text, message="Failed to get access token")
+
         token = token_response.json().get('access_token')
 
         self.cache.put(self.cache_key, {"token": token, "expires_at": now + self.expiry})

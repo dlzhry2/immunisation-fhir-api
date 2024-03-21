@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Union
 
 
 class NoneThrowingError:
@@ -51,7 +51,7 @@ class ImmunizationApiError(RuntimeError):
     """An error that occurs when the ImmunizationApi returns a non-200 status code."""
     status_code: int
     request: dict
-    response: dict
+    response: Union[dict, str]
 
 
 @dataclass

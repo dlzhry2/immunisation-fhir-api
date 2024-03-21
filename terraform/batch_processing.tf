@@ -22,11 +22,13 @@ data "aws_iam_policy_document" "batch_processing_policy_document" {
         templatefile("${local.policy_path}/batch_processing.json", {
             "batch_processing_source_bucket" : aws_s3_bucket.batch_data_source_bucket.bucket
             "batch_processing_destination_bucket" : aws_s3_bucket.batch_data_destination_bucket.bucket
+            "account_id" : data.aws_caller_identity.current.account_id
         } ),
         templatefile("${local.policy_path}/log.json", {} ),
     ]
 }
 resource "aws_iam_policy" "batch_processing_policy" {
+    name = "${local.prefix}-batch-processing-policy"
     policy = data.aws_iam_policy_document.batch_processing_policy_document.json
 }
 

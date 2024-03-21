@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import create_autospec
 
+from batch.errors import TransformerRowError, TransformerUnhandledError, ImmunizationApiError, \
+    ImmunizationApiUnhandledError
 from batch.immunization_api import ImmunizationApi
 from batch.parser import DataParser
 from batch.processor import BatchProcessor, BatchData
@@ -49,13 +51,50 @@ class TestBatchProcessor(unittest.TestCase):
 
         self.processor.process()
 
-        self.api.create_immunization.assert_called_once_with(imms)
+        self.api.create_immunization.assert_called_once_with(imms, self.processor.trace_data["correlation_id"])
 
-    def test_continue_on_transform_error(self):
+    def test_close_report(self):
+        """it should close the report generator, so we can upload the report"""
+        self.parser.parse_rows.return_value = iter([["H0", "H1"], ["v0", "v1"]])
+
+        self.processor.process()
+
+        self.report_gen.close.assert_called_once()
+
+    def test_continue_on_transform_handled_error(self):
         """it should continue processing if a transform error is raised"""
         self.parser.parse_rows.return_value = iter([["H0", "H1"], ["v0", "v1"]])
-        self.transformer.transform.side_effect = Exception("Boom")
+        self.transformer.transform.side_effect = TransformerRowError([])
 
         self.processor.process()
 
         self.api.create_immunization.assert_not_called()
+
+    def test_continue_on_transform_unhandled_error(self):
+        """it should continue processing if a transform error is raised"""
+        self.parser.parse_rows.return_value = iter([["H0", "H1"], ["v0", "v1"]])
+        self.transformer.transform.side_effect = TransformerUnhandledError("a_decorator")
+
+        self.processor.process()
+
+        self.api.create_immunization.assert_not_called()
+
+    def test_continue_on_api_handled_error(self):
+        """it should continue processing if an api error is raised"""
+        self.parser.parse_rows.return_value = iter([["H0", "H1"], ["v0", "v1"]])
+        self.transformer.transform.return_value = {"key": "value"}
+        self.api.create_immunization.side_effect = ImmunizationApiError(0, {}, {})
+
+        self.processor.process()
+
+        self.api.create_immunization.assert_called_once()
+
+    def test_continue_on_api_unhandled_error(self):
+        """it should continue processing if an api error is raised"""
+        self.parser.parse_rows.return_value = iter([["H0", "H1"], ["v0", "v1"]])
+        self.transformer.transform.return_value = {"key": "value"}
+        self.api.create_immunization.side_effect = ImmunizationApiUnhandledError({})
+
+        self.processor.process()
+
+        self.api.create_immunization.assert_called_once()

@@ -47,7 +47,7 @@ def _make_batch_data() -> BatchData:
 
 def batch_processing(s3_client, secret_client):
     batch = _make_batch_data()
-    logging.log(logging.INFO,
+    logging.log(logging.WARNING,
                 {"type": "batch_start", "message": "a new batch processing has started", **batch.__dict__})
 
     cache = Cache(directory="/tmp")
