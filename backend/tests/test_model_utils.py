@@ -1,17 +1,11 @@
 """Tests for the utils module"""
 
 import unittest
-from copy import deepcopy
-from models.utils.generic_utils import nhs_number_mod11_check, get_nhs_number_verification_status_code
-from .utils.generic_utils import load_json_data
+from models.utils.generic_utils import nhs_number_mod11_check
 
 
 class UtilsTests(unittest.TestCase):
     """Tests for models.utils.generic_utils module"""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.json_data = load_json_data("sample_covid_immunization_event.json")
 
     def test_nhs_number_mod11_check(self):
         """Test the nhs_number_mod11_check function"""
