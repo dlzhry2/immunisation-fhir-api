@@ -36,7 +36,7 @@ def make_controller(
     boto_config = Config(region_name="eu-west-2")
     cache = Cache(directory="/tmp")
     authenticator = AppRestrictedAuth(
-        service=Service.IMMUNIZATION,
+        service=Service.PDS,
         secret_manager_client=boto3.client("secretsmanager", config=boto_config),
         environment=pds_env,
         cache=cache)
