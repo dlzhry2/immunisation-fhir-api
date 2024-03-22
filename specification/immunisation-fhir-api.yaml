@@ -449,9 +449,12 @@ components:
               -immunization.target:
                 type: string
                 description: |
-                  The vaccine preventable disease the dose is being administered against.
-                  Expressed as `<value>` where`<value>` must be a valid Snomed Code.
-                example: "39114911000001105"
+                  Specific procedures, disorders, diseases, infections or organisms.
+                enum:
+                  - "COVID19"
+                  - "FLU"
+                  - "HPV"
+                  - "MMR"
               -date.from:
                 type: string
                 format: date
@@ -533,12 +536,15 @@ components:
       in: query
       name: -immunization.target
       description: |
-        The vaccine preventable disease the dose is being administered against.
-        Expressed as `<value>` where`<value>` must be a valid Snomed Code.
+        Specific procedures, disorders, diseases, infections or organisms.
       required: true
       schema:
         type: string
-        example: "39114911000001105"
+        enum:
+          - "COVID19"
+          - "FLU"
+          - "HPV"
+          - "MMR"
     DateFrom:
       in: query
       name: -date.from
