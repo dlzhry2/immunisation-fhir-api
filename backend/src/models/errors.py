@@ -11,9 +11,9 @@ class Code(str, Enum):
     forbidden = "forbidden"
     not_found = "not-found"
     invalid = "invalid"
-    #server_error = "internal-server-error"
+    server_error = "internal-server-error"
     invariant = "invariant"
-    #invalid_resource = "invalid_resource"
+    invalid_resource = "invalid_resource"
 
 
 @dataclass
