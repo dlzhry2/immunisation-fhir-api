@@ -1,5 +1,4 @@
 import uuid
-
 from utils.base_test import ImmunizationBaseTest
 from utils.resource import create_an_imms_obj, get_full_row_from_identifier
 

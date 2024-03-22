@@ -130,7 +130,7 @@ class MandationTests:
 
         else:
             # Test that correct error message is raised
-            with test_instance.assertRaises(MandatoryError) as error:
+            with test_instance.assertRaises(ValueError) as error:
                 test_instance.validator.validate(invalid_json_data)
             test_instance.assertEqual(expected_error_message, str(error.exception))
 
