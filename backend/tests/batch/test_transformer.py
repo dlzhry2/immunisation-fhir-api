@@ -33,5 +33,5 @@ class TestTransformerImmsStatus(unittest.TestCase):
 
         self.patcher.start()
 
-    def test(self):
+    def test_not_given(self):
         pass

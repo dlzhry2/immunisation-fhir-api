@@ -9,7 +9,7 @@ from batch.decorators import (
     _decorate_vaccination,
     _decorate_vaccine,
     _decorate_practitioner,
-    _decorate_questionare, decorate)
+    _decorate_questionare, decorate, _decorate_status)
 from batch.errors import DecoratorError, TransformerFieldError, TransformerRowError, TransformerUnhandledError
 from mappings import vaccination_procedure_snomed_codes
 
@@ -107,6 +107,37 @@ class TestDecorate(unittest.TestCase):
         # Then
         self.assertEqual(e.exception.decorator_name, str(self.decorator0))
         self.decorator1.assert_not_called()
+
+
+class TestStatusDecorator(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        self.imms = copy.deepcopy(raw_imms)
+
+    def test_not_given_true(self):
+        """it should set status to 'not-done' if not given is true"""
+        headers = OrderedDict([("not_given", "TRUE")])
+
+        _decorate_status(self.imms, headers)
+
+        expected_imms = copy.deepcopy(raw_imms)
+        expected_imms["status"] = "not-done"
+
+        self.assertDictEqual(expected_imms, self.imms)
+
+    def test_not_given_false_action_delete(self):
+        """it should set the status to 'entered-in-error' if not given is false and ACTION_FLAG is update or delete"""
+        values = [("FALSE", "update"), ("FALSE", "delete"), ("FALSE", "some-other-value")]
+        for not_given, action_flag in values:
+            with self.subTest(not_given=not_given, action_flag=action_flag):
+                headers = OrderedDict([("not_given", not_given), ("action_flag", action_flag)])
+
+                _decorate_status(self.imms, headers)
+
+                expected_imms = copy.deepcopy(raw_imms)
+                expected_imms["status"] = "entered-in-error"
+
+                self.assertDictEqual(expected_imms, self.imms)
 
 
 class TestPatientDecorator(unittest.TestCase):

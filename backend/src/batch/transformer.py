@@ -46,3 +46,4 @@ class DataRecordTransformer:
         imms = copy.deepcopy(self.raw_imms)
         decorate(imms, record)
         return imms
+

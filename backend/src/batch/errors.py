@@ -10,6 +10,7 @@ class NoneThrowingError:
 class TransformerFieldError(NoneThrowingError):
     """An error that occurs during transformation of a field or a collection of fields like patient"""
     message: str
+    field: str
 
     def __str__(self):
         return self.message

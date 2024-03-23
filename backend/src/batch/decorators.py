@@ -49,6 +49,40 @@ def _convert_gender_code(code: str) -> str:
     return code_to_fhir.get(code, code)
 
 
+def _parse_boolean(value: str) -> bool:
+    """Boolean values are represented as string in the CSV file. This function converts them to Python boolean."""
+    return value.lower() == "true"
+
+
+def _decorate_status(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
+    """ Takes ACTION_FLAG and NOT_GIVEN and sets the status accordingly. Status is a mandatory FHIR field.
+    The following 1-to-1 mapping applies:
+    * NOT_GIVEN is True <---> Status will be set to 'not-done' (and therefore ACTION_FLAG is
+        absent)
+    * NOT_GIVEN is False <---> Status will be set to 'completed' or 'entered-in-error' (and
+        therefore ACTION_FLAG is present)
+    """
+    errors: List[TransformerFieldError] = []
+
+    if not_given := record.get("not_given"):
+        if _parse_boolean(not_given):
+            imms["status"] = "not-done"
+        else:
+            if action_flag := record.get("action_flag"):
+                if action_flag.lower() == "new":
+                    imms["status"] = "completed"
+                else:
+                    imms["status"] = "entered-in-error"
+            else:
+                errors.append(TransformerFieldError(field="action_flag", message="Action flag is missing"))
+
+    else:
+        errors.append(TransformerFieldError(field="not_given", message="Not given is missing"))
+
+    func_name = inspect.currentframe().f_back.f_code.co_name
+    return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
+
+
 def _decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
     """Create the 'patient' object and append to 'contained' list"""
     errors: List[TransformerFieldError] = []
@@ -173,7 +207,7 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
         imms["occurrenceDateTime"] = _convert_date_time(occurrenceDateTime)
 
     if primary_source := record.get("primary_source"):
-        imms["primarySource"] = primary_source.lower() == "true"
+        imms["primarySource"] = _parse_boolean(primary_source)
 
     if report_origin := record.get("report_origin"):
         imms["reportOrigin"] = report_origin
@@ -326,7 +360,8 @@ def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
-all_decorators = [
+all_decorators: List[ImmunizationDecorator] = [
+    _decorate_status,
     _decorate_patient,
     _decorate_vaccine,
     _decorate_vaccination,
