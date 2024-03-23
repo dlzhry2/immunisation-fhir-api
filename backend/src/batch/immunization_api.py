@@ -13,6 +13,19 @@ class ImmunizationApi:
             if environment != "prod" else "https://api.service.nhs.uk/immunisation-fhir-api"
 
     def create_immunization(self, immunization: dict, correlation_id: str):
+        return self._send("POST", "Immunization", immunization, correlation_id)
+
+    def update_immunization(self, immunization: dict, correlation_id: str):
+        # TODO: get the id from ???
+        imms_id = ""
+        return self._send("PUT", f"Immunization/{imms_id}", immunization, correlation_id)
+
+    def delete_immunization(self, immunization: dict, correlation_id: str):
+        # TODO: get the id from ???
+        imms_id = ""
+        return self._send("DELETE", f"Immunization/{imms_id}", immunization, correlation_id)
+
+    def _send(self, method, path, imms, correlation_id):
         access_token = self.authenticator.get_access_token()
         request_headers = {
             'Authorization': f'Bearer {access_token}',
@@ -22,16 +35,16 @@ class ImmunizationApi:
             "Accept": "application/fhir+json"
         }
         try:
-            response = requests.post(f"{self.base_url}/Immunization",
-                                     headers=request_headers,
-                                     json=immunization,
-                                     timeout=5)
+            response = requests.request(method=method, url=f"{self.base_url}/{path}",
+                                        headers=request_headers,
+                                        json=imms,
+                                        timeout=5)
         except Exception as e:
-            raise ImmunizationApiUnhandledError(request=immunization) from e
+            raise ImmunizationApiUnhandledError(request=imms) from e
 
         if response.status_code < 300:
             return response
         else:
             raise ImmunizationApiError(
-                request=immunization, response=response.text,
+                request=imms, response=response.text,
                 status_code=response.status_code)

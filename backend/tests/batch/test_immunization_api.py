@@ -41,6 +41,18 @@ class TestImmunizationApi(unittest.TestCase):
         self.assertDictEqual(act_response.json(), exp_response)
 
     @responses.activate
+    def test_update_immunization(self):
+        """it should update an immunization"""
+        imms_url = self.api.base_url + "/Immunization"
+        # TODO: write it once we know the id
+
+    @responses.activate
+    def test_delete_immunization(self):
+        """it should delete an immunization"""
+        imms_url = self.api.base_url + "/Immunization"
+        # TODO: write it once we know the id
+
+    @responses.activate
     def test_non_200_error(self):
         """it should raise an error if response is not 200"""
         imms_url = self.api.base_url + "/Immunization"

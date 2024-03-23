@@ -1,9 +1,11 @@
 from collections import OrderedDict
 
 import logging
+import time
 import uuid
 from dataclasses import dataclass
-from typing import List
+from enum import Enum
+from typing import List, Optional
 
 from batch.errors import TransformerUnhandledError, TransformerRowError, ImmunizationApiError, \
     ImmunizationApiUnhandledError
@@ -15,8 +17,7 @@ from batch.transformer import DataRecordTransformer
 
 @dataclass
 class BatchData:
-    """The origin of the Batch event.
-    It's backend agnostic. File name refers to the filename and path refers to s3 path."""
+    """The origin of the Batch event."""
     batch_id: str
     object_key: str
     source_bucket: str
@@ -25,6 +26,13 @@ class BatchData:
     event_timestamp: float
     process_timestamp: float
     environment: str
+
+
+class Action(str, Enum):
+    """The action to be taken on the record. The value is determined by the `action_flag` field."""
+    CREATE = "new"
+    UPDATE = "update"
+    DELETE = "delete"
 
 
 class BatchProcessor:
@@ -62,8 +70,9 @@ class BatchProcessor:
             }
 
             raw_record = OrderedDict(zip(self.headers, row))
-            if record := self._transform(raw_record, cur_row_no):
-                self._send_data(record)
+            if action := self._get_action(raw_record, cur_row_no):
+                if record := self._transform(raw_record, cur_row_no):
+                    self._send_data(record, action, cur_row_no)
 
         self.report_generator.close()
 
@@ -74,17 +83,24 @@ class BatchProcessor:
         except (TransformerUnhandledError, TransformerRowError) as e:
             self.report_generator.add_error(ReportEntry(message=str(e)))
 
-            data = self._make_log_data(str(e))
-            data["type"] = "error"
-            data["row"] = row
+            data = self._make_log_data(str(e), row)
+            data["type"] = "transform_error"
             data["error_type"] = "handled" if isinstance(e, TransformerRowError) else "unhandled"
 
             logging.log(logging.ERROR, data)
 
-    def _send_data(self, data: dict) -> None:
+    def _send_data(self, data: dict, action: Action, row: int) -> None:
         try:
-            response = self.api.create_immunization(data, self.trace_data["correlation_id"])
-            data = self._make_log_data("Immunization created successfully")
+            if action == Action.DELETE:
+                response = self.api.delete_immunization(data, self.trace_data["correlation_id"])
+            elif action == Action.UPDATE:
+                response = self.api.update_immunization(data, self.trace_data["correlation_id"])
+            elif action == Action.CREATE:
+                response = self.api.create_immunization(data, self.trace_data["correlation_id"])
+            else:
+                raise ValueError("Invalid action")  # This should never happen, we have already validated the action
+
+            data = self._make_log_data(f"Immunization {action.value}ed successfully", row)
             data["type"] = "api_success"
             data["request"] = data
             data["response"] = response.json()
@@ -93,7 +109,7 @@ class BatchProcessor:
             report_entry = ReportEntry(message=str(e.response))
             self.report_generator.add_error(report_entry)
 
-            data = self._make_log_data(f"Immunization creation failed")
+            data = self._make_log_data(f"Immunization creation failed", row)
             data["type"] = "api_error"
             data["error_type"] = "handled"
             data["request"] = e.request
@@ -103,14 +119,41 @@ class BatchProcessor:
             report_entry = ReportEntry(message=str(e.request))
             self.report_generator.add_error(report_entry)
 
-            data = self._make_log_data(f"An error occurred while creating immunization: {e}")
+            data = self._make_log_data(f"An error occurred while creating immunization: {e}", row)
             data["type"] = "api_error"
             data["error_type"] = "unhandled"
             logging.log(logging.ERROR, data)
 
-    def _make_log_data(self, msg: str) -> dict:
+    def _get_action(self, record: OrderedDict, row: int) -> Optional[Action]:
+        if action := record.get("action_flag"):
+            try:
+                return Action(action.lower())
+            except ValueError:
+                report_entry = ReportEntry(message=str(f"The value for action_flag is invalid: {action}"))
+                self.report_generator.add_error(report_entry)
+
+                data = self._make_log_data(f"The value for action_flag is invalid: {action}", row)
+                data["type"] = "action_error"
+                data["error_type"] = "unhandled"
+                logging.log(logging.ERROR, data)
+
+                return None
+        else:
+            report_entry = ReportEntry(message=str("The action_flag is missing"))
+            self.report_generator.add_error(report_entry)
+
+            data = self._make_log_data("The action_flag is missing", row)
+            data["type"] = "action_error"
+            data["error_type"] = "unhandled"
+            logging.log(logging.ERROR, data)
+
+            return None
+
+    def _make_log_data(self, msg: str, row: int) -> dict:
         return {
             "batch_id": self.batch_data.batch_id,
             "message": msg,
+            "row": row,
+            "timestamp": time.time(),
             **self.trace_data,
         }
