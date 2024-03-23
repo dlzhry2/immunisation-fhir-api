@@ -2,16 +2,23 @@ from collections import OrderedDict
 
 import copy
 import unittest
-from unittest.mock import ANY
+from unittest.mock import ANY, MagicMock, patch
 
-from batch.decorators import decorate_patient, decorate_vaccination, decorate_vaccine, decorate_practitioner, \
-    decorate_questionare
+from batch.decorators import (
+    _decorate_patient,
+    _decorate_vaccination,
+    _decorate_vaccine,
+    _decorate_practitioner,
+    _decorate_questionare, decorate)
+from batch.errors import DecoratorError, TransformerFieldError, TransformerRowError, TransformerUnhandledError
 from mappings import vaccination_procedure_snomed_codes
 
 """Test each decorator in the transformer module
 Each decorator has its own test class. Each method is used to test a specific scenario. For example there may be
 different ways to create a patient object. We may need to handle legacy data, or Point of Care data that's different
 from other PoCs. This means the decorator should be flexible enough to handle different scenarios. Hence a test class.
+NOTE: testing protected methods is not ideal. But in this case, we are testing the decorators in isolation.
+NOTE: the public function `decorate` is tested in `TestDecorate` class.
 """
 
 raw_imms = {
@@ -20,6 +27,86 @@ raw_imms = {
     "extension": [],
     "performer": [],
 }
+
+
+class TestDecorate(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        self.imms = copy.deepcopy(raw_imms)
+
+        self.decorator0 = MagicMock(name="decorator0")
+        self.decorator1 = MagicMock(name="decorator1")
+        self.patcher = patch("batch.decorators.all_decorators", [self.decorator0, self.decorator1])
+        self.patcher.start()
+
+    def test_decorate_apply_decorators(self):
+        """it should decorate the raw imms by applying the decorators"""
+
+        # Given
+        # we create two mock decorators. Then we make sure they both contribute to the imms
+        def decorator_0(_imms, _record):
+            _imms["decorator_0"] = "decorator_0"
+            return None
+
+        def decorator_1(_imms, _record):
+            _imms["decorator_1"] = "decorator_1"
+            return None
+
+        self.decorator0.side_effect = decorator_0
+        self.decorator1.side_effect = decorator_1
+
+        # When
+        imms = {}
+        decorate(imms, OrderedDict([]))
+
+        # Then
+        decorators_contribution = {
+            "decorator_0": "decorator_0",
+            "decorator_1": "decorator_1",
+        }
+        # initial imms is empty so, the contribution should be equal to the decorated imms
+        self.assertEqual(imms, decorators_contribution)
+
+    def test_accumulate_errors(self):
+        """it should keep calling decorators and accumulate errors"""
+
+        def decorator_0(_imms, _record):
+            return DecoratorError(errors=[TransformerFieldError("field a and b failed")], decorator_name="decorator_0")
+
+        def decorator_1(_imms, _record):
+            return DecoratorError(errors=[TransformerFieldError("field x failed")], decorator_name="decorator_1")
+
+        self.decorator0.side_effect = decorator_0
+        self.decorator1.side_effect = decorator_1
+
+        # When
+        with self.assertRaises(TransformerRowError) as e:
+            imms = {}
+            decorate(imms, OrderedDict([]))
+
+        # Then
+        self.assertEqual(len(e.exception.errors), 2)
+
+    def test_unhandled_error(self):
+        """it should raise an error if a decorator throws an error"""
+
+        def decorator_0(_imms, _record):
+            raise ValueError("decorator_0")
+
+        def decorator_1(_imms, _record):
+            return None
+
+        self.decorator0.side_effect = decorator_0
+        self.decorator1.side_effect = decorator_1
+
+        # When
+        with self.assertRaises(TransformerUnhandledError) as e:
+            imms = {}
+            decorate(imms, OrderedDict([]))
+
+        # Then
+        self.assertEqual(e.exception.decorator_name, str(self.decorator0))
+        self.decorator1.assert_not_called()
 
 
 class TestPatientDecorator(unittest.TestCase):
@@ -32,7 +119,7 @@ class TestPatientDecorator(unittest.TestCase):
         # Given
         headers = OrderedDict([])
 
-        decorate_patient(self.imms, headers)
+        _decorate_patient(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["patient"] = {"reference": "#patient_1"}
@@ -51,7 +138,7 @@ class TestPatientDecorator(unittest.TestCase):
         headers = OrderedDict([("nhs_number", "a_nhs_number")])
 
         # When
-        decorate_patient(self.imms, headers)
+        _decorate_patient(self.imms, headers)
 
         # Then
         expected_imms = copy.deepcopy(raw_imms)
@@ -80,7 +167,7 @@ class TestPatientDecorator(unittest.TestCase):
         ])
 
         # When
-        decorate_patient(self.imms, headers)
+        _decorate_patient(self.imms, headers)
 
         # Then
         expected_imms = copy.deepcopy(raw_imms)
@@ -116,7 +203,7 @@ class TestPatientDecorator(unittest.TestCase):
         ])
 
         # When
-        decorate_patient(self.imms, headers)
+        _decorate_patient(self.imms, headers)
 
         # Then
         expected_imms = copy.deepcopy(raw_imms)
@@ -139,7 +226,7 @@ class TestPatientDecorator(unittest.TestCase):
         """it should add the dob to the patient object"""
         headers = OrderedDict([("person_dob", "a_person_dob")])
 
-        decorate_patient(self.imms, headers)
+        _decorate_patient(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["patient"] = ANY
@@ -153,23 +240,31 @@ class TestPatientDecorator(unittest.TestCase):
 
         self.assertDictEqual(expected_imms, self.imms)
 
-    def test_add_gender(self):
-        """it should add gender code"""
-        headers = OrderedDict([("person_gender_code", "a_person_gender_code")])
+    def test_gender_converter(self):
+        """it should convert gender code to fhir code and leave it as is if we can't convert it"""
+        values = [("0", "unknown"),
+                  ("1", "male"),
+                  ("2", "female"),
+                  ("9", "other"),
+                  ("unknown_code_123", "unknown_code_123")]
+        for value, expected in values:
+            with self.subTest(value=value):
+                headers = OrderedDict([("person_gender_code", value)])
+                imms = copy.deepcopy(raw_imms)
 
-        decorate_patient(self.imms, headers)
+                _decorate_patient(imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["patient"] = ANY
-        expected_imms["contained"].append({
-            "resourceType": "Patient",
-            "id": ANY,
-            "identifier": [],
-            "name": [],
-            "gender": "a_person_gender_code"
-        })
+                expected_imms = copy.deepcopy(raw_imms)
+                expected_imms["patient"] = ANY
+                expected_imms["contained"].append({
+                    "resourceType": "Patient",
+                    "id": ANY,
+                    "identifier": [],
+                    "name": [],
+                    "gender": expected
+                })
 
-        self.assertDictEqual(expected_imms, self.imms)
+                self.assertDictEqual(expected_imms, imms)
 
 
 class TestVaccineDecorator(unittest.TestCase):
@@ -183,7 +278,7 @@ class TestVaccineDecorator(unittest.TestCase):
             ("vaccine_product_term", "a_vaccine_product_term"),
         ])
 
-        decorate_vaccine(self.imms, headers)
+        _decorate_vaccine(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["vaccineCode"] = {
@@ -198,7 +293,7 @@ class TestVaccineDecorator(unittest.TestCase):
     def test_manufacturer(self):
         headers = OrderedDict([("vaccine_manufacturer", "a_vaccine_manufacturer")])
 
-        decorate_vaccine(self.imms, headers)
+        _decorate_vaccine(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["manufacturer"] = "a_vaccine_manufacturer"
@@ -208,7 +303,7 @@ class TestVaccineDecorator(unittest.TestCase):
     def test_expiration(self):
         headers = OrderedDict([("expiry_date", "a_expiry_date")])
 
-        decorate_vaccine(self.imms, headers)
+        _decorate_vaccine(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["expirationDate"] = "a_expiry_date"
@@ -218,7 +313,7 @@ class TestVaccineDecorator(unittest.TestCase):
     def test_lot_number(self):
         headers = OrderedDict([("batch_number", "a_batch_number")])
 
-        decorate_vaccine(self.imms, headers)
+        _decorate_vaccine(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["lotNumber"] = "a_batch_number"
@@ -239,7 +334,7 @@ class TestVaccinationDecorator(unittest.TestCase):
             ("vaccination_procedure_term", "a_vaccination_procedure_term"),
         ])
 
-        decorate_vaccination(self.imms, headers)
+        _decorate_vaccination(self.imms, headers)
 
         # Then
         vac_type = vaccination_procedure_snomed_codes.get(a_vaccination_procedure_code)
@@ -263,7 +358,7 @@ class TestVaccinationDecorator(unittest.TestCase):
         """it should convert and add the occurrence date time to the vaccination object"""
         headers = OrderedDict([("date_and_time", "20240221T171930")])
 
-        decorate_vaccination(self.imms, headers)
+        _decorate_vaccination(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["occurrenceDateTime"] = "2024-02-21T17:19:30+00:00"
@@ -274,7 +369,7 @@ class TestVaccinationDecorator(unittest.TestCase):
         """it should set the primary source by converting the string to a boolean"""
         headers = OrderedDict([("primary_source", "FALSE")])
 
-        decorate_vaccination(self.imms, headers)
+        _decorate_vaccination(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["primarySource"] = False
@@ -284,7 +379,7 @@ class TestVaccinationDecorator(unittest.TestCase):
         """it should set the primary source by converting the string to a boolean"""
         headers = OrderedDict([("primary_source", "TRUE")])
 
-        decorate_vaccination(self.imms, headers)
+        _decorate_vaccination(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["primarySource"] = True
@@ -294,7 +389,7 @@ class TestVaccinationDecorator(unittest.TestCase):
         """it should set the report origin"""
         headers = OrderedDict([("report_origin", "a_report_origin")])
 
-        decorate_vaccination(self.imms, headers)
+        _decorate_vaccination(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["reportOrigin"] = "a_report_origin"
@@ -307,7 +402,7 @@ class TestVaccinationDecorator(unittest.TestCase):
             ("site_of_vaccination_term", "a_site_of_vaccination_term"),
         ])
 
-        decorate_vaccination(self.imms, headers)
+        _decorate_vaccination(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["site"] = {
@@ -329,7 +424,7 @@ class TestVaccinationDecorator(unittest.TestCase):
             ("route_of_vaccination_term", "a_route_of_vaccination_term"),
         ])
 
-        decorate_vaccination(self.imms, headers)
+        _decorate_vaccination(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["route"] = {
@@ -352,7 +447,7 @@ class TestVaccinationDecorator(unittest.TestCase):
             ("dose_unit_term", "a_dose_unit_term"),
         ])
 
-        decorate_vaccination(self.imms, headers)
+        _decorate_vaccination(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["doseQuantity"] = {
@@ -375,7 +470,7 @@ class TestPractitionerDecorator(unittest.TestCase):
             ("performing_professional_body_reg_code", "a_performing_professional_body_reg_code")
         ])
 
-        decorate_practitioner(self.imms, headers)
+        _decorate_practitioner(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["contained"].append({
@@ -394,7 +489,7 @@ class TestPractitionerDecorator(unittest.TestCase):
             ("performing_professional_body_reg_uri", "a_performing_professional_body_reg_uri"),
         ])
 
-        decorate_practitioner(self.imms, headers)
+        _decorate_practitioner(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["contained"].append({
@@ -418,7 +513,7 @@ class TestPractitionerDecorator(unittest.TestCase):
             ("performing_professional_surname", "a_performing_professional_surname"),
         ])
 
-        decorate_practitioner(self.imms, headers)
+        _decorate_practitioner(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["contained"].append({
@@ -441,7 +536,7 @@ class TestPractitionerDecorator(unittest.TestCase):
             ("location_code_type_uri", "a_location_code_type_uri"),
         ])
 
-        decorate_practitioner(self.imms, headers)
+        _decorate_practitioner(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         # TODO: check source code TODO
@@ -466,7 +561,7 @@ class TestPractitionerDecorator(unittest.TestCase):
             ("location_code_type_uri", "a_location_code_type_uri"),
         ])
 
-        decorate_practitioner(self.imms, headers)
+        _decorate_practitioner(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         # TODO: this is tested before and contains the same location. Check TODO in decorator source code
@@ -505,7 +600,7 @@ class TestDecorateQuestionare(unittest.TestCase):
             ("consent_for_treatment_description", "a_consent_for_treatment_description"),
         ])
 
-        decorate_questionare(self.imms, headers)
+        _decorate_questionare(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         item = {"valueCoding": {
@@ -524,7 +619,7 @@ class TestDecorateQuestionare(unittest.TestCase):
             ("care_setting_type_description", "a_care_setting_type_description"),
         ])
 
-        decorate_questionare(self.imms, headers)
+        _decorate_questionare(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         item = {"valueCoding": {
@@ -543,7 +638,7 @@ class TestDecorateQuestionare(unittest.TestCase):
             ("local_patient_uri", "a_local_patient_uri"),
         ])
 
-        decorate_questionare(self.imms, headers)
+        _decorate_questionare(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         item = {"valueReference": {
@@ -560,7 +655,7 @@ class TestDecorateQuestionare(unittest.TestCase):
         """it should add the ip address to the questionare list"""
         headers = OrderedDict([("ip_address", "a_ip_address")])
 
-        decorate_questionare(self.imms, headers)
+        _decorate_questionare(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         self._make_questionare(expected_imms, "IpAddress", {"valueString": "a_ip_address"})
@@ -571,7 +666,7 @@ class TestDecorateQuestionare(unittest.TestCase):
         """it should add the user id to the questionare list"""
         headers = OrderedDict([("user_id", "a_user_id")])
 
-        decorate_questionare(self.imms, headers)
+        _decorate_questionare(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         self._make_questionare(expected_imms, "UserId", {"valueString": "a_user_id"})
@@ -582,7 +677,7 @@ class TestDecorateQuestionare(unittest.TestCase):
         """it should add the user name to the questionare list"""
         headers = OrderedDict([("user_name", "a_user_name")])
 
-        decorate_questionare(self.imms, headers)
+        _decorate_questionare(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         self._make_questionare(expected_imms, "UserName", {"valueString": "a_user_name"})
@@ -593,7 +688,7 @@ class TestDecorateQuestionare(unittest.TestCase):
         """it should add the user email to the questionare list"""
         headers = OrderedDict([("user_email", "a_user_email")])
 
-        decorate_questionare(self.imms, headers)
+        _decorate_questionare(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         self._make_questionare(expected_imms, "UserEmail", {"valueString": "a_user_email"})
@@ -604,7 +699,7 @@ class TestDecorateQuestionare(unittest.TestCase):
         """it should convert and add the submitted timestamp to the questionare list"""
         headers = OrderedDict([("submitted_timestamp", "20240221T17193000")])
 
-        decorate_questionare(self.imms, headers)
+        _decorate_questionare(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         self._make_questionare(expected_imms,
@@ -616,7 +711,7 @@ class TestDecorateQuestionare(unittest.TestCase):
         """it should add the performer job role to the questionare list"""
         headers = OrderedDict([("sds_job_role_name", "a_sds_job_role_name")])
 
-        decorate_questionare(self.imms, headers)
+        _decorate_questionare(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         self._make_questionare(expected_imms, "PerformerSDSJobRole", {"valueString": "a_sds_job_role_name"})

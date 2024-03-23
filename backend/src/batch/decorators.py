@@ -4,7 +4,7 @@ import inspect
 from datetime import datetime
 from typing import List, Callable, Dict, Optional
 
-from batch.errors import DecoratorError, TransformerFieldError
+from batch.errors import DecoratorError, TransformerFieldError, TransformerUnhandledError, TransformerRowError
 from mappings import vaccination_procedure_snomed_codes
 
 ImmunizationDecorator = Callable[[Dict, OrderedDict[str, str]], Optional[DecoratorError]]
@@ -14,6 +14,7 @@ returns an error object that has a list of all field errors. DO NOT raise any ex
 The caller will catch Exception and treat them as unhandled errors. This way we can log these errors which are bugs or
 a result of a batch file with unexpected headers/values.
 NOTE: The decorators are order independent. They can be called in any order, so don't rely on previous changes.
+NOTE: decorate function is the only public function. If you add a new decorator, call it in this function.
 """
 
 
@@ -25,6 +26,8 @@ def _make_snomed(code: str, display: str) -> dict:
     }
 
 
+# TODO NOT_GIVEN: constants.py for values, method: fhir_immunization_pre_validators.py pre_validate_status
+
 def _convert_date_time(date_time: str) -> str:
     # TODO(validation): check the format in csv. Is conversion necessary?
     # TODO(validation): is conversion correct? do we have source code in the validation that does this?
@@ -35,7 +38,18 @@ def _convert_date_time(date_time: str) -> str:
     return parsed_dt.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
 
-def decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
+def _convert_gender_code(code: str) -> str:
+    """Convert code to fhir gender, if we don't recognize the code, return the code as is"""
+    code_to_fhir = {
+        "1": "male",
+        "2": "female",
+        "9": "other",
+        "0": "unknown"
+    }
+    return code_to_fhir.get(code, code)
+
+
+def _decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
     """Create the 'patient' object and append to 'contained' list"""
     errors: List[TransformerFieldError] = []
 
@@ -62,17 +76,16 @@ def decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[Deco
         "name": [],
     }
 
-    nhs_number = record.get("nhs_number")
-    if nhs_number is not None:
+    if nhs_number := record.get("nhs_number"):
         identifier = {
             "system": "https://fhir.nhs.uk/Id/nhs-number",
             "value": nhs_number
         }
-        id_code = record.get("nhs_number_status_indicator_code")
-        id_display = record.get("nhs_number_status_indicator_description")
-        if id_code is not None:
+        if id_code := record.get("nhs_number_status_indicator_code"):
+            id_display = record.get("nhs_number_status_indicator_description")
             extension = create_verified_nhs_number_extension(id_code, id_display)
             identifier["extension"] = [extension]
+
         patient["identifier"].append(identifier)
 
     person_surname = record.get("person_surname")
@@ -83,24 +96,28 @@ def decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[Deco
             "given": [person_forename]
         })
 
-    person_dob = record.get("person_dob")
-    if person_dob is not None:
+    if person_dob := record.get("person_dob"):
         patient["birthDate"] = person_dob
 
     # TODO(validation): is it correct? should gender code be used like this?
-    person_gender_code = record.get("person_gender_code")
-    if person_gender_code is not None:
-        patient["gender"] = person_gender_code
+    #  it should be converted to fhir
+    # ‘male’ = 1
+    # ‘female’ = 2
+    # ‘other’ = 9
+    # ‘unknown’ = 0
+    if person_gender_code := record.get("person_gender_code"):
+        gender = _convert_gender_code(person_gender_code)
+        patient["gender"] = gender
 
     # TODO(validation): there is no address in the csv. Will it cause validation error?
-
+    #  person_postcode
     imms["contained"].append(patient)
 
     func_name = inspect.currentframe().f_back.f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
-def decorate_vaccine(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
+def _decorate_vaccine(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
     """Vaccine refers to the physical vaccine product the manufacturer"""
     errors: List[TransformerFieldError] = []
 
@@ -109,30 +126,26 @@ def decorate_vaccine(imms: dict, record: OrderedDict[str, str]) -> Optional[Deco
             "coding": [_make_snomed(_vac_product_code, _display)]
         }
 
-    vac_product_code = record.get("vaccine_product_code")
-    if vac_product_code is not None:
+    if vac_product_code := record.get("vaccine_product_code"):
         display = record.get("vaccine_product_term")
         imms["vaccineCode"] = create_vaccine_code(vac_product_code, display)
 
-    manufacturer = record.get("vaccine_manufacturer")
-    if manufacturer is not None:
+    if manufacturer := record.get("vaccine_manufacturer"):
         imms["manufacturer"] = manufacturer
 
     # TODO(validation): is expiry refers to the product itself or something else?
-    expiry_date = record.get("expiry_date")
-    if expiry_date is not None:
+    if expiry_date := record.get("expiry_date"):
         imms["expirationDate"] = expiry_date
 
     # TODO(validation): is it correct?
-    lot_number = record.get("batch_number")
-    if lot_number is not None:
+    if lot_number := record.get("batch_number"):
         imms["lotNumber"] = lot_number
 
     func_name = inspect.currentframe().f_back.f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
-def decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
+def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
     """Vaccination refers to the actual administration of a vaccine to a patient"""
     errors: List[TransformerFieldError] = []
 
@@ -150,10 +163,8 @@ def decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional[
             }
         }
 
-    vac_code = record.get("vaccination_procedure_code")
-    if vac_code is not None:
-        vac_type = vaccination_procedure_snomed_codes.get(vac_code)
-        if vac_type is not None:
+    if vac_code := record.get("vaccination_procedure_code"):
+        if vac_type := vaccination_procedure_snomed_codes.get(vac_code):
             vac_display = record.get("vaccination_procedure_term")
             imms["extension"].append(create_vaccination_procedure_ext(vac_type, vac_display))
 
@@ -161,24 +172,20 @@ def decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional[
     if occurrenceDateTime := record.get("date_and_time"):
         imms["occurrenceDateTime"] = _convert_date_time(occurrenceDateTime)
 
-    primary_source = record.get("primary_source")
-    if primary_source is not None:
+    if primary_source := record.get("primary_source"):
         imms["primarySource"] = primary_source.lower() == "true"
 
-    report_origin = record.get("report_origin")
-    if report_origin is not None:
+    if report_origin := record.get("report_origin"):
         imms["reportOrigin"] = report_origin
 
     # TODO(validation): there is also SITE_CODE in csv. What's that?
-    site_code = record.get("site_of_vaccination_code")
-    site_display = record.get("site_of_vaccination_term")
-    if site_code is not None:
+    if site_code := record.get("site_of_vaccination_code"):
+        site_display = record.get("site_of_vaccination_term")
         imms["site"] = {
             "coding": [_make_snomed(site_code, site_display)]
         }
-    route_code = record.get("route_of_vaccination_code")
-    route_display = record.get("route_of_vaccination_term")
-    if route_code is not None:
+    if route_code := record.get("route_of_vaccination_code"):
+        route_display = record.get("route_of_vaccination_term")
         imms["route"] = {
             "coding": [_make_snomed(route_code, route_display)]
         }
@@ -199,14 +206,13 @@ def decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional[
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
-def decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
+def _decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
     """Create the 'practitioner' object and 'organization' and append them to the 'contained' list"""
     errors: List[TransformerFieldError] = []
 
     # TODO(validation): is it correct?
-    prac_org = record.get("performing_professional_body_reg_code")
-    prac_org_uri = record.get("performing_professional_body_reg_uri")
-    if prac_org is not None:
+    if prac_org := record.get("performing_professional_body_reg_code"):
+        prac_org_uri = record.get("performing_professional_body_reg_uri")
         practitioner = {
             "resourceType": "Practitioner",
             "id": "practitioner_1",
@@ -229,9 +235,8 @@ def decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optional
             })
 
     # TODO(validation): is it correct. Also check the location below?
-    org_code = record.get("location_code")
-    org_uri = record.get("location_code_type_uri")
-    if org_code is not None:
+    if org_code := record.get("location_code"):
+        org_uri = record.get("location_code_type_uri")
         organization = {"resourceType": "Organization", "identifier": [{
             "system": "" if org_uri is None else org_uri,
             "value": org_code
@@ -239,8 +244,7 @@ def decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optional
         imms["performer"].append({"actor": organization})
 
     # TODO(validation): I think this wrong. what's the difference between this and the actor location?
-    location_code = record.get("location_code")
-    if location_code is not None:
+    if location_code := record.get("location_code"):
         system = record.get("location_code_type_uri")
         imms["location"] = {
             "identifier": {
@@ -252,7 +256,7 @@ def decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optional
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
-def decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
+def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
     """Create the 'questionnaire' object and append items list"""
 
     def _make_questionare_item(_name: str, _item: dict) -> dict:
@@ -320,3 +324,27 @@ def decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional[
 
     func_name = inspect.currentframe().f_back.f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
+
+
+all_decorators = [
+    _decorate_patient,
+    _decorate_vaccine,
+    _decorate_vaccination,
+    _decorate_practitioner,
+    _decorate_questionare
+]
+
+
+def decorate(imms: dict, record: OrderedDict[str, str]):
+    """Decorate the immunization object with the provided record"""
+    errors = []
+    for decorator in all_decorators:
+        try:
+            dec_err = decorator(imms, record)
+            if dec_err:
+                errors.append(dec_err)
+        except Exception as e:
+            raise TransformerUnhandledError(decorator_name=str(decorator)) from e
+
+    if errors:
+        raise TransformerRowError(errors=errors)
