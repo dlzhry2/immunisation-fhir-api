@@ -13,6 +13,7 @@ from tests.utils.generic_utils import (
     load_json_data,
 )
 from tests.utils.mandation_test_utils import MandationTests
+from src.models.utils.post_validation_utils import MandatoryError
 
 
 class TestImmunizationModelPostValidationRules(unittest.TestCase):
@@ -30,6 +31,65 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         self.reduce_validation_json_data = load_json_data("sample_immunization_reduce_validation_event.json")
         self.validator = ImmunizationValidator()
 
+    def test_collected_errors(self):
+        """Test that when passed multiple validation errors, it returns a list of all expected errors."""
+
+        covid_data = self.covid_json_data
+
+        #remove name[0].given for 'Patient'
+        for item in covid_data.get('contained', []):
+            if item.get('resourceType') == 'Patient':
+                if 'name' in item and item['name'] and 'given' in item['name'][0]:
+                    item['name'][0]['given'] = None
+
+        #remove actor.identifier.value for 'Organization'
+        for performer in covid_data.get('performer', []):
+            if performer.get('actor', {}).get('type') == 'Organization':
+                if 'identifier' in performer['actor']:
+                    performer['actor']['identifier']['value'] = None
+                if 'display' in performer['actor']:
+                    performer['actor']['display'] = None
+
+        #remove postalCode for 'Patient'
+        for item in covid_data.get('contained', []):
+            if item.get('resourceType') == 'Patient':
+                if 'address' in item and item['address']:
+                    item['address'][0]['postalCode'] = None
+
+        #remove 'given' for 'Practitioner'
+        for item in covid_data.get('contained', []):
+            if item.get('resourceType') == 'Practitioner':
+                if 'name' in item and item['name'] and 'given' in item['name'][0]:
+                    item['name'][0]['given'] = None
+
+        #remove 'primarySource'
+        covid_data['primarySource'] = None
+
+        expected_errors = [
+            "Validation errors: contained[?(@.resourceType=='Patient')].name[0].given must be an array",
+            "performer[?(@.actor.type=='Organization')].actor.identifier.value must be a "
+            'string',
+            "performer[?@.actor.type == 'Organization'].actor.display must be a string",
+            "contained[?(@.resourceType=='Patient')].address[0].postalCode must be a "
+            'string',
+            "contained[?(@.resourceType=='Practitioner')].name[0].given must be an array",
+            'primarySource must be a boolean'
+        ]
+
+        #assert ValueError raised
+        with self.assertRaises(ValueError) as cm:
+            self.validator.validate(covid_data)
+
+        #extract the error messages from the exception
+        actual_errors = str(cm.exception).split('; ')
+
+        #assert length of errors
+        assert len(actual_errors) == len(expected_errors)
+
+        #assert the error is in the expected error messages
+        for error in actual_errors:
+            assert error in expected_errors
+
     def test_sample_data(self):
         """Test that each piece of valid sample data passes post validation"""
         # TODO: vaccinationProcedure item in not-done data extension to be removed
@@ -39,12 +99,12 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self.covid_json_data,
             self.flu_json_data,
             self.not_done_json_data,
-            self.reduce_validation_json_data,
+            self.reduce_validation_json_data
         ]
 
         for json_data in json_data_to_test:
-            validator = ImmunizationValidator()
-            self.assertTrue(validator.validate(json_data))
+            # validator = ImmunizationValidator()
+            self.assertTrue(self.validator.validate(json_data))
 
     def test_post_vaccination_procedure_code(self):
         """
@@ -52,6 +112,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         values and rejects missing data
         """
         valid_json_data = deepcopy(self.covid_json_data)
+
         field_location = (
             "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
             + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
@@ -65,6 +126,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             field_location=field_location,
             valid_values_to_test=["1324681000000101"],
         )
+
         self.assertEqual(VaccineTypes.covid_19, self.validator.vaccine_type)
 
         # Test that an invalid code is rejected
@@ -439,7 +501,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             field_location=field_location,
             valid_json_data=deepcopy(self.not_done_json_data),
         )
-        
+
         # Test that valid values are accepted when status is 'not-done'
         _test_valid_values_accepted(
             self,
