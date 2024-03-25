@@ -193,4 +193,4 @@ class FhirService:
         if patient:
             return patient
         else:
-            raise InvalidPatientId(nhs_number=nhs_number)
+            raise InvalidPatientId(patient_identifier=nhs_number)

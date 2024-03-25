@@ -142,7 +142,7 @@ class TestCreateImmunization(unittest.TestCase):
         imms = Immunization.construct()
         aws_event = {"body": imms.json()}
         invalid_nhs_num = "a-bad-id"
-        self.service.create_immunization.side_effect = InvalidPatientId(nhs_number=invalid_nhs_num)
+        self.service.create_immunization.side_effect = InvalidPatientId(patient_identifier=invalid_nhs_num)
 
         response = self.controller.create_immunization(aws_event)
 
@@ -316,7 +316,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.patient_identifier_valid_value = f"{patient_identifier_system}|{self.nhs_number_valid_value}"
 
     def test_get_search_immunizations(self):
-        """it should search based on nhsNumber and diseaseType"""
+        """it should search based on nhsNumber and immunization_target"""
         search_result = Bundle.construct()
         self.service.search_immunizations.return_value = search_result
 

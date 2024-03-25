@@ -133,7 +133,7 @@ class TestParameterParser(unittest.TestCase):
 
         self.assertEqual(str(e.exception), f"Search parameter {date_from_key} must be before {date_to_key}")
 
-    def test_process_search_params_diseaseType_is_mandatory(self):
+    def test_process_search_params_immunization_target_is_mandatory(self):
         with self.assertRaises(ParameterException) as e:
             _ = process_search_params(
                 {

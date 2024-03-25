@@ -66,10 +66,10 @@ class ValidationError(RuntimeError):
 class InvalidPatientId(ValidationError):
     """Use this when NHS Number is invalid or doesn't exist"""
 
-    nhs_number: str
+    patient_identifier: str
 
     def __str__(self):
-        return f"NHS Number: {self.nhs_number} is invalid or it doesn't exist."
+        return f"NHS Number: {self.patient_identifier} is invalid or it doesn't exist."
 
     def to_operation_outcome(self) -> dict:
         return create_operation_outcome(

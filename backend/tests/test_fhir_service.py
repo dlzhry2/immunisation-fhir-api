@@ -220,7 +220,7 @@ class TestCreateImmunization(unittest.TestCase):
             self.fhir_service.create_immunization(bad_patient_imms)
 
         # Then
-        self.assertEqual(e.exception.nhs_number, invalid_nhs_number)
+        self.assertEqual(e.exception.patient_identifier, invalid_nhs_number)
         self.imms_repo.create_immunization.assert_not_called()
 
 
@@ -382,7 +382,7 @@ class TestUpdateImmunization(unittest.TestCase):
             self.fhir_service.update_immunization(imms_id, bad_patient_imms)
 
         # Then
-        self.assertEqual(e.exception.nhs_number, invalid_nhs_number)
+        self.assertEqual(e.exception.patient_identifier, invalid_nhs_number)
         self.imms_repo.update_immunization.assert_not_called()
 
 
