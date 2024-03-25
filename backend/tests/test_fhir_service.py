@@ -655,26 +655,6 @@ class TestSearchImmunizations(unittest.TestCase):
         for i, entry in enumerate(entries):
             self.assertEqual(entry.fullUrl, f"urn:uuid:{imms_ids[i]}")
 
-    def test_patient_included(self):
-        """Patient is included in the results."""
-
-        imms_ids = ["imms-1", "imms-2"]
-        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
-        patient = next(contained for contained in imms_list[0]["contained"] if contained["resourceType"] == "Patient")
-        self.imms_repo.find_immunizations.return_value = imms_list
-        self.pds_service.get_patient_details.return_value = patient
-        nhs_number = valid_nhs_number
-        disease_types = ["COVID19"]
-
-        # When
-        result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, ""
-        )
-
-        # Then
-        patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"), None)
-        self.assertIsNotNone(patient_entry)
-
     @unittest.skip("Patient fullUrl not implemented")
     def test_patient_contains_fullUrl(self):
         """Patient must have a fullUrl consisting of its id.
@@ -697,8 +677,8 @@ class TestSearchImmunizations(unittest.TestCase):
         patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"), None)
         self.assertEqual(patient_entry.fullUrl, "???")
 
-    def test_patient_is_stripped(self):
-        """The included Patient is a subset of the data. Matches Immunisation History API."""
+    def test_patient_included(self):
+        """Patient is included in the results."""
 
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
@@ -715,6 +695,26 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # Then
         patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"), None)
+        self.assertIsNotNone(patient_entry)
+
+    def test_patient_is_stripped(self):
+        """The included Patient is a subset of the data."""
+
+        imms_ids = ["imms-1", "imms-2"]
+        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        patient = next(contained for contained in imms_list[0]["contained"] if contained["resourceType"] == "Patient")
+        self.imms_repo.find_immunizations.return_value = imms_list
+        self.pds_service.get_patient_details.return_value = patient
+        nhs_number = valid_nhs_number
+        disease_types = ["COVID19"]
+
+        # When
+        result = self.fhir_service.search_immunizations(
+            nhs_number, disease_types, ""
+        )
+
+        # Then
+        patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"))
         patient_entry_resource = patient_entry.resource
         fields_to_keep = ["id", "resource_type", "identifier", "birthDate"]
         #self.assertListEqual(sorted(vars(patient_entry.resource).keys()), sorted(fields_to_keep))

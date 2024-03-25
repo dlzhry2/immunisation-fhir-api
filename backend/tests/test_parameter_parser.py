@@ -18,6 +18,25 @@ class TestParameterParser(unittest.TestCase):
         self.date_from_key = "-date.from"
         self.date_to_key = "-date.to"
 
+    def test_process_params_combines_content_and_query_string(self):
+        lambda_event = {
+            "multiValueQueryStringParameters": {
+                self.patient_identifier_key: ["a"],
+            },
+            "body": base64.b64encode(f"{self.immunization_target_key}=b".encode("utf-8")),
+            "headers": {'Content-Type': 'application/x-www-form-urlencoded'},
+            "httpMethod": "POST"
+        }
+
+        processed_params = process_params(lambda_event)
+
+        expected = {
+            self.patient_identifier_key: ["a"],
+            self.immunization_target_key: ["b"]
+        }
+
+        self.assertEqual(expected, processed_params)
+
     def test_process_params_is_sorted(self):
         lambda_event = {
             "multiValueQueryStringParameters": {
@@ -141,3 +160,12 @@ class TestParameterParser(unittest.TestCase):
                 }
             )
         self.assertEqual(str(e.exception), f"Search parameter -immunization.target must have one or more values.")
+
+    def test_process_search_params_patient_identifier_is_mandatory(self):
+        with self.assertRaises(ParameterException) as e:
+            _ = process_search_params(
+                {
+                    self.immunization_target_key: ["a-disease-type"],
+                }
+            )
+        self.assertEqual(str(e.exception), f"Search parameter patient.identifier must have one or more values.")

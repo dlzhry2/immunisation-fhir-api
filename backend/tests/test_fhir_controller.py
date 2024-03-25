@@ -4,7 +4,7 @@ import urllib
 import json
 import unittest
 import uuid
-from unittest.mock import create_autospec, ANY
+from unittest.mock import create_autospec, ANY, patch, Mock
 from urllib.parse import urlencode
 
 from authorization import Authorization
@@ -16,11 +16,11 @@ from models.errors import (
     ResourceNotFoundError,
     UnhandledResponseError,
     InvalidPatientId,
-    CustomValidationError,
+    CustomValidationError, ParameterException,
 )
 from tests.immunization_utils import create_an_immunization
 from mappings import VaccineTypes
-from parameter_parser import patient_identifier_system
+from parameter_parser import patient_identifier_system, process_search_params
 
 
 class TestFhirController(unittest.TestCase):
@@ -374,147 +374,36 @@ class TestSearchImmunizations(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
 
-    def test_post_empty_body_search_immunizations(self):
-        """it should return bad request if nhsNumber and diseaseType are neither given in body nor in queryParams"""
-        search_result = Bundle.construct()
-        self.service.search_immunizations.return_value = search_result
-        # Construct the lambda event
-        lambda_event = {
-            "httpMethod": "POST",
-            "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-        }
-        # When
+    @patch('fhir_controller.process_search_params')
+    def test_search_immunizations_returns_400_on_ParameterException(self, process_search_params: Mock):
+        """it should return bad request on a ParameterException"""
+        lambda_event = {"multiValueQueryStringParameters": {
+            self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
+            self.immunization_target_key: ["a-disease-type"],
+        }}
+
+        process_search_params.side_effect = ParameterException("Test")
         response = self.controller.search_immunizations(lambda_event)
+
         # Then
         self.assertEqual(response["statusCode"], 400)
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
-    def test_repeated_same_params_search_immunizations(self):
-        """it should fail when diseaseType repeated in params and body"""
-        search_result = Bundle.construct()
-        self.service.search_immunizations.return_value = search_result
-
-        disease_type = VaccineTypes().all[0]
-        params = (f"{self.immunization_target_key}={disease_type}&"
-                  + urllib.parse.urlencode([(f"{self.patient_identifier_key}",
-                                             f"{self.patient_identifier_valid_value}")]))
-        # Construct the application/x-www-form-urlencoded body
-        body = {
-            self.immunization_target_key: disease_type
-        }
-        encoded_body = urlencode(body)
-        # Base64 encode the body
-        base64_encoded_body = base64.b64encode(encoded_body.encode("utf-8")).decode("utf-8")
-
-        # Construct the lambda event
-        lambda_event = {
-            "httpMethod": "POST",
-            "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-            "body": base64_encoded_body,
-            "multiValueQueryStringParameters": {
-                self.immunization_target_key: [disease_type],
-                self.patient_identifier_key: [self.patient_identifier_valid_value]
-            },
-        }
-        # When
-        response = self.controller.search_immunizations(lambda_event)
-        # Then
-        self.service.search_immunizations.assert_not_called()
-        self.assertEqual(response["statusCode"], 400)
-
-    def test_mixed_params_search_immunizations(self):
-        """it should search based on nhsNumber in body and diseaseType in params"""
-        search_result = Bundle.construct()
-        self.service.search_immunizations.return_value = search_result
-
-        disease_type = VaccineTypes().all[0]
-        params = (f"{self.immunization_target_key}={disease_type}&"
-                  + urllib.parse.urlencode([(f"{self.patient_identifier_key}",
-                                             f"{self.patient_identifier_valid_value}")]))
-        # Construct the application/x-www-form-urlencoded body
-        body = {
-            self.patient_identifier_key: self.patient_identifier_valid_value
-        }
-        encoded_body = urlencode(body)
-        # Base64 encode the body
-        base64_encoded_body = base64.b64encode(encoded_body.encode("utf-8")).decode("utf-8")
-
-        # Construct the lambda event
-        lambda_event = {
-            "httpMethod": "POST",
-            "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-            "body": base64_encoded_body,
-            "multiValueQueryStringParameters": {self.immunization_target_key: [disease_type]},
-
-        }
-        # When
-        response = self.controller.search_immunizations(lambda_event)
-        # Then
-        self.service.search_immunizations.assert_called_once_with(
-            self.nhs_number_valid_value, [disease_type], params, ANY, ANY
-        )
-        self.assertEqual(response["statusCode"], 200)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "Bundle")
-
-    def test_repeated_different_params_search_immunizations(self):
-        """it should return bad request if nhsNumber or diseaseType are different in params and body"""
-        search_result = Bundle.construct()
-        self.service.search_immunizations.return_value = search_result
-
-        nhs_number1 = f"{patient_identifier_system}|an-patient-id"
-        disease_type1 = "a-disease-type"
-        nhs_number2 = f"{patient_identifier_system}|an-patient-id2"
-        disease_type2 = "a-disease-type2"
-        body = {
-            self.patient_identifier_key: nhs_number2,
-            self.immunization_target_key: disease_type2
-        }
-        encoded_body = urlencode(body)
-        base64_encoded_body = base64.b64encode(encoded_body.encode("utf-8")).decode("utf-8")
-
-        lambda_event = {
-            "httpMethod": "POST",
-            "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-            "body": base64_encoded_body,
-            "multiValueQueryStringParameters": {
-                self.immunization_target_key: [disease_type1],
-                self.patient_identifier_key: [nhs_number1]
-            }
-        }
-        # When
-        response = self.controller.search_immunizations(lambda_event)
-        # Then
-        self.assertEqual(response["statusCode"], 400)
-        outcome = json.loads(response["body"])
-        self.assertEqual(outcome["resourceType"], "OperationOutcome")
-
-    def test_patient_identifier_is_mandatory(self):
+    @patch('fhir_controller.process_search_params', wraps=process_search_params)
+    def test_uses_parameter_parser(self, process_search_params: Mock):
         """nhsNumber is a mandatory query param"""
         lambda_event = {"multiValueQueryStringParameters": {
+            self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
             self.immunization_target_key: ["a-disease-type"],
         }}
 
         response = self.controller.search_immunizations(lambda_event)
 
-        self.assertEqual(self.service.search_immunizations.call_count, 0)
-        self.assertEqual(response["statusCode"], 400)
-        outcome = json.loads(response["body"])
-        self.assertEqual(outcome["resourceType"], "OperationOutcome")
-
-    def test_immunization_target_is_mandatory(self):
-        """nhsNumber is a mandatory query param"""
-        lambda_event = {"multiValueQueryStringParameters": {
-            self.patient_identifier_key: ["a-disease-type"],
-        }}
-
-        response = self.controller.search_immunizations(lambda_event)
-
-        self.assertEqual(self.service.search_immunizations.call_count, 0)
-        self.assertEqual(response["statusCode"], 400)
-        outcome = json.loads(response["body"])
-        self.assertEqual(outcome["resourceType"], "OperationOutcome")
+        process_search_params.assert_called_once_with({
+            self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
+            self.immunization_target_key: ["a-disease-type"],
+        })
 
     def test_self_link_excludes_extraneous_params(self):
         search_result = Bundle.construct()
