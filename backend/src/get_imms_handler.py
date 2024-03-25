@@ -4,9 +4,16 @@ import uuid
 
 from fhir_controller import FhirController, make_controller
 from models.errors import Severity, Code, create_operation_outcome
+from timer import timed
 
 
+@timed
 def get_imms_handler(event, context):
+    headers = event.get('headers', {})
+    amzn_trace_id = headers.get('X-Amzn-Trace-Id', 'Unknown')
+    correlation_id = headers.get('X-Correlation-ID', 'Unknown')
+    path = event.get('path', 'Unknown')
+    print(f"Request ID: {amzn_trace_id}, Correlation ID: {correlation_id}, Path: {path}")
     return get_immunization_by_id(event, make_controller())
 
 
