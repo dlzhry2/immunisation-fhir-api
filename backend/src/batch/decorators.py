@@ -2,10 +2,10 @@ from collections import OrderedDict
 
 import inspect
 from datetime import datetime
+from decimal import Decimal, ROUND_DOWN
 from typing import List, Callable, Dict, Optional
 
 from batch.errors import DecoratorError, TransformerFieldError, TransformerUnhandledError, TransformerRowError
-from mappings import vaccination_procedure_snomed_codes
 
 ImmunizationDecorator = Callable[[Dict, OrderedDict[str, str]], Optional[DecoratorError]]
 """A decorator function (Callable) takes current immunization object and
@@ -22,20 +22,20 @@ def _make_snomed(code: str, display: str) -> dict:
     return {
         "system": "http://snomed.info/sct",
         "code": code,
-        "display": "" if display is None else display
+        "display": display
     }
 
 
-# TODO NOT_GIVEN: constants.py for values, method: fhir_immunization_pre_validators.py pre_validate_status
-
 def _convert_date_time(date_time: str) -> str:
-    # TODO(validation): check the format in csv. Is conversion necessary?
-    # TODO(validation): is conversion correct? do we have source code in the validation that does this?
     try:
         parsed_dt = datetime.strptime(date_time, "%Y%m%dT%H%M%S00")
     except ValueError:
         parsed_dt = datetime.strptime(date_time, "%Y%m%dT%H%M%S")
     return parsed_dt.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+
+
+def _convert_date(date: str) -> str:
+    return datetime.strptime(date, "%Y%m%d").strftime("%Y-%m-%d")
 
 
 def _convert_gender_code(code: str) -> str:
@@ -49,13 +49,18 @@ def _convert_gender_code(code: str) -> str:
     return code_to_fhir.get(code, code)
 
 
+def _convert_decimal(value: str) -> Decimal:
+    return Decimal(value).quantize(Decimal('.0001'), rounding=ROUND_DOWN)
+
+
 def _parse_boolean(value: str) -> bool:
     """Boolean values are represented as string in the CSV file. This function converts them to Python boolean."""
     return value.lower() == "true"
 
 
-def _decorate_status(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
-    """ Takes ACTION_FLAG and NOT_GIVEN and sets the status accordingly. Status is a mandatory FHIR field.
+def _decorate_immunization(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
+    """ Every thing related to the immunization object itself like status and identifier
+    Takes ACTION_FLAG and NOT_GIVEN and sets the status accordingly. Status is a mandatory FHIR field.
     The following 1-to-1 mapping applies:
     * NOT_GIVEN is True <---> Status will be set to 'not-done' (and therefore ACTION_FLAG is
         absent)
@@ -63,6 +68,12 @@ def _decorate_status(imms: dict, record: OrderedDict[str, str]) -> Optional[Deco
         therefore ACTION_FLAG is present)
     """
     errors: List[TransformerFieldError] = []
+
+    if unique_id := record.get("unique_id"):
+        imms["identifier"] = [{
+            "system": record.get("unique_id_uri", ""),
+            "value": unique_id
+        }]
 
     if not_given := record.get("not_given"):
         if _parse_boolean(not_given):
@@ -78,6 +89,23 @@ def _decorate_status(imms: dict, record: OrderedDict[str, str]) -> Optional[Deco
 
     else:
         errors.append(TransformerFieldError(field="not_given", message="Not given is missing"))
+
+    # not_given and indication are mutually exclusive
+    reason_code = record.get("reason_not_given_code", "")
+    reason_term = record.get("reason_not_given_term", "")
+    indication_code = record.get("indication_code", "")
+    indication_term = record.get("indication_term", "")
+    imms["statusReason"] = {
+        "coding": [
+            {
+                "code": reason_code if reason_code != "" else indication_code,
+                "display": reason_term if reason_term != "" else indication_term,
+            }
+        ]
+    }
+
+    if recorded_date := record.get("recorded_date"):
+        imms["recorded"] = _convert_date(recorded_date)
 
     func_name = inspect.currentframe().f_back.f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
@@ -133,18 +161,15 @@ def _decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
     if person_dob := record.get("person_dob"):
         patient["birthDate"] = person_dob
 
-    # TODO(validation): is it correct? should gender code be used like this?
-    #  it should be converted to fhir
-    # ‘male’ = 1
-    # ‘female’ = 2
-    # ‘other’ = 9
-    # ‘unknown’ = 0
     if person_gender_code := record.get("person_gender_code"):
         gender = _convert_gender_code(person_gender_code)
         patient["gender"] = gender
 
-    # TODO(validation): there is no address in the csv. Will it cause validation error?
-    #  person_postcode
+    if person_postcode := record.get("person_postcode"):
+        patient["address"] = [{
+            "postalCode": person_postcode
+        }]
+
     imms["contained"].append(patient)
 
     func_name = inspect.currentframe().f_back.f_code.co_name
@@ -155,23 +180,18 @@ def _decorate_vaccine(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
     """Vaccine refers to the physical vaccine product the manufacturer"""
     errors: List[TransformerFieldError] = []
 
-    def create_vaccine_code(_vac_product_code: str, _display: str) -> dict:
-        return {
-            "coding": [_make_snomed(_vac_product_code, _display)]
+    if vac_product_code := record.get("vaccine_product_code"):
+        display = record.get("vaccine_product_term", "")
+        imms["vaccineCode"] = {
+            "coding": [_make_snomed(vac_product_code, display)]
         }
 
-    if vac_product_code := record.get("vaccine_product_code"):
-        display = record.get("vaccine_product_term")
-        imms["vaccineCode"] = create_vaccine_code(vac_product_code, display)
-
     if manufacturer := record.get("vaccine_manufacturer"):
-        imms["manufacturer"] = manufacturer
+        imms["manufacturer"] = {"display": manufacturer}
 
-    # TODO(validation): is expiry refers to the product itself or something else?
     if expiry_date := record.get("expiry_date"):
         imms["expirationDate"] = expiry_date
 
-    # TODO(validation): is it correct?
     if lot_number := record.get("batch_number"):
         imms["lotNumber"] = lot_number
 
@@ -183,13 +203,13 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
     """Vaccination refers to the actual administration of a vaccine to a patient"""
     errors: List[TransformerFieldError] = []
 
-    def create_vaccination_procedure_ext(_vaccine_type: str, _display: str) -> dict:
+    def create_vaccination_procedure_ext(url: str, _vaccine_type: str, _display: str) -> dict:
         return {
-            "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedureCode",
+            "url": url,
             "valueCodeableConcept": {
                 "coding": [
                     {
-                        "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-VaccinationProcedureCode",
+                        "system": "http://snomed.info/sct",
                         "code": _vaccine_type,
                         "display": "" if _display is None else _display
                     }
@@ -198,11 +218,15 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
         }
 
     if vac_code := record.get("vaccination_procedure_code"):
-        if vac_type := vaccination_procedure_snomed_codes.get(vac_code):
-            vac_display = record.get("vaccination_procedure_term")
-            imms["extension"].append(create_vaccination_procedure_ext(vac_type, vac_display))
+        vac_display = record.get("vaccination_procedure_term", "")
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
+        imms["extension"].append(create_vaccination_procedure_ext(url, vac_code, vac_display))
 
-    # TODO(validation): what is RECORDED_DATE and should i use it here?
+    if vac_situation := record.get("vaccination_situation_code"):
+        vac_display = record.get("vaccination_situation_term", "")
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
+        imms["extension"].append(create_vaccination_procedure_ext(url, vac_situation, vac_display))
+
     if occurrenceDateTime := record.get("date_and_time"):
         imms["occurrenceDateTime"] = _convert_date_time(occurrenceDateTime)
 
@@ -210,16 +234,17 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
         imms["primarySource"] = _parse_boolean(primary_source)
 
     if report_origin := record.get("report_origin"):
-        imms["reportOrigin"] = report_origin
+        imms["reportOrigin"] = {
+            "text": report_origin
+        }
 
-    # TODO(validation): there is also SITE_CODE in csv. What's that?
     if site_code := record.get("site_of_vaccination_code"):
-        site_display = record.get("site_of_vaccination_term")
+        site_display = record.get("site_of_vaccination_term", "")
         imms["site"] = {
             "coding": [_make_snomed(site_code, site_display)]
         }
     if route_code := record.get("route_of_vaccination_code"):
-        route_display = record.get("route_of_vaccination_term")
+        route_display = record.get("route_of_vaccination_term", "")
         imms["route"] = {
             "coding": [_make_snomed(route_code, route_display)]
         }
@@ -227,14 +252,15 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
     dose_amount = record.get("dose_amount")
     dose_unit_code = record.get("dose_unit_code")
     dose_unit_term = record.get("dose_unit_term")
-    # TODO(validation): should dose_unit_code be enforced?
-    # TODO(validation): what to do with dose_sequence?
     if dose_amount is not None and dose_unit_code is not None:
         imms["doseQuantity"] = {
-            "value": dose_amount,
-            "unit": dose_unit_code,
-            "system": "" if dose_unit_term is None else dose_unit_term
+            "value": float(_convert_decimal(dose_amount)),
+            "code": dose_unit_code,
+            "unit": dose_unit_term,
+            "system": "http://unitsofmeasure.org"
         }
+    if dose_sequence := record.get("dose_sequence"):
+        imms["protocolApplied"] = [{"doseNumberPositiveInt": int(dose_sequence)}]
 
     func_name = inspect.currentframe().f_back.f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
@@ -244,7 +270,6 @@ def _decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optiona
     """Create the 'practitioner' object and 'organization' and append them to the 'contained' list"""
     errors: List[TransformerFieldError] = []
 
-    # TODO(validation): is it correct?
     if prac_org := record.get("performing_professional_body_reg_code"):
         prac_org_uri = record.get("performing_professional_body_reg_uri")
         practitioner = {
@@ -268,16 +293,18 @@ def _decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optiona
                 "given": [prac_name]
             })
 
-    # TODO(validation): is it correct. Also check the location below?
-    if org_code := record.get("location_code"):
-        org_uri = record.get("location_code_type_uri")
-        organization = {"resourceType": "Organization", "identifier": [{
-            "system": "" if org_uri is None else org_uri,
-            "value": org_code
-        }]}
+    if site_code := record.get("site_code"):
+        org_uri = record.get("site_code_type_uri")
+        organization = {
+            "resourceType": "Organization",
+            "identifier": {
+                "system": "" if org_uri is None else org_uri,
+                "value": site_code
+            },
+            "display": record.get("site_name", "")}
+
         imms["performer"].append({"actor": organization})
 
-    # TODO(validation): I think this wrong. what's the difference between this and the actor location?
     if location_code := record.get("location_code"):
         system = record.get("location_code_type_uri")
         imms["location"] = {
@@ -303,25 +330,30 @@ def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional
 
     questionare = {
         "resourceType": "QuestionnaireResponse",
-        # TODO(validation): what is this ID?
         "id": "QR1",
         "status": "completed",
     }
     items = []
 
-    # TODO(validation): where is reduced validation?
-    # TODO(validation): I our example's questionare.
-    #  Is there anything in csv that i missed adding to questionare?
+    reduced_validation_code = record.get("reduce_validation_code", "false")
+    is_reduced = _parse_boolean(reduced_validation_code)
+    items.append(_make_questionare_item(
+        "ReduceValidation",
+        {"valueBoolean": is_reduced}))
+    if is_reduced:
+        items.append(_make_questionare_item(
+            "ReduceValidationReason",
+            {"valueString": record.get("reduce_validation_reason", "")}))
 
     if ip_address := record.get("ip_address"):
         items.append(_make_questionare_item("IpAddress", {"valueString": ip_address}))
 
     if consent_code := record.get("consent_for_treatment_code"):
-        item = _make_snomed(consent_code, record.get("consent_for_treatment_description"))
+        item = _make_snomed(consent_code, record.get("consent_for_treatment_description", ""))
         items.append(_make_questionare_item("Consent", {"valueCoding": item}))
 
     if care_code := record.get("care_setting_type_code"):
-        item = _make_snomed(care_code, record.get("care_setting_type_description"))
+        item = _make_snomed(care_code, record.get("care_setting_type_description", ""))
         items.append(_make_questionare_item("CareSetting", {"valueCoding": item}))
 
     if local_patient_id := record.get("local_patient_id"):
@@ -344,9 +376,7 @@ def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional
         items.append(_make_questionare_item("UserEmail", {"valueString": user_email}))
 
     if submitted_timestamp := record.get("submitted_timestamp"):
-        # TODO(validation): check the format in csv. Is conversion necessary?
         converted_dt = _convert_date_time(submitted_timestamp)
-
         items.append(_make_questionare_item("SubmittedTimeStamp", {"valueDateTime": converted_dt}))
 
     if sds_job_role := record.get("sds_job_role_name"):
@@ -361,7 +391,7 @@ def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional
 
 
 all_decorators: List[ImmunizationDecorator] = [
-    _decorate_status,
+    _decorate_immunization,
     _decorate_patient,
     _decorate_vaccine,
     _decorate_vaccination,

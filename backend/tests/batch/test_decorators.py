@@ -9,9 +9,8 @@ from batch.decorators import (
     _decorate_vaccination,
     _decorate_vaccine,
     _decorate_practitioner,
-    _decorate_questionare, decorate, _decorate_status)
+    _decorate_questionare, decorate, _decorate_immunization)
 from batch.errors import DecoratorError, TransformerFieldError, TransformerRowError, TransformerUnhandledError
-from mappings import vaccination_procedure_snomed_codes
 
 """Test each decorator in the transformer module
 Each decorator has its own test class. Each method is used to test a specific scenario. For example there may be
@@ -109,16 +108,29 @@ class TestDecorate(unittest.TestCase):
         self.decorator1.assert_not_called()
 
 
-class TestStatusDecorator(unittest.TestCase):
+class TestImmunizationDecorator(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.imms = copy.deepcopy(raw_imms)
+
+    def test_identifier(self):
+        """it should add unique id as identifier"""
+        headers = OrderedDict([
+            ("unique_id", "a_unique_id"),
+            ("unique_id_uri", "a_unique_id_uri")])
+
+        _decorate_immunization(self.imms, headers)
+
+        expected_imms = copy.deepcopy(raw_imms)
+        expected_imms["identifier"] = [{"value": "a_unique_id", "system": "a_unique_id_uri"}]
+
+        self.assertDictEqual(expected_imms, self.imms)
 
     def test_not_given_true(self):
         """it should set status to 'not-done' if not given is true"""
         headers = OrderedDict([("not_given", "TRUE")])
 
-        _decorate_status(self.imms, headers)
+        _decorate_immunization(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["status"] = "not-done"
@@ -132,12 +144,61 @@ class TestStatusDecorator(unittest.TestCase):
             with self.subTest(not_given=not_given, action_flag=action_flag):
                 headers = OrderedDict([("not_given", not_given), ("action_flag", action_flag)])
 
-                _decorate_status(self.imms, headers)
+                _decorate_immunization(self.imms, headers)
 
                 expected_imms = copy.deepcopy(raw_imms)
                 expected_imms["status"] = "entered-in-error"
 
                 self.assertDictEqual(expected_imms, self.imms)
+
+    def test_not_given_reason(self):
+        """it should add the reason why the vaccine was not given"""
+        headers = OrderedDict([("reason_not_given_code", "a_not_given_reason_code"),
+                               ("reason_not_given_term", "a_not_given_reason_term")])
+
+        _decorate_immunization(self.imms, headers)
+
+        expected_imms = copy.deepcopy(raw_imms)
+        expected_imms["statusReason"] = {
+            "coding": [{
+                "code": "a_not_given_reason_code",
+                "display": "a_not_given_reason_term"
+            }]
+        }
+
+        self.assertDictEqual(expected_imms, self.imms)
+
+    def test_use_indication_if_not_given_empty(self):
+        """it should use the indication if reason-not-given is empty. they are mutually exclusive"""
+        headers = OrderedDict([
+            ("reason_not_given_code", ""),
+            ("reason_not_given_term", ""),
+            ("indication_code", "a_indication_code"),
+            ("indication_term", "a_indication_term")
+        ])
+
+        _decorate_immunization(self.imms, headers)
+
+        expected_imms = copy.deepcopy(raw_imms)
+        expected_imms["statusReason"] = {
+            "coding": [{
+                "code": "a_indication_code",
+                "display": "a_indication_term"
+            }]
+        }
+
+        self.assertDictEqual(expected_imms, self.imms)
+
+    def test_recorded_date(self):
+        """it should convert and add the recorded date to the immunization object"""
+        headers = OrderedDict([("recorded_date", "20240221")])
+
+        _decorate_immunization(self.imms, headers)
+
+        expected_imms = copy.deepcopy(raw_imms)
+        expected_imms["recorded"] = "2024-02-21"
+
+        self.assertDictEqual(expected_imms, self.imms)
 
 
 class TestPatientDecorator(unittest.TestCase):
@@ -297,6 +358,28 @@ class TestPatientDecorator(unittest.TestCase):
 
                 self.assertDictEqual(expected_imms, imms)
 
+    def test_add_address(self):
+        """it should add postcode and address to the patient object"""
+        headers = OrderedDict([("person_postcode", "a_person_postcode")])
+
+        _decorate_patient(self.imms, headers)
+
+        expected_imms = copy.deepcopy(raw_imms)
+        expected_imms["patient"] = ANY
+        expected_imms["contained"].append({
+            "resourceType": "Patient",
+            "id": ANY,
+            "identifier": [],
+            "name": [],
+            "address": [
+                {
+                    "postalCode": "a_person_postcode",
+                }
+            ]
+        })
+
+        self.assertDictEqual(expected_imms, self.imms)
+
 
 class TestVaccineDecorator(unittest.TestCase):
     def setUp(self):
@@ -327,7 +410,7 @@ class TestVaccineDecorator(unittest.TestCase):
         _decorate_vaccine(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["manufacturer"] = "a_vaccine_manufacturer"
+        expected_imms["manufacturer"] = {"display": "a_vaccine_manufacturer"}
 
         self.assertDictEqual(expected_imms, self.imms)
 
@@ -368,16 +451,44 @@ class TestVaccinationDecorator(unittest.TestCase):
         _decorate_vaccination(self.imms, headers)
 
         # Then
-        vac_type = vaccination_procedure_snomed_codes.get(a_vaccination_procedure_code)
         expected_imms = copy.deepcopy(raw_imms)
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
         expected_imms["extension"].append({
-            "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedureCode",
+            "url": url,
             "valueCodeableConcept": {
                 "coding": [
                     {
-                        "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-VaccinationProcedureCode",
-                        "code": vac_type,
+                        "system": "http://snomed.info/sct",
+                        "code": a_vaccination_procedure_code,
                         "display": "a_vaccination_procedure_term"
+                    }
+                ]
+            }
+        })
+
+        self.assertDictEqual(expected_imms, self.imms)
+
+    def test_vaccination_situation(self):
+        """it should get the vaccination situation code and term and add it to the extension list"""
+        a_vaccination_situation_code = "1324681000000101"
+        headers = OrderedDict([
+            ("vaccination_situation_code", a_vaccination_situation_code),
+            ("vaccination_situation_term", "a_vaccination_situation_term"),
+        ])
+
+        _decorate_vaccination(self.imms, headers)
+
+        # Then
+        expected_imms = copy.deepcopy(raw_imms)
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
+        expected_imms["extension"].append({
+            "url": url,
+            "valueCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": a_vaccination_situation_code,
+                        "display": "a_vaccination_situation_term"
                     }
                 ]
             }
@@ -423,7 +534,7 @@ class TestVaccinationDecorator(unittest.TestCase):
         _decorate_vaccination(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["reportOrigin"] = "a_report_origin"
+        expected_imms["reportOrigin"] = {"text": "a_report_origin"}
         self.assertDictEqual(expected_imms, self.imms)
 
     def test_vaccination_site(self):
@@ -473,7 +584,7 @@ class TestVaccinationDecorator(unittest.TestCase):
     def test_dose_quantity(self):
         """it should get the dose amount, unit code and term and add it to the doseQuantity object"""
         headers = OrderedDict([
-            ("dose_amount", "a_dose_amount"),
+            ("dose_amount", "123.1234"),
             ("dose_unit_code", "a_dose_unit_code"),
             ("dose_unit_term", "a_dose_unit_term"),
         ])
@@ -482,10 +593,39 @@ class TestVaccinationDecorator(unittest.TestCase):
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["doseQuantity"] = {
-            "value": "a_dose_amount",
-            "unit": "a_dose_unit_code",
-            "system": "a_dose_unit_term"
+            "value": 123.1234,
+            "unit": "a_dose_unit_term",
+            "code": "a_dose_unit_code",
+            "system": "http://unitsofmeasure.org"
         }
+
+        self.assertDictEqual(expected_imms, self.imms)
+
+    def test_dose_quantity_decimal(self):
+        """it should convert the string to a decimal with 4 decimal places"""
+        headers = OrderedDict([
+            ("dose_amount", "123.1234567"),
+            ("dose_unit_code", "a_dose_unit_code"),
+        ])
+
+        _decorate_vaccination(self.imms, headers)
+
+        expected_imms = copy.deepcopy(raw_imms)
+        expected_imms["doseQuantity"] = {
+            "value": 123.1234,
+            "unit": ANY,
+            "system": ANY
+        }
+        self.assertDictEqual(expected_imms, self.imms)
+
+    def test_dose_sequence(self):
+        """it should add the dose sequence to the vaccination object as int"""
+        headers = OrderedDict([("dose_sequence", "12")])
+
+        _decorate_vaccination(self.imms, headers)
+
+        expected_imms = copy.deepcopy(raw_imms)
+        expected_imms["protocolApplied"] = [{"doseNumberPositiveInt": 12}]
 
         self.assertDictEqual(expected_imms, self.imms)
 
@@ -561,25 +701,24 @@ class TestPractitionerDecorator(unittest.TestCase):
         self.assertDictEqual(expected_imms, self.imms)
 
     def test_add_organisation(self):
-        """it should add the organisation where the vaccination was given"""
+        """it should add the organisation where the vaccination was given based on the site code"""
         headers = OrderedDict([
-            ("location_code", "a_location_code"),
-            ("location_code_type_uri", "a_location_code_type_uri"),
+            ("site_code", "a_site_code"),
+            ("site_code_type_uri", "a_site_code_type_uri"),
+            ("site_name", "a_site_name"),
         ])
 
         _decorate_practitioner(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
-        # TODO: check source code TODO
-        expected_imms["location"] = ANY
-
         expected_imms["performer"].append({
             "actor": {
                 "resourceType": "Organization",
-                "identifier": [{
-                    "system": "a_location_code_type_uri",
-                    "value": "a_location_code"
-                }]
+                "identifier": {
+                    "system": "a_site_code_type_uri",
+                    "value": "a_site_code"
+                },
+                "display": "a_site_name"
             }
         })
 
@@ -623,6 +762,42 @@ class TestDecorateQuestionare(unittest.TestCase):
             }]
         }
         imms["contained"].append(questionare)
+
+    @staticmethod
+    def _add_questionare_item(imms: dict, name: str, item: dict):
+        imms["contained"][0]["item"].append({
+            "linkId": name,
+            "answer": [item]
+        })
+
+    def test_reduce_validation_code(self):
+        """it should add the reduceValidation if provided with the default value of false"""
+        headers = OrderedDict([("reduce_validation_code", "True")])
+
+        _decorate_questionare(self.imms, headers)
+
+        expected_imms = copy.deepcopy(raw_imms)
+        self._make_questionare(expected_imms, "ReduceValidation", {"valueBoolean": True})
+
+        self.assertDictEqual(expected_imms, self.imms)
+
+    def test_reduce_validation_reason(self):
+        """it should add the ReduceValidationReason if code is provided"""
+        headers = OrderedDict([
+            ("reduce_validation_code", "True"),
+            ("reduce_validation_reason", "a_reduce_validation_reason"),
+        ])
+
+        _decorate_questionare(self.imms, headers)
+
+        expected_imms = copy.deepcopy(raw_imms)
+        self._make_questionare(expected_imms, "ReduceValidation", {"valueBoolean": True})
+        self._add_questionare_item(
+            expected_imms,
+            "ReduceValidationReason",
+            {"valueString": "a_reduce_validation_reason"})
+
+        self.assertDictEqual(expected_imms, self.imms)
 
     def test_add_consent(self):
         """it should add the consent to the questionare list"""
