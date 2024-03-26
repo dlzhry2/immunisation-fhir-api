@@ -50,9 +50,10 @@ class ImmunisationApi:
         return requests.delete(f"{self.url}/Immunization/{imms_id}", headers=self._update_headers())
 
     def search_immunizations(self, patient_identifier: str, immunization_target: str):
-        return requests.get(f"{self.url}/Immunization?patient.identifier={patient_identifier_system}|{patient_identifier}"
-                            f"&-immunization.target={immunization_target}",
-                            headers=self._update_headers())
+        return requests.get(
+            f"{self.url}/Immunization?patient.identifier={patient_identifier_system}|{patient_identifier}"
+            f"&-immunization.target={immunization_target}",
+            headers=self._update_headers())
 
     def search_immunizations_full(self,
                                   http_method: Literal["POST", "GET"],
