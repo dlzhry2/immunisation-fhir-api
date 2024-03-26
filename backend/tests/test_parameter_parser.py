@@ -1,12 +1,14 @@
 import base64
 import unittest
+import datetime
 from unittest.mock import create_autospec
 
 from authorization import Authorization
 from fhir_service import FhirService
 from mappings import VaccineTypes
 from models.errors import ParameterException
-from parameter_parser import date_from_key, date_to_key, process_params, process_search_params
+from parameter_parser import date_from_key, date_to_key, process_params, process_search_params, create_query_string, \
+    SearchParams
 
 
 class TestParameterParser(unittest.TestCase):
@@ -168,4 +170,26 @@ class TestParameterParser(unittest.TestCase):
                     self.immunization_target_key: ["a-disease-type"],
                 }
             )
-        self.assertEqual(str(e.exception), f"Search parameter patient.identifier must have one or more values.")
+        self.assertEqual(str(e.exception), f"Search parameter patient.identifier must have one value.")
+
+    def test_create_query_string_with_all_params(self):
+        search_params = SearchParams("a", ["b"], datetime.date(1, 2, 3), datetime.date(4, 5, 6), "c")
+        query_string = create_query_string(search_params)
+        expected = "-date.from=0001-02-03&-date.to=0004-05-06&-immunization.target=b" \
+                   "&_include=c&patient.identifier=https%3A%2F%2Ffhir.nhs.uk%2FId%2Fnhs-number%7Ca"
+
+        self.assertEqual(expected, query_string)
+
+    def test_create_query_string_with_minimal_params(self):
+        search_params = SearchParams("a", ["b"], None, None, None)
+        query_string = create_query_string(search_params)
+        expected = "-immunization.target=b&patient.identifier=https%3A%2F%2Ffhir.nhs.uk%2FId%2Fnhs-number%7Ca"
+
+        self.assertEqual(expected, query_string)
+
+    def test_create_query_string_with_multiple_immunization_targets_comma_separated(self):
+        search_params = SearchParams("a", ["b", "c"], None, None, None)
+        query_string = create_query_string(search_params)
+        expected = "-immunization.target=b,c&patient.identifier=https%3A%2F%2Ffhir.nhs.uk%2FId%2Fnhs-number%7Ca"
+
+        self.assertEqual(expected, query_string)

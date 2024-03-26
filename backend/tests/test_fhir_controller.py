@@ -374,9 +374,24 @@ class TestSearchImmunizations(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
 
+    @patch('fhir_controller.process_search_params', wraps=process_search_params)
+    def test_uses_parameter_parser(self, process_search_params: Mock):
+        lambda_event = {"multiValueQueryStringParameters": {
+            self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
+            self.immunization_target_key: ["a-disease-type"],
+        }}
+
+        self.controller.search_immunizations(lambda_event)
+
+        process_search_params.assert_called_once_with({
+            self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
+            self.immunization_target_key: ["a-disease-type"],
+        })
+
     @patch('fhir_controller.process_search_params')
-    def test_search_immunizations_returns_400_on_ParameterException(self, process_search_params: Mock):
-        """it should return bad request on a ParameterException"""
+    def test_search_immunizations_returns_400_on_ParameterException_from_parameter_parser(
+        self, process_search_params: Mock
+    ):
         lambda_event = {"multiValueQueryStringParameters": {
             self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
             self.immunization_target_key: ["a-disease-type"],
@@ -389,21 +404,6 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(response["statusCode"], 400)
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
-
-    @patch('fhir_controller.process_search_params', wraps=process_search_params)
-    def test_uses_parameter_parser(self, process_search_params: Mock):
-        """nhsNumber is a mandatory query param"""
-        lambda_event = {"multiValueQueryStringParameters": {
-            self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
-            self.immunization_target_key: ["a-disease-type"],
-        }}
-
-        response = self.controller.search_immunizations(lambda_event)
-
-        process_search_params.assert_called_once_with({
-            self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9000000009"],
-            self.immunization_target_key: ["a-disease-type"],
-        })
 
     def test_self_link_excludes_extraneous_params(self):
         search_result = Bundle.construct()

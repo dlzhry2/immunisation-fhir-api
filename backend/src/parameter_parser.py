@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from aws_lambda_typing.events import APIGatewayProxyEventV1
 from typing import Optional
-from urllib.parse import parse_qs, urlencode
+from urllib.parse import parse_qs, urlencode, quote
 
 from mappings import VaccineTypes
 from models.errors import ParameterException
@@ -20,6 +20,7 @@ date_from_key = "-date.from"
 date_from_default = datetime.date(1900, 1, 1)
 date_to_key = "-date.to"
 date_to_default = datetime.date(9999, 12, 31)
+include_key = "_include"
 
 
 @dataclass
@@ -28,6 +29,7 @@ class SearchParams:
     disease_types: list[str]
     date_from: Optional[datetime.date]
     date_to: Optional[datetime.date]
+    include: Optional[str]
 
     def __repr__(self):
         return str(self.__dict__)
@@ -136,18 +138,23 @@ def process_search_params(params: ParamContainer) -> SearchParams:
     if date_from and date_to and date_from > date_to:
         raise ParameterException(f"Search parameter {date_from_key} must be before {date_to_key}")
 
-    return SearchParams(patient_identifier, disease_types, date_from, date_to)
+    # include
+    include = params.get(include_key)
+
+    return SearchParams(patient_identifier, disease_types, date_from, date_to, include)
 
 
 def create_query_string(search_params: SearchParams) -> str:
     params = [
-        (immunization_target_key, search_params.disease_types),
+        (immunization_target_key, ",".join(map(quote, search_params.disease_types))),
         (patient_identifier_key,
          f"{patient_identifier_system}|{search_params.nhs_number}"),
         *([(date_from_key, search_params.date_from.isoformat())]
-          if search_params.date_from != date_from_default else []),
-        *([(date_from_key, search_params.date_to.isoformat())]
-          if search_params.date_to != date_to_default else []),
+          if search_params.date_from and search_params.date_from != date_from_default else []),
+        *([(date_to_key, search_params.date_to.isoformat())]
+          if search_params.date_to and search_params.date_to != date_to_default else []),
+        *([(include_key, search_params.include)]
+          if search_params.include else []),
     ]
-    search_params_qs = urlencode(sorted(params, key=lambda x: x[0]), doseq=True)
+    search_params_qs = urlencode(sorted(params, key=lambda x: x[0]), safe=",")
     return search_params_qs
