@@ -49,9 +49,9 @@ class ImmunisationApi:
     def delete_immunization(self, imms_id):
         return requests.delete(f"{self.url}/Immunization/{imms_id}", headers=self._update_headers())
 
-    def search_immunizations(self, nhs_number: str, disease_type: str):
-        return requests.get(f"{self.url}/Immunization?patient.identifier={patient_identifier_system}|{nhs_number}"
-                            f"&-immunization.target={disease_type}",
+    def search_immunizations(self, patient_identifier: str, immunization_target: str):
+        return requests.get(f"{self.url}/Immunization?patient.identifier={patient_identifier_system}|{patient_identifier}"
+                            f"&-immunization.target={immunization_target}",
                             headers=self._update_headers())
 
     def search_immunizations_full(self,

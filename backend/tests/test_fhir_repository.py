@@ -436,7 +436,7 @@ class TestFindImmunizations(unittest.TestCase):
         self.repository = ImmunizationRepository(table=self.table)
 
     def test_find_immunizations(self):
-        """it should find events with nhsNumber"""
+        """it should find events with patient_identifier"""
         nhs_number = "a-patient-id"
         dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": []}
         self.table.query = MagicMock(return_value=dynamo_response)

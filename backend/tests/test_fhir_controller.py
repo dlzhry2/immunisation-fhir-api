@@ -316,7 +316,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.patient_identifier_valid_value = f"{patient_identifier_system}|{self.nhs_number_valid_value}"
 
     def test_get_search_immunizations(self):
-        """it should search based on nhsNumber and immunization_target"""
+        """it should search based on patient_identifier and immunization_target"""
         search_result = Bundle.construct()
         self.service.search_immunizations.return_value = search_result
 
@@ -341,7 +341,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(body["resourceType"], "Bundle")
 
     def test_post_search_immunizations(self):
-        """it should search based on nhsNumber and diseaseType"""
+        """it should search based on patient_identifier and immunization_target"""
         search_result = Bundle.construct()
         self.service.search_immunizations.return_value = search_result
 

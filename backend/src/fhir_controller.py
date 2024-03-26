@@ -149,8 +149,8 @@ class FhirController:
             raise Exception("Failed to parse parameters.")
 
         result = self.fhir_service.search_immunizations(
-            search_params.nhs_number,
-            search_params.disease_types,
+            search_params.patient_identifier,
+            search_params.immunization_targets,
             create_query_string(search_params),
             search_params.date_from,
             search_params.date_to,

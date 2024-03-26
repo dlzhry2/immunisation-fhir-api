@@ -25,8 +25,8 @@ include_key = "_include"
 
 @dataclass
 class SearchParams:
-    nhs_number: str
-    disease_types: list[str]
+    patient_identifier: str
+    immunization_targets: list[str]
     date_from: Optional[datetime.date]
     date_to: Optional[datetime.date]
     include: Optional[str]
@@ -146,9 +146,9 @@ def process_search_params(params: ParamContainer) -> SearchParams:
 
 def create_query_string(search_params: SearchParams) -> str:
     params = [
-        (immunization_target_key, ",".join(map(quote, search_params.disease_types))),
+        (immunization_target_key, ",".join(map(quote, search_params.immunization_targets))),
         (patient_identifier_key,
-         f"{patient_identifier_system}|{search_params.nhs_number}"),
+         f"{patient_identifier_system}|{search_params.patient_identifier}"),
         *([(date_from_key, search_params.date_from.isoformat())]
           if search_params.date_from and search_params.date_from != date_from_default else []),
         *([(date_to_key, search_params.date_to.isoformat())]
