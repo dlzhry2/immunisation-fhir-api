@@ -24,7 +24,6 @@ from models.errors import (
     IdentifierDuplicationError
 )
 from pds_service import PdsService, Authenticator
-from timer import timed
 
 
 def make_controller(
@@ -53,7 +52,6 @@ class FhirController:
         self.fhir_service = fhir_service
         self.authorizer = authorizer
 
-    @timed
     def get_immunization_by_id(self, aws_event) -> dict:
         
         if response := self.authorize_request(EndpointOperation.READ, aws_event):

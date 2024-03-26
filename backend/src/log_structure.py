@@ -17,18 +17,35 @@ def function_info(func):
         request_id = headers.get('X-Request-ID', 'X-Request-ID not passed')
         actual_path = event.get('path', 'Unknown')
         resource_path = event.get('requestContext', {}).get('resourcePath', 'Unknown')
-        start = time.time()
-        result = func(*args, **kwargs)
-        end = time.time()
-        log = {
-            "function_name": func.__name__,
-            "time_taken":"{} ran in {}s".format(func.__name__, round(end - start, 5)),
-            "X-Correlation-ID": correlation_id,
-            "X-Request-ID": request_id,
-            "actual_path": actual_path,
-            "resource_path": resource_path
-            }
-        logger.info("Function execution details: %s", log)
-        return result
+        logger.info(f"Starting {func.__name__} with X-Correlation-ID: {correlation_id} and X-Request-ID: {request_id}")
+
+        try:
+            start = time.time()
+            result = func(*args, **kwargs)
+            end = time.time()
+
+            logger.info({
+                "function_name": func.__name__,
+                "time_taken": f"{round(end - start, 5)}s",
+                "X-Correlation-ID": correlation_id,
+                "X-Request-ID": request_id,
+                "actual_path": actual_path,
+                "resource_path": resource_path,
+                "status": "completed successfully"
+            })
+
+            return result
+
+        except Exception as e:
+            logger.exception({
+                "function_name": func.__name__,
+                "time_taken": f"{round(time.time() - start, 5)}s",
+                "X-Correlation-ID": correlation_id,
+                "X-Request-ID": request_id,
+                "actual_path": actual_path,
+                "resource_path": resource_path,
+                "error": str(e)
+            })
+            raise
 
     return wrapper
