@@ -90,7 +90,6 @@ class TestSearchImmunization(ImmunizationBaseTest):
         ]
 
         self.store_records(*stored_records)
-
         created_resource_ids = [result["id"] for result in stored_records]
 
         # When
@@ -194,4 +193,8 @@ class TestSearchImmunization(ImmunizationBaseTest):
         result_without_include = response_without_include.json()
 
         # Matches Immunisation History API in that it doesn't matter if you don't pass "_include".
+
+        # Ignore self link which will always differ.
+        result["link"] = []
+        result_without_include["link"] = []
         assert result == result_without_include
