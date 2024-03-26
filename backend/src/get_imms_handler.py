@@ -10,11 +10,18 @@ from timer import timed
 @timed
 def get_imms_handler(event, context):
     headers = event.get('headers', {})
-    print(event)
-    amzn_trace_id = headers.get('X-Amzn-Trace-Id', 'Unknown')
-    correlation_id = headers.get('X-Correlation-ID', 'Unknown')
+    print("event:", event)
+    correlation_id = headers.get('X-Correlation-ID', 'X-Correlation-ID not passed')
+    request_id = headers.get('X-Request-ID', 'X-Request-ID not passed')
     path = event.get('path', 'Unknown')
-    print(f"Request ID: {amzn_trace_id}, Correlation ID: {correlation_id}, Path: {path}")
+    resource_path = event['requestContext']['resourcePath']
+    print({
+        "correlation_id": correlation_id,
+        "request_id": request_id,
+        "resource_path": resource_path,
+        "actual_path": path
+    })
+    print(f"Request ID: {request_id}, Correlation ID: {correlation_id}, Path: {path}")
     return get_immunization_by_id(event, make_controller())
 
 
