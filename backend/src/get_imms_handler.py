@@ -10,6 +10,7 @@ from timer import timed
 @timed
 def get_imms_handler(event, context):
     headers = event.get('headers', {})
+    print(event)
     amzn_trace_id = headers.get('X-Amzn-Trace-Id', 'Unknown')
     correlation_id = headers.get('X-Correlation-ID', 'Unknown')
     path = event.get('path', 'Unknown')
