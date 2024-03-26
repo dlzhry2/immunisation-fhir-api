@@ -56,13 +56,9 @@ class FhirController:
     @timed
     def get_immunization_by_id(self, aws_event) -> dict:
         
-        print("HELLO")
-        
         if response := self.authorize_request(EndpointOperation.READ, aws_event):
-            print("HELLO")
             return response
         
-        print("HELLO")
         imms_id = aws_event["pathParameters"]["id"]
 
         if id_error := self._validate_id(imms_id):

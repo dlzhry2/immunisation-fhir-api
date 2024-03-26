@@ -2,32 +2,33 @@ import logging
 import time
 from functools import wraps
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig()
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel("INFO")
 
-def timed(func):
-    """This decorator logs the execution time for the decorated function along with additional details."""
+def function_info(func):
+    """This decorator prints the execution time for the decorated function."""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # Assuming correlation_id and request_id are passed as keyword arguments to the functions
-        # If they are not, you'll need to modify this part to fetch them from the correct location
-        correlation_id = kwargs.get('correlation_id', 'Unknown')
-        request_id = kwargs.get('request_id', 'Unknown')
-
+        event = args[0] if args else {}
+        headers = event.get('headers', {})
+        correlation_id = headers.get('X-Correlation-ID', 'X-Correlation-ID not passed')
+        request_id = headers.get('X-Request-ID', 'X-Request-ID not passed')
+        actual_path = event.get('path', 'Unknown')
+        resource_path = event.get('requestContext', {}).get('resourcePath', 'Unknown')
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
-
-        # Construct the log message as a structured dictionary
         log = {
-            "function": func.__name__,
-            "time_taken": f"{round(end - start, 5)}s",
-            "correlation_id": correlation_id,
-            "request_id": request_id
-        }
-        logger.info("Function execution details", extra=log)
+            "function_name": func.__name__,
+            "time_taken":"{} ran in {}s".format(func.__name__, round(end - start, 5)),
+            "X-Correlation-ID": correlation_id,
+            "X-Request-ID": request_id,
+            "actual_path": actual_path,
+            "resource_path": resource_path
+            }
+        logger.info("Function execution details: %s", log)
         return result
 
     return wrapper
