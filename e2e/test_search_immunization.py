@@ -73,3 +73,16 @@ class TestSearchImmunization(ImmunizationBaseTest):
         self.assertTrue(mmr1["id"] in resource_ids)
         self.assertTrue(mmr2["id"] in resource_ids)
         self.assertTrue(deleted_mmr["id"] not in resource_ids)
+
+    def test_search_reject_tbc(self):
+        # Given patient has a vaccine with no NHS number
+        imms = create_an_imms_obj(str(uuid.uuid4()), "TBC", mmr_code)
+        del imms["contained"][1]["identifier"][0]["value"]
+        imms["contained"][1]["identifier"][0]["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "04"
+        self.store_records(imms)
+
+        # When
+        response = self.default_imms_api.search_immunizations("TBC", "MMR")
+
+        # Then
+        self.assert_operation_outcome(response, 500)

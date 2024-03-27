@@ -1,6 +1,6 @@
 import uuid
 from utils.base_test import ImmunizationBaseTest
-from utils.resource import create_an_imms_obj
+from utils.resource import create_an_imms_obj, get_full_row_from_identifier
 
 
 class TestCreateImmunization(ImmunizationBaseTest):
@@ -53,3 +53,21 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
         # Then
         self.assert_operation_outcome(response, 400, "occurrenceDateTime")
+
+    def test_no_nhs_number_correct_status(self):
+        """it should accept the request if nhs-number is missing and verification status is 04"""
+        imms = create_an_imms_obj()
+        del imms["contained"][1]["identifier"][0]["value"]
+        imms["contained"][1]["identifier"][0]["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "04"
+
+        response = self.default_imms_api.create_immunization(imms)
+
+        self.assertEqual(response.status_code, 201, response.text)
+        self.assertEqual(response.text, "")
+        self.assertTrue("Location" in response.headers)
+
+        identifier = response.headers.get("location").split("/")[-1]
+
+        patient_pk = get_full_row_from_identifier(identifier).get("PatientPK")
+
+        self.assertEqual(patient_pk, "Patient#TBC")

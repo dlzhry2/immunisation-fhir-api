@@ -4,7 +4,7 @@ from models.constants import Constants
 from models.utils.generic_utils import (
     get_generic_questionnaire_response_value,
     get_generic_extension_value,
-    generate_field_location_for_questionnnaire_response,
+    generate_field_location_for_questionnaire_response,
     generate_field_location_for_extension,
 )
 from models.utils.pre_validator_utils import PreValidation
@@ -713,7 +713,7 @@ class PreValidators:
             )
             PreValidation.for_string(
                 ip_address_code,
-                generate_field_location_for_questionnnaire_response(
+                generate_field_location_for_questionnaire_response(
                     link_id="PerformerSDSJobRole", answer_type=answer_type
                 ),
             )
@@ -1452,7 +1452,7 @@ class PreValidators:
             )
             PreValidation.for_string(
                 local_patient_value,
-                generate_field_location_for_questionnnaire_response(
+                generate_field_location_for_questionnaire_response(
                     link_id="LocalPatient", answer_type=answer_type, field_type="value"
                 ),
                 max_length=20,
@@ -1478,7 +1478,7 @@ class PreValidators:
             )
             PreValidation.for_string(
                 local_patient_system,
-                generate_field_location_for_questionnnaire_response(
+                generate_field_location_for_questionnaire_response(
                     link_id="LocalPatient", answer_type=answer_type, field_type="system"
                 ),
             )
@@ -1503,7 +1503,7 @@ class PreValidators:
             )
             PreValidation.for_string(
                 consent_code,
-                generate_field_location_for_questionnnaire_response(
+                generate_field_location_for_questionnaire_response(
                     link_id="Consent", answer_type=answer_type, field_type="code"
                 ),
             )
@@ -1528,7 +1528,7 @@ class PreValidators:
             )
             PreValidation.for_string(
                 consent_display,
-                generate_field_location_for_questionnnaire_response(
+                generate_field_location_for_questionnaire_response(
                     link_id="Consent", answer_type=answer_type, field_type="display"
                 ),
             )
@@ -1553,7 +1553,7 @@ class PreValidators:
             )
             PreValidation.for_string(
                 care_setting_code,
-                generate_field_location_for_questionnnaire_response(
+                generate_field_location_for_questionnaire_response(
                     link_id="CareSetting", answer_type=answer_type, field_type="code"
                 ),
             )
@@ -1578,7 +1578,7 @@ class PreValidators:
             )
             PreValidation.for_string(
                 care_setting_display,
-                generate_field_location_for_questionnnaire_response(
+                generate_field_location_for_questionnaire_response(
                     link_id="CareSetting", answer_type=answer_type, field_type="display"
                 ),
             )
@@ -1598,7 +1598,7 @@ class PreValidators:
             ip_address_code = get_generic_questionnaire_response_value(values, "IpAddress", answer_type=answer_type)
             PreValidation.for_string(
                 ip_address_code,
-                generate_field_location_for_questionnnaire_response(link_id="IpAddress", answer_type=answer_type),
+                generate_field_location_for_questionnaire_response(link_id="IpAddress", answer_type=answer_type),
             )
         except (KeyError, IndexError):
             pass
@@ -1616,7 +1616,7 @@ class PreValidators:
             user_id_code = get_generic_questionnaire_response_value(values, "UserId", answer_type=answer_type)
             PreValidation.for_string(
                 user_id_code,
-                generate_field_location_for_questionnnaire_response(link_id="UserId", answer_type=answer_type),
+                generate_field_location_for_questionnaire_response(link_id="UserId", answer_type=answer_type),
             )
         except (KeyError, IndexError):
             pass
@@ -1634,7 +1634,7 @@ class PreValidators:
             user_name_code = get_generic_questionnaire_response_value(values, "UserName", answer_type=answer_type)
             PreValidation.for_string(
                 user_name_code,
-                generate_field_location_for_questionnnaire_response(link_id="UserName", answer_type=answer_type),
+                generate_field_location_for_questionnaire_response(link_id="UserName", answer_type=answer_type),
             )
         except (KeyError, IndexError):
             pass
@@ -1652,7 +1652,7 @@ class PreValidators:
             user_email_code = get_generic_questionnaire_response_value(values, "UserEmail", answer_type=answer_type)
             PreValidation.for_string(
                 user_email_code,
-                generate_field_location_for_questionnnaire_response(link_id="UserEmail", answer_type=answer_type),
+                generate_field_location_for_questionnaire_response(link_id="UserEmail", answer_type=answer_type),
             )
         except (KeyError, IndexError):
             pass
@@ -1675,7 +1675,7 @@ class PreValidators:
             )
             PreValidation.for_date_time(
                 submitted_time_stamp_code,
-                generate_field_location_for_questionnnaire_response(
+                generate_field_location_for_questionnaire_response(
                     link_id="SubmittedTimeStamp", answer_type=answer_type
                 ),
             )
@@ -1723,9 +1723,7 @@ class PreValidators:
             )
             PreValidation.for_boolean(
                 reduce_validation_code,
-                generate_field_location_for_questionnnaire_response(
-                    link_id="ReduceValidation", answer_type=answer_type
-                ),
+                generate_field_location_for_questionnaire_response(link_id="ReduceValidation", answer_type=answer_type),
             )
         except (KeyError, IndexError):
             pass
@@ -1745,7 +1743,7 @@ class PreValidators:
             )
             PreValidation.for_string(
                 reduce_validation_display,
-                generate_field_location_for_questionnnaire_response(
+                generate_field_location_for_questionnaire_response(
                     link_id="ReduceValidationReason",
                     answer_type=answer_type,
                 ),

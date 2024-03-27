@@ -207,7 +207,7 @@ paths:
         ## Overview
         Use this endpoint to record the administration of a vaccination.
 
-        This endpoint is not availble for when you are authenticated using patient access.
+        This endpoint is not available for when you are authenticated using patient access.
 
         ## Sandbox testing
         You can test the following scenarios in our sandbox environment:
@@ -234,7 +234,7 @@ paths:
       operationId: searchViaGetImmunization
       description: |
         ## Overview
-        Use this endpoint to search for a patient using thier NHS number and DiseaseType.
+        Use this endpoint to search for a patient using their NHS number and DiseaseType.
 
         ## Sandbox testing
         You can test the following scenarios in our sandbox environment:
@@ -444,8 +444,8 @@ components:
                 type: string
                 description: |
                   The vaccine preventable disease the dose is being administered against.
-                  Expressed as `<value>` where`<value>` must be a valid Snomed Code.
-                example: "39114911000001105"
+                  Expressed as `<value>` where`<value>` must be a valid Disease Type (COVID19, FLU, HPV, MMR).
+                example: "COVID19"
   parameters:
     Id:
       in: path
@@ -514,11 +514,11 @@ components:
       name: -diseaseType
       description: |
         The vaccine preventable disease the dose is being administered against.
-        Expressed as `<value>` where`<value>` must be a valid Snomed Code.
+        Expressed as `<value>` where`<value>` must be a valid Disease Type (COVID19, FLU, HPV, MMR).
       required: true
       schema:
         type: string
-        example: "39114911000001105"
+        example: "COVID19"
   schemas:
     Resource:
       type: object
