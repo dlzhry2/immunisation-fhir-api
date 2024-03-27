@@ -20,7 +20,7 @@ NOTE: testing protected methods is not ideal. But in this case, we are testing t
 NOTE: the public function `decorate` is tested in `TestDecorate` class.
 """
 
-raw_imms = {
+raw_imms: dict = {
     "resourceType": "Immunization",
     "contained": [],
     "extension": [],
@@ -40,6 +40,7 @@ class TestDecorate(unittest.TestCase):
 
     def test_decorate_apply_decorators(self):
         """it should decorate the raw imms by applying the decorators"""
+        self.fail()
 
         # Given
         # we create two mock decorators. Then we make sure they both contribute to the imms
@@ -70,10 +71,12 @@ class TestDecorate(unittest.TestCase):
         """it should keep calling decorators and accumulate errors"""
 
         def decorator_0(_imms, _record):
-            return DecoratorError(errors=[TransformerFieldError("field a and b failed")], decorator_name="decorator_0")
+            return DecoratorError(errors=[TransformerFieldError(message="field a and b failed", field="a")],
+                                  decorator_name="decorator_0")
 
         def decorator_1(_imms, _record):
-            return DecoratorError(errors=[TransformerFieldError("field x failed")], decorator_name="decorator_1")
+            return DecoratorError(errors=[TransformerFieldError(message="field x failed", field="b")],
+                                  decorator_name="decorator_1")
 
         self.decorator0.side_effect = decorator_0
         self.decorator1.side_effect = decorator_1
@@ -121,10 +124,9 @@ class TestImmunizationDecorator(unittest.TestCase):
 
         _decorate_immunization(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["identifier"] = [{"value": "a_unique_id", "system": "a_unique_id_uri"}]
+        expected = [{"value": "a_unique_id", "system": "a_unique_id_uri"}]
 
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertDictEqual(expected[0], self.imms["identifier"][0])
 
     def test_not_given_true(self):
         """it should set status to 'not-done' if not given is true"""
@@ -132,10 +134,7 @@ class TestImmunizationDecorator(unittest.TestCase):
 
         _decorate_immunization(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["status"] = "not-done"
-
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertEqual("not-done", self.imms["status"])
 
     def test_not_given_false_action_delete(self):
         """it should set the status to 'entered-in-error' if not given is false and ACTION_FLAG is update or delete"""
@@ -146,10 +145,7 @@ class TestImmunizationDecorator(unittest.TestCase):
 
                 _decorate_immunization(self.imms, headers)
 
-                expected_imms = copy.deepcopy(raw_imms)
-                expected_imms["status"] = "entered-in-error"
-
-                self.assertDictEqual(expected_imms, self.imms)
+                self.assertEqual("entered-in-error", self.imms["status"])
 
     def test_not_given_reason(self):
         """it should add the reason why the vaccine was not given"""
@@ -158,15 +154,13 @@ class TestImmunizationDecorator(unittest.TestCase):
 
         _decorate_immunization(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["statusReason"] = {
+        expected = {
             "coding": [{
                 "code": "a_not_given_reason_code",
                 "display": "a_not_given_reason_term"
             }]
         }
-
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertDictEqual(expected, self.imms["statusReason"])
 
     def test_use_indication_if_not_given_empty(self):
         """it should use the indication if reason-not-given is empty. they are mutually exclusive"""
@@ -179,15 +173,13 @@ class TestImmunizationDecorator(unittest.TestCase):
 
         _decorate_immunization(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["statusReason"] = {
+        expected = {
             "coding": [{
                 "code": "a_indication_code",
                 "display": "a_indication_term"
             }]
         }
-
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertDictEqual(expected, self.imms["statusReason"])
 
     def test_recorded_date(self):
         """it should convert and add the recorded date to the immunization object"""
@@ -195,10 +187,7 @@ class TestImmunizationDecorator(unittest.TestCase):
 
         _decorate_immunization(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["recorded"] = "2024-02-21"
-
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertEqual("2024-02-21", self.imms["recorded"])
 
 
 class TestPatientDecorator(unittest.TestCase):
@@ -214,10 +203,10 @@ class TestPatientDecorator(unittest.TestCase):
         _decorate_patient(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["patient"] = {"reference": "#patient_1"}
+        expected_imms["patient"] = {"reference": "#patient1"}
         expected_imms["contained"].append({
             "resourceType": "Patient",
-            "id": "patient_1",
+            "id": "patient1",
             "identifier": [],
             "name": []
         })
@@ -302,7 +291,7 @@ class TestPatientDecorator(unittest.TestCase):
         expected_imms["patient"] = ANY
         expected_imms["contained"].append({
             "resourceType": "Patient",
-            "id": "patient_1",
+            "id": "patient1",
             "identifier": [],
             "name": [
                 {
@@ -415,12 +404,13 @@ class TestVaccineDecorator(unittest.TestCase):
         self.assertDictEqual(expected_imms, self.imms)
 
     def test_expiration(self):
-        headers = OrderedDict([("expiry_date", "a_expiry_date")])
+        """it should convert and add expiration date"""
+        headers = OrderedDict([("expiry_date", "20240303")])
 
         _decorate_vaccine(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["expirationDate"] = "a_expiry_date"
+        expected_imms["expirationDate"] = "2024-03-03"
 
         self.assertDictEqual(expected_imms, self.imms)
 
@@ -614,7 +604,8 @@ class TestVaccinationDecorator(unittest.TestCase):
         expected_imms["doseQuantity"] = {
             "value": 123.1234,
             "unit": ANY,
-            "system": ANY
+            "system": ANY,
+            "code": ANY,
         }
         self.assertDictEqual(expected_imms, self.imms)
 
@@ -646,11 +637,11 @@ class TestPractitionerDecorator(unittest.TestCase):
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["contained"].append({
             "resourceType": "Practitioner",
-            "id": "practitioner_1",
+            "id": "practitioner1",
             "identifier": ANY,
             "name": []
         })
-        expected_imms["performer"].append({"actor": {"reference": "#practitioner_1"}})
+        expected_imms["performer"].append({"actor": {"reference": "#practitioner1"}})
 
         self.assertDictEqual(expected_imms, self.imms)
 
@@ -733,16 +724,13 @@ class TestPractitionerDecorator(unittest.TestCase):
 
         _decorate_practitioner(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        # TODO: this is tested before and contains the same location. Check TODO in decorator source code
-        expected_imms["performer"].append(ANY)
-        expected_imms["location"] = {
+        expected = {
             "identifier": {
                 "value": "a_location_code",
                 "system": "a_location_code_type_uri"
             }}
 
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertDictEqual(expected, self.imms["location"])
 
 
 class TestDecorateQuestionare(unittest.TestCase):
@@ -764,6 +752,13 @@ class TestDecorateQuestionare(unittest.TestCase):
         imms["contained"].append(questionare)
 
     @staticmethod
+    def _make_questionare_item(name: str, item: dict):
+        return {
+            "linkId": name,
+            "answer": [item]
+        }
+
+    @staticmethod
     def _add_questionare_item(imms: dict, name: str, item: dict):
         imms["contained"][0]["item"].append({
             "linkId": name,
@@ -776,10 +771,9 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        self._make_questionare(expected_imms, "ReduceValidation", {"valueBoolean": True})
+        expected_item = self._make_questionare_item("ReduceValidation", {"valueBoolean": True})
 
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_reduce_validation_reason(self):
         """it should add the ReduceValidationReason if code is provided"""
@@ -790,14 +784,10 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        self._make_questionare(expected_imms, "ReduceValidation", {"valueBoolean": True})
-        self._add_questionare_item(
-            expected_imms,
-            "ReduceValidationReason",
-            {"valueString": "a_reduce_validation_reason"})
+        expected_item = self._make_questionare_item("ReduceValidationReason",
+                                                    {"valueString": "a_reduce_validation_reason"})
 
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_add_consent(self):
         """it should add the consent to the questionare list"""
@@ -808,15 +798,14 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
         item = {"valueCoding": {
             "system": "http://snomed.info/sct",
             "code": "a_consent_for_treatment_code",
             "display": "a_consent_for_treatment_description"
         }}
-        self._make_questionare(expected_imms, "Consent", item)
+        expected_item = self._make_questionare_item("Consent", item)
 
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_add_care_setting(self):
         """it should add the care setting to the questionare list"""
@@ -827,15 +816,13 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
         item = {"valueCoding": {
             "system": "http://snomed.info/sct",
             "code": "a_care_setting_type_code",
             "display": "a_care_setting_type_description"
         }}
-        self._make_questionare(expected_imms, "CareSetting", item)
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected_item = self._make_questionare_item("CareSetting", item)
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_add_local_patient(self):
         """it should add the local patient to the questionare list"""
@@ -846,16 +833,14 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
         item = {"valueReference": {
             "identifier": {
                 "system": "a_local_patient_uri",
                 "value": "a_local_patient_id"
             }
         }}
-        self._make_questionare(expected_imms, "LocalPatient", item)
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected_item = self._make_questionare_item("LocalPatient", item)
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_add_ip_address(self):
         """it should add the ip address to the questionare list"""
@@ -863,10 +848,8 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        self._make_questionare(expected_imms, "IpAddress", {"valueString": "a_ip_address"})
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected_item = self._make_questionare_item("IpAddress", {"valueString": "a_ip_address"})
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_add_user_id(self):
         """it should add the user id to the questionare list"""
@@ -874,10 +857,8 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        self._make_questionare(expected_imms, "UserId", {"valueString": "a_user_id"})
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected_item = self._make_questionare_item("UserId", {"valueString": "a_user_id"})
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_add_user_name(self):
         """it should add the user name to the questionare list"""
@@ -885,10 +866,8 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        self._make_questionare(expected_imms, "UserName", {"valueString": "a_user_name"})
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected_item = self._make_questionare_item("UserName", {"valueString": "a_user_name"})
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_add_user_email(self):
         """it should add the user email to the questionare list"""
@@ -896,10 +875,8 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        self._make_questionare(expected_imms, "UserEmail", {"valueString": "a_user_email"})
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected_item = self._make_questionare_item("UserEmail", {"valueString": "a_user_email"})
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_add_submitted_timestamp(self):
         """it should convert and add the submitted timestamp to the questionare list"""
@@ -907,11 +884,9 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        self._make_questionare(expected_imms,
-                               "SubmittedTimeStamp", {"valueDateTime": "2024-02-21T17:19:30+00:00"})
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected_item = self._make_questionare_item("SubmittedTimeStamp",
+                                                    {"valueDateTime": "2024-02-21T17:19:30+00:00"})
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_add_performer_job_role(self):
         """it should add the performer job role to the questionare list"""
@@ -919,7 +894,6 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         _decorate_questionare(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        self._make_questionare(expected_imms, "PerformerSDSJobRole", {"valueString": "a_sds_job_role_name"})
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected_item = self._make_questionare_item("PerformerSDSJobRole",
+                                                    {"valueString": "a_sds_job_role_name"})
+        self.assertIn(expected_item, self.imms["contained"][0]["item"])

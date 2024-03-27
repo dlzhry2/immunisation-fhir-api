@@ -129,7 +129,7 @@ def _decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
             }
         }
 
-    internal_id = "patient_1"
+    internal_id = "patient1"
     imms["patient"] = {"reference": f"#{internal_id}"}
     patient = {
         "id": internal_id,
@@ -190,7 +190,7 @@ def _decorate_vaccine(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
         imms["manufacturer"] = {"display": manufacturer}
 
     if expiry_date := record.get("expiry_date"):
-        imms["expirationDate"] = expiry_date
+        imms["expirationDate"] = _convert_date(expiry_date)
 
     if lot_number := record.get("batch_number"):
         imms["lotNumber"] = lot_number
@@ -274,7 +274,7 @@ def _decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optiona
         prac_org_uri = record.get("performing_professional_body_reg_uri")
         practitioner = {
             "resourceType": "Practitioner",
-            "id": "practitioner_1",
+            "id": "practitioner1",
             "identifier": [],
             "name": []
         }
@@ -282,7 +282,7 @@ def _decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optiona
             "system": "" if prac_org_uri is None else prac_org_uri,
             "value": prac_org
         })
-        imms["performer"].append({"actor": {"reference": "#practitioner_1"}})
+        imms["performer"].append({"actor": {"reference": "#practitioner1"}})
         imms["contained"].append(practitioner)
 
         prac_name = record.get("performing_professional_forename")
