@@ -2,6 +2,9 @@ import copy
 import json
 import os
 import uuid
+import boto3
+from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource
+from botocore.config import Config
 
 from .constants import valid_nhs_number1, mmr_code, flu_code
 
@@ -51,9 +54,7 @@ def get_disease_type(imms: dict) -> str:
     ][0]["valueCodeableConcept"]["coding"]
 
     vaccination_procedure_code = [
-        x
-        for x in value_codeable_concept_coding
-        if x.get("system") == "http://snomed.info/sct"
+        x for x in value_codeable_concept_coding if x.get("system") == "http://snomed.info/sct"
     ][0]["code"]
 
     return disease_code_to_type_map[vaccination_procedure_code]
@@ -61,8 +62,17 @@ def get_disease_type(imms: dict) -> str:
 
 def get_questionnaire_items(imms: dict):
     questionnaire = next(
-        contained
-        for contained in imms["contained"]
-        if contained["resourceType"] == "QuestionnaireResponse"
+        contained for contained in imms["contained"] if contained["resourceType"] == "QuestionnaireResponse"
     )
     return questionnaire["item"]
+
+
+def get_full_row_from_identifier(identifier: str) -> dict:
+    """
+    Get the full record from the dynamodb table using the identifier
+    """
+    config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
+    db: DynamoDBServiceResource = boto3.resource("dynamodb", region_name="eu-west-2", config=config)
+    table = db.Table(os.getenv("DYNAMODB_TABLE_NAME"))
+
+    return table.get_item(Key={"PK": f"Immunization#{identifier}"}).get("Item")

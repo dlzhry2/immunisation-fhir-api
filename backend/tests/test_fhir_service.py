@@ -144,10 +144,9 @@ class TestCreateImmunization(unittest.TestCase):
 
     def test_pre_validation_failed(self):
         """it should throw exception if Immunization is not valid"""
-        imms = create_an_immunization_dict("an-id", "12345")
-        expected_msg = (
-            "contained[?(@.resourceType=='Patient')].identifier[0].value must be 10 characters"
-        )
+        imms = create_an_immunization_dict("an-id", "9990548609")
+        imms["recorded"] = "20201214"
+        expected_msg = 'recorded must be a valid date string in the format "YYYY-MM-DD"'
 
         with self.assertRaises(CustomValidationError) as error:
             # When
@@ -275,7 +274,12 @@ class TestUpdateImmunization(unittest.TestCase):
 
         self.imms_repo.update_immunization.return_value = {}
 
-        validation_error = ValidationError([ErrorWrapper(TypeError('bad type'), '/type'), ], Immunization)
+        validation_error = ValidationError(
+            [
+                ErrorWrapper(TypeError("bad type"), "/type"),
+            ],
+            Immunization,
+        )
         self.validator.validate.side_effect = validation_error
         expected_msg = str(validation_error)
 

@@ -54,14 +54,22 @@ class FhirService:
         self.validator = validator
 
     def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
+        """
+        Get an Immunization by its ID. Return None if not found. If the patient doesn't have an NHS number,
+        return the Immunization without calling PDS or checking S flag.
+        """
         imms = self.immunization_repo.get_immunization_by_id(imms_id)
 
         if not imms:
             return None
 
-        nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
-        patient = self.pds_service.get_patient_details(nhs_number)
-        filtered_immunization = handle_s_flag(imms, patient)
+        try:
+            nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
+        except (KeyError, IndexError):
+            filtered_immunization = imms
+        else:
+            patient = self.pds_service.get_patient_details(nhs_number)
+            filtered_immunization = handle_s_flag(imms, patient)
         return Immunization.parse_obj(filtered_immunization)
 
     def create_immunization(self, immunization: dict) -> Immunization:
@@ -69,14 +77,13 @@ class FhirService:
             self.validator.validate(immunization)
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
-
         patient = self._validate_patient(immunization)
 
         imms = self.immunization_repo.create_immunization(immunization, patient)
 
         return Immunization.parse_obj(imms)
 
-    def update_immunization(self, imms_id: str, immunization: dict) -> (UpdateOutcome, Immunization):
+    def update_immunization(self, imms_id: str, immunization: dict) -> tuple[UpdateOutcome, Immunization]:
         if immunization.get("id", imms_id) != imms_id:
             raise InconsistentIdError(imms_id=imms_id)
         immunization["id"] = imms_id
@@ -186,11 +193,24 @@ class FhirService:
         return fhir_bundle
 
     @timed
-    def _validate_patient(self, imms: dict):
-        nhs_number = [x for x in imms["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0]["value"]
+    def _validate_patient(self, imms: dict) -> dict:
+        """
+        Get the NHS number from the contained Patient resource and validate it with PDS.
+
+        If the NHS number doesn't exist, return an empty dict.
+        If the NHS number exists, get the patient details from PDS and return the patient details.
+        """
+        try:
+            nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
+        except (KeyError, IndexError):
+            nhs_number = None
+
+        if not nhs_number:
+            return {}
+
         patient = self.pds_service.get_patient_details(nhs_number)
 
         if patient:
             return patient
-        else:
-            raise InvalidPatientId(patient_identifier=nhs_number)
+
+        raise InvalidPatientId(patient_identifier=nhs_number)

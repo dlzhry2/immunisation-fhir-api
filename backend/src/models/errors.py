@@ -22,7 +22,8 @@ class UnauthorizedError(RuntimeError):
     def to_operation_outcome() -> dict:
         msg = f"Unauthorized request"
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.forbidden, diagnostics=msg)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.forbidden, diagnostics=msg
+        )
 
 
 @dataclass
