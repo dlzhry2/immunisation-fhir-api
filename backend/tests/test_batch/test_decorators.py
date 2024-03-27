@@ -40,6 +40,7 @@ class TestDecorate(unittest.TestCase):
 
     def test_decorate_apply_decorators(self):
         """it should decorate the raw imms by applying the decorators"""
+
         # we create two mock decorators. Then we make sure they both contribute to the imms
         def decorator_0(_imms, _record):
             _imms["decorator_0"] = "decorator_0"
@@ -219,9 +220,7 @@ class TestPatientDecorator(unittest.TestCase):
         _decorate_patient(self.imms, headers)
 
         # Then
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["patient"] = ANY
-        expected_imms["contained"].append({
+        expected = {
             "resourceType": "Patient",
             "id": ANY,
             "identifier": [
@@ -231,9 +230,8 @@ class TestPatientDecorator(unittest.TestCase):
                 }
             ],
             "name": []
-        })
-
-        self.assertDictEqual(expected_imms, self.imms)
+        }
+        self.assertDictEqual(expected, self.imms["contained"][0])
 
     def test_add_nhs_number_extension(self):
         """it should add the nhs number to the patient object"""
@@ -248,9 +246,7 @@ class TestPatientDecorator(unittest.TestCase):
         _decorate_patient(self.imms, headers)
 
         # Then
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["patient"] = ANY
-        expected_imms["contained"].append({
+        expected = {
             "resourceType": "Patient",
             "id": ANY,
             "identifier": [{
@@ -268,9 +264,8 @@ class TestPatientDecorator(unittest.TestCase):
                 }]
             }],
             "name": []
-        })
-
-        self.assertDictEqual(expected_imms, self.imms)
+        }
+        self.assertDictEqual(expected, self.imms["contained"][0])
 
     def test_add_name(self):
         """it should add the name to the patient object"""
@@ -284,9 +279,7 @@ class TestPatientDecorator(unittest.TestCase):
         _decorate_patient(self.imms, headers)
 
         # Then
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["patient"] = ANY
-        expected_imms["contained"].append({
+        expected = {
             "resourceType": "Patient",
             "id": "patient1",
             "identifier": [],
@@ -296,9 +289,8 @@ class TestPatientDecorator(unittest.TestCase):
                     "given": ["a_person_forename"]
                 }
             ]
-        })
-
-        self.assertDictEqual(expected_imms, self.imms)
+        }
+        self.assertDictEqual(expected, self.imms["contained"][0])
 
     def test_add_dob(self):
         """it should convert and add the dob to the patient object"""
@@ -306,17 +298,14 @@ class TestPatientDecorator(unittest.TestCase):
 
         _decorate_patient(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["patient"] = ANY
-        expected_imms["contained"].append({
+        expected = {
             "resourceType": "Patient",
             "id": ANY,
             "identifier": [],
             "name": [],
             "birthDate": "1993-08-21"
-        })
-
-        self.assertDictEqual(expected_imms, self.imms)
+        }
+        self.assertDictEqual(expected, self.imms["contained"][0])
 
     def test_gender_converter(self):
         """it should convert gender code to fhir code and leave it as is if we can't convert it"""
@@ -325,24 +314,22 @@ class TestPatientDecorator(unittest.TestCase):
                   ("2", "female"),
                   ("9", "other"),
                   ("unknown_code_123", "unknown_code_123")]
-        for value, expected in values:
-            with self.subTest(value=value):
-                headers = OrderedDict([("person_gender_code", value)])
+        for gen_num, gen_value in values:
+            with self.subTest(value=gen_num):
+                headers = OrderedDict([("person_gender_code", gen_num)])
                 imms = copy.deepcopy(raw_imms)
 
                 _decorate_patient(imms, headers)
 
-                expected_imms = copy.deepcopy(raw_imms)
-                expected_imms["patient"] = ANY
-                expected_imms["contained"].append({
+                expected = {
                     "resourceType": "Patient",
                     "id": ANY,
                     "identifier": [],
                     "name": [],
-                    "gender": expected
-                })
+                    "gender": gen_value
+                }
 
-                self.assertDictEqual(expected_imms, imms)
+                self.assertDictEqual(expected, imms["contained"][0])
 
     def test_add_address(self):
         """it should add postcode and address to the patient object"""
@@ -350,9 +337,7 @@ class TestPatientDecorator(unittest.TestCase):
 
         _decorate_patient(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["patient"] = ANY
-        expected_imms["contained"].append({
+        expected = {
             "resourceType": "Patient",
             "id": ANY,
             "identifier": [],
@@ -362,9 +347,8 @@ class TestPatientDecorator(unittest.TestCase):
                     "postalCode": "a_person_postcode",
                 }
             ]
-        })
-
-        self.assertDictEqual(expected_imms, self.imms)
+        }
+        self.assertDictEqual(expected, self.imms["contained"][0])
 
 
 class TestVaccineDecorator(unittest.TestCase):
@@ -380,25 +364,22 @@ class TestVaccineDecorator(unittest.TestCase):
 
         _decorate_vaccine(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["vaccineCode"] = {
+        expected = {
             "coding": [{
                 "system": "http://snomed.info/sct",
                 "code": "a_vaccine_product_code",
                 "display": "a_vaccine_product_term"
             }]
         }
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertDictEqual(expected, self.imms["vaccineCode"])
 
     def test_manufacturer(self):
         headers = OrderedDict([("vaccine_manufacturer", "a_vaccine_manufacturer")])
 
         _decorate_vaccine(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["manufacturer"] = {"display": "a_vaccine_manufacturer"}
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected = {"display": "a_vaccine_manufacturer"}
+        self.assertDictEqual(expected, self.imms["manufacturer"])
 
     def test_expiration(self):
         """it should convert and add expiration date"""
@@ -406,20 +387,16 @@ class TestVaccineDecorator(unittest.TestCase):
 
         _decorate_vaccine(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["expirationDate"] = "2024-03-03"
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected = "2024-03-03"
+        self.assertEqual(expected, self.imms["expirationDate"])
 
     def test_lot_number(self):
         headers = OrderedDict([("batch_number", "a_batch_number")])
 
         _decorate_vaccine(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["lotNumber"] = "a_batch_number"
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected = "a_batch_number"
+        self.assertEqual(expected, self.imms["lotNumber"])
 
 
 class TestVaccinationDecorator(unittest.TestCase):
@@ -438,9 +415,8 @@ class TestVaccinationDecorator(unittest.TestCase):
         _decorate_vaccination(self.imms, headers)
 
         # Then
-        expected_imms = copy.deepcopy(raw_imms)
         url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
-        expected_imms["extension"].append({
+        expected = {
             "url": url,
             "valueCodeableConcept": {
                 "coding": [
@@ -451,9 +427,8 @@ class TestVaccinationDecorator(unittest.TestCase):
                     }
                 ]
             }
-        })
-
-        self.assertDictEqual(expected_imms, self.imms)
+        }
+        self.assertDictEqual(expected, self.imms["extension"][0])
 
     def test_vaccination_situation(self):
         """it should get the vaccination situation code and term and add it to the extension list"""
@@ -466,9 +441,8 @@ class TestVaccinationDecorator(unittest.TestCase):
         _decorate_vaccination(self.imms, headers)
 
         # Then
-        expected_imms = copy.deepcopy(raw_imms)
         url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
-        expected_imms["extension"].append({
+        expected = {
             "url": url,
             "valueCodeableConcept": {
                 "coding": [
@@ -479,9 +453,8 @@ class TestVaccinationDecorator(unittest.TestCase):
                     }
                 ]
             }
-        })
-
-        self.assertDictEqual(expected_imms, self.imms)
+        }
+        self.assertDictEqual(expected, self.imms["extension"][0])
 
     def test_occurrence_date_time(self):
         """it should convert and add the occurrence date time to the vaccination object"""
@@ -489,10 +462,8 @@ class TestVaccinationDecorator(unittest.TestCase):
 
         _decorate_vaccination(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["occurrenceDateTime"] = "2024-02-21T17:19:30+00:00"
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected = "2024-02-21T17:19:30+00:00"
+        self.assertEqual(expected, self.imms["occurrenceDateTime"])
 
     def test_primary_source_false(self):
         """it should set the primary source by converting the string to a boolean"""
@@ -500,9 +471,7 @@ class TestVaccinationDecorator(unittest.TestCase):
 
         _decorate_vaccination(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["primarySource"] = False
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertEqual(False, self.imms["primarySource"])
 
     def test_primary_source_true(self):
         """it should set the primary source by converting the string to a boolean"""
@@ -510,9 +479,7 @@ class TestVaccinationDecorator(unittest.TestCase):
 
         _decorate_vaccination(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["primarySource"] = True
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertEqual(True, self.imms["primarySource"])
 
     def test_report_origin(self):
         """it should set the report origin"""
@@ -520,9 +487,8 @@ class TestVaccinationDecorator(unittest.TestCase):
 
         _decorate_vaccination(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["reportOrigin"] = {"text": "a_report_origin"}
-        self.assertDictEqual(expected_imms, self.imms)
+        expected = {"text": "a_report_origin"}
+        self.assertDictEqual(expected, self.imms["reportOrigin"])
 
     def test_vaccination_site(self):
         """it should get the vaccination site code and term and add it to the site object"""
@@ -533,8 +499,7 @@ class TestVaccinationDecorator(unittest.TestCase):
 
         _decorate_vaccination(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["site"] = {
+        expected = {
             "coding": [
                 {
                     "system": "http://snomed.info/sct",
@@ -543,8 +508,7 @@ class TestVaccinationDecorator(unittest.TestCase):
                 }
             ]
         }
-
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertDictEqual(expected, self.imms["site"])
 
     def test_vaccination_route(self):
         """it should get the vaccination route code and term and add it to the route object"""
@@ -555,8 +519,7 @@ class TestVaccinationDecorator(unittest.TestCase):
 
         _decorate_vaccination(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["route"] = {
+        expected = {
             "coding": [
                 {
                     "system": "http://snomed.info/sct",
@@ -565,8 +528,7 @@ class TestVaccinationDecorator(unittest.TestCase):
                 }
             ]
         }
-
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertDictEqual(expected, self.imms["route"])
 
     def test_dose_quantity(self):
         """it should get the dose amount, unit code and term and add it to the doseQuantity object"""
@@ -578,15 +540,13 @@ class TestVaccinationDecorator(unittest.TestCase):
 
         _decorate_vaccination(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["doseQuantity"] = {
+        expected = {
             "value": 123.1234,
             "unit": "a_dose_unit_term",
             "code": "a_dose_unit_code",
             "system": "http://unitsofmeasure.org"
         }
-
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertDictEqual(expected, self.imms["doseQuantity"])
 
     def test_dose_quantity_decimal(self):
         """it should convert the string to a decimal with 4 decimal places"""
@@ -597,14 +557,13 @@ class TestVaccinationDecorator(unittest.TestCase):
 
         _decorate_vaccination(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["doseQuantity"] = {
+        expected = {
             "value": 123.1234,
             "unit": ANY,
             "system": ANY,
             "code": ANY,
         }
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertDictEqual(expected, self.imms["doseQuantity"])
 
     def test_dose_sequence(self):
         """it should add the dose sequence to the vaccination object as int"""
@@ -612,10 +571,8 @@ class TestVaccinationDecorator(unittest.TestCase):
 
         _decorate_vaccination(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["protocolApplied"] = [{"doseNumberPositiveInt": 12}]
-
-        self.assertDictEqual(expected_imms, self.imms)
+        expected = [{"doseNumberPositiveInt": 12}]
+        self.assertEqual(expected, self.imms["protocolApplied"])
 
 
 class TestPractitionerDecorator(unittest.TestCase):
@@ -698,19 +655,39 @@ class TestPractitionerDecorator(unittest.TestCase):
 
         _decorate_practitioner(self.imms, headers)
 
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["performer"].append({
+        expected = {
             "actor": {
-                "resourceType": "Organization",
+                "type": "Organization",
                 "identifier": {
                     "system": "a_site_code_type_uri",
                     "value": "a_site_code"
                 },
                 "display": "a_site_name"
             }
-        })
+        }
 
-        self.assertDictEqual(expected_imms, self.imms)
+        self.assertDictEqual(expected, self.imms["performer"][0])
+
+    def test_org_display_is_mandatory_and_not_empty(self):
+        headers = OrderedDict([
+            ("site_code", "a_site_code"),
+            ("site_code_type_uri", "a_site_code_type_uri"),
+        ])
+
+        _decorate_practitioner(self.imms, headers)
+
+        expected_default = "N/A"
+        expected = {
+            "actor": {
+                "type": "Organization",
+                "identifier": {
+                    "system": "a_site_code_type_uri",
+                    "value": "a_site_code"
+                },
+                "display": expected_default
+            }
+        }
+        self.assertDictEqual(expected, self.imms["performer"][0])
 
     def test_location(self):
         """it should get the location code and type and add it to the location object"""

@@ -77,7 +77,7 @@ def batch_processing(s3_client, secret_client):
         processor.process()
     except Exception as e:
         data = {"type": "batch_error", "error_type": "unhandled",
-                "message": f"An unhandled error happened during batch processing {e}",
+                "message": f"An unhandled error happened during batch processing: {e}",
                 **batch.__dict__}
         logging.log(logging.ERROR, data)
 

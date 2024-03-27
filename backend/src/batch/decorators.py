@@ -296,12 +296,14 @@ def _decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optiona
     if site_code := record.get("site_code"):
         org_uri = record.get("site_code_type_uri")
         organization = {
-            "resourceType": "Organization",
+            "type": "Organization",
             "identifier": {
                 "system": "" if org_uri is None else org_uri,
                 "value": site_code
             },
-            "display": record.get("site_name", "")}
+            # TODO(validation): site_name is not mandatory in the csv, but it's mandatory in our api.
+            #  What's the fallback value? or should it be an error?
+            "display": record.get("site_name", "N/A")}
 
         imms["performer"].append({"actor": organization})
 
