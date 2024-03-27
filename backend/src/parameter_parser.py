@@ -115,7 +115,7 @@ def process_search_params(params: ParamContainer) -> SearchParams:
     date_froms = params.get(date_from_key, [])
 
     if len(date_froms) > 1:
-        raise ParameterException(f"Search parameter {date_from_key} may have only one value.")
+        raise ParameterException(f"Search parameter {date_from_key} may have one value at most.")
 
     try:
         date_from = datetime.datetime.strptime(date_froms[0], "%Y-%m-%d").date() \
@@ -127,7 +127,7 @@ def process_search_params(params: ParamContainer) -> SearchParams:
     date_tos = params.get(date_to_key, [])
 
     if len(date_tos) > 1:
-        raise ParameterException(f"Search parameter {date_to_key} may have only one value.")
+        raise ParameterException(f"Search parameter {date_to_key} may have one value at most.")
 
     try:
         date_to = datetime.datetime.strptime(date_tos[0], "%Y-%m-%d").date() \
@@ -139,7 +139,8 @@ def process_search_params(params: ParamContainer) -> SearchParams:
         raise ParameterException(f"Search parameter {date_from_key} must be before {date_to_key}")
 
     # include
-    include = params.get(include_key)
+    includes = params.get(include_key, [])
+    include = includes[0] if len(includes) > 0 else None
 
     return SearchParams(patient_identifier, disease_types, date_from, date_to, include)
 

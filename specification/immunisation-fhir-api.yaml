@@ -440,7 +440,7 @@ components:
           schema:
             type: object
             properties:
-              patient-identifier:
+              patient.identifier:
                 type: string
                 description: |
                   The patient's NHS number.
