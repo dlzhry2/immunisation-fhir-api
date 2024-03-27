@@ -1,7 +1,6 @@
 """Tests for the utils module"""
 
 import unittest
-
 from models.utils.generic_utils import nhs_number_mod11_check
 
 
