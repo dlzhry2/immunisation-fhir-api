@@ -5,15 +5,13 @@ from models.constants import Constants
 from models.utils.generic_utils import (
     get_generic_questionnaire_response_value_from_model,
     get_generic_extension_value_from_model,
-    generate_field_location_for_questionnnaire_response,
+    generate_field_location_for_questionnaire_response,
     generate_field_location_for_extension,
     get_contained_resource_from_model,
     is_organization,
+    get_nhs_number_verification_status_code,
 )
-from models.utils.post_validation_utils import (
-    PostValidation,
-    MandatoryError
-)
+from models.utils.post_validation_utils import PostValidation, MandatoryError
 from mappings import Mandation, VaccineTypes
 
 check_mandation_requirements_met = PostValidation.check_mandation_requirements_met
@@ -23,16 +21,17 @@ get_generic_questionnaire_response_value = PostValidation.get_generic_questionna
 
 class PostValidators:
     """FHIR Immunization Post Validators"""
+
     def __init__(self, immunization):
         self.values = immunization
         self.errors = []
-    
+
     def validate(self):
         """
         Run all post-validation checks.
         """
-        
-        #Run critical validations that other validations rely on, if they fail then no need to carry on
+
+        # Run critical validations that other validations rely on, if they fail then no need to carry on
         try:
             self.validate_and_set_vaccination_procedure_code(self.values)
             self.validate_occurrence_date_time(self.values)
@@ -95,7 +94,7 @@ class PostValidators:
             self.validate_submitted_time_stamp,
             self.validate_location_identifier_value,
             self.validate_location_identifier_system,
-            self.validate_reduce_validation_reason
+            self.validate_reduce_validation_reason,
         ]
         for method in validation_methods:
             try:
@@ -134,18 +133,23 @@ class PostValidators:
 
     def validate_patient_identifier_value(self, values: dict) -> dict:
         "Validate that patient_identifier_value is present or absent, as required"
+        field_location = "contained[?(@.resourceType=='Patient')].identifier[0].value"
         try:
             contained_patient = get_contained_resource_from_model(values, "Patient")
 
-            patient_identifier_value = [
+            patient_identifier_value = next(
                 x for x in contained_patient.identifier if x.system == "https://fhir.nhs.uk/Id/nhs-number"
-            ][0].value
+            ).value
+            verification_status_code = get_nhs_number_verification_status_code(values)
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_identifier_value = None
 
+        if not patient_identifier_value and verification_status_code != "04":
+            raise MandatoryError(f"{field_location} is mandatory when verification status is not 04")
+
         check_mandation_requirements_met(
             field_value=patient_identifier_value,
-            field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
+            field_location=field_location,
             vaccine_type=self.vaccine_type,
             mandation_key="patient_identifier_value",
         )
@@ -546,9 +550,9 @@ class PostValidators:
         field_location = "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
 
         try:
-            status_reason_coding_code = [
-                x for x in values.statusReason.coding if x.system == "http://snomed.info/sct"
-            ][0].code
+            status_reason_coding_code = [x for x in values.statusReason.coding if x.system == "http://snomed.info/sct"][
+                0
+            ].code
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             status_reason_coding_code = None
 
@@ -638,10 +642,9 @@ class PostValidators:
         else:
             system = "http://snomed.info/sct"
         field_location = f"vaccineCode.coding[?(@.system=='{system}')].code"
-        
+
         try:
             vaccine_code_coding_code = next((x.code for x in values.vaccineCode.coding if x.system == system), None)
-
 
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccine_code_coding_code = None
@@ -719,7 +722,7 @@ class PostValidators:
             lot_number = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations['lot_number'][self.vaccine_type]
+        mandation = vaccine_type_applicable_validations["lot_number"][self.vaccine_type]
         bespoke_mandatory_error_message = None
         if values.status != "not-done" and self.vaccine_type == VaccineTypes.covid_19:
             mandation = Mandation.mandatory
@@ -1068,7 +1071,7 @@ class PostValidators:
         link_id = "LocalPatient"
         answer_type = "valueReference"
         field_type = "value"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
@@ -1089,7 +1092,7 @@ class PostValidators:
         link_id = "LocalPatient"
         answer_type = "valueReference"
         field_type = "system"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
@@ -1110,7 +1113,7 @@ class PostValidators:
         link_id = "Consent"
         answer_type = "valueCoding"
         field_type = "code"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             consent_code = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
@@ -1145,7 +1148,7 @@ class PostValidators:
         link_id = "Consent"
         answer_type = "valueCoding"
         field_type = "display"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             consent_display = get_generic_questionnaire_response_value_from_model(
@@ -1167,7 +1170,7 @@ class PostValidators:
         link_id = "CareSetting"
         answer_type = "valueCoding"
         field_type = "code"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             care_setting_code = get_generic_questionnaire_response_value_from_model(
@@ -1189,7 +1192,7 @@ class PostValidators:
         link_id = "CareSetting"
         answer_type = "valueCoding"
         field_type = "display"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             care_setting_display = get_generic_questionnaire_response_value_from_model(
