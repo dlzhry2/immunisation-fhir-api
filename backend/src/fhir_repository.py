@@ -120,6 +120,7 @@ class ImmunizationRepository:
                 "Resource": json.dumps(attr.resource, cls=DecimalEncoder),
                 "Patient": attr.patient,
                 "IdentifierPK": attr.identifier,
+                "Operation": "CREATE",
             }
         )
 
@@ -133,7 +134,8 @@ class ImmunizationRepository:
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient"
+            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient, "
+            "Operation = :operation"
         )
 
         queryResponse = _query_identifier(self.table, "IdentifierGSI", "IdentifierPK", attr.identifier)
@@ -157,6 +159,7 @@ class ImmunizationRepository:
                     ":patient_sk": attr.patient_sk,
                     ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
                     ":patient": attr.patient,
+                    ":operation": "UPDATE",
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(attr.pk) & Attr("DeletedAt").not_exists(),
@@ -178,10 +181,8 @@ class ImmunizationRepository:
         try:
             response = self.table.update_item(
                 Key={"PK": _make_immunization_pk(imms_id)},
-                UpdateExpression="SET DeletedAt = :timestamp",
-                ExpressionAttributeValues={
-                    ":timestamp": now_timestamp,
-                },
+                UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation",
+                ExpressionAttributeValues={":timestamp": now_timestamp, ":operation": "DELETE"},
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id)) & Attr("DeletedAt").not_exists(),
             )
