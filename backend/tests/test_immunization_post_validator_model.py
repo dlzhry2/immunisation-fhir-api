@@ -13,7 +13,6 @@ from tests.utils.generic_utils import (
     load_json_data,
 )
 from tests.utils.mandation_test_utils import MandationTests
-from src.models.utils.post_validation_utils import MandatoryError
 
 
 class TestImmunizationModelPostValidationRules(unittest.TestCase):
