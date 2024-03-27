@@ -1,7 +1,6 @@
 from collections import OrderedDict
 
 import copy
-from datetime import datetime
 
 from batch.decorators import decorate
 
@@ -20,16 +19,6 @@ RecordDict = OrderedDict[str, str]
 """A record of fields with the same order as headers"""
 
 
-def _convert_date_time(date_time: str) -> str:
-    # TODO(validation): check the format in csv. Is conversion necessary?
-    # TODO(validation): is conversion correct? do we have source code in the validation that does this?
-    try:
-        parsed_dt = datetime.strptime(date_time, "%Y%m%dT%H%M%S00")
-    except ValueError:
-        parsed_dt = datetime.strptime(date_time, "%Y%m%dT%H%M%S")
-    return parsed_dt.strftime("%Y-%m-%dT%H:%M:%S+00:00")
-
-
 class DataRecordTransformer:
     raw_imms: dict
 
@@ -46,4 +35,3 @@ class DataRecordTransformer:
         imms = copy.deepcopy(self.raw_imms)
         decorate(imms, record)
         return imms
-

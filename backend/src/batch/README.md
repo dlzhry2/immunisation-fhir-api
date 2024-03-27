@@ -3,3 +3,5 @@ The batch processing module is a stand-alone module that is responsible for proc
 This module deals with the provided CSV files with various quality and shapes. It is expected that the code in this
 module will see a lot of changes as the project progresses. This is why it has its own readme file and it's recommended 
 to **read it before making any changes to the code**.
+
+batch-file -> s3 -> event -> task -> report(s3)

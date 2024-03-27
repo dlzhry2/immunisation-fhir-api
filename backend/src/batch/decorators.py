@@ -159,7 +159,7 @@ def _decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
         })
 
     if person_dob := record.get("person_dob"):
-        patient["birthDate"] = person_dob
+        patient["birthDate"] = _convert_date(person_dob)
 
     if person_gender_code := record.get("person_gender_code"):
         gender = _convert_gender_code(person_gender_code)

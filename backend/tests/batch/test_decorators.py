@@ -315,8 +315,8 @@ class TestPatientDecorator(unittest.TestCase):
         self.assertDictEqual(expected_imms, self.imms)
 
     def test_add_dob(self):
-        """it should add the dob to the patient object"""
-        headers = OrderedDict([("person_dob", "a_person_dob")])
+        """it should convert and add the dob to the patient object"""
+        headers = OrderedDict([("person_dob", "19930821")])
 
         _decorate_patient(self.imms, headers)
 
@@ -327,7 +327,7 @@ class TestPatientDecorator(unittest.TestCase):
             "id": ANY,
             "identifier": [],
             "name": [],
-            "birthDate": "a_person_dob"
+            "birthDate": "1993-08-21"
         })
 
         self.assertDictEqual(expected_imms, self.imms)
