@@ -40,9 +40,6 @@ class TestDecorate(unittest.TestCase):
 
     def test_decorate_apply_decorators(self):
         """it should decorate the raw imms by applying the decorators"""
-        self.fail()
-
-        # Given
         # we create two mock decorators. Then we make sure they both contribute to the imms
         def decorator_0(_imms, _record):
             _imms["decorator_0"] = "decorator_0"
