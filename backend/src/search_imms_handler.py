@@ -9,8 +9,10 @@ from aws_lambda_typing import context as context_, events
 from authorization import Permission
 from fhir_controller import FhirController, make_controller
 from models.errors import Severity, Code, create_operation_outcome
+from log_structure import function_info
 
 
+@function_info
 def search_imms_handler(event: events.APIGatewayProxyEventV1, context: context_):
     return search_imms(event, make_controller())
 
