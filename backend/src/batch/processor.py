@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import logging
+import structlog
 import time
 import uuid
 from dataclasses import dataclass
@@ -13,6 +14,8 @@ from batch.immunization_api import ImmunizationApi
 from batch.parser import DataParser
 from batch.report import ReportGenerator, ReportEntry
 from batch.transformer import DataRecordTransformer
+
+logger = structlog.get_logger()
 
 
 @dataclass
@@ -87,7 +90,7 @@ class BatchProcessor:
             data["type"] = "transform_error"
             data["error_type"] = "handled" if isinstance(e, TransformerRowError) else "unhandled"
 
-            logging.log(logging.ERROR, data)
+            logger.error(data)
 
     def _send_data(self, data: dict, action: Action, row: int) -> None:
         try:
@@ -103,8 +106,8 @@ class BatchProcessor:
             data = self._make_log_data(f"Immunization {action.value}ed successfully", row)
             data["type"] = "api_success"
             data["request"] = data
-            data["response"] = response.json()
-            logging.log(logging.DEBUG, data)
+            data["response"] = response.text
+            logger.info(data)
 
         except ImmunizationApiError as e:
             report_entry = ReportEntry(message=str(e.response))

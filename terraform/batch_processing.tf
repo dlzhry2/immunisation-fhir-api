@@ -46,7 +46,7 @@ resource "aws_cloudwatch_event_rule" "source_bucket_event_rule" {
             },
             object : {
                 key : [
-                    { wildcard : "*" },
+                    { wildcard : "*.dat" },
                 ]
             }
         }

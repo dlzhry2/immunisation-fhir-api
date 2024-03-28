@@ -61,6 +61,7 @@ class S3FixedBufferStream(S3Upload):
 
     def add_data(self, data: bytes):
         self.stream.write(data)
+        self.stream.write(b'\n')
 
     def close(self):
         self.stream.seek(0)

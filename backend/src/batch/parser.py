@@ -22,6 +22,9 @@ class DataParser:
         This parser ignores whitespace and quotes. It's resilient to empty values and mismatched quotes
         The header can either be quoted or not. They are treated the same as each row"""
         for row in self.stream.iter_lines():
-            raw_values = row.decode("utf-8").strip().split(self.delimiter)
+            row_str = row.decode("utf-8")
+            if not row_str:
+                continue
+            raw_values = row_str.strip().split(self.delimiter)
             yield [value.strip('"').strip() for value in raw_values]
 

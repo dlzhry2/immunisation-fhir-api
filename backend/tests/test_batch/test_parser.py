@@ -6,8 +6,15 @@ from batch.parser import DataParser
 
 
 def make_a_stream() -> StreamingBody:
-    # this covers all the edge cases, including empty values and mismatched quotes
-    content = b'FOO"|BAR\n"val1"|val2"\nval3 | val4\n|'
+    # this covers all the edge cases, including:
+    #  empty lines, empty values and mismatched quotes
+    content = b"""
+    FOO"|BAR
+    "val1"|val2"
+    val3 | val4
+    |
+
+    """
     return StreamingBody(io.BytesIO(content), len(content))
 
 
