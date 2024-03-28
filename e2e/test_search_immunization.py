@@ -78,13 +78,13 @@ class TestSearchImmunization(ImmunizationBaseTest):
         self.assertTrue(mmr2["id"] in resource_ids)
         self.assertTrue(deleted_mmr["id"] not in resource_ids)
 
-    def test_search_immunization_parameter_locations(self):
-        """it should filter based on disease type regardless of if parameters are in the URL or content"""
-
+    def test_search_immunization_parameter_smoke_tests(self):
         stored_records = [
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, mmr_code),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, flu_code),
+            create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, covid_code),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, covid_code, "2024-01-30T13:28:17.271+00:00"),
+            create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, covid_code, "2024-02-01T13:28:17.271+00:00"),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, flu_code),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, covid_code)
         ]
@@ -132,9 +132,26 @@ class TestSearchImmunization(ImmunizationBaseTest):
                               None, False, []),
              # Date
              SearchTestParams("GET",
+                              f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19",
+                              None, True, [2, 3, 4]),
+             SearchTestParams("GET",
                               f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
-                              f"&-date.from=2023-12-31&-date.to=2024-01-31",
-                              None, True, [2])]
+                              f"&-date.from=2024-01-30",
+                              None, True, [3, 4]),
+             SearchTestParams("GET",
+                              f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
+                              f"&-date.to=2024-01-30",
+                              None, True, [2, 3]),
+             SearchTestParams("GET",
+                              f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
+                              f"&-date.from=2024-01-01&-date.to=2024-01-30",
+                              None, True, [3]),
+             # "from" after "to" is an error.
+             SearchTestParams("GET",
+                              f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
+                              f"&-date.from=2024-02-01&-date.to=2024-01-30",
+                              None, False, [0])
+             ]
 
         for search in searches:
             pprint.pprint(search)
