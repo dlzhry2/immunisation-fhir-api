@@ -76,7 +76,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")
 
     # EndpointOperation.CREATE
     def test_create_imms_authorized(self):
@@ -104,7 +104,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")
 
     # EndpointOperation.UPDATE
     def test_update_imms_authorized(self):
@@ -136,7 +136,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")
 
     # EndpointOperation.DELETE
     def test_delete_imms_authorized(self):
@@ -166,7 +166,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")
 
     # EndpointOperation.SEARCH
     def test_search_imms_authorized(self):
@@ -196,4 +196,4 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")
