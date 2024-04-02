@@ -2,6 +2,7 @@ import argparse
 import pprint
 import uuid
 
+from authorization import Permission
 from fhir_controller import FhirController, make_controller
 from models.errors import Severity, Code, create_operation_outcome
 from log_structure import function_info
@@ -30,6 +31,11 @@ if __name__ == "__main__":
     event = {
         "pathParameters": {
             "id": args.id
+        },
+        "headers": {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'AuthenticationType': 'ApplicationRestricted',
+            'Permissions': (','.join([Permission.DELETE]))
         }
     }
     pprint.pprint(delete_imms_handler(event, {}))
