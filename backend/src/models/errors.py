@@ -6,6 +6,7 @@ from enum import Enum
 class Severity(str, Enum):
     error = "error"
 
+
 class Code(str, Enum):
     forbidden = "forbidden"
     not_found = "not-found"
