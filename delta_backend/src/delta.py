@@ -55,3 +55,4 @@ def handler(event, context):
         # Send the failed event to the DLQ
         log = f"Record NOT created due to Exception {e}"
         logger.exception(log)
+        raise

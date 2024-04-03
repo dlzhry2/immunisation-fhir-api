@@ -3,6 +3,7 @@ locals {
     delta_files = fileset(local.delta_lambda_dir, "**")
     delta_dir_sha = sha1(join("", [for f in local.delta_files : filesha1("${local.delta_lambda_dir}/${f}")]))
     function_name = "delta"
+    dlq_name = "delta-dlq"
 }
 
 module "delta_docker_image" {
@@ -43,6 +44,9 @@ data "aws_iam_policy_document" "delta_policy_document" {
         templatefile("${local.policy_path}/dynamodb_stream.json", {
             "dynamodb_table_name" : aws_dynamodb_table.test-dynamodb-table.name
         } ),
+        templatefile("${local.policy_path}/aws_sqs_queue.json", {
+            "aws_sqs_queue_name" : aws_sqs_queue.dlq.name
+        } ),
         templatefile("${local.policy_path}/log.json", {} ),
     ]
 }
@@ -79,6 +83,15 @@ resource "aws_lambda_function" "delta_sync_lambda" {
   package_type = "Image"
   architectures = ["x86_64"]
   image_uri    = module.delta_docker_image.image_uri
+  #Enable Async Invocation for DLQ
+  async_invocation_config {
+   destination_config {
+     on_failure {
+       type = "SQS"  
+       arn  = aws_sqs_queue.dlq.arn
+     }
+   }
+  }
   environment {
     variables = {
       DELTA_TABLE_NAME      = aws_dynamodb_table.delta-dynamodb-table.name
@@ -92,4 +105,9 @@ resource "aws_lambda_event_source_mapping" "delta_trigger" {
     event_source_arn = aws_dynamodb_table.test-dynamodb-table.stream_arn
     function_name    = aws_lambda_function.delta_sync_lambda.function_name
     starting_position = "TRIM_HORIZON"
+}
+
+
+resource "aws_sqs_queue" "dlq" {
+    name = "${local.short_prefix}-${local.dlq_name}"
 }
