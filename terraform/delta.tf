@@ -84,20 +84,16 @@ resource "aws_lambda_function" "delta_sync_lambda" {
   architectures = ["x86_64"]
   image_uri    = module.delta_docker_image.image_uri
   #Enable Async Invocation for DLQ
-  async_invocation_config {
-   destination_config {
-     on_failure {
-       type = "SQS"  
-       arn  = aws_sqs_queue.dlq.arn
-     }
-   }
-  }
+ 
   environment {
     variables = {
       DELTA_TABLE_NAME      = aws_dynamodb_table.delta-dynamodb-table.name
       SOURCE = "IEDS"
     }
   }
+   dead_letter_config {
+      target_arn  = aws_sqs_queue.dlq.arn
+   }
 }
 
 
