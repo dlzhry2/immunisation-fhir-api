@@ -11,7 +11,7 @@ class TestSQS(unittest.TestCase):
         # Replace with your SQS queue URL
         self.queue_url = os.environ["DLQ_ARN"]
         read_and_delete_messages(self.queue_url)
-        
+
     def test_send_message(self):
         # Create a message
         message_body = {"message": "This is a test message"}
