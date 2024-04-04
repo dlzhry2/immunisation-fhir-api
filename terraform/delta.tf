@@ -83,8 +83,8 @@ resource "aws_lambda_function" "delta_sync_lambda" {
   package_type = "Image"
   architectures = ["x86_64"]
   image_uri    = module.delta_docker_image.image_uri
-  #Enable Async Invocation for DLQ
- 
+  
+    
   environment {
     variables = {
       DELTA_TABLE_NAME      = aws_dynamodb_table.delta-dynamodb-table.name

@@ -7,8 +7,7 @@
           "sqs:SendMessage" 
         ],
         "Resource": [
-          "arn:aws:sqs:*:*:${aws_sqs_queue_name}",
-          "arn:aws:sqs:*:*:${aws_sqs_queue_name}/SQSDefaultPolicy"
+          "arn:aws:sqs:*:*:${aws_sqs_queue_name}"
         ]
       }
     ]
