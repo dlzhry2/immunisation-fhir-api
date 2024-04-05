@@ -14,7 +14,7 @@ def read_and_delete_messages(queue_url):
         response = sqs_client.receive_message(
             QueueUrl=queue_url, MaxNumberOfMessages=10
         )
-        
+
         # Check if there are any messages
         if "Messages" not in response:
             print("No messages found in the queue.")
