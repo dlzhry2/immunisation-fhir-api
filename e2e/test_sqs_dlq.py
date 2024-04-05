@@ -11,7 +11,6 @@ class TestSQS(unittest.TestCase):
     def setUp(self):
         # Get SQS queue url
         self.queue_name = os.environ["AWS_SQS_QUEUE_NAME"]
-        print(self.queue_name)
         self.queue_url = get_queue_url(self.queue_name)
         read_and_delete_messages(self.queue_url)
 
@@ -25,6 +24,7 @@ class TestSQS(unittest.TestCase):
             response = sqs_client.send_message(
                 QueueUrl=self.queue_url, MessageBody=json.dumps(message_body)
             )
+            read_and_delete_messages(self.queue_url)
             # Assert successful message sending
             self.assertIn("MessageId", response)
         except ClientError as e:
