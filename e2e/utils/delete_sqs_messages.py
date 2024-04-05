@@ -17,18 +17,18 @@ def read_and_delete_messages(queue_url):
 
         # Check if there are any messages
         if "Messages" not in response:
-            print("No messages found in the queue.")
+            # print("No messages found in the queue.")
             return
         # Process and delete each message
         for message in response["Messages"]:
             # Access message body
-            message_body = message["Body"]
+            # message_body = message["Body"]
             # Process the message (replace with your actual processing logic)
-            print(f"Processing message: {message_body}")
+            # print(f"Processing message: {message_body}")
             # Get the receipt handle for deletion
             receipt_handle = message["ReceiptHandle"]
             # Delete the message from the queue
             sqs_client.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
-            print(f"Deleted message: {message_body}")
+            # print(f"Deleted message: {message_body}")
     except ClientError as e:
         print(f"Error accessing SQS: {e}")
