@@ -3,13 +3,16 @@ import json
 import boto3
 import os
 from utils.delete_sqs_messages import read_and_delete_messages
+from utils.get_sqs_url import get_queue_url
 from botocore.exceptions import ClientError  # Handle potential errors
 
 
 class TestSQS(unittest.TestCase):
     def setUp(self):
-        # Replace with your SQS queue URL
-        self.queue_url = os.environ["DLQ_ARN"]
+        # Get SQS queue url
+        self.queue_name = os.environ["AWS_SQS_QUEUE_NAME"]
+        print(self.queue_name)
+        self.queue_url = get_queue_url(self.queue_name)
         read_and_delete_messages(self.queue_url)
 
     def test_send_message(self):
