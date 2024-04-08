@@ -90,8 +90,9 @@ apigee:
         visibility: {{ ENV.portal_visibility | default(true) }}
         specId: {{ NAME }}
 {% endfor %}
-{% endfor %}
 
+apigee:
+  environments:
 {% for ENV in APIGEE_ENVIRONMENTS %}
 {% set TITLE = PRODUCT_DISPLAY_NAME + ' (' + ENV.display_name + ' Environment)' %}
 {% set NAME = SERVICE_NAME + '-' + ENV.name %}
@@ -144,6 +145,8 @@ apigee:
         specId: {{ NAME }}
 {% endfor %}
 
+apigee:
+  environments:
 {% for ENV in APIGEE_ENVIRONMENTS %}
 {% set TITLE = PRODUCT_DISPLAY_NAME + ' (' + ENV.display_name + ' Environment)' %}
 {% set NAME = SERVICE_NAME + '-' + ENV.name %}
