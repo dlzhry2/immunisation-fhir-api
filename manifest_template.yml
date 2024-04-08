@@ -159,7 +159,7 @@ apigee:
         displayName: Immunisation Fhir API - {{ mode.displayName }} ({{ env.display_name_suffix }})
         environments: [ {{ env.name }} ]
         proxies:
-{% if has_mock_auth == 'true' %}
+{% if env.has_mock_auth == 'true' %}
           - identity-service-mock-{{ env.name }}
           - immunisation-fhir-api-{{ env.name }}
 {% else %}
