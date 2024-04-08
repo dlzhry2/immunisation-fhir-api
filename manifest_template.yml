@@ -1,6 +1,7 @@
 # Templating vars - Immunisation FHIR API
 APIGEE_ENVIRONMENTS:
   - name: internal-dev
+    mock_auth: true
     display_name_suffix: Internal Development
     ratelimiting:
       immunisation-fhir-api-dev:
@@ -31,21 +32,8 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
-  - name: internal-qa-sandbox
-    display_name_suffix: Internal QA Sandbox
-    # Ratelimiting is currently disabled for sandbox environments
-    ratelimiting:
-      immunisation-fhir-api-internal-qa-sandbox:
-        quota:
-          enabled: false
-        spikeArrest:
-          enabled: false
-      app:
-        quota:
-          enabled: false
-        spikeArrest:
-          enabled: false
   - name: ref
+    mock_auth: true
     display_name_suffix: Reference
     ratelimiting:
       immunisation-fhir-api-ref:
@@ -78,6 +66,7 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: false
   - name: int
+    mock_auth: false
     display_name_suffix: Integration Testing
     ratelimiting:
       immunisation-fhir-api-int:
@@ -94,28 +83,29 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
-  - name: prod
-    approval_type: manual
-    display_name_suffix: Production
-    ratelimiting:
-      immunisation-fhir-api-prod:
-        quota:
-          enabled: true
-          limit: 42000  # 700 TPS Amount Spine indicated they can handle as burst load
-          interval: 1
-          timeunit: minute
-        spikeArrest:
-          enabled: true
-          ratelimit: 42000pm # 700 requests per second
-      app:
-        quota:
-          enabled: false
-        #   limit: 300    # 5TPS
-        #   interval: 1
-        #   timeunit: minute
-        spikeArrest:
-          enabled: false
-        #   ratelimit: 600pm # 10 requests per second
+  # - name: prod
+  #   mock_auth: false
+  #   approval_type: manual
+  #   display_name_suffix: Production
+  #   ratelimiting:
+  #     immunisation-fhir-api-prod:
+  #       quota:
+  #         enabled: true
+  #         limit: 42000  # 700 TPS Amount Spine indicated they can handle as burst load
+  #         interval: 1
+  #         timeunit: minute
+  #       spikeArrest:
+  #         enabled: true
+  #         ratelimit: 42000pm # 700 requests per second
+  #     app:
+  #       quota:
+  #         enabled: false
+  #       #   limit: 300    # 5TPS
+  #       #   interval: 1
+  #       #   timeunit: minute
+  #       spikeArrest:
+  #         enabled: false
+  #       #   ratelimit: 600pm # 10 requests per second
 
 ACCESS_MODES:
   - name: user-restricted
@@ -169,14 +159,12 @@ apigee:
         displayName: Immunisation Fhir API - {{ mode.displayName }} ({{ env.display_name_suffix }})
         environments: [ {{ env.name }} ]
         proxies:
-          - identity-service-{{ env.name }}
-          - identity-service-{{ env.name }}
-{% if env.name == 'int' %}
-          - identity-service-{{ env.name }}-no-smartcard
+{% if mock_auth == 'true' %}
           - identity-service-mock-{{ env.name }}
-{% endif %}
-{% if env.name == 'internal-dev' or env.name == 'internal-qa' %}
-          - identity-service-mock-{{ env.name }}
+          - immunisation-fhir-api-{{ env.name }}
+{% else %}
+          - identity-service-{{ env.name }}
+          - immunisation-fhir-api-{{ env.name }}
 {% endif %}
         scopes: {{ mode.scopes }}
 {% endfor %}
@@ -191,6 +179,6 @@ apigee:
         requireCallbackUrl: {{ mode.requireCallbackUrl }}
         title: Immunisation Fhir Api - {{ mode.displayName }} ({{ env.display_name_suffix }})
         visibility: {{ portal_visibility }}
-        specId: personal-demographics-{{ env.name }}
+        specId: immunisation-fhir-api-{{ env.name }}
 {% endfor %}
 {% endfor %}
