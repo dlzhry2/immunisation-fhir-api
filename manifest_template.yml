@@ -1,7 +1,7 @@
 # Templating vars - Immunisation FHIR API
 APIGEE_ENVIRONMENTS:
   - name: internal-dev
-    mock_auth: true
+    has_mock_auth: true
     display_name_suffix: Internal Development
     ratelimiting:
       immunisation-fhir-api-dev:
@@ -33,7 +33,7 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: false
   - name: ref
-    mock_auth: true
+    has_mock_auth: true
     display_name_suffix: Reference
     ratelimiting:
       immunisation-fhir-api-ref:
@@ -66,7 +66,7 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: false
   - name: int
-    mock_auth: false
+    has_mock_auth: false
     display_name_suffix: Integration Testing
     ratelimiting:
       immunisation-fhir-api-int:
@@ -84,7 +84,7 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: false
   # - name: prod
-  #   mock_auth: false
+  #   has_mock_auth: false
   #   approval_type: manual
   #   display_name_suffix: Production
   #   ratelimiting:
@@ -159,7 +159,7 @@ apigee:
         displayName: Immunisation Fhir API - {{ mode.displayName }} ({{ env.display_name_suffix }})
         environments: [ {{ env.name }} ]
         proxies:
-{% if mock_auth == 'true' %}
+{% if has_mock_auth == 'true' %}
           - identity-service-mock-{{ env.name }}
           - immunisation-fhir-api-{{ env.name }}
 {% else %}
