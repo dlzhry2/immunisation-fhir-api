@@ -90,6 +90,7 @@ apigee:
         visibility: {{ ENV.portal_visibility | default(true) }}
         specId: {{ NAME }}
 {% endfor %}
+{% endfor %}
 
 {% for ENV in APIGEE_ENVIRONMENTS %}
 {% set TITLE = PRODUCT_DISPLAY_NAME + ' (' + ENV.display_name + ' Environment)' %}
