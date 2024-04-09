@@ -10,3 +10,7 @@ output "imms_delta_table_name" {
 output "aws_sqs_queue_name" {
   value = aws_sqs_queue.dlq.name
 }
+
+output "aws_sns_topic_name" {
+  value = aws_sns_topic.delta_sns.name
+}

@@ -6,7 +6,8 @@ import os
 from datetime import datetime, timedelta
 import uuid
 import logging
-
+from aws_lambda_destinations import SqsDestination
+from botocore.exceptions import ClientError
 
 def get_delta_table(table_name, region_name="eu-west-2"):
     config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
@@ -15,8 +16,21 @@ def get_delta_table(table_name, region_name="eu-west-2"):
     )
     return db.Table(table_name)
 
+def get_dlq(queue_name):
+    sqs_client = boto3.client("sqs")
+    try:
+        response = sqs_client.get_queue_url(QueueName=queue_name)
+        return response["QueueUrl"]
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "QueueDoesNotExist":
+            print(f"Queue with name {queue_name} does not exist.")
+        else:
+            print(f"Error getting queue URL: {e}")
+        return None
+
 
 def handler(event, context):
+    failure_queue_url = get_dlq(os.environ["AWS_SQS_QUEUE_NAME"])
     try:
         delta_table = get_delta_table(os.environ["DELTA_TABLE_NAME"])
         delta_source = os.environ["SOURCE"]
@@ -72,9 +86,8 @@ def handler(event, context):
             "statusCode": 200,
             "body": json.dumps("Records processed successfully and tested"),
         }
-
+    
     except Exception as e:
-        # Send the failed event to the DLQ
-        log = f"Record NOT created due to Exception {e}"
-        logger.exception(log)
-        raise Exception("Something failed")
+           failure_destination = SqsDestination(failure_queue_url)
+           failure_destination.send(event=record, error=str(e))  # Send error details to DLQ
+           print(f"Sent failed record with error to DLQ: {record}")

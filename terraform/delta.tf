@@ -4,6 +4,7 @@ locals {
     delta_dir_sha = sha1(join("", [for f in local.delta_files : filesha1("${local.delta_lambda_dir}/${f}")]))
     function_name = "delta"
     dlq_name = "delta-dlq"
+    sns_name = "delta-sns"
 }
 
 module "delta_docker_image" {
@@ -46,6 +47,9 @@ data "aws_iam_policy_document" "delta_policy_document" {
         } ),
         templatefile("${local.policy_path}/aws_sqs_queue.json", {
             "aws_sqs_queue_name" : aws_sqs_queue.dlq.name
+        } ),
+         templatefile("${local.policy_path}/aws_sns_topic.json", {
+            "aws_sns_topic_name" : aws_sns_topic.delta_sns.name
         } ),
         templatefile("${local.policy_path}/log.json", {} ),
     ]
@@ -101,7 +105,7 @@ resource "aws_lambda_event_source_mapping" "delta_trigger" {
     starting_position = "TRIM_HORIZON"
     destination_config {
         on_failure {
-          destination_arn = aws_sqs_queue.dlq.arn
+          destination_arn = aws_sns_topic.delta_sns.arn
         }
     }
     maximum_retry_attempts = 2
@@ -110,4 +114,8 @@ resource "aws_lambda_event_source_mapping" "delta_trigger" {
 
 resource "aws_sqs_queue" "dlq" {
     name = "${local.short_prefix}-${local.dlq_name}"
+}
+
+resource "aws_sns_topic" "delta_sns" {
+    name = "${local.short_prefix}-${local.sns_name}"
 }
