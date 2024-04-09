@@ -1,8 +1,8 @@
 # Templating vars - Immunisation FHIR API
 APIGEE_ENVIRONMENTS:
   - name: internal-dev
-    has_mock_auth: true
     display_name_suffix: Internal Development
+    has_mock_auth: true
     ratelimiting:
       immunisation-fhir-api-dev:
         quota:
@@ -33,8 +33,8 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: false
   - name: ref
-    has_mock_auth: true
     display_name_suffix: Reference
+    has_mock_auth: true
     ratelimiting:
       immunisation-fhir-api-ref:
         quota:
@@ -66,8 +66,8 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: false
   - name: int
-    has_mock_auth: false
     display_name_suffix: Integration Testing
+    has_mock_auth: false
     ratelimiting:
       immunisation-fhir-api-int:
         quota:
@@ -84,8 +84,8 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: false
   # - name: prod
-  #   has_mock_auth: false
   #   approval_type: manual
+  #   has_mock_auth: false
   #   display_name_suffix: Production
   #   ratelimiting:
   #     immunisation-fhir-api-prod:
