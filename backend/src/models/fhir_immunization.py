@@ -1,7 +1,6 @@
 """Immunization FHIR R4B validator"""
 import json
 from typing import Literal
-from decimal import Decimal
 
 from fhir.resources.R4B.immunization import Immunization
 from models.fhir_immunization_pre_validators import PreValidators
@@ -82,7 +81,7 @@ class ImmunizationValidator:
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
         if isinstance(json_data, str):
-            json_data = json.loads(json_data, parse_float=Decimal)
+            json_data = json.loads(json_data)
 
         self.set_reduce_validation_code(json_data)
         self.initialize_pre_validators(json_data)
