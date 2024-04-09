@@ -1,8 +1,8 @@
-# Templating vars - Immunisation FHIR API
+# Templating vars - Immunisation fhir API
 APIGEE_ENVIRONMENTS:
   - name: internal-dev
-    display_name_suffix: Internal Development
     has_mock_auth: true
+    display_name_suffix: Internal Development
     ratelimiting:
       immunisation-fhir-api-dev:
         quota:
@@ -33,8 +33,8 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: false
   - name: ref
-    display_name_suffix: Reference
     has_mock_auth: true
+    display_name_suffix: Reference
     ratelimiting:
       immunisation-fhir-api-ref:
         quota:
@@ -66,8 +66,8 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: false
   - name: int
-    display_name_suffix: Integration Testing
     has_mock_auth: false
+    display_name_suffix: Integration Testing
     ratelimiting:
       immunisation-fhir-api-int:
         quota:
@@ -84,8 +84,8 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: false
   # - name: prod
-  #   approval_type: manual
   #   has_mock_auth: false
+  #   approval_type: manual
   #   display_name_suffix: Production
   #   ratelimiting:
   #     immunisation-fhir-api-prod:
@@ -175,9 +175,9 @@ apigee:
 {% for mode in ACCESS_MODES %}
       - edgeAPIProductName: immunisation-fhir-api-{{ env.name }}{{ mode.nameSuffix }}
         anonAllowed: true
-        description: Immunisation FHIR API - {{ mode.displayName|lower  }} access mode - {{ env.display_name_suffix|lower }} environment
+        description: Immunisation fhir API - {{ mode.displayName|lower  }} access mode - {{ env.display_name_suffix|lower }} environment
         requireCallbackUrl: {{ mode.requireCallbackUrl }}
-        title: Immunisation Fhir Api - {{ mode.displayName }} ({{ env.display_name_suffix }})
+        title: Immunisation fhir Api - {{ mode.displayName }} ({{ env.display_name_suffix }})
         visibility: {{ portal_visibility }}
         specId: immunisation-fhir-api-{{ env.name }}
 {% endfor %}
