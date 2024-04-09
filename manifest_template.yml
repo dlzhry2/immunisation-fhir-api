@@ -50,21 +50,21 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
-  # - name: sandbox
-  #   display_name_suffix: Sandbox
-  #   portal_visibility: false
-  #   # Ratelimiting is currently disabled for sandbox environments
-  #   ratelimiting:
-  #     immunisation-fhir-api-sandbox:
-  #       quota:
-  #         enabled: false
-  #       spikeArrest:
-  #         enabled: false
-  #     app:
-  #       quota:
-  #         enabled: false
-  #       spikeArrest:
-  #         enabled: false
+  - name: sandbox
+    display_name_suffix: Sandbox
+    portal_visibility: false
+    # Ratelimiting is currently disabled for sandbox environments
+    ratelimiting:
+      immunisation-fhir-api-sandbox:
+        quota:
+          enabled: false
+        spikeArrest:
+          enabled: false
+      app:
+        quota:
+          enabled: false
+        spikeArrest:
+          enabled: false
   - name: int
     has_mock_auth: false
     display_name_suffix: Integration Testing
