@@ -42,7 +42,7 @@ data "aws_iam_policy_document" "delta_policy_document" {
             "dynamodb_table_name" : aws_dynamodb_table.delta-dynamodb-table.name
         } ),
         templatefile("${local.policy_path}/dynamodb_stream.json", {
-            "dynamodb_table_name" : aws_dynamodb_table.test-dynamodb-table.name
+            "dynamodb_table_name" : aws_dynamodb_table.events-dynamodb-table.name
         } ),
         templatefile("${local.policy_path}/aws_sqs_queue.json", {
             "aws_sqs_queue_name" : aws_sqs_queue.dlq.name
@@ -91,16 +91,20 @@ resource "aws_lambda_function" "delta_sync_lambda" {
       SOURCE = "IEDS"
     }
   }
-   dead_letter_config {
-      target_arn  = aws_sqs_queue.dlq.arn
-   }
+   
 }
 
 
 resource "aws_lambda_event_source_mapping" "delta_trigger" {
-    event_source_arn = aws_dynamodb_table.test-dynamodb-table.stream_arn
+    event_source_arn = aws_dynamodb_table.events-dynamodb-table.stream_arn
     function_name    = aws_lambda_function.delta_sync_lambda.function_name
     starting_position = "TRIM_HORIZON"
+    destination_config {
+        on_failure {
+          destination_arn = aws_sqs_queue.dlq.arn
+        }
+    }
+    maximum_retry_attempts = 2
 }
 
 
