@@ -8,6 +8,9 @@ import uuid
 import logging
 from botocore.exceptions import ClientError
 
+failure_queue_url = os.environ["AWS_SQS_QUEUE_URL"]
+delta_table_from_tf = os.environ["DELTA_TABLE_NAME"]
+
 
 def get_delta_table(table_name, region_name="eu-west-2"):
     config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
@@ -18,7 +21,7 @@ def get_delta_table(table_name, region_name="eu-west-2"):
 
 
 def send_message(record, e):
-    failure_queue_url = os.environ["AWS_SQS_QUEUE_URL"]
+
     # Create a message
     message_body = record
     # Use boto3 to interact with SQS
@@ -36,6 +39,7 @@ def send_message(record, e):
 def handler(event, context):
     try:
         delta_table = get_delta_table(os.environ["DELTA_TABLE_NAME"])
+        print(f"Delta table name from TF: {delta_table_from_tf}")
         print(f"Delta table name: {delta_table}")
         delta_source = os.environ["SOURCE"]
         logging.basicConfig()
