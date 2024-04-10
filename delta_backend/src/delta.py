@@ -17,31 +17,16 @@ def get_delta_table(table_name, region_name="eu-west-2"):
     return db.Table(table_name)
 
 
-def get_dlq(queue_name):
-    sqs_client = boto3.client("sqs")
-    try:
-        response = sqs_client.get_queue_url(QueueName=queue_name)
-        return response["QueueUrl"]
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "QueueDoesNotExist":
-            print(f"Queue with name {queue_name} does not exist.")
-        else:
-            print(f"Error getting queue URL: {e}")
-        return None
-
-
 def send_message(record, e):
-    queue_name = os.environ["AWS_SQS_QUEUE_NAME"]
-    print(f"Queue name:{queue_name} from environment exist.")
-    failure_queue_url = get_dlq(queue_name)
-
+    failure_queue_url = os.environ["AWS_SQS_QUEUE_URL"]
+    print(f"Queue url:{failure_queue_url} from environment exist.")
     # Create a message
     message_body = record
     # Use boto3 to interact with SQS
     sqs_client = boto3.client("sqs")
     try:
         # Send the record to the queue
-        response = sqs_client.send_message(
+        sqs_client.send_message(
             QueueUrl=failure_queue_url, MessageBody=json.dumps(message_body)
         )
         print("Record saved successfully to the DLQ")
