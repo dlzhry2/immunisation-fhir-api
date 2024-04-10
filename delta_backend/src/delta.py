@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 
 failure_queue_url = os.environ["AWS_SQS_QUEUE_URL"]
 delta_table_name = os.environ["DELTA_TABLE_NAME"]
+delta_source = os.environ["SOURCE"]
 
 
 def send_message(record, e):
@@ -30,8 +31,6 @@ def handler(event, context):
     try:
         dynamodb = boto3.resource("dynamodb")
         delta_table = dynamodb.Table(delta_table_name)
-        print(f"Delta table name: {delta_table}")
-        delta_source = os.environ["SOURCE"]
         logging.basicConfig()
         logger = logging.getLogger()
         logger.setLevel("INFO")
