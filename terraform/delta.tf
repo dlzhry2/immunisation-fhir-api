@@ -92,6 +92,7 @@ resource "aws_lambda_function" "delta_sync_lambda" {
   environment {
     variables = {
       DELTA_TABLE_NAME      = aws_dynamodb_table.delta-dynamodb-table.name
+      AWS_SQS_QUEUE_NAME    = aws_sqs_queue.dlq.name
       SOURCE = "IEDS"
     }
   }
