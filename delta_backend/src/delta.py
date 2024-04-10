@@ -19,7 +19,6 @@ def get_delta_table(table_name, region_name="eu-west-2"):
 
 def send_message(record, e):
     failure_queue_url = os.environ["AWS_SQS_QUEUE_URL"]
-    print(f"Queue url:{failure_queue_url} from environment exist.")
     # Create a message
     message_body = record
     # Use boto3 to interact with SQS
@@ -93,4 +92,5 @@ def handler(event, context):
 
     except Exception as e:
         send_message(record, e)  # Send error details to DLQ
-        print(f"Sent failed record with error to DLQ: {record}")
+        print("Sent failed record with error to DLQ")
+        raise
