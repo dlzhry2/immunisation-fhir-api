@@ -93,4 +93,4 @@ def handler(event, context):
     except Exception as e:
         send_message(record, e)  # Send error details to DLQ
         print("Sent failed record with error to DLQ")
-        raise
+        raise Exception("Infra failure")
