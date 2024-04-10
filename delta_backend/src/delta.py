@@ -1,7 +1,5 @@
 import boto3
 import json
-from botocore.config import Config
-from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 import os
 from datetime import datetime, timedelta
 import uuid
@@ -9,15 +7,7 @@ import logging
 from botocore.exceptions import ClientError
 
 failure_queue_url = os.environ["AWS_SQS_QUEUE_URL"]
-delta_table_from_tf = os.environ["DELTA_TABLE_NAME"]
-
-
-def get_delta_table(table_name, region_name="eu-west-2"):
-    config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
-    db: DynamoDBServiceResource = boto3.resource(
-        "dynamodb", region_name=region_name, config=config
-    )
-    return db.Table(table_name)
+delta_table_name = os.environ["DELTA_TABLE_NAME"]
 
 
 def send_message(record, e):
@@ -38,8 +28,8 @@ def send_message(record, e):
 
 def handler(event, context):
     try:
-        delta_table = get_delta_table(os.environ["DELTA_TABLE_NAME"])
-        print(f"Delta table name from TF: {delta_table_from_tf}")
+        dynamodb = boto3.resource("dynamodb")
+        delta_table = dynamodb.Table(delta_table_name)
         print(f"Delta table name: {delta_table}")
         delta_source = os.environ["SOURCE"]
         logging.basicConfig()
