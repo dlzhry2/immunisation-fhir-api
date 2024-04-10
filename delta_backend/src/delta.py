@@ -31,7 +31,10 @@ def get_dlq(queue_name):
 
 
 def send_message(record, e):
-    failure_queue_url = get_dlq(os.environ["AWS_SQS_QUEUE_NAME"])
+    queue_name = os.environ["AWS_SQS_QUEUE_NAME"]
+    print(f"Queue name:{queue_name} from environment exist.")
+    failure_queue_url = get_dlq(queue_name)
+
     # Create a message
     message_body = record
     # Use boto3 to interact with SQS
