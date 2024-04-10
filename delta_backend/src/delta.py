@@ -36,6 +36,7 @@ def send_message(record, e):
 def handler(event, context):
     try:
         delta_table = get_delta_table(os.environ["DELTA_TABLE_NAME"])
+        print(f"Delta table name: {delta_table}")
         delta_source = os.environ["SOURCE"]
         logging.basicConfig()
         logger = logging.getLogger()
