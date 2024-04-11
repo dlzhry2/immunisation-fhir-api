@@ -66,3 +66,4 @@ extends:
           DOMAIN_ENDPOINT: https://int.imms.dev.api.platform.nhs.uk
         post_deploy:
            - template: ./templates/post-deploy.yml
+           
