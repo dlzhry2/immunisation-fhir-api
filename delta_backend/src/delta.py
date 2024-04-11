@@ -11,8 +11,7 @@ delta_table_name = os.environ["DELTA_TABLE_NAME"]
 delta_source = os.environ["SOURCE"]
 
 
-def send_message(record, e):
-
+def send_message(record):
     # Create a message
     message_body = record
     # Use boto3 to interact with SQS
@@ -28,16 +27,19 @@ def send_message(record, e):
 
 
 def handler(event, context):
+    intrusion_check = True
     try:
         dynamodb = boto3.resource("dynamodb")
         delta_table = dynamodb.Table(delta_table_name)
         logging.basicConfig()
         logger = logging.getLogger()
         logger.setLevel("INFO")
+
         # Converting ApproximateCreationDateTime directly to string will give Unix timestamp
         # I am converting it to isofformat for filtering purpose. This can be changed accordingly
 
         for record in event["Records"]:
+            intrusion_check = False
             approximate_creation_time = datetime.utcfromtimestamp(
                 record["dynamodb"]["ApproximateCreationDateTime"]
             )
@@ -85,6 +87,9 @@ def handler(event, context):
         }
 
     except Exception as e:
-        send_message(record, e)  # Send error details to DLQ
-        print("Sent failed record with error to DLQ")
+        if intrusion_check:
+            send_message(e)  # Send error details to DLQ
+            print("Incorrect invocation of Lambda")
+        else:
+            send_message(record)
         raise Exception("Infra failure")
