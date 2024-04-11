@@ -39,12 +39,12 @@ APIGEE_ENVIRONMENTS:
       immunisation-fhir-api-ref:
         quota:
           enabled: true
-          limit: 31500
+          limit: 300
           interval: 1
           timeunit: minute
         spikeArrest:
           enabled: true
-          ratelimit: 63000pm # 1050 requests per second
+          ratelimit: 600pm # 10 requests per second
       app:
         quota:
           enabled: false
@@ -72,12 +72,12 @@ APIGEE_ENVIRONMENTS:
       immunisation-fhir-api-int:
         quota:
           enabled: true
-          limit: 1200   # 20 TPS as agreed with Azhar Sept 2021 - APMSPII-1196
+          limit: 300 
           interval: 1
           timeunit: minute
         spikeArrest:
           enabled: true
-          ratelimit: 2400pm # 40 requests per second
+          ratelimit: 600pm # 10 requests per second
       app:
         quota:
           enabled: false
@@ -91,7 +91,7 @@ APIGEE_ENVIRONMENTS:
   #     immunisation-fhir-api-prod:
   #       quota:
   #         enabled: true
-  #         limit: 42000  # 700 TPS Amount Spine indicated they can handle as burst load
+  #         limit: 42000 
   #         interval: 1
   #         timeunit: minute
   #       spikeArrest:
