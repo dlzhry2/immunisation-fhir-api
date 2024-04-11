@@ -109,7 +109,7 @@ resource "aws_lambda_event_source_mapping" "delta_trigger" {
           destination_arn = aws_sns_topic.delta_sns.arn
         }
     }
-    maximum_retry_attempts = 2
+    maximum_retry_attempts = 0
 }
 
 

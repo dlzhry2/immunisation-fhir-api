@@ -88,8 +88,7 @@ def handler(event, context):
 
     except Exception as e:
         if intrusion_check:
-            send_message(str(e))  # Send error details to DLQ
             print("Incorrect invocation of Lambda")
         else:
-            send_message(record)
-        raise Exception("Infra failure")
+            send_message(record)  # Send failed record details to DLQ
+        raise Exception(f"Delta Lambda failure: {e}")
