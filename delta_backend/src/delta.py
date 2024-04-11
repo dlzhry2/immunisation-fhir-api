@@ -1,7 +1,5 @@
 import boto3
 import json
-from botocore.config import Config
-from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 import os
 from datetime import datetime, timedelta
 import uuid
@@ -9,19 +7,11 @@ import logging
 from botocore.exceptions import ClientError
 
 failure_queue_url = os.environ["AWS_SQS_QUEUE_URL"]
-delta_table_from_tf = os.environ["DELTA_TABLE_NAME"]
+delta_table_name = os.environ["DELTA_TABLE_NAME"]
+delta_source = os.environ["SOURCE"]
 
 
-def get_delta_table(table_name, region_name="eu-west-2"):
-    config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
-    db: DynamoDBServiceResource = boto3.resource(
-        "dynamodb", region_name=region_name, config=config
-    )
-    return db.Table(table_name)
-
-
-def send_message(record, e):
-
+def send_message(record):
     # Create a message
     message_body = record
     # Use boto3 to interact with SQS
@@ -37,18 +27,19 @@ def send_message(record, e):
 
 
 def handler(event, context):
+    intrusion_check = True
     try:
-        delta_table = get_delta_table(os.environ["DELTA_TABLE_NAME"])
-        print(f"Delta table name from TF: {delta_table_from_tf}")
-        print(f"Delta table name: {delta_table}")
-        delta_source = os.environ["SOURCE"]
+        dynamodb = boto3.resource("dynamodb")
+        delta_table = dynamodb.Table(delta_table_name)
         logging.basicConfig()
         logger = logging.getLogger()
         logger.setLevel("INFO")
+
         # Converting ApproximateCreationDateTime directly to string will give Unix timestamp
         # I am converting it to isofformat for filtering purpose. This can be changed accordingly
 
         for record in event["Records"]:
+            intrusion_check = False
             approximate_creation_time = datetime.utcfromtimestamp(
                 record["dynamodb"]["ApproximateCreationDateTime"]
             )
@@ -96,6 +87,9 @@ def handler(event, context):
         }
 
     except Exception as e:
-        send_message(record, e)  # Send error details to DLQ
-        print("Sent failed record with error to DLQ")
+        if intrusion_check:
+            send_message(e)  # Send error details to DLQ
+            print("Incorrect invocation of Lambda")
+        else:
+            send_message(record)
         raise Exception("Infra failure")
