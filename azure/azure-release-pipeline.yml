@@ -48,10 +48,13 @@ extends:
           DOMAIN_ENDPOINT: just-dummy-value-for-successful-build
         depends_on:
           - internal_dev_sandbox
+      - environment: manual-approval
+        manual_approval_prod: true
       - environment: ref
         depends_on:
             - internal_dev
             - internal_dev_sandbox
+            - manual_approval
         jinja_templates:
             DOMAIN_ENDPOINT: https://ref.imms.dev.api.platform.nhs.uk
         post_deploy:
