@@ -13,8 +13,8 @@ class Code(str, Enum):
     invalid = "invalid"
     server_error = "exception"
     invariant = "invariant"
-    invalid_resource = "not-supported"
-
+    not_supported = "not-supported"
+    duplicate = "duplicate"
 
 @dataclass
 class UnauthorizedError(RuntimeError):
@@ -121,7 +121,7 @@ class IdentifierDuplicationError(RuntimeError):
     def to_operation_outcome(self) -> dict:
         msg = self.__str__()
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invalid_resource, diagnostics=msg
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.duplicate, diagnostics=msg
         )
 
 

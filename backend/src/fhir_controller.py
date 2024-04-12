@@ -21,15 +21,18 @@ from models.errors import (
     ResourceNotFoundError,
     UnhandledResponseError,
     ValidationError,
-    IdentifierDuplicationError, ParameterException
+    IdentifierDuplicationError,
+    ParameterException,
 )
 from pds_service import PdsService, Authenticator
 from parameter_parser import process_params, process_search_params, create_query_string
 
+ALLOWED_METHODS = ["GET", "POST", "DELETE", "PUT"]
+
 
 def make_controller(
     pds_env: str = os.getenv("PDS_ENV", "int"),
-    immunization_env: str = os.getenv("IMMUNIZATION_ENV")
+    immunization_env: str = os.getenv("IMMUNIZATION_ENV"),
 ):
     endpoint_url = "http://localhost:4566" if immunization_env == "local" else None
     imms_repo = ImmunizationRepository(create_table(endpoint_url=endpoint_url))
@@ -54,10 +57,13 @@ class FhirController:
         self.authorizer = authorizer
 
     def get_immunization_by_id(self, aws_event) -> dict:
-        
+        method = aws_event["httpMethod"]
         if response := self.authorize_request(EndpointOperation.READ, aws_event):
             return response
-        
+
+        if method not in ALLOWED_METHODS:
+            return self._create_bad_method("Method Not Allowed")
+
         imms_id = aws_event["pathParameters"]["id"]
 
         if id_error := self._validate_id(imms_id):
@@ -76,13 +82,19 @@ class FhirController:
             return FhirController.create_response(404, id_error)
 
     def create_immunization(self, aws_event):
+        method = aws_event["httpMethod"]
         if response := self.authorize_request(EndpointOperation.CREATE, aws_event):
             return response
+
+        if method not in ALLOWED_METHODS:
+            return self._create_bad_method("Method Not Allowed")
 
         try:
             imms = json.loads(aws_event["body"], parse_float=Decimal)
         except json.decoder.JSONDecodeError as e:
-            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+            return self._create_bad_request(
+                f"Request's body contains malformed JSON: {e}"
+            )
 
         try:
             resource = self.fhir_service.create_immunization(imms)
@@ -90,14 +102,18 @@ class FhirController:
             return self.create_response(201, None, {"Location": location})
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
-        except IdentifierDuplicationError as invalid_error:
-            return self.create_response(422, invalid_error.to_operation_outcome())
+        except IdentifierDuplicationError as duplicate:
+            return self.create_response(422, duplicate.to_operation_outcome())
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
 
     def update_immunization(self, aws_event):
+        method = aws_event["httpMethod"]
         if response := self.authorize_request(EndpointOperation.UPDATE, aws_event):
             return response
+
+        if method not in ALLOWED_METHODS:
+            return self._create_bad_method("Method Not Allowed")
 
         imms_id = aws_event["pathParameters"]["id"]
         if id_error := self._validate_id(imms_id):
@@ -122,8 +138,12 @@ class FhirController:
             return self.create_response(422, invalid_error.to_operation_outcome())
 
     def delete_immunization(self, aws_event):
+        method = aws_event["httpMethod"]
         if response := self.authorize_request(EndpointOperation.DELETE, aws_event):
             return response
+
+        if method not in ALLOWED_METHODS:
+            return self._create_bad_method("Method Not Allowed")
 
         imms_id = aws_event["pathParameters"]["id"]
 
@@ -139,8 +159,12 @@ class FhirController:
             return self.create_response(500, unhandled_error.to_operation_outcome())
 
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
+        method = aws_event["httpMethod"]
         if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
             return response
+
+        if method not in ALLOWED_METHODS:
+            return self._create_bad_method("Method Not Allowed")
 
         try:
             search_params = process_search_params(process_params(aws_event))
@@ -186,7 +210,18 @@ class FhirController:
         )
         return self.create_response(400, error)
 
-    def authorize_request(self, operation: EndpointOperation, aws_event: dict) -> Optional[dict]:
+    def _create_bad_method(self, message):
+        error = create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.not_supported,
+            diagnostics=message,
+        )
+        return self.create_response(405, error)
+
+    def authorize_request(
+        self, operation: EndpointOperation, aws_event: dict
+    ) -> Optional[dict]:
         try:
             self.authorizer.authorize(operation, aws_event)
         except UnauthorizedError as e:
@@ -197,7 +232,7 @@ class FhirController:
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
                 code=Code.server_error,
-                diagnostics='application includes invalid authorization values',
+                diagnostics="application includes invalid authorization values",
             )
             return self.create_response(500, id_error)
 
