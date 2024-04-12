@@ -55,13 +55,16 @@ class FhirController:
     def __init__(self, authorizer: Authorization, fhir_service: FhirService):
         self.fhir_service = fhir_service
         self.authorizer = authorizer
+        self.method = "GET"
 
     def get_immunization_by_id(self, aws_event) -> dict:
-        method = aws_event["httpMethod"]
+        if aws_event.get("httpMethod"):
+            self.method = aws_event["httpMethod"]
+
         if response := self.authorize_request(EndpointOperation.READ, aws_event):
             return response
 
-        if method not in ALLOWED_METHODS:
+        if self.method not in ALLOWED_METHODS:
             return self._create_bad_method("Method Not Allowed")
 
         imms_id = aws_event["pathParameters"]["id"]
@@ -82,11 +85,13 @@ class FhirController:
             return FhirController.create_response(404, id_error)
 
     def create_immunization(self, aws_event):
-        method = aws_event["httpMethod"]
+        if aws_event.get("httpMethod"):
+            self.method = aws_event["httpMethod"]
+
         if response := self.authorize_request(EndpointOperation.CREATE, aws_event):
             return response
 
-        if method not in ALLOWED_METHODS:
+        if self.method not in ALLOWED_METHODS:
             return self._create_bad_method("Method Not Allowed")
 
         try:
@@ -108,11 +113,13 @@ class FhirController:
             return self.create_response(500, unhandled_error.to_operation_outcome())
 
     def update_immunization(self, aws_event):
-        method = aws_event["httpMethod"]
+        if aws_event.get("httpMethod"):
+            self.method = aws_event["httpMethod"]
+
         if response := self.authorize_request(EndpointOperation.UPDATE, aws_event):
             return response
 
-        if method not in ALLOWED_METHODS:
+        if self.method not in ALLOWED_METHODS:
             return self._create_bad_method("Method Not Allowed")
 
         imms_id = aws_event["pathParameters"]["id"]
@@ -138,11 +145,13 @@ class FhirController:
             return self.create_response(422, invalid_error.to_operation_outcome())
 
     def delete_immunization(self, aws_event):
-        method = aws_event["httpMethod"]
+        if aws_event.get("httpMethod"):
+            self.method = aws_event["httpMethod"]
+
         if response := self.authorize_request(EndpointOperation.DELETE, aws_event):
             return response
 
-        if method not in ALLOWED_METHODS:
+        if self.method not in ALLOWED_METHODS:
             return self._create_bad_method("Method Not Allowed")
 
         imms_id = aws_event["pathParameters"]["id"]
@@ -159,11 +168,13 @@ class FhirController:
             return self.create_response(500, unhandled_error.to_operation_outcome())
 
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
-        method = aws_event["httpMethod"]
+        if aws_event.get("httpMethod"):
+            self.method = aws_event["httpMethod"]
+
         if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
             return response
 
-        if method not in ALLOWED_METHODS:
+        if self.method not in ALLOWED_METHODS:
             return self._create_bad_method("Method Not Allowed")
 
         try:
