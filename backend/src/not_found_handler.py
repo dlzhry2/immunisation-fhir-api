@@ -10,6 +10,7 @@ def not_found_handler(event, context):
             "statusCode": 405,
             "headers": {
                 "Content-Type": "application/json",
+                "Allow": ", ".join(ALLOWED_METHODS),
             },
             "body": json.dumps(
                 {
