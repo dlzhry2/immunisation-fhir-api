@@ -19,12 +19,27 @@ def search_imms_handler(event: events.APIGatewayProxyEventV1, context: context_)
 
 def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController):
     try:
-        return controller.search_immunizations(event)
+        response = controller.search_immunizations(event)
+        result_json = json.dumps(response)
+        result_size = len(result_json.encode("utf-8"))
+        if result_size > 6 * 1024 * 1024:
+            exp_error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.invalid,
+                diagnostics="Search returned too many results. Please narrow down the search",
+            )
+            return FhirController.create_response(400, exp_error)
+        else:
+            return response
+        return
     except Exception as e:
-        exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()),
-                                             severity=Severity.error,
-                                             code=Code.server_error,
-                                             diagnostics=traceback.format_exc())
+        exp_error = create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.server_error,
+            diagnostics=traceback.format_exc(),
+        )
         return FhirController.create_response(500, exp_error)
 
 
@@ -35,24 +50,18 @@ if __name__ == "__main__":
         help="Identifier of Patient",
         type=str,
         required=True,
-        dest="patient_identifier")
+        dest="patient_identifier",
+    )
     parser.add_argument(
         "--immunization.target",
         help="http://hl7.org/fhir/ValueSet/immunization-target-disease",
         type=str,
         required=True,
         nargs="+",
-        dest="immunization_target")
-    parser.add_argument(
-        "--date.from",
-        type=str,
-        required=False,
-        dest="date_from")
-    parser.add_argument(
-        "--date.to",
-        type=str,
-        required=False,
-        dest="date_to")
+        dest="immunization_target",
+    )
+    parser.add_argument("--date.from", type=str, required=False, dest="date_from")
+    parser.add_argument("--date.to", type=str, required=False, dest="date_to")
 
     args = parser.parse_args()
 
@@ -62,13 +71,13 @@ if __name__ == "__main__":
             "-immunization.target": [",".join(args.immunization_target)],
             "-date.from": [args.date_from] if args.date_from else [],
             "-date.to": [args.date_to] if args.date_to else [],
-            "_include": ["Immunization:patient"]
+            "_include": ["Immunization:patient"],
         },
         "httpMethod": "POST",
         "headers": {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'AuthenticationType': 'ApplicationRestricted',
-            'Permissions': (','.join([Permission.SEARCH]))
+            "Content-Type": "application/x-www-form-urlencoded",
+            "AuthenticationType": "ApplicationRestricted",
+            "Permissions": (",".join([Permission.SEARCH])),
         },
         "body": None,
         "resource": None,
