@@ -300,7 +300,7 @@ class TestDeleteImmunization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")
 
 
 class TestSearchImmunizations(unittest.TestCase):
