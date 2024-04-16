@@ -28,7 +28,7 @@ LocalStack uses port 4566 so make sure it's free.
 ```shell
 cd ../terraform
 tflocal init
-tflocal apply -target=aws_dynamodb_table.test-dynamodb-table
+tflocal apply -target=aws_dynamodb_table.events-dynamodb-table
 ```
 
 ### Run endpoint
