@@ -1,4 +1,4 @@
-resource "aws_dynamodb_table" "test-dynamodb-table" {
+resource "aws_dynamodb_table" "events-dynamodb-table" {
     name         = "${local.short_prefix}-imms-events"
     billing_mode = "PAY_PER_REQUEST"
     hash_key     = "PK"
