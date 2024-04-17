@@ -30,7 +30,7 @@ resource "aws_kms_key_policy" "shared_key" {
 }
 
 resource "aws_kms_alias" "shared_key" {
-  name          = "${local.prefix}-shared-key"
+  name          = "alias/${local.prefix}-shared-key"
   target_key_id = aws_kms_key.shared_key.key_id
 }
 
