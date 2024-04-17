@@ -5,28 +5,33 @@ locals {
 }
 
  resource "aws_kms_key" "shared_key" {
- description = "KMS key for S3 batch bucket"
- enable_key_rotation = true  
- policy = <<POLICY
-{
- "Version": "2012-10-17",
- "Id": "key-default-1",
- "Statement": [
-   {
-     "Effect": "Allow",
-     "Principal": {
-       "AWS": "arn:aws:iam::${local.account_id}:root"
-     },
-     "Action": [
-       "kms:Encrypt",
-       "kms:Decrypt",
-       "kms:GenerateDataKey*"
-     ],
-     "Resource": "*"
-   }
- ]
+    description = "KMS key for S3 batch bucket"
+    enable_key_rotation = true  
+ }
+
+resource "aws_kms_key_policy" "shared_key" {
+    key_id = aws_kms_key.shared_key.id
+    policy = jsonencode({
+        Id = "key-default-1"
+        Statement = [
+        {
+            Action = "kms:*"
+            Effect = "Allow"
+            Principal = {
+            AWS = "arn:aws:iam::${local.account_id}:root"
+            }
+
+            Resource = "*"
+            Sid      = "Enable IAM User Permissions"
+        },
+        ]
+        Version = "2012-10-17"
+    })
 }
-POLICY
+
+resource "aws_kms_alias" "shared_key" {
+  name          = "${local.prefix}-shared-key"
+  target_key_id = aws_kms_key.shared_key.key_id
 }
 
 resource "aws_s3_bucket" "batch_data_source_bucket" {
