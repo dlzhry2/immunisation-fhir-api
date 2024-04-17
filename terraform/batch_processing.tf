@@ -11,22 +11,28 @@ locals {
 
 resource "aws_kms_key_policy" "shared_key" {
     key_id = aws_kms_key.shared_key.id
-    policy = jsonencode({
-        Id = "key-default-1"
-        Statement = [
-        {
-            Action = "kms:*"
-            Effect = "Allow"
-            Principal = {
-            AWS = "arn:aws:iam::${local.account_id}:root"
-            }
+    policy = <<POLICY
+{
+ "Version": "2012-10-17",
+ "Id": "key-default-1",
+ "Statement": [
+   {
+     "Sid": "AllowAccountA",
+     "Effect": "Allow",
+     "Principal": {
+       "AWS": "arn:aws:iam::${local.account_id}:root"
+     },
+     "Action": [
+       "kms:Encrypt",
+       "kms:Decrypt",
+       "kms:GenerateDataKey*"
+     ],
+     "Resource": "*"
+   }
+ ]
+}
+POLICY
 
-            Resource = "*"
-            Sid      = "Enable IAM User Permissions"
-        },
-        ]
-        Version = "2012-10-17"
-    })
 }
 
 resource "aws_kms_alias" "shared_key" {
