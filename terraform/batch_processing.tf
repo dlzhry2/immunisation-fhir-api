@@ -7,10 +7,6 @@ locals {
  resource "aws_kms_key" "shared_key" {
     description = "KMS key for S3 batch bucket"
     enable_key_rotation = true  
- }
-
-resource "aws_kms_key_policy" "shared_key" {
-    key_id = aws_kms_key.shared_key.id
     policy = <<POLICY
 {
  "Version": "2012-10-17",
@@ -32,7 +28,6 @@ resource "aws_kms_key_policy" "shared_key" {
  ]
 }
 POLICY
-
 }
 
 resource "aws_kms_alias" "shared_key" {
