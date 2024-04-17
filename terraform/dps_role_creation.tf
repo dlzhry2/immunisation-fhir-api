@@ -1,9 +1,3 @@
-locals {
-    account_id = local.environment == "prod" ? 232116723729 : 603871901111
-
-}
-
-
 data "aws_iam_policy_document" "dynamo_s3_policy_document" {
     source_policy_documents = [
         local.environment == "prod" ? templatefile("${local.policy_path}/dynamodb_delta_prod.json", {
