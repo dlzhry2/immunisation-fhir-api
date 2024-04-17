@@ -2,6 +2,7 @@ locals {
     // Flag so we can force delete s3 buckets with items in for pr and shortcode environments only.
     is_temp = length(regexall("[a-z]{2,4}-?[0-9]+", local.environment)) > 0
     account_id = local.environment == "prod" ? 232116723729 : 603871901111
+    local_account_id = local.environment == "prod" ? 790083933819 : 790083933819
 }
 
  resource "aws_kms_key" "shared_key" {
@@ -12,6 +13,26 @@ locals {
  "Version": "2012-10-17",
  "Id": "key-default-1",
  "Statement": [
+    {
+    "Sid": "Allow administration of the key",
+    "Effect": "Allow",
+    "Principal": { "AWS": "arn:aws:iam::${local.local_account_id}:root" },
+    "Action": [
+        "kms:Create*",
+        "kms:Describe*",
+        "kms:Enable*",
+        "kms:List*",
+        "kms:Put*",
+        "kms:Update*",
+        "kms:Revoke*",
+        "kms:Disable*",
+        "kms:Get*",
+        "kms:Delete*",
+        "kms:ScheduleKeyDeletion",
+        "kms:CancelKeyDeletion"
+        ],
+        "Resource": "*"
+    },
    {
      "Sid": "AllowAccountA",
      "Effect": "Allow",
