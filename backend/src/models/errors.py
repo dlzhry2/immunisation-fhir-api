@@ -12,10 +12,10 @@ class Code(str, Enum):
     forbidden = "forbidden"
     not_found = "not-found"
     invalid = "invalid"
-    server_error = "internal-server-error"
+    server_error = "exception"
     invariant = "invariant"
-    invalid_resource = "invalid_resource"
-
+    not_supported = "not-supported"
+    duplicate = "duplicate"
 
 @dataclass
 class UnauthorizedError(RuntimeError):
@@ -23,7 +23,8 @@ class UnauthorizedError(RuntimeError):
     def to_operation_outcome() -> dict:
         msg = f"Unauthorized request"
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.forbidden, diagnostics=msg)
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.forbidden, diagnostics=msg
+        )
 
 
 @dataclass
@@ -67,10 +68,10 @@ class ValidationError(RuntimeError):
 class InvalidPatientId(ValidationError):
     """Use this when NHS Number is invalid or doesn't exist"""
 
-    nhs_number: str
+    patient_identifier: str
 
     def __str__(self):
-        return f"NHS Number: {self.nhs_number} is invalid or it doesn't exist."
+        return f"NHS Number: {self.patient_identifier} is invalid or it doesn't exist."
 
     def to_operation_outcome(self) -> dict:
         return create_operation_outcome(
@@ -121,7 +122,7 @@ class IdentifierDuplicationError(RuntimeError):
     def to_operation_outcome(self) -> dict:
         msg = self.__str__()
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invalid_resource, diagnostics=msg
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.duplicate, diagnostics=msg
         )
 
 
@@ -132,3 +133,11 @@ def create_operation_outcome(resource_id: str, severity: Severity, code: Code, d
         "id": resource_id,
         "issue": [{"severity": severity, "code": code, "diagnostics": diagnostics}],
     }
+
+
+@dataclass
+class ParameterException(RuntimeError):
+    message: str
+
+    def __str__(self):
+        return self.message

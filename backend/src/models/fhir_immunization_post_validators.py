@@ -5,15 +5,14 @@ from models.constants import Constants
 from models.utils.generic_utils import (
     get_generic_questionnaire_response_value_from_model,
     get_generic_extension_value_from_model,
-    generate_field_location_for_questionnnaire_response,
+    generate_field_location_for_questionnaire_response,
     generate_field_location_for_extension,
     get_contained_resource_from_model,
     is_organization,
+    get_nhs_number_verification_status_code,
 )
-from models.utils.post_validation_utils import (
-    PostValidation,
-    MandatoryError,
-)
+from models.utils.post_validation_utils import PostValidation, MandatoryError
+from mappings import Mandation, VaccineTypes
 
 check_mandation_requirements_met = PostValidation.check_mandation_requirements_met
 get_generic_field_value = PostValidation.get_generic_field_value
@@ -22,74 +21,90 @@ get_generic_questionnaire_response_value = PostValidation.get_generic_questionna
 
 class PostValidators:
     """FHIR Immunization Post Validators"""
+
     def __init__(self, immunization):
         self.values = immunization
-    
+        self.errors = []
+
     def validate(self):
         """
         Run all post-validation checks.
         """
+
+        # Run critical validations that other validations rely on, if they fail then no need to carry on
         try:
             self.validate_and_set_vaccination_procedure_code(self.values)
-            self.set_status(self.values)
-            self.validate_patient_identifier_value(self.values)
-            self.validate_patient_name_given(self.values)
-            self.validate_patient_name_family(self.values)
-            self.validate_patient_birth_date(self.values)
-            self.validate_patient_gender(self.values)
-            self.validate_patient_address_postal_code(self.values)
             self.validate_occurrence_date_time(self.values)
-            self.validate_organization_identifier_value(self.values)
-            self.validate_organization_display(self.values)
-            self.validate_identifier_value(self.values)
-            self.validate_identifier_system(self.values)
-            self.validate_practitioner_name_given(self.values)
-            self.validate_practitioner_name_family(self.values)
-            self.validate_practitioner_identifier_value(self.values)
-            self.validate_practitioner_identifier_system(self.values)
-            self.validate_performer_sds_job_role(self.values)
-            self.validate_recorded(self.values)
-            self.validate_primary_source(self.values)
-            self.validate_report_origin_text(self.values)
-            self.validate_vaccination_procedure_display(self.values)
-            self.validate_vaccination_situation_code(self.values)
-            self.validate_vaccination_situation_display(self.values)
-            self.validate_status_reason_coding_code(self.values)
-            self.validate_status_reason_coding_display(self.values)
-            self.validate_protocol_applied_dose_number_positive_int(self.values)
-            self.validate_vaccine_code_coding_code(self.values)
-            self.validate_vaccine_code_coding_display(self.values)
-            self.validate_manufacturer_display(self.values)
-            self.validate_lot_number(self.values)
-            self.validate_expiration_date(self.values)
-            self.validate_site_coding_code(self.values)
-            self.validate_site_coding_display(self.values)
-            self.validate_route_coding_code(self.values)
-            self.validate_route_coding_display(self.values)
-            self.validate_dose_quantity_value(self.values)
-            self.validate_dose_quantity_code(self.values)
-            self.validate_dose_quantity_unit(self.values)
-            self.validate_reason_code_coding_code(self.values)
-            self.validate_reason_code_coding_display(self.values)
-            self.validate_nhs_number_verification_status_code(self.values)
-            self.validate_nhs_number_verification_status_display(self.values)
-            self.validate_organization_identifier_system(self.values)
-            self.validate_local_patient_value(self.values)
-            self.validate_local_patient_system(self.values)
-            self.validate_consent_code(self.values)
-            self.validate_consent_display(self.values)
-            self.validate_care_setting_code(self.values)
-            self.validate_care_setting_display(self.values)
-            self.validate_ip_address(self.values)
-            self.validate_user_id(self.values)
-            self.validate_user_name(self.values)
-            self.validate_user_email(self.values)
-            self.validate_submitted_time_stamp(self.values)
-            self.validate_location_identifier_value(self.values)
-            self.validate_location_identifier_system(self.values)
-            self.validate_reduce_validation_reason(self.values)
-        except (MandatoryError, ValueError) as error:
-            raise error
+            self.set_status(self.values)
+        except (ValueError, TypeError, IndexError, AttributeError, MandatoryError) as e:
+            raise ValueError(str(e))
+
+        validation_methods = [
+            self.validate_patient_identifier_value,
+            self.validate_patient_name_given,
+            self.validate_patient_name_family,
+            self.validate_patient_birth_date,
+            self.validate_patient_gender,
+            self.validate_patient_address_postal_code,
+            self.validate_organization_identifier_value,
+            self.validate_organization_display,
+            self.validate_identifier_value,
+            self.validate_identifier_system,
+            self.validate_practitioner_name_given,
+            self.validate_practitioner_name_family,
+            self.validate_practitioner_identifier_value,
+            self.validate_practitioner_identifier_system,
+            self.validate_performer_sds_job_role,
+            self.validate_recorded,
+            self.validate_primary_source,
+            self.validate_report_origin_text,
+            self.validate_vaccination_procedure_display,
+            self.validate_vaccination_situation_code,
+            self.validate_vaccination_situation_display,
+            self.validate_status_reason_coding_code,
+            self.validate_status_reason_coding_display,
+            self.validate_protocol_applied_dose_number_positive_int,
+            self.validate_vaccine_code_coding_code,
+            self.validate_vaccine_code_coding_display,
+            self.validate_manufacturer_display,
+            self.validate_lot_number,
+            self.validate_expiration_date,
+            self.validate_site_coding_code,
+            self.validate_site_coding_display,
+            self.validate_route_coding_code,
+            self.validate_route_coding_display,
+            self.validate_dose_quantity_value,
+            self.validate_dose_quantity_code,
+            self.validate_dose_quantity_unit,
+            self.validate_reason_code_coding_code,
+            self.validate_reason_code_coding_display,
+            self.validate_nhs_number_verification_status_code,
+            self.validate_nhs_number_verification_status_display,
+            self.validate_organization_identifier_system,
+            self.validate_local_patient_value,
+            self.validate_local_patient_system,
+            self.validate_consent_code,
+            self.validate_consent_display,
+            self.validate_care_setting_code,
+            self.validate_care_setting_display,
+            self.validate_ip_address,
+            self.validate_user_id,
+            self.validate_user_name,
+            self.validate_user_email,
+            self.validate_submitted_time_stamp,
+            self.validate_location_identifier_value,
+            self.validate_location_identifier_system,
+            self.validate_reduce_validation_reason,
+        ]
+        for method in validation_methods:
+            try:
+                method(self.values)
+            except (ValueError, TypeError, IndexError, AttributeError, MandatoryError) as e:
+                self.errors.append(str(e))
+
+        if self.errors:
+            all_errors = "; ".join(self.errors)
+            raise ValueError(all_errors)
 
     def validate_and_set_vaccination_procedure_code(self, values: dict) -> dict:
         "Validate that vaccination_procedure_code is a valid code"
@@ -118,18 +133,23 @@ class PostValidators:
 
     def validate_patient_identifier_value(self, values: dict) -> dict:
         "Validate that patient_identifier_value is present or absent, as required"
+        field_location = "contained[?(@.resourceType=='Patient')].identifier[0].value"
         try:
             contained_patient = get_contained_resource_from_model(values, "Patient")
 
-            patient_identifier_value = [
+            patient_identifier_value = next(
                 x for x in contained_patient.identifier if x.system == "https://fhir.nhs.uk/Id/nhs-number"
-            ][0].value
+            ).value
+            verification_status_code = get_nhs_number_verification_status_code(values)
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             patient_identifier_value = None
 
+        if not patient_identifier_value and verification_status_code != "04":
+            raise MandatoryError(f"{field_location} is mandatory when verification status is not 04")
+
         check_mandation_requirements_met(
             field_value=patient_identifier_value,
-            field_location="contained[?(@.resourceType=='Patient')].identifier[0].value",
+            field_location=field_location,
             vaccine_type=self.vaccine_type,
             mandation_key="patient_identifier_value",
         )
@@ -199,6 +219,7 @@ class PostValidators:
 
     def validate_patient_address_postal_code(self, values: dict) -> dict:
         "Validate that patient_address_postal_code is present or absent, as required"
+
         try:
             patient_address_postal_code = get_contained_resource_from_model(values, "Patient").address[0].postalCode
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
@@ -529,9 +550,9 @@ class PostValidators:
         field_location = "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
 
         try:
-            status_reason_coding_code = [
-                x for x in values.statusReason.coding if x.system == "http://snomed.info/sct"
-            ][0].code
+            status_reason_coding_code = [x for x in values.statusReason.coding if x.system == "http://snomed.info/sct"][
+                0
+            ].code
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             status_reason_coding_code = None
 
@@ -621,10 +642,9 @@ class PostValidators:
         else:
             system = "http://snomed.info/sct"
         field_location = f"vaccineCode.coding[?(@.system=='{system}')].code"
-        
+
         try:
             vaccine_code_coding_code = next((x.code for x in values.vaccineCode.coding if x.system == system), None)
-
 
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             vaccine_code_coding_code = None
@@ -702,7 +722,7 @@ class PostValidators:
             lot_number = None
 
         # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations['lot_number'][self.vaccine_type]
+        mandation = vaccine_type_applicable_validations["lot_number"][self.vaccine_type]
         bespoke_mandatory_error_message = None
         if values.status != "not-done" and self.vaccine_type == VaccineTypes.covid_19:
             mandation = Mandation.mandatory
@@ -1051,7 +1071,7 @@ class PostValidators:
         link_id = "LocalPatient"
         answer_type = "valueReference"
         field_type = "value"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
@@ -1072,7 +1092,7 @@ class PostValidators:
         link_id = "LocalPatient"
         answer_type = "valueReference"
         field_type = "system"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             field_value = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
@@ -1093,7 +1113,7 @@ class PostValidators:
         link_id = "Consent"
         answer_type = "valueCoding"
         field_type = "code"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             consent_code = get_generic_questionnaire_response_value_from_model(values, link_id, answer_type, field_type)
@@ -1128,7 +1148,7 @@ class PostValidators:
         link_id = "Consent"
         answer_type = "valueCoding"
         field_type = "display"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             consent_display = get_generic_questionnaire_response_value_from_model(
@@ -1150,7 +1170,7 @@ class PostValidators:
         link_id = "CareSetting"
         answer_type = "valueCoding"
         field_type = "code"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             care_setting_code = get_generic_questionnaire_response_value_from_model(
@@ -1172,7 +1192,7 @@ class PostValidators:
         link_id = "CareSetting"
         answer_type = "valueCoding"
         field_type = "display"
-        field_location = generate_field_location_for_questionnnaire_response(link_id, answer_type, field_type)
+        field_location = generate_field_location_for_questionnaire_response(link_id, answer_type, field_type)
 
         try:
             care_setting_display = get_generic_questionnaire_response_value_from_model(

@@ -112,7 +112,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
 
         self.assertDictEqual(res_imms, imms)
         self.table.put_item.assert_called_once_with(
-            Item={"PK": ANY, "PatientPK": ANY, "PatientSK": ANY, "Resource": json.dumps(imms), "Patient": ANY, "IdentifierPK": ANY})
+            Item={"PK": ANY, "PatientPK": ANY, "PatientSK": ANY, "Resource": json.dumps(imms), "Patient": ANY, "IdentifierPK": ANY, "Operation":"CREATE"})
 
     def test_add_patient(self):
         """it should store patient along the Immunization resource"""
@@ -124,7 +124,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
 
         self.assertDictEqual(res_imms, imms)
         self.table.put_item.assert_called_once_with(
-            Item={"PK": ANY,  "PatientPK": ANY, "PatientSK": ANY, "Resource": ANY, "Patient": self.patient, "IdentifierPK": ANY})
+            Item={"PK": ANY,  "PatientPK": ANY, "PatientSK": ANY, "Resource": ANY, "Patient": self.patient, "IdentifierPK": ANY, "Operation": "CREATE"})
 
     def test_create_immunization_makes_new_id(self):
         """create should create new Logical ID even if one is already provided"""
@@ -258,7 +258,8 @@ class TestUpdateImmunization(unittest.TestCase):
 
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient"
+            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient, "
+            "Operation = :operation"
         )
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][0]["identifier"][0]["value"]
@@ -280,6 +281,7 @@ class TestUpdateImmunization(unittest.TestCase):
                 ":patient_sk": patient_sk,
                 ":imms_resource_val": json.dumps(imms),
                 ":patient": self.patient,
+                ":operation": "UPDATE"
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,
@@ -351,9 +353,10 @@ class TestDeleteImmunization(unittest.TestCase):
         # Then
         self.table.update_item.assert_called_once_with(
             Key={"PK": _make_immunization_pk(imms_id)},
-            UpdateExpression="SET DeletedAt = :timestamp",
+            UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation",
             ExpressionAttributeValues={
                 ":timestamp": now_epoch,
+                ":operation": "DELETE"
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,
@@ -433,18 +436,15 @@ class TestFindImmunizations(unittest.TestCase):
         self.repository = ImmunizationRepository(table=self.table)
 
     def test_find_immunizations(self):
-        """it should find events with nhsNumber and diseaseCode(like snomed)"""
+        """it should find events with patient_identifier"""
         nhs_number = "a-patient-id"
-        disease_code = "a-snomed-code-for-disease"
         dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": []}
         self.table.query = MagicMock(return_value=dynamo_response)
 
         condition = Key("PatientPK").eq(_make_patient_pk(nhs_number))
-        sort_key = f"{disease_code}#"
-        condition &= Key("PatientSK").begins_with(sort_key)
 
         # When
-        _ = self.repository.find_immunizations(nhs_number, disease_code)
+        _ = self.repository.find_immunizations(nhs_number)
 
         # Then
         self.table.query.assert_called_once_with(
@@ -461,7 +461,7 @@ class TestFindImmunizations(unittest.TestCase):
         is_ = Attr("DeletedAt").not_exists()
 
         # When
-        _ = self.repository.find_immunizations("an-id", "a-code")
+        _ = self.repository.find_immunizations("an-id")
 
         # Then
         self.table.query.assert_called_once_with(
@@ -480,7 +480,7 @@ class TestFindImmunizations(unittest.TestCase):
         self.table.query = MagicMock(return_value=dynamo_response)
 
         # When
-        results = self.repository.find_immunizations("an-id", "a-code")
+        results = self.repository.find_immunizations("an-id")
 
         # Then
         self.assertListEqual(results, [imms1, imms2])
@@ -493,7 +493,7 @@ class TestFindImmunizations(unittest.TestCase):
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.find_immunizations("an-id", "a-code")
+            self.repository.find_immunizations("an-id")
 
         # Then
         self.assertDictEqual(e.exception.response, response)

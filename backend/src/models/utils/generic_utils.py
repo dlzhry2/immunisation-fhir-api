@@ -1,4 +1,5 @@
 """Generic utilities for models"""
+import datetime
 
 from typing import Literal, Union, Optional, Any
 
@@ -122,7 +123,7 @@ def get_generic_extension_value_from_model(
     return value
 
 
-def generate_field_location_for_questionnnaire_response(
+def generate_field_location_for_questionnaire_response(
     link_id: str,
     answer_type: str,
     field_type: Literal["code", "display", "system"] = None,
@@ -155,6 +156,32 @@ def is_organization(x):
         return False
 
 
+def get_nhs_number_verification_status_code(imms: dict) -> Union[str, None]:
+    """Get the NHS number verification status code from the contained Patient resource"""
+    try:
+        extension = next(
+            x
+            for x in get_contained_resource_from_model(imms, "Patient").identifier
+            if x.system == "https://fhir.nhs.uk/Id/nhs-number"
+        ).extension
+
+        value_codeable_concept_coding = next(
+            x
+            for x in extension
+            if x.url == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
+        ).valueCodeableConcept.coding
+
+        verification_status_code = next(
+            x
+            for x in value_codeable_concept_coding
+            if x.system == "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+        ).code
+    except (StopIteration, KeyError, IndexError):
+        verification_status_code = None
+
+    return verification_status_code
+
+
 def nhs_number_mod11_check(nhs_number: str) -> bool:
     """
     Parameters:-
@@ -181,3 +208,31 @@ def nhs_number_mod11_check(nhs_number: str) -> bool:
         is_mod11 = check_digit == int(nhs_number[-1])
 
     return is_mod11
+
+def get_disease_type(immunization: dict):
+    value_codeable_concept_coding = [
+        ext
+        for ext in immunization["extension"]
+        if ext.get("url") == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
+    ][0]["valueCodeableConcept"]["coding"]
+
+    vaccination_procedure_code = [
+        coding
+        for coding in value_codeable_concept_coding
+        if coding.get("system") == "http://snomed.info/sct"
+    ][0]["code"]
+
+    from mappings import vaccination_procedure_snomed_codes
+    disease_type = vaccination_procedure_snomed_codes.get(
+        vaccination_procedure_code, None
+    )
+
+    return disease_type
+
+
+def get_occurrence_datetime(immunization: dict) -> Optional[datetime.datetime]:
+    occurrence_datetime_str: Optional[str] = immunization.get("occurrenceDateTime", None)
+    if occurrence_datetime_str is None:
+        return None
+
+    return datetime.datetime.fromisoformat(occurrence_datetime_str)

@@ -7,9 +7,11 @@ import uuid
 from botocore.config import Config
 from decimal import Decimal
 from typing import Optional
-from urllib.parse import parse_qs
-
 from authentication import AppRestrictedAuth, Service
+import boto3
+from aws_lambda_typing.events import APIGatewayProxyEventV1
+from botocore.config import Config
+
 from authorization import Authorization, EndpointOperation, UnknownPermission
 from cache import Cache
 from fhir_repository import ImmunizationRepository, create_table
@@ -22,14 +24,18 @@ from models.errors import (
     ResourceNotFoundError,
     UnhandledResponseError,
     ValidationError,
-    IdentifierDuplicationError
+    IdentifierDuplicationError,
+    ParameterException,
 )
-from pds_service import PdsService
+
+from pds_service import PdsService, Authenticator
+from parameter_parser import process_params, process_search_params, create_query_string
+
 
 
 def make_controller(
     pds_env: str = os.getenv("PDS_ENV", "int"),
-    immunization_env: str = os.getenv("IMMUNIZATION_ENV")
+    immunization_env: str = os.getenv("IMMUNIZATION_ENV"),
 ):
     endpoint_url = "http://localhost:4566" if immunization_env == "local" else None
     imms_repo = ImmunizationRepository(create_table(endpoint_url=endpoint_url))
@@ -83,7 +89,9 @@ class FhirController:
         try:
             imms = json.loads(aws_event["body"], parse_float=Decimal)
         except json.decoder.JSONDecodeError as e:
-            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+            return self._create_bad_request(
+                f"Request's body contains malformed JSON: {e}"
+            )
 
         try:
             resource = self.fhir_service.create_immunization(imms)
@@ -91,8 +99,8 @@ class FhirController:
             return self.create_response(201, None, {"Location": location})
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
-        except IdentifierDuplicationError as invalid_error:
-            return self.create_response(422, invalid_error.to_operation_outcome())
+        except IdentifierDuplicationError as duplicate:
+            return self.create_response(422, duplicate.to_operation_outcome())
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
 
@@ -119,8 +127,8 @@ class FhirController:
                 return self.create_response(201, None, {"Location": location})
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
-        except IdentifierDuplicationError as invalid_error:
-            return self.create_response(422, invalid_error.to_operation_outcome())
+        except IdentifierDuplicationError as duplicate:
+            return self.create_response(422, duplicate.to_operation_outcome())
 
     def delete_immunization(self, aws_event):
         if response := self.authorize_request(EndpointOperation.DELETE, aws_event):
@@ -139,63 +147,30 @@ class FhirController:
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
 
-    def search_immunizations(self, aws_event) -> dict:
+    def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
         if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
             return response
 
-        http_method = aws_event.get("httpMethod")
-        nhs_number_value = None
-        disease_type_value = None
-        nhs_number_param = "-nhsNumber"
-        disease_type_param = "-diseaseType"
-        if http_method == "POST":
-            content_type = aws_event.get("headers", {}).get("Content-Type")
-            if content_type == "application/x-www-form-urlencoded":
-                body = aws_event.get("body")
-                if body:
-                    decoded_body = base64.b64decode(body).decode("utf-8")
-                    parsed_body = parse_qs(decoded_body)
-                    nhs_number_list = parsed_body.get(nhs_number_param)
-                    if nhs_number_list:
-                        nhs_number_value = nhs_number_list[0]
-                    disease_type_list = parsed_body.get(disease_type_param)
-                    if disease_type_list:
-                        disease_type_value = disease_type_list[0]
-        parsed_query_params = aws_event.get("queryStringParameters")
-        if parsed_query_params:
-            nhs_number_query_param_value = parsed_query_params.get(nhs_number_param)
-            if nhs_number_query_param_value:
-                if nhs_number_value is None:
-                    nhs_number_value = nhs_number_query_param_value
-                else:
-                    if nhs_number_query_param_value != nhs_number_value:
-                        return self._create_bad_request(
-                            f"Search Parameter {nhs_number_param} can have only one value"
-                        )
+        try:
+            search_params = process_search_params(process_params(aws_event))
+        except ParameterException as e:
+            return self._create_bad_request(e.message)
+        if search_params is None:
+            raise Exception("Failed to parse parameters.")
 
-            disease_type_query_param_value = parsed_query_params.get(disease_type_param)
-            if disease_type_query_param_value:
-                if disease_type_value is None:
-                    disease_type_value = disease_type_query_param_value
-                else:
-                    if disease_type_query_param_value != disease_type_value:
-                        return self._create_bad_request(
-                            f"Search Parameter {disease_type_param} can have only one value"
-                        )
-        if not nhs_number_value:
-            return self._create_bad_request(
-                f"Search Parameter {nhs_number_param} is mandatory"
-            )
-        if not disease_type_value:
-            return self._create_bad_request(
-                f"Search Parameter {disease_type_param} is mandatory"
-            )
-
-        search_params = f"{nhs_number_param}={nhs_number_value}&{disease_type_param}={disease_type_value}"
         result = self.fhir_service.search_immunizations(
-            nhs_number_value, disease_type_value, search_params
+            search_params.patient_identifier,
+            search_params.immunization_targets,
+            create_query_string(search_params),
+            search_params.date_from,
+            search_params.date_to,
         )
-        return self.create_response(200, result.json())
+
+        # Workaround for fhir.resources JSON removing the empty "entry" list.
+        result_json_dict: dict = json.loads(result.json())
+        if "entry" not in result_json_dict:
+            result_json_dict["entry"] = []
+        return self.create_response(200, json.dumps(result_json_dict))
 
     def _validate_id(self, _id: str) -> Optional[dict]:
         if not re.match(self.immunization_id_pattern, _id):
@@ -220,7 +195,9 @@ class FhirController:
         )
         return self.create_response(400, error)
 
-    def authorize_request(self, operation: EndpointOperation, aws_event: dict) -> Optional[dict]:
+    def authorize_request(
+        self, operation: EndpointOperation, aws_event: dict
+    ) -> Optional[dict]:
         try:
             self.authorizer.authorize(operation, aws_event)
         except UnauthorizedError as e:
@@ -231,7 +208,7 @@ class FhirController:
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
                 code=Code.server_error,
-                diagnostics='application includes invalid authorization values',
+                diagnostics="application includes invalid authorization values",
             )
             return self.create_response(500, id_error)
 
