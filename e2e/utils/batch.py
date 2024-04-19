@@ -98,7 +98,7 @@ base_value = [
     "",
     1,
     "39326911000001101",
-    "Spikevax COVID-19 mRNA (nucleoside modified) Vaccine 0.1mg/0.5mL dose dispersion for injection multidose vials (Moderna, Inc)",
+    "Spikevax COVID-19 mRNA Vaccine 0.1mg/0.5mL dose dispersion for injection multidose vials (Moderna, Inc)",
     "Moderna",
     "BN1231231AW",
     "20240303",
