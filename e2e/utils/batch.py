@@ -65,25 +65,69 @@ base_headers = [
     "USER_EMAIL",
     "SUBMITTED_TIMESTAMP",
     "LOCATION_CODE",
-    "LOCATION_CODE_TYPE_URI"
+    "LOCATION_CODE_TYPE_URI",
 ]
 
 # example to populate a base row with
 base_value = [
-    "9726811104", "HELENA", "GANDY", "19730409", "9", "RG1 7YE", "20240221T141951", "RVVKC",
-    "001_COVID_4_1_Positive_First_Dose_20240222164519", "https://evahealth.co.uk/identifier/vacc", "new", "Ellena",
-    "O'Reilly", "2038243", "https://fhir.hl7.org.uk/Id/gphc-number", "DEFAULT_JOB_ROLE_NAME", "20240221", "TRUE",
-    "X99999", "1324681000000101",
-    "Administration of first dose of SARS-CoV-2 (severe acute respiratory syndrome coronavirus 2) vaccine", "", "",
-    "FALSE", "", "", 1, "39326911000001101",
+    "9726811104",
+    "HELENA",
+    "GANDY",
+    "19730409",
+    "9",
+    "RG1 7YE",
+    "20240221T141951",
+    "RVVKC",
+    "001_COVID_4_1_Positive_First_Dose_20240222164519",
+    "https://evahealth.co.uk/identifier/vacc",
+    "new",
+    "Ellena",
+    "O'Reilly",
+    "2038243",
+    "https://fhir.hl7.org.uk/Id/gphc-number",
+    "DEFAULT_JOB_ROLE_NAME",
+    "20240221",
+    "TRUE",
+    "X99999",
+    "1324681000000101",
+    "Administration of first dose of SARS-CoV-2 (severe acute respiratory syndrome coronavirus 2) vaccine",
+    "",
+    "",
+    "FALSE",
+    "",
+    "",
+    1,
+    "39326911000001101",
     "Spikevax COVID-19 mRNA (nucleoside modified) Vaccine 0.1mg/0.5mL dose dispersion for injection multidose vials (Moderna, Inc)",
-    "Moderna", "BN1231231AW", "20240303", "368208006", "Left upper arm structure (body structure)", "78421000",
-    "Intramuscular route (qualifier value)", "0.5", "258773002", "Milliliter (qualifier value)", "443684005",
-    "Disease Outbreak (event)", "02", "Number present but not traced", "https://fhir.nhs.uk/Id/ods-organization-code",
-    "528458", "https://nivs.ardengemcsu.nhs.uk_COVID", "762911000000102",
-    "Informed consent given for treatment (finding)", "413294000", "Community health services (qualifier value)",
-    "192.168.0.56", "634165", "bloggsj21", "joebloggs21@test.net", "20240221T17193000", "RJC02",
-    "https://fhir.nhs.uk/Id/ods-organization-code"]
+    "Moderna",
+    "BN1231231AW",
+    "20240303",
+    "368208006",
+    "Left upper arm structure (body structure)",
+    "78421000",
+    "Intramuscular route (qualifier value)",
+    "0.5",
+    "258773002",
+    "Milliliter (qualifier value)",
+    "443684005",
+    "Disease Outbreak (event)",
+    "02",
+    "Number present but not traced",
+    "https://fhir.nhs.uk/Id/ods-organization-code",
+    "528458",
+    "https://nivs.ardengemcsu.nhs.uk_COVID",
+    "762911000000102",
+    "Informed consent given for treatment (finding)",
+    "413294000",
+    "Community health services (qualifier value)",
+    "192.168.0.56",
+    "634165",
+    "bloggsj21",
+    "joebloggs21@test.net",
+    "20240221T17193000",
+    "RJC02",
+    "https://fhir.nhs.uk/Id/ods-organization-code",
+]
 
 base_record = OrderedDict[str, str](zip(base_headers, base_value))
 
@@ -95,7 +139,7 @@ def _make_header(stream: io.BytesIO, headers: List[str]):
 
 
 def _make_row_entry(record: OrderedDict[str, str], stream: io.BytesIO):
-    row_str = '|'.join(f'"{v}"' for v in record.values())
+    row_str = "|".join(f'"{v}"' for v in record.values())
     row_str += "\n"
     stream.write(row_str.encode())
 
@@ -109,10 +153,12 @@ def _get_terraform_output(output_name: str) -> str:
         cwd=terraform_dir,
         capture_output=True,
         env={"AWS_PROFILE": "apim-dev"},
-        text=True
+        text=True,
     )
     if output.returncode != 0:
-        raise RuntimeError(f"Error getting terraform output {output_name}: {output.stderr}")
+        raise RuntimeError(
+            f"Error getting terraform output {output_name}: {output.stderr}"
+        )
     return output.stdout.strip()
 
 
@@ -196,5 +242,7 @@ class BatchFile:
 
     def upload_to_s3(self, s3_client, bucket, key):
         self.stream.seek(0)
-        s3_client.upload_fileobj(self.stream, bucket, key, ExtraArgs={'ContentType': "text/plain"})
+        s3_client.upload_fileobj(
+            self.stream, bucket, key, ExtraArgs={"ContentType": "text/plain"}
+        )
         self.stream.close()
