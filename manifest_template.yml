@@ -117,12 +117,14 @@ ACCESS_MODES:
     ]
     requireCallbackUrl: true
     description: User restricted
+
   - name: application-restricted
     nameSuffix: -application-restricted
     displayName: Application-Restricted
     scopes: ['urn:nhsd:apim:app:level3:immunisation-fhir-api']
     requireCallbackUrl: false
     description: Application Restricted
+    
   # - name: patient-access
   #   nameSuffix: -patient-access
   #   displayName: Patient-Access
