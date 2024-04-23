@@ -28,7 +28,7 @@ from models.errors import (
     ParameterException,
 )
 
-from pds_service import PdsService, Authenticator
+from pds_service import PdsService
 from parameter_parser import process_params, process_search_params, create_query_string
 
 
