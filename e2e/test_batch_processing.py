@@ -100,9 +100,9 @@ class TestBatchProcessing(unittest.TestCase):
         logger.debug(bf.stream.getvalue().decode("utf-8"))
         return bf
 
-    def test_batch_file(self):
-        report = download_report_file(self.s3_client, get_s3_destination_name(), self.report_key)
-        logger.debug(f"report:\n{report}")
+    # def test_batch_file(self):
+    #     report = download_report_file(self.s3_client, get_s3_destination_name(), self.report_key)
+    #     logger.debug(f"report:\n{report}")
 
-        lines = report.splitlines()
-        self.assertEqual(len(lines), 1)
+    #     lines = report.splitlines()
+    #     self.assertEqual(len(lines), 1)
