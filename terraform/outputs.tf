@@ -10,7 +10,7 @@ output "batch_destination_bucket" {
 }
 output "batch_cluster_name" {
     value = module.batch_processing.cluster_name
-
+}
 output "dynamodb_table_name" {
   value = aws_dynamodb_table.events-dynamodb-table.name
 }
