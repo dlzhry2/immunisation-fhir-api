@@ -32,7 +32,24 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
-          
+  - name: int
+    has_mock_auth: false
+    display_name_suffix: Integration Testing
+    ratelimiting:
+      immunisation-fhir-api-ref:
+        quota:
+          enabled: true
+          limit: 300
+          interval: 1
+          timeunit: minute
+        spikeArrest:
+          enabled: true
+          ratelimit: 600pm # 10 requests per second 
+      app:
+        quota:
+          enabled: false
+        spikeArrest:
+          enabled: false
   - name: sandbox
     display_name_suffix: Sandbox
     portal_visibility: false
@@ -48,9 +65,9 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
-  - name: int
+  - name: ref
     has_mock_auth: false
-    display_name_suffix: Integration Testing
+    display_name_suffix: Reference
     ratelimiting:
       immunisation-fhir-api-int:
         quota:
@@ -61,24 +78,6 @@ APIGEE_ENVIRONMENTS:
         spikeArrest:
           enabled: true
           ratelimit: 600pm # 10 requests per second
-      app:
-        quota:
-          enabled: false
-        spikeArrest:
-          enabled: false
-  - name: ref
-    has_mock_auth: false
-    display_name_suffix: Reference
-    ratelimiting:
-      immunisation-fhir-api-ref:
-        quota:
-          enabled: true
-          limit: 300
-          interval: 1
-          timeunit: minute
-        spikeArrest:
-          enabled: true
-          ratelimit: 600pm # 10 requests per second 
       app:
         quota:
           enabled: false
@@ -109,7 +108,7 @@ APIGEE_ENVIRONMENTS:
   #       #   ratelimit: 600pm # 10 requests per second
 
 ACCESS_MODES:
-  - name: user-restricted #First Product - User Restricted
+  - name: user-restricted
     nameSuffix: ''
     displayName: Authorisation
     scopes: [
@@ -118,13 +117,13 @@ ACCESS_MODES:
     ]
     requireCallbackUrl: true
     description: User restricted
-  - name: application-restricted # Second product - Application restricted
+  - name: application-restricted
     nameSuffix: -application-restricted
     displayName: Application-Restricted
     scopes: ['urn:nhsd:apim:app:level3:immunisation-fhir-api']
     requireCallbackUrl: false
     description: Application Restricted
-  # - name: patient-access #Third Product - Patient access (NHS login) - commented out as currently not in use
+  # - name: patient-access
   #   nameSuffix: -patient-access
   #   displayName: Patient-Access
   #   scopes: ['urn:nhsd:apim:user-nhs-login:P9:immunisation-fhir-api']
