@@ -48,7 +48,6 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
-  
   - name: int
     has_mock_auth: false
     display_name_suffix: Integration Testing
@@ -67,7 +66,6 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
-  
   - name: ref
     has_mock_auth: false
     display_name_suffix: Reference
@@ -86,7 +84,6 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
-
   # - name: prod
   #   has_mock_auth: false
   #   approval_type: manual
@@ -112,7 +109,7 @@ APIGEE_ENVIRONMENTS:
   #       #   ratelimit: 600pm # 10 requests per second
 
 ACCESS_MODES:
-  - name: user-restricted
+  - name: user-restricted #First Product - User Restricted
     nameSuffix: ''
     displayName: Authorisation
     scopes: [
@@ -121,15 +118,13 @@ ACCESS_MODES:
     ]
     requireCallbackUrl: true
     description: User restricted
-
-  - name: application-restricted
+  - name: application-restricted # Second product - Application restricted
     nameSuffix: -application-restricted
     displayName: Application-Restricted
     scopes: ['urn:nhsd:apim:app:level3:immunisation-fhir-api']
     requireCallbackUrl: false
     description: Application Restricted
-
-  # - name: patient-access
+  # - name: patient-access #Third Product - Patient access (NHS login) - commented out as currently not in use
   #   nameSuffix: -patient-access
   #   displayName: Patient-Access
   #   scopes: ['urn:nhsd:apim:user-nhs-login:P9:immunisation-fhir-api']
