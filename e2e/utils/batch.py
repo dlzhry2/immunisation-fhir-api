@@ -252,7 +252,6 @@ class BatchFile:
     #     )
     #     self.stream.close()
 
-
     def upload_to_s3(self, s3_client, bucket):
         self.stream.seek(0)
         s3_client.upload_fileobj(
