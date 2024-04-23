@@ -32,24 +32,7 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
-  - name: ref
-    has_mock_auth: true
-    display_name_suffix: Reference
-    ratelimiting:
-      immunisation-fhir-api-ref:
-        quota:
-          enabled: true
-          limit: 300
-          interval: 1
-          timeunit: minute
-        spikeArrest:
-          enabled: true
-          ratelimit: 600pm # 10 requests per second 
-      app:
-        quota:
-          enabled: false
-        spikeArrest:
-          enabled: false
+          
   - name: sandbox
     display_name_suffix: Sandbox
     portal_visibility: false
@@ -65,6 +48,7 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
+  
   - name: int
     has_mock_auth: false
     display_name_suffix: Integration Testing
@@ -83,6 +67,26 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
+  
+  - name: ref
+    has_mock_auth: false
+    display_name_suffix: Reference
+    ratelimiting:
+      immunisation-fhir-api-ref:
+        quota:
+          enabled: true
+          limit: 300
+          interval: 1
+          timeunit: minute
+        spikeArrest:
+          enabled: true
+          ratelimit: 600pm # 10 requests per second 
+      app:
+        quota:
+          enabled: false
+        spikeArrest:
+          enabled: false
+
   # - name: prod
   #   has_mock_auth: false
   #   approval_type: manual
@@ -117,12 +121,14 @@ ACCESS_MODES:
     ]
     requireCallbackUrl: true
     description: User restricted
+
   - name: application-restricted
     nameSuffix: -application-restricted
     displayName: Application-Restricted
     scopes: ['urn:nhsd:apim:app:level3:immunisation-fhir-api']
     requireCallbackUrl: false
     description: Application Restricted
+
   # - name: patient-access
   #   nameSuffix: -patient-access
   #   displayName: Patient-Access
