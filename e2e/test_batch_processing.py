@@ -65,9 +65,11 @@ class TestBatchProcessing(unittest.TestCase):
 
         source_bucket = get_s3_source_name()
         date_file = cls.make_batch_file()
-        date_file.upload_to_s3(cls.s3_client, source_bucket, cls.dat_key)
+       # date_file.upload_to_s3(cls.s3_client, source_bucket, cls.dat_key)
+        date_file.upload_to_s3(cls.s3_client, source_bucket)
         ctl_file = make_ctl_file()
-        ctl_file.upload_to_s3(cls.s3_client, source_bucket, cls.ctl_key)
+        #ctl_file.upload_to_s3(cls.s3_client, source_bucket, cls.ctl_key)
+        ctl_file.upload_to_s3(cls.s3_client, source_bucket)
 
         logger.debug("waiting for the batch processing to finish")
         # wait for the event rule to start the task and then wait for the task to finish

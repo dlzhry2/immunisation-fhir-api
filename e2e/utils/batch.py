@@ -213,9 +213,14 @@ class CtlFile:
         self.ctl_data = ctl_data
         self.stream.write(self.ctl_data.to_xml().encode())
 
-    def upload_to_s3(self, s3_client, bucket, key):
+    # def upload_to_s3(self, s3_client, bucket, key):
+    #     self.stream.seek(0)
+    #     s3_client.upload_fileobj(self.stream, bucket, key)
+    #     self.stream.close()
+
+    def upload_to_s3(self, s3_client, bucket):
         self.stream.seek(0)
-        s3_client.upload_fileobj(self.stream, bucket, key)
+        s3_client.upload_fileobj(self.stream, bucket)
         self.stream.close()
 
 
