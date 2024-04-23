@@ -11,7 +11,7 @@ from time import sleep
 #     download_report_file, get_s3_destination_name, CtlFile, CtlData
 
 from utils.batch import BatchFile, base_headers, base_record, \
-    download_report_file, get_s3_destination_name, CtlFile, CtlData
+    CtlFile, CtlData
 
 logger = logging.getLogger("batch")
 logger.setLevel(logging.DEBUG)
