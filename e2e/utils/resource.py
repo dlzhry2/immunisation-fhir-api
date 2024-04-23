@@ -3,6 +3,7 @@ import json
 import os
 import uuid
 import boto3
+from decimal import Decimal
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource
 from botocore.config import Config
 
@@ -13,7 +14,7 @@ current_directory = os.path.dirname(os.path.realpath(__file__))
 
 def load_example(path: str) -> dict:
     with open(f"{current_directory}/../../specification/components/examples/{path}") as f:
-        return json.load(f)
+        return json.load(f, parse_float=Decimal)
 
 
 def create_an_imms_obj(imms_id: str = str(uuid.uuid4()),
