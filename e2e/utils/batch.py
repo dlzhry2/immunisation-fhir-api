@@ -245,9 +245,17 @@ class BatchFile:
         self.records.append((msg, record))
         _make_row_entry(record, self.stream)
 
-    def upload_to_s3(self, s3_client, bucket, key):
+    # def upload_to_s3(self, s3_client, bucket, key):
+    #     self.stream.seek(0)
+    #     s3_client.upload_fileobj(
+    #         self.stream, bucket, key, ExtraArgs={"ContentType": "text/plain"}
+    #     )
+    #     self.stream.close()
+
+
+    def upload_to_s3(self, s3_client, bucket):
         self.stream.seek(0)
         s3_client.upload_fileobj(
-            self.stream, bucket, key, ExtraArgs={"ContentType": "text/plain"}
+            self.stream, bucket, ExtraArgs={"ContentType": "text/plain"}
         )
         self.stream.close()
