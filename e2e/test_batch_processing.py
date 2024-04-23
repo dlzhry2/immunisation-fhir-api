@@ -4,10 +4,13 @@ import unittest
 import uuid
 from time import sleep
 
-import boto3
-from botocore.config import Config
+# import boto3
+# from botocore.config import Config
 
-from utils.batch import BatchFile, base_headers, base_record, get_s3_source_name, get_cluster_name, \
+# from utils.batch import BatchFile, base_headers, base_record, get_s3_source_name, get_cluster_name, \
+#     download_report_file, get_s3_destination_name, CtlFile, CtlData
+
+from utils.batch import BatchFile, base_headers, base_record, \
     download_report_file, get_s3_destination_name, CtlFile, CtlData
 
 logger = logging.getLogger("batch")
