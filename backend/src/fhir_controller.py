@@ -161,6 +161,7 @@ class FhirController:
 
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
+        print(f"final response :{result_json_dict}")
         if "entry" not in result_json_dict:
             result_json_dict["entry"] = []
         return self.create_response(200, json.dumps(result_json_dict))
