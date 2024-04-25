@@ -165,7 +165,7 @@ class FhirController:
         print(f"final response :{result_json_dict}")
         if "entry" not in result_json_dict:
             result_json_dict["entry"] = []
-        return self.create_response(200, json.dumps(result_json_dict))
+        return self.create_response(200, json.dumps(result_json_dict) )
 
     def _validate_id(self, _id: str) -> Optional[dict]:
         if not re.match(self.immunization_id_pattern, _id):
