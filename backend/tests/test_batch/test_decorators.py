@@ -694,7 +694,7 @@ class TestPractitionerDecorator(unittest.TestCase):
         self.assertDictEqual(expected, self.imms["location"])
 
 
-class TestDecorateQuestionare(unittest.TestCase):
+class TestQuestionnaireDecorator(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.imms = copy.deepcopy(raw_imms)
@@ -757,7 +757,6 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         item = {
             "valueCoding": {
-                "system": "http://snomed.info/sct",
                 "code": "a_consent_for_treatment_code",
                 "display": "a_consent_for_treatment_description",
             }
@@ -779,12 +778,12 @@ class TestDecorateQuestionare(unittest.TestCase):
 
         item = {
             "valueCoding": {
-                "system": "http://snomed.info/sct",
                 "code": "a_care_setting_type_code",
                 "display": "a_care_setting_type_description",
             }
         }
         expected_item = self._make_questionare_item("CareSetting", item)
+
         self.assertIn(expected_item, self.imms["contained"][0]["item"])
 
     def test_add_local_patient(self):

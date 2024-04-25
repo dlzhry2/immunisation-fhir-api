@@ -411,60 +411,68 @@ def _decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optiona
 
 def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
     """Create the 'questionnaire' object and append items list"""
-
-    def _make_questionare_item(_name: str, _item: dict) -> dict:
-        return {"linkId": _name, "answer": [_item]}
-
     errors: List[TransformerFieldError] = []
 
-    questionare = {
-        "resourceType": "QuestionnaireResponse",
-        "id": "QR1",
-        "status": "completed",
-    }
-    items = []
+    questionnaire_values = [
+        consent_for_treatment_code := record.get("consent_for_treatment_code"),
+        consent_for_treatment_description := record.get("consent_for_treatment_description"),
+        care_setting_type_code := record.get("care_setting_type_code"),
+        care_setting_type_description := record.get("care_setting_type_description"),
+        reduced_validation_code := record.get("reduce_validation_code"),
+        reduced_validation_reason := record.get("reduce_validation_reason"),
+        local_patient_uri := record.get("local_patient_uri"),
+        local_patient_id := record.get("local_patient_id"),
+        ip_address := record.get("ip_address"),
+        user_id := record.get("user_id"),
+        user_name := record.get("user_name"),
+        user_email := record.get("user_email"),
+        submitted_timestamp := record.get("submitted_timestamp"),
+        sds_job_role_name := record.get("sds_job_role_name"),
+    ]
 
-    reduced_validation_code = record.get("reduce_validation_code", "false")
-    is_reduced = _parse_boolean(reduced_validation_code)
-    items.append(_make_questionare_item("ReduceValidation", {"valueBoolean": is_reduced}))
-    if is_reduced:
-        items.append(
-            _make_questionare_item(
-                "ReduceValidationReason", {"valueString": record.get("reduce_validation_reason", "")}
+    if any(_is_not_empty(value) for value in questionnaire_values):
+        questionare = {
+            "resourceType": "QuestionnaireResponse",
+            "id": "QR1",
+            "status": "completed",
+        }
+        items = []
+
+        # TODO: Check if consent and care should have snomed uri (had one in original version of this code)
+
+        if any(_is_not_empty(value) for value in [consent_for_treatment_code, consent_for_treatment_description]):
+            consent = _make_dict({"code": consent_for_treatment_code, "display": consent_for_treatment_description})
+            _add_questionnaire_item(items, "Consent", {"valueCoding": consent})
+
+        if any(_is_not_empty(value) for value in [care_setting_type_code, care_setting_type_description]):
+            care_setting = _make_dict({"code": care_setting_type_code, "display": care_setting_type_description})
+            _add_questionnaire_item(items, "CareSetting", {"valueCoding": care_setting})
+
+        if any(_is_not_empty(value) for value in [local_patient_uri, local_patient_id]):
+            local_patient = _make_dict({"system": local_patient_uri, "value": local_patient_id})
+            _add_questionnaire_item(items, "LocalPatient", {"valueReference": {"identifier": local_patient}})
+
+        if _is_not_empty(reduced_validation_code):
+            _add_questionnaire_item(
+                items, "ReduceValidation", {"valueBoolean": _parse_boolean(reduced_validation_code)}
             )
-        )
 
-    if ip_address := record.get("ip_address"):
-        items.append(_make_questionare_item("IpAddress", {"valueString": ip_address}))
+        if _is_not_empty(submitted_timestamp):
+            _add_questionnaire_item(
+                items, "SubmittedTimeStamp", {"valueDateTime": _convert_date_time(submitted_timestamp)}
+            )
 
-    if consent_code := record.get("consent_for_treatment_code"):
-        item = _make_snomed(consent_code, record.get("consent_for_treatment_description", ""))
-        items.append(_make_questionare_item("Consent", {"valueCoding": item}))
+        for key, value in {
+            "IpAddress": ip_address,
+            "UserId": user_id,
+            "UserName": user_name,
+            "UserEmail": user_email,
+            "PerformerSDSJobRole": sds_job_role_name,
+            "ReduceValidationReason": reduced_validation_reason,
+        }.items():
+            if _is_not_empty(value):
+                _add_questionnaire_item(items, key, {"valueString": value})
 
-    if care_code := record.get("care_setting_type_code"):
-        item = _make_snomed(care_code, record.get("care_setting_type_description", ""))
-        items.append(_make_questionare_item("CareSetting", {"valueCoding": item}))
-
-    if local_patient_id := record.get("local_patient_id"):
-        system = record.get("local_patient_uri")
-        reference = {"valueReference": {"identifier": {"system": system, "value": local_patient_id}}}
-        items.append(_make_questionare_item("LocalPatient", reference))
-
-    if user_id := record.get("user_id"):
-        items.append(_make_questionare_item("UserId", {"valueString": user_id}))
-    if user_name := record.get("user_name"):
-        items.append(_make_questionare_item("UserName", {"valueString": user_name}))
-    if user_email := record.get("user_email"):
-        items.append(_make_questionare_item("UserEmail", {"valueString": user_email}))
-
-    if submitted_timestamp := record.get("submitted_timestamp"):
-        converted_dt = _convert_date_time(submitted_timestamp)
-        items.append(_make_questionare_item("SubmittedTimeStamp", {"valueDateTime": converted_dt}))
-
-    if sds_job_role := record.get("sds_job_role_name"):
-        items.append(_make_questionare_item("PerformerSDSJobRole", {"valueString": sds_job_role}))
-
-    if len(items) > 0:
         questionare["item"] = items
         imms["contained"].append(questionare)
 
