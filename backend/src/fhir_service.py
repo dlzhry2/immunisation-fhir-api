@@ -192,6 +192,7 @@ class FhirService:
         )
         url = f"{get_service_url()}/Immunization?{params}"
         fhir_bundle.link = [BundleLink(relation="self", url=url)]
+        fhir_bundle.total =[FhirBundle.total]
         print (f"response of fhir bundle: {fhir_bundle}")
         return fhir_bundle
 
