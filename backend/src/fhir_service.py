@@ -160,7 +160,7 @@ class FhirService:
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         if not nhs_number_mod11_check(nhs_number):
-            raise InvalidPatientId(nhs_number=nhs_number)
+            raise InvalidPatientId(patient_identifier=nhs_number)
         resources = self.immunization_repo.find_immunizations(nhs_number)
         resources = [
             r for r in resources
