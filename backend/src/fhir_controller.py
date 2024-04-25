@@ -159,7 +159,7 @@ class FhirController:
             search_params.date_from,
             search_params.date_to,
         )
-
+        print(f"result_response:{result}")
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
         print(f"final response :{result_json_dict}")
