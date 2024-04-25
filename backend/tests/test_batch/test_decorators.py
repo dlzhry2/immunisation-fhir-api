@@ -8,7 +8,7 @@ from batch.decorators import (
     _decorate_patient,
     _decorate_vaccination,
     _decorate_vaccine,
-    _decorate_practitioner,
+    _decorate_performer,
     _decorate_questionare,
     decorate,
     _decorate_immunization,
@@ -181,6 +181,7 @@ class TestImmunizationDecorator(unittest.TestCase):
         _decorate_immunization(self.imms, headers)
 
         expected = {"coding": [{"code": "a_indication_code", "display": "a_indication_term"}]}
+
         self.assertDictEqual(expected, self.imms["reasonCode"][0])
 
     def test_recorded_date(self):
@@ -506,6 +507,7 @@ class TestVaccinationDecorator(unittest.TestCase):
                 }
             ]
         }
+
         self.assertDictEqual(expected, self.imms["site"])
 
     def test_vaccination_route(self):
@@ -588,7 +590,7 @@ class TestPractitionerDecorator(unittest.TestCase):
         """it should add the practitioner object to the contained list and the performer list"""
         headers = OrderedDict([("performing_professional_body_reg_code", "a_performing_professional_body_reg_code")])
 
-        _decorate_practitioner(self.imms, headers)
+        _decorate_performer(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["contained"].append({"resourceType": "Practitioner", "id": "practitioner1", "identifier": ANY})
@@ -605,7 +607,7 @@ class TestPractitionerDecorator(unittest.TestCase):
             ]
         )
 
-        _decorate_practitioner(self.imms, headers)
+        _decorate_performer(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["contained"].append(
@@ -635,7 +637,7 @@ class TestPractitionerDecorator(unittest.TestCase):
             ]
         )
 
-        _decorate_practitioner(self.imms, headers)
+        _decorate_performer(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
         expected_imms["contained"].append(
@@ -663,7 +665,7 @@ class TestPractitionerDecorator(unittest.TestCase):
             ]
         )
 
-        _decorate_practitioner(self.imms, headers)
+        _decorate_performer(self.imms, headers)
 
         expected = {
             "actor": {
@@ -684,7 +686,7 @@ class TestPractitionerDecorator(unittest.TestCase):
             ]
         )
 
-        _decorate_practitioner(self.imms, headers)
+        _decorate_performer(self.imms, headers)
 
         expected = {
             "type": "Location",
