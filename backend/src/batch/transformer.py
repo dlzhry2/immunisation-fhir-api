@@ -27,8 +27,6 @@ class DataRecordTransformer:
         self.raw_imms = {
             "resourceType": "Immunization",
             "contained": [],
-            "extension": [],
-            "performer": [],
         }
 
     def transform(self, record: RecordDict) -> dict:

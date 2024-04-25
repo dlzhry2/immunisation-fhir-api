@@ -1,5 +1,5 @@
 from collections import OrderedDict
-
+from decimal import Decimal
 import copy
 import unittest
 from unittest.mock import ANY, MagicMock, patch
@@ -26,8 +26,6 @@ NOTE: the public function `decorate` is tested in `TestDecorate` class.
 raw_imms: dict = {
     "resourceType": "Immunization",
     "contained": [],
-    "extension": [],
-    "performer": [],
 }
 
 
@@ -364,6 +362,7 @@ class TestVaccineDecorator(unittest.TestCase):
                 }
             ]
         }
+
         self.assertDictEqual(expected, self.imms["vaccineCode"])
 
     def test_manufacturer(self):
@@ -544,7 +543,7 @@ class TestVaccinationDecorator(unittest.TestCase):
         _decorate_vaccination(self.imms, headers)
 
         expected = {
-            "value": 123.1234,
+            "value": Decimal("123.1234"),
             "unit": "a_dose_unit_term",
             "code": "a_dose_unit_code",
             "system": "http://unitsofmeasure.org",
@@ -563,11 +562,11 @@ class TestVaccinationDecorator(unittest.TestCase):
         _decorate_vaccination(self.imms, headers)
 
         expected = {
-            "value": 123.1234,
-            "unit": ANY,
+            "value": Decimal("123.1234567"),
             "system": ANY,
             "code": ANY,
         }
+
         self.assertDictEqual(expected, self.imms["doseQuantity"])
 
     def test_dose_sequence(self):
@@ -592,9 +591,8 @@ class TestPractitionerDecorator(unittest.TestCase):
         _decorate_practitioner(self.imms, headers)
 
         expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["contained"].append(
-            {"resourceType": "Practitioner", "id": "practitioner1", "identifier": ANY, "name": []}
-        )
+        expected_imms["contained"].append({"resourceType": "Practitioner", "id": "practitioner1", "identifier": ANY})
+        expected_imms["performer"] = []
         expected_imms["performer"].append({"actor": {"reference": "#practitioner1"}})
 
         self.assertDictEqual(expected_imms, self.imms)
@@ -620,9 +618,9 @@ class TestPractitionerDecorator(unittest.TestCase):
                         "value": "a_performing_professional_body_reg_code",
                     }
                 ],
-                "name": [],
             }
         )
+        expected_imms["performer"] = []
         expected_imms["performer"].append(ANY)
 
         self.assertDictEqual(expected_imms, self.imms)
@@ -650,6 +648,7 @@ class TestPractitionerDecorator(unittest.TestCase):
                 ],
             }
         )
+        expected_imms["performer"] = []
         expected_imms["performer"].append(ANY)
 
         self.assertDictEqual(expected_imms, self.imms)
@@ -676,26 +675,6 @@ class TestPractitionerDecorator(unittest.TestCase):
 
         self.assertDictEqual(expected, self.imms["performer"][0])
 
-    def test_org_display_is_mandatory_and_not_empty(self):
-        headers = OrderedDict(
-            [
-                ("site_code", "a_site_code"),
-                ("site_code_type_uri", "a_site_code_type_uri"),
-            ]
-        )
-
-        _decorate_practitioner(self.imms, headers)
-
-        expected_default = "N/A"
-        expected = {
-            "actor": {
-                "type": "Organization",
-                "identifier": {"system": "a_site_code_type_uri", "value": "a_site_code"},
-                "display": expected_default,
-            }
-        }
-        self.assertDictEqual(expected, self.imms["performer"][0])
-
     def test_location(self):
         """it should get the location code and type and add it to the location object"""
         headers = OrderedDict(
@@ -707,7 +686,10 @@ class TestPractitionerDecorator(unittest.TestCase):
 
         _decorate_practitioner(self.imms, headers)
 
-        expected = {"identifier": {"value": "a_location_code", "system": "a_location_code_type_uri"}}
+        expected = {
+            "type": "Location",
+            "identifier": {"value": "a_location_code", "system": "a_location_code_type_uri"},
+        }
 
         self.assertDictEqual(expected, self.imms["location"])
 
