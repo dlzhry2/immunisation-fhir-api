@@ -162,6 +162,7 @@ class FhirService:
         if not nhs_number_mod11_check(nhs_number):
             raise InvalidPatientId(patient_identifier=nhs_number)
         resources = self.immunization_repo.find_immunizations(nhs_number)
+        print(f"resource_response:{resources}")
         resources = [
             r for r in resources
             if FhirService.has_valid_disease_type(r, disease_types)
