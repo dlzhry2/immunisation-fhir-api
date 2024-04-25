@@ -190,9 +190,12 @@ class FhirService:
             type="searchset",
             entry=entries
         )
+        print (f"response of fhir bundle_before: {fhir_bundle}")
         url = f"{get_service_url()}/Immunization?{params}"
         fhir_bundle.link = [BundleLink(relation="self", url=url)]
-        fhir_bundle.total =[FhirBundle.total]
+        total =fhir_bundle.total
+        print (f"response of total_result: {total}")
+        
         print (f"response of fhir bundle: {fhir_bundle}")
         return fhir_bundle
 
