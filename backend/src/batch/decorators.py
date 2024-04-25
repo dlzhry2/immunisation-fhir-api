@@ -17,13 +17,63 @@ NOTE: The decorators are order independent. They can be called in any order, so 
 NOTE: decorate function is the only public function. If you add a new decorator, call it in this function.
 """
 
+snomed_url = "http://snomed.info/sct"
+
+
+def _is_not_empty(value: any) -> bool:
+    """Determine if a value is not empty i.e. there is data present. Note that some
+    "Falsey" values, such as zero values and a boolean of false, are valid data"""
+    return value not in [None, "", [], {}, (), [""]]
+
 
 def _make_snomed(code: str, display: str) -> dict:
+    return {"system": "http://snomed.info/sct", "code": code, "display": display}
+
+
+def _make_dict(fields: dict) -> dict:
+    """Makes a dictionary with all empty items removed"""
+    dictionary = {}
+    for fhir_key_name, field_value in fields.items():
+        if _is_not_empty(field_value):
+            dictionary[fhir_key_name] = field_value
+    return dictionary
+
+
+def _make_extension_item(url: str, system: str, code: str, display: str) -> dict:
     return {
-        "system": "http://snomed.info/sct",
-        "code": code,
-        "display": display
+        "url": url,
+        "valueCodeableConcept": {"coding": [{"system": system, "code": code, "display": display}]},
     }
+
+
+def _add_item(dictionary: dict, fhir_field_name: str, value: any, conversion_fn=None):
+    if _is_not_empty(value):
+        dictionary[fhir_field_name] = value if conversion_fn is None else conversion_fn(value)
+
+
+def _add_dict(dictionary: dict, fhir_field_name: str, fields: dict):
+    if any(_is_not_empty(field_value) for field_value in fields.values()):
+        _add_item(dictionary, fhir_field_name, _make_dict(fields))
+
+
+def _add_list_of_dict(dictionary: dict, fhir_field_name: str, fields: dict):
+    if any(_is_not_empty(field_value) for field_value in fields.values()):
+        _add_item(dictionary, fhir_field_name, [_make_dict(fields)])
+
+
+def _add_custom_item(dictionary: dict, fhir_field_name: str, field_values: list, item_to_add: any):
+    if any(_is_not_empty(field_value) for field_value in field_values):
+        dictionary[fhir_field_name] = item_to_add
+
+
+def _add_snomed(dictionary: dict, fhir_field_name: str, code: str, display: str):
+    if _is_not_empty(code) or _is_not_empty(display):
+        dictionary[fhir_field_name] = {"coding": [_make_dict({"system": snomed_url, "code": code, "display": display})]}
+
+
+def _add_questionnaire_item(items: list, linkId: str, item: dict):
+    # TODO: Need to unit test this function
+    items.append({"linkId": linkId, "answer": [item]})
 
 
 def _convert_date_time(date_time: str) -> str:
@@ -40,17 +90,12 @@ def _convert_date(date: str) -> str:
 
 def _convert_gender_code(code: str) -> str:
     """Convert code to fhir gender, if we don't recognize the code, return the code as is"""
-    code_to_fhir = {
-        "1": "male",
-        "2": "female",
-        "9": "other",
-        "0": "unknown"
-    }
+    code_to_fhir = {"1": "male", "2": "female", "9": "other", "0": "unknown"}
     return code_to_fhir.get(code, code)
 
 
 def _convert_decimal(value: str) -> Decimal:
-    return Decimal(value).quantize(Decimal('.0001'), rounding=ROUND_DOWN)
+    return Decimal(value).quantize(Decimal(".0001"), rounding=ROUND_DOWN)
 
 
 def _parse_boolean(value: str) -> bool:
@@ -58,8 +103,14 @@ def _parse_boolean(value: str) -> bool:
     return value.lower() == "true"
 
 
+def _parse_boolean2(value: str) -> bool:
+    """Booleans are represented as strings in the CSV. This function converts them to Python booleans where possible"""
+    lower_value = value.lower() if isinstance(value, str) else None
+    return {"true": True, "false": False}.get(lower_value, value)
+
+
 def _decorate_immunization(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
-    """ Every thing related to the immunization object itself like status and identifier
+    """Every thing related to the immunization object itself like status and identifier
     Takes ACTION_FLAG and NOT_GIVEN and sets the status accordingly. Status is a mandatory FHIR field.
     The following 1-to-1 mapping applies:
     * NOT_GIVEN is True <---> Status will be set to 'not-done' (and therefore ACTION_FLAG is
@@ -69,43 +120,51 @@ def _decorate_immunization(imms: dict, record: OrderedDict[str, str]) -> Optiona
     """
     errors: List[TransformerFieldError] = []
 
-    if unique_id := record.get("unique_id"):
-        imms["identifier"] = [{
-            "system": record.get("unique_id_uri", ""),
-            "value": unique_id
-        }]
+    # NOT_GIVEN and ACTION_FLAG must contain valid values to allow transformation
+    if (not_given := _parse_boolean2(record.get("not_given"))) not in [True, False]:
+        errors.append(TransformerFieldError(field="NOT_GIVEN", message="NOT_GIVEN is missing or is not a boolean"))
 
-    if not_given := record.get("not_given"):
-        if _parse_boolean(not_given):
-            imms["status"] = "not-done"
-        else:
-            if action_flag := record.get("action_flag"):
-                if action_flag.lower() == "new":
-                    imms["status"] = "completed"
-                else:
-                    imms["status"] = "entered-in-error"
-            else:
-                errors.append(TransformerFieldError(field="action_flag", message="Action flag is missing"))
+    if not isinstance(action_flag := record.get("action_flag"), str) or (action_flag.lower()) not in [
+        "new",
+        "update",
+        "delete",
+    ]:
+        errors.append(
+            TransformerFieldError(
+                field="ACTION_FLAG", message="ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"
+            )
+        )
 
-    else:
-        errors.append(TransformerFieldError(field="not_given", message="Not given is missing"))
+    # TODO: Find this comment in validators and update logic
+    # Add status. The following mapping applies:
+    # * NOT_GIVEN is True <---> Status will be set to 'not-done' (irrespective of the ACTION_FLAG value)
+    # * NOT_GIVEN is False & ACTION_FLAG is "new" or "update" <---> Status will be set to 'completed'
+    # * NOT_GIVEN is False and ACTION_FLAG is "delete" <---> Status will be set to entered-in-error'
+    if not_given is True:
+        imms["status"] = "not-done"
+    elif not_given is False:
+        # TODO: Check with IMMS team r.e. status when action_flag is "update"
+        if action_flag == "new" or action_flag == "update":
+            imms["status"] = "completed"
+        elif action_flag == "delete":
+            imms["status"] = "entered-in-error"
 
-    # not_given and indication are mutually exclusive
-    reason_code = record.get("reason_not_given_code", "")
-    reason_term = record.get("reason_not_given_term", "")
-    indication_code = record.get("indication_code", "")
-    indication_term = record.get("indication_term", "")
-    imms["statusReason"] = {
-        "coding": [
-            {
-                "code": reason_code if reason_code != "" else indication_code,
-                "display": reason_term if reason_term != "" else indication_term,
-            }
-        ]
-    }
+    # statusReason
+    reason_not_given_code = record.get("reason_not_given_code")
+    reason_not_given_term = record.get("reason_not_given_term")
+    if _is_not_empty(reason_not_given_code) or _is_not_empty(reason_not_given_term):
+        imms["statusReason"] = {"coding": [{"code": reason_not_given_code, "display": reason_not_given_term}]}
 
-    if recorded_date := record.get("recorded_date"):
-        imms["recorded"] = _convert_date(recorded_date)
+    # reasonCode
+    indication_code = record.get("indication_code")
+    indication_term = record.get("indication_term")
+    if _is_not_empty(indication_code) or _is_not_empty(indication_term):
+        imms["reasonCode"] = [{"coding": [{"code": indication_code, "display": indication_term}]}]
+
+    # TODO: Confirm date expected format as differs between spec and 4.1 (files follow 4.1)
+    _add_item(imms, "recorded", record.get("recorded_date"), _convert_date)
+
+    _add_list_of_dict(imms, "identifier", {"value": record.get("unique_id"), "system": record.get("unique_id_uri")})
 
     func_name = inspect.currentframe().f_back.f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
@@ -115,60 +174,61 @@ def _decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
     """Create the 'patient' object and append to 'contained' list"""
     errors: List[TransformerFieldError] = []
 
-    def create_verified_nhs_number_extension(_code: str, _display: str) -> dict:
-        return {
-            "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
-            "valueCodeableConcept": {
-                "coding": [
-                    {
-                        "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
-                        "code": _code,
-                        "display": "" if _display is None else _display
-                    }
-                ]
-            }
-        }
-
-    internal_id = "patient1"
-    imms["patient"] = {"reference": f"#{internal_id}"}
-    patient = {
-        "id": internal_id,
-        "resourceType": "Patient",
-        "identifier": [],
-        "name": [],
-    }
-
-    if nhs_number := record.get("nhs_number"):
-        identifier = {
-            "system": "https://fhir.nhs.uk/Id/nhs-number",
-            "value": nhs_number
-        }
-        if id_code := record.get("nhs_number_status_indicator_code"):
-            id_display = record.get("nhs_number_status_indicator_description")
-            extension = create_verified_nhs_number_extension(id_code, id_display)
-            identifier["extension"] = [extension]
-
-        patient["identifier"].append(identifier)
-
+    nhs_number_status_indicator_code = record.get("nhs_number_status_indicator_code")
+    nhs_number_status_indicator_description = record.get("nhs_number_status_indicator_description")
+    nhs_number = record.get("nhs_number")
     person_surname = record.get("person_surname")
     person_forename = record.get("person_forename")
-    if person_surname is not None and person_forename is not None:
-        patient["name"].append({
-            "family": person_surname,
-            "given": [person_forename]
-        })
+    person_gender_code = record.get("person_gender_code")
+    person_dob = record.get("person_dob")
+    person_postcode = record.get("person_postcode")
 
-    if person_dob := record.get("person_dob"):
-        patient["birthDate"] = _convert_date(person_dob)
+    patient_extension_values = [nhs_number_status_indicator_code, nhs_number_status_indicator_description]
+    patient_identifier_values = [nhs_number] + patient_extension_values
+    patient_name_values = [person_surname, person_forename]
+    patient_top_level_values = [person_gender_code, person_dob, person_postcode]
+    patient_values = patient_top_level_values + patient_name_values + patient_identifier_values
 
-    if person_gender_code := record.get("person_gender_code"):
-        gender = _convert_gender_code(person_gender_code)
-        patient["gender"] = gender
+    # Add patient if there is at least one non-empty patient value
+    if any(_is_not_empty(value) for value in patient_values):
+        internal_patient_id = "Patient1"
+        imms["patient"] = {"reference": f"#{internal_patient_id}"}
+        patient = {
+            "id": internal_patient_id,
+            "resourceType": "Patient",
+        }
 
-    if person_postcode := record.get("person_postcode"):
-        patient["address"] = [{
-            "postalCode": person_postcode
-        }]
+        _add_item(patient, "gender", person_gender_code, _convert_gender_code)
+
+        _add_item(patient, "birthDate", person_dob, _convert_date)
+
+        _add_list_of_dict(patient, "address", {"postalCode": person_postcode})
+
+        # Add patient name if there is at least one non-empty patient name value
+        if any(_is_not_empty(value) for value in patient_name_values):
+            patient["name"] = [{}]
+
+            _add_item(patient["name"][0], "family", person_surname)
+
+            _add_custom_item(patient["name"][0], "given", [person_forename], [person_forename])
+
+        # Add patient identifier if there is at least one non-empty patient identifier value
+        if any(_is_not_empty(value) for value in patient_identifier_values):
+            _add_list_of_dict(
+                patient,
+                "identifier",
+                {"value": nhs_number, "system": "https://fhir.nhs.uk/Id/nhs-number"},
+            )
+
+            # Add the extension if there is at least one non-empty extension value
+            if any(_is_not_empty(value) for value in patient_extension_values):
+                extension_item = _make_extension_item(
+                    url="https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
+                    system="https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
+                    code=nhs_number_status_indicator_code,
+                    display=nhs_number_status_indicator_description,
+                )
+                patient["identifier"][0]["extension"] = [extension_item]
 
     imms["contained"].append(patient)
 
@@ -182,9 +242,7 @@ def _decorate_vaccine(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
 
     if vac_product_code := record.get("vaccine_product_code"):
         display = record.get("vaccine_product_term", "")
-        imms["vaccineCode"] = {
-            "coding": [_make_snomed(vac_product_code, display)]
-        }
+        imms["vaccineCode"] = {"coding": [_make_snomed(vac_product_code, display)]}
 
     if manufacturer := record.get("vaccine_manufacturer"):
         imms["manufacturer"] = {"display": manufacturer}
@@ -211,10 +269,10 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
                     {
                         "system": "http://snomed.info/sct",
                         "code": _vaccine_type,
-                        "display": "" if _display is None else _display
+                        "display": "" if _display is None else _display,
                     }
                 ]
-            }
+            },
         }
 
     if vac_code := record.get("vaccination_procedure_code"):
@@ -234,20 +292,14 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
         imms["primarySource"] = _parse_boolean(primary_source)
 
     if report_origin := record.get("report_origin"):
-        imms["reportOrigin"] = {
-            "text": report_origin
-        }
+        imms["reportOrigin"] = {"text": report_origin}
 
     if site_code := record.get("site_of_vaccination_code"):
         site_display = record.get("site_of_vaccination_term", "")
-        imms["site"] = {
-            "coding": [_make_snomed(site_code, site_display)]
-        }
+        imms["site"] = {"coding": [_make_snomed(site_code, site_display)]}
     if route_code := record.get("route_of_vaccination_code"):
         route_display = record.get("route_of_vaccination_term", "")
-        imms["route"] = {
-            "coding": [_make_snomed(route_code, route_display)]
-        }
+        imms["route"] = {"coding": [_make_snomed(route_code, route_display)]}
 
     dose_amount = record.get("dose_amount")
     dose_unit_code = record.get("dose_unit_code")
@@ -257,7 +309,7 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
             "value": float(_convert_decimal(dose_amount)),
             "code": dose_unit_code,
             "unit": dose_unit_term,
-            "system": "http://unitsofmeasure.org"
+            "system": "http://unitsofmeasure.org",
         }
     if dose_sequence := record.get("dose_sequence"):
         imms["protocolApplied"] = [{"doseNumberPositiveInt": int(dose_sequence)}]
@@ -272,48 +324,31 @@ def _decorate_practitioner(imms: dict, record: OrderedDict[str, str]) -> Optiona
 
     if prac_org := record.get("performing_professional_body_reg_code"):
         prac_org_uri = record.get("performing_professional_body_reg_uri")
-        practitioner = {
-            "resourceType": "Practitioner",
-            "id": "practitioner1",
-            "identifier": [],
-            "name": []
-        }
-        practitioner["identifier"].append({
-            "system": "" if prac_org_uri is None else prac_org_uri,
-            "value": prac_org
-        })
+        practitioner = {"resourceType": "Practitioner", "id": "practitioner1", "identifier": [], "name": []}
+        practitioner["identifier"].append({"system": "" if prac_org_uri is None else prac_org_uri, "value": prac_org})
         imms["performer"].append({"actor": {"reference": "#practitioner1"}})
         imms["contained"].append(practitioner)
 
         prac_name = record.get("performing_professional_forename")
         prac_family = record.get("performing_professional_surname")
         if prac_name is not None or prac_family is not None:
-            practitioner["name"].append({
-                "family": prac_family,
-                "given": [prac_name]
-            })
+            practitioner["name"].append({"family": prac_family, "given": [prac_name]})
 
     if site_code := record.get("site_code"):
         org_uri = record.get("site_code_type_uri")
         organization = {
             "type": "Organization",
-            "identifier": {
-                "system": "" if org_uri is None else org_uri,
-                "value": site_code
-            },
+            "identifier": {"system": "" if org_uri is None else org_uri, "value": site_code},
             # TODO(validation): site_name is not mandatory in the csv, but it's mandatory in our api.
             #  What's the fallback value? or should it be an error?
-            "display": record.get("site_name", "N/A")}
+            "display": record.get("site_name", "N/A"),
+        }
 
         imms["performer"].append({"actor": organization})
 
     if location_code := record.get("location_code"):
         system = record.get("location_code_type_uri")
-        imms["location"] = {
-            "identifier": {
-                "value": location_code,
-                "system": "" if system is None else system
-            }}
+        imms["location"] = {"identifier": {"value": location_code, "system": "" if system is None else system}}
 
     func_name = inspect.currentframe().f_back.f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
@@ -323,10 +358,7 @@ def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional
     """Create the 'questionnaire' object and append items list"""
 
     def _make_questionare_item(_name: str, _item: dict) -> dict:
-        return {
-            "linkId": _name,
-            "answer": [_item]
-        }
+        return {"linkId": _name, "answer": [_item]}
 
     errors: List[TransformerFieldError] = []
 
@@ -339,13 +371,13 @@ def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional
 
     reduced_validation_code = record.get("reduce_validation_code", "false")
     is_reduced = _parse_boolean(reduced_validation_code)
-    items.append(_make_questionare_item(
-        "ReduceValidation",
-        {"valueBoolean": is_reduced}))
+    items.append(_make_questionare_item("ReduceValidation", {"valueBoolean": is_reduced}))
     if is_reduced:
-        items.append(_make_questionare_item(
-            "ReduceValidationReason",
-            {"valueString": record.get("reduce_validation_reason", "")}))
+        items.append(
+            _make_questionare_item(
+                "ReduceValidationReason", {"valueString": record.get("reduce_validation_reason", "")}
+            )
+        )
 
     if ip_address := record.get("ip_address"):
         items.append(_make_questionare_item("IpAddress", {"valueString": ip_address}))
@@ -360,14 +392,7 @@ def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional
 
     if local_patient_id := record.get("local_patient_id"):
         system = record.get("local_patient_uri")
-        reference = {
-            "valueReference": {
-                "identifier": {
-                    "system": system,
-                    "value": local_patient_id
-                }
-            }
-        }
+        reference = {"valueReference": {"identifier": {"system": system, "value": local_patient_id}}}
         items.append(_make_questionare_item("LocalPatient", reference))
 
     if user_id := record.get("user_id"):
@@ -398,7 +423,7 @@ all_decorators: List[ImmunizationDecorator] = [
     _decorate_vaccine,
     _decorate_vaccination,
     _decorate_practitioner,
-    _decorate_questionare
+    _decorate_questionare,
 ]
 
 

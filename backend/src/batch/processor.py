@@ -8,8 +8,12 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 
-from batch.errors import TransformerUnhandledError, TransformerRowError, ImmunizationApiError, \
-    ImmunizationApiUnhandledError
+from batch.errors import (
+    TransformerUnhandledError,
+    TransformerRowError,
+    ImmunizationApiError,
+    ImmunizationApiUnhandledError,
+)
 from batch.immunization_api import ImmunizationApi
 from batch.parser import DataParser
 from batch.report import ReportGenerator, ReportEntry
@@ -21,6 +25,7 @@ logger = structlog.get_logger()
 @dataclass
 class BatchData:
     """The origin of the Batch event."""
+
     batch_id: str
     object_key: str
     source_bucket: str
@@ -33,6 +38,7 @@ class BatchData:
 
 class Action(str, Enum):
     """The action to be taken on the record. The value is determined by the `action_flag` field."""
+
     CREATE = "new"
     UPDATE = "update"
     DELETE = "delete"
@@ -41,11 +47,14 @@ class Action(str, Enum):
 class BatchProcessor:
     headers: List[str]
 
-    def __init__(self, batch_data: BatchData,
-                 parser: DataParser,
-                 row_transformer: DataRecordTransformer,
-                 report_generator: ReportGenerator,
-                 api: ImmunizationApi):
+    def __init__(
+        self,
+        batch_data: BatchData,
+        parser: DataParser,
+        row_transformer: DataRecordTransformer,
+        report_generator: ReportGenerator,
+        api: ImmunizationApi,
+    ):
         self.parser = parser
         self.row_transformer = row_transformer
         self.report_generator = report_generator
@@ -73,6 +82,13 @@ class BatchProcessor:
             }
 
             raw_record = OrderedDict(zip(self.headers, row))
+
+            # TODO: Tidy this
+            def keys_lower(test_dict):
+                return {k.lower(): keys_lower(v) if isinstance(v, dict) else v for k, v in test_dict.items()}
+
+            raw_record = keys_lower(raw_record)
+
             if action := self._get_action(raw_record, cur_row_no):
                 if record := self._transform(raw_record, cur_row_no):
                     self._send_data(record, action, cur_row_no)
