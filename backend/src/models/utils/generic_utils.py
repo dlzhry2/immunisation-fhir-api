@@ -197,15 +197,19 @@ def nhs_number_mod11_check(nhs_number: str) -> bool:
     if nhs_number.isdigit() and len(nhs_number) == 10:
         # Create a reversed list of weighting factors
         weighting_factors = list(range(2, 11))[::-1]
+        print(f"weighting_factors:{weighting_factors}")
         # Multiply each of the first nine digits by the weighting factor and add the results of each multiplication
         # together
         total = sum(int(digit) * weight for digit, weight in zip(nhs_number[:-1], weighting_factors))
+        print(f"total:{total}")
         # Divide the total by 11 and establish the remainder and subtract the remainder from 11 to give the check digit.
         # If the result is 11 then a check digit of 0 is used. If the result is 10 then the NHS NUMBER is invalid and
         # not used.
         check_digit = 0 if (total % 11 == 0) else (11 - (total % 11))
+        print(f"check_digit:{check_digit}")
         # Check the remainder matches the check digit. If it does not, the NHS NUMBER is invalid.
         is_mod11 = check_digit == int(nhs_number[-1])
+        print(f"is_mod11:{is_mod11}")
 
     return is_mod11
 
