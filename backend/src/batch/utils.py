@@ -137,6 +137,7 @@ class Convert:
         lower_value = value.lower() if isinstance(value, str) else None
         return {"true": True, "false": False}.get(lower_value, value)
 
+    # TODO: Consider whether this should return an integer for integer strings
     @staticmethod
     def decimal(value: any) -> any:
         """
@@ -145,7 +146,7 @@ class Convert:
         """
         try:
             return Decimal(value)
-        except (TypeError, InvalidOperation):
+        except (TypeError, ValueError, InvalidOperation):
             return value
 
     @staticmethod
