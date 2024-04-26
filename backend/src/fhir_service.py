@@ -22,6 +22,8 @@ from models.utils.post_validation_utils import MandatoryError, NotApplicableErro
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
+from fhir_controller import FhirController
+from models.errors import Severity, Code, create_operation_outcome
 
 
 
@@ -162,7 +164,13 @@ class FhirService:
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         if not nhs_number_mod11_check(nhs_number):
-            raise(InvalidPatientId(patient_identifier=nhs_number))
+            exp_error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.invalid,
+                diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
+            )
+            return FhirController.create_response(400, exp_error)
         resources = self.immunization_repo.find_immunizations(nhs_number)
         print(f"resource_response:{resources}")
         resources = [
