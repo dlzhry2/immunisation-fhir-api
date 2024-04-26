@@ -23,7 +23,7 @@ from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
 from models.errors import Severity, Code, create_operation_outcome
-from fhir_controller import FhirController, make_controller
+from fhir_controller import FhirController
 
 
 def get_service_url(
@@ -168,7 +168,7 @@ class FhirService:
             resource_id=str(uuid.uuid4()),
             severity=Severity.error,
             code=Code.invariant,
-            diagnostics="Invalid NHS Number",
+            diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
             )
             return FhirController.create_response(400, exp_error)
         resources = self.immunization_repo.find_immunizations(nhs_number)
