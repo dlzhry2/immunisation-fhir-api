@@ -22,8 +22,7 @@ from models.utils.post_validation_utils import MandatoryError, NotApplicableErro
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
-from models.errors import Severity, Code, create_operation_outcome
-from fhir_controller import FhirController
+
 
 
 def get_service_url(
