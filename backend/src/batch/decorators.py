@@ -7,13 +7,15 @@ from batch.utils import _is_not_empty, _add_questionnaire_item_to_list, Create, 
 
 
 ImmunizationDecorator = Callable[[Dict, OrderedDict[str, str]], Optional[DecoratorError]]
-"""A decorator function (Callable) takes current immunization object and
-validates it and adds appropriate fields to it. It returns None if no error occurs, otherwise it
-returns an error object that has a list of all field errors. DO NOT raise any exception during this process.
-The caller will catch Exception and treat them as unhandled errors. This way we can log these errors which are bugs or
-a result of a batch file with unexpected headers/values.
+"""
+A decorator function (Callable) takes current immunization object, validates it and adds appropriate fields to it. 
+It returns None if no error occurs, otherwise it returns an error object that has a list of all field errors. 
+DO NOT raise any exception during this process. The caller will catch exceptions and treat them as unhandled errors. 
+This way we can log these errors which are bugs or a result of a batch file with unexpected headers/values.
 NOTE: The decorators are order independent. They can be called in any order, so don't rely on previous changes.
 NOTE: decorate function is the only public function. If you add a new decorator, call it in this function.
+NOTE: Validation should be handled by the API validator wherever possible. Immunization decorators should only
+perform validation that is essential for the transformation to take place.
 """
 
 
@@ -24,16 +26,9 @@ def _decorate_immunization(imms: dict, record: OrderedDict[str, str]) -> Optiona
     # NOT_GIVEN and ACTION_FLAG must contain valid values to allow transformation
     if (not_given := Convert.boolean(record.get("not_given"))) not in [True, False]:
         errors.append(TransformerFieldError(field="NOT_GIVEN", message="NOT_GIVEN is missing or is not a boolean"))
-    elif (action_flag := Convert.to_lower(record.get("action_flag"))) not in [
-        "new",
-        "update",
-        "delete",
-    ]:
-        errors.append(
-            TransformerFieldError(
-                field="ACTION_FLAG", message="ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"
-            )
-        )
+    elif (action_flag := Convert.to_lower(record.get("action_flag"))) not in ["new", "update", "delete"]:
+        message = "ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"
+        errors.append(TransformerFieldError(field="ACTION_FLAG", message=message))
     else:
         # Add status. The following mapping applies:
         # * NOT_GIVEN is True & ACTION_FLAG is "new" or "update" or "delete" <---> Status will be set to 'not-done'
@@ -55,7 +50,7 @@ def _decorate_immunization(imms: dict, record: OrderedDict[str, str]) -> Optiona
             reason_not_given_code := record.get("reason_not_given_code"),
             reason_not_given_term := record.get("reason_not_given_term"),
         ],
-        {"coding": [{"code": reason_not_given_code, "display": reason_not_given_term}]},
+        {"coding": [Create.dictionary({"code": reason_not_given_code, "display": reason_not_given_term})]},
     )
 
     # reasonCode (note that this is reason for vaccination, which is different from statusReason)
@@ -63,7 +58,7 @@ def _decorate_immunization(imms: dict, record: OrderedDict[str, str]) -> Optiona
         imms,
         "reasonCode",
         [indication_code := record.get("indication_code"), indication_term := record.get("indication_term")],
-        [{"coding": [{"code": indication_code, "display": indication_term}]}],
+        [{"coding": [Create.dictionary({"code": indication_code, "display": indication_term})]}],
     )
 
     Add.item(imms, "recorded", record.get("recorded_date"), Convert.date)
@@ -108,9 +103,11 @@ def _decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
 
         Add.list_of_dict(patient, "address", {"postalCode": person_postcode})
 
-        Add.custom_item(
-            patient, "name", [person_surname, person_forename], [{"family": person_surname, "given": [person_forename]}]
-        )
+        # Add patient name if there is at least one non-empty patient name value
+        if any(_is_not_empty(value) for value in [person_surname, person_forename]):
+            patient["name"] = [{}]
+            Add.item(patient["name"][0], "family", person_surname)
+            Add.custom_item(patient["name"][0], "given", [person_forename], [person_forename])
 
         # Add patient identifier if there is at least one non-empty patient identifier value
         if any(_is_not_empty(value) for value in patient_identifier_values):
@@ -146,7 +143,7 @@ def _decorate_vaccine(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
 
     Add.snomed(imms, "vaccineCode", record.get("vaccine_product_code"), record.get("vaccine_product_term"))
 
-    Add.dict(imms, "manufacturer", {"display": record.get("vaccine_manufacturer")})
+    Add.dictionary(imms, "manufacturer", {"display": record.get("vaccine_manufacturer")})
 
     Add.item(imms, "expirationDate", record.get("expiry_date"), Convert.date)
 
@@ -189,7 +186,7 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
 
     Add.item(imms, "primarySource", record.get("primary_source"), Convert.boolean)
 
-    Add.dict(imms, "reportOrigin", {"text": record.get("report_origin")})
+    Add.dictionary(imms, "reportOrigin", {"text": record.get("report_origin")})
 
     Add.snomed(imms, "site", record.get("site_of_vaccination_code"), record.get("site_of_vaccination_term"))
 
@@ -201,10 +198,9 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
         "system": "http://unitsofmeasure.org",
         "code": record.get("dose_unit_code"),
     }
-    Add.dict(imms, "doseQuantity", dose_quantity_dict)
+    Add.dictionary(imms, "doseQuantity", dose_quantity_dict)
 
-    dose_sequence = Convert.integer(record.get("dose_sequence"))
-    Add.custom_item(imms, "protocolApplied", [dose_sequence], [{"doseNumberPositiveInt": dose_sequence}])
+    Add.list_of_dict(imms, "protocolApplied", {"doseNumberPositiveInt": Convert.integer(record.get("dose_sequence"))})
 
     func_name = inspect.currentframe().f_back.f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
@@ -239,7 +235,7 @@ def _decorate_performer(imms: dict, record: OrderedDict[str, str]) -> Optional[D
 
             Add.item(organization["actor"], "display", site_name)
 
-            Add.dict(organization["actor"], "identifier", {"system": site_code_type_uri, "value": site_code})
+            Add.dictionary(organization["actor"], "identifier", {"system": site_code_type_uri, "value": site_code})
 
             imms["performer"].append(organization)
 
@@ -257,12 +253,18 @@ def _decorate_performer(imms: dict, record: OrderedDict[str, str]) -> Optional[D
                 {"value": performing_professional_body_reg_code, "system": performing_professional_body_reg_uri},
             )
 
-            Add.custom_item(
-                practitioner,
-                "name",
-                [performing_professional_surname, performing_professional_forename],
-                [{"family": performing_professional_surname, "given": [performing_professional_forename]}],
-            )
+            # Add practitioner name if there is at least one non-empty practitioner name value
+            if any(
+                _is_not_empty(value) for value in [performing_professional_surname, performing_professional_forename]
+            ):
+                practitioner["name"] = [{}]
+                Add.item(practitioner["name"][0], "family", performing_professional_surname)
+                Add.custom_item(
+                    practitioner["name"][0],
+                    "given",
+                    [performing_professional_forename],
+                    [performing_professional_forename],
+                )
 
             imms["contained"].append(practitioner)
 
@@ -270,7 +272,10 @@ def _decorate_performer(imms: dict, record: OrderedDict[str, str]) -> Optional[D
         imms,
         "location",
         [location_code := record.get("location_code"), location_code_type_uri := record.get("location_code_type_uri")],
-        {"type": "Location", "identifier": {"value": location_code, "system": location_code_type_uri}},
+        {
+            "type": "Location",
+            "identifier": Create.dictionary({"value": location_code, "system": location_code_type_uri}),
+        },
     )
 
     func_name = inspect.currentframe().f_back.f_code.co_name
@@ -311,15 +316,17 @@ def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional
         # add it if necessary
 
         if any(_is_not_empty(value) for value in [consent_for_treatment_code, consent_for_treatment_description]):
-            consent = Create.dict({"code": consent_for_treatment_code, "display": consent_for_treatment_description})
+            consent = Create.dictionary(
+                {"code": consent_for_treatment_code, "display": consent_for_treatment_description}
+            )
             _add_questionnaire_item_to_list(items, "Consent", {"valueCoding": consent})
 
         if any(_is_not_empty(value) for value in [care_setting_type_code, care_setting_type_description]):
-            care_setting = Create.dict({"code": care_setting_type_code, "display": care_setting_type_description})
+            care_setting = Create.dictionary({"code": care_setting_type_code, "display": care_setting_type_description})
             _add_questionnaire_item_to_list(items, "CareSetting", {"valueCoding": care_setting})
 
         if any(_is_not_empty(value) for value in [local_patient_uri, local_patient_id]):
-            local_patient = Create.dict({"system": local_patient_uri, "value": local_patient_id})
+            local_patient = Create.dictionary({"system": local_patient_uri, "value": local_patient_id})
             _add_questionnaire_item_to_list(items, "LocalPatient", {"valueReference": {"identifier": local_patient}})
 
         if _is_not_empty(reduced_validation_code):
