@@ -167,10 +167,15 @@ class FhirService:
         if not nhs_number_mod11_check(nhs_number):
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
-                code=Code.invalid,
-                diagnostics="Search returned too many results. Please narrow down the search"
-                exp_error =(resource_id,severity,code,diagnostics)
-                return (400, exp_error)
+                code=Code.invariant,
+                diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
+                exp_error = {
+                             "resourceId": resource_id,
+                             "severity": severity,
+                             "code": code,
+                             "diagnostics": diagnostics
+                            }
+                return (exp_error)
         resources = self.immunization_repo.find_immunizations(nhs_number)
         print(f"resource_response:{resources}")
         resources = [

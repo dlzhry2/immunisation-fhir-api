@@ -161,6 +161,8 @@ class FhirController:
             search_params.date_to,
         )
         print(f"result_response:{result}")
+        if len(result) == 4:
+           return self.create_response(400, json.dumps(result) ) 
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
         print(f"final response :{result_json_dict}")
