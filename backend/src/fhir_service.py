@@ -25,9 +25,6 @@ from timer import timed
 from models.errors import Severity, Code
 
 
-
-
-
 def get_service_url(
     service_env: str = os.getenv("IMMUNIZATION_ENV"),
     service_base_path: str = os.getenv("IMMUNIZATION_BASE_PATH"),

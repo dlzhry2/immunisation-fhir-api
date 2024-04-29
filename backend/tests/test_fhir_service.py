@@ -27,7 +27,6 @@ from tests.immunization_utils import (
 )
 
 
-
 class TestServiceUrl(unittest.TestCase):
     def test_get_service_url(self):
         """it should create service url"""
