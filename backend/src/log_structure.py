@@ -27,7 +27,7 @@ class FirehoseLogger:
         try:
             response = self.firehose_client.put_record(
                 DeliveryStreamName=self.delivery_stream_name,
-                Record={"event":encoded_log_data},
+                Record={"Data":encoded_log_data},
             )
             print(f"Log sent to Firehose: {response}")
         except Exception as e:
