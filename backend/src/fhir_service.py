@@ -177,7 +177,6 @@ class FhirService:
                             }
                 return (exp_error)
         resources = self.immunization_repo.find_immunizations(nhs_number)
-        print(f"resource_response:{resources}")
         resources = [
             r for r in resources
             if FhirService.has_valid_disease_type(r, disease_types)
@@ -185,7 +184,6 @@ class FhirService:
             and FhirService.is_valid_date_to(r, date_to)
         ]
         patient = self.pds_service.get_patient_details(nhs_number) if len(resources) > 0 else None
-        print(f"patient_response:{patient}")
         entries = [
                 BundleEntry(
                     resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
@@ -205,13 +203,8 @@ class FhirService:
             type="searchset",
             entry=entries
         )
-        print (f"response of fhir bundle_before: {fhir_bundle}")
         url = f"{get_service_url()}/Immunization?{params}"
         fhir_bundle.link = [BundleLink(relation="self", url=url)]
-        total =fhir_bundle.total
-        print (f"response of total_result: {total}")
-        
-        print (f"response of fhir bundle: {fhir_bundle}")
         return fhir_bundle
 
     @timed

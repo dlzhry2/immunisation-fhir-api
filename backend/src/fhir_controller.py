@@ -28,7 +28,6 @@ from pds_service import PdsService, Authenticator
 from parameter_parser import process_params, process_search_params, create_query_string
 
 
-
 def make_controller(
     pds_env: str = os.getenv("PDS_ENV", "int"),
     immunization_env: str = os.getenv("IMMUNIZATION_ENV"),
@@ -147,7 +146,6 @@ class FhirController:
 
         try:
             search_params = process_search_params(process_params(aws_event))
-            print(f"aws event:{aws_event}")
         except ParameterException as e:
             return self._create_bad_request(e.message)
         if search_params is None:
@@ -160,12 +158,10 @@ class FhirController:
             search_params.date_from,
             search_params.date_to,
         )
-        print(f"result_response:{result}")
         if "severity" in result:
            return self.create_response(400, json.dumps(result) ) 
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
-        print(f"final response :{result_json_dict}")
         if "entry" in result_json_dict:
             total_count = sum(1 for entry in result_json_dict["entry"] if entry.get("search", {}).get("mode") == "match")
             result_json_dict["total"] = total_count

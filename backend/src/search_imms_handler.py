@@ -21,7 +21,6 @@ def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController
     try:
         response = controller.search_immunizations(event)
         result_json = json.dumps(response)
-        print(f"final response of search :{response}")
         result_size = len(result_json.encode("utf-8"))
         if result_size > 6 * 1024 * 1024:
             exp_error = create_operation_outcome(
