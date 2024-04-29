@@ -55,7 +55,11 @@ def function_info(func):
         try:
             start = time.time()
             result = func(*args, **kwargs)
-            outcome = result['statusCode']
+            outcome = "500"
+            
+            if isinstance(result,dict):
+                outcome = result['statusCode']
+            
             end = time.time()
             logData = {
                 "function_name": func.__name__,
@@ -70,7 +74,6 @@ def function_info(func):
             logger.info(logData)
             firehose_logger.send_log(logData)
             
-
             return result
 
         except Exception as e:
