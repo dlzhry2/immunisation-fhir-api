@@ -22,12 +22,12 @@ class FirehoseLogger:
 
     def send_log(self, log_message):
         log_to_splunk = log_message
-        log_to_splunk["sourcetype"] = "App_immunisations_dev"
+        
         encoded_log_data = json.dumps(log_to_splunk).encode("utf-8")
         try:
             response = self.firehose_client.put_record(
                 DeliveryStreamName=self.delivery_stream_name,
-                Record={"Data": encoded_log_data},
+                Record={"event":encoded_log_data},
             )
             print(f"Log sent to Firehose: {response}")
         except Exception as e:
@@ -55,6 +55,7 @@ def function_info(func):
         try:
             start = time.time()
             result = func(*args, **kwargs)
+            outcome = result['statusCode']
             end = time.time()
             logData = {
                 "function_name": func.__name__,
@@ -63,12 +64,12 @@ def function_info(func):
                 "X-Request-ID": request_id,
                 "actual_path": actual_path,
                 "resource_path": resource_path,
-                "status": "Success",
+                "status": outcome,
                 "status_code": "Completed successfully",
             }
-            logger.info(result)
-            firehose_logger.send_log(logData)
             logger.info(logData)
+            firehose_logger.send_log(logData)
+            
 
             return result
 
@@ -82,8 +83,9 @@ def function_info(func):
                 "resource_path": resource_path,
                 "error": str(e),
             }
-            firehose_logger.send_log(logData)
+            
             logger.exception(logData)
+            firehose_logger.send_log(logData)
             raise
 
     return wrapper
