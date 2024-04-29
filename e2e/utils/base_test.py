@@ -129,3 +129,8 @@ class ImmunizationBaseTest(unittest.TestCase):
         self.assertEqual(response.status_code, status_code, response.text)
         self.assertEqual(body["resourceType"], "OperationOutcome")
         self.assertTrue(contains in body["issue"][0]["diagnostics"])
+    
+    def assert_operation_outcome_400(self, response, status_code: int, contains: str = ""):
+        body = response.json()
+        self.assertEqual(response.status_code, status_code, response.text)
+        self.assertEqual(body["severity"], ["error"])
