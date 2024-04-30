@@ -165,8 +165,15 @@ class FhirController:
             search_params.date_from,
             search_params.date_to,
         )
-        if "severity" in result:
-           return self.create_response(400, json.dumps(result) ) 
+
+        if "diagnostics" in result: 
+           exp_error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.invalid,
+                diagnostics=result["diagnostics"]
+            )
+           return self.create_response(400, json.dumps(exp_error) ) 
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
         if "entry" in result_json_dict:
