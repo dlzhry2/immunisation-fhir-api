@@ -1,9 +1,9 @@
 """Utils for the batch decorators"""
 
+import re
+
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-
-# TODO: Unit test all functions
 
 
 def _is_not_empty(value: any) -> bool:
@@ -17,6 +17,104 @@ def _is_not_empty(value: any) -> bool:
 def _add_questionnaire_item_to_list(items: list, link_id: str, item: dict):
     """Adds a questionnaire item to the items list"""
     items.append({"linkId": link_id, "answer": [item]})
+
+
+class Convert:
+    """
+    Some values need to be converted when the batch input is transformed into FHIR Immunization Resources. Each of the
+    conversion functions returns the converted value where possible, or returns the originial value otherwise
+    """
+
+    @staticmethod
+    def date_time(date_time: str) -> str:
+        """
+        Converts value to a FHIR-formatted date_time if the value is a string represenation of a date_time in the
+        specified format of "YYYYMMDDThhmmss" or "YYYMMDDThhmmss00" (for UTC timezone) or "YYYMMDDThhmmss00" (for BST
+        timezone). Otherwise returns the original value. Where timezone is not given, timezone is defaulted to UTC.
+        """
+
+        if not isinstance(date_time, str):
+            return date_time
+
+        is_date_time_without_timezone = re.compile(r"\d{8}T\d{6}").fullmatch(date_time)
+        is_date_time_utc = re.compile(r"\d{8}T\d{6}00").fullmatch(date_time)
+        is_date_time_bst = re.compile(r"\d{8}T\d{6}01").fullmatch(date_time)
+
+        if not (is_date_time_without_timezone or is_date_time_utc or is_date_time_bst):
+            return date_time
+
+        if is_date_time_utc:
+            return datetime.strptime(date_time, "%Y%m%dT%H%M%S00").strftime("%Y-%m-%dT%H:%M:%S+00:00")
+
+        if is_date_time_bst:
+            return datetime.strptime(date_time, "%Y%m%dT%H%M%S01").strftime("%Y-%m-%dT%H:%M:%S+01:00")
+
+        if is_date_time_without_timezone:
+            return datetime.strptime(date_time, "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S+00:00")
+
+    @staticmethod
+    def date(date: str) -> str:
+        """
+        Converts value to a FHIR-formatted date if the value is a string represenation of a date
+        in the specified format of "YYYYMMDD". Otherwise returns the original value.
+        """
+        # Date cannot be converted if it is not a string of eight digits
+        if not isinstance(date, str) or not re.compile(r"\d{8}").fullmatch(date):
+            return date
+
+        try:
+            return datetime.strptime(date, "%Y%m%d").strftime("%Y-%m-%d")
+        except ValueError:
+            return date
+
+    @staticmethod
+    def gender_code(code: any) -> any:
+        """Converts gender code to fhir gender if the code is recognised. Otherwise returns the original code."""
+        code_to_fhir = {"1": "male", "2": "female", "9": "other", "0": "unknown"}
+        return code_to_fhir.get(code, code)
+
+    @staticmethod
+    def boolean(value: any) -> any:
+        """
+        Converts value to a Python boolean if the value is a string representation of a boolean.
+        Otherwise returns the original value.
+        """
+        lower_value = value.lower() if isinstance(value, str) else None
+        return {"true": True, "false": False}.get(lower_value, value)
+
+    @staticmethod
+    def integer_or_decimal(value: any) -> any:
+        """
+        Converts value to an integer if the value is a string representation of an integer,
+        or Decimal if the value is a string representation of a decimal.
+        Otherwise returns the original value.
+        """
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            try:
+                return Decimal(value)
+            except (TypeError, ValueError, InvalidOperation):
+                return value
+
+    @staticmethod
+    def integer(value: any) -> any:
+        """
+        Converts value to a integer if the value is a string representation of an integer.
+        Otherwise returns the original value.
+        """
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return value
+
+    @staticmethod
+    def to_lower(value: any) -> any:
+        """Converts value to a lower case string if the value is a string. Otherwise returns the original value."""
+        try:
+            return value.lower()
+        except (AttributeError, SyntaxError):
+            return value
 
 
 class Create:
@@ -95,75 +193,3 @@ class Add:
             dictionary[key] = {
                 "coding": [Create.dictionary({"system": "http://snomed.info/sct", "code": code, "display": display})]
             }
-
-
-class Convert:
-    """
-    Some values need to be converted when the batch input is transformed into FHIR Immunization Resources. Each of the
-    conversion functions returns the converted value where possible, or returns the originial value otherwise
-    """
-
-    # TODO: Fix data and date_time conversion
-    @staticmethod
-    def date_time(date_time: str) -> str:
-        try:
-            parsed_dt = datetime.strptime(date_time, "%Y%m%dT%H%M%S00")
-        except ValueError:
-            parsed_dt = datetime.strptime(date_time, "%Y%m%dT%H%M%S")
-        try:
-            return parsed_dt.strftime("%Y-%m-%dT%H:%M:%S+00:00")
-        except ValueError:
-            return date_time
-
-    @staticmethod
-    def date(date: str) -> str:
-        try:
-            return datetime.strptime(date, "%Y%m%d").strftime("%Y-%m-%d")
-        except ValueError:
-            return date
-
-    @staticmethod
-    def gender_code(code: any) -> any:
-        """Converts gender code to fhir gender if the code is recognised. Otherwise returns the original code."""
-        code_to_fhir = {"1": "male", "2": "female", "9": "other", "0": "unknown"}
-        return code_to_fhir.get(code, code)
-
-    @staticmethod
-    def boolean(value: any) -> any:
-        """
-        Converts value to a Python boolean if the value is a string representation of a boolean.
-        Otherwise returns the original value.
-        """
-        lower_value = value.lower() if isinstance(value, str) else None
-        return {"true": True, "false": False}.get(lower_value, value)
-
-    # TODO: Consider whether this should return an integer for integer strings
-    @staticmethod
-    def decimal(value: any) -> any:
-        """
-        Converts value to a Decimal if the value is a string representation of a decimal number.
-        Otherwise returns the original value.
-        """
-        try:
-            return Decimal(value)
-        except (TypeError, ValueError, InvalidOperation):
-            return value
-
-    @staticmethod
-    def integer(value: any) -> any:
-        """
-        Converts value to a integer if the value is a string representation of an integer.
-        Otherwise returns the original value.
-        """
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return value
-
-    @staticmethod
-    def to_lower(value: any) -> any:
-        """Converts value to a lower case string if the value is a string. Otherwise returns the original value."""
-        try:
-            return value.lower()
-        except (AttributeError, SyntaxError):
-            return value

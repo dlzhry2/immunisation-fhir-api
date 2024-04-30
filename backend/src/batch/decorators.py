@@ -193,7 +193,7 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
     Add.snomed(imms, "route", record.get("route_of_vaccination_code"), record.get("route_of_vaccination_term"))
 
     dose_quantity_dict = {
-        "value": Convert.decimal(record.get("dose_amount")),
+        "value": Convert.integer_or_decimal(record.get("dose_amount")),
         "unit": record.get("dose_unit_term"),
         "system": "http://unitsofmeasure.org",
         "code": record.get("dose_unit_code"),
