@@ -2,6 +2,7 @@ import datetime
 import os
 from enum import Enum
 from typing import Optional
+import uuid
 
 from fhir.resources.R4B.bundle import Bundle as FhirBundle, BundleEntry, BundleLink, BundleEntrySearch
 from fhir.resources.R4B.immunization import Immunization
@@ -21,6 +22,7 @@ from models.utils.post_validation_utils import MandatoryError, NotApplicableErro
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
+from models.errors import Severity, Code
 
 
 def get_service_url(
@@ -160,7 +162,17 @@ class FhirService:
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         if not nhs_number_mod11_check(nhs_number):
-            raise InvalidPatientId(nhs_number=nhs_number)
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.invariant,
+                diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
+                exp_error = {
+                             "resourceId": resource_id,
+                             "severity": severity,
+                             "code": code,
+                             "diagnostics": diagnostics
+                            }
+                return (exp_error)
         resources = self.immunization_repo.find_immunizations(nhs_number)
         resources = [
             r for r in resources
