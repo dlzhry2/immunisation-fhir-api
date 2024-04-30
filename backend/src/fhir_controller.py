@@ -170,7 +170,7 @@ class FhirController:
            exp_error = create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
-                code=Code.invalid,
+                code=Code.invariant,
                 diagnostics=result["diagnostics"]
             )
            return self.create_response(400, json.dumps(exp_error) ) 

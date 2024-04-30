@@ -20,7 +20,8 @@ def search_imms_handler(event: events.APIGatewayProxyEventV1, context: context_)
 def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController):
     try:
         response = controller.search_immunizations(event)
-        result_size = len(response.encode("utf-8"))
+        result_json = json.dumps(response)
+        result_size = len(result_json.encode("utf-8"))
         if result_size > 6 * 1024 * 1024:
             exp_error = create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
