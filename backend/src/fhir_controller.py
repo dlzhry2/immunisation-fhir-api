@@ -165,12 +165,17 @@ class FhirController:
             search_params.date_from,
             search_params.date_to,
         )
-
+        if "severity" in result:
+           return self.create_response(400, json.dumps(result) ) 
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
+        if "entry" in result_json_dict:
+            total_count = sum(1 for entry in result_json_dict["entry"] if entry.get("search", {}).get("mode") == "match")
+            result_json_dict["total"] = total_count
         if "entry" not in result_json_dict:
             result_json_dict["entry"] = []
-        return self.create_response(200, json.dumps(result_json_dict))
+            result_json_dict["total"] = 0
+        return self.create_response(200, json.dumps(result_json_dict) )
 
     def _validate_id(self, _id: str) -> Optional[dict]:
         if not re.match(self.immunization_id_pattern, _id):

@@ -28,6 +28,7 @@ locals {
         "IMMUNIZATION_BASE_PATH" = strcontains(local.environment, "pr-") ? "immunisation-fhir-api-${local.environment}" : "immunisation-fhir-api"
         # except for prod and ref, any other env uses PDS int environment
         "PDS_ENV"                = local.environment == "prod" ? "prod" : local.environment == "ref" ? "ref" : "int",
+        "SPLUNK_FIREHOSE_NAME"   = module.splunk.firehose_stream_name
     }
 }
 data "aws_iam_policy_document" "imms_policy_document" {
@@ -36,6 +37,7 @@ data "aws_iam_policy_document" "imms_policy_document" {
             "dynamodb_table_name" : local.imms_table_name
         } ),
         templatefile("${local.policy_path}/log.json", {} ),
+        templatefile("${local.policy_path}/log_kinesis.json", {} ),
         templatefile("${local.policy_path}/secret_manager.json", {
             "account_id": data.aws_caller_identity.current.account_id
         })
