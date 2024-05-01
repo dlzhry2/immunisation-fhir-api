@@ -76,13 +76,14 @@ class FhirService:
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
+            print(f"immunization : {immunization}")
             self.validator.validate(immunization)
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
 
         imms = self.immunization_repo.create_immunization(immunization, patient)
-
+        print(f"imms_response :{imms}")
         return Immunization.parse_obj(imms)
 
     def update_immunization(self, imms_id: str, immunization: dict) -> tuple[UpdateOutcome, Immunization]:
@@ -214,14 +215,15 @@ class FhirService:
         """
         try:
             nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
+            print(f"Service_nhs_number : {nhs_number}")
         except (KeyError, IndexError):
             nhs_number = None
 
         if not nhs_number:
             return {}
-
+        
         patient = self.pds_service.get_patient_details(nhs_number)
-
+        print(f"Service_Patient : {patient}")
         if patient:
             return patient
 
