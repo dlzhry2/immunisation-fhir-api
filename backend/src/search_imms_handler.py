@@ -32,7 +32,6 @@ def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController
             return FhirController.create_response(400, exp_error)
         else:
             return response
-        return
     except Exception as e:
         exp_error = create_operation_outcome(
             resource_id=str(uuid.uuid4()),
