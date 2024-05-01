@@ -79,7 +79,7 @@ class FhirService:
             print(f"immunization : {immunization}")
             self.validator.validate(immunization)
             nhs_number = [x for x in immunization["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
-            print(f"NHS_NUMBER :{pds_nhs_number}")
+            print(f"NHS_NUMBER :{nhs_number}")
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
