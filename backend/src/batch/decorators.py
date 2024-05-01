@@ -1,3 +1,5 @@
+""""Decorators to add the relevant fields to the FHIR immunization resource from the batch stream"""
+
 from collections import OrderedDict
 import inspect
 from typing import List, Callable, Dict, Optional
@@ -26,21 +28,16 @@ def _decorate_immunization(imms: dict, record: OrderedDict[str, str]) -> Optiona
     # NOT_GIVEN and ACTION_FLAG must contain valid values to allow transformation
     if (not_given := Convert.boolean(record.get("not_given"))) not in [True, False]:
         errors.append(TransformerFieldError(field="NOT_GIVEN", message="NOT_GIVEN is missing or is not a boolean"))
-    elif (action_flag := Convert.to_lower(record.get("action_flag"))) not in ["new", "update", "delete"]:
+    # Note that an action_flag of 'delete' goes to the delete lambda and the decorators should not be called
+    elif (Convert.to_lower(record.get("action_flag"))) not in ["new", "update"]:
         message = "ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"
         errors.append(TransformerFieldError(field="ACTION_FLAG", message=message))
     else:
+        # TODO: Confirm below mapping, and that action_flag of delete goes to delete endpoint
         # Add status. The following mapping applies:
         # * NOT_GIVEN is True & ACTION_FLAG is "new" or "update" or "delete" <---> Status will be set to 'not-done'
         # * NOT_GIVEN is False & ACTION_FLAG is "new" or "update" <---> Status will be set to 'completed'
-        # * NOT_GIVEN is False and ACTION_FLAG is "delete" <---> Status will be set to entered-in-error'
-        if not_given is True:
-            imms["status"] = "not-done"
-        elif not_given is False:
-            if action_flag == "new" or action_flag == "update":
-                imms["status"] = "completed"
-            elif action_flag == "delete":
-                imms["status"] = "entered-in-error"
+        imms["status"] = "not-done" if not_given is True else "completed"
 
     # statusReason
     Add.custom_item(
@@ -97,9 +94,9 @@ def _decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
             "resourceType": "Patient",
         }
 
-        Add.item(patient, "gender", person_gender_code, Convert.gender_code)
-
         Add.item(patient, "birthDate", person_dob, Convert.date)
+
+        Add.item(patient, "gender", person_gender_code, Convert.gender_code)
 
         Add.list_of_dict(patient, "address", {"postalCode": person_postcode})
 
@@ -192,13 +189,18 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
 
     Add.snomed(imms, "route", record.get("route_of_vaccination_code"), record.get("route_of_vaccination_term"))
 
+    dose_quantity_values = [
+        dose_amount := record.get("dose_amount"),
+        dose_unit_term := record.get("dose_unit_term"),
+        dose_unit_code := record.get("dose_unit_code"),
+    ]
     dose_quantity_dict = {
-        "value": Convert.integer_or_decimal(record.get("dose_amount")),
-        "unit": record.get("dose_unit_term"),
+        "value": Convert.integer_or_decimal(dose_amount),
+        "unit": dose_unit_term,
         "system": "http://unitsofmeasure.org",
-        "code": record.get("dose_unit_code"),
+        "code": dose_unit_code,
     }
-    Add.dictionary(imms, "doseQuantity", dose_quantity_dict)
+    Add.custom_item(imms, "doseQuantity", dose_quantity_values, Create.dictionary(dose_quantity_dict))
 
     Add.list_of_dict(imms, "protocolApplied", {"doseNumberPositiveInt": Convert.integer(record.get("dose_sequence"))})
 
@@ -213,9 +215,7 @@ def _decorate_performer(imms: dict, record: OrderedDict[str, str]) -> Optional[D
     organization_values = [
         site_code_type_uri := record.get("site_code_type_uri"),
         site_code := record.get("site_code"),
-        # TODO: Confirm how to handle absent site_name. Currently defaulted to unkown if site_code exists in order
-        # to pass validation. Note that site_name is not in vaccinations 4.1 spec, but is mandatory in FHIR API spec.
-        site_name := record.get("site_name", "unknown") if site_code else record.get("site_name"),
+        site_name := record.get("site_name"),
     ]
     practitioner_values = [
         performing_professional_body_reg_uri := record.get("performing_professional_body_reg_uri"),

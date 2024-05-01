@@ -29,7 +29,7 @@ class Convert:
     def date_time(date_time: str) -> str:
         """
         Converts value to a FHIR-formatted date_time if the value is a string represenation of a date_time in the
-        specified format of "YYYYMMDDThhmmss" or "YYYMMDDThhmmss00" (for UTC timezone) or "YYYMMDDThhmmss00" (for BST
+        specified format of "YYYYMMDDThhmmss" or "YYYMMDDThhmmss00" (for UTC timezone) or "YYYMMDDThhmmss01" (for BST
         timezone). Otherwise returns the original value. Where timezone is not given, timezone is defaulted to UTC.
         """
 
@@ -43,14 +43,17 @@ class Convert:
         if not (is_date_time_without_timezone or is_date_time_utc or is_date_time_bst):
             return date_time
 
-        if is_date_time_utc:
-            return datetime.strptime(date_time, "%Y%m%dT%H%M%S00").strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        try:
+            if is_date_time_utc:
+                return datetime.strptime(date_time, "%Y%m%dT%H%M%S00").strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-        if is_date_time_bst:
-            return datetime.strptime(date_time, "%Y%m%dT%H%M%S01").strftime("%Y-%m-%dT%H:%M:%S+01:00")
+            if is_date_time_bst:
+                return datetime.strptime(date_time, "%Y%m%dT%H%M%S01").strftime("%Y-%m-%dT%H:%M:%S+01:00")
 
-        if is_date_time_without_timezone:
-            return datetime.strptime(date_time, "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S+00:00")
+            if is_date_time_without_timezone:
+                return datetime.strptime(date_time, "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        except ValueError:
+            return date_time
 
     @staticmethod
     def date(date: str) -> str:

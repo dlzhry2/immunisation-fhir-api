@@ -24,10 +24,7 @@ class DataRecordTransformer:
 
     def __init__(self):
         # Initialise the immunization resource with the base model
-        self.raw_imms = {
-            "resourceType": "Immunization",
-            "contained": [],
-        }
+        self.raw_imms = {"resourceType": "Immunization", "contained": []}
 
     def transform(self, record: RecordDict) -> dict:
         imms = copy.deepcopy(self.raw_imms)

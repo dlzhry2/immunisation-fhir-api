@@ -14,6 +14,7 @@ from batch.decorators import (
     _decorate_immunization,
 )
 from batch.errors import DecoratorError, TransformerFieldError, TransformerRowError, TransformerUnhandledError
+from constants import valid_nhs_number, address_unknown_postcode
 
 """Test each decorator in the transformer module
 Each decorator has its own test class. Each method is used to test a specific scenario. For example there may be
@@ -23,10 +24,51 @@ NOTE: testing protected methods is not ideal. But in this case, we are testing t
 NOTE: the public function `decorate` is tested in `TestDecorate` class.
 """
 
-raw_imms: dict = {
-    "resourceType": "Immunization",
-    "contained": [],
+raw_imms: dict = {"resourceType": "Immunization", "contained": []}
+vaccination_procedure_url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
+vaccination_situation_url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
+snomed_url = "http://snomed.info/sct"
+nhs_number_verification_url = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+base_extension_item = {"valueCodeableConcept": {"coding": [{"system": snomed_url}]}}
+
+vaccination_procedure_extension_item = {
+    "url": vaccination_procedure_url,
+    "valueCodeableConcept": {
+        "coding": [
+            {
+                "system": snomed_url,
+                "code": "a_vaccination_procedure_code",
+                "display": "a_vaccination_procedure_term",
+            }
+        ]
+    },
 }
+
+vaccination_situation_extension_item = {
+    "url": vaccination_situation_url,
+    "valueCodeableConcept": {
+        "coding": [
+            {
+                "system": snomed_url,
+                "code": "a_vaccination_situation_code",
+                "display": "a_vaccination_situation_term",
+            }
+        ]
+    },
+}
+
+# vaccination_procedure_extension_item = {
+#     "url": vaccination_procedure_url,
+#     "valueCodeableConcept": {
+#         "coding": [
+#             {
+#                 "system": nhs_number_verification_url,
+#                 "code": "a_vaccination_procedure_code",
+#                 "display": "a_vaccination_procedure_term",
+#             }
+#         ]
+#     },
+# }
 
 
 class TestDecorate(unittest.TestCase):
@@ -114,474 +156,532 @@ class TestDecorate(unittest.TestCase):
 
 class TestImmunizationDecorator(unittest.TestCase):
     def setUp(self):
-        self.maxDiff = None
         self.imms = copy.deepcopy(raw_imms)
-
-    def test_identifier(self):
-        """it should add unique id as identifier"""
-        headers = OrderedDict([("unique_id", "a_unique_id"), ("unique_id_uri", "a_unique_id_uri")])
-
-        _decorate_immunization(self.imms, headers)
-
-        expected = [{"value": "a_unique_id", "system": "a_unique_id_uri"}]
-
-        self.assertDictEqual(expected[0], self.imms["identifier"][0])
-
-    def test_not_given_true(self):
-        """it should set status to 'not-done' if not given is true"""
-        headers = OrderedDict([("not_given", "TRUE"), ("action_flag", "new")])
-
-        _decorate_immunization(self.imms, headers)
-
-        self.assertEqual("not-done", self.imms["status"])
-
-    def test_not_given_false_action_delete(self):
-        """it should set the status to 'entered-in-error' if not given is false and ACTION_FLAG is update or delete"""
-        values = [("FALSE", "delete")]
-        for not_given, action_flag in values:
-            with self.subTest(not_given=not_given, action_flag=action_flag):
-                headers = OrderedDict([("not_given", not_given), ("action_flag", action_flag)])
-
-                _decorate_immunization(self.imms, headers)
-
-                self.assertEqual("entered-in-error", self.imms["status"])
-
-        # TODO: Check if any other action flag should set status to entered-in-error, or raise an error. Add a test.
-        # TODO: Add more tests for other action flags.
-
-    def test_not_given_reason(self):
-        """it should add the reason why the vaccine was not given"""
-        headers = OrderedDict(
+        self.completed_all_headers = OrderedDict(
             [
-                ("not_given", "True"),
+                ("not_given", "false"),
                 ("action_flag", "new"),
-                ("reason_not_given_code", "a_not_given_reason_code"),
-                ("reason_not_given_term", "a_not_given_reason_term"),
+                ("indication_code", "INDICATION_CODE"),
+                ("indication_term", "indication term"),
+                ("recorded_date", "20000101"),
+                ("unique_id", "UNIQUE_ID_123"),
+                ("unique_id_uri", "unique_id_uri"),
+            ]
+        )
+        self.not_done_all_headers = OrderedDict(
+            [
+                ("not_given", "true"),
+                ("action_flag", "new"),
+                ("reason_not_given_code", "REASON_NOT_GIVEN_CODE"),
+                ("reason_not_given_term", "reason not given term"),
+                ("recorded_date", "20000101"),
+                ("unique_id", "UNIQUE_ID_123"),
+                ("unique_id_uri", "unique_id_uri"),
             ]
         )
 
-        _decorate_immunization(self.imms, headers)
+    def test_completed_all_headers(self):
+        _decorate_immunization(self.imms, self.completed_all_headers)
 
+        expected_output = {
+            "resourceType": "Immunization",
+            "contained": [],
+            "status": "completed",
+            "reasonCode": [{"coding": [{"code": "INDICATION_CODE", "display": "indication term"}]}],
+            "recorded": "2000-01-01",
+            "identifier": [{"system": "unique_id_uri", "value": "UNIQUE_ID_123"}],
+        }
+
+        self.assertDictEqual(self.imms, expected_output)
+
+    def test_not_done_all_headers(self):
+        _decorate_immunization(self.imms, self.not_done_all_headers)
+
+        expected_output = {
+            "resourceType": "Immunization",
+            "contained": [],
+            "status": "not-done",
+            "statusReason": {"coding": [{"code": "REASON_NOT_GIVEN_CODE", "display": "reason not given term"}]},
+            "recorded": "2000-01-01",
+            "identifier": [{"system": "unique_id_uri", "value": "UNIQUE_ID_123"}],
+        }
+
+        self.assertDictEqual(self.imms, expected_output)
+
+    def test_no_headers(self):
+        _decorate_immunization(self.imms, OrderedDict([]))
+        self.assertDictEqual(self.imms, {"resourceType": "Immunization", "contained": []})
+
+    def test_not_given_and_action_flag_true(self):
+        """Test status is set to the appropriate value based on not_given and action_flag"""
+        for not_given, action_flag, status in [
+            ("true", "new", "not-done"),
+            ("TRUE", "UPDATE", "not-done"),
+            ("fAlsE", "nEw", "completed"),
+            ("false", "update", "completed"),
+        ]:
+            _decorate_immunization(self.imms, OrderedDict([("not_given", not_given), ("action_flag", action_flag)]))
+            self.assertEqual(status, self.imms["status"])
+
+            # TODO: Test invalid values of not_given and action_flag
+
+    def test_reason_not_given(self):
+        """it should add the reason why the vaccine was not given"""
+        # Code and term both non-empty
+        headers = OrderedDict(
+            [("reason_not_given_code", "a_not_given_reason_code"), ("reason_not_given_term", "a_not_given_reason_term")]
+        )
+        _decorate_immunization(self.imms, headers)
         expected = {"coding": [{"code": "a_not_given_reason_code", "display": "a_not_given_reason_term"}]}
         self.assertDictEqual(expected, self.imms["statusReason"])
 
-    def test_use_indication_if_not_given_empty(self):
-        """it should use the indication if reason-not-given is empty. they are mutually exclusive"""
-        headers = OrderedDict(
-            [
-                ("not_given", "False"),
-                ("action_flag", "new"),
-                ("reason_not_given_code", ""),
-                ("reason_not_given_term", ""),
-                ("indication_code", "a_indication_code"),
-                ("indication_term", "a_indication_term"),
-            ]
-        )
-
+        # Code non-empty, term empty
+        headers = OrderedDict([("reason_not_given_code", "a_not_given_reason_code")])
         _decorate_immunization(self.imms, headers)
+        expected = {"coding": [{"code": "a_not_given_reason_code"}]}
+        self.assertDictEqual(expected, self.imms["statusReason"])
 
-        expected = {"coding": [{"code": "a_indication_code", "display": "a_indication_term"}]}
+        # Code empty, term non-empty
+        headers = OrderedDict([("reason_not_given_term", "a_not_given_reason_term")])
+        _decorate_immunization(self.imms, headers)
+        expected = {"coding": [{"display": "a_not_given_reason_term"}]}
+        self.assertDictEqual(expected, self.imms["statusReason"])
 
-        self.assertDictEqual(expected, self.imms["reasonCode"][0])
+    def test_indication(self):
+        """it should add the reason why the vaccine was given"""
+        # Code and term both non-empty
+        headers = OrderedDict([("indication_code", "indication_code"), ("indication_term", "indication_term")])
+        _decorate_immunization(self.imms, headers)
+        expected = [{"coding": [{"code": "indication_code", "display": "indication_term"}]}]
+        self.assertListEqual(expected, self.imms["reasonCode"])
+
+        # Code non-empty, term empty
+        headers = OrderedDict([("indication_code", "indication_code")])
+        _decorate_immunization(self.imms, headers)
+        expected = [{"coding": [{"code": "indication_code"}]}]
+        self.assertListEqual(expected, self.imms["reasonCode"])
+
+        # Code empty, term non-empty
+        headers = OrderedDict([("indication_term", "indication_term"), ("indication_code", "")])
+        _decorate_immunization(self.imms, headers)
+        expected = [{"coding": [{"display": "indication_term"}]}]
+        self.assertListEqual(expected, self.imms["reasonCode"])
 
     def test_recorded_date(self):
         """it should convert and add the recorded date to the immunization object"""
-        headers = OrderedDict([("recorded_date", "20240221")])
-
-        _decorate_immunization(self.imms, headers)
-
+        _decorate_immunization(self.imms, OrderedDict([("recorded_date", "20240221")]))
         self.assertEqual("2024-02-21", self.imms["recorded"])
+
+    def test_identifier(self):
+        """it should add unique id as identifier"""
+        # id and uri non-empty
+        _decorate_immunization(
+            self.imms, OrderedDict([("unique_id", "a_unique_id"), ("unique_id_uri", "a_unique_id_uri")])
+        )
+        self.assertListEqual([{"value": "a_unique_id", "system": "a_unique_id_uri"}], self.imms["identifier"])
+
+        # id non-empty, uri empty
+        _decorate_immunization(self.imms, OrderedDict([("unique_id", "a_unique_id"), ("unique_id_uri", None)]))
+        self.assertListEqual([{"value": "a_unique_id"}], self.imms["identifier"])
+
+        # id empty, uri non-empty
+        _decorate_immunization(self.imms, OrderedDict([("unique_id_uri", "a_unique_id_uri")]))
+        self.assertListEqual([{"system": "a_unique_id_uri"}], self.imms["identifier"])
 
 
 class TestPatientDecorator(unittest.TestCase):
+    """Tests for _decorate_patient"""
+
     def setUp(self):
-        self.maxDiff = None
         self.imms = copy.deepcopy(raw_imms)
 
-    def test_add_patient(self):
-        """it should add the patient object to the contained list"""
-        # Given
-        headers = OrderedDict([("person_dob", "20000101")])
-
-        _decorate_patient(self.imms, headers)
-
-        expected_imms = copy.deepcopy(raw_imms)
-        expected_imms["patient"] = {"reference": "#Patient1"}
-        expected_imms["contained"].append({"resourceType": "Patient", "id": "Patient1", "birthDate": "2000-01-01"})
-
-        self.assertDictEqual(expected_imms, self.imms)
-
-    def test_add_nhs_number(self):
-        """it should add the nhs number to the patient object"""
-        # Given
-        headers = OrderedDict([("nhs_number", "a_nhs_number")])
-
-        # When
-        _decorate_patient(self.imms, headers)
-
-        # Then
-        expected = {
-            "resourceType": "Patient",
-            "id": ANY,
-            "identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number", "value": "a_nhs_number"}],
-        }
-        self.assertDictEqual(expected, self.imms["contained"][0])
-
-    def test_add_nhs_number_extension(self):
-        """it should add the nhs number to the patient object"""
-        # Given
-        headers = OrderedDict(
+    def test_all_patient_headers(self):
+        """Test that all patient fields are added when all patient fields contain non-empty data"""
+        all_patient_headers = OrderedDict(
             [
-                ("nhs_number", "a_nhs_number"),
-                ("nhs_number_status_indicator_code", "a_nhs_number_status_indicator_code"),
-                ("nhs_number_status_indicator_description", "a_nhs_number_status_indicator_description"),
+                ("person_surname", "surname"),
+                ("person_forename", "forename"),
+                ("person_gender_code", "1"),
+                ("person_dob", "20000101"),
+                ("person_postcode", address_unknown_postcode),
+                ("nhs_number", valid_nhs_number),
+                ("nhs_number_status_indicator_code", "an_nhs_status_code"),
+                ("nhs_number_status_indicator_description", "an_nhs_status_description"),
             ]
         )
+        _decorate_patient(self.imms, all_patient_headers)
 
-        # When
-        _decorate_patient(self.imms, headers)
-
-        # Then
-        expected = {
-            "resourceType": "Patient",
-            "id": ANY,
-            "identifier": [
+        expected_output = {
+            "resourceType": "Immunization",
+            "contained": [
                 {
-                    "system": ANY,
-                    "value": ANY,
-                    "extension": [
+                    "resourceType": "Patient",
+                    "id": "Patient1",
+                    "identifier": [
                         {
-                            "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-                            + "NHSNumberVerificationStatus",
-                            "valueCodeableConcept": {
-                                "coding": [
-                                    {
-                                        "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-"
-                                        + "NHSNumberVerificationStatusEngland",
-                                        "code": "a_nhs_number_status_indicator_code",
-                                        "display": "a_nhs_number_status_indicator_description",
-                                    }
-                                ]
-                            },
+                            "extension": [
+                                {
+                                    "url": "https://fhir.hl7.org.uk/StructureDefinition/"
+                                    + "Extension-UKCore-NHSNumberVerificationStatus",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "https://fhir.hl7.org.uk/CodeSystem/"
+                                                + "UKCore-NHSNumberVerificationStatusEngland",
+                                                "code": "an_nhs_status_code",
+                                                "display": "an_nhs_status_description",
+                                            }
+                                        ]
+                                    },
+                                }
+                            ],
+                            "system": "https://fhir.nhs.uk/Id/nhs-number",
+                            "value": valid_nhs_number,
                         }
                     ],
-                }
+                    "name": [{"family": "surname", "given": ["forename"]}],
+                    "gender": "male",
+                    "birthDate": "2000-01-01",
+                    "address": [{"postalCode": address_unknown_postcode}],
+                },
             ],
+            "patient": {"reference": "#Patient1"},
         }
-        self.assertDictEqual(expected, self.imms["contained"][0])
+
+        self.assertDictEqual(self.imms, expected_output)
+
+    def test_no_headers(self):
+        """Test that no fields are added when no patient fields contain non-empty data"""
+        _decorate_patient(self.imms, OrderedDict([]))
+        self.assertDictEqual(self.imms, {"resourceType": "Immunization", "contained": []})
+
+    def test_dob(self):
+        """it should convert and add the dob to the patient object"""
+        _decorate_patient(self.imms, OrderedDict([("person_dob", "19930821")]))
+        expected_imms = {
+            "resourceType": "Immunization",
+            "contained": [{"resourceType": "Patient", "id": "Patient1", "birthDate": "1993-08-21"}],
+            "patient": {"reference": "#Patient1"},
+        }
+        self.assertDictEqual(expected_imms, self.imms)
+
+    def test_gender_code(self):
+        """it should convert gender code to fhir code and leave it as is if we can't convert it"""
+        imms = copy.deepcopy(self.imms)
+        _decorate_patient(imms, OrderedDict([("person_gender_code", "1")]))
+        expected_contained_patient = {"resourceType": "Patient", "id": "Patient1", "gender": "male"}
+        self.assertDictEqual(expected_contained_patient, imms["contained"][0])
+
+        imms = copy.deepcopy(self.imms)
+        _decorate_patient(imms, OrderedDict([("person_gender_code", "invalid_code")]))
+        expected_contained_patient = {"resourceType": "Patient", "id": "Patient1", "gender": "invalid_code"}
+        self.assertDictEqual(expected_contained_patient, imms["contained"][0])
+
+    def test_address(self):
+        """it should add postcode and address to the patient object"""
+        _decorate_patient(self.imms, OrderedDict([("person_postcode", "a_person_postcode")]))
+        expected_contained_patient = {
+            "resourceType": "Patient",
+            "id": "Patient1",
+            "address": [{"postalCode": "a_person_postcode"}],
+        }
+        self.assertDictEqual(expected_contained_patient, self.imms["contained"][0])
 
     def test_add_name(self):
         """it should add the name to the patient object"""
-        # Given
+        # Surname and forename non-empty
+        imms = copy.deepcopy(self.imms)
+        _decorate_patient(imms, OrderedDict([("person_surname", "a_surname"), ("person_forename", "a_forename")]))
+        self.assertListEqual([{"family": "a_surname", "given": ["a_forename"]}], imms["contained"][0]["name"])
+
+        # Surname non-empty, forename empty
+        imms = copy.deepcopy(self.imms)
+        _decorate_patient(imms, OrderedDict([("person_surname", "a_surname"), ("person_forename", "")]))
+        self.assertListEqual([{"family": "a_surname"}], imms["contained"][0]["name"])
+
+        # Surname empty, forename non-empty
+        imms = copy.deepcopy(self.imms)
+        _decorate_patient(imms, OrderedDict([("person_forename", "a_forename")]))
+        self.assertListEqual([{"given": ["a_forename"]}], imms["contained"][0]["name"])
+
+    def test_add_nhs_number(self):
+        """it should add the nhs number to the patient object"""
+        _decorate_patient(self.imms, OrderedDict([("nhs_number", "a_nhs_number")]))
+        expected_contained_patient_identifier = [
+            {"system": "https://fhir.nhs.uk/Id/nhs-number", "value": "a_nhs_number"}
+        ]
+        self.assertListEqual(expected_contained_patient_identifier, self.imms["contained"][0]["identifier"])
+
+    def test_add_patient_extension(self):
+        """it should add the nhs number to the patient object"""
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
+        coding_system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
+        extension_base = {"extension": [{"url": url, "valueCodeableConcept": {"coding": [{"system": coding_system}]}}]}
+
+        # nhs_number_status_indicator: _code and _description non-empty
+        imms = copy.deepcopy(self.imms)
         headers = OrderedDict(
             [
-                ("person_surname", "a_person_surname"),
-                ("person_forename", "a_person_forename"),
+                ("nhs_number_status_indicator_code", "a_status_code"),
+                ("nhs_number_status_indicator_description", "a_status_description"),
             ]
         )
 
-        # When
-        _decorate_patient(self.imms, headers)
+        _decorate_patient(imms, headers)
 
-        # Then
-        expected = {
-            "resourceType": "Patient",
-            "id": "Patient1",
-            "name": [{"family": "a_person_surname", "given": ["a_person_forename"]}],
-        }
+        expected = copy.deepcopy(extension_base)
+        expected["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "a_status_code"
+        expected["extension"][0]["valueCodeableConcept"]["coding"][0]["display"] = "a_status_description"
+        self.assertDictEqual(expected, imms["contained"][0]["identifier"][0])
 
-        self.assertDictEqual(expected, self.imms["contained"][0])
+        # nhs_number_status_indicator: _code non-empty, _description empty
+        imms = copy.deepcopy(self.imms)
+        headers = OrderedDict([("nhs_number_status_indicator_code", "a_status_code")])
 
-    def test_add_dob(self):
-        """it should convert and add the dob to the patient object"""
-        headers = OrderedDict([("person_dob", "19930821")])
+        _decorate_patient(imms, headers)
 
-        _decorate_patient(self.imms, headers)
+        expected = copy.deepcopy(extension_base)
+        expected["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "a_status_code"
+        self.assertDictEqual(expected, imms["contained"][0]["identifier"][0])
 
-        expected = {"resourceType": "Patient", "id": ANY, "birthDate": "1993-08-21"}
-        self.assertDictEqual(expected, self.imms["contained"][0])
+        # nhs_number_status_indicator: _code empty, _description non-empty
+        imms = copy.deepcopy(self.imms)
+        headers = OrderedDict([("nhs_number_status_indicator_description", "a_status_description")])
 
-    def test_gender_converter(self):
-        """it should convert gender code to fhir code and leave it as is if we can't convert it"""
-        values = [
-            ("0", "unknown"),
-            ("1", "male"),
-            ("2", "female"),
-            ("9", "other"),
-            ("unknown_code_123", "unknown_code_123"),
-        ]
-        for gen_num, gen_value in values:
-            with self.subTest(value=gen_num):
-                headers = OrderedDict([("person_gender_code", gen_num)])
-                imms = copy.deepcopy(raw_imms)
+        _decorate_patient(imms, headers)
 
-                _decorate_patient(imms, headers)
-
-                expected = {"resourceType": "Patient", "id": ANY, "gender": gen_value}
-
-                self.assertDictEqual(expected, imms["contained"][0])
-
-    def test_add_address(self):
-        """it should add postcode and address to the patient object"""
-        headers = OrderedDict([("person_postcode", "a_person_postcode")])
-
-        _decorate_patient(self.imms, headers)
-
-        expected = {
-            "resourceType": "Patient",
-            "id": ANY,
-            "address": [
-                {
-                    "postalCode": "a_person_postcode",
-                }
-            ],
-        }
-        self.assertDictEqual(expected, self.imms["contained"][0])
+        expected = copy.deepcopy(extension_base)
+        expected["extension"][0]["valueCodeableConcept"]["coding"][0]["display"] = "a_status_description"
+        self.assertDictEqual(expected, imms["contained"][0]["identifier"][0])
 
 
 class TestVaccineDecorator(unittest.TestCase):
     def setUp(self):
-        self.maxDiff = None
         self.imms = copy.deepcopy(raw_imms)
 
-    def test_vaccine_product(self):
-        headers = OrderedDict(
+    def test_all_vaccine_headers(self):
+        """Test that all vaccine fields are added when all vaccine fields contain non-empty data"""
+        all_vaccine_headers = OrderedDict(
             [
-                ("vaccine_product_code", "a_vaccine_product_code"),
-                ("vaccine_product_term", "a_vaccine_product_term"),
+                ("vaccine_product_code", "a_vacc_code"),
+                ("vaccine_product_term", "a_vacc_term"),
+                ("vaccine_manufacturer", "a_manufacturer"),
+                ("expiry_date", "20000101"),
+                ("batch_number", "a_batch_number"),
             ]
         )
+        _decorate_vaccine(self.imms, all_vaccine_headers)
 
-        _decorate_vaccine(self.imms, headers)
-
-        expected = {
-            "coding": [
-                {
-                    "system": "http://snomed.info/sct",
-                    "code": "a_vaccine_product_code",
-                    "display": "a_vaccine_product_term",
-                }
-            ]
+        expected_output = {
+            "resourceType": "Immunization",
+            "contained": [],
+            "vaccineCode": {
+                "coding": [{"system": "http://snomed.info/sct", "code": "a_vacc_code", "display": "a_vacc_term"}]
+            },
+            "manufacturer": {"display": "a_manufacturer"},
+            "lotNumber": "a_batch_number",
+            "expirationDate": "2000-01-01",
         }
 
+        self.assertDictEqual(self.imms, expected_output)
+
+    # TODO: Remove this one, but add to other decorators
+    def test_one_header(self):
+        """Test that vaccine fields are added when one vaccine field contains non-empty data"""
+        _decorate_vaccine(self.imms, OrderedDict([("vaccine_product_code", "a_vacc_code")]))
+        expected_output = {
+            "resourceType": "Immunization",
+            "contained": [],
+            "vaccineCode": {"coding": [{"system": "http://snomed.info/sct", "code": "a_vacc_code"}]},
+        }
+        self.assertDictEqual(self.imms, expected_output)
+
+    def test_no_headers(self):
+        """Test that no fields are added when no vaccine fields contain non-empty data"""
+        _decorate_vaccine(self.imms, OrderedDict([]))
+        self.assertDictEqual(self.imms, {"resourceType": "Immunization", "contained": []})
+
+    def test_vaccine_product(self):
+        # vaccine_product: _code and term non-empty
+        headers = OrderedDict([("vaccine_product_code", "a_vacc_code"), ("vaccine_product_term", "a_vacc_term")])
+        _decorate_vaccine(self.imms, headers)
+        expected = {"coding": [{"system": "http://snomed.info/sct", "code": "a_vacc_code", "display": "a_vacc_term"}]}
         self.assertDictEqual(expected, self.imms["vaccineCode"])
 
-    def test_manufacturer(self):
-        headers = OrderedDict([("vaccine_manufacturer", "a_vaccine_manufacturer")])
-
+        # vaccine_product: _code non-empty, term empty
+        headers = OrderedDict([("vaccine_product_code", "a_vacc_code"), ("vaccine_product_term", "")])
         _decorate_vaccine(self.imms, headers)
+        expected = {"coding": [{"system": "http://snomed.info/sct", "code": "a_vacc_code"}]}
+        self.assertDictEqual(expected, self.imms["vaccineCode"])
 
-        expected = {"display": "a_vaccine_manufacturer"}
-        self.assertDictEqual(expected, self.imms["manufacturer"])
-
-    def test_expiration(self):
-        """it should convert and add expiration date"""
-        headers = OrderedDict([("expiry_date", "20240303")])
-
+        # vaccine_product: _code empty, term non-empty
+        headers = OrderedDict([("vaccine_product_code", ""), ("vaccine_product_term", "a_vacc_term")])
         _decorate_vaccine(self.imms, headers)
-
-        expected = "2024-03-03"
-        self.assertEqual(expected, self.imms["expirationDate"])
-
-    def test_lot_number(self):
-        headers = OrderedDict([("batch_number", "a_batch_number")])
-
-        _decorate_vaccine(self.imms, headers)
-
-        expected = "a_batch_number"
-        self.assertEqual(expected, self.imms["lotNumber"])
+        expected = {"coding": [{"system": "http://snomed.info/sct", "display": "a_vacc_term"}]}
+        self.assertDictEqual(expected, self.imms["vaccineCode"])
 
 
 class TestVaccinationDecorator(unittest.TestCase):
     def setUp(self):
-        self.maxDiff = None
         self.imms = copy.deepcopy(raw_imms)
+
+    def test_all_vaccination_headers(self):
+        """Test that all vaccination fields are added when all vaccination fields contain non-empty data"""
+        all_vaccination_headers = OrderedDict(
+            [
+                ("vaccination_procedure_code", "a_vaccination_procedure_code"),
+                ("vaccination_procedure_term", "a_vaccination_procedure_term"),
+                ("vaccination_situation_code", "a_vaccination_situation_code"),
+                ("vaccination_situation_term", "a_vaccination_situation_term"),
+                ("date_and_time", "20000101T11111101"),
+                ("primary_source", "True"),
+                ("report_origin", "a_report_origin"),
+                ("site_of_vaccination_code", "a_vacc_site_code"),
+                ("site_of_vaccination_term", "a_vacc_site_term"),
+                ("route_of_vaccination_code", "a_vacc_route_code"),
+                ("route_of_vaccination_term", "a_vacc_route_term"),
+                ("dose_amount", "0.5"),
+                ("dose_unit_term", "a_dose_unit_term"),
+                ("dose_unit_code", "a_dose_unit_code"),
+                ("dose_sequence", "3"),
+            ]
+        )
+        _decorate_vaccination(self.imms, all_vaccination_headers)
+
+        expected_output = {
+            "resourceType": "Immunization",
+            "contained": [],
+            "extension": [vaccination_procedure_extension_item, vaccination_situation_extension_item],
+            "occurrenceDateTime": "2000-01-01T11:11:11+01:00",
+            "primarySource": True,
+            "reportOrigin": {"text": "a_report_origin"},
+            "site": {
+                "coding": [
+                    {"system": "http://snomed.info/sct", "code": "a_vacc_site_code", "display": "a_vacc_site_term"}
+                ]
+            },
+            "route": {
+                "coding": [
+                    {"system": "http://snomed.info/sct", "code": "a_vacc_route_code", "display": "a_vacc_route_term"}
+                ]
+            },
+            "doseQuantity": {
+                "value": Decimal(0.5),
+                "unit": "a_dose_unit_term",
+                "system": "http://unitsofmeasure.org",
+                "code": "a_dose_unit_code",
+            },
+            "protocolApplied": [{"doseNumberPositiveInt": 3}],
+        }
+
+        self.assertDictEqual(self.imms, expected_output)
+
+    def test_no_headers(self):
+        """Test that no fields are added when no vaccination fields contain non-empty data"""
+        _decorate_vaccination(self.imms, OrderedDict([]))
+        self.assertDictEqual(self.imms, {"resourceType": "Immunization", "contained": []})
+
+    def test_one_extension_header(self):
+        """Test that the relevant extension fields are added when one vaccination field contains non-empty data"""
+        _decorate_vaccination(self.imms, OrderedDict([("vaccination_procedure_term", "a_vaccination_procedure_term")]))
+
+        expected_extension_item = copy.deepcopy(vaccination_procedure_extension_item)
+        expected_extension_item["valueCodeableConcept"]["coding"][0].pop("code")
+        expected_output = {"resourceType": "Immunization", "contained": [], "extension": [expected_extension_item]}
+        self.assertDictEqual(self.imms, expected_output)
 
     def test_vaccination_procedure(self):
         """it should get the vaccination procedure code and term and add it to the extension list"""
-        a_vaccination_procedure_code = "1324681000000101"
-        headers = OrderedDict(
-            [
-                ("vaccination_procedure_code", a_vaccination_procedure_code),
-                ("vaccination_procedure_term", "a_vaccination_procedure_term"),
-            ]
-        )
+        # vaccination_procedure: _code empty, _term non-empty
+        _decorate_vaccination(self.imms, OrderedDict([("vaccination_procedure_term", "a_vaccination_procedure_term")]))
+        expected_extension_item = copy.deepcopy(vaccination_procedure_extension_item)
+        expected_extension_item["valueCodeableConcept"]["coding"][0].pop("code")
+        self.assertListEqual(self.imms["extension"], [expected_extension_item])
 
-        _decorate_vaccination(self.imms, headers)
-
-        # Then
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
-        expected = {
-            "url": url,
-            "valueCodeableConcept": {
-                "coding": [
-                    {
-                        "system": "http://snomed.info/sct",
-                        "code": a_vaccination_procedure_code,
-                        "display": "a_vaccination_procedure_term",
-                    }
-                ]
-            },
-        }
-        self.assertDictEqual(expected, self.imms["extension"][0])
+        # vaccination_procedure: _code empty, _term non-empty
+        _decorate_vaccination(self.imms, OrderedDict([("vaccination_procedure_code", "a_vaccination_procedure_code")]))
+        expected_extension_item = copy.deepcopy(vaccination_procedure_extension_item)
+        expected_extension_item["valueCodeableConcept"]["coding"][0].pop("display")
+        self.assertListEqual(self.imms["extension"], [expected_extension_item])
 
     def test_vaccination_situation(self):
-        """it should get the vaccination situation code and term and add it to the extension list"""
-        a_vaccination_situation_code = "1324681000000101"
-        headers = OrderedDict(
-            [
-                ("vaccination_situation_code", a_vaccination_situation_code),
-                ("vaccination_situation_term", "a_vaccination_situation_term"),
-            ]
-        )
+        # vaccination_situation: _code empty, _term non-empty
+        _decorate_vaccination(self.imms, OrderedDict([("vaccination_situation_term", "a_vaccination_situation_term")]))
+        expected_extension_item = copy.deepcopy(vaccination_situation_extension_item)
+        expected_extension_item["valueCodeableConcept"]["coding"][0].pop("code")
+        self.assertListEqual(self.imms["extension"], [expected_extension_item])
 
-        _decorate_vaccination(self.imms, headers)
+        # vaccination_situation: _code empty, _term non-empty
+        _decorate_vaccination(self.imms, OrderedDict([("vaccination_situation_code", "a_vaccination_situation_code")]))
+        expected_extension_item = copy.deepcopy(vaccination_situation_extension_item)
+        expected_extension_item["valueCodeableConcept"]["coding"][0].pop("display")
+        self.assertListEqual(self.imms["extension"], [expected_extension_item])
 
-        # Then
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation"
-        expected = {
-            "url": url,
-            "valueCodeableConcept": {
-                "coding": [
-                    {
-                        "system": "http://snomed.info/sct",
-                        "code": a_vaccination_situation_code,
-                        "display": "a_vaccination_situation_term",
-                    }
-                ]
-            },
-        }
-        self.assertDictEqual(expected, self.imms["extension"][0])
-
-    def test_occurrence_date_time(self):
-        """it should convert and add the occurrence date time to the vaccination object"""
-        headers = OrderedDict([("date_and_time", "20240221T171930")])
-
-        _decorate_vaccination(self.imms, headers)
-
-        expected = "2024-02-21T17:19:30+00:00"
-        self.assertEqual(expected, self.imms["occurrenceDateTime"])
-
-    def test_primary_source_false(self):
-        """it should set the primary source by converting the string to a boolean"""
-        headers = OrderedDict([("primary_source", "FALSE")])
-
-        _decorate_vaccination(self.imms, headers)
-
-        self.assertEqual(False, self.imms["primarySource"])
-
-    def test_primary_source_true(self):
-        """it should set the primary source by converting the string to a boolean"""
-        headers = OrderedDict([("primary_source", "TRUE")])
-
-        _decorate_vaccination(self.imms, headers)
-
-        self.assertEqual(True, self.imms["primarySource"])
-
-    def test_report_origin(self):
-        """it should set the report origin"""
-        headers = OrderedDict([("report_origin", "a_report_origin")])
-
-        _decorate_vaccination(self.imms, headers)
-
-        expected = {"text": "a_report_origin"}
-        self.assertDictEqual(expected, self.imms["reportOrigin"])
-
-    def test_vaccination_site(self):
+    def test_site_of_vaccination(self):
         """it should get the vaccination site code and term and add it to the site object"""
-        headers = OrderedDict(
-            [
-                ("site_of_vaccination_code", "a_site_of_vaccination_code"),
-                ("site_of_vaccination_term", "a_site_of_vaccination_term"),
-            ]
-        )
-
-        _decorate_vaccination(self.imms, headers)
-
-        expected = {
-            "coding": [
-                {
-                    "system": "http://snomed.info/sct",
-                    "code": "a_site_of_vaccination_code",
-                    "display": "a_site_of_vaccination_term",
-                }
-            ]
-        }
-
+        # site_of_vaccination: _code non-empty, _display empty
+        _decorate_vaccination(self.imms, OrderedDict([("site_of_vaccination_code", "a_vacc_site_code")]))
+        expected = {"coding": [{"system": "http://snomed.info/sct", "code": "a_vacc_site_code"}]}
         self.assertDictEqual(expected, self.imms["site"])
 
-    def test_vaccination_route(self):
+        # site_of_vaccination: _code empty, _display non-empty
+        _decorate_vaccination(self.imms, OrderedDict([("site_of_vaccination_term", "a_vacc_site_term")]))
+        expected = {"coding": [{"system": "http://snomed.info/sct", "display": "a_vacc_site_term"}]}
+        self.assertDictEqual(expected, self.imms["site"])
+
+    def test_route_of_vaccination(self):
         """it should get the vaccination route code and term and add it to the route object"""
-        headers = OrderedDict(
-            [
-                ("route_of_vaccination_code", "a_route_of_vaccination_code"),
-                ("route_of_vaccination_term", "a_route_of_vaccination_term"),
-            ]
-        )
+        # route_of_vaccination: _code non-empty, _display empty
+        _decorate_vaccination(self.imms, OrderedDict([("route_of_vaccination_code", "a_vacc_route_code")]))
+        expected = {"coding": [{"system": "http://snomed.info/sct", "code": "a_vacc_route_code"}]}
+        self.assertDictEqual(expected, self.imms["route"])
 
-        _decorate_vaccination(self.imms, headers)
-
-        expected = {
-            "coding": [
-                {
-                    "system": "http://snomed.info/sct",
-                    "code": "a_route_of_vaccination_code",
-                    "display": "a_route_of_vaccination_term",
-                }
-            ]
-        }
+        # route_of_vaccination: _code empty, _display non-empty
+        _decorate_vaccination(self.imms, OrderedDict([("route_of_vaccination_term", "a_vacc_route_term")]))
+        expected = {"coding": [{"system": "http://snomed.info/sct", "display": "a_vacc_route_term"}]}
         self.assertDictEqual(expected, self.imms["route"])
 
     def test_dose_quantity(self):
         """it should get the dose amount, unit code and term and add it to the doseQuantity object"""
-        headers = OrderedDict(
-            [
-                ("dose_amount", "123.1234"),
-                ("dose_unit_code", "a_dose_unit_code"),
-                ("dose_unit_term", "a_dose_unit_term"),
-            ]
-        )
-
+        dose_quantity = {"system": "http://unitsofmeasure.org", "value": Decimal("0.5"), "unit": "t", "code": "code"}
+        # dose: _amount non-empty, _unit_term non-empty, _unit_code empty
+        headers = OrderedDict([("dose_amount", "0.5"), ("dose_unit_term", "a_dose_unit_term"), ("dose_unit_code", "")])
         _decorate_vaccination(self.imms, headers)
+        dose_quantity = {"system": "http://unitsofmeasure.org", "value": Decimal("0.5"), "unit": "a_dose_unit_term"}
+        self.assertDictEqual(self.imms["doseQuantity"], dose_quantity)
 
-        expected = {
-            "value": Decimal("123.1234"),
-            "unit": "a_dose_unit_term",
-            "code": "a_dose_unit_code",
-            "system": "http://unitsofmeasure.org",
-        }
-        self.assertDictEqual(expected, self.imms["doseQuantity"])
-
-    def test_dose_quantity_decimal(self):
-        """it should convert the string to a decimal with 4 decimal places"""
-        headers = OrderedDict(
-            [
-                ("dose_amount", "123.1234567"),
-                ("dose_unit_code", "a_dose_unit_code"),
-            ]
-        )
-
+        # dose: _amount non-empty, _unit_term empty, _unit_code non-empty
+        headers = OrderedDict([("dose_amount", "0.5"), ("dose_unit_code", "a_dose_unit_code")])
         _decorate_vaccination(self.imms, headers)
+        dose_quantity = {"system": "http://unitsofmeasure.org", "value": Decimal("0.5"), "code": "a_dose_unit_code"}
+        self.assertDictEqual(self.imms["doseQuantity"], dose_quantity)
 
-        expected = {
-            "value": Decimal("123.1234567"),
-            "system": ANY,
-            "code": ANY,
-        }
-
-        self.assertDictEqual(expected, self.imms["doseQuantity"])
-
-    def test_dose_sequence(self):
-        """it should add the dose sequence to the vaccination object as int"""
-        headers = OrderedDict([("dose_sequence", "12")])
-
+        # dose: _amount empty, _unit_term non-empty, _unit_code non-empty
+        headers = OrderedDict([("dose_unit_term", "a_dose_unit_term"), ("dose_unit_code", "a_dose_unit_code")])
         _decorate_vaccination(self.imms, headers)
+        dose_quantity = {"system": "http://unitsofmeasure.org", "code": "a_dose_unit_code", "unit": "a_dose_unit_term"}
+        self.assertDictEqual(self.imms["doseQuantity"], dose_quantity)
 
-        expected = [{"doseNumberPositiveInt": 12}]
-        self.assertEqual(expected, self.imms["protocolApplied"])
+        # dose: _amount non-empty, _unit_term empty, _unit_code empty
+        headers = OrderedDict([("dose_amount", "2"), ("dose_unit_code", "")])
+        _decorate_vaccination(self.imms, headers)
+        dose_quantity = {"system": "http://unitsofmeasure.org", "value": 2}
+        self.assertDictEqual(self.imms["doseQuantity"], dose_quantity)
+
+        # dose: _amount empty, _unit_term non-empty, _unit_code empty
+        headers = OrderedDict([("dose_unit_term", "a_dose_unit_term"), ("dose_unit_code", "")])
+        _decorate_vaccination(self.imms, headers)
+        dose_quantity = {"system": "http://unitsofmeasure.org", "unit": "a_dose_unit_term"}
+        self.assertDictEqual(self.imms["doseQuantity"], dose_quantity)
+
+        # dose: _amount empty, _unit_term empty, _unit_code non-empty
+        headers = OrderedDict([("dose_unit_code", "a_dose_unit_code")])
+        _decorate_vaccination(self.imms, headers)
+        dose_quantity = {"system": "http://unitsofmeasure.org", "code": "a_dose_unit_code"}
+        self.assertDictEqual(self.imms["doseQuantity"], dose_quantity)
 
 
-class TestPractitionerDecorator(unittest.TestCase):
+class TestPerformerDecorator(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.imms = copy.deepcopy(raw_imms)
