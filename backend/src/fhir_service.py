@@ -101,7 +101,8 @@ class FhirService:
             raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
-
+        if "diagnostics" in patient: 
+                return (patient)
         try:
             imms = self.immunization_repo.update_immunization(imms_id, immunization, patient)
             return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
@@ -167,11 +168,8 @@ class FhirService:
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         if not nhs_number_mod11_check(nhs_number):
-                diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
-                exp_error = {
-                             "diagnostics": diagnostics
-                            }
-                return (exp_error)
+                diagnostics_error = self.create_diagnostics(nhs_number)
+                return (diagnostics_error)
         resources = self.immunization_repo.find_immunizations(nhs_number)
         resources = [
             r for r in resources
@@ -180,6 +178,11 @@ class FhirService:
             and FhirService.is_valid_date_to(r, date_to)
         ]
         patient = self.pds_service.get_patient_details(nhs_number) if len(resources) > 0 else None
+        pds_nhs_number = patient["identifier"][0]["value"]
+        if patient:
+            if pds_nhs_number != nhs_number :
+                        diagnostics_error = self.create_diagnostics(nhs_number)
+                        return (diagnostics_error)
         entries = [
                 BundleEntry(
                     resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
@@ -235,3 +238,11 @@ class FhirService:
             return patient
 
         raise InvalidPatientId(patient_identifier=nhs_number)
+    
+    
+    def create_diagnostics(nhs_number):
+                diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
+                exp_error = {
+                             "diagnostics": diagnostics
+                            }
+                return (exp_error) 
