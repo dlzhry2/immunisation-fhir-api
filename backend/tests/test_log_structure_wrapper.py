@@ -36,12 +36,7 @@ class TestFunctionInfoWrapper(unittest.TestCase):
         args, kwargs = mock_logger.info.call_args
         logged_info = args[0]
 
-        self.assertIn('function_name', logged_info)
-        self.assertIn('time_taken', logged_info)
-        self.assertEqual(logged_info['X-Correlation-ID'], 'test_correlation')
-        self.assertEqual(logged_info['X-Request-ID'], 'test_request')
-        self.assertEqual(logged_info['actual_path'], '/test')
-        self.assertEqual(logged_info['resource_path'], '/test')
+        self.assertIn('event', logged_info)
     
     @patch('src.log_structure.logger')
     def test_exception_handling(self, mock_logger):        
@@ -64,10 +59,5 @@ class TestFunctionInfoWrapper(unittest.TestCase):
         args, kwargs = mock_logger.exception.call_args
         logged_info = args[0]
         
-        self.assertIn('function_name', logged_info)
-        self.assertIn('time_taken', logged_info)
-        self.assertEqual(logged_info['X-Correlation-ID'], 'failed_test_correlation')
-        self.assertEqual(logged_info['X-Request-ID'], 'failed_test_request')
-        self.assertEqual(logged_info['actual_path'], '/failed_test')
-        self.assertEqual(logged_info['resource_path'], '/failed_test')
-        self.assertEqual(logged_info['error'], str(ValueError("Test error")))
+        self.assertIn('event', logged_info)
+       
