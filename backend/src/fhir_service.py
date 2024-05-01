@@ -163,14 +163,8 @@ class FhirService:
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         if not nhs_number_mod11_check(nhs_number):
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.invariant,
                 diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
                 exp_error = {
-                             "resourceId": resource_id,
-                             "severity": severity,
-                             "code": code,
                              "diagnostics": diagnostics
                             }
                 return (exp_error)
