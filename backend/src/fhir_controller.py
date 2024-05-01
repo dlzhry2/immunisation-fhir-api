@@ -97,6 +97,15 @@ class FhirController:
 
         try:
             resource = self.fhir_service.create_immunization(imms)
+            print(f"control_respomse:{resource}")
+            if "diagnostics" in resource: 
+                exp_error = create_operation_outcome(
+                        resource_id=str(uuid.uuid4()),
+                        severity=Severity.error,
+                        code=Code.invariant,
+                        diagnostics=resource["diagnostics"]
+                    )
+                return self.create_response(400, json.dumps(exp_error) )
             location = f"{get_service_url()}/Immunization/{resource.id}"
             return self.create_response(201, None, {"Location": location})
         except ValidationError as error:

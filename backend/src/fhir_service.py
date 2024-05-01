@@ -78,10 +78,20 @@ class FhirService:
         try:
             print(f"immunization : {immunization}")
             self.validator.validate(immunization)
+            nhs_number = [x for x in immunization["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
+            print(f"NHS_NUMBER :{pds_nhs_number}")
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
-
+        print(f"response of patient from pds :{patient}")
+        pds_nhs_number = patient["identifier"][0]["value"]
+        print(f"PDS_NHS_NUMBER :{pds_nhs_number}")
+        if pds_nhs_number != nhs_number :
+                diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
+                exp_error = {
+                             "diagnostics": diagnostics
+                            }
+                return (exp_error)
         imms = self.immunization_repo.create_immunization(immunization, patient)
         print(f"imms_response :{imms}")
         return Immunization.parse_obj(imms)
