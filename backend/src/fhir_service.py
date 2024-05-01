@@ -178,11 +178,11 @@ class FhirService:
             and FhirService.is_valid_date_to(r, date_to)
         ]
         patient = self.pds_service.get_patient_details(nhs_number) if len(resources) > 0 else None
-        pds_nhs_number = patient["identifier"][0]["value"]
         if patient:
-            if pds_nhs_number != nhs_number :
-                        diagnostics_error = self.create_diagnostics(nhs_number)
-                        return (diagnostics_error)
+            pds_nhs_number = patient["identifier"][0]["value"]
+            if pds_nhs_number != nhs_number:
+                diagnostics_error = self.create_diagnostics(nhs_number)
+                return diagnostics_error
         entries = [
                 BundleEntry(
                     resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
