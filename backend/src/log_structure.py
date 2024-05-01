@@ -34,37 +34,41 @@ def function_info(func):
             start = time.time()
             result = func(*args, **kwargs)
             outcome = "500"
-            
-            if isinstance(result,dict):
-                outcome = result['statusCode']
-            
+
+            if isinstance(result, dict):
+                outcome = result["statusCode"]
+
             end = time.time()
             logData = {
-                "function_name": func.__name__,
-                "time_taken": f"{round(end - start, 5)}s",
-                "X-Correlation-ID": correlation_id,
-                "X-Request-ID": request_id,
-                "actual_path": actual_path,
-                "resource_path": resource_path,
-                "status": outcome,
-                "status_code": "Completed successfully",
+                "event": {
+                    "function_name": func.__name__,
+                    "time_taken": f"{round(end - start, 5)}s",
+                    "X-Correlation-ID": correlation_id,
+                    "X-Request-ID": request_id,
+                    "actual_path": actual_path,
+                    "resource_path": resource_path,
+                    "status": outcome,
+                    "status_code": "Completed successfully",
+                }
             }
             logger.info(logData)
             firehose_logger.send_log(logData)
-            
+
             return result
 
         except Exception as e:
             logData = {
-                "function_name": func.__name__,
-                "time_taken": f"{round(time.time() - start, 5)}s",
-                "X-Correlation-ID": correlation_id,
-                "X-Request-ID": request_id,
-                "actual_path": actual_path,
-                "resource_path": resource_path,
-                "error": str(e),
+                "event": {
+                    "function_name": func.__name__,
+                    "time_taken": f"{round(time.time() - start, 5)}s",
+                    "X-Correlation-ID": correlation_id,
+                    "X-Request-ID": request_id,
+                    "actual_path": actual_path,
+                    "resource_path": resource_path,
+                    "error": str(e),
+                }
             }
-            
+
             logger.exception(logData)
             firehose_logger.send_log(logData)
             raise
