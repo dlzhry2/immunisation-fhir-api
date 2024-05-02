@@ -22,7 +22,7 @@ from batch.decorators import (
 )
 from batch.errors import DecoratorError, TransformerFieldError, TransformerRowError, TransformerUnhandledError
 from tests.test_batch.decorators_constants import AllHeaders, AllHeadersExpectedOutput, ExtensionItems
-
+from constants import valid_nhs_number
 
 raw_imms: dict = {"resourceType": "Immunization", "contained": []}
 
@@ -138,6 +138,7 @@ class TestImmunizationDecorator(unittest.TestCase):
 
     def test_not_given_and_action_flag(self):
         """Test that status is set to the appropriate value based on not_given and action_flag"""
+        # Valid not_given and action_flag values
         for not_given, action_flag, status in [
             ("true", "new", "not-done"),
             ("TRUE", "UPDATE", "not-done"),
@@ -147,7 +148,21 @@ class TestImmunizationDecorator(unittest.TestCase):
             _decorate_immunization(self.imms, OrderedDict([("not_given", not_given), ("action_flag", action_flag)]))
             self.assertEqual(self.imms["status"], status)
 
-            # TODO: Test invalid values of not_given and action_flag
+        # Invalid not_given and/ or action_flag values
+        for not_given, action_flag, error_message in [
+            ("invalid_not_given", "new", "NOT_GIVEN is missing or is not a boolean"),
+            ("", "new", "NOT_GIVEN is missing or is not a boolean"),
+            (None, "new", "NOT_GIVEN is missing or is not a boolean"),
+            ("false", "invalid_action_flag", "ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"),
+            ("false", "", "ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"),
+            ("false", None, "ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"),
+        ]:
+            output = _decorate_immunization(
+                self.imms, OrderedDict([("not_given", not_given), ("action_flag", action_flag)])
+            )
+            self.assertEqual(type(output), DecoratorError)
+            # TODO: Test the correct error message in output
+            # TODO: Add a test for invalid not_given AND invalid action_flag
 
     def test_reason_not_given(self):
         """Test that only non-empty reason_not_given values are added"""
@@ -234,7 +249,25 @@ class TestPatientDecorator(unittest.TestCase):
         expected["extension"][0]["valueCodeableConcept"]["coding"][0].pop("code")
         self.assertDictEqual(imms["contained"][0]["identifier"][0], expected)
 
-        # TODO: Consider combinations with NHS number
+    def test_patient_identifier(self):
+        """Fill this in"""
+        # nhs_number non_empty, both extension values empty
+        imms = copy.deepcopy(self.imms)
+        _decorate_patient(imms, OrderedDict([("nhs_number", valid_nhs_number)]))
+        expected = [{"system": "https://fhir.nhs.uk/Id/nhs-number", "value": valid_nhs_number}]
+        self.assertListEqual(imms["contained"][0]["identifier"], expected)
+
+        # nhs_number empty, both extension values non_empty
+        imms = copy.deepcopy(self.imms)
+        headers = OrderedDict(
+            [
+                ("nhs_number_status_indicator_description", "an_nhs_status_description"),
+                ("nhs_number_status_indicator_code", "an_nhs_status_code"),
+            ]
+        )
+        _decorate_patient(imms, headers)
+        expected = [{"extension": [ExtensionItems.nhs_number_status]}]
+        self.assertListEqual(imms["contained"][0]["identifier"], expected)
 
 
 class TestVaccineDecorator(unittest.TestCase):

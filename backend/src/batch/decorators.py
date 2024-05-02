@@ -18,6 +18,8 @@ NOTE: The decorators are order independent. They can be called in any order, so 
 NOTE: decorate function is the only public function. If you add a new decorator, call it in this function.
 NOTE: Validation should be handled by the API validator wherever possible. Immunization decorators should only
 perform validation that is essential for the transformation to take place.
+NOTE: An overarching data rule is that where data is not present the field should not be added to the FHIR Immunization
+resource. Therefore before adding an element it is necessary to check that at least one of its values is non-empty.
 """
 
 
