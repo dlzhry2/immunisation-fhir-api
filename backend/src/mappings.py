@@ -12,8 +12,9 @@ class VaccineTypes:
     hpv: str = "HPV"
     mmr: str = "MMR"
 
-    all: list[str] = \
-        field(default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr])
+    all: list[str] = field(
+        default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]
+    )
 
 
 @dataclass
@@ -109,10 +110,10 @@ vaccine_type_applicable_validations = {
         VaccineTypes.mmr: Mandation.mandatory,
     },
     "organization_display": {
-        VaccineTypes.covid_19: Mandation.mandatory,
-        VaccineTypes.flu: Mandation.mandatory,
-        VaccineTypes.hpv: Mandation.mandatory,
-        VaccineTypes.mmr: Mandation.mandatory,
+        VaccineTypes.covid_19: Mandation.optional,
+        VaccineTypes.flu: Mandation.optional,
+        VaccineTypes.hpv: Mandation.optional,
+        VaccineTypes.mmr: Mandation.optional,
     },
     "identifier_value": {
         VaccineTypes.covid_19: Mandation.mandatory,
