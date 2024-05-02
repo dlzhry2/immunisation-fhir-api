@@ -83,12 +83,6 @@ class BatchProcessor:
 
             raw_record = OrderedDict(zip(self.headers, row))
 
-            # TODO: Tidy this
-            def keys_lower(test_dict):
-                return {k.lower(): keys_lower(v) if isinstance(v, dict) else v for k, v in test_dict.items()}
-
-            raw_record = keys_lower(raw_record)
-
             if action := self._get_action(raw_record, cur_row_no):
                 if record := self._transform(raw_record, cur_row_no):
                     self._send_data(record, action, cur_row_no)

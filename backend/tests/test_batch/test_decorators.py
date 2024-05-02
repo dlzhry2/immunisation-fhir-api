@@ -1,8 +1,6 @@
 """
-Test each decorator in the transformer module
-Each decorator has its own test class. Each method is used to test a specific scenario. For example there may be
-different ways to create a patient object. We may need to handle legacy data, or Point of Care data that's different
-from other PoCs. This means the decorator should be flexible enough to handle different scenarios. Hence a test class.
+Test each decorator in the transformer module.
+Each decorator has its own test class, which tests various potential combinations of headers.
 NOTE: testing protected methods is not ideal. But in this case, we are testing the decorators in isolation.
 NOTE: the public function `decorate` is tested in `TestDecorate` class.
 """
