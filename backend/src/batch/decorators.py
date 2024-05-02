@@ -243,7 +243,7 @@ def _decorate_performer(imms: dict, record: OrderedDict[str, str]) -> Optional[D
         if any(_is_not_empty(value) for value in practitioner_values):
 
             # Set up the practitioner
-            internal_practitioner_id = "practitioner1"
+            internal_practitioner_id = "Practitioner1"
             practitioner = {"resourceType": "Practitioner", "id": internal_practitioner_id}
             imms["performer"].append({"actor": {"reference": f"#{internal_practitioner_id}"}})
 
@@ -282,7 +282,7 @@ def _decorate_performer(imms: dict, record: OrderedDict[str, str]) -> Optional[D
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
-def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
+def _decorate_questionnaire(imms: dict, record: OrderedDict[str, str]) -> Optional[DecoratorError]:
     """Create the 'questionnaire' object and append items list"""
     errors: List[TransformerFieldError] = []
 
@@ -325,14 +325,14 @@ def _decorate_questionare(imms: dict, record: OrderedDict[str, str]) -> Optional
             care_setting = Create.dictionary({"code": care_setting_type_code, "display": care_setting_type_description})
             _add_questionnaire_item_to_list(items, "CareSetting", {"valueCoding": care_setting})
 
-        if any(_is_not_empty(value) for value in [local_patient_uri, local_patient_id]):
-            local_patient = Create.dictionary({"system": local_patient_uri, "value": local_patient_id})
-            _add_questionnaire_item_to_list(items, "LocalPatient", {"valueReference": {"identifier": local_patient}})
-
         if _is_not_empty(reduced_validation_code):
             _add_questionnaire_item_to_list(
                 items, "ReduceValidation", {"valueBoolean": Convert.boolean(reduced_validation_code)}
             )
+
+        if any(_is_not_empty(value) for value in [local_patient_uri, local_patient_id]):
+            local_patient = Create.dictionary({"system": local_patient_uri, "value": local_patient_id})
+            _add_questionnaire_item_to_list(items, "LocalPatient", {"valueReference": {"identifier": local_patient}})
 
         if _is_not_empty(submitted_timestamp):
             _add_questionnaire_item_to_list(
@@ -363,7 +363,7 @@ all_decorators: List[ImmunizationDecorator] = [
     _decorate_vaccine,
     _decorate_vaccination,
     _decorate_performer,
-    _decorate_questionare,
+    _decorate_questionnaire,
 ]
 
 
