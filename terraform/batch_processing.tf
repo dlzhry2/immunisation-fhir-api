@@ -72,6 +72,34 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3_batch_encrypti
   }
 }
 
+resource "aws_s3_bucket_object" "folder_object" { 
+	bucket = aws_s3_bucket.batch_data_source_bucket.id 
+	key = "COVID19_POC/" 
+	content = "" 
+	content_type = "application/x-directory" 
+}
+
+resource "aws_s3_bucket_object" "folder_object" { 
+	bucket = aws_s3_bucket.batch_data_source_bucket.id 
+	key = "COVID19/" 
+	content = "" 
+	content_type = "application/x-directory" 
+}
+
+resource "aws_s3_bucket_object" "folder_object" { 
+	bucket = aws_s3_bucket.batch_data_source_bucket.id 
+	key = "FLU_POC/" 
+	content = "" 
+	content_type = "application/x-directory" 
+}
+
+resource "aws_s3_bucket_object" "folder_object" { 
+	bucket = aws_s3_bucket.batch_data_source_bucket.id 
+	key = "FLU/" 
+	content = "" 
+	content_type = "application/x-directory" 
+}
+
 resource "aws_s3_bucket_notification" "source_bucket_notification" {
     bucket      = aws_s3_bucket.batch_data_source_bucket.bucket
     eventbridge = true
