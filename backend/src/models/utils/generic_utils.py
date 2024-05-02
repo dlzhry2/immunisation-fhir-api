@@ -236,3 +236,10 @@ def get_occurrence_datetime(immunization: dict) -> Optional[datetime.datetime]:
         return None
 
     return datetime.datetime.fromisoformat(occurrence_datetime_str)
+
+def create_diagnostics(nhs_number):
+                diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
+                exp_error = {
+                             "diagnostics": diagnostics
+                            }
+                return (exp_error)
