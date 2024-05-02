@@ -1,6 +1,4 @@
-import os
 import boto3
-import pytest
 from utils.batch import get_s3_source_name
 
 
