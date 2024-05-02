@@ -178,6 +178,7 @@ class FhirService:
             and FhirService.is_valid_date_from(r, date_from)
             and FhirService.is_valid_date_to(r, date_to)
         ]
+        print(f"resource :{resources}")
         patient = self.pds_service.get_patient_details(nhs_number) if len(resources) > 0 else None
         print(f"patient :{patient}") 
         if patient:
