@@ -27,18 +27,23 @@ def _decorate_immunization(imms: dict, record: OrderedDict[str, str]) -> Optiona
     """Every thing related to the immunization object itself like status and identifier"""
     errors: List[TransformerFieldError] = []
 
-    # NOT_GIVEN and ACTION_FLAG must contain valid values to allow transformation
-    if (not_given := Convert.boolean(record.get("not_given"))) not in [True, False]:
+    # Check that not_given value is valid
+    not_given_is_valid = (not_given := Convert.boolean(record.get("not_given"))) in [True, False]
+    if not not_given_is_valid:
         errors.append(TransformerFieldError(field="NOT_GIVEN", message="NOT_GIVEN is missing or is not a boolean"))
-    # Note that an action_flag of 'delete' goes to the delete lambda and the decorators should not be called
-    elif (Convert.to_lower(record.get("action_flag"))) not in ["new", "update"]:
+
+    # Check that action_flag value is valid
+    action_flag_is_valid = Convert.to_lower(record.get("action_flag")) in ["new", "update"]
+    if not action_flag_is_valid:
+        # Note that an action_flag of 'delete' goes to the delete lambda and the decorators should not be called
         message = "ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"
         errors.append(TransformerFieldError(field="ACTION_FLAG", message=message))
-    else:
-        # TODO: Confirm below mapping, and that action_flag of delete goes to delete endpoint
-        # Add status. The following mapping applies:
-        # * NOT_GIVEN is True & ACTION_FLAG is "new" or "update" or "delete" <---> Status will be set to 'not-done'
-        # * NOT_GIVEN is False & ACTION_FLAG is "new" or "update" <---> Status will be set to 'completed'
+
+    # TODO: Confirm below mapping, and that action_flag of delete goes to delete endpoint
+    # not_given and action_flag must be valid to allow FHIR status field to be populated. The following mapping applies:
+    # * NOT_GIVEN is True & ACTION_FLAG is "new" or "update"<---> Status will be set to 'not-done'
+    # * NOT_GIVEN is False & ACTION_FLAG is "new" or "update" <---> Status will be set to 'completed'
+    if not_given_is_valid and action_flag_is_valid:
         imms["status"] = "not-done" if not_given is True else "completed"
 
     # statusReason
@@ -64,7 +69,7 @@ def _decorate_immunization(imms: dict, record: OrderedDict[str, str]) -> Optiona
 
     Add.list_of_dict(imms, "identifier", {"value": record.get("unique_id"), "system": record.get("unique_id_uri")})
 
-    func_name = inspect.currentframe().f_back.f_code.co_name
+    func_name = inspect.currentframe().f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
@@ -132,7 +137,7 @@ def _decorate_patient(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
 
         imms["contained"].append(patient)
 
-    func_name = inspect.currentframe().f_back.f_code.co_name
+    func_name = inspect.currentframe().f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
@@ -148,7 +153,7 @@ def _decorate_vaccine(imms: dict, record: OrderedDict[str, str]) -> Optional[Dec
 
     Add.item(imms, "lotNumber", record.get("batch_number"))
 
-    func_name = inspect.currentframe().f_back.f_code.co_name
+    func_name = inspect.currentframe().f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
@@ -206,7 +211,7 @@ def _decorate_vaccination(imms: dict, record: OrderedDict[str, str]) -> Optional
 
     Add.list_of_dict(imms, "protocolApplied", {"doseNumberPositiveInt": Convert.integer(record.get("dose_sequence"))})
 
-    func_name = inspect.currentframe().f_back.f_code.co_name
+    func_name = inspect.currentframe().f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
@@ -280,7 +285,7 @@ def _decorate_performer(imms: dict, record: OrderedDict[str, str]) -> Optional[D
         },
     )
 
-    func_name = inspect.currentframe().f_back.f_code.co_name
+    func_name = inspect.currentframe().f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 
@@ -355,7 +360,7 @@ def _decorate_questionnaire(imms: dict, record: OrderedDict[str, str]) -> Option
         questionare["item"] = items
         imms["contained"].append(questionare)
 
-    func_name = inspect.currentframe().f_back.f_code.co_name
+    func_name = inspect.currentframe().f_code.co_name
     return DecoratorError(errors=errors, decorator_name=func_name) if errors else None
 
 

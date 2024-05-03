@@ -149,20 +149,24 @@ class TestImmunizationDecorator(unittest.TestCase):
             self.assertEqual(self.imms["status"], status)
 
         # Invalid not_given and/ or action_flag values
+        base_error_message = "  Decorator _decorate_immunization failed due to:"
+        not_given_error_message = "\n    NOT_GIVEN is missing or is not a boolean"
+        action_flag_error_message = "\n    ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"
+
         for not_given, action_flag, error_message in [
-            ("invalid_not_given", "new", "NOT_GIVEN is missing or is not a boolean"),
-            ("", "new", "NOT_GIVEN is missing or is not a boolean"),
-            (None, "new", "NOT_GIVEN is missing or is not a boolean"),
-            ("false", "invalid_action_flag", "ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"),
-            ("false", "", "ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"),
-            ("false", None, "ACTION_FLAG is missing or is not in the set 'new', 'update', 'delete'"),
+            ("invalid_not_given", "new", not_given_error_message),
+            ("", "new", not_given_error_message),
+            (None, "new", not_given_error_message),
+            ("false", "invalid_action_flag", action_flag_error_message),
+            ("false", "", action_flag_error_message),
+            ("false", None, action_flag_error_message),
+            (None, None, not_given_error_message + action_flag_error_message),
         ]:
             output = _decorate_immunization(
                 self.imms, OrderedDict([("not_given", not_given), ("action_flag", action_flag)])
             )
+            self.assertIn(base_error_message + error_message, str(output))
             self.assertEqual(type(output), DecoratorError)
-            # TODO: Test the correct error message in output
-            # TODO: Add a test for invalid not_given AND invalid action_flag
 
     def test_reason_not_given(self):
         """Test that only non-empty reason_not_given values are added"""
