@@ -29,7 +29,9 @@ locals {
         "kms:Get*",
         "kms:Delete*",
         "kms:ScheduleKeyDeletion",
-        "kms:CancelKeyDeletion"
+        "kms:CancelKeyDeletion",
+        "kms:GenerateDataKey*",
+        "kms:Decrypt"
         ],
         "Resource": "*"
     },
