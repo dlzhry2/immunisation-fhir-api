@@ -6,9 +6,8 @@ from utils.batch import get_s3_source_name
 class TestS3Batch(unittest.TestCase):
     def test_s3_folder_structure(self):
         source_bucket = get_s3_source_name()
-        print(f"source bucket: {source_bucket}")
         s3 = boto3.client("s3")
-        expected_folders = ["COVID19_POC/", "COVID19/", "FLU_POC/", "FLU/"]
+        expected_folders = ["COVID19/", "COVID19_POC/", "FLU/", "FLU_POC/"]
         objects = s3.list_objects_v2(Bucket=source_bucket)
         actual_folders = [
             obj["Key"]
