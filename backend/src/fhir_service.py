@@ -76,18 +76,15 @@ class FhirService:
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
-            print(f"immunization : {immunization}")
             self.validator.validate(immunization)
 
             
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
-        print(f"response of patient from pds :{patient}")
         if "diagnostics" in patient: 
                 return (patient)
         imms = self.immunization_repo.create_immunization(immunization, patient)
-        print(f"imms_response :{imms}")
         return Immunization.parse_obj(imms)
 
     def update_immunization(self, imms_id: str, immunization: dict) -> tuple[UpdateOutcome, Immunization]:
@@ -171,30 +168,20 @@ class FhirService:
                 diagnostics_error = create_diagnostics(nhs_number)
                 return (diagnostics_error)
         resources = self.immunization_repo.find_immunizations(nhs_number)
-        print(f"nhs_number :{nhs_number}")
         resources = [
             r for r in resources
             if FhirService.has_valid_disease_type(r, disease_types)
             and FhirService.is_valid_date_from(r, date_from)
             and FhirService.is_valid_date_to(r, date_to)
         ]
-        print(f"resource :{resources}")
         patient_details = self.pds_service.get_patient_details(nhs_number)
-        print(f"patient_details :{patient_details}") 
+       # To check whether the Superseded NHS number present in PDS 
         if patient_details:
             pds_nhs_number = patient_details["identifier"][0]["value"]
-            print(f"PDS_nhs_number :{pds_nhs_number}")
             if pds_nhs_number != nhs_number:
                 diagnostics_error = create_diagnostics(nhs_number)
                 return diagnostics_error
         patient = patient_details if len(resources) > 0 else None
-        print(f"patient :{patient}") 
-        if patient:
-            pds_nhs_number = patient["identifier"][0]["value"]
-            print(f"PDS_nhs_number :{pds_nhs_number}")
-            if pds_nhs_number != nhs_number:
-                diagnostics_error = create_diagnostics(nhs_number)
-                return diagnostics_error
         entries = [
                 BundleEntry(
                     resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
@@ -228,7 +215,6 @@ class FhirService:
         """
         try:
             nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
-            print(f"Service_nhs_number : {nhs_number}")
         except (KeyError, IndexError):
             nhs_number = None
 
@@ -236,10 +222,9 @@ class FhirService:
             return {}
         
         patient = self.pds_service.get_patient_details(nhs_number)
-        print(f"Service_Patient : {patient}")
+        # To check whether the Superseded NHS number present in PDS 
         if patient:
             pds_nhs_number = patient["identifier"][0]["value"]
-            print(f"PDS_NHS_NUMBER :{pds_nhs_number}")
             if pds_nhs_number != nhs_number :
                     diagnostics_error = create_diagnostics(nhs_number)
                     return diagnostics_error
