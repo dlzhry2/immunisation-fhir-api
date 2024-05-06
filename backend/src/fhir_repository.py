@@ -98,6 +98,7 @@ class ImmunizationRepository:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
+
         query_response = _query_identifier(self.table, "IdentifierGSI", "IdentifierPK", attr.identifier)
 
         if query_response is not None and "DeletedAt" not in query_response["Items"][0]:
@@ -114,6 +115,7 @@ class ImmunizationRepository:
                 "Operation": "CREATE",
             }
         )
+
         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
             return immunization
         else:

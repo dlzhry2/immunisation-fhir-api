@@ -77,14 +77,14 @@ class FhirService:
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
             self.validator.validate(immunization)
-
-            
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
+        
         if "diagnostics" in patient: 
                 return (patient)
         imms = self.immunization_repo.create_immunization(immunization, patient)
+
         return Immunization.parse_obj(imms)
 
     def update_immunization(self, imms_id: str, immunization: dict) -> tuple[UpdateOutcome, Immunization]:
@@ -220,7 +220,7 @@ class FhirService:
 
         if not nhs_number:
             return {}
-        
+
         patient = self.pds_service.get_patient_details(nhs_number)
         # To check whether the Superseded NHS number present in PDS 
         if patient:
