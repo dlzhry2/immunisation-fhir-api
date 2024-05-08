@@ -17,10 +17,11 @@ class PreValidators:
     meet the NHS custom requirements. Note that validation of the existence of a value (i.e. it
     exists if mandatory, or doesn't exist if is not applicable) is done by the post validators.
     """
+
     def __init__(self, values: dict):
         self.values = values
         self.errors = []
-    
+
     def validate(self):
         """
         Run all pre-validation checks.
@@ -106,15 +107,15 @@ class PreValidators:
             self.pre_validate_location_identifier_value,
             self.pre_validate_location_identifier_system,
             self.pre_validate_reduce_validation,
-            self.pre_validate_reduce_validation_reason
+            self.pre_validate_reduce_validation_reason,
         ]
-            
+
         for method in validation_methods:
             try:
                 method(self.values)
             except (ValueError, TypeError, IndexError, AttributeError) as e:
                 self.errors.append(str(e))
-                
+
         if self.errors:
             all_errors = "; ".join(self.errors)
             raise ValueError(f"Validation errors: {all_errors}")
@@ -567,13 +568,10 @@ class PreValidators:
         then it is a non-empty string which is one of the following: completed, entered-in-error,
         not-done.
 
-        NOTE 1: ACTION_FLAG and NOT_GIVEN are mutually exclusive i.e. if ACTION_FLAG is present then
-        NOT_GIVEN will be absent and vice versa. The ACTION_FLAGs are 'completed' and 'not-done'.
-        The following 1-to-1 mapping applies:
-        * NOT_GIVEN is True <---> Status will be set to 'not-done' (and therefore ACTION_FLAG is
-            absent)
-        * NOT_GIVEN is False <---> Status will be set to 'completed' or 'entered-in-error' (and
-            therefore ACTION_FLAG is present)
+        NOTE 1: The following mapping applies:
+        * NOT_GIVEN is True & ACTION_FLAG is "new" or "update" or "delete" <---> Status is 'not-done'
+        * NOT_GIVEN is False & ACTION_FLAG is "new" or "update" <---> Status is 'completed'
+        * NOT_GIVEN is False and ACTION_FLAG is "delete" <---> Status is entered-in-error'
 
         NOTE 2: Status is a mandatory FHIR field. A value of None will be rejected by the
         FHIR model before pre-validators are run.
@@ -777,9 +775,7 @@ class PreValidators:
 
         return values
 
-    def pre_validate_extension_value_codeable_concept_codings(
-        self, values: dict
-    ) -> dict:
+    def pre_validate_extension_value_codeable_concept_codings(self, values: dict) -> dict:
         """
         Pre-validate that, if they exist, each extension[{index}].valueCodeableConcept.coding.system
         is unique
@@ -966,9 +962,7 @@ class PreValidators:
 
         return values
 
-    def pre_validate_protocol_applied_dose_number_positive_int(
-        self, values: dict
-    ) -> dict:
+    def pre_validate_protocol_applied_dose_number_positive_int(self, values: dict) -> dict:
         """
         Pre-validate that, if protocolApplied[0].doseNumberPositiveInt (legacy CSV fidose_sequence)
         exists, then it is an integer from 1 to 9

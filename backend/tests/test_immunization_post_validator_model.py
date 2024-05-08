@@ -35,57 +35,55 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         covid_data = self.covid_json_data
 
-        #remove name[0].given for 'Patient'
-        for item in covid_data.get('contained', []):
-            if item.get('resourceType') == 'Patient':
-                if 'name' in item and item['name'] and 'given' in item['name'][0]:
-                    item['name'][0]['given'] = None
+        # remove name[0].given for 'Patient'
+        for item in covid_data.get("contained", []):
+            if item.get("resourceType") == "Patient":
+                if "name" in item and item["name"] and "given" in item["name"][0]:
+                    item["name"][0]["given"] = None
 
-        #remove actor.identifier.value for 'Organization'
-        for performer in covid_data.get('performer', []):
-            if performer.get('actor', {}).get('type') == 'Organization':
-                if 'identifier' in performer['actor']:
-                    performer['actor']['identifier']['value'] = None
-                if 'display' in performer['actor']:
-                    performer['actor']['display'] = None
+        # remove actor.identifier.value for 'Organization'
+        for performer in covid_data.get("performer", []):
+            if performer.get("actor", {}).get("type") == "Organization":
+                if "identifier" in performer["actor"]:
+                    performer["actor"]["identifier"]["value"] = None
+                if "display" in performer["actor"]:
+                    performer["actor"]["display"] = None
 
-        #remove postalCode for 'Patient'
-        for item in covid_data.get('contained', []):
-            if item.get('resourceType') == 'Patient':
-                if 'address' in item and item['address']:
-                    item['address'][0]['postalCode'] = None
+        # remove postalCode for 'Patient'
+        for item in covid_data.get("contained", []):
+            if item.get("resourceType") == "Patient":
+                if "address" in item and item["address"]:
+                    item["address"][0]["postalCode"] = None
 
-        #remove 'given' for 'Practitioner'
-        for item in covid_data.get('contained', []):
-            if item.get('resourceType') == 'Practitioner':
-                if 'name' in item and item['name'] and 'given' in item['name'][0]:
-                    item['name'][0]['given'] = None
+        # remove 'given' for 'Practitioner'
+        for item in covid_data.get("contained", []):
+            if item.get("resourceType") == "Practitioner":
+                if "name" in item and item["name"] and "given" in item["name"][0]:
+                    item["name"][0]["given"] = None
 
-        #remove 'primarySource'
-        covid_data['primarySource'] = None
+        # remove 'primarySource'
+        covid_data["primarySource"] = None
 
         expected_errors = [
             "Validation errors: contained[?(@.resourceType=='Patient')].name[0].given must be an array",
-            "performer[?(@.actor.type=='Organization')].actor.identifier.value must be a "
-            'string',
+            "performer[?(@.actor.type=='Organization')].actor.identifier.value must be a " "string",
             "performer[?@.actor.type == 'Organization'].actor.display must be a string",
-            "contained[?(@.resourceType=='Patient')].address[0].postalCode must be a "
-            'string',
+            "contained[?(@.resourceType=='Patient')].address[0].postalCode must be a " "string",
             "contained[?(@.resourceType=='Practitioner')].name[0].given must be an array",
-            'primarySource must be a boolean'
+            "primarySource must be a boolean",
         ]
 
-        #assert ValueError raised
+        # assert ValueError raised
         with self.assertRaises(ValueError) as cm:
             self.validator.validate(covid_data)
 
-        #extract the error messages from the exception
-        actual_errors = str(cm.exception).split('; ')
+        # extract the error messages from the exception
+        actual_errors = str(cm.exception).split("; ")
 
-        #assert length of errors
+        # assert length of errors
         assert len(actual_errors) == len(expected_errors)
 
-        #assert the error is in the expected error messages
+        # assert the error is in the expected error messages
         for error in actual_errors:
             assert error in expected_errors
 
@@ -98,7 +96,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self.covid_json_data,
             self.flu_json_data,
             self.not_done_json_data,
-            self.reduce_validation_json_data
+            self.reduce_validation_json_data,
         ]
 
         for json_data in json_data_to_test:
@@ -134,7 +132,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             valid_json_data=valid_json_data,
             field_location=field_location,
             invalid_value="INVALID_VALUE",
-            expected_error_message=f"{field_location}: INVALID_VALUE is not a valid code for this service"
+            expected_error_message=f"{field_location}: INVALID_VALUE is not a valid code for this service",
         )
 
         # Test that json data which doesn't contain vaccination_procedure_code is rejected
@@ -237,10 +235,8 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
     def test_post_organization_display(self):
-        """Test that the JSON data is rejected if it does not contain organization_display"""
-        MandationTests.test_missing_mandatory_field_rejected(
-            self, "performer[?(@.actor.type=='Organization')].actor.display"
-        )
+        """Test that the JSON data is accepted if it does not contain organization_display"""
+        MandationTests.test_missing_field_accepted(self, "performer[?(@.actor.type=='Organization')].actor.display")
 
     def test_post_identifer_value(self):
         """Test that the JSON data is rejected if it does not contain identifier_value"""
@@ -537,7 +533,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             field_location=field_location,
             invalid_value="39114911000001105",
             expected_error_message=f"{field_location} must be one of the following:"
-            + " NAVU, UNC, UNK, NA when status is 'not-done'"
+            + " NAVU, UNC, UNK, NA when status is 'not-done'",
         )
 
     def test_post_vaccine_code_coding_display(self):
