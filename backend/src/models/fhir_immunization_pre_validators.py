@@ -69,6 +69,8 @@ class PreValidators:
             self.pre_validate_status_reason_coding_display,
             self.pre_validate_protocol_applied,
             self.pre_validate_protocol_applied_dose_number_positive_int,
+            self.pre_validate_target_disease,
+            self.pre_validate_target_disease_codings,
             self.pre_validate_vaccine_code_coding,
             self.pre_validate_vaccine_code_coding_code,
             self.pre_validate_vaccine_code_coding_display,
@@ -970,7 +972,7 @@ class PreValidators:
         self, values: dict
     ) -> dict:
         """
-        Pre-validate that, if protocolApplied[0].doseNumberPositiveInt (legacy CSV fidose_sequence)
+        Pre-validate that, if protocolApplied[0].doseNumberPositiveInt (legacy CSV field : dose_sequence)
         exists, then it is an integer from 1 to 9
         """
         try:
@@ -981,6 +983,45 @@ class PreValidators:
                 max_value=9,
             )
         except (KeyError, IndexError):
+            pass
+
+        return values
+    
+    def pre_validate_target_disease(self , values :dict) ->dict:
+        
+        try:
+             target_disease = values["protocolApplied"][0]["targetDisease"]
+
+             for element in target_disease:
+                 if "coding" not in element :
+                     raise ValueError ("Every element of protocolApplied[0].targetDisease must have 'coding' property")
+                     
+        except (KeyError, IndexError):
+            pass
+
+        return values
+    
+
+    def pre_validate_target_disease_codings(
+        self, values: dict
+    ) -> dict:
+        """
+        Pre-validate that, if they exist, each protocolApplied[0].targetDisease[{index}].valueCodeableConcept.coding.system
+        is unique
+        """
+        try:
+            for i in range(len(values["protocolApplied"][0]["targetDisease"])):
+                try:
+                    target_disease_coding = values["protocolApplied"][0]["targetDisease"][i]["coding"]
+
+                    PreValidation.for_unique_list(
+                        target_disease_coding,
+                        "system",
+                        f"protocolApplied[0].targetDisease[{i}].coding[?(@.system=='FIELD_TO_REPLACE')]",
+                    )
+                except KeyError:
+                    pass
+        except KeyError:
             pass
 
         return values

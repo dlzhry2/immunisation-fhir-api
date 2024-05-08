@@ -704,6 +704,69 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             max_value=9,
         )
 
+    def test_pre_validate_target_disease(self):    
+
+        valid_json_data = load_json_data (filename="sample_mmr_immunization_event.json")
+
+        self.assertTrue(self.validator.validate(valid_json_data))
+
+        invalid_target_disease = [
+            {"coding": [{"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"}]},
+            {"text": "a_disease"},
+            {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]}
+        ]
+        
+        _test_invalid_values_rejected(self,
+            valid_json_data,
+            field_location="protocolApplied[0].targetDisease",
+            invalid_value=invalid_target_disease,
+            expected_error_message="Every element of protocolApplied[0].targetDisease must have 'coding' property"
+        )
+
+
+    def test_pre_validate_target_disease_codings(self):
+        """
+        Test pre_validate_target_disease_codings accepts valid values and rejects invalid values
+        """
+        valid_target_disease_values = [
+            [
+                {
+                    "coding": [
+                        {"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"},
+                        {"system": "some_other_system", "code": "a_code", "display": "Measles"},
+                    ]
+                },
+                {"coding": [{"system": "http://snomed.info/sct", "code": "36989005", "display": "Mumps"}]},
+                {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]},
+            ]
+        ]
+
+        invalid_target_disease_values = [
+            
+                {
+                    "coding": [
+                        {"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"},
+                        {"system": "some_other_system", "code": "a_code", "display": "Measles"},
+                    ]
+                },
+                {
+                    "coding": [
+                        {"system": "http://snomed.info/sct", "code": "36989005", "display": "Mumps"},
+                        {"system": "http://snomed.info/sct", "code": "another_mumps_code", "display": "Mumps"},
+                    ]
+                },
+                {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]},
+            
+        ]
+
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location="protocolApplied[0].targetDisease",
+            valid_lists_to_test=valid_target_disease_values,
+            invalid_list_with_duplicates_to_test=invalid_target_disease_values,
+            expected_error_message="protocolApplied[0].targetDisease[1].coding[?(@.system=='http://snomed.info/sct')] must be unique",
+        )
+        
     def test_pre_validate_vaccine_code_coding(self):
         """Test pre_validate_vaccine_code_coding accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_unique_list(
