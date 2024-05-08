@@ -1,9 +1,7 @@
-import boto3
 import logging
 import json
-import os
 import time
-from botocore.config import Config
+from datetime import datetime
 from functools import wraps
 from log_firehose import FirehoseLogger
 
@@ -29,48 +27,49 @@ def function_info(func):
         logger.info(
             f"Starting {func.__name__} with X-Correlation-ID: {correlation_id} and X-Request-ID: {request_id}"
         )
+        log_data = {
+                'function_name': func.__name__,
+                'date_time': str(datetime.now()),
+                'X-Correlation-ID': correlation_id,
+                'X-Request-ID': request_id,
+                'actual_path': actual_path,
+                'resource_path': resource_path                
+        }
 
         try:
             start = time.time()
             result = func(*args, **kwargs)
-            outcome = "500"
-
-            if isinstance(result, dict):
-                outcome = result["statusCode"]
-
             end = time.time()
-            logData = {
-                "event": {
-                    "function_name": func.__name__,
-                    "time_taken": f"{round(end - start, 5)}s",
-                    "X-Correlation-ID": correlation_id,
-                    "X-Request-ID": request_id,
-                    "actual_path": actual_path,
-                    "resource_path": resource_path,
-                    "status": outcome,
-                    "status_code": "Completed successfully",
-                }
+            log_data['time_taken']= f"{round(end - start, 5)}s"
+            status = "201"
+            status_code = "Completed successfully"
+            diagnostics = ""
+            if isinstance(result, dict):
+                status = result["statusCode"]
+                if result.get("body"):
+                    ops_outcome = json.loads(result["body"])
+                    outcome_body = ops_outcome["issue"][0]
+                    status_code = outcome_body["code"]
+                    diagnostics = outcome_body["diagnostics"]
+            operation_outcome = {
+                'status': status,
+                'status_code': status_code
             }
-            logger.info(logData)
-            firehose_logger.send_log(logData)
+            if len(diagnostics) > 1:
+                operation_outcome['diagnostics'] = diagnostics
+            log_data['operation_outcome'] = operation_outcome
+            logger.info(json.dumps(log_data))
+            firehose_log = dict()
+            firehose_log['event'] = log_data
+            firehose_logger.send_log(firehose_log)
 
             return result
 
         except Exception as e:
-            logData = {
-                "event": {
-                    "function_name": func.__name__,
-                    "time_taken": f"{round(time.time() - start, 5)}s",
-                    "X-Correlation-ID": correlation_id,
-                    "X-Request-ID": request_id,
-                    "actual_path": actual_path,
-                    "resource_path": resource_path,
-                    "error": str(e),
-                }
-            }
-
-            logger.exception(logData)
-            firehose_logger.send_log(logData)
+            log_data['error'] = str(e)
+            logger.exception(json.dumps(log_data))
+            firehose_log['event'] = log_data
+            firehose_logger.send_log(firehose_log)
             raise
 
     return wrapper
