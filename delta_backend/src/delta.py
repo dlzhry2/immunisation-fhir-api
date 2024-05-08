@@ -50,11 +50,14 @@ def handler(event, context):
             if record["eventName"] != "REMOVE":
                 new_image = record["dynamodb"]["NewImage"]
                 imms_id = new_image["PK"]["S"].split("#")[1]
+                operation = new_image["Operation"]["S"]
+                if operation == "CREATE":
+                    operation = "NEW"
                 response = delta_table.put_item(
                     Item={
                         "PK": str(uuid.uuid4()),
                         "ImmsID": imms_id,
-                        "Operation": new_image["Operation"]["S"],
+                        "Operation": operation,
                         "DateTimeStamp": approximate_creation_time.isoformat(),
                         "Source": delta_source,
                         "Imms": new_image["Resource"]["S"],
