@@ -7,7 +7,7 @@ from jsonpath_ng.ext import parse
 from mappings import (
     VaccineTypes,
     Mandation,
-    vaccine_type_to_sample_vaccination_procedure_snomed_code,
+    vaccine_type_mappings,
 )
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
 from pydantic import ValidationError
@@ -17,29 +17,27 @@ class MandationTests:
     """Test for presence of fields with different mandation levels"""
 
     @staticmethod
-    def update_vaccination_procedure_code(
+    def update_target_disease(
         test_instance: unittest.TestCase,
         vaccine_type: VaccineTypes,
         valid_json_data: dict = None,
     ):
-        """
-        Update the vaccination_procedure_code in the data to match the vaccine type
-        """
+        """Update the target_disease in the data to match the vaccine type"""
+
         # Prepare the json data
         if not valid_json_data:
             valid_json_data = deepcopy(test_instance.covid_json_data)
 
-        # Set the vaccination procedure code based on vaccine type
-        vaccination_procedure_code_field_location = (
-            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
-            + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
-            + "'http://snomed.info/sct')].code"
-        )
+        # Set the target disease field value based on vaccine type
+        target_disease_field_location = "protocolApplied[0].targetDisease"
+        target_disease_codes = next(x[0] for x in vaccine_type_mappings if x[1] == vaccine_type)
+        target_disease = []
 
-        return parse(vaccination_procedure_code_field_location).update(
-            deepcopy(valid_json_data),
-            vaccine_type_to_sample_vaccination_procedure_snomed_code[vaccine_type],
-        )
+        for code in target_disease_codes:
+            element = {"coding": [{"system": "http://snomed.info/sct", "code": code, "display": "Dummy"}]}
+            target_disease.append(element)
+
+        return parse(target_disease_field_location).update(deepcopy(valid_json_data), target_disease)
 
     @staticmethod
     def test_present_field_accepted(
@@ -148,7 +146,7 @@ class MandationTests:
         value_error. This is why the test checks for the type of error in the error message.
         """
 
-        invalid_json_data = MandationTests.update_vaccination_procedure_code(
+        invalid_json_data = MandationTests.update_target_disease(
             test_instance, vaccine_type, valid_json_data=invalid_json_data
         )
 
@@ -234,7 +232,7 @@ class MandationTests:
             valid_json_data = test_instance.mmr_json_data
             base_not_done_json_data = test_instance.not_done_mmr_json_data
 
-        valid_json_data = MandationTests.update_vaccination_procedure_code(
+        valid_json_data = MandationTests.update_target_disease(
             test_instance, vaccine_type, valid_json_data=deepcopy(valid_json_data)
         )
 
@@ -267,7 +265,7 @@ class MandationTests:
         # Test case where status is "not-done"
         base_not_done_json_data = deepcopy(base_not_done_json_data)
 
-        json_data_with_status_not_done = MandationTests.update_vaccination_procedure_code(
+        json_data_with_status_not_done = MandationTests.update_target_disease(
             test_instance, vaccine_type, base_not_done_json_data
         )
 
@@ -299,7 +297,7 @@ class MandationTests:
         """
 
         # Set the vaccination procedure code based on vaccine type
-        valid_json_data = MandationTests.update_vaccination_procedure_code(
+        valid_json_data = MandationTests.update_target_disease(
             test_instance, vaccine_type, valid_json_data=valid_json_data
         )
 

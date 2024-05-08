@@ -1,4 +1,5 @@
 """Pre-validation test utilities"""
+
 import unittest
 from copy import deepcopy
 from decimal import Decimal
@@ -20,6 +21,7 @@ class ValidatorModelTests:
         test_instance: unittest.TestCase,
         field_location: str,
         valid_strings_to_test: dict,
+        valid_json_data: dict = None,
         defined_length: int = None,
         max_length: int = None,
         invalid_length_strings_to_test: list = None,
@@ -56,19 +58,17 @@ class ValidatorModelTests:
             invalid_strings_with_spaces_test must also be given
         """
 
-        valid_json_data = deepcopy(test_instance.json_data)
+        valid_json_data = deepcopy(test_instance.json_data) if valid_json_data is None else valid_json_data
 
         # Test that valid data is accepted
-        test_valid_values_accepted(
-            test_instance, valid_json_data, field_location, valid_strings_to_test
-        )
+        test_valid_values_accepted(test_instance, valid_json_data, field_location, valid_strings_to_test)
+
 
         # Set list of invalid data types to test
         invalid_data_types_for_strings = InvalidDataTypes.for_strings
         if is_mandatory_fhir:
-            invalid_data_types_for_strings = filter(
-                None, invalid_data_types_for_strings
-            )
+            invalid_data_types_for_strings = filter(None, invalid_data_types_for_strings)
+
 
         # Test invalid data types
         for invalid_data_type_for_string in invalid_data_types_for_strings:
@@ -77,7 +77,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_string,
-                expected_error_message=f"{field_location} must be a string"
+                expected_error_message=f"{field_location} must be a string",
             )
 
         # If there is a predefined string length, then test invalid string lengths,
@@ -89,7 +89,7 @@ class ValidatorModelTests:
                     valid_json_data,
                     field_location=field_location,
                     invalid_value=invalid_length_string,
-                    expected_error_message=f"{field_location} must be {defined_length} characters"
+                    expected_error_message=f"{field_location} must be {defined_length} characters",
                 )
         else:
             test_invalid_values_rejected(
@@ -97,7 +97,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value="",
-                expected_error_message=f"{field_location} must be a non-empty string"
+                expected_error_message=f"{field_location} must be a non-empty string",
             )
 
         # If there is a max_length, test strings which exceed that length
@@ -108,8 +108,7 @@ class ValidatorModelTests:
                     valid_json_data,
                     field_location=field_location,
                     invalid_value=invalid_length_string,
-                    expected_error_message=f"{field_location} must be {max_length} "
-                    + "or fewer characters"
+                    expected_error_message=f"{field_location} must be {max_length} " + "or fewer characters",
                 )
 
         # If there are predefined values, then test strings which are
@@ -122,7 +121,7 @@ class ValidatorModelTests:
                     field_location=field_location,
                     invalid_value=invalid_string,
                     expected_error_message=f"{field_location} must be one of the following: "
-                    + str(", ".join(predefined_values))
+                    + str(", ".join(predefined_values)),
                 )
 
         # If spaces are not allowed, then test strings with spaces
@@ -133,7 +132,7 @@ class ValidatorModelTests:
                     valid_json_data,
                     field_location=field_location,
                     invalid_value=invalid_string_with_spaces,
-                    expected_error_message=f"{field_location} must not contain spaces"
+                    expected_error_message=f"{field_location} must not contain spaces",
                 )
 
         # If is a postal code, then test postal codes which are not separated into the two parts
@@ -147,7 +146,7 @@ class ValidatorModelTests:
                     field_location=field_location,
                     invalid_value=invalid_postal_code,
                     expected_error_message=f"{field_location} must contain a single space, "
-                    + "which divides the two parts of the postal code"
+                    + "which divides the two parts of the postal code",
                 )
 
             # Test invalid postal code length
@@ -156,8 +155,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value="AA000 00AA",
-                expected_error_message=f"{field_location} must be 8 or fewer characters "
-                + "(excluding spaces)"
+                expected_error_message=f"{field_location} must be 8 or fewer characters " + "(excluding spaces)",
             )
 
     @staticmethod
@@ -188,9 +186,7 @@ class ValidatorModelTests:
         valid_json_data = deepcopy(test_instance.json_data)
 
         # Test that valid data is accepted
-        test_valid_values_accepted(
-            test_instance, valid_json_data, field_location, valid_lists_to_test
-        )
+        test_valid_values_accepted(test_instance, valid_json_data, field_location, valid_lists_to_test)
 
         # Test invalid data types
         for invalid_data_type_for_list in InvalidDataTypes.for_lists:
@@ -199,7 +195,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_list,
-                expected_error_message=f"{field_location} must be an array"
+                expected_error_message=f"{field_location} must be an array",
             )
 
         # If there is a predefined list length, then test the empty list and a list which is
@@ -219,7 +215,6 @@ class ValidatorModelTests:
             if predefined_list_length != 1:  # If is 1 then list_too_short = []
                 invalid_length_lists.append([])
 
-
             # Test invalid list lengths
             for invalid_length_list in invalid_length_lists:
                 test_invalid_values_rejected(
@@ -228,7 +223,7 @@ class ValidatorModelTests:
                     field_location=field_location,
                     invalid_value=invalid_length_list,
                     expected_error_message=f"{field_location} must be an array of length "
-                    + f"{predefined_list_length}"
+                    + f"{predefined_list_length}",
                 )
         else:
             test_invalid_values_rejected(
@@ -236,7 +231,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=[],
-                expected_error_message=f"{field_location} must be a non-empty array"
+                expected_error_message=f"{field_location} must be a non-empty array",
             )
 
         # Tests lists with non-string or empty string elements (if applicable)
@@ -248,7 +243,7 @@ class ValidatorModelTests:
                     valid_json_data,
                     field_location=field_location,
                     invalid_value=invalid_list,
-                    expected_error_message=f"{field_location} must be an array of strings"
+                    expected_error_message=f"{field_location} must be an array of strings",
                 )
 
             # Test empty string in list
@@ -257,7 +252,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=[""],
-                expected_error_message=f"{field_location} must be an array of non-empty strings"
+                expected_error_message=f"{field_location} must be an array of non-empty strings",
             )
 
     @staticmethod
@@ -277,16 +272,14 @@ class ValidatorModelTests:
         valid_json_data = deepcopy(test_instance.json_data)
 
         # Test that valid data is accepted
-        test_valid_values_accepted(
-            test_instance, valid_json_data, field_location, valid_lists_to_test
-        )
+        test_valid_values_accepted(test_instance, valid_json_data, field_location, valid_lists_to_test)
         # Test lists with duplicate values
         test_invalid_values_rejected(
             test_instance,
             valid_json_data,
             field_location=field_location,
             invalid_value=invalid_list_with_duplicates_to_test,
-            expected_error_message=expected_error_message
+            expected_error_message=expected_error_message,
         )
 
     @staticmethod
@@ -304,9 +297,7 @@ class ValidatorModelTests:
         valid_json_data = deepcopy(test_instance.json_data)
 
         # Test that valid data is accepted
-        test_valid_values_accepted(
-            test_instance, valid_json_data, field_location, ["2000-01-01", "1933-12-31"]
-        )
+        test_valid_values_accepted(test_instance, valid_json_data, field_location, ["2000-01-01", "1933-12-31"])
 
         # Test invalid data types
         for invalid_data_type_for_string in InvalidDataTypes.for_strings:
@@ -315,7 +306,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_string,
-                expected_error_message=f"{field_location} must be a string"
+                expected_error_message=f"{field_location} must be a string",
             )
 
         # Test invalid date string formats
@@ -325,8 +316,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_date_format,
-                expected_error_message=f"{field_location} must be a valid date string in the "
-                + 'format "YYYY-MM-DD"'
+                expected_error_message=f"{field_location} must be a valid date string in the " + 'format "YYYY-MM-DD"',
             )
 
     @staticmethod
@@ -346,16 +336,12 @@ class ValidatorModelTests:
         valid_json_data = deepcopy(test_instance.json_data)
 
         # Test that valid data is accepted
-        test_valid_values_accepted(
-            test_instance, valid_json_data, field_location, ValidValues.for_date_times
-        )
+        test_valid_values_accepted(test_instance, valid_json_data, field_location, ValidValues.for_date_times)
 
         # Set list of invalid data types to test
         invalid_data_types_for_strings = InvalidDataTypes.for_strings
         if is_occurrence_date_time:
-            invalid_data_types_for_strings = filter(
-                None, invalid_data_types_for_strings
-            )
+            invalid_data_types_for_strings = filter(None, invalid_data_types_for_strings)
 
         # Test invalid data types
         for invalid_data_type_for_string in invalid_data_types_for_strings:
@@ -364,7 +350,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_string,
-                expected_error_message=f"{field_location} must be a string"
+                expected_error_message=f"{field_location} must be a string",
             )
 
         # Test invalid date time string formats
@@ -378,7 +364,7 @@ class ValidatorModelTests:
                 + '"YYYY-MM-DDThh:mm:ss+zz:zz" or '
                 + '"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, including timezone offset in '
                 + "hours and minutes). Milliseconds are optional after the seconds "
-                + "(e.g. 2021-01-01T00:00:00.000+00:00)."
+                + "(e.g. 2021-01-01T00:00:00.000+00:00).",
             )
 
         # Test invalid date times
@@ -388,7 +374,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_occurrence_date_time,
-                expected_error_message=f"{field_location} must be a valid datetime"
+                expected_error_message=f"{field_location} must be a valid datetime",
             )
 
     @staticmethod
@@ -401,9 +387,7 @@ class ValidatorModelTests:
         valid_json_data = deepcopy(test_instance.json_data)
 
         # Test that valid data is accepted
-        test_valid_values_accepted(
-            test_instance, valid_json_data, field_location, [True, False]
-        )
+        test_valid_values_accepted(test_instance, valid_json_data, field_location, [True, False])
 
         # Test invalid data types
         for invalid_data_type_for_boolean in InvalidDataTypes.for_booleans:
@@ -412,7 +396,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_boolean,
-                expected_error_message=f"{field_location} must be a boolean"
+                expected_error_message=f"{field_location} must be a boolean",
             )
 
     @staticmethod
@@ -447,7 +431,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_integer,
-                expected_error_message=f"{field_location} must be a positive integer"
+                expected_error_message=f"{field_location} must be a positive integer",
             )
 
         # Test non-positive integers
@@ -457,7 +441,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=non_positive_integer,
-                expected_error_message=f"{field_location} must be a positive integer"
+                expected_error_message=f"{field_location} must be a positive integer",
             )
 
         # Test value exceeding the max value (if applicable)
@@ -467,8 +451,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=max_value + 1,
-                expected_error_message=f"{field_location} must be an integer in the range 1 to "
-                + f"{str(max_value)}"
+                expected_error_message=f"{field_location} must be an integer in the range 1 to " + f"{str(max_value)}",
             )
 
     @staticmethod
@@ -496,15 +479,13 @@ class ValidatorModelTests:
         )
 
         # Test invalid data types
-        for (
-            invalid_data_type_for_decimals_or_integers
-        ) in InvalidDataTypes.for_decimals_or_integers:
+        for invalid_data_type_for_decimals_or_integers in InvalidDataTypes.for_decimals_or_integers:
             test_invalid_values_rejected(
                 test_instance,
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_data_type_for_decimals_or_integers,
-                expected_error_message=f"{field_location} must be a number"
+                expected_error_message=f"{field_location} must be a number",
             )
 
         # Test Decimal with more than the maximum number of decimal places
@@ -515,7 +496,7 @@ class ValidatorModelTests:
             field_location=field_location,
             invalid_value=decimal_too_many_dp,
             expected_error_message=f"{field_location} must be a number with a maximum of "
-            + f"{max_decimal_places} decimal places"
+            + f"{max_decimal_places} decimal places",
         )
 
     @staticmethod
@@ -555,7 +536,7 @@ class ValidatorModelTests:
             test_instance.validator.validate(invalid_json_data)
 
         full_error_message = str(error.exception)
-        actual_error_messages = full_error_message.replace('Validation errors: ', '').split('; ')
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
         test_instance.assertIn(expected_error_message, actual_error_messages)
 
     @staticmethod
@@ -595,5 +576,5 @@ class ValidatorModelTests:
             test_instance.validator.validate(invalid_json_data)
 
         full_error_message = str(error.exception)
-        actual_error_messages = full_error_message.replace('Validation errors: ', '').split('; ')
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
         test_instance.assertIn(expected_error_message, actual_error_messages)

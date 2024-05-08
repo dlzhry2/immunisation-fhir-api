@@ -23,44 +23,45 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         """Set up for each test. This runs before every test"""
         self.json_data = load_json_data(filename="sample_covid_immunization_event.json")
         self.validator = ImmunizationValidator(add_post_validators=False)
-        
+
     def test_collected_errors(self):
         """Test that when passed multiple validation errors, it returns a list of all expected errors."""
-        
-        covid_data = self.json_data
-        
-        #remove identifier[0].value from 'contained' resource
-        covid_data['contained'][0]['identifier'][0]['value'] = None
 
-        #remove identifier[0].coding[0].code from 'Patient' resource
-        for resource in covid_data['contained']:
-            if resource['resourceType'] == 'Patient':
-                resource['identifier'][0]['extension'][0]['valueCodeableConcept']['coding'][0]['code'] = None
-        
-        #remove coding.code from 'reasonCode'
-        covid_data['reasonCode'][0]['coding'][0]['code'] = None
-                
-        expected_errors = ['Validation errors: '
+        covid_data = self.json_data
+
+        # remove identifier[0].value from 'contained' resource
+        covid_data["contained"][0]["identifier"][0]["value"] = None
+
+        # remove identifier[0].coding[0].code from 'Patient' resource
+        for resource in covid_data["contained"]:
+            if resource["resourceType"] == "Patient":
+                resource["identifier"][0]["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = None
+
+        # remove coding.code from 'reasonCode'
+        covid_data["reasonCode"][0]["coding"][0]["code"] = None
+
+        expected_errors = [
+            "Validation errors: "
             "contained[?(@.resourceType=='Practitioner')].identifier[0].value must be a "
-            'string',
-            "contained[?(@.resourceType=='Patient')].identifier[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]." + 
-            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]" + 
-            ".valueCodeableConcept.coding[?(@.system=='https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland')]" +
-            ".code must be a string",
-           'reasonCode[0].coding[0].code must be a string'
-            ]
-        
-        #assert ValueError raised
+            "string",
+            "contained[?(@.resourceType=='Patient')].identifier[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')]"
+            + ".valueCodeableConcept.coding[?(@.system=='https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland')]"
+            + ".code must be a string",
+            "reasonCode[0].coding[0].code must be a string",
+        ]
+
+        # assert ValueError raised
         with self.assertRaises(ValueError) as cm:
             self.validator.validate(covid_data)
 
-        #extract the error messages from the exception
-        actual_errors = str(cm.exception).split('; ')
-        
+        # extract the error messages from the exception
+        actual_errors = str(cm.exception).split("; ")
+
         # assert length of errors
         assert len(actual_errors) == len(expected_errors)
-        
-        #assert the error is in the expected error messages
+
+        # assert the error is in the expected error messages
         for error in actual_errors:
             assert error in expected_errors
 
@@ -332,7 +333,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_json_data,
             field_location="performer",
             invalid_value=InvalidValues.performer_with_two_organizations,
-            expected_error_message="performer.actor[?@.type=='Organization'] must be unique"
+            expected_error_message="performer.actor[?@.type=='Organization'] must be unique",
         )
 
     def test_pre_validate_performer_actor_reference(self):
@@ -704,30 +705,29 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             max_value=9,
         )
 
-    def test_pre_validate_target_disease(self):    
+    def test_pre_validate_target_disease(self):
+        """Test pre_validate_target_disease accepts valid values and rejects invalid values"""
 
-        valid_json_data = load_json_data (filename="sample_mmr_immunization_event.json")
+        valid_json_data = load_json_data(filename="sample_mmr_immunization_event.json")
 
         self.assertTrue(self.validator.validate(valid_json_data))
 
         invalid_target_disease = [
             {"coding": [{"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"}]},
             {"text": "a_disease"},
-            {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]}
+            {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]},
         ]
-        
-        _test_invalid_values_rejected(self,
+
+        _test_invalid_values_rejected(
+            self,
             valid_json_data,
             field_location="protocolApplied[0].targetDisease",
             invalid_value=invalid_target_disease,
-            expected_error_message="Every element of protocolApplied[0].targetDisease must have 'coding' property"
+            expected_error_message="Every element of protocolApplied[0].targetDisease must have 'coding' property",
         )
 
-
     def test_pre_validate_target_disease_codings(self):
-        """
-        Test pre_validate_target_disease_codings accepts valid values and rejects invalid values
-        """
+        """Test pre_validate_target_disease_codings accepts valid values and rejects invalid values"""
         valid_target_disease_values = [
             [
                 {
@@ -742,21 +742,19 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ]
 
         invalid_target_disease_values = [
-            
-                {
-                    "coding": [
-                        {"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"},
-                        {"system": "some_other_system", "code": "a_code", "display": "Measles"},
-                    ]
-                },
-                {
-                    "coding": [
-                        {"system": "http://snomed.info/sct", "code": "36989005", "display": "Mumps"},
-                        {"system": "http://snomed.info/sct", "code": "another_mumps_code", "display": "Mumps"},
-                    ]
-                },
-                {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]},
-            
+            {
+                "coding": [
+                    {"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"},
+                    {"system": "some_other_system", "code": "a_code", "display": "Measles"},
+                ]
+            },
+            {
+                "coding": [
+                    {"system": "http://snomed.info/sct", "code": "36989005", "display": "Mumps"},
+                    {"system": "http://snomed.info/sct", "code": "another_mumps_code", "display": "Mumps"},
+                ]
+            },
+            {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]},
         ]
 
         ValidatorModelTests.test_unique_list(
@@ -764,9 +762,23 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location="protocolApplied[0].targetDisease",
             valid_lists_to_test=valid_target_disease_values,
             invalid_list_with_duplicates_to_test=invalid_target_disease_values,
-            expected_error_message="protocolApplied[0].targetDisease[1].coding[?(@.system=='http://snomed.info/sct')] must be unique",
+            expected_error_message="protocolApplied[0].targetDisease[1].coding"
+            + "[?(@.system=='http://snomed.info/sct')] must be unique",
         )
-        
+
+    def test_pre_validate_disease_type_coding_codes(self):
+        """
+        Test pre_validate_disease_type_coding_codes accepts valid values and rejects invalid values
+        """
+        for i in range(0, 2):
+            ValidatorModelTests.test_string_value(
+                self,
+                field_location=f"protocolApplied[0].targetDisease[{i}]."
+                + "coding[?(@.system=='http://snomed.info/sct')].code",
+                valid_strings_to_test=["dummy"],
+                valid_json_data=load_json_data(filename="sample_mmr_immunization_event.json"),
+            )
+
     def test_pre_validate_vaccine_code_coding(self):
         """Test pre_validate_vaccine_code_coding accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_unique_list(

@@ -249,6 +249,17 @@ def get_vaccine_type(immunization: dict):
     # return disease_type
 
 
+def get_target_disease_codes_from_model(immunization: dict):
+    """Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases"""
+    target_diseases = []
+    target_disease_list = immunization.protocolApplied[0].targetDisease
+    for element in target_disease_list:
+        code = [x.code for x in element.coding if x.system == "http://snomed.info/sct"][0]
+        if code is not None:
+            target_diseases.append(code)
+    return target_diseases
+
+
 def get_occurrence_datetime(immunization: dict) -> Optional[datetime.datetime]:
     occurrence_datetime_str: Optional[str] = immunization.get("occurrenceDateTime", None)
     if occurrence_datetime_str is None:

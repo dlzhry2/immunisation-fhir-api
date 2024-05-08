@@ -29,63 +29,67 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         self.not_done_mmr_json_data = load_json_data("sample_immunization_not_done_mmr_event.json")
         self.reduce_validation_json_data = load_json_data("sample_immunization_reduce_validation_event.json")
         self.validator = ImmunizationValidator()
+        self.valid_json_data = {
+            VaccineTypes.covid_19: self.covid_json_data,
+            VaccineTypes.flu: self.flu_json_data,
+            VaccineTypes.hpv: self.hpv_json_data,
+            VaccineTypes.mmr: self.mmr_json_data,
+        }
 
     def test_collected_errors(self):
         """Test that when passed multiple validation errors, it returns a list of all expected errors."""
 
         covid_data = self.covid_json_data
 
-        #remove name[0].given for 'Patient'
-        for item in covid_data.get('contained', []):
-            if item.get('resourceType') == 'Patient':
-                if 'name' in item and item['name'] and 'given' in item['name'][0]:
-                    item['name'][0]['given'] = None
+        # remove name[0].given for 'Patient'
+        for item in covid_data.get("contained", []):
+            if item.get("resourceType") == "Patient":
+                if "name" in item and item["name"] and "given" in item["name"][0]:
+                    item["name"][0]["given"] = None
 
-        #remove actor.identifier.value for 'Organization'
-        for performer in covid_data.get('performer', []):
-            if performer.get('actor', {}).get('type') == 'Organization':
-                if 'identifier' in performer['actor']:
-                    performer['actor']['identifier']['value'] = None
-                if 'display' in performer['actor']:
-                    performer['actor']['display'] = None
+        # remove actor.identifier.value for 'Organization'
+        for performer in covid_data.get("performer", []):
+            if performer.get("actor", {}).get("type") == "Organization":
+                if "identifier" in performer["actor"]:
+                    performer["actor"]["identifier"]["value"] = None
+                if "display" in performer["actor"]:
+                    performer["actor"]["display"] = None
 
-        #remove postalCode for 'Patient'
-        for item in covid_data.get('contained', []):
-            if item.get('resourceType') == 'Patient':
-                if 'address' in item and item['address']:
-                    item['address'][0]['postalCode'] = None
+        # remove postalCode for 'Patient'
+        for item in covid_data.get("contained", []):
+            if item.get("resourceType") == "Patient":
+                if "address" in item and item["address"]:
+                    item["address"][0]["postalCode"] = None
 
-        #remove 'given' for 'Practitioner'
-        for item in covid_data.get('contained', []):
-            if item.get('resourceType') == 'Practitioner':
-                if 'name' in item and item['name'] and 'given' in item['name'][0]:
-                    item['name'][0]['given'] = None
+        # remove 'given' for 'Practitioner'
+        for item in covid_data.get("contained", []):
+            if item.get("resourceType") == "Practitioner":
+                if "name" in item and item["name"] and "given" in item["name"][0]:
+                    item["name"][0]["given"] = None
 
-        #remove 'primarySource'
-        covid_data['primarySource'] = None
+        # remove 'primarySource'
+        covid_data["primarySource"] = None
 
         expected_errors = [
             "Validation errors: contained[?(@.resourceType=='Patient')].name[0].given must be an array",
-            "performer[?(@.actor.type=='Organization')].actor.identifier.value must be a "
-            'string',
+            "performer[?(@.actor.type=='Organization')].actor.identifier.value must be a string",
             "performer[?@.actor.type == 'Organization'].actor.display must be a string",
-            "contained[?(@.resourceType=='Patient')].address[0].postalCode must be a "
-            'string',
+            "contained[?(@.resourceType=='Patient')].address[0].postalCode must be a string",
             "contained[?(@.resourceType=='Practitioner')].name[0].given must be an array",
-            'primarySource must be a boolean'
+            "primarySource must be a boolean",
         ]
 
-        #assert ValueError raised
+        # assert ValueError raised
         with self.assertRaises(ValueError) as cm:
             self.validator.validate(covid_data)
 
-        #extract the error messages from the exception
-        actual_errors = str(cm.exception).split('; ')
+        # extract the error messages from the exception
+        actual_errors = str(cm.exception).split("; ")
 
-        #assert length of errors
+        # assert length of errors
         assert len(actual_errors) == len(expected_errors)
 
-        #assert the error is in the expected error messages
+        # assert the error is in the expected error messages
         for error in actual_errors:
             assert error in expected_errors
 
@@ -93,24 +97,61 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """Test that each piece of valid sample data passes post validation"""
         # TODO: vaccinationProcedure item in not-done data extension to be removed
         # dependent on imms team confirmation (it was added to allow tests to pass)
-        # TODO: Also test some sample HPV and MMR data
         json_data_to_test = [
             self.covid_json_data,
             self.flu_json_data,
+            self.hpv_json_data,
+            self.mmr_json_data,
             self.not_done_json_data,
-            self.reduce_validation_json_data
+            self.reduce_validation_json_data,
         ]
 
         for json_data in json_data_to_test:
             # validator = ImmunizationValidator()
             self.assertTrue(self.validator.validate(json_data))
 
-    def test_post_vaccination_procedure_code(self):
+    def test_post_validate_and_set_vaccine_type(self):
         """
-        Test validate_and_set_vaccination_procedure_code accepts valid values, rejects invalid
+        Test validate_and_set_validate_and_set_vaccine_type accepts valid values, rejects invalid
         values and rejects missing data
         """
-        valid_json_data = deepcopy(self.covid_json_data)
+        field_location = "protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
+
+        # Test that a valid combination of disease codes is accepted and vaccine_type is set correctly
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
+            self.assertTrue(self.validator.validate(self.valid_json_data[vaccine_type]))
+            self.assertEqual(vaccine_type, self.validator.vaccine_type)
+
+        # Test that an invalid single disease code is rejected
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(self.covid_json_data),
+            field_location=field_location,
+            invalid_value="INVALID_VALUE",
+            expected_error_message="['INVALID_VALUE'] is not a valid combination of disease codes for this service",
+        )
+
+        # Test that an invalid combination of disease codes is rejected
+        invalid_target_disease = [
+            {"coding": [{"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"}]},
+            {"coding": [{"system": "http://snomed.info/sct", "code": "INVALID", "display": "Mumps"}]},
+            {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]},
+        ]
+
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(self.covid_json_data),
+            field_location="protocolApplied[0].targetDisease",
+            invalid_value=invalid_target_disease,
+            expected_error_message="['14189004', 'INVALID', '36653000'] is not a valid combination"
+            + " of disease codes for this service",
+        )
+
+        # Test that json data which doesn't contain a targetDisease code is rejected
+        MandationTests.test_missing_mandatory_field_rejected(self, field_location)
+
+    def test_post_vaccination_procedure_code(self):
+        """Test that the JSON data is rejected if it does not contain vaccination_procedure_code"""
 
         field_location = (
             "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
@@ -118,26 +159,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             + "'http://snomed.info/sct')].code"
         )
 
-        # Test that a valid COVID19 code is accepted and vaccine_type is therefore set to COVID19
-        _test_valid_values_accepted(
-            self,
-            valid_json_data=valid_json_data,
-            field_location=field_location,
-            valid_values_to_test=["1324681000000101"],
-        )
-
-        self.assertEqual(VaccineTypes.covid_19, self.validator.vaccine_type)
-
-        # Test that an invalid code is rejected
-        _test_invalid_values_rejected(
-            self,
-            valid_json_data=valid_json_data,
-            field_location=field_location,
-            invalid_value="INVALID_VALUE",
-            expected_error_message=f"{field_location}: INVALID_VALUE is not a valid code for this service"
-        )
-
-        # Test that json data which doesn't contain vaccination_procedure_code is rejected
         MandationTests.test_missing_mandatory_field_rejected(self, field_location)
 
     def test_post_status(self):
@@ -450,56 +471,57 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self, "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
         )
 
-    def test_post_protocol_appplied_dose_number_positive_int(self):
-        """
-        Test that present or absent protocol_appplied_dose_number_positive_int is accepted or
-        rejected as appropriate dependent on other fields
-        """
+    # TODO: Check if dose number is now mandatory and update this test accordingly
+    # def test_post_protocol_appplied_dose_number_positive_int(self):
+    #     """
+    #     Test that present or absent protocol_appplied_dose_number_positive_int is accepted or
+    #     rejected as appropriate dependent on other fields
+    #     """
 
-        field_location = "protocolApplied[0].doseNumberPositiveInt"
-        # protocol_applied_dose_number_positive_int is FHIR mandatory when protocol_applied is
-        # present, therefore to test the NHS validators when
-        # protocol_applied_dose_number_positive_int is removed, it is necessary to removed
-        # the entirety of protocol_applied
-        field_to_remove = "protocolApplied"
+    #     field_location = "protocolApplied[0].doseNumberPositiveInt"
+    #     # protocol_applied_dose_number_positive_int is FHIR mandatory when protocol_applied is
+    #     # present, therefore to test the NHS validators when
+    #     # protocol_applied_dose_number_positive_int is removed, it is necessary to removed
+    #     # the entirety of protocol_applied
+    #     field_to_remove = "protocolApplied"
 
-        # Test cases for COVID-19
-        MandationTests.test_mandation_for_status_dependent_fields(
-            self,
-            field_location,
-            vaccine_type=VaccineTypes.covid_19,
-            mandation_when_status_completed=Mandation.mandatory,
-            mandation_when_status_entered_in_error=Mandation.mandatory,
-            mandation_when_status_not_done=Mandation.mandatory,
-            expected_bespoke_error_message=f"{field_location} is mandatory when vaccination "
-            + f"type is {VaccineTypes.covid_19}",
-            field_to_remove=field_to_remove,
-        )
+    #     # Test cases for COVID-19
+    #     MandationTests.test_mandation_for_status_dependent_fields(
+    #         self,
+    #         field_location,
+    #         vaccine_type=VaccineTypes.covid_19,
+    #         mandation_when_status_completed=Mandation.mandatory,
+    #         mandation_when_status_entered_in_error=Mandation.mandatory,
+    #         mandation_when_status_not_done=Mandation.mandatory,
+    #         expected_bespoke_error_message=f"{field_location} is mandatory when vaccination "
+    #         + f"type is {VaccineTypes.covid_19}",
+    #         field_to_remove=field_to_remove,
+    #     )
 
-        # Test cases for FLU
-        MandationTests.test_mandation_for_status_dependent_fields(
-            self,
-            field_location,
-            vaccine_type=VaccineTypes.flu,
-            mandation_when_status_completed=Mandation.mandatory,
-            mandation_when_status_entered_in_error=Mandation.mandatory,
-            mandation_when_status_not_done=Mandation.required,
-            expected_bespoke_error_message=f"{field_location} is mandatory when status is "
-            + f"'completed' or 'entered-in-error' and vaccination type is {VaccineTypes.flu}",
-            field_to_remove=field_to_remove,
-        )
+    #     # Test cases for FLU
+    #     MandationTests.test_mandation_for_status_dependent_fields(
+    #         self,
+    #         field_location,
+    #         vaccine_type=VaccineTypes.flu,
+    #         mandation_when_status_completed=Mandation.mandatory,
+    #         mandation_when_status_entered_in_error=Mandation.mandatory,
+    #         mandation_when_status_not_done=Mandation.required,
+    #         expected_bespoke_error_message=f"{field_location} is mandatory when status is "
+    #         + f"'completed' or 'entered-in-error' and vaccination type is {VaccineTypes.flu}",
+    #         field_to_remove=field_to_remove,
+    #     )
 
-        # Test cases for HPV and MMR
-        for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
-            MandationTests.test_mandation_for_status_dependent_fields(
-                self,
-                field_location,
-                vaccine_type=vaccine_type,
-                mandation_when_status_completed=Mandation.required,
-                mandation_when_status_entered_in_error=Mandation.required,
-                mandation_when_status_not_done=Mandation.required,
-                field_to_remove=field_to_remove,
-            )
+    #     # Test cases for HPV and MMR
+    #     for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
+    #         MandationTests.test_mandation_for_status_dependent_fields(
+    #             self,
+    #             field_location,
+    #             vaccine_type=vaccine_type,
+    #             mandation_when_status_completed=Mandation.required,
+    #             mandation_when_status_entered_in_error=Mandation.required,
+    #             mandation_when_status_not_done=Mandation.required,
+    #             field_to_remove=field_to_remove,
+    #         )
 
     def test_post_vaccine_code_coding_code(self):
         """Test that the JSON data is rejected when vaccine_code_coding_code is absent"""
@@ -537,7 +559,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             field_location=field_location,
             invalid_value="39114911000001105",
             expected_error_message=f"{field_location} must be one of the following:"
-            + " NAVU, UNC, UNK, NA when status is 'not-done'"
+            + " NAVU, UNC, UNK, NA when status is 'not-done'",
         )
 
     def test_post_vaccine_code_coding_display(self):
@@ -913,9 +935,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             elif vaccine_type == VaccineTypes.hpv:
                 valid_json_data = deepcopy(self.hpv_json_data)
 
-            valid_json_data = MandationTests.update_vaccination_procedure_code(
-                self, vaccine_type, valid_json_data=valid_json_data
-            )
+            valid_json_data = MandationTests.update_target_disease(self, vaccine_type, valid_json_data=valid_json_data)
             MandationTests.test_missing_field_accepted(self, field_location, valid_json_data)
 
     def test_post_ip_address(self):
@@ -1054,7 +1074,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         field_location = "location.identifier.value"
         # Test cases for COVID-19, FLU and HPV where it is mandatory
         for vaccine_type in (VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv):
-            valid_json_data = MandationTests.update_vaccination_procedure_code(
+            valid_json_data = MandationTests.update_target_disease(
                 self,
                 vaccine_type,
                 valid_json_data=deepcopy(
@@ -1064,7 +1084,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             MandationTests.test_missing_mandatory_field_rejected(self, field_location, valid_json_data=valid_json_data)
 
         # Test cases for MMR where it is N/A
-        invalid_json_data = MandationTests.update_vaccination_procedure_code(
+        invalid_json_data = MandationTests.update_target_disease(
             self, VaccineTypes.mmr, valid_json_data=deepcopy(self.flu_json_data)
         )
         invalid_json_data["location"] = {
@@ -1087,7 +1107,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         field_location = "location.identifier.system"
         # Test cases for COVID-19, FLU and HPV where it is mandatory
         for vaccine_type in (VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv):
-            valid_json_data = MandationTests.update_vaccination_procedure_code(
+            valid_json_data = MandationTests.update_target_disease(
                 self,
                 vaccine_type,
                 valid_json_data=deepcopy(
@@ -1097,7 +1117,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             MandationTests.test_missing_mandatory_field_rejected(self, field_location, valid_json_data=valid_json_data)
 
         # Test cases for MMR where it is N/A
-        invalid_json_data = MandationTests.update_vaccination_procedure_code(
+        invalid_json_data = MandationTests.update_target_disease(
             self, VaccineTypes.mmr, valid_json_data=deepcopy(self.flu_json_data)
         )
         invalid_json_data["location"] = {

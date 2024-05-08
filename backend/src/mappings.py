@@ -68,7 +68,6 @@ vaccine_type_mappings = [
 ]
 
 
-
 # Dictionary of vaccine types and their applicable mandations for each field
 vaccine_type_applicable_validations = {
     "patient_identifier_value": {
@@ -184,6 +183,12 @@ vaccine_type_applicable_validations = {
         VaccineTypes.flu: Mandation.conditional_mandatory,
         VaccineTypes.hpv: Mandation.conditional_mandatory,
         VaccineTypes.mmr: Mandation.conditional_mandatory,
+    },
+    "vaccination_procedure_code": {
+        VaccineTypes.covid_19: Mandation.mandatory,
+        VaccineTypes.flu: Mandation.mandatory,
+        VaccineTypes.hpv: Mandation.mandatory,
+        VaccineTypes.mmr: Mandation.mandatory,
     },
     "vaccination_procedure_display": {
         VaccineTypes.covid_19: Mandation.required,

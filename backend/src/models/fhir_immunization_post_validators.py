@@ -10,6 +10,8 @@ from models.utils.generic_utils import (
     get_contained_resource_from_model,
     is_organization,
     get_nhs_number_verification_status_code,
+    get_target_disease_codes_from_model,
+    disease_codes_to_vaccine_type,
 )
 from models.utils.post_validation_utils import PostValidation, MandatoryError
 from mappings import Mandation, VaccineTypes
@@ -33,11 +35,11 @@ class PostValidators:
 
         # Run critical validations that other validations rely on, if they fail then no need to carry on
         try:
-            self.validate_and_set_vaccination_procedure_code(self.values)
+            self.validate_and_set_vaccine_type(self.values)
             self.validate_occurrence_date_time(self.values)
             self.set_status(self.values)
         except (ValueError, TypeError, IndexError, AttributeError, MandatoryError) as e:
-            raise ValueError(str(e))
+            raise ValueError(str(e)) from e
 
         validation_methods = [
             self.validate_patient_identifier_value,
@@ -58,6 +60,7 @@ class PostValidators:
             self.validate_recorded,
             self.validate_primary_source,
             self.validate_report_origin_text,
+            self.validate_vaccination_procedure_code,
             self.validate_vaccination_procedure_display,
             self.validate_vaccination_situation_code,
             self.validate_vaccination_situation_display,
@@ -106,19 +109,17 @@ class PostValidators:
             all_errors = "; ".join(self.errors)
             raise ValueError(all_errors)
 
-    def validate_and_set_vaccination_procedure_code(self, values: dict) -> dict:
-        "Validate that vaccination_procedure_code is a valid code"
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
-        system = "http://snomed.info/sct"
-        field_type = "code"
-        field_location = generate_field_location_for_extension(url, system, field_type)
-
+    def validate_and_set_vaccine_type(self, values: dict) -> dict:
+        """
+        Validate that the combination of targetDisease codes maps to a valid vaccine type and
+        set the vaccine type accordingly
+        """
+        field_location = "protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
         try:
-            vaccination_procedure_code = get_generic_extension_value_from_model(values, url, system, field_type)
-            if vaccination_procedure_code is None:
+            target_diseases = get_target_disease_codes_from_model(values)
+            if target_diseases == []:
                 raise KeyError
-            self.vaccine_type = PostValidation.vaccination_procedure_code(vaccination_procedure_code, field_location)
-
+            self.vaccine_type = disease_codes_to_vaccine_type(target_diseases)
         except (KeyError, IndexError, TypeError) as error:
             raise MandatoryError(f"{field_location} is a mandatory field") from error
 
@@ -473,6 +474,27 @@ class PostValidators:
             field_location=field_location,
             mandation=mandation,
             bespoke_mandatory_error_message=f"{field_location} is mandatory when primarySource is false",
+        )
+
+        return values
+
+    def validate_vaccination_procedure_code(self, values: dict) -> dict:
+        "Validate that vaccination_procedure_code is a valid code"
+        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
+        system = "http://snomed.info/sct"
+        field_type = "code"
+        field_location = generate_field_location_for_extension(url, system, field_type)
+
+        try:
+            vaccination_procedure_code = get_generic_extension_value_from_model(values, url, system, field_type)
+        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
+            vaccination_procedure_code = None
+
+        check_mandation_requirements_met(
+            field_value=vaccination_procedure_code,
+            field_location=field_location,
+            vaccine_type=self.vaccine_type,
+            mandation_key="vaccination_procedure_code",
         )
 
         return values

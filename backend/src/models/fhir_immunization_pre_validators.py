@@ -17,10 +17,11 @@ class PreValidators:
     meet the NHS custom requirements. Note that validation of the existence of a value (i.e. it
     exists if mandatory, or doesn't exist if is not applicable) is done by the post validators.
     """
+
     def __init__(self, values: dict):
         self.values = values
         self.errors = []
-    
+
     def validate(self):
         """
         Run all pre-validation checks.
@@ -71,6 +72,7 @@ class PreValidators:
             self.pre_validate_protocol_applied_dose_number_positive_int,
             self.pre_validate_target_disease,
             self.pre_validate_target_disease_codings,
+            self.pre_validate_disease_type_coding_codes,
             self.pre_validate_vaccine_code_coding,
             self.pre_validate_vaccine_code_coding_code,
             self.pre_validate_vaccine_code_coding_display,
@@ -108,15 +110,15 @@ class PreValidators:
             self.pre_validate_location_identifier_value,
             self.pre_validate_location_identifier_system,
             self.pre_validate_reduce_validation,
-            self.pre_validate_reduce_validation_reason
+            self.pre_validate_reduce_validation_reason,
         ]
-            
+
         for method in validation_methods:
             try:
                 method(self.values)
             except (ValueError, TypeError, IndexError, AttributeError) as e:
                 self.errors.append(str(e))
-                
+
         if self.errors:
             all_errors = "; ".join(self.errors)
             raise ValueError(f"Validation errors: {all_errors}")
@@ -779,9 +781,7 @@ class PreValidators:
 
         return values
 
-    def pre_validate_extension_value_codeable_concept_codings(
-        self, values: dict
-    ) -> dict:
+    def pre_validate_extension_value_codeable_concept_codings(self, values: dict) -> dict:
         """
         Pre-validate that, if they exist, each extension[{index}].valueCodeableConcept.coding.system
         is unique
@@ -968,9 +968,7 @@ class PreValidators:
 
         return values
 
-    def pre_validate_protocol_applied_dose_number_positive_int(
-        self, values: dict
-    ) -> dict:
+    def pre_validate_protocol_applied_dose_number_positive_int(self, values: dict) -> dict:
         """
         Pre-validate that, if protocolApplied[0].doseNumberPositiveInt (legacy CSV field : dose_sequence)
         exists, then it is an integer from 1 to 9
@@ -986,25 +984,26 @@ class PreValidators:
             pass
 
         return values
-    
-    def pre_validate_target_disease(self , values :dict) ->dict:
-        
-        try:
-             target_disease = values["protocolApplied"][0]["targetDisease"]
 
-             for element in target_disease:
-                 if "coding" not in element :
-                     raise ValueError ("Every element of protocolApplied[0].targetDisease must have 'coding' property")
-                     
+    def pre_validate_target_disease(self, values: dict) -> dict:
+        """
+        Pre-validate that, if protocolApplied[0].targetDisease exists, then 
+        each of its elements contains a coding field
+        """
+
+        try:
+            target_disease = values["protocolApplied"][0]["targetDisease"]
+
+            for element in target_disease:
+                if "coding" not in element:
+                    raise ValueError("Every element of protocolApplied[0].targetDisease must have 'coding' property")
+
         except (KeyError, IndexError):
             pass
 
         return values
-    
 
-    def pre_validate_target_disease_codings(
-        self, values: dict
-    ) -> dict:
+    def pre_validate_target_disease_codings(self, values: dict) -> dict:
         """
         Pre-validate that, if they exist, each protocolApplied[0].targetDisease[{index}].valueCodeableConcept.coding.system
         is unique
@@ -1018,6 +1017,30 @@ class PreValidators:
                         target_disease_coding,
                         "system",
                         f"protocolApplied[0].targetDisease[{i}].coding[?(@.system=='FIELD_TO_REPLACE')]",
+                    )
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
+        return values
+
+    def pre_validate_disease_type_coding_codes(self, values: dict) -> dict:
+        """
+        Pre-validate that, if protocolApplied[0].targetDisease[{i}].coding[?(@.system=='http://snomed.info/sct')].code
+        exists, then it is a non-empty string
+        """
+        try:
+            for i in range(len(values["protocolApplied"][0]["targetDisease"])):
+                try:
+                    target_disease_coding = values["protocolApplied"][0]["targetDisease"][i]["coding"]
+                    target_disease_coding_code = [
+                        x for x in target_disease_coding if x.get("system") == "http://snomed.info/sct"
+                    ][0]["code"]
+
+                    PreValidation.for_string(
+                        target_disease_coding_code,
+                        f"protocolApplied[0].targetDisease[{i}].coding[?(@.system=='http://snomed.info/sct')].code",
                     )
                 except KeyError:
                     pass
