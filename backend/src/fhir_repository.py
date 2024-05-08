@@ -14,7 +14,7 @@ from mappings import vaccination_procedure_snomed_codes
 from models.errors import ResourceNotFoundError, UnhandledResponseError, IdentifierDuplicationError
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 
-from models.utils.generic_utils import get_disease_type
+from models.utils.generic_utils import get_vaccine_type
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -76,7 +76,7 @@ class RecordAttributes:
         self.patient = patient
         self.resource = imms
         self.timestamp = int(time.time())
-        self.disease_type = get_disease_type(imms)
+        self.disease_type = get_vaccine_type(imms)
 
         self.patient_sk = f"{self.disease_type}#{imms_id}"
         self.identifier = imms["identifier"][0]["value"]

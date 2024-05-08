@@ -215,6 +215,17 @@
   ],
   "protocolApplied": [
     {
+      "targetDisease": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "240532009",
+              "display": "Human papillomavirus infection"
+            }
+          ]
+        }
+      ],
       "doseNumberPositiveInt": 1
     }
   ]

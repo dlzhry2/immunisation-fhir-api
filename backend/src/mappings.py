@@ -1,6 +1,7 @@
 """Dictionary of vaccine procedure snomed codes and their mapping to vaccine type"""
 
 from dataclasses import dataclass, field
+from typing import Union
 
 
 @dataclass
@@ -12,8 +13,9 @@ class VaccineTypes:
     hpv: str = "HPV"
     mmr: str = "MMR"
 
-    all: list[str] = \
-        field(default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr])
+    all: list[str] = field(
+        default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]
+    )
 
 
 @dataclass
@@ -57,6 +59,15 @@ vaccine_type_to_sample_vaccination_procedure_snomed_code = {
     VaccineTypes.hpv: "mockHPVcode1",
     VaccineTypes.mmr: "mockMMRcode1",
 }
+
+vaccine_type_mappings = [
+    (["840539006"], VaccineTypes.covid_19),
+    (["6142004"], VaccineTypes.flu),
+    (["240532009"], VaccineTypes.hpv),
+    (["14189004", "36653000", "36989005"], VaccineTypes.mmr),
+]
+
+
 
 # Dictionary of vaccine types and their applicable mandations for each field
 vaccine_type_applicable_validations = {

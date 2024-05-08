@@ -17,7 +17,7 @@ from models.errors import (
     InconsistentIdError,
 )
 from models.fhir_immunization import ImmunizationValidator
-from models.utils.generic_utils import nhs_number_mod11_check, get_occurrence_datetime, get_disease_type
+from models.utils.generic_utils import nhs_number_mod11_check, get_occurrence_datetime, get_vaccine_type
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
@@ -116,7 +116,7 @@ class FhirService:
 
     @staticmethod
     def has_valid_disease_type(immunization: dict, disease_types: list[str]):
-        return get_disease_type(immunization) in disease_types
+        return get_vaccine_type(immunization) in disease_types
 
     @staticmethod
     def is_valid_date_from(immunization: dict, date_from: datetime.date):
@@ -154,7 +154,7 @@ class FhirService:
         disease_types: list[str],
         params: str,
         date_from: datetime.date = parameter_parser.date_from_default,
-        date_to: datetime.date = parameter_parser.date_to_default
+        date_to: datetime.date = parameter_parser.date_to_default,
     ) -> FhirBundle:
         """find all instances of Immunization(s) for a patient and specified disease type.
         Returns Bundle[Immunization]
@@ -162,38 +162,33 @@ class FhirService:
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         if not nhs_number_mod11_check(nhs_number):
-                diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
-                exp_error = {
-                             "diagnostics": diagnostics
-                            }
-                return (exp_error)
+            diagnostics = f"NHS Number: {nhs_number} is invalid or it doesn't exist."
+            exp_error = {"diagnostics": diagnostics}
+            return exp_error
         resources = self.immunization_repo.find_immunizations(nhs_number)
         resources = [
-            r for r in resources
+            r
+            for r in resources
             if FhirService.has_valid_disease_type(r, disease_types)
             and FhirService.is_valid_date_from(r, date_from)
             and FhirService.is_valid_date_to(r, date_to)
         ]
         patient = self.pds_service.get_patient_details(nhs_number) if len(resources) > 0 else None
         entries = [
-                BundleEntry(
-                    resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
-                    search=BundleEntrySearch(mode="match"),
-                    fullUrl=f"urn:uuid:{imms['id']}"
-                ) for imms in resources
-            ]
+            BundleEntry(
+                resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
+                search=BundleEntrySearch(mode="match"),
+                fullUrl=f"urn:uuid:{imms['id']}",
+            )
+            for imms in resources
+        ]
         if patient:
             entries.append(
                 BundleEntry(
-                    resource=FhirService.process_patient_for_include(patient),
-                    search=BundleEntrySearch(mode="include")
+                    resource=FhirService.process_patient_for_include(patient), search=BundleEntrySearch(mode="include")
                 )
             )
-        fhir_bundle = FhirBundle(
-            resourceType="Bundle",
-            type="searchset",
-            entry=entries
-        )
+        fhir_bundle = FhirBundle(resourceType="Bundle", type="searchset", entry=entries)
         url = f"{get_service_url()}/Immunization?{params}"
         fhir_bundle.link = [BundleLink(relation="self", url=url)]
         return fhir_bundle

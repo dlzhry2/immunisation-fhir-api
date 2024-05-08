@@ -1,7 +1,21 @@
 """Generic utilities for models"""
+
 import datetime
 
 from typing import Literal, Union, Optional, Any
+
+from mappings import vaccine_type_mappings
+
+
+def disease_codes_to_vaccine_type(disease_codes: list) -> Union[str, None]:
+    """
+    Takes a list of disease codes and returns the corresponding vaccine type if found,
+    otherwise raises a value error
+    """
+    try:
+        return next(x[1] for x in vaccine_type_mappings if x[0] == sorted(disease_codes))
+    except Exception as e:
+        raise ValueError(f"{disease_codes} is not a valid combination of disease codes for this service") from e
 
 
 def get_contained_resource_from_model(
@@ -110,9 +124,7 @@ def get_generic_extension_value_from_model(
     """
     Get the value of an extension field, given its url, field_type, and system
     """
-    value_codeable_concept_coding = [x for x in values.extension if x.url == url][
-        0
-    ].valueCodeableConcept.coding
+    value_codeable_concept_coding = [x for x in values.extension if x.url == url][0].valueCodeableConcept.coding
 
     value = getattr(
         [x for x in value_codeable_concept_coding if x.system == system][0],
@@ -209,25 +221,32 @@ def nhs_number_mod11_check(nhs_number: str) -> bool:
 
     return is_mod11
 
-def get_disease_type(immunization: dict):
-    value_codeable_concept_coding = [
-        ext
-        for ext in immunization["extension"]
-        if ext.get("url") == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
-    ][0]["valueCodeableConcept"]["coding"]
 
-    vaccination_procedure_code = [
-        coding
-        for coding in value_codeable_concept_coding
-        if coding.get("system") == "http://snomed.info/sct"
-    ][0]["code"]
+def get_vaccine_type(immunization: dict):
+    """Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases"""
+    target_diseases = []
+    target_disease_list = immunization["protocolApplied"][0]["targetDisease"]
+    for element in target_disease_list:
+        code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
+        target_diseases.append(code)
+    return disease_codes_to_vaccine_type(target_diseases)
 
-    from mappings import vaccination_procedure_snomed_codes
-    disease_type = vaccination_procedure_snomed_codes.get(
-        vaccination_procedure_code, None
-    )
+    # TODO: Remove this commented code
+    # value_codeable_concept_coding = [
+    #     ext
+    #     for ext in immunization["extension"]
+    #     if ext.get("url") == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
+    # ][0]["valueCodeableConcept"]["coding"]
 
-    return disease_type
+    # vaccination_procedure_code = [
+    #     coding for coding in value_codeable_concept_coding if coding.get("system") == "http://snomed.info/sct"
+    # ][0]["code"]
+
+    # from mappings import vaccination_procedure_snomed_codes
+
+    # disease_type = vaccination_procedure_snomed_codes.get(vaccination_procedure_code, None)
+
+    # return disease_type
 
 
 def get_occurrence_datetime(immunization: dict) -> Optional[datetime.datetime]:
