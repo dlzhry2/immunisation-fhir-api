@@ -4,17 +4,6 @@ from dataclasses import dataclass, field
 
 
 @dataclass
-class Mandation:
-    """Mandation types"""
-
-    mandatory: str = "M"
-    conditional_mandatory: str = "CM"
-    required: str = "R"
-    optional: str = "O"
-    not_applicable: str = "N/A"
-
-
-@dataclass
 class VaccineTypes:
     """Vaccine types"""
 
@@ -26,6 +15,17 @@ class VaccineTypes:
     all: list[str] = field(
         default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]
     )
+
+
+@dataclass
+class Mandation:
+    """Mandation types"""
+
+    mandatory: str = "M"
+    conditional_mandatory: str = "CM"
+    required: str = "R"
+    optional: str = "O"
+    not_applicable: str = "N/A"
 
 
 @dataclass
@@ -117,10 +117,10 @@ vaccine_type_applicable_validations = {
         VaccineTypes.mmr: Mandation.mandatory,
     },
     "organization_display": {
-        VaccineTypes.covid_19: Mandation.mandatory,
-        VaccineTypes.flu: Mandation.mandatory,
-        VaccineTypes.hpv: Mandation.mandatory,
-        VaccineTypes.mmr: Mandation.mandatory,
+        VaccineTypes.covid_19: Mandation.optional,
+        VaccineTypes.flu: Mandation.optional,
+        VaccineTypes.hpv: Mandation.optional,
+        VaccineTypes.mmr: Mandation.optional,
     },
     "identifier_value": {
         VaccineTypes.covid_19: Mandation.mandatory,

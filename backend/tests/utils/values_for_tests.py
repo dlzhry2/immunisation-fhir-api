@@ -207,7 +207,7 @@ class InvalidValues:
         "2000-13-01",  # Month 13
         "2000-01-00",  # Day 0
         "2000-01-32",  # Day 32
-        "2000-02-30",  # Invalid combnation of month and day
+        "2000-02-30",  # Invalid combination of month and day
     ]
 
     # Strings which are not in acceptable date time format

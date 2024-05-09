@@ -258,10 +258,8 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
     def test_post_organization_display(self):
-        """Test that the JSON data is rejected if it does not contain organization_display"""
-        MandationTests.test_missing_mandatory_field_rejected(
-            self, "performer[?(@.actor.type=='Organization')].actor.display"
-        )
+        """Test that the JSON data is accepted if it does not contain organization_display"""
+        MandationTests.test_missing_field_accepted(self, "performer[?(@.actor.type=='Organization')].actor.display")
 
     def test_post_identifer_value(self):
         """Test that the JSON data is rejected if it does not contain identifier_value"""
