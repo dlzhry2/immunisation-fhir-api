@@ -4,6 +4,7 @@ from s_flag_handler import handle_s_flag
 
 
 class TestRemovePersonalInfo(unittest.TestCase):
+    # TODO: Update this to use sample data file
     input_immunization = {
         "resourceType": "Immunization",
         "contained": [
@@ -53,15 +54,11 @@ class TestRemovePersonalInfo(unittest.TestCase):
                 "item": [
                     {
                         "linkId": "Consent",
-                        "answer": [
-                            {"valueCoding": {"code": "snomed", "display": "free text"}}
-                        ],
+                        "answer": [{"valueCoding": {"code": "snomed", "display": "free text"}}],
                     },
                     {
                         "linkId": "Example",
-                        "answer": [
-                            {"valueCoding": {"system": "snomed", "code": "M242ND"}}
-                        ],
+                        "answer": [{"valueCoding": {"system": "snomed", "code": "M242ND"}}],
                     },
                 ],
             },
@@ -128,9 +125,7 @@ class TestRemovePersonalInfo(unittest.TestCase):
                     "item": [
                         {
                             "linkId": "Example",
-                            "answer": [
-                                {"valueCoding": {"system": "snomed", "code": "M242ND"}}
-                            ],
+                            "answer": [{"valueCoding": {"system": "snomed", "code": "M242ND"}}],
                         },
                     ],
                 },

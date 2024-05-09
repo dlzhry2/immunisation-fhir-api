@@ -9,7 +9,7 @@ from fhir.resources.R4B.bundle import Bundle as FhirBundle, BundleEntry
 from fhir.resources.R4B.immunization import Immunization
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome, get_service_url
-from mappings import vaccination_procedure_snomed_codes
+from mappings import VaccineTypes
 from models.errors import (
     InvalidPatientId,
     CustomValidationError,
@@ -162,33 +162,30 @@ class TestCreateImmunization(unittest.TestCase):
 
         valid_imms = create_an_immunization_dict("an-id", VALID_NHS_NUMBER)
 
-        bad_procedure_code_imms = deepcopy(valid_imms)
-        bad_procedure_code_imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "bad-code"
-        bad_procedure_code_msg = (
-            "extension[?(@.url=="
-            + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')"
-            + "].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code: "
-            + "bad-code is not a valid code for this service"
-        )
+        bad_target_disease_imms = deepcopy(valid_imms)
+        bad_target_disease_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "bad-code"
+        bad_target_disease_msg = "['bad-code'] is not a valid combination of disease codes for this service"
 
         bad_patient_name_imms = deepcopy(valid_imms)
         del bad_patient_name_imms["contained"][1]["name"][0]["given"]
         bad_patient_name_msg = "contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
 
+        # TODO: Create mapping for vaccine_type to target disease codes
         bad_na_imms = deepcopy(valid_imms)
-        bad_na_imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "mockFLUcode1"
+        bad_na_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "6142004"
         bad_na_msg = (
             "contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='IpAddress')].answer[0].valueString must not be provided for this vaccine type"
         )
+
         fhir_service = FhirService(self.imms_repo, self.pds_service)
 
         # Create
-        # Invalid procedure_code
+        # Invalid target_disease
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.create_immunization(bad_procedure_code_imms)
+            fhir_service.create_immunization(bad_target_disease_imms)
 
-        self.assertEqual(bad_procedure_code_msg, error.exception.message)
+        self.assertEqual(bad_target_disease_msg, error.exception.message)
         self.imms_repo.create_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
@@ -295,32 +292,29 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_post_validation_failed(self):
         valid_imms = create_an_immunization_dict("an-id", VALID_NHS_NUMBER)
 
-        bad_procedure_code_imms = deepcopy(valid_imms)
-        bad_procedure_code_imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "bad-code"
-        bad_procedure_code_msg = (
-            "extension[?(@.url=="
-            + "'https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')"
-            + "].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code: "
-            + "bad-code is not a valid code for this service"
-        )
+        bad_target_disease_imms = deepcopy(valid_imms)
+        bad_target_disease_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "bad-code"
+        bad_target_disease_msg = "['bad-code'] is not a valid combination of disease codes for this service"
 
         bad_patient_name_imms = deepcopy(valid_imms)
         del bad_patient_name_imms["contained"][1]["name"][0]["given"]
         bad_patient_name_msg = "contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
 
+        # TODO: Create mapping for vaccine_type to target disease codes
         bad_na_imms = deepcopy(valid_imms)
-        bad_na_imms["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "mockFLUcode1"
+        bad_na_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "6142004"
         bad_na_msg = (
             "contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='IpAddress')].answer[0].valueString must not be provided for this vaccine type"
         )
+
         fhir_service = FhirService(self.imms_repo, self.pds_service)
 
-        # Invalid procedure_code
+        # Invalid target_disease
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_procedure_code_imms)
+            fhir_service.update_immunization("an-id", bad_target_disease_imms)
 
-        self.assertEqual(bad_procedure_code_msg, error.exception.message)
+        self.assertEqual(bad_target_disease_msg, error.exception.message)
         self.imms_repo.update_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
@@ -425,16 +419,14 @@ class TestSearchImmunizations(unittest.TestCase):
         self.nhs_search_param = "patient.identifier"
         self.disease_type_search_param = "-immunization.target"
 
-    def test_map_disease_type_to_disease_code(self):
-        """It should map disease_type to disease_code"""
-        # TODO: for this ticket we are assuming code is provided
+    def test_vaccine_type_search(self):
+        """It should search for the correct vaccine type"""
         nhs_number = VALID_NHS_NUMBER
-        disease_type = "1324681000000101"
-        params = f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_type}"
+        vaccine_type = VaccineTypes.covid_19
+        params = f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={vaccine_type}"
 
-        disease_code = vaccination_procedure_snomed_codes[disease_type]
         # When
-        _ = self.fhir_service.search_immunizations(nhs_number, disease_code, params)
+        _ = self.fhir_service.search_immunizations(nhs_number, vaccine_type, params)
 
         # Then
         self.imms_repo.find_immunizations.assert_called_once_with(nhs_number)

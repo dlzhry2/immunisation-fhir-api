@@ -4,6 +4,17 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class Mandation:
+    """Mandation types"""
+
+    mandatory: str = "M"
+    conditional_mandatory: str = "CM"
+    required: str = "R"
+    optional: str = "O"
+    not_applicable: str = "N/A"
+
+
+@dataclass
 class VaccineTypes:
     """Vaccine types"""
 
@@ -18,22 +29,41 @@ class VaccineTypes:
 
 
 @dataclass
-class Mandation:
-    """Mandation types"""
+class DiseaseDisplayTerms:
+    """Disease display terms which correspond to disease codes"""
 
-    mandatory: str = "M"
-    conditional_mandatory: str = "CM"
-    required: str = "R"
-    optional: str = "O"
-    not_applicable: str = "N/A"
+    covid_19: str = "Disease caused by severe acute respiratory syndrome coronavirus 2"
+    flu: str = "Influenza"
+    hpv: str = "Human papillomavirus infection"
+    measles: str = "Measles"
+    mumps: str = "Mumps"
+    rubella: str = "Rubella"
+
+
+@dataclass
+class DiseaseCodes:
+    # TODO: ? link website of codes and terms here
+    """Disease Codes"""
+
+    covid_19: str = "840539006"
+    flu: str = "6142004"
+    hpv: str = "240532009"
+    measles: str = "14189004"
+    mumps: str = "36989005"
+    rubella: str = "36653000"
 
 
 vaccine_type_mappings = [
-    (["840539006"], VaccineTypes.covid_19),
-    (["6142004"], VaccineTypes.flu),
-    (["240532009"], VaccineTypes.hpv),
-    (["14189004", "36653000", "36989005"], VaccineTypes.mmr),
+    ([DiseaseCodes.covid_19], VaccineTypes.covid_19),
+    ([DiseaseCodes.flu], VaccineTypes.flu),
+    ([DiseaseCodes.hpv], VaccineTypes.hpv),
+    # FOR VACCINE_TYPES WHICH TARGET MULTIPLE DISEASES ENSURE THAT THE DISEASE CODES A ORDERED ALPHABETICALLY
+    # This allows order-insensitive comparison with other lists, by alphabetically sorting the list for comparison
+    (sorted([DiseaseCodes.measles, DiseaseCodes.rubella, DiseaseCodes.mumps]), VaccineTypes.mmr),
 ]
+
+
+valid_disease_code_combinations = [x[0] for x in vaccine_type_mappings]
 
 
 # Dictionary of vaccine types and their applicable mandations for each field

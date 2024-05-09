@@ -10,7 +10,6 @@ import boto3
 import botocore.exceptions
 from boto3.dynamodb.conditions import Attr, Key
 from botocore.config import Config
-from mappings import vaccination_procedure_snomed_codes
 from models.errors import ResourceNotFoundError, UnhandledResponseError, IdentifierDuplicationError
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 
