@@ -1,4 +1,5 @@
 """Store values for use in tests"""
+
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -27,6 +28,8 @@ class InvalidDataTypes:
 @dataclass
 class ValidValues:
     """Store valid values for tests"""
+
+    nhs_number = "9990548609"
 
     for_date_times = [
         "2000-01-01T00:00:00+00:00",  # Time and offset all zeroes
@@ -146,16 +149,12 @@ class ValidValues:
 
     vaccination_procedure_with_one_snomed_code = {
         "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
-        "valueCodeableConcept": {
-            "coding": vaccination_procedure_coding_with_one_snomed_code
-        },
+        "valueCodeableConcept": {"coding": vaccination_procedure_coding_with_one_snomed_code},
     }
 
     vaccination_procedure_with_snomed_and_dmd_codes = {
         "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
-        "valueCodeableConcept": {
-            "coding": vaccination_procedure_coding_with_snomed_and_dmd_codes
-        },
+        "valueCodeableConcept": {"coding": vaccination_procedure_coding_with_snomed_and_dmd_codes},
     }
 
     vaccination_situation_with_one_snomed_code = {
@@ -164,15 +163,13 @@ class ValidValues:
     }
 
     nhs_number_coding_item = {
-        "system": "https://fhir.hl7.org.uk/CodeSystem"
-        + "/UKCore-NHSNumberVerificationStatusEngland",
+        "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
         "code": "NHS_NUMBER_STATUS_INDICATOR_CODE",
         "display": "NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION",
     }
 
     nhs_number_verification_status = {
-        "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-        + "NHSNumberVerificationStatus",
+        "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
         "valueCodeableConcept": {"coding": [nhs_number_coding_item]},
     }
 
@@ -255,8 +252,7 @@ class InvalidValues:
     for_lists_of_strings_of_length_1 = [[1], [False], [["Test1"]]]
 
     for_strings_with_max_100_chars = [
-        "This is a really long string with more than 100 "
-        + "characters to test whether the validator is working well"
+        "This is a really long string with more than 100 characters to test whether the validator is working well"
     ]
 
     for_genders = [

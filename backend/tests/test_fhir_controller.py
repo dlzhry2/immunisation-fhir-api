@@ -321,12 +321,12 @@ class TestSearchImmunizations(unittest.TestCase):
         search_result = Bundle.construct()
         self.service.search_immunizations.return_value = search_result
 
-        disease_type = VaccineTypes().all[0]
-        params = (f"{self.immunization_target_key}={disease_type}&"
+        vaccine_type = VaccineTypes().all[0]
+        params = (f"{self.immunization_target_key}={vaccine_type}&"
                   + urllib.parse.urlencode([(f"{self.patient_identifier_key}",
                                              f"{self.patient_identifier_valid_value}")]))
         lambda_event = {"multiValueQueryStringParameters": {
-            self.immunization_target_key: [disease_type],
+            self.immunization_target_key: [vaccine_type],
             self.patient_identifier_key: [self.patient_identifier_valid_value]
         }}
 
@@ -335,7 +335,7 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # Then
         self.service.search_immunizations.assert_called_once_with(
-            self.nhs_number_valid_value, [disease_type], params, ANY, ANY
+            self.nhs_number_valid_value, [vaccine_type], params, ANY, ANY
         )
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
@@ -346,14 +346,14 @@ class TestSearchImmunizations(unittest.TestCase):
         search_result = Bundle.construct()
         self.service.search_immunizations.return_value = search_result
 
-        disease_type = VaccineTypes().all[0]
-        params = (f"{self.immunization_target_key}={disease_type}&"
+        vaccine_type = VaccineTypes().all[0]
+        params = (f"{self.immunization_target_key}={vaccine_type}&"
                   + urllib.parse.urlencode([(f"{self.patient_identifier_key}",
                                              f"{self.patient_identifier_valid_value}")]))
         # Construct the application/x-www-form-urlencoded body
         body = {
             self.patient_identifier_key: self.patient_identifier_valid_value,
-            self.immunization_target_key: disease_type
+            self.immunization_target_key: vaccine_type
         }
         encoded_body = urlencode(body)
         # Base64 encode the body
@@ -369,7 +369,7 @@ class TestSearchImmunizations(unittest.TestCase):
         response = self.controller.search_immunizations(lambda_event)
         # Then
         self.service.search_immunizations.assert_called_once_with(
-            self.nhs_number_valid_value, [disease_type], params, ANY, ANY
+            self.nhs_number_valid_value, [vaccine_type], params, ANY, ANY
         )
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
@@ -409,15 +409,15 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_self_link_excludes_extraneous_params(self):
         search_result = Bundle.construct()
         self.service.search_immunizations.return_value = search_result
-        disease_type = VaccineTypes().all[0]
-        params = (f"{self.immunization_target_key}={disease_type}&"
+        vaccine_type = VaccineTypes().all[0]
+        params = (f"{self.immunization_target_key}={vaccine_type}&"
                   + urllib.parse.urlencode(
                     [(f"{self.patient_identifier_key}", f"{self.patient_identifier_valid_value}")]))
 
         lambda_event = {
             "multiValueQueryStringParameters": {
                 self.patient_identifier_key: [self.patient_identifier_valid_value],
-                self.immunization_target_key: [disease_type],
+                self.immunization_target_key: [vaccine_type],
                 "b": ["b,a"],
                 "a": ["b,a"],
             },
@@ -429,5 +429,5 @@ class TestSearchImmunizations(unittest.TestCase):
         self.controller.search_immunizations(lambda_event)
 
         self.service.search_immunizations.assert_called_once_with(
-            self.nhs_number_valid_value, [disease_type], params, ANY, ANY
+            self.nhs_number_valid_value, [vaccine_type], params, ANY, ANY
         )

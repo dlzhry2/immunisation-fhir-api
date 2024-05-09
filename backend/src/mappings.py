@@ -1,7 +1,6 @@
 """Dictionary of vaccine procedure snomed codes and their mapping to vaccine type"""
 
 from dataclasses import dataclass, field
-from typing import Union
 
 
 @dataclass
@@ -28,37 +27,6 @@ class Mandation:
     optional: str = "O"
     not_applicable: str = "N/A"
 
-
-# TODO: Update dictionary to use correct codes and mappings once received from Imms team
-# Dictionary of vaccine procedure snomed codes and their mapping to vaccine type. Any new codes
-# should be added here
-vaccination_procedure_snomed_codes = {
-    "1324681000000101": VaccineTypes.covid_19,
-    "1324691000000104": VaccineTypes.covid_19,
-    "1324671000000103": VaccineTypes.covid_19,
-    "1362591000000103": VaccineTypes.covid_19,
-    "1363861000000103": VaccineTypes.covid_19,
-    "1363791000000101": VaccineTypes.covid_19,
-    "1363831000000108": VaccineTypes.covid_19,
-    "822851000000102": VaccineTypes.flu,  # TODO: remove this code if necessary once full list of
-    # accceptable codes is received (note that it has been copied from the sample data, to allow
-    # the sample flu data to pass the validator)
-    "mockFLUcode1": VaccineTypes.flu,
-    "mockFLUcode2": VaccineTypes.flu,
-    "mockHPVcode1": VaccineTypes.hpv,
-    "mockHPVcode2": VaccineTypes.hpv,
-    "mockMMRcode1": VaccineTypes.mmr,
-    "mockMMRcode2": VaccineTypes.mmr,
-    "mockOTHERDISEASEcode1": "OTHER_DISEASE",
-    "mockMENINGITIScode1": "MEN",
-}
-
-vaccine_type_to_sample_vaccination_procedure_snomed_code = {
-    VaccineTypes.covid_19: "1324681000000101",
-    VaccineTypes.flu: "mockFLUcode1",
-    VaccineTypes.hpv: "mockHPVcode1",
-    VaccineTypes.mmr: "mockMMRcode1",
-}
 
 vaccine_type_mappings = [
     (["840539006"], VaccineTypes.covid_19),

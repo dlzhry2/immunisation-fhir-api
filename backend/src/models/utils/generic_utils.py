@@ -223,7 +223,10 @@ def nhs_number_mod11_check(nhs_number: str) -> bool:
 
 
 def get_vaccine_type(immunization: dict):
-    """Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases"""
+    """
+    Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases.
+    If combination of disease types does not map to a valid vaccine type, a value error is raised
+    """
     target_diseases = []
     target_disease_list = immunization["protocolApplied"][0]["targetDisease"]
     for element in target_disease_list:

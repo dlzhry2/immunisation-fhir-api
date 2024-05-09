@@ -1,4 +1,5 @@
 """Immunization FHIR R4B validator"""
+
 import json
 from typing import Literal
 from decimal import Decimal
@@ -7,7 +8,11 @@ from models.fhir_immunization_pre_validators import PreValidators
 from models.fhir_immunization_post_validators import PostValidators
 from models.utils.generic_utils import get_generic_questionnaire_response_value, get_generic_extension_value_from_model
 from mappings import vaccination_procedure_snomed_codes
-from models.utils.generic_utils import get_generic_questionnaire_response_value
+from models.utils.generic_utils import (
+    get_generic_questionnaire_response_value,
+    disease_codes_to_vaccine_type,
+    get_target_disease_codes_from_model,
+)
 
 
 class ImmunizationValidator:
@@ -23,7 +28,7 @@ class ImmunizationValidator:
         self.pre_validators = None
         self.post_validators = None
         self.errors = []
-        
+
     def initialize_immunization(self, json_data):
         self.immunization = Immunization.parse_obj(json_data)
 
@@ -65,17 +70,15 @@ class ImmunizationValidator:
 
         self.reduce_validation_code = reduce_validation_code
 
-    def set_vaccine_type(self, immunization):
-        """Set vaccine type"""
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
-        system = "http://snomed.info/sct"
-        field_type = "code"
+    def set_vaccine_type(self, values: dict) -> dict:
+        # TODO: Work out if this replaces, or is in addition to, similar function in post validators
+        """Set the vaccine type"""
         try:
-            vaccination_procedure_code = get_generic_extension_value_from_model(immunization, url, system, field_type)
-            self.vaccine_type = vaccination_procedure_snomed_codes.get(
-                vaccination_procedure_code, None
-            )
-        except (KeyError, IndexError, AttributeError, TypeError) as error:
+            target_diseases = get_target_disease_codes_from_model(values)
+            if target_diseases == []:
+                raise KeyError
+            self.vaccine_type = disease_codes_to_vaccine_type(target_diseases)
+        except (KeyError, IndexError, TypeError) as error:
             raise error
 
     def validate(self, json_data) -> Immunization:
