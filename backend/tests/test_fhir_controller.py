@@ -234,7 +234,7 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_validation_superseded_number_to_give_bad_request_for_update_immunization(self):
         """it should return 400 if Immunization has superseded nhs number"""
         imms = "{}"
-        aws_event = {"body": imms, "pathParameters": {"id": "9990548609"}}
+        aws_event = {"body": imms, "pathParameters": {"id": "9452372230"}}
         self.service.update_immunization.side_effect = CustomValidationError(message="invalid")
 
         response = self.controller.update_immunization(aws_event)
