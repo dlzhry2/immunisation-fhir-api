@@ -63,7 +63,7 @@ class TestFunctionInfoWrapper(unittest.TestCase):
         #Assert
         mock_logger.exception.assert_called()
         args, kwargs = mock_logger.exception.call_args
-        logged_info = args[0]
+        logged_info = json.loads(args[0])
         
         self.assertIn('function_name', logged_info)
         self.assertIn('time_taken', logged_info)
