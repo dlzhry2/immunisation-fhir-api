@@ -6,7 +6,7 @@ import boto3
 from decimal import Decimal
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource
 from botocore.config import Config
-from mappings import vaccine_type_mappings, VaccineTypes
+from .mappings import vaccine_type_mappings, VaccineTypes
 
 from .constants import valid_nhs_number1
 
