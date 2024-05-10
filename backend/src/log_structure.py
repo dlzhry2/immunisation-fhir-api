@@ -49,9 +49,11 @@ def function_info(func):
                 status_code = "Completed successfully" 
                 if result.get("body"):
                     ops_outcome = json.loads(result["body"])
-                    outcome_body = ops_outcome["issue"][0]
-                    status_code = outcome_body["code"]
-                    diagnostics = outcome_body["diagnostics"]
+                    print(f"ops_outcome: {ops_outcome}")
+                    if ops_outcome.get("issue"):
+                        outcome_body = ops_outcome["issue"][0]
+                        status_code = outcome_body["code"]
+                        diagnostics = outcome_body["diagnostics"]
             operation_outcome = {
                 'status': status,
                 'status_code': status_code
