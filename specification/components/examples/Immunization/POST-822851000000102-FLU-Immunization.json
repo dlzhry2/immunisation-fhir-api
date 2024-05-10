@@ -119,7 +119,7 @@
         "coding": [
           {
             "system": "http://snomed.info/sct",
-            "code": "mockHPVcode1",
+            "code": "822851000000102",
             "display": "Seasonal influenza vaccination (procedure)"
           }
         ]
@@ -216,6 +216,17 @@
   ],
   "protocolApplied": [
     {
+      "targetDisease": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "6142004",
+              "display": "Influenza"
+            }
+          ]
+        }
+      ],
       "doseNumberPositiveInt": 1
     }
   ]
