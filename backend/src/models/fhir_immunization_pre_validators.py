@@ -984,7 +984,7 @@ class PreValidators:
 
     def pre_validate_target_disease(self, values: dict) -> dict:
         """
-        Pre-validate that, if protocolApplied[0].targetDisease exists, then 
+        Pre-validate that, if protocolApplied[0].targetDisease exists, then
         each of its elements contains a coding field
         """
 
@@ -1002,8 +1002,8 @@ class PreValidators:
 
     def pre_validate_target_disease_codings(self, values: dict) -> dict:
         """
-        Pre-validate that, if they exist, each protocolApplied[0].targetDisease[{index}].valueCodeableConcept.coding.system
-        is unique
+        Pre-validate that, if they exist, each
+        protocolApplied[0].targetDisease[{index}].valueCodeableConcept.coding.system is unique
         """
         try:
             for i in range(len(values["protocolApplied"][0]["targetDisease"])):
@@ -1052,9 +1052,7 @@ class PreValidators:
             vaccine_code_coding = values["vaccineCode"]["coding"]
 
             PreValidation.for_unique_list(
-                vaccine_code_coding,
-                "system",
-                "vaccineCode.coding[?(@.system=='FIELD_TO_REPLACE')]",
+                vaccine_code_coding, "system", "vaccineCode.coding[?(@.system=='FIELD_TO_REPLACE')]"
             )
         except KeyError:
             pass
@@ -1143,11 +1141,7 @@ class PreValidators:
         try:
             coding = values["site"]["coding"]
 
-            PreValidation.for_unique_list(
-                coding,
-                "system",
-                "site.coding[?(@.system=='FIELD_TO_REPLACE')]",
-            )
+            PreValidation.for_unique_list(coding, "system", "site.coding[?(@.system=='FIELD_TO_REPLACE')]")
         except KeyError:
             pass
 
@@ -1162,10 +1156,7 @@ class PreValidators:
             site_coding_code = [x for x in values["site"]["coding"] if x.get("system") == "http://snomed.info/sct"][0][
                 "code"
             ]
-            PreValidation.for_string(
-                site_coding_code,
-                "site.coding[?(@.system=='http://snomed.info/sct')].code",
-            )
+            PreValidation.for_string(site_coding_code, "site.coding[?(@.system=='http://snomed.info/sct')].code")
         except (KeyError, IndexError):
             pass
 
@@ -1181,10 +1172,7 @@ class PreValidators:
                 0
             ]["display"]
 
-            PreValidation.for_string(
-                site_coding_display,
-                "site.coding[?(@.system=='http://snomed.info/sct')].display",
-            )
+            PreValidation.for_string(site_coding_display, "site.coding[?(@.system=='http://snomed.info/sct')].display")
         except (KeyError, IndexError):
             pass
 
@@ -1195,11 +1183,7 @@ class PreValidators:
         try:
             coding = values["route"]["coding"]
 
-            PreValidation.for_unique_list(
-                coding,
-                "system",
-                "route.coding[?(@.system=='FIELD_TO_REPLACE')]",
-            )
+            PreValidation.for_unique_list(coding, "system", "route.coding[?(@.system=='FIELD_TO_REPLACE')]")
         except KeyError:
             pass
 
@@ -1214,10 +1198,7 @@ class PreValidators:
             route_coding_code = [x for x in values["route"]["coding"] if x.get("system") == "http://snomed.info/sct"][
                 0
             ]["code"]
-            PreValidation.for_string(
-                route_coding_code,
-                "route.coding[?(@.system=='http://snomed.info/sct')].code",
-            )
+            PreValidation.for_string(route_coding_code, "route.coding[?(@.system=='http://snomed.info/sct')].code")
         except (KeyError, IndexError):
             pass
 
@@ -1234,8 +1215,7 @@ class PreValidators:
             ][0]["display"]
 
             PreValidation.for_string(
-                route_coding_display,
-                "route.coding[?(@.system=='http://snomed.info/sct')].display",
+                route_coding_display, "route.coding[?(@.system=='http://snomed.info/sct')].display"
             )
         except (KeyError, IndexError):
             pass
@@ -1298,11 +1278,7 @@ class PreValidators:
             for index, value in enumerate(values["reasonCode"]):
                 try:
                     reason_code_coding = value["coding"]
-                    PreValidation.for_list(
-                        reason_code_coding,
-                        f"reasonCode[{index}].coding",
-                        defined_length=1,
-                    )
+                    PreValidation.for_list(reason_code_coding, f"reasonCode[{index}].coding", defined_length=1)
                 except KeyError:
                     pass
         except KeyError:
@@ -1336,10 +1312,7 @@ class PreValidators:
             for index, value in enumerate(values["reasonCode"]):
                 try:
                     reason_code_coding_display = value["coding"][0]["display"]
-                    PreValidation.for_string(
-                        reason_code_coding_display,
-                        f"reasonCode[{index}].coding[0].display",
-                    )
+                    PreValidation.for_string(reason_code_coding_display, f"reasonCode[{index}].coding[0].display")
                 except KeyError:
                     pass
         except (KeyError, IndexError):
@@ -1361,9 +1334,8 @@ class PreValidators:
             PreValidation.for_unique_list(
                 patient_extension,
                 "url",
-                "contained[?(@.resourceType=='Patient')].identifier"
-                + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension[?(@.url=="
-                + "'FIELD_TO_REPLACE')]",
+                "contained[?(@.resourceType=='Patient')].identifier[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]"
+                + ".extension[?(@.url=='FIELD_TO_REPLACE')]",
             )
         except (KeyError, IndexError):
             pass
@@ -1532,10 +1504,7 @@ class PreValidators:
         try:
             answer_type = "valueReference"
             local_patient_system = get_generic_questionnaire_response_value(
-                values,
-                "LocalPatient",
-                answer_type=answer_type,
-                field_type="system",
+                values, "LocalPatient", answer_type=answer_type, field_type="system"
             )
             PreValidation.for_string(
                 local_patient_system,
@@ -1557,10 +1526,7 @@ class PreValidators:
         try:
             answer_type = "valueCoding"
             consent_code = get_generic_questionnaire_response_value(
-                values,
-                "Consent",
-                answer_type=answer_type,
-                field_type="code",
+                values, "Consent", answer_type=answer_type, field_type="code"
             )
             PreValidation.for_string(
                 consent_code,
@@ -1582,10 +1548,7 @@ class PreValidators:
         try:
             answer_type = "valueCoding"
             consent_display = get_generic_questionnaire_response_value(
-                values,
-                "Consent",
-                answer_type=answer_type,
-                field_type="display",
+                values, "Consent", answer_type=answer_type, field_type="display"
             )
             PreValidation.for_string(
                 consent_display,
@@ -1607,10 +1570,7 @@ class PreValidators:
         try:
             answer_type = "valueCoding"
             care_setting_code = get_generic_questionnaire_response_value(
-                values,
-                "CareSetting",
-                answer_type=answer_type,
-                field_type="code",
+                values, "CareSetting", answer_type=answer_type, field_type="code"
             )
             PreValidation.for_string(
                 care_setting_code,
@@ -1632,10 +1592,7 @@ class PreValidators:
         try:
             answer_type = "valueCoding"
             care_setting_display = get_generic_questionnaire_response_value(
-                values,
-                "CareSetting",
-                answer_type=answer_type,
-                field_type="display",
+                values, "CareSetting", answer_type=answer_type, field_type="display"
             )
             PreValidation.for_string(
                 care_setting_display,

@@ -27,6 +27,7 @@ class PostValidators:
     def __init__(self, immunization):
         self.values = immunization
         self.errors = []
+        self.vaccine_type: str
         # Note: FHIR validator mandates the presence of status field, so there is no post-validation for status
         self.status = self.values.status
 

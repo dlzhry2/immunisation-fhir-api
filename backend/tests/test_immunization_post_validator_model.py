@@ -39,7 +39,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
     def test_collected_errors(self):
         """Test that when passed multiple validation errors, it returns a list of all expected errors."""
 
-        covid_data = self.covid_json_data
+        covid_data = deepcopy(self.covid_json_data)
 
         # remove name[0].given for 'Patient'
         for item in covid_data.get("contained", []):
@@ -107,7 +107,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         ]
 
         for json_data in json_data_to_test:
-            # validator = ImmunizationValidator()
             self.assertTrue(self.validator.validate(json_data))
 
     def test_post_validate_and_set_vaccine_type(self):
@@ -120,7 +119,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # Test that a valid combination of disease codes is accepted and vaccine_type is set correctly
         for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
             self.assertTrue(self.validator.validate(self.valid_json_data[vaccine_type]))
-            self.assertEqual(vaccine_type, self.validator.vaccine_type)
+            self.assertEqual(vaccine_type, self.validator.post_validators.vaccine_type)
 
         # Test that an invalid single disease code is rejected
         _test_invalid_values_rejected(
@@ -152,11 +151,9 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_post_vaccination_procedure_code(self):
         """Test that the JSON data is rejected if it does not contain vaccination_procedure_code"""
-
         field_location = (
-            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
-            + "Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=="
-            + "'http://snomed.info/sct')].code"
+            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')]"
+            + ".valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code"
         )
 
         MandationTests.test_missing_mandatory_field_rejected(self, field_location)
@@ -298,54 +295,32 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             "contained[?(@.resourceType=='Practitioner')].identifier[0].system"
         )
 
-        # Test COVID-19 cases
-        MandationTests.test_mandation_for_interdependent_fields(
-            self,
-            dependent_field_location=practitioner_identifier_system_field_location,
-            dependent_on_field_location=practitioner_identifier_value_field_location,
-            vaccine_type=VaccineTypes.covid_19,
-            mandation_when_dependent_on_field_present=Mandation.mandatory,
-            mandation_when_dependent_on_field_absent=Mandation.optional,
-            expected_bespoke_error_message=f"{practitioner_identifier_system_field_location} is "
-            + f"mandatory when {practitioner_identifier_value_field_location} is present and "
-            + f"vaccination type is {VaccineTypes.covid_19}",
-        )
+        # Test COVID-19 and FLU cases
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu]:
+            MandationTests.test_mandation_for_interdependent_fields(
+                self,
+                dependent_field_location=practitioner_identifier_system_field_location,
+                dependent_on_field_location=practitioner_identifier_value_field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_dependent_on_field_present=Mandation.mandatory,
+                mandation_when_dependent_on_field_absent=Mandation.optional,
+                expected_bespoke_error_message=f"{practitioner_identifier_system_field_location} is "
+                + f"mandatory when {practitioner_identifier_value_field_location} is present and "
+                + f"vaccination type is {vaccine_type}",
+                valid_json_data=deepcopy(self.valid_json_data[vaccine_type]),
+            )
 
-        # Tes FLU cases
-        MandationTests.test_mandation_for_interdependent_fields(
-            self,
-            dependent_field_location=practitioner_identifier_system_field_location,
-            dependent_on_field_location=practitioner_identifier_value_field_location,
-            vaccine_type=VaccineTypes.flu,
-            mandation_when_dependent_on_field_present=Mandation.mandatory,
-            mandation_when_dependent_on_field_absent=Mandation.optional,
-            expected_bespoke_error_message=f"{practitioner_identifier_system_field_location} is "
-            + f"mandatory when {practitioner_identifier_value_field_location} is present and "
-            + f"vaccination type is {VaccineTypes.flu}",
-            valid_json_data=deepcopy(self.flu_json_data),
-        )
-
-        # Test HPV cases
-        MandationTests.test_mandation_for_interdependent_fields(
-            self,
-            dependent_field_location=practitioner_identifier_system_field_location,
-            dependent_on_field_location=practitioner_identifier_value_field_location,
-            vaccine_type=VaccineTypes.hpv,
-            mandation_when_dependent_on_field_present=Mandation.optional,
-            mandation_when_dependent_on_field_absent=Mandation.optional,
-            valid_json_data=deepcopy(self.hpv_json_data),
-        )
-
-        # Test MMR cases
-        MandationTests.test_mandation_for_interdependent_fields(
-            self,
-            dependent_field_location=practitioner_identifier_system_field_location,
-            dependent_on_field_location=practitioner_identifier_value_field_location,
-            vaccine_type=VaccineTypes.mmr,
-            mandation_when_dependent_on_field_present=Mandation.optional,
-            mandation_when_dependent_on_field_absent=Mandation.optional,
-            valid_json_data=deepcopy(self.mmr_json_data),
-        )
+        # Test HPV and MMR cases
+        for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
+            MandationTests.test_mandation_for_interdependent_fields(
+                self,
+                dependent_field_location=practitioner_identifier_system_field_location,
+                dependent_on_field_location=practitioner_identifier_value_field_location,
+                vaccine_type=vaccine_type,
+                mandation_when_dependent_on_field_present=Mandation.optional,
+                mandation_when_dependent_on_field_absent=Mandation.optional,
+                valid_json_data=deepcopy(self.valid_json_data[vaccine_type]),
+            )
 
     def test_post_perfomer_sds_job_role(self):
         """Test that the JSON data is accepted if it does not contain performer_sds_job_role"""
@@ -892,21 +867,17 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             + "[?(@.linkId=='CareSetting')].answer[0].valueCoding.code"
         )
 
-        # Test cases for COVID19
-        MandationTests.test_missing_mandatory_field_rejected(
-            self, field_location, valid_json_data=deepcopy(self.covid_json_data)
-        )
+        # Test cases for COVID-19 and FLU
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu]:
+            MandationTests.test_missing_mandatory_field_rejected(
+                self, field_location, valid_json_data=deepcopy(self.valid_json_data[vaccine_type])
+            )
 
-        # Test cases for FLU
-        MandationTests.test_missing_mandatory_field_rejected(
-            self, field_location, valid_json_data=deepcopy(self.flu_json_data)
-        )
-
-        # Test cases for HPV
-        MandationTests.test_missing_field_accepted(self, field_location, valid_json_data=deepcopy(self.hpv_json_data))
-
-        # Test cases for MMR
-        MandationTests.test_missing_field_accepted(self, field_location, valid_json_data=deepcopy(self.mmr_json_data))
+        # Test cases for HPV and MMR
+        for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
+            MandationTests.test_missing_field_accepted(
+                self, field_location, valid_json_data=deepcopy(self.valid_json_data[vaccine_type])
+            )
 
     def test_post_care_setting_display(self):
         """
@@ -918,22 +889,8 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             + "[?(@.linkId=='CareSetting')].answer[0].valueCoding.display"
         )
 
-        for vaccine_type in [
-            VaccineTypes.covid_19,
-            VaccineTypes.flu,
-            VaccineTypes.hpv,
-            VaccineTypes.mmr,
-        ]:
-            if vaccine_type == VaccineTypes.covid_19:
-                valid_json_data = deepcopy(self.covid_json_data)
-            elif vaccine_type == VaccineTypes.flu:
-                valid_json_data = deepcopy(self.flu_json_data)
-            elif vaccine_type == VaccineTypes.mmr:
-                valid_json_data = deepcopy(self.mmr_json_data)
-            elif vaccine_type == VaccineTypes.hpv:
-                valid_json_data = deepcopy(self.hpv_json_data)
-
-            valid_json_data = MandationTests.update_target_disease(self, vaccine_type, valid_json_data=valid_json_data)
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
+            valid_json_data = deepcopy(self.valid_json_data[vaccine_type])
             MandationTests.test_missing_field_accepted(self, field_location, valid_json_data)
 
     def test_post_ip_address(self):
@@ -947,19 +904,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         MandationTests.test_missing_field_accepted(self, field_location)
 
         # Test cases for FLU, HPV and MMR
-        # Add value into the JSON data
-        invalid_flu_json_data = deepcopy(self.flu_json_data)
-        invalid_flu_json_data["contained"][2]["item"].append(
-            {"linkId": "IpAddress", "answer": [{"valueString": "IP_ADDRESS"}]}
-        )
-
         for vaccine_type in (VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr):
-            MandationTests.test_present_not_applicable_field_rejected(
-                self,
-                field_location=field_location,
-                vaccine_type=vaccine_type,
-                invalid_json_data=deepcopy(invalid_flu_json_data),
+            invalid_json_data = deepcopy(self.valid_json_data[vaccine_type])
+            # Add value into the JSON data
+            invalid_json_data["contained"][2]["item"].append(
+                {"linkId": "IpAddress", "answer": [{"valueString": "IP_ADDRESS"}]}
             )
+            MandationTests.test_present_not_applicable_field_rejected(self, field_location, deepcopy(invalid_json_data))
 
     def test_post_user_id(self):
         """Test that the JSON data is rejected if it does contain user_id"""
@@ -971,45 +922,32 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # Test case for COVID19
         MandationTests.test_missing_field_accepted(self, field_location)
 
-        # Add value into the JSON data
-        invalid_flu_json_data = deepcopy(self.flu_json_data)
-        invalid_flu_json_data["contained"][2]["item"].append(
-            {"linkId": "UserId", "answer": [{"valueString": "USER_ID"}]}
-        )
-
         # Test cases for FLU, HPV and MMR
         for vaccine_type in (VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr):
-            MandationTests.test_present_not_applicable_field_rejected(
-                self,
-                field_location=field_location,
-                vaccine_type=vaccine_type,
-                invalid_json_data=deepcopy(invalid_flu_json_data),
+            invalid_json_data = deepcopy(self.valid_json_data[vaccine_type])
+            # Add value into the JSON data
+            invalid_json_data["contained"][2]["item"].append(
+                {"linkId": "UserId", "answer": [{"valueString": "USER_ID"}]}
             )
+            MandationTests.test_present_not_applicable_field_rejected(self, field_location, deepcopy(invalid_json_data))
 
     def test_post_user_name(self):
         """Test that the JSON data is rejected if it does contain user_name"""
         field_location = (
-            "contained[?(@.resourceType=='QuestionnaireResponse')].item"
-            + "[?(@.linkId=='UserName')].answer[0].valueString"
+            "contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='UserName')].answer[0].valueString"
         )
 
         # Test case for COVID19
         MandationTests.test_missing_field_accepted(self, field_location)
 
-        # Add value into the JSON data
-        invalid_flu_json_data = deepcopy(self.flu_json_data)
-        invalid_flu_json_data["contained"][2]["item"].append(
-            {"linkId": "UserName", "answer": [{"valueString": "USER_NAME"}]}
-        )
-
         # Test cases for FLU, HPV and MMR
         for vaccine_type in (VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr):
-            MandationTests.test_present_not_applicable_field_rejected(
-                self,
-                field_location=field_location,
-                vaccine_type=vaccine_type,
-                invalid_json_data=deepcopy(invalid_flu_json_data),
+            invalid_json_data = deepcopy(self.valid_json_data[vaccine_type])
+            # Add value into the JSON data
+            invalid_json_data["contained"][2]["item"].append(
+                {"linkId": "UserName", "answer": [{"valueString": "USER_NAME"}]}
             )
+            MandationTests.test_present_not_applicable_field_rejected(self, field_location, deepcopy(invalid_json_data))
 
     def test_post_user_email(self):
         """Test that the JSON data is rejected if it does contain user_email"""
@@ -1021,20 +959,14 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # Test case for COVID19
         MandationTests.test_missing_field_accepted(self, field_location)
 
-        # Add value into the JSON data
-        invalid_flu_json_data = deepcopy(self.flu_json_data)
-        invalid_flu_json_data["contained"][2]["item"].append(
-            {"linkId": "UserEmail", "answer": [{"valueString": "USER_EMAIL"}]}
-        )
-
         # Test cases for FLU, HPV and MMR
         for vaccine_type in (VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr):
-            MandationTests.test_present_not_applicable_field_rejected(
-                self,
-                field_location=field_location,
-                vaccine_type=vaccine_type,
-                invalid_json_data=deepcopy(invalid_flu_json_data),
+            invalid_json_data = deepcopy(self.valid_json_data[vaccine_type])
+            # Add value into the JSON data
+            invalid_json_data["contained"][2]["item"].append(
+                {"linkId": "UserEmail", "answer": [{"valueString": "USER_EMAIL"}]}
             )
+            MandationTests.test_present_not_applicable_field_rejected(self, field_location, deepcopy(invalid_json_data))
 
     def test_post_submitted_time_stamp(self):
         """Test that the JSON data is rejected if it does contain submitted_time_stamp"""
@@ -1046,23 +978,17 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         # Test case for COVID19
         MandationTests.test_missing_field_accepted(self, field_location)
 
-        # Add value into the JSON data
-        invalid_flu_json_data = deepcopy(self.flu_json_data)
-        invalid_flu_json_data["contained"][2]["item"].append(
-            {
-                "linkId": "SubmittedTimeStamp",
-                "answer": [{"valueDateTime": "2021-02-07T13:44:07+00:00"}],
-            }
-        )
-
         # Test cases for FLU, HPV and MMR
         for vaccine_type in (VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr):
-            MandationTests.test_present_not_applicable_field_rejected(
-                self,
-                field_location=field_location,
-                vaccine_type=vaccine_type,
-                invalid_json_data=deepcopy(invalid_flu_json_data),
+            invalid_json_data = deepcopy(self.valid_json_data[vaccine_type])
+            # Add value into the JSON data
+            invalid_json_data["contained"][2]["item"].append(
+                {
+                    "linkId": "SubmittedTimeStamp",
+                    "answer": [{"valueDateTime": "2021-02-07T13:44:07+00:00"}],
+                }
             )
+            MandationTests.test_present_not_applicable_field_rejected(self, field_location, deepcopy(invalid_json_data))
 
     def test_post_location_identifier_value(self):
         """
@@ -1072,77 +998,34 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         field_location = "location.identifier.value"
         # Test cases for COVID-19, FLU and HPV where it is mandatory
         for vaccine_type in (VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv):
-            valid_json_data = MandationTests.update_target_disease(
-                self,
-                vaccine_type,
-                valid_json_data=deepcopy(
-                    self.covid_json_data if vaccine_type == VaccineTypes.covid_19 else self.flu_json_data
-                ),
-            )
+            valid_json_data = deepcopy(self.valid_json_data[vaccine_type])
             MandationTests.test_missing_mandatory_field_rejected(self, field_location, valid_json_data=valid_json_data)
 
         # Test cases for MMR where it is N/A
-        invalid_json_data = MandationTests.update_target_disease(
-            self, VaccineTypes.mmr, valid_json_data=deepcopy(self.flu_json_data)
-        )
-        invalid_json_data["location"] = {
-            "identifier": {
-                "value": "X99999",
-            }
-        }
-        MandationTests.test_present_not_applicable_field_rejected(
-            self,
-            field_location,
-            VaccineTypes.mmr,
-            invalid_json_data=invalid_json_data,
-        )
+        invalid_json_data = deepcopy(self.valid_json_data[VaccineTypes.mmr])
+        invalid_json_data["location"] = {"identifier": {"value": "X99999"}}
+        MandationTests.test_present_not_applicable_field_rejected(self, field_location, invalid_json_data)
 
     def test_post_location_identifier_system(self):
         """
-        Test that the JSON data is rejected if it does and does not contain
-        location_identifier_system as appropriate
+        Test that the JSON data is rejected if it does and does not contain location_identifier_system as appropriate
         """
         field_location = "location.identifier.system"
         # Test cases for COVID-19, FLU and HPV where it is mandatory
         for vaccine_type in (VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv):
-            valid_json_data = MandationTests.update_target_disease(
-                self,
-                vaccine_type,
-                valid_json_data=deepcopy(
-                    self.covid_json_data if vaccine_type == VaccineTypes.covid_19 else self.flu_json_data
-                ),
-            )
-            MandationTests.test_missing_mandatory_field_rejected(self, field_location, valid_json_data=valid_json_data)
+            valid_json_data = deepcopy(self.valid_json_data[vaccine_type])
+            MandationTests.test_missing_mandatory_field_rejected(self, field_location, valid_json_data)
 
         # Test cases for MMR where it is N/A
-        invalid_json_data = MandationTests.update_target_disease(
-            self, VaccineTypes.mmr, valid_json_data=deepcopy(self.flu_json_data)
-        )
-        invalid_json_data["location"] = {
-            "identifier": {
-                "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-            }
-        }
-        MandationTests.test_present_not_applicable_field_rejected(
-            self,
-            field_location,
-            VaccineTypes.mmr,
-            invalid_json_data=invalid_json_data,
-        )
+        invalid_json_data = deepcopy(self.valid_json_data[VaccineTypes.mmr])
+        invalid_json_data["location"] = {"identifier": {"system": "https://fhir.nhs.uk/Id/ods-organization-code"}}
+        MandationTests.test_present_not_applicable_field_rejected(self, field_location, invalid_json_data)
 
     def test_post_reduce_validation_code(self):
-        """
-        Test that present or absent reduce_validation_code is accepted
-        """
+        """Test that present or absent reduce_validation_code is accepted"""
         field_location = (
             "contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='ReduceValidationCode')].answer[0].valueString"
         )
-        MandationTests.test_missing_field_accepted(
-            self,
-            field_location,
-        )
-        MandationTests.test_present_field_accepted(
-            self,
-            valid_json_data=deepcopy(self.covid_json_data),
-        )
+        MandationTests.test_missing_field_accepted(self, field_location)
+        MandationTests.test_present_field_accepted(self, valid_json_data=deepcopy(self.covid_json_data))

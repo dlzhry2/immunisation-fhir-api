@@ -1,33 +1,24 @@
 """Immunization FHIR R4B validator"""
 
-import json
-from decimal import Decimal
 from fhir.resources.R4B.immunization import Immunization
 from models.fhir_immunization_pre_validators import PreValidators
 from models.fhir_immunization_post_validators import PostValidators
-from models.utils.generic_utils import get_generic_questionnaire_response_value, get_generic_extension_value_from_model
-from models.utils.generic_utils import (
-    get_generic_questionnaire_response_value,
-    disease_codes_to_vaccine_type,
-    get_target_disease_codes_from_model,
-)
+from models.utils.generic_utils import get_generic_questionnaire_response_value
 
 
 class ImmunizationValidator:
-    """
-    Validate the FHIR Immunization model against the NHS specific validators and Immunization
-    FHIR profile
-    """
+    """Validate the FHIR Immunization model against the NHS specific validators and Immunization FHIR profile"""
 
-    def __init__(self, add_post_validators: bool = True, immunization: Immunization = None) -> None:
-        self.immunization = immunization
-        self.reduce_validation_code = False
+    def __init__(self, add_post_validators: bool = True) -> None:
+        self.immunization: Immunization
+        self.reduce_validation_code: bool
         self.add_post_validators = add_post_validators
-        self.pre_validators = None
-        self.post_validators = None
+        self.pre_validators: PreValidators
+        self.post_validators: PostValidators
         self.errors = []
 
-    def initialize_immunization(self, json_data):
+    def initialize_immunization_and_run_fhir_validators(self, json_data):
+        """Initialize immunization with data after parsing it through the FHIR validator"""
         self.immunization = Immunization.parse_obj(json_data)
 
     def initialize_pre_validators(self, immunization):
@@ -51,7 +42,7 @@ class ImmunizationValidator:
             raise ValueError(error)
 
     def set_reduce_validation_code(self, json_data):
-        """Set the reduce validation code"""
+        """Set the reduce validation code (default to false if no reduceValidation code is given)"""
         reduce_validation_code = False
 
         # If reduce_validation_code field exists then retrieve it's value
@@ -62,40 +53,26 @@ class ImmunizationValidator:
         except (KeyError, IndexError, AttributeError, TypeError):
             pass
         finally:
-            # If no value is given, then ReduceValidation default value is False
             if reduce_validation_code is None:
                 reduce_validation_code = False
 
         self.reduce_validation_code = reduce_validation_code
 
-    def set_vaccine_type(self, values: dict) -> dict:
-        # TODO: Work out if this replaces, or is in addition to, similar function in post validators
-        """Set the vaccine type"""
-        field_location = "protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
-        try:
-            target_diseases = get_target_disease_codes_from_model(values)
-            if target_diseases == []:
-                raise KeyError
-            self.vaccine_type = disease_codes_to_vaccine_type(target_diseases)
-        except (KeyError, IndexError, TypeError) as error:
-            raise ValueError(f"{field_location} is a mandatory field") from error
-
     def validate(self, json_data) -> Immunization:
         """Generate the Immunization model"""
-        if isinstance(json_data, str):
-            json_data = json.loads(json_data, parse_float=Decimal)
-
         self.set_reduce_validation_code(json_data)
-        self.initialize_pre_validators(json_data)
 
+        # Pre-FHIR validations
+        self.initialize_pre_validators(json_data)
         try:
             self.run_pre_validators()
         except Exception as e:
             raise e
 
-        self.initialize_immunization(json_data)
-        self.set_vaccine_type(self.immunization)
+        # FHIR validations
+        self.initialize_immunization_and_run_fhir_validators(json_data)
 
+        # Post-FHIR validations
         if self.add_post_validators and not self.reduce_validation_code:
             self.initialize_post_validators(self.immunization)
             try:

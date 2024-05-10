@@ -17,6 +17,11 @@ class MandationTests:
     """Test for presence of fields with different mandation levels"""
 
     @staticmethod
+    def prepare_json_data(test_instance: unittest.TestCase, json_data: dict = None) -> dict:
+        """Returns json_data if given json_data, otherwise returns the valid covid json data as a default"""
+        return json_data if json_data else test_instance.valid_json_data[VaccineTypes.covid_19]
+
+    @staticmethod
     def update_target_disease(
         test_instance: unittest.TestCase,
         vaccine_type: VaccineTypes,
@@ -24,33 +29,23 @@ class MandationTests:
     ):
         """Update the target_disease in the data to match the vaccine type"""
 
-        # Prepare the json data
-        if not valid_json_data:
-            valid_json_data = deepcopy(test_instance.covid_json_data)
+        valid_json_data = MandationTests.prepare_json_data(test_instance, valid_json_data)
 
         # Set the target disease field value based on vaccine type
-        target_disease_field_location = "protocolApplied[0].targetDisease"
         target_disease_codes = next(x[0] for x in vaccine_type_mappings if x[1] == vaccine_type)
         target_disease = []
-
         for code in target_disease_codes:
-            element = {"coding": [{"system": "http://snomed.info/sct", "code": code, "display": "Dummy"}]}
-            target_disease.append(element)
+            target_disease.append({"coding": [{"system": "http://snomed.info/sct", "code": code, "display": "Dummy"}]})
 
-        return parse(target_disease_field_location).update(deepcopy(valid_json_data), target_disease)
+        return parse("protocolApplied[0].targetDisease").update(deepcopy(valid_json_data), target_disease)
 
     @staticmethod
     def test_present_field_accepted(
         test_instance: unittest.TestCase,
         valid_json_data: dict = None,
     ):
-        """
-        Test that JSON data is accepted when a field is present
-        """
-        # Prepare the json data
-        if not valid_json_data:
-            valid_json_data = deepcopy(test_instance.covid_json_data)
-        # Test that the valid data is accepted by the model
+        """Test that JSON data is accepted when a field is present"""
+        valid_json_data = MandationTests.prepare_json_data(test_instance, valid_json_data)
         test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
 
     @staticmethod
@@ -66,14 +61,11 @@ class MandationTests:
         NOTE: By default the field_location being tested is removed. If required, a parent
         field can be given to the optional field_to_remove argument instead.
         """
-        # Prepare the json data
-        if not valid_json_data:
-            valid_json_data = deepcopy(test_instance.covid_json_data)
-        # Remove the relevant field
-        if field_to_remove:
-            valid_json_data = parse(field_to_remove).filter(lambda d: True, valid_json_data)
-        else:
-            valid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
+        # Prepare the data
+        valid_json_data = MandationTests.prepare_json_data(test_instance, valid_json_data)
+        field_to_remove = field_to_remove if field_to_remove else field_location
+        valid_json_data = parse(field_to_remove).filter(lambda d: True, valid_json_data)
+
         # Test that the valid data is accepted by the model
         test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
 
@@ -102,8 +94,9 @@ class MandationTests:
         value_error. This is why the test checks for the type of error in the error message.
         """
         # Prepare the json data
-        if not valid_json_data:
-            valid_json_data = deepcopy(test_instance.covid_json_data)
+        valid_json_data = MandationTests.prepare_json_data(test_instance, valid_json_data)
+        field_to_remove = field_to_remove if field_to_remove else field_location
+        invalid_json_data = parse(field_to_remove).filter(lambda d: True, valid_json_data)
 
         # Set the expected error message
         if expected_bespoke_error_message:
@@ -111,17 +104,10 @@ class MandationTests:
         else:
             expected_error_message = f"{field_location} is a mandatory field"
 
-        if field_to_remove:
-            invalid_json_data = parse(field_to_remove).filter(lambda d: True, valid_json_data)
-        else:
-            # Create invalid json data by removing the relevant field
-            invalid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
-
         if is_mandatory_fhir:
             # Test that correct error message is raised
             with test_instance.assertRaises(ValidationError) as error:
                 test_instance.validator.validate(invalid_json_data)
-
             test_instance.assertTrue(
                 (expected_bespoke_error_message + f" (type={expected_error_type})") in str(error.exception)
             )
@@ -136,7 +122,6 @@ class MandationTests:
     def test_present_not_applicable_field_rejected(
         test_instance: unittest.TestCase,
         field_location: str,
-        vaccine_type: VaccineTypes,
         invalid_json_data: dict = None,
     ):
         """
@@ -145,18 +130,12 @@ class MandationTests:
         this happens, the error message is suffixed with the type of error e.g. type_error or
         value_error. This is why the test checks for the type of error in the error message.
         """
-
-        invalid_json_data = MandationTests.update_target_disease(
-            test_instance, vaccine_type, valid_json_data=invalid_json_data
-        )
+        invalid_json_data = MandationTests.prepare_json_data(test_instance, invalid_json_data)
 
         # Test that correct error message is raised
         with test_instance.assertRaises(NotApplicableError) as error:
             test_instance.validator.validate(invalid_json_data)
-        test_instance.assertEqual(
-            f"{field_location} must not be provided for this vaccine type",
-            str(error.exception),
-        )
+        test_instance.assertEqual(f"{field_location} must not be provided for this vaccine type", str(error.exception))
 
     @staticmethod
     def test_mandation_rule_met(
@@ -190,17 +169,17 @@ class MandationTests:
             MandationTests.test_present_field_accepted(test_instance, valid_json_data)
             # Accept field absent
             MandationTests.test_missing_field_accepted(
-                test_instance,
-                field_location,
-                valid_json_data,
-                field_to_remove=field_to_remove,
+                test_instance, field_location, valid_json_data, field_to_remove=field_to_remove
             )
 
-        # TODO: Handle not applicable instance
-        if mandation == Mandation.not_applicable:
-            # Reject field present
-            # Accept field absent
-            pass
+        # # TODO: Handle not applicable instance
+        # if mandation == Mandation.not_applicable:
+        #     # Reject field present
+        #     MandationTests.test_present_not_applicable_field_rejected(test_instance, valid_json_data)
+        #     # Accept field absent
+        #     MandationTests.test_missing_field_accepted(
+        #         test_instance, field_location, valid_json_data, field_to_remove=field_to_remove
+        #     )
 
     @staticmethod
     def test_mandation_for_status_dependent_fields(
