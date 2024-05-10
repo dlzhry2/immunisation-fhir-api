@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import uuid
 import logging
 from botocore.exceptions import ClientError
+from log_structure import function_info
 
 failure_queue_url = os.environ["AWS_SQS_QUEUE_URL"]
 delta_table_name = os.environ["DELTA_TABLE_NAME"]
@@ -25,7 +26,7 @@ def send_message(record):
     except ClientError as e:
         print(f"Error sending record to DLQ: {e}")
 
-
+@function_info
 def handler(event, context):
     intrusion_check = True
     try:
@@ -86,12 +87,13 @@ def handler(event, context):
             logger.info(log)
         return {
             "statusCode": 200,
-            "body": json.dumps("Records processed successfully"),
+            "body": "Records processed successfully"
         }
 
     except Exception as e:
         if intrusion_check:
-            print("Incorrect invocation of Lambda")
+            logger.exception("Incorrect invocation of Lambda")
         else:
+            logger.exception(f"Delta Lambda failure: {e}")
             send_message(record)  # Send failed record details to DLQ
         raise Exception(f"Delta Lambda failure: {e}")

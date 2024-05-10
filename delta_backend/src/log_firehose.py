@@ -20,6 +20,7 @@ class FirehoseLogger:
 
     def send_log(self, log_message):
         log_to_splunk = log_message
+        logger.info(f"Log sent to Firehose for save: {log_to_splunk}")
         encoded_log_data = json.dumps(log_to_splunk).encode("utf-8")
         try:
             response = self.firehose_client.put_record(

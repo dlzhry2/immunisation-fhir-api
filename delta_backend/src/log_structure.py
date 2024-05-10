@@ -20,21 +20,10 @@ def function_info(func):
     def wrapper(*args, **kwargs):
         event = args[0] if args else {}
         print(f"Event: {event}")
-        headers = event.get("headers", {})
-        correlation_id = headers.get("X-Correlation-ID", "X-Correlation-ID not passed")
-        request_id = headers.get("X-Request-ID", "X-Request-ID not passed")
-        actual_path = event.get("path", "Unknown")
-        resource_path = event.get("requestContext", {}).get("resourcePath", "Unknown")
-        logger.info(
-            f"Starting {func.__name__} with X-Correlation-ID: {correlation_id} and X-Request-ID: {request_id}"
-        )
+        logger.info("Starting Delta Handler")
         log_data = {
-                'function_name': func.__name__,
-                'date_time': str(datetime.now()),
-                'X-Correlation-ID': correlation_id,
-                'X-Request-ID': request_id,
-                'actual_path': actual_path,
-                'resource_path': resource_path                
+                'function_name': 'delta_sync',
+                'date_time': str(datetime.now())                              
         }
 
         try:
@@ -42,23 +31,17 @@ def function_info(func):
             result = func(*args, **kwargs)
             end = time.time()
             log_data['time_taken']= f"{round(end - start, 5)}s"
-            status = "500"
-            status_code = "Exception"
-            diagnostics = ""
+            status = '500'
+            status_code = 'Exception'
+            print(f"result: {result}")
             if isinstance(result, dict):
-                status = str(result["statusCode"])
-                status_code = "Completed successfully" 
-                if result.get("body"):
-                    ops_outcome = json.loads(result["body"])
-                    outcome_body = ops_outcome["issue"][0]
-                    status_code = outcome_body["code"]
-                    diagnostics = outcome_body["diagnostics"]
+                if str(result["statusCode"]) == "200":
+                    status = '201'
+                    status_code = 'Processed successfully'
             operation_outcome = {
                 'status': status,
                 'status_code': status_code
             }
-            if len(diagnostics) > 1:
-                operation_outcome['diagnostics'] = diagnostics
             log_data['operation_outcome'] = operation_outcome
             logger.info(json.dumps(log_data))
             firehose_log = dict()
