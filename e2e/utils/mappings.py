@@ -10,13 +10,18 @@ class VaccineTypes:
     mmr: str = "MMR"
 
     all: list[str] = field(
-        default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]
+        default_factory=lambda: [
+            VaccineTypes.covid_19,
+            VaccineTypes.flu,
+            VaccineTypes.hpv,
+            VaccineTypes.mmr,
+        ]
     )
 
 
 vaccine_type_mappings = [
-            (["840539006"], VaccineTypes.covid_19),
-            (["6142004"], VaccineTypes.flu),
-            (["240532009"], VaccineTypes.hpv),
-            (["14189004", "36653000", "36989005"], VaccineTypes.mmr),
-        ]
+    (["840539006"], VaccineTypes.covid_19),
+    (["6142004"], VaccineTypes.flu),
+    (["240532009"], VaccineTypes.hpv),
+    (["14189004", "36653000", "36989005"], VaccineTypes.mmr),
+]
