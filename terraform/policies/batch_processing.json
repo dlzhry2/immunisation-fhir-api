@@ -15,6 +15,11 @@
       ]
     },
     {
+      "Action": "kms:Decrypt",
+      "Effect": "Allow",
+      "Resource": "arn:aws:kms:*:*:*"
+    },
+    {
       "Action": [
         "s3:ListBucket",
         "s3:PutObject",
