@@ -1,9 +1,10 @@
 """Tests for generic utils"""
 
 import unittest
-from .utils.generic_utils import load_json_data
+
 from src.models.utils.generic_utils import disease_codes_to_vaccine_type, get_vaccine_type
-from mappings import VaccineTypes
+from src.mappings import VaccineTypes
+from .utils.generic_utils import load_json_data
 
 
 class TestGenericUtils(unittest.TestCase):
@@ -19,7 +20,6 @@ class TestGenericUtils(unittest.TestCase):
         of disease codes, or raises a value error otherwise
         """
         # Valid combinations return appropriate vaccine type
-
         valid_combinations = [
             (["840539006"], VaccineTypes.covid_19),
             (["6142004"], VaccineTypes.flu),
