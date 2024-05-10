@@ -27,17 +27,16 @@ class PostValidators:
     def __init__(self, immunization):
         self.values = immunization
         self.errors = []
+        # Note: FHIR validator mandates the presence of status field, so there is no post-validation for status
+        self.status = self.values.status
 
     def validate(self):
-        """
-        Run all post-validation checks.
-        """
+        """Run all post-validation checks."""
 
         # Run critical validations that other validations rely on, if they fail then no need to carry on
         try:
             self.validate_and_set_vaccine_type(self.values)
             self.validate_occurrence_date_time(self.values)
-            self.set_status(self.values)
         except (ValueError, TypeError, IndexError, AttributeError, MandatoryError) as e:
             raise ValueError(str(e)) from e
 
@@ -122,13 +121,6 @@ class PostValidators:
             self.vaccine_type = disease_codes_to_vaccine_type(target_diseases)
         except (KeyError, IndexError, TypeError) as error:
             raise MandatoryError(f"{field_location} is a mandatory field") from error
-
-        return values
-
-    def set_status(self, values: dict) -> dict:
-        "Set status property to match the value in the JSON data"
-        # Note: no need to check field is present, as this is done already by the FHIR validator
-        self.status = values.status
 
         return values
 

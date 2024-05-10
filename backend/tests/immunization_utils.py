@@ -2,19 +2,21 @@ from decimal import Decimal
 
 from fhir.resources.R4B.immunization import Immunization
 
-valid_nhs_number = "9990548609"
+from tests.utils.values_for_tests import ValidValues
+from tests.utils.generic_utils import load_json_data
+
+VALID_NHS_NUMBER = ValidValues.nhs_number
 
 
-def create_an_immunization(imms_id, nhs_number=valid_nhs_number) -> Immunization:
+def create_an_immunization(imms_id, nhs_number=VALID_NHS_NUMBER) -> Immunization:
     base_imms = create_an_immunization_dict(imms_id, nhs_number)
     return Immunization.parse_obj(base_imms)
 
 
 def create_an_immunization_dict(
-    imms_id,
-    nhs_number=valid_nhs_number,
-    occurrence_date_time="2021-02-07T13:28:17.271+00:00"
+    imms_id, nhs_number=VALID_NHS_NUMBER, occurrence_date_time="2021-02-07T13:28:17.271+00:00"
 ):
+    # TODO: use sample data and update relevant values
     return {
         "resourceType": "Immunization",
         "id": imms_id,
@@ -212,5 +214,20 @@ def create_an_immunization_dict(
                 ]
             }
         ],
-        "protocolApplied": [{"doseNumberPositiveInt": 1}],
+        "protocolApplied": [
+            {
+                "targetDisease": [
+                    {
+                        "coding": [
+                            {
+                                "system": "http://snomed.info/sct",
+                                "code": "840539006",
+                                "display": "Disease caused by severe acute respiratory syndrome coronavirus 2",
+                            }
+                        ]
+                    }
+                ],
+                "doseNumberPositiveInt": 1,
+            }
+        ],
     }

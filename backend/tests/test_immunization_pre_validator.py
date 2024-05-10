@@ -14,6 +14,7 @@ from .utils.generic_utils import (
 from .utils.pre_validation_test_utils import ValidatorModelTests
 from .utils.values_for_tests import ValidValues, InvalidValues
 from src.models.fhir_immunization import ImmunizationValidator
+from mappings import DiseaseCodes
 
 
 class TestImmunizationModelPreValidationRules(unittest.TestCase):
@@ -683,7 +684,12 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_pre_validate_protocol_applied(self):
         """Test pre_validate_protocol_applied accepts valid values and rejects invalid values"""
-        valid_list_element = {"doseNumberPositiveInt": 1}
+        valid_list_element = {
+            "targetDisease": [
+                {"coding": [{"system": "http://snomed.info/sct", "code": "6142004", "display": "Influenza"}]}
+            ],
+            "doseNumberPositiveInt": 1,
+        }
 
         ValidatorModelTests.test_list_value(
             self,
@@ -767,15 +773,23 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         )
 
     def test_pre_validate_disease_type_coding_codes(self):
-        """
-        Test pre_validate_disease_type_coding_codes accepts valid values and rejects invalid values
-        """
-        for i in range(0, 2):
+        """Test pre_validate_disease_type_coding_codes accepts valid values and rejects invalid values"""
+        # Test data with single disease_type_coding_code
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="protocolApplied[0].targetDisease[0]."
+            + "coding[?(@.system=='http://snomed.info/sct')].code",
+            valid_strings_to_test=[DiseaseCodes.covid_19, DiseaseCodes.flu, DiseaseCodes.hpv],
+            valid_json_data=load_json_data(filename="sample_covid_immunization_event.json"),
+        )
+
+        # Test data with multiple disease_type_coding_codes
+        for i, disease_code in [(0, DiseaseCodes.measles), (1, DiseaseCodes.mumps), (2, DiseaseCodes.rubella)]:
             ValidatorModelTests.test_string_value(
                 self,
                 field_location=f"protocolApplied[0].targetDisease[{i}]."
                 + "coding[?(@.system=='http://snomed.info/sct')].code",
-                valid_strings_to_test=["dummy"],
+                valid_strings_to_test=[disease_code],
                 valid_json_data=load_json_data(filename="sample_mmr_immunization_event.json"),
             )
 

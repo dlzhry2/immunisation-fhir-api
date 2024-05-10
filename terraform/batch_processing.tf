@@ -29,7 +29,9 @@ locals {
         "kms:Get*",
         "kms:Delete*",
         "kms:ScheduleKeyDeletion",
-        "kms:CancelKeyDeletion"
+        "kms:CancelKeyDeletion",
+        "kms:GenerateDataKey*",
+        "kms:Decrypt"
         ],
         "Resource": "*"
     },
@@ -70,6 +72,33 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3_batch_encrypti
       sse_algorithm     = "aws:kms"
     }
   }
+}
+
+resource "aws_s3_object" "covid_19_poc_folder_object" { 
+	bucket = aws_s3_bucket.batch_data_source_bucket.id 
+	key = "COVID19_POC/" 
+	content_type = "application/x-directory" 
+}
+
+resource "aws_s3_object" "covid_19_folder_object" { 
+	bucket = aws_s3_bucket.batch_data_source_bucket.id 
+	key = "COVID19/" 
+    content = ""
+	content_type = "application/x-directory" 
+}
+
+resource "aws_s3_object" "flu_poc_folder_object" { 
+	bucket = aws_s3_bucket.batch_data_source_bucket.id 
+	key = "FLU_POC/" 
+    content = ""
+	content_type = "application/x-directory" 
+}
+
+resource "aws_s3_object" "flu_folder_object" { 
+	bucket = aws_s3_bucket.batch_data_source_bucket.id 
+	key = "FLU/" 
+    content = ""
+	content_type = "application/x-directory" 
 }
 
 resource "aws_s3_bucket_notification" "source_bucket_notification" {

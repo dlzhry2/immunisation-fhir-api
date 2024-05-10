@@ -571,13 +571,10 @@ class PreValidators:
         then it is a non-empty string which is one of the following: completed, entered-in-error,
         not-done.
 
-        NOTE 1: ACTION_FLAG and NOT_GIVEN are mutually exclusive i.e. if ACTION_FLAG is present then
-        NOT_GIVEN will be absent and vice versa. The ACTION_FLAGs are 'completed' and 'not-done'.
-        The following 1-to-1 mapping applies:
-        * NOT_GIVEN is True <---> Status will be set to 'not-done' (and therefore ACTION_FLAG is
-            absent)
-        * NOT_GIVEN is False <---> Status will be set to 'completed' or 'entered-in-error' (and
-            therefore ACTION_FLAG is present)
+        NOTE 1: The following mapping applies:
+        * NOT_GIVEN is True & ACTION_FLAG is "new" or "update" or "delete" <---> Status is 'not-done'
+        * NOT_GIVEN is False & ACTION_FLAG is "new" or "update" <---> Status is 'completed'
+        * NOT_GIVEN is False and ACTION_FLAG is "delete" <---> Status is entered-in-error'
 
         NOTE 2: Status is a mandatory FHIR field. A value of None will be rejected by the
         FHIR model before pre-validators are run.

@@ -23,6 +23,7 @@ from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
 from models.errors import Severity, Code
+from utils import has_valid_vaccine_type
 
 
 def get_service_url(
@@ -115,8 +116,8 @@ class FhirService:
         return Immunization.parse_obj(imms)
 
     @staticmethod
-    def has_valid_disease_type(immunization: dict, disease_types: list[str]):
-        return get_vaccine_type(immunization) in disease_types
+    def has_valid_vaccine_type(immunization: dict, vaccine_types: list[str]):
+        return get_vaccine_type(immunization) in vaccine_types
 
     @staticmethod
     def is_valid_date_from(immunization: dict, date_from: datetime.date):
@@ -151,7 +152,7 @@ class FhirService:
     def search_immunizations(
         self,
         nhs_number: str,
-        disease_types: list[str],
+        vaccine_types: list[str],
         params: str,
         date_from: datetime.date = parameter_parser.date_from_default,
         date_to: datetime.date = parameter_parser.date_to_default,
@@ -169,7 +170,7 @@ class FhirService:
         resources = [
             r
             for r in resources
-            if FhirService.has_valid_disease_type(r, disease_types)
+            if FhirService.has_valid_vaccine_type(r, vaccine_types)
             and FhirService.is_valid_date_from(r, date_from)
             and FhirService.is_valid_date_to(r, date_to)
         ]

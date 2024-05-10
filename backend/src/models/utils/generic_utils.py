@@ -223,7 +223,10 @@ def nhs_number_mod11_check(nhs_number: str) -> bool:
 
 
 def get_vaccine_type(immunization: dict):
-    """Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases"""
+    """
+    Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases.
+    If combination of disease types does not map to a valid vaccine type, a value error is raised
+    """
     target_diseases = []
     target_disease_list = immunization["protocolApplied"][0]["targetDisease"]
     for element in target_disease_list:
@@ -231,26 +234,9 @@ def get_vaccine_type(immunization: dict):
         target_diseases.append(code)
     return disease_codes_to_vaccine_type(target_diseases)
 
-    # TODO: Remove this commented code
-    # value_codeable_concept_coding = [
-    #     ext
-    #     for ext in immunization["extension"]
-    #     if ext.get("url") == "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
-    # ][0]["valueCodeableConcept"]["coding"]
-
-    # vaccination_procedure_code = [
-    #     coding for coding in value_codeable_concept_coding if coding.get("system") == "http://snomed.info/sct"
-    # ][0]["code"]
-
-    # from mappings import vaccination_procedure_snomed_codes
-
-    # disease_type = vaccination_procedure_snomed_codes.get(vaccination_procedure_code, None)
-
-    # return disease_type
-
 
 def get_target_disease_codes_from_model(immunization: dict):
-    """Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases"""
+    """Take a FHIR immunization resource model and returns a list of target disease codes"""
     target_diseases = []
     target_disease_list = immunization.protocolApplied[0].targetDisease
     for element in target_disease_list:
