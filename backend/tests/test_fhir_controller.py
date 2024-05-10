@@ -138,6 +138,21 @@ class TestCreateImmunization(unittest.TestCase):
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
+    def test_create_bad_request_for_superseded_number_for_create_immunization(self):
+        """it should return 400 if json has superseded nhs number"""
+        imms = Immunization.construct()
+        aws_event = {"body": imms.json()}
+        superseded_number = "9452372230"
+        self.service.create_immunization.side_effect = InvalidPatientId(patient_identifier=superseded_number)
+
+        response = self.controller.create_immunization(aws_event)
+
+        self.assertEqual(response["statusCode"], 400)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertTrue(superseded_number in body["issue"][0]["diagnostics"])
+
+
     def test_invalid_nhs_number(self):
         """it should handle ValidationError when patient doesn't exist"""
         imms = Immunization.construct()
@@ -214,6 +229,19 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertEqual(400, response["statusCode"])
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
+
+
+    def test_validation_superseded_number_to_give_bad_request_for_update_immunization(self):
+        """it should return 400 if Immunization has superseded nhs number"""
+        imms = "{}"
+        aws_event = {"body": imms, "pathParameters": {"id": "9990548609"}}
+        self.service.update_immunization.side_effect = CustomValidationError(message="invalid")
+
+        response = self.controller.update_immunization(aws_event)
+
+        self.assertEqual(400, response["statusCode"])
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")    
 
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
@@ -405,6 +433,24 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(response["statusCode"], 400)
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
+
+    @patch('fhir_controller.process_search_params')
+    def test_search_immunizations_returns_400_on_passing_superseded_nhs_number(
+        self, process_search_params: Mock
+    ):
+        "This method should return 400 as input paramter has superseded nhs number"
+        lambda_event = {"multiValueQueryStringParameters": {
+            self.patient_identifier_key: ["https://fhir.nhs.uk/Id/nhs-number|9452372230"],
+            self.immunization_target_key: ["a-disease-type"],
+        }}
+
+        process_search_params.side_effect = ParameterException("Test")
+        response = self.controller.search_immunizations(lambda_event)
+
+        # Then
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")    
 
     def test_self_link_excludes_extraneous_params(self):
         search_result = Bundle.construct()
