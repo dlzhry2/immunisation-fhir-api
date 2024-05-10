@@ -127,7 +127,7 @@ class TestCreateImmunization(unittest.TestCase):
         """it should create Immunization and validate it"""
         imms_id = "an-id"
         self.imms_repo.create_immunization.return_value = create_an_immunization_dict(imms_id)
-        pds_patient = {"id": "a-patient-id"}
+        pds_patient = {"identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number","value": "9990548609"}]}
         self.fhir_service.pds_service.get_patient_details.return_value = pds_patient
 
         nhs_number = VALID_NHS_NUMBER
@@ -233,7 +233,7 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should update Immunization and validate NHS number"""
         imms_id = "an-id"
         self.imms_repo.update_immunization.return_value = create_an_immunization_dict(imms_id)
-        pds_patient = {"id": "a-patient-id"}
+        pds_patient =  {"identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number","value": "9990548609"}]}
         self.fhir_service.pds_service.get_patient_details.return_value = pds_patient
 
         nhs_number = VALID_NHS_NUMBER
@@ -254,7 +254,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         self.imms_repo.update_immunization.side_effect = ResourceNotFoundError("Immunization", imms_id)
         self.imms_repo.create_immunization.return_value = create_an_immunization_dict(imms_id)
-        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "a-patient-id"}
+        self.fhir_service.pds_service.get_patient_details.return_value =  {"identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number","value": "9990548609"}]}
 
         # When
         outcome, _ = self.fhir_service.update_immunization(imms_id, imms)
@@ -338,7 +338,7 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should populate id in the message if it is not present"""
         req_imms_id = "an-id"
         self.imms_repo.update_immunization.return_value = create_an_immunization_dict(req_imms_id)
-        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
+        self.fhir_service.pds_service.get_patient_details.return_value =  {"identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number","value": "9990548609"}]}
 
         req_imms = create_an_immunization_dict("we-will-remove-this-id")
         del req_imms["id"]
