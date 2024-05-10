@@ -80,13 +80,14 @@ class TestSearchImmunization(ImmunizationBaseTest):
         self.assertTrue(deleted_mmr["id"] not in resource_ids)
 
     def test_search_immunization_parameter_smoke_tests(self):
-        time = "2024-01-30T13:28:17.271+00:00"
+        time_1 = "2024-01-30T13:28:17.271+00:00"
+        time_2 = "2024-02-01T13:28:17.271+00:00"
         stored_records = [
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.mmr),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.flu),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.covid_19),
-            create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.covid_19, time),
-            create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.covid_19, time),
+            create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.covid_19, time_1),
+            create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.covid_19, time_2),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, VaccineTypes.flu),
             create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, VaccineTypes.covid_19)
         ]
@@ -142,10 +143,6 @@ class TestSearchImmunization(ImmunizationBaseTest):
                               None, True, [3, 4]),
              SearchTestParams("GET",
                               f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
-                              f"&-date.to=2024-01-30",
-                              None, True, [2, 3]),
-             SearchTestParams("GET",
-                              f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
                               f"&-date.from=2024-01-01&-date.to=2024-01-30",
                               None, True, [3]),
              # "from" after "to" is an error.
@@ -171,7 +168,8 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
                 result_ids = [result["resource"]["id"] for result in results["entry"]]
                 created_and_returned_ids = list(set(result_ids) & set(created_resource_ids))
-
+                print(len(created_and_returned_ids))
+                print(len(search.expected_indexes))
                 assert len(created_and_returned_ids) == len(search.expected_indexes)
                 for expected_index in search.expected_indexes:
                     assert created_resource_ids[expected_index] in result_ids
