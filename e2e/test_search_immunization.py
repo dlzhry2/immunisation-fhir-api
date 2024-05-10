@@ -143,6 +143,10 @@ class TestSearchImmunization(ImmunizationBaseTest):
                               None, True, [3, 4]),
              SearchTestParams("GET",
                               f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
+                              f"&-date.to=2024-01-30",
+                              None, True, [2, 3]),
+             SearchTestParams("GET",
+                              f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
                               f"&-date.from=2024-01-01&-date.to=2024-01-30",
                               None, True, [3]),
              # "from" after "to" is an error.
@@ -168,8 +172,6 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
                 result_ids = [result["resource"]["id"] for result in results["entry"]]
                 created_and_returned_ids = list(set(result_ids) & set(created_resource_ids))
-                print(len(created_and_returned_ids))
-                print(len(search.expected_indexes))
                 assert len(created_and_returned_ids) == len(search.expected_indexes)
                 for expected_index in search.expected_indexes:
                     assert created_resource_ids[expected_index] in result_ids
