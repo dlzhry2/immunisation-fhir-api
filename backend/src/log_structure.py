@@ -36,9 +36,8 @@ def function_info(func):
                 'actual_path': actual_path,
                 'resource_path': resource_path                
         }
-
+        start = time.time()
         try:
-            start = time.time()
             result = func(*args, **kwargs)
             end = time.time()
             log_data['time_taken']= f"{round(end - start, 5)}s"
@@ -69,6 +68,8 @@ def function_info(func):
 
         except Exception as e:
             log_data['error'] = str(e)
+            end = time.time()
+            log_data['time_taken']= f"{round(end - start, 5)}s"
             logger.exception(json.dumps(log_data))
             firehose_log = dict()
             firehose_log['event'] = log_data
