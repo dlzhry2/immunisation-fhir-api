@@ -53,6 +53,7 @@ def function_info(func):
         except Exception as e:
             log_data['error'] = str(e)
             logger.exception(json.dumps(log_data))
+            firehose_log = dict()
             firehose_log['event'] = log_data
             firehose_logger.send_log(firehose_log)
             raise
