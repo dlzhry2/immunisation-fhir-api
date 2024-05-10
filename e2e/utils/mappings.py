@@ -1,4 +1,3 @@
-from dataclasses import field
 
 
 class VaccineTypes:
@@ -8,15 +7,6 @@ class VaccineTypes:
     flu: str = "FLU"
     hpv: str = "HPV"
     mmr: str = "MMR"
-
-    all: list[str] = field(
-        default_factory=lambda: [
-            VaccineTypes.covid_19,
-            VaccineTypes.flu,
-            VaccineTypes.hpv,
-            VaccineTypes.mmr,
-        ]
-    )
 
 
 vaccine_type_mappings = [
