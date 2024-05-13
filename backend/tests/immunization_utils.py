@@ -17,7 +17,7 @@ def create_an_immunization_dict(
     imms_id, nhs_number=VALID_NHS_NUMBER, occurrence_date_time="2021-02-07T13:28:17.271+00:00"
 ):
     # TODO: use sample data and update relevant values
-    Immunization_json = load_json_data("sample_covid_immunization_event.json")
+    Immunization_json = load_json_data("completed_covid19_immunization_event.json")
     Immunization_json["id"] = imms_id
 
     [x for x in Immunization_json["contained"] if x.get("resourceType") == "Patient"][0]["identifier"][0][

@@ -22,7 +22,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        self.json_data = load_json_data(filename="sample_covid_immunization_event.json")
+        self.json_data = load_json_data(filename="completed_covid19_immunization_event.json")
         self.validator = ImmunizationValidator(add_post_validators=False)
 
     def test_collected_errors(self):
@@ -631,7 +631,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
     def test_pre_validate_target_disease(self):
         """Test pre_validate_target_disease accepts valid values and rejects invalid values"""
 
-        valid_json_data = load_json_data(filename="sample_mmr_immunization_event.json")
+        valid_json_data = load_json_data(filename="completed_mmr_immunization_event.json")
 
         self.assertTrue(self.validator.validate(valid_json_data))
 
@@ -697,7 +697,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location="protocolApplied[0].targetDisease[0]."
             + "coding[?(@.system=='http://snomed.info/sct')].code",
             valid_strings_to_test=[DiseaseCodes.covid_19, DiseaseCodes.flu, DiseaseCodes.hpv],
-            valid_json_data=load_json_data(filename="sample_covid_immunization_event.json"),
+            valid_json_data=load_json_data(filename="completed_covid19_immunization_event.json"),
         )
 
         # Test data with multiple disease_type_coding_codes
@@ -707,7 +707,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 field_location=f"protocolApplied[0].targetDisease[{i}]."
                 + "coding[?(@.system=='http://snomed.info/sct')].code",
                 valid_strings_to_test=[disease_code],
-                valid_json_data=load_json_data(filename="sample_mmr_immunization_event.json"),
+                valid_json_data=load_json_data(filename="completed_mmr_immunization_event.json"),
             )
 
     def test_pre_validate_vaccine_code_coding(self):
@@ -1060,7 +1060,7 @@ class TestImmunizationModelPreValidationRulesForNotDone(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        self.json_data = load_json_data("sample_immunization_not_done_event.json")
+        self.json_data = load_json_data("not_done_hpv_immunization_event.json")
         self.validator = ImmunizationValidator(add_post_validators=False)
 
     def test_pre_validate_vaccination_situation_code(self):
@@ -1108,7 +1108,7 @@ class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCa
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        self.json_data = load_json_data("sample_immunization_reduce_validation_event.json")
+        self.json_data = load_json_data("reduce_validation_hpv_immunization_event.json")
         self.validator = ImmunizationValidator(add_post_validators=False)
 
     def test_pre_validate_reduce_validation_reason_answer(self):

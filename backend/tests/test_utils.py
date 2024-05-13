@@ -12,7 +12,7 @@ class TestGenericUtils(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        self.json_data = load_json_data(filename="sample_mmr_immunization_event.json")
+        self.json_data = load_json_data(filename="completed_mmr_immunization_event.json")
 
     def test_disease_codes_to_vaccine_type(self):
         """
@@ -49,14 +49,9 @@ class TestGenericUtils(unittest.TestCase):
         Test that get_vaccine_type returns the correct vaccine type when given valid json data with a
         valid combination of target disease code, or raises an error otherwise
         """
-        vaccine_names = [
-            ("covid", VaccineTypes.covid_19),
-            ("flu", VaccineTypes.flu),
-            ("hpv", VaccineTypes.hpv),
-            ("mmr", VaccineTypes.mmr),
-        ]
-        for vaccine_name, vaccine_type in vaccine_names:
-            json_data = load_json_data(filename=f"sample_{vaccine_name}_immunization_event.json")
+        vaccine_types = [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]
+        for vaccine_type in vaccine_types:
+            json_data = load_json_data(filename=f"completed_{vaccine_type.lower()}_immunization_event.json")
             self.assertEqual(get_vaccine_type(json_data), vaccine_type)
 
         # TODO: Test 'bad' data
