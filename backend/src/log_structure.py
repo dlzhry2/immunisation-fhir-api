@@ -29,24 +29,32 @@ def function_info(func):
             f"Starting {func.__name__} with X-Correlation-ID: {correlation_id} and X-Request-ID: {request_id}"
         )
         log_data = {
-                'function_name': func.__name__,
-                'date_time': str(datetime.now()),
-                'X-Correlation-ID': correlation_id,
-                'X-Request-ID': request_id,
-                'actual_path': actual_path,
-                'resource_path': resource_path                
+            "function_name": func.__name__,
+            "date_time": str(datetime.now()),
+            "X-Correlation-ID": correlation_id,
+            "X-Request-ID": request_id,
+            "actual_path": actual_path,
+            "resource_path": resource_path,
         }
+        operation_outcome = dict()
+        firehose_log = dict()
         start = time.time()
         try:
             result = func(*args, **kwargs)
+            print(f"Result:{result}")
             end = time.time()
-            log_data['time_taken']= f"{round(end - start, 5)}s"
+            log_data["time_taken"] = f"{round(end - start, 5)}s"
             status = "500"
             status_code = "Exception"
-            diagnostics = ""
+            diagnostics = str()
+            record = str()
             if isinstance(result, dict):
                 status = str(result["statusCode"])
-                status_code = "Completed successfully" 
+                status_code = "Completed successfully"
+                if result.get("headers"):
+                    result_headers = result["headers"]
+                    if result_headers.get("Location"):
+                        record = result_headers["Location"]
                 if result.get("body"):
                     ops_outcome = json.loads(result["body"])
                     print(f"ops_outcome: {ops_outcome}")
@@ -54,27 +62,25 @@ def function_info(func):
                         outcome_body = ops_outcome["issue"][0]
                         status_code = outcome_body["code"]
                         diagnostics = outcome_body["diagnostics"]
-            operation_outcome = {
-                'status': status,
-                'status_code': status_code
-            }
+            operation_outcome["status"] = status
+            operation_outcome["status_code"] = status_code
             if len(diagnostics) > 1:
-                operation_outcome['diagnostics'] = diagnostics
-            log_data['operation_outcome'] = operation_outcome
+                operation_outcome["diagnostics"] = diagnostics
+            if len(record) > 1:
+                operation_outcome["record"] = record
+            log_data["operation_outcome"] = operation_outcome
             logger.info(json.dumps(log_data))
-            firehose_log = dict()
-            firehose_log['event'] = log_data
+            firehose_log["event"] = log_data
             firehose_logger.send_log(firehose_log)
 
             return result
 
         except Exception as e:
-            log_data['error'] = str(e)
+            log_data["error"] = str(e)
             end = time.time()
-            log_data['time_taken']= f"{round(end - start, 5)}s"
+            log_data["time_taken"] = f"{round(end - start, 5)}s"
             logger.exception(json.dumps(log_data))
-            firehose_log = dict()
-            firehose_log['event'] = log_data
+            firehose_log["event"] = log_data
             firehose_logger.send_log(firehose_log)
             raise
 
