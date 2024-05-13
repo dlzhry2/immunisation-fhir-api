@@ -424,13 +424,13 @@ class TestSearchImmunizations(unittest.TestCase):
         self.validator = create_autospec(ImmunizationValidator)
         self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
         self.nhs_search_param = "patient.identifier"
-        self.disease_type_search_param = "-immunization.target"
+        self.vaccine_type_search_param = "-immunization.target"
 
     def test_vaccine_type_search(self):
         """It should search for the correct vaccine type"""
         nhs_number = VALID_NHS_NUMBER
         vaccine_type = VaccineTypes.covid_19
-        params = f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={vaccine_type}"
+        params = f"{self.nhs_search_param}={nhs_number}&{self.vaccine_type_search_param}={vaccine_type}"
 
         # When
         _ = self.fhir_service.search_immunizations(nhs_number, vaccine_type, params)
@@ -445,10 +445,10 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
-        disease_types = ["COVID19"]
-        params = f"{self.nhs_search_param}={nhs_number}&{self.disease_type_search_param}={disease_types}"
+        vaccine_types = [VaccineTypes.covid_19]
+        params = f"{self.nhs_search_param}={nhs_number}&{self.vaccine_type_search_param}={vaccine_types}"
         # When
-        result = self.fhir_service.search_immunizations(nhs_number, disease_types, params)
+        result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, params)
         # Then
         self.assertIsInstance(result, FhirBundle)
         self.assertEqual(result.type, "searchset")
@@ -473,12 +473,12 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
-        disease_types = ["COVID19"]
+        vaccine_types = [VaccineTypes.covid_19]
 
         # When
         # Day before.
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, "", date_from=datetime.date(2021, 2, 6)
+            nhs_number, vaccine_types, "", date_from=datetime.date(2021, 2, 6)
         )
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
@@ -490,7 +490,7 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         # Day of first, inclusive search.
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, "", date_from=datetime.date(2021, 2, 7)
+            nhs_number, vaccine_types, "", date_from=datetime.date(2021, 2, 7)
         )
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
@@ -502,7 +502,7 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         # Day of second, inclusive search.
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, "", date_from=datetime.date(2021, 2, 8)
+            nhs_number, vaccine_types, "", date_from=datetime.date(2021, 2, 8)
         )
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
@@ -513,7 +513,7 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         # Day after.
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, "", date_from=datetime.date(2021, 2, 9)
+            nhs_number, vaccine_types, "", date_from=datetime.date(2021, 2, 9)
         )
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
@@ -527,10 +527,10 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
-        disease_types = ["COVID19"]
+        vaccine_types = [VaccineTypes.covid_19]
 
         # When
-        result = self.fhir_service.search_immunizations(nhs_number, disease_types, "")
+        result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
         # Then
@@ -539,7 +539,7 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # When
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, "", date_from=datetime.date(2021, 3, 6)
+            nhs_number, vaccine_types, "", date_from=datetime.date(2021, 3, 6)
         )
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
@@ -558,12 +558,12 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
-        disease_types = ["COVID19"]
+        vaccine_types = [VaccineTypes.covid_19]
 
         # When
         # Day after.
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, "", date_to=datetime.date(2021, 2, 9)
+            nhs_number, vaccine_types, "", date_to=datetime.date(2021, 2, 9)
         )
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
@@ -575,7 +575,7 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         # Day of second, inclusive search.
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, "", date_to=datetime.date(2021, 2, 8)
+            nhs_number, vaccine_types, "", date_to=datetime.date(2021, 2, 8)
         )
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
@@ -587,7 +587,7 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         # Day of first, inclusive search.
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, "", date_to=datetime.date(2021, 2, 7)
+            nhs_number, vaccine_types, "", date_to=datetime.date(2021, 2, 7)
         )
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
@@ -598,7 +598,7 @@ class TestSearchImmunizations(unittest.TestCase):
         # When
         # Day before.
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, "", date_to=datetime.date(2021, 2, 6)
+            nhs_number, vaccine_types, "", date_to=datetime.date(2021, 2, 6)
         )
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
@@ -612,10 +612,10 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
-        disease_types = ["COVID19"]
+        vaccine_types = [VaccineTypes.covid_19]
 
         # When
-        result = self.fhir_service.search_immunizations(nhs_number, disease_types, "")
+        result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
         # Then
@@ -624,7 +624,7 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # When
         result = self.fhir_service.search_immunizations(
-            nhs_number, disease_types, "", date_to=datetime.date(2021, 3, 8)
+            nhs_number, vaccine_types, "", date_to=datetime.date(2021, 3, 8)
         )
         searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
@@ -642,10 +642,10 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
-        disease_types = ["COVID19"]
+        vaccine_types = [VaccineTypes.covid_19]
 
         # When
-        result = self.fhir_service.search_immunizations(nhs_number, disease_types, "")
+        result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
         entries = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
 
         # Then
@@ -663,10 +663,10 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
-        disease_types = ["COVID19"]
+        vaccine_types = [VaccineTypes.covid_19]
 
         # When
-        result = self.fhir_service.search_immunizations(nhs_number, disease_types, "")
+        result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
 
         # Then
         patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"), None)
@@ -681,10 +681,10 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = patient
         nhs_number = VALID_NHS_NUMBER
-        disease_types = ["COVID19"]
+        vaccine_types = [VaccineTypes.covid_19]
 
         # When
-        result = self.fhir_service.search_immunizations(nhs_number, disease_types, "")
+        result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
 
         # Then
         patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"), None)
@@ -699,10 +699,10 @@ class TestSearchImmunizations(unittest.TestCase):
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = patient
         nhs_number = VALID_NHS_NUMBER
-        disease_types = ["COVID19"]
+        vaccine_types = [VaccineTypes.covid_19]
 
         # When
-        result = self.fhir_service.search_immunizations(nhs_number, disease_types, "")
+        result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
 
         # Then
         patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"))

@@ -224,6 +224,12 @@ vaccine_type_applicable_validations = {
         VaccineTypes.hpv: Mandation.required,
         VaccineTypes.mmr: Mandation.required,
     },
+    "protocol_applied_dose_number_string": {
+        VaccineTypes.covid_19: Mandation.conditional_mandatory,
+        VaccineTypes.flu: Mandation.conditional_mandatory,
+        VaccineTypes.hpv: Mandation.conditional_mandatory,
+        VaccineTypes.mmr: Mandation.conditional_mandatory,
+    },
     "vaccine_code_coding_code": {
         VaccineTypes.covid_19: Mandation.mandatory,
         VaccineTypes.flu: Mandation.mandatory,
