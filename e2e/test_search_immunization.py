@@ -103,6 +103,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
             should_be_success: bool
             expected_indexes: List[int]
 
+        # TODO: Amend these searches to  use vaccine type enums
         searches = \
             [SearchTestParams("GET", "", None, False, []),
              # No results.
