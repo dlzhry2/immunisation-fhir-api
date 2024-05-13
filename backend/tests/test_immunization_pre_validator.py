@@ -3,6 +3,7 @@
 import unittest
 from copy import deepcopy
 from decimal import Decimal
+from jsonpath_ng.ext import parse
 
 from src.models.fhir_immunization import ImmunizationValidator
 from src.mappings import DiseaseCodes
@@ -607,6 +608,24 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location="protocolApplied[0].doseNumberPositiveInt",
             valid_positive_integers_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
             max_value=9,
+        )
+
+    def test_pre_validate_protocol_applied_dose_number_string(self):
+        """
+        Test pre_validate_protocol_applied_dose_number_string accepts valid values and
+        rejects invalid values
+        """
+        valid_json_data = deepcopy(self.json_data)
+        valid_json_data["protocolApplied"][0]["doseNumberString"] = "Dose sequence not recorded"
+        valid_json_data = parse("protocolApplied[0].doseNumberPositiveInt").filter(lambda d: True, valid_json_data)
+
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="protocolApplied[0].doseNumberString",
+            valid_strings_to_test=["Dose sequence not recorded"],
+            valid_json_data=valid_json_data,
+            predefined_values=("Dose sequence not recorded"),
+            invalid_strings_to_test=["Invalid"],
         )
 
     def test_pre_validate_target_disease(self):

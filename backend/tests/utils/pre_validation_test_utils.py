@@ -5,7 +5,6 @@ from copy import deepcopy
 from decimal import Decimal
 
 from jsonpath_ng.ext import parse
-from pydantic import ValidationError
 from .generic_utils import (
     test_valid_values_accepted,
     test_invalid_values_rejected,
@@ -20,7 +19,7 @@ class ValidatorModelTests:
     def test_string_value(
         test_instance: unittest.TestCase,
         field_location: str,
-        valid_strings_to_test: dict,
+        valid_strings_to_test: list,
         valid_json_data: dict = None,
         defined_length: int = None,
         max_length: int = None,
@@ -63,12 +62,10 @@ class ValidatorModelTests:
         # Test that valid data is accepted
         test_valid_values_accepted(test_instance, valid_json_data, field_location, valid_strings_to_test)
 
-
         # Set list of invalid data types to test
         invalid_data_types_for_strings = InvalidDataTypes.for_strings
         if is_mandatory_fhir:
             invalid_data_types_for_strings = filter(None, invalid_data_types_for_strings)
-
 
         # Test invalid data types
         for invalid_data_type_for_string in invalid_data_types_for_strings:

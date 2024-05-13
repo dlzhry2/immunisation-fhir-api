@@ -67,6 +67,7 @@ class PreValidators:
             self.pre_validate_status_reason_coding_display,
             self.pre_validate_protocol_applied,
             self.pre_validate_protocol_applied_dose_number_positive_int,
+            self.pre_validate_protocol_applied_dose_number_string,
             self.pre_validate_target_disease,
             self.pre_validate_target_disease_codings,
             self.pre_validate_disease_type_coding_codes,
@@ -746,6 +747,18 @@ class PreValidators:
         try:
             field_value = values["protocolApplied"][0]["doseNumberPositiveInt"]
             PreValidation.for_positive_integer(field_value, field_location, max_value=9)
+        except (KeyError, IndexError):
+            pass
+
+    def pre_validate_protocol_applied_dose_number_string(self, values: dict) -> dict:
+        """
+        Pre-validate that, if protocolApplied[0].doseNumberString exists, then it is the string
+        "Dose sequence not recorded"
+        """
+        field_location = "protocolApplied[0].doseNumberString"
+        try:
+            field_value = values["protocolApplied"][0]["doseNumberString"]
+            PreValidation.for_string(field_value, field_location, predefined_values="Dose sequence not recorded")
         except (KeyError, IndexError):
             pass
 

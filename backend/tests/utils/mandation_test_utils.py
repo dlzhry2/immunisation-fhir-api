@@ -135,7 +135,7 @@ class MandationTests:
         """
         invalid_json_data = MandationTests.prepare_json_data(test_instance, invalid_json_data)
 
-         # Set the expected error message
+        # Set the expected error message
         if expected_bespoke_error_message:
             expected_error_message = expected_bespoke_error_message
         else:
@@ -147,18 +147,14 @@ class MandationTests:
                 test_instance.validator.validate(invalid_json_data)
             test_instance.assertTrue(
                 (expected_bespoke_error_message + f" (type={expected_error_type})") in str(error.exception)
-            )    
+            )
 
         # Test that correct error message is raised
         else:
             # Test that correct error message is raised
             with test_instance.assertRaises(NotApplicableError) as error:
                 test_instance.validator.validate(invalid_json_data)
-            eoor = error
-            print(eoor)    
             test_instance.assertEqual(expected_error_message, str(error.exception))
-
-        
 
     @staticmethod
     def test_mandation_rule_met(

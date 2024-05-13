@@ -411,83 +411,101 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
     # TODO: Check if dose number is now mandatory and update this test accordingly
-    def test_post_protocol_appplied_dose_number_positive_int(self):
+    def test_post_dose_number_positive_int(self):
         """
         Test that present or absent protocol_appplied_dose_number_positive_int is accepted or
-        rejected as appropriate dependent on other fields
+        rejected as appropriate dependent on other fields.
+
+        NOTE: doseNumber is a mandatory FHIR element of protocolApplied. Therefore is doseNumberPositiveInt is not
+        given then doseNumberString must be given instead in order to pass the FHIR validator.
         """
         dose_number_positive_int_field_location = "protocolApplied[0].doseNumberPositiveInt"
         dose_number_string_field_location = "protocolApplied[0].doseNumberString"
 
-        for vaccine_type in [VaccineTypes.covid_19,VaccineTypes.flu,VaccineTypes.hpv,VaccineTypes.mmr]:
+        # Test cases which fail the FHIR validator
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
+
+            # dose_number_positive_int exists , dose_number_string exists
             invalid_json_data = deepcopy(self.valid_json_data[vaccine_type])
             invalid_json_data["protocolApplied"][0]["doseNumberString"] = "Dose sequence not recorded"
-            # dose_number_positive_int exists , dose_number_string exists
             MandationTests.test_present_not_applicable_field_rejected(
                 self,
                 dose_number_string_field_location,
                 invalid_json_data=invalid_json_data,
-                expected_bespoke_error_message = " Any of one field value is expected from this list" + 
-                                                " ['doseNumberPositiveInt', 'doseNumberString'], but got multiple!",
+                expected_bespoke_error_message=" Any of one field value is expected from this list"
+                + " ['doseNumberPositiveInt', 'doseNumberString'], but got multiple!",
                 expected_error_type="value_error",
-                is_mandatory_fhir= True
+                is_mandatory_fhir=True,
             )
+
             # dose_number_positive_int does not exist, dose_number_string does not exist
             valid_json_data = deepcopy(self.valid_json_data[vaccine_type])
-            MandationTests.test_missing_mandatory_field_rejected(self,field_location=dose_number_positive_int_field_location,valid_json_data=valid_json_data,expected_bespoke_error_message="Expect any of field value from this list ['doseNumberPositiveInt', 'doseNumberString'].",is_mandatory_fhir=True)       
-        
-        # Test cases for COVID-19
+            MandationTests.test_missing_mandatory_field_rejected(
+                self,
+                field_location=dose_number_positive_int_field_location,
+                valid_json_data=valid_json_data,
+                expected_bespoke_error_message="Expect any of field value from this list "
+                + "['doseNumberPositiveInt', 'doseNumberString'].",
+                is_mandatory_fhir=True,
+            )
+
+        # COVID19: dose_number_positive_int exists, dose_number_string does not exist
         covid_json_data = deepcopy(self.valid_json_data[VaccineTypes.covid_19])
-        # dose_number_positive_int exists, dose_number_string does not exist
-        MandationTests.test_present_field_accepted (self,covid_json_data)
-         # dose_number_positive_int does not exists , dose_number_positive_int exists
+        MandationTests.test_present_field_accepted(self, covid_json_data)
+
+        # COVID19: dose_number_positive_int does not exist, dose_number_string exists
         covid_json_data["protocolApplied"][0]["doseNumberString"] = "Dose sequence not recorded"
-        MandationTests.test_missing_mandatory_field_rejected(self,field_location=dose_number_positive_int_field_location,valid_json_data=covid_json_data,expected_bespoke_error_message="protocolApplied[0].doseNumberPositiveInt is mandatory when vaccination type is COVID19")
-        
-        # field_location = "protocolApplied[0].doseNumberPositiveInt"
-        # protocol_applied_dose_number_positive_int is FHIR mandatory when protocol_applied is
-        # present, therefore to test the NHS validators when
-        # protocol_applied_dose_number_positive_int is removed, it is necessary to removed
-        # the entirety of protocol_applied
-        # field_to_remove = "protocolApplied"
+        MandationTests.test_missing_mandatory_field_rejected(
+            self,
+            field_location=dose_number_positive_int_field_location,
+            valid_json_data=covid_json_data,
+            expected_bespoke_error_message=f"{dose_number_positive_int_field_location} is "
+            + f"mandatory when vaccination type is {VaccineTypes.covid_19}",
+        )
 
-        # # Test cases for COVID-19
-        # MandationTests.test_mandation_for_status_dependent_fields(
-        #     self,
-        #     field_location,
-        #     vaccine_type=VaccineTypes.covid_19,
-        #     mandation_when_status_completed=Mandation.mandatory,
-        #     mandation_when_status_entered_in_error=Mandation.mandatory,
-        #     mandation_when_status_not_done=Mandation.mandatory,
-        #     expected_bespoke_error_message=f"{field_location} is mandatory when vaccination "
-        #     + f"type is {VaccineTypes.covid_19}",
-        #     field_to_remove=field_to_remove,
-        # )
+        # Test cases for FLU
+        flu_json_data = deepcopy(self.valid_json_data[VaccineTypes.flu])
 
-        # # Test cases for FLU
-        # MandationTests.test_mandation_for_status_dependent_fields(
-        #     self,
-        #     field_location,
-        #     vaccine_type=VaccineTypes.flu,
-        #     mandation_when_status_completed=Mandation.mandatory,
-        #     mandation_when_status_entered_in_error=Mandation.mandatory,
-        #     mandation_when_status_not_done=Mandation.required,
-        #     expected_bespoke_error_message=f"{field_location} is mandatory when status is "
-        #     + f"'completed' or 'entered-in-error' and vaccination type is {VaccineTypes.flu}",
-        #     field_to_remove=field_to_remove,
-        # )
+        # FLU: status = "completed" or "entered-in-error"
+        for status in ["completed", "entered-in-error"]:
+            flu_json_data = parse("status").update(deepcopy(flu_json_data), status)
+            # dose_number_positive_int exists, dose_number_string does not exist
+            MandationTests.test_present_field_accepted(self, flu_json_data)
 
-        # # Test cases for HPV and MMR
-        # for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
-        #     MandationTests.test_mandation_for_status_dependent_fields(
-        #         self,
-        #         field_location,
-        #         vaccine_type=vaccine_type,
-        #         mandation_when_status_completed=Mandation.required,
-        #         mandation_when_status_entered_in_error=Mandation.required,
-        #         mandation_when_status_not_done=Mandation.required,
-        #         field_to_remove=field_to_remove,
-        #     )
+            # dose_number_positive_int does not exist, dose_number_string exists
+            invalid_flu_json_data = deepcopy(self.valid_json_data[VaccineTypes.flu])
+            invalid_flu_json_data["protocolApplied"][0]["doseNumberString"] = "Dose sequence not recorded"
+            MandationTests.test_missing_mandatory_field_rejected(
+                self,
+                field_location=dose_number_positive_int_field_location,
+                valid_json_data=invalid_flu_json_data,
+                expected_bespoke_error_message=f"{dose_number_positive_int_field_location} is mandatory when status is"
+                + f" 'completed' or 'entered-in-error' and vaccination type is {VaccineTypes.flu}",
+            )
+
+        # FLU: status = "not-done"
+        flu_json_data = parse("status").update(deepcopy(self.not_done_json_data), "not-done")
+        flu_json_data = MandationTests.update_target_disease(self, VaccineTypes.flu, flu_json_data)
+
+        # FLU, status = "note-done", dose_number_positive_int exists, dose_number_string does not exist
+        MandationTests.test_present_field_accepted(self, flu_json_data)
+
+        # FLU, status = "note-done", dose_number_positive_int does not exist, dose_number_string exists
+        flu_json_data["protocolApplied"][0]["doseNumberString"] = "Dose sequence not recorded"
+        MandationTests.test_missing_field_accepted(
+            self, field_location=dose_number_positive_int_field_location, valid_json_data=flu_json_data
+        )
+
+        # Test cases for HPV and MMR
+        for vaccine_type in [VaccineTypes.hpv, VaccineTypes.mmr]:
+            valid_json_data = deepcopy(self.valid_json_data[vaccine_type])
+
+            # dose_number_positive_int exists, dose_number_string does not exist
+            MandationTests.test_present_field_accepted(self, valid_json_data)
+
+            # dose_number_positive_int does not exist, dose_number_string exists
+            valid_json_data["protocolApplied"][0]["doseNumberString"] = "Dose sequence not recorded"
+            MandationTests.test_missing_field_accepted(self, dose_number_positive_int_field_location, valid_json_data)
 
     def test_post_vaccine_code_coding_code(self):
         """Test that the JSON data is rejected when vaccine_code_coding_code is absent"""

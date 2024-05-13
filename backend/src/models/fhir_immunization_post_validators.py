@@ -66,7 +66,6 @@ class PostValidators:
             self.validate_status_reason_coding_code,
             self.validate_status_reason_coding_display,
             self.validate_protocol_applied_dose_number_positive_int,
-            self.validate_protocol_applied_dose_number_string,
             self.validate_vaccine_code_coding_code,
             self.validate_vaccine_code_coding_display,
             self.validate_manufacturer_display,
@@ -546,41 +545,6 @@ class PostValidators:
             mandation=mandation,
             bespoke_mandatory_error_message=bespoke_mandatory_error_message,
         )
-
-
-    def validate_protocol_applied_dose_number_string(self, values: dict) -> dict:
-        "Validate that protocol_applied_dose_number_string is present or absent, as required"
-        dose_number_positive_int_location = "protocolApplied[0].doseNumberPositiveInt"
-
-        try:
-            dose_number_positive_int_value = values.protocolApplied[0].doseNumberPositiveInt
-        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
-            dose_number_positive_int_value = None
-        
-        field_location = "protocolApplied[0].doseNumberString"
-
-        try:
-            field_value = values.protocolApplied[0].doseNumberString
-        except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
-            field_value = None
-
-        # Handle conditional mandation logic
-        mandation = vaccine_type_applicable_validations["protocol_applied_dose_number_string"][self.vaccine_type]
-        
-        mandation = Mandation.not_applicable if dose_number_positive_int_value else Mandation.mandatory
-
-        # Set the bespoke mandatory error messages
-        bespoke_mandatory_error_message = f"{field_location} is mandatory when {dose_number_positive_int_location} is not given"
-
-        bespoke_not_applicable_error_message = f"{field_location} must not exist when {dose_number_positive_int_location} is given"
-
-        check_mandation_requirements_met(
-            field_value=field_value,
-            field_location=field_location,
-            mandation=mandation,
-            bespoke_mandatory_error_message=bespoke_mandatory_error_message,
-            bespoke_not_applicable_error_message = bespoke_not_applicable_error_message
-        )    
 
     def validate_vaccine_code_coding_code(self, values: dict) -> dict:
         "Validate that vaccineCode_coding_code is present or absent, as required"
