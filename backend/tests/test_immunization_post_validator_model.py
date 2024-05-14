@@ -409,7 +409,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self, "statusReason.coding[?(@.system=='http://snomed.info/sct')].code"
         )
 
-    # TODO: Check if dose number is now mandatory and update this test accordingly
+    # TODO: To confirm with imms if dose number string validation is correct (current working assumption is yes)
     def test_post_dose_number_positive_int(self):
         """
         Test that present or absent protocol_appplied_dose_number_positive_int is accepted or
