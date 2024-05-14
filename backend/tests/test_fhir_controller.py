@@ -437,7 +437,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
     def test_search_immunizations_returns_400_on_passing_superseded_nhs_number(self):
-        "This method should return 400 as input paramter has superseded nhs number"
+        "This method should return 400 as input paramter has superseded nhs number."
         search_result = {"diagnostics": "Validation errors: contained[?(@.resourceType=='Patient')].identifier[0].value does not exists"}
         self.service.search_immunizations.return_value = search_result
 
