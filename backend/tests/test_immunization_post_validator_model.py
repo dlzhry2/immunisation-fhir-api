@@ -37,7 +37,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_collected_errors(self):
         """Test that when passed multiple validation errors, it returns a list of all expected errors."""
-        # TODO: Fix this test so that it collects post-validation errors (the ones here are pre-validation)
+        # TODO: BUG Fix this test so that it collects post-validation errors (the ones here are pre-validation)
 
         covid_19_json_data = deepcopy(self.completed_json_data[VaccineTypes.covid_19])
 

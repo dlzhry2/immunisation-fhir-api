@@ -47,4 +47,4 @@ class TestUpdateImmunizations(unittest.TestCase):
 
     def test_update_imms_with_duplicated_identifier_returns_error(self):
         """Should return an IdentifierDuplication error"""
-        # TODO: Implement this test
+        # TODO: BUG Implement this test

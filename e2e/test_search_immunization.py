@@ -24,7 +24,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 # Given two patients each with one mmr
-                # TODO: Check why mmr_p2 has flu vaccine type
+                # TODO: BUG Check why mmr_p2 has flu vaccine type
                 mmr_p1 = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.mmr)
                 mmr_p2 = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, VaccineTypes.flu)
                 self.store_records(mmr_p1, mmr_p2)
@@ -42,7 +42,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 self.assertTrue(mmr_p2["id"] not in resource_ids)
 
     def test_search_patient_multiple_diseases(self):
-        # TODO: Is this test a duplicate of the above?
+        # TODO: BUG Is this test a duplicate of the above?
         # Given patient has two vaccines
         mmr = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.mmr)
         flu = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.flu)
@@ -104,7 +104,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
             should_be_success: bool
             expected_indexes: List[int]
 
-        # TODO: Amend these searches to  use vaccine type enums
+        # TODO: VACCINE_TYPE Amend these searches to  use vaccine type enums
         searches = [
             SearchTestParams("GET", "", None, False, []),
             # No results.
@@ -270,7 +270,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         self.store_records(imms)
 
         # When
-        # TODO: Use VaccineTypes enum here
+        # TODO: VACCINE_TYPE Use VaccineTypes enum here
         response = self.default_imms_api.search_immunizations("TBC", "MMR")
         # Then
         self.assert_operation_outcome(response, 400)

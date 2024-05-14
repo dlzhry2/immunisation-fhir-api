@@ -22,7 +22,7 @@ def create_an_imms_obj(
     imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1, vaccine_type=None, occurrence_date_time: str = None
 ) -> dict:
     imms = copy.deepcopy(load_example("Immunization/POST-COVID19-Immunization.json"))
-    # TODO: remove unnecessary lines of code below
+    # TODO: VACCINE_TYPE remove unnecessary lines of code below
     if vaccine_type:
         target_diseases = []
         target_disease_list = imms["protocolApplied"][0]["targetDisease"]

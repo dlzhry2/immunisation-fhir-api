@@ -54,4 +54,4 @@ class TestGenericUtils(unittest.TestCase):
             json_data = load_json_data(filename=f"completed_{vaccine_type.lower()}_immunization_event.json")
             self.assertEqual(get_vaccine_type(json_data), vaccine_type)
 
-        # TODO: Test 'bad' data
+        # TODO: VACCINE_TYPE Test 'bad' data
