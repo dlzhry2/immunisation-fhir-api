@@ -42,9 +42,9 @@ class DiseaseDisplayTerms:
 
 @dataclass
 class DiseaseCodes:
-    # TODO: ? link website of codes and terms here
     """Disease Codes"""
 
+    # Disease codes can be found at https://hl7.org/fhir/uv/ips/ValueSet-target-diseases-uv-ips.html
     covid_19: str = "840539006"
     flu: str = "6142004"
     hpv: str = "240532009"
@@ -57,7 +57,7 @@ vaccine_type_mappings = [
     ([DiseaseCodes.covid_19], VaccineTypes.covid_19),
     ([DiseaseCodes.flu], VaccineTypes.flu),
     ([DiseaseCodes.hpv], VaccineTypes.hpv),
-    # FOR VACCINE_TYPES WHICH TARGET MULTIPLE DISEASES ENSURE THAT THE DISEASE CODES A ORDERED ALPHABETICALLY
+    # FOR VACCINE_TYPES WHICH TARGET MULTIPLE DISEASES ENSURE THAT THE DISEASE CODES ARE SORTED ALPHABETICALLY
     # This allows order-insensitive comparison with other lists, by alphabetically sorting the list for comparison
     (sorted([DiseaseCodes.measles, DiseaseCodes.rubella, DiseaseCodes.mumps]), VaccineTypes.mmr),
 ]

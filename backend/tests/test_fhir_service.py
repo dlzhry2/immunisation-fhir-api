@@ -21,13 +21,11 @@ from pds_service import PdsService
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
 from tests.immunization_utils import (
-    create_an_immunization,
-    create_an_immunization_dict,
+    create_covid_19_immunization,
+    create_covid_19_immunization_dict,
     VALID_NHS_NUMBER,
 )
-
-# TODO: Amend all incorrect references to disease_type to vaccine_type
-# Amend to use VaccineType enums throughout this file
+from src.mappings import DiseaseCodes
 
 
 class TestServiceUrl(unittest.TestCase):
@@ -66,7 +64,7 @@ class TestGetImmunization(unittest.TestCase):
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
         imms_id = "an-id"
-        self.imms_repo.get_immunization_by_id.return_value = create_an_immunization(imms_id).dict()
+        self.imms_repo.get_immunization_by_id.return_value = create_covid_19_immunization(imms_id).dict()
         self.pds_service.get_patient_details.return_value = {}
 
         # When
@@ -92,13 +90,14 @@ class TestGetImmunization(unittest.TestCase):
         """it should return a filtered Immunization when patient is restricted"""
         imms_id = "restricted_id"
         with open(
-            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/" + "sample_immunization_event.json",
+            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/completed_covid19_immunization_event.json",
             "r",
             encoding="utf-8",
         ) as immunization_data_file:
             immunization_data = json.load(immunization_data_file)
         with open(
-            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/filtered_sample_immunization_event.json",
+            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/"
+            + "completed_covid19_filtered_immunization_event.json",
             "r",
             encoding="utf-8",
         ) as filtered_immunization_data_file:
@@ -129,12 +128,12 @@ class TestCreateImmunization(unittest.TestCase):
     def test_create_immunization(self):
         """it should create Immunization and validate it"""
         imms_id = "an-id"
-        self.imms_repo.create_immunization.return_value = create_an_immunization_dict(imms_id)
+        self.imms_repo.create_immunization.return_value = create_covid_19_immunization_dict(imms_id)
         pds_patient = {"identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number", "value": "9990548609"}]}
         self.fhir_service.pds_service.get_patient_details.return_value = pds_patient
 
         nhs_number = VALID_NHS_NUMBER
-        req_imms = create_an_immunization_dict(imms_id, nhs_number)
+        req_imms = create_covid_19_immunization_dict(imms_id, nhs_number)
 
         # When
         stored_imms = self.fhir_service.create_immunization(req_imms)
@@ -147,7 +146,7 @@ class TestCreateImmunization(unittest.TestCase):
 
     def test_pre_validation_failed(self):
         """it should throw exception if Immunization is not valid"""
-        imms = create_an_immunization_dict("an-id", "9990548609")
+        imms = create_covid_19_immunization_dict("an-id", "9990548609")
         imms["recorded"] = "20201214"
         expected_msg = 'recorded must be a valid date string in the format "YYYY-MM-DD"'
 
@@ -163,7 +162,7 @@ class TestCreateImmunization(unittest.TestCase):
     def test_post_validation_failed(self):
         """it should throw exception if Immunization is not valid"""
 
-        valid_imms = create_an_immunization_dict("an-id", VALID_NHS_NUMBER)
+        valid_imms = create_covid_19_immunization_dict("an-id", VALID_NHS_NUMBER)
 
         bad_target_disease_imms = deepcopy(valid_imms)
         bad_target_disease_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "bad-code"
@@ -173,9 +172,8 @@ class TestCreateImmunization(unittest.TestCase):
         del bad_patient_name_imms["contained"][1]["name"][0]["given"]
         bad_patient_name_msg = "contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
 
-        # TODO: Create mapping for vaccine_type to target disease codes
         bad_na_imms = deepcopy(valid_imms)
-        bad_na_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "6142004"
+        bad_na_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = DiseaseCodes.flu
         bad_na_msg = (
             "contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='IpAddress')].answer[0].valueString must not be provided for this vaccine type"
@@ -212,7 +210,7 @@ class TestCreateImmunization(unittest.TestCase):
         """it should throw error when PDS can't resolve patient"""
         self.fhir_service.pds_service.get_patient_details.return_value = None
         invalid_nhs_number = "a-bad-patient-id"
-        bad_patient_imms = create_an_immunization_dict("an-id", invalid_nhs_number)
+        bad_patient_imms = create_covid_19_immunization_dict("an-id", invalid_nhs_number)
 
         with self.assertRaises(InvalidPatientId) as e:
             # When
@@ -235,12 +233,12 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_update_immunization(self):
         """it should update Immunization and validate NHS number"""
         imms_id = "an-id"
-        self.imms_repo.update_immunization.return_value = create_an_immunization_dict(imms_id)
+        self.imms_repo.update_immunization.return_value = create_covid_19_immunization_dict(imms_id)
         pds_patient = {"identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number", "value": "9990548609"}]}
         self.fhir_service.pds_service.get_patient_details.return_value = pds_patient
 
         nhs_number = VALID_NHS_NUMBER
-        req_imms = create_an_immunization_dict(imms_id, nhs_number)
+        req_imms = create_covid_19_immunization_dict(imms_id, nhs_number)
 
         # When
         outcome, _ = self.fhir_service.update_immunization(imms_id, req_imms)
@@ -253,10 +251,10 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_none_existing_imms(self):
         """it should create a new record, if it doesn't exist"""
         imms_id = "an-id"
-        imms = create_an_immunization_dict(imms_id, VALID_NHS_NUMBER)
+        imms = create_covid_19_immunization_dict(imms_id, VALID_NHS_NUMBER)
 
         self.imms_repo.update_immunization.side_effect = ResourceNotFoundError("Immunization", imms_id)
-        self.imms_repo.create_immunization.return_value = create_an_immunization_dict(imms_id)
+        self.imms_repo.create_immunization.return_value = create_covid_19_immunization_dict(imms_id)
         self.fhir_service.pds_service.get_patient_details.return_value = {
             "identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number", "value": "9990548609"}]
         }
@@ -271,7 +269,7 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_pre_validation_failed(self):
         """it should throw exception if Immunization is not valid"""
         imms_id = "an-id"
-        imms = create_an_immunization_dict(imms_id)
+        imms = create_covid_19_immunization_dict(imms_id)
         imms["patient"] = {"identifier": {"value": VALID_NHS_NUMBER}}
 
         self.imms_repo.update_immunization.return_value = {}
@@ -295,7 +293,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.pds_service.get_patient_details.assert_not_called()
 
     def test_post_validation_failed(self):
-        valid_imms = create_an_immunization_dict("an-id", VALID_NHS_NUMBER)
+        valid_imms = create_covid_19_immunization_dict("an-id", VALID_NHS_NUMBER)
 
         bad_target_disease_imms = deepcopy(valid_imms)
         bad_target_disease_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "bad-code"
@@ -305,9 +303,8 @@ class TestUpdateImmunization(unittest.TestCase):
         del bad_patient_name_imms["contained"][1]["name"][0]["given"]
         bad_patient_name_msg = "contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
 
-        # TODO: Create mapping for vaccine_type to target disease codes
         bad_na_imms = deepcopy(valid_imms)
-        bad_na_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "6142004"
+        bad_na_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = DiseaseCodes.flu
         bad_na_msg = (
             "contained[?(@.resourceType=='QuestionnaireResponse')]"
             + ".item[?(@.linkId=='IpAddress')].answer[0].valueString must not be provided for this vaccine type"
@@ -342,12 +339,12 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_id_not_present(self):
         """it should populate id in the message if it is not present"""
         req_imms_id = "an-id"
-        self.imms_repo.update_immunization.return_value = create_an_immunization_dict(req_imms_id)
+        self.imms_repo.update_immunization.return_value = create_covid_19_immunization_dict(req_imms_id)
         self.fhir_service.pds_service.get_patient_details.return_value = {
             "identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number", "value": "9990548609"}]
         }
 
-        req_imms = create_an_immunization_dict("we-will-remove-this-id")
+        req_imms = create_covid_19_immunization_dict("we-will-remove-this-id")
         del req_imms["id"]
 
         # When
@@ -364,7 +361,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
 
         obj_imms_id = "a-diff-id"
-        req_imms = create_an_immunization_dict(obj_imms_id)
+        req_imms = create_covid_19_immunization_dict(obj_imms_id)
 
         with self.assertRaises(InconsistentIdError) as error:
             # When
@@ -380,7 +377,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.fhir_service.pds_service.get_patient_details.return_value = None
         imms_id = "an-id"
         invalid_nhs_number = "a-bad-patient-id"
-        bad_patient_imms = create_an_immunization_dict(imms_id, invalid_nhs_number)
+        bad_patient_imms = create_covid_19_immunization_dict(imms_id, invalid_nhs_number)
 
         with self.assertRaises(InvalidPatientId) as e:
             # When
@@ -403,7 +400,7 @@ class TestDeleteImmunization(unittest.TestCase):
     def test_delete_immunization(self):
         """it should delete Immunization record"""
         imms_id = "an-id"
-        imms = json.loads(create_an_immunization(imms_id).json())
+        imms = json.loads(create_covid_19_immunization(imms_id).json())
         self.imms_repo.delete_immunization.return_value = imms
 
         # When
@@ -441,7 +438,7 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_make_fhir_bundle_from_search_result(self):
         """It should return a FHIR Bundle resource"""
         imms_ids = ["imms-1", "imms-2"]
-        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
@@ -466,7 +463,7 @@ class TestSearchImmunizations(unittest.TestCase):
         """It should return only Immunizations after date_from"""
         imms = [("imms-1", "2021-02-07T13:28:17.271+00:00"), ("imms-2", "2021-02-08T13:28:17.271+00:00")]
         imms_list = [
-            create_an_immunization_dict(imms_id, occurrence_date_time=occcurrence_date_time)
+            create_covid_19_immunization_dict(imms_id, occurrence_date_time=occcurrence_date_time)
             for (imms_id, occcurrence_date_time) in imms
         ]
         imms_ids = [imms[0] for imms in imms]
@@ -523,7 +520,7 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_date_from_is_optional(self):
         """It should return everything when no date_from is specified"""
         imms_ids = ["imms-1", "imms-2"]
-        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
@@ -551,7 +548,7 @@ class TestSearchImmunizations(unittest.TestCase):
         """It should return only Immunizations before date_to"""
         imms = [("imms-1", "2021-02-07T13:28:17.271+00:00"), ("imms-2", "2021-02-08T13:28:17.271+00:00")]
         imms_list = [
-            create_an_immunization_dict(imms_id, occurrence_date_time=occcurrence_date_time)
+            create_covid_19_immunization_dict(imms_id, occurrence_date_time=occcurrence_date_time)
             for (imms_id, occcurrence_date_time) in imms
         ]
         imms_ids = [imms[0] for imms in imms]
@@ -608,7 +605,7 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_date_to_is_optional(self):
         """It should return everything when no date_to is specified"""
         imms_ids = ["imms-1", "imms-2"]
-        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
@@ -638,7 +635,7 @@ class TestSearchImmunizations(unittest.TestCase):
         Tested because fhir.resources validation doesn't check this as mandatory."""
 
         imms_ids = ["imms-1", "imms-2"]
-        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
@@ -659,7 +656,7 @@ class TestSearchImmunizations(unittest.TestCase):
         Tested because fhir.resources validation doesn't check this as mandatory."""
 
         imms_ids = ["imms-1", "imms-2"]
-        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = {}
         nhs_number = VALID_NHS_NUMBER
@@ -676,7 +673,7 @@ class TestSearchImmunizations(unittest.TestCase):
         """Patient is included in the results."""
 
         imms_ids = ["imms-1", "imms-2"]
-        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
         patient = next(contained for contained in imms_list[0]["contained"] if contained["resourceType"] == "Patient")
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = patient
@@ -694,7 +691,7 @@ class TestSearchImmunizations(unittest.TestCase):
         """The included Patient is a subset of the data."""
 
         imms_ids = ["imms-1", "imms-2"]
-        imms_list = [create_an_immunization_dict(imms_id) for imms_id in imms_ids]
+        imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
         patient = next(contained for contained in imms_list[0]["contained"] if contained["resourceType"] == "Patient")
         self.imms_repo.find_immunizations.return_value = imms_list
         self.pds_service.get_patient_details.return_value = patient

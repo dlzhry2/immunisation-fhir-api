@@ -11,8 +11,8 @@ from src.models.utils.generic_utils import (
     is_organization,
     get_nhs_number_verification_status_code,
     get_target_disease_codes_from_model,
-    disease_codes_to_vaccine_type,
 )
+from src.utils import disease_codes_to_vaccine_type
 from models.utils.post_validation_utils import PostValidation, MandatoryError
 
 
@@ -133,7 +133,7 @@ class PostValidators:
             field_value = next(
                 x for x in contained_patient.identifier if x.system == "https://fhir.nhs.uk/Id/nhs-number"
             ).value
-            # TODO: Fix this. Should have a separate try-excpet for verification_status_code. Also consider
+            # TODO: BUG Fix this. Should have a separate try-excpet for verification_status_code. Also consider
             # whether logic can be made more consistent with other CM fields (note that NHS_NUMBER is R, not CM)
             verification_status_code = get_nhs_number_verification_status_code(values)
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
@@ -555,7 +555,6 @@ class PostValidators:
         field_location = f"vaccineCode.coding[?(@.system=='{system}')].code"
 
         try:
-            # TODO: Make this consistent with other validators
             field_value = next((x.code for x in values.vaccineCode.coding if x.system == system), None)
         except (KeyError, IndexError, AttributeError, MandatoryError, TypeError):
             field_value = None

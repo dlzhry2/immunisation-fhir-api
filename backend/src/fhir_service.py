@@ -2,7 +2,6 @@ import datetime
 import os
 from enum import Enum
 from typing import Optional
-import uuid
 
 from fhir.resources.R4B.bundle import Bundle as FhirBundle, BundleEntry, BundleLink, BundleEntrySearch
 from fhir.resources.R4B.immunization import Immunization
@@ -17,13 +16,16 @@ from models.errors import (
     InconsistentIdError,
 )
 from models.fhir_immunization import ImmunizationValidator
-from models.utils.generic_utils import nhs_number_mod11_check, get_occurrence_datetime, get_vaccine_type,create_diagnostics
+from models.utils.generic_utils import (
+    nhs_number_mod11_check,
+    get_occurrence_datetime,
+    create_diagnostics,
+)
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
+from src.utils import get_vaccine_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
-from models.errors import Severity, Code
-from utils import has_valid_vaccine_type
 
 
 def get_service_url(
@@ -81,9 +83,9 @@ class FhirService:
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
-        
-        if "diagnostics" in patient: 
-                return (patient)
+
+        if "diagnostics" in patient:
+            return patient
         imms = self.immunization_repo.create_immunization(immunization, patient)
 
         return Immunization.parse_obj(imms)
@@ -99,8 +101,8 @@ class FhirService:
             raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
-        if "diagnostics" in patient: 
-                return (None,patient)
+        if "diagnostics" in patient:
+            return (None, patient)
         try:
             imms = self.immunization_repo.update_immunization(imms_id, immunization, patient)
             return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
@@ -163,21 +165,22 @@ class FhirService:
         """find all instances of Immunization(s) for a patient and specified disease type.
         Returns Bundle[Immunization]
         """
-        # TODO: is disease type a mandatory field? (I assumed it is)
+        # TODO: VACCINE_TYPE is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         if not nhs_number_mod11_check(nhs_number):
-                diagnostics_error = create_diagnostics(nhs_number)
-                return (diagnostics_error)
+            diagnostics_error = create_diagnostics(nhs_number)
+            return diagnostics_error
         resources = self.immunization_repo.find_immunizations(nhs_number)
         resources = [
             r
             for r in resources
+            # TODO: VACCINE_TYPE Change this implementation to use the vaccine type indexed on creation
             if FhirService.has_valid_vaccine_type(r, vaccine_types)
             and FhirService.is_valid_date_from(r, date_from)
             and FhirService.is_valid_date_to(r, date_to)
         ]
         patient_details = self.pds_service.get_patient_details(nhs_number)
-       # To check whether the Superseded NHS number present in PDS 
+        # To check whether the Superseded NHS number present in PDS
         if patient_details:
             pds_nhs_number = patient_details["identifier"][0]["value"]
             if pds_nhs_number != nhs_number:
@@ -220,13 +223,13 @@ class FhirService:
             return {}
 
         patient = self.pds_service.get_patient_details(nhs_number)
-        # To check whether the Superseded NHS number present in PDS 
+        # To check whether the Superseded NHS number present in PDS
         if patient:
             pds_nhs_number = patient["identifier"][0]["value"]
-            if pds_nhs_number != nhs_number :
-                    diagnostics_error = create_diagnostics(nhs_number)
-                    return diagnostics_error
-        
+            if pds_nhs_number != nhs_number:
+                diagnostics_error = create_diagnostics(nhs_number)
+                return diagnostics_error
+
             return patient
 
         raise InvalidPatientId(patient_identifier=nhs_number)
