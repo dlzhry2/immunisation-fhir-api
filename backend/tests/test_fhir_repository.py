@@ -6,9 +6,11 @@ from unittest.mock import MagicMock, patch, ANY
 
 import botocore.exceptions
 from boto3.dynamodb.conditions import Attr, Key
-from fhir_repository import ImmunizationRepository
-from utils import disease_codes_to_vaccine_type, get_vaccine_type
+from src.mappings import DiseaseCodes
+from src.fhir_repository import ImmunizationRepository
+from src.utils import get_vaccine_type
 from models.errors import ResourceNotFoundError, UnhandledResponseError, IdentifierDuplicationError
+from tests.utils.generic_utils import update_target_disease_code
 
 
 def _make_immunization_pk(_id):
@@ -44,6 +46,7 @@ class TestGetImmunization(unittest.TestCase):
         self.assertIsNone(imms)
 
 
+# TODO: VACCINE_TYPE Check if can use one of the sample data files
 def _make_an_immunization(imms_id="an-id") -> dict:
     """create the minimum required object. Caller should override relevant fields explicitly"""
     return {
@@ -112,6 +115,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
     def test_create_immunization(self):
         """it should create Immunization, and return created object"""
         imms = _make_an_immunization("an-id")
+
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
         self.table.query = MagicMock(return_value={})
 
@@ -233,10 +237,8 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         """Patient record should have a sort-key based on vaccine-type"""
         imms = _make_an_immunization()
 
-        # TODO : Move this functionality to a utils function
-        target_disease_code = "6142004"
-        imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = target_disease_code
-        vaccine_type = disease_codes_to_vaccine_type([target_disease_code])
+        update_target_disease_code(imms, DiseaseCodes.flu)
+        vaccine_type = get_vaccine_type(imms)
 
         self.table.query = MagicMock(return_value={"Count": 0})
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
@@ -292,9 +294,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.table.update_item.assert_called_once_with(
             Key={"PK": _make_immunization_pk(imms_id)},
             UpdateExpression=update_exp,
-            ExpressionAttributeNames={
-                "#imms_resource": "Resource",
-            },
+            ExpressionAttributeNames={"#imms_resource": "Resource"},
             ExpressionAttributeValues={
                 ":timestamp": now_epoch,
                 ":patient_pk": _make_patient_pk(patient_id),
@@ -479,9 +479,7 @@ class TestFindImmunizations(unittest.TestCase):
 
         # Then
         self.table.query.assert_called_once_with(
-            IndexName="PatientGSI",
-            KeyConditionExpression=ANY,
-            FilterExpression=is_,
+            IndexName="PatientGSI", KeyConditionExpression=ANY, FilterExpression=is_
         )
 
     def test_map_results_to_immunizations(self):

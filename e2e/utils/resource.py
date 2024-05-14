@@ -18,19 +18,16 @@ def load_example(path: str) -> dict:
         return json.load(f, parse_float=Decimal)
 
 
-def create_an_imms_obj(imms_id: str = str(uuid.uuid4()),
-                       nhs_number=valid_nhs_number1,
-                       vaccine_type=None,
-                       occurrence_date_time: str = None) -> dict:
+def create_an_imms_obj(
+    imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1, vaccine_type=None, occurrence_date_time: str = None
+) -> dict:
     imms = copy.deepcopy(load_example("Immunization/POST-COVID19-Immunization.json"))
+    # TODO: remove unnecessary lines of code below
     if vaccine_type:
         target_diseases = []
         target_disease_list = imms["protocolApplied"][0]["targetDisease"]
         for element in target_disease_list:
-            code = [
-                     x.get("code")
-                     for x in element["coding"]
-                     if x.get("system") == "http://snomed.info/sct"][0]
+            code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
         target_diseases.append(code)
         [disease_type for codes, disease_type in vaccine_type_mappings if codes == target_diseases][0] = vaccine_type
         if vaccine_type == VaccineTypes.mmr:
@@ -56,10 +53,7 @@ def get_vaccine_type(imms: dict) -> str:
     target_diseases = []
     target_disease_list = imms["protocolApplied"][0]["targetDisease"]
     for element in target_disease_list:
-        code = [
-                     x.get("code")
-                     for x in element["coding"]
-                     if x.get("system") == "http://snomed.info/sct"][0]
+        code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
     target_diseases.append(code)
 
     vaccine_type = [disease_type for codes, disease_type in vaccine_type_mappings if codes == target_diseases][0]

@@ -4,19 +4,6 @@ import datetime
 
 from typing import Literal, Union, Optional, Any
 
-from mappings import vaccine_type_mappings
-
-
-def disease_codes_to_vaccine_type(disease_codes: list) -> Union[str, None]:
-    """
-    Takes a list of disease codes and returns the corresponding vaccine type if found,
-    otherwise raises a value error
-    """
-    try:
-        return next(x[1] for x in vaccine_type_mappings if x[0] == sorted(disease_codes))
-    except Exception as e:
-        raise ValueError(f"{disease_codes} is not a valid combination of disease codes for this service") from e
-
 
 def get_contained_resource_from_model(
     values: dict,
@@ -222,19 +209,6 @@ def nhs_number_mod11_check(nhs_number: str) -> bool:
     return is_mod11
 
 
-def get_vaccine_type(immunization: dict):
-    """
-    Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases.
-    If combination of disease types does not map to a valid vaccine type, a value error is raised
-    """
-    target_diseases = []
-    target_disease_list = immunization["protocolApplied"][0]["targetDisease"]
-    for element in target_disease_list:
-        code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
-        target_diseases.append(code)
-    return disease_codes_to_vaccine_type(target_diseases)
-
-
 def get_target_disease_codes_from_model(immunization: dict):
     """Take a FHIR immunization resource model and returns a list of target disease codes"""
     target_diseases = []
@@ -253,9 +227,8 @@ def get_occurrence_datetime(immunization: dict) -> Optional[datetime.datetime]:
 
     return datetime.datetime.fromisoformat(occurrence_datetime_str)
 
+
 def create_diagnostics(nhs_number):
-                diagnostics=f"NHS Number: {nhs_number} is invalid or it doesn't exist."
-                exp_error = {
-                             "diagnostics": diagnostics
-                            }
-                return (exp_error)
+    diagnostics = f"NHS Number: {nhs_number} is invalid or it doesn't exist."
+    exp_error = {"diagnostics": diagnostics}
+    return exp_error

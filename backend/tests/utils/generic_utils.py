@@ -31,6 +31,14 @@ def generate_field_location_for_extension(url: str, system: str, field_type: Lit
     return f"extension[?(@.url=='{url}')].valueCodeableConcept." + f"coding[?(@.system=='{system}')].{field_type}"
 
 
+def update_target_disease_code(imms: dict, target_disease_code: str):
+    """
+    Update the disease code found at the first index of coding field,
+    within the first index of targetDisease field with a new code
+    """
+    imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = target_disease_code
+
+
 def test_valid_values_accepted(
     test_instance: unittest.TestCase,
     valid_json_data: dict,

@@ -1,9 +1,9 @@
 """Utils for backend folder"""
 
 from typing import Union
-from mappings import vaccine_type_mappings
+from src.mappings import vaccine_type_mappings
 
-# TODO: Remove duplicates of these functions
+
 def disease_codes_to_vaccine_type(disease_codes: list) -> Union[str, None]:
     """
     Takes a list of disease codes and returns the corresponding vaccine type if found,
