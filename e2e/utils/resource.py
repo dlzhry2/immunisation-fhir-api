@@ -31,6 +31,8 @@ def create_an_imms_obj(
         target_diseases.append(code)
         [disease_type for codes, disease_type in vaccine_type_mappings if codes == target_diseases][0] = vaccine_type
         if vaccine_type == VaccineTypes.mmr:
+            # TODO: VACCINE_TYPE Rename the files reference in this function to be consistent with sample data file
+            # names in backend
             imms = copy.deepcopy(load_example("Immunization/POST-MMR-Immunization.json"))
         if vaccine_type == VaccineTypes.flu:
             imms = copy.deepcopy(load_example("Immunization/POST-822851000000102-FLU-Immunization.json"))

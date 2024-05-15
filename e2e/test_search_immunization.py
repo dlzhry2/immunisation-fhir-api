@@ -104,21 +104,29 @@ class TestSearchImmunization(ImmunizationBaseTest):
             should_be_success: bool
             expected_indexes: List[int]
 
-        # TODO: VACCINE_TYPE Amend these searches to  use vaccine type enums
         searches = [
             SearchTestParams("GET", "", None, False, []),
             # No results.
             SearchTestParams(
-                "GET", f"patient.identifier={valid_patient_identifier2}&-immunization.target=MMR", None, True, []
+                "GET",
+                f"patient.identifier={valid_patient_identifier2}&-immunization.target={VaccineTypes.mmr}",
+                None,
+                True,
+                [],
             ),
             # Basic success.
             SearchTestParams(
-                "GET", f"patient.identifier={valid_patient_identifier1}&-immunization.target=MMR", None, True, [0]
+                "GET",
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.mmr}",
+                None,
+                True,
+                [0],
             ),
             # "Or" params.
             SearchTestParams(
                 "GET",
-                f"patient.identifier={valid_patient_identifier1}&-immunization.target=MMR,FLU",
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.mmr},"
+                + f"{VaccineTypes.flu}",
                 None,
                 True,
                 [0, 1],
@@ -126,18 +134,22 @@ class TestSearchImmunization(ImmunizationBaseTest):
             # GET does not support body.
             SearchTestParams(
                 "GET",
-                f"patient.identifier={valid_patient_identifier1}&-immunization.target=MMR",
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.mmr}",
                 f"patient.identifier={valid_patient_identifier1}",
                 True,
                 [0],
             ),
             SearchTestParams(
-                "POST", None, f"patient.identifier={valid_patient_identifier1}&-immunization.target=MMR", True, [0]
+                "POST",
+                None,
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.mmr}",
+                True,
+                [0],
             ),
             # Duplicated NHS number not allowed, spread across query and content.
             SearchTestParams(
                 "POST",
-                f"patient.identifier={valid_patient_identifier1}&-immunization.target=MMR",
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.mmr}",
                 f"patient.identifier={valid_patient_identifier1}",
                 False,
                 [],
@@ -146,7 +158,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 "GET",
                 f"patient.identifier={valid_patient_identifier1}"
                 f"&patient.identifier={valid_patient_identifier1}"
-                f"&-immunization.target=MMR",
+                f"&-immunization.target={VaccineTypes.mmr}",
                 None,
                 False,
                 [],
@@ -154,7 +166,8 @@ class TestSearchImmunization(ImmunizationBaseTest):
             # "And" params not supported.
             SearchTestParams(
                 "GET",
-                f"patient.identifier={valid_patient_identifier1}&-immunization.target=MMR" f"&-immunization.target=FLU",
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.mmr}"
+                f"&-immunization.target={VaccineTypes.flu}",
                 None,
                 False,
                 [],
@@ -162,14 +175,14 @@ class TestSearchImmunization(ImmunizationBaseTest):
             # Date
             SearchTestParams(
                 "GET",
-                f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19",
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.covid_19}",
                 None,
                 True,
                 [2, 3, 4],
             ),
             SearchTestParams(
                 "GET",
-                f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.covid_19}"
                 f"&-date.from=2024-01-30",
                 None,
                 True,
@@ -177,14 +190,15 @@ class TestSearchImmunization(ImmunizationBaseTest):
             ),
             SearchTestParams(
                 "GET",
-                f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19" f"&-date.to=2024-01-30",
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.covid_19}"
+                f"&-date.to=2024-01-30",
                 None,
                 True,
                 [2, 3],
             ),
             SearchTestParams(
                 "GET",
-                f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.covid_19}"
                 f"&-date.from=2024-01-01&-date.to=2024-01-30",
                 None,
                 True,
@@ -193,7 +207,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
             # "from" after "to" is an error.
             SearchTestParams(
                 "GET",
-                f"patient.identifier={valid_patient_identifier1}&-immunization.target=COVID19"
+                f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.covid_19}"
                 f"&-date.from=2024-02-01&-date.to=2024-01-30",
                 None,
                 False,
@@ -229,7 +243,8 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
         response = self.default_imms_api.search_immunizations_full(
             "POST",
-            f"patient.identifier={valid_patient_identifier1}&-immunization.target=MMR&_include=Immunization:patient",
+            f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.mmr}"
+            + "&_include=Immunization:patient",
             None,
         )
 
@@ -249,7 +264,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         datetime.datetime.strptime(patient_entry["resource"]["birthDate"], "%Y-%m-%d").date()
 
         response_without_include = self.default_imms_api.search_immunizations_full(
-            "POST", f"patient.identifier={valid_patient_identifier1}&-immunization.target=MMR", None
+            "POST", f"patient.identifier={valid_patient_identifier1}&-immunization.target={VaccineTypes.mmr}", None
         )
 
         assert response_without_include.ok
@@ -270,7 +285,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         self.store_records(imms)
 
         # When
-        # TODO: VACCINE_TYPE Use VaccineTypes enum here
-        response = self.default_imms_api.search_immunizations("TBC", "MMR")
+        response = self.default_imms_api.search_immunizations("TBC", f"{VaccineTypes.mmr}")
+
         # Then
         self.assert_operation_outcome(response, 400)
