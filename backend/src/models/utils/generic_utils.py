@@ -238,7 +238,7 @@ def get_occurrence_datetime(immunization: dict) -> Optional[datetime.datetime]:
     return datetime.datetime.fromisoformat(occurrence_datetime_str)
 
 def create_diagnostics():
-                diagnostics=f"Validation errors: contained[?(@.resourceType=='Patient')].identifier[0].value doesn't exists."
+                diagnostics=f"Validation errors: contained[?(@.resourceType=='Patient')].identifier[0].value does not exists."
                 exp_error = {
                              "diagnostics": diagnostics
                             }
