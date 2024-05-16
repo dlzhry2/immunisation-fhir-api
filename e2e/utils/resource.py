@@ -20,7 +20,10 @@ def load_example(path: str) -> dict:
 
 
 def create_an_imms_obj(
-    imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1, vaccine_type=None, occurrence_date_time: str = None
+    imms_id: str = str(uuid.uuid4()),
+    nhs_number=valid_nhs_number1,
+    vaccine_type=VaccineTypes.covid_19,
+    occurrence_date_time: str = None,
 ) -> dict:
     """
     Creates a FHIR Immunization Resource dictionary, which includes an id, using the sample data for the given
