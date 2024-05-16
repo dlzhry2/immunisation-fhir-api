@@ -1,9 +1,10 @@
-import copy
 import json
 import os
 import uuid
 import boto3
+from copy import deepcopy
 from decimal import Decimal
+from typing import Union
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource
 from botocore.config import Config
 from .mappings import vaccine_type_mappings, VaccineTypes
@@ -21,21 +22,12 @@ def load_example(path: str) -> dict:
 def create_an_imms_obj(
     imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1, vaccine_type=None, occurrence_date_time: str = None
 ) -> dict:
-    imms = copy.deepcopy(load_example("Immunization/POST-COVID19-Immunization.json"))
-    # TODO: VACCINE_TYPE remove unnecessary lines of code below
-    if vaccine_type:
-        target_diseases = []
-        target_disease_list = imms["protocolApplied"][0]["targetDisease"]
-        for element in target_disease_list:
-            code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
-        target_diseases.append(code)
-        [disease_type for codes, disease_type in vaccine_type_mappings if codes == target_diseases][0] = vaccine_type
-        if vaccine_type == VaccineTypes.mmr:
-            # TODO: VACCINE_TYPE Rename the files reference in this function to be consistent with sample data file
-            # names in backend
-            imms = copy.deepcopy(load_example("Immunization/POST-MMR-Immunization.json"))
-        if vaccine_type == VaccineTypes.flu:
-            imms = copy.deepcopy(load_example("Immunization/POST-822851000000102-FLU-Immunization.json"))
+    """
+    Creates a FHIR Immunization Resource dictionary using the sample data for the given vaccine type as a base,
+    and updates the id, nhs_number and occurrence_date_time as required. The unique_identifier is also updated to ensure
+    uniqueness.
+    """
+    imms = deepcopy(load_example(f"Immunization/completed_{vaccine_type.lower()}_immunization_event_with_id.json"))
     imms["id"] = imms_id
     imms["identifier"][0]["value"] = str(uuid.uuid4())
     imms["contained"][1]["identifier"][0]["value"] = nhs_number
@@ -50,16 +42,35 @@ def get_patient_id(imms: dict) -> str:
     return patients[0]["identifier"][0]["value"]
 
 
-def get_vaccine_type(imms: dict) -> str:
-    """find the vaccine code in the resource and map it to disease-type"""
-    target_diseases = []
-    target_disease_list = imms["protocolApplied"][0]["targetDisease"]
-    for element in target_disease_list:
-        code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
-    target_diseases.append(code)
-    # TODO: VACCINE_TYPE Update the below line to use disease_codes_to_vaccine_type function (copy from backend)
-    vaccine_type = [disease_type for codes, disease_type in vaccine_type_mappings if codes == target_diseases][0]
-    return vaccine_type
+def disease_codes_to_vaccine_type(disease_codes_input: list) -> Union[str, None]:
+    """
+    Takes a list of disease codes and returns the corresponding vaccine type if found,
+    otherwise raises a value error
+    """
+    try:
+        return next(
+            vaccine_type
+            for disease_codes, vaccine_type in vaccine_type_mappings
+            if sorted(disease_codes_input) == disease_codes
+        )
+    except Exception as e:
+        raise ValueError(f"{disease_codes_input} is not a valid combination of disease codes for this service") from e
+
+
+def get_vaccine_type(immunization: dict):
+    """
+    Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases.
+    If combination of disease types does not map to a valid vaccine type, a value error is raised
+    """
+    try:
+        target_diseases = []
+        target_disease_list = immunization["protocolApplied"][0]["targetDisease"]
+        for element in target_disease_list:
+            code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
+            target_diseases.append(code)
+    except (KeyError, IndexError, AttributeError) as error:
+        raise ValueError("No target disease codes found") from error
+    return disease_codes_to_vaccine_type(target_diseases)
 
 
 def get_questionnaire_items(imms: dict):
@@ -70,9 +81,7 @@ def get_questionnaire_items(imms: dict):
 
 
 def get_full_row_from_identifier(identifier: str) -> dict:
-    """
-    Get the full record from the dynamodb table using the identifier
-    """
+    """Get the full record from the dynamodb table using the identifier"""
     config = Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1})
     db: DynamoDBServiceResource = boto3.resource("dynamodb", region_name="eu-west-2", config=config)
     table = db.Table(os.getenv("DYNAMODB_TABLE_NAME"))
