@@ -12,7 +12,7 @@ from models.utils.generic_utils import (
     get_nhs_number_verification_status_code,
     get_target_disease_codes_from_model,
 )
-from src.utils import disease_codes_to_vaccine_type
+from models.utils.validation_utils import disease_codes_to_vaccine_type
 from models.utils.post_validation_utils import PostValidation, MandatoryError
 
 

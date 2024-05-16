@@ -24,11 +24,14 @@ def get_vaccine_type(immunization: dict):
     Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases.
     If combination of disease types does not map to a valid vaccine type, a value error is raised
     """
-    target_diseases = []
-    target_disease_list = immunization["protocolApplied"][0]["targetDisease"]
-    for element in target_disease_list:
-        code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
-        target_diseases.append(code)
+    try:
+        target_diseases = []
+        target_disease_list = immunization["protocolApplied"][0]["targetDisease"]
+        for element in target_disease_list:
+            code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
+            target_diseases.append(code)
+    except (KeyError, IndexError, AttributeError) as error:
+        raise ValueError("No target disease codes found") from error
     return disease_codes_to_vaccine_type(target_diseases)
 
 
