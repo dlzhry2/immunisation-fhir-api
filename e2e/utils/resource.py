@@ -57,7 +57,7 @@ def get_vaccine_type(imms: dict) -> str:
     for element in target_disease_list:
         code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
     target_diseases.append(code)
-
+    # TODO: VACCINE_TYPE Update the below line to use disease_codes_to_vaccine_type function (copy from backend)
     vaccine_type = [disease_type for codes, disease_type in vaccine_type_mappings if codes == target_diseases][0]
     return vaccine_type
 

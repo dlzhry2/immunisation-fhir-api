@@ -42,7 +42,6 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 self.assertTrue(mmr_p2["id"] not in resource_ids)
 
     def test_search_patient_multiple_diseases(self):
-        # TODO: BUG Is this test a duplicate of the above?
         # Given patient has two vaccines
         mmr = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.mmr)
         flu = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.flu)
