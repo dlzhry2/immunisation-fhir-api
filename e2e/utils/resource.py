@@ -23,9 +23,9 @@ def create_an_imms_obj(
     imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1, vaccine_type=None, occurrence_date_time: str = None
 ) -> dict:
     """
-    Creates a FHIR Immunization Resource dictionary using the sample data for the given vaccine type as a base,
-    and updates the id, nhs_number and occurrence_date_time as required. The unique_identifier is also updated to ensure
-    uniqueness.
+    Creates a FHIR Immunization Resource dictionary, which includes an id, using the sample data for the given
+    vaccine type as a base, and updates the id, nhs_number and occurrence_date_time as required.
+    The unique_identifier is also updated to ensure uniqueness.
     """
     imms = deepcopy(load_example(f"Immunization/completed_{vaccine_type.lower()}_immunization_event_with_id.json"))
     imms["id"] = imms_id
