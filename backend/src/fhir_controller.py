@@ -182,7 +182,7 @@ class FhirController:
             search_params.date_from,
             search_params.date_to,
         )
-        print(f"result :{result}")
+        print(f"result_1 :{result}")
 
         if "diagnostics" in result: 
            exp_error = create_operation_outcome(
@@ -194,6 +194,7 @@ class FhirController:
            return self.create_response(400, json.dumps(exp_error) ) 
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
+        print(f"result_json_dict:{result_json_dict}")
         if "entry" in result_json_dict:
             result_json_dict['entry'] = [result_json_dict for entry in result_json_dict['entry'] if entry['resource'].get('status') != 'not-done']
             total_count = sum(1 for entry in result_json_dict["entry"] if entry.get("search", {}).get("mode") == "match")
