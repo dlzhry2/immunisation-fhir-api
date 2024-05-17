@@ -113,6 +113,7 @@ class ImmunizationRepository:
                 "Patient": attr.patient,
                 "IdentifierPK": attr.identifier,
                 "Operation": "CREATE",
+                "Version": 1
             }
         )
 
