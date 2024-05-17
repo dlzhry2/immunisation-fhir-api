@@ -75,7 +75,7 @@ class FhirService:
         if not imms_resp:
             return None
         imms = dict()
-        version = int()
+        version = str()
         try:
             if imms_resp.get("Resource"):
                 imms = imms_resp["Resource"]
