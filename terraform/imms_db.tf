@@ -22,6 +22,13 @@ resource "aws_dynamodb_table" "events-dynamodb-table" {
         type = "S"
     }
 
+    attribute {
+        name = "Version"
+        type = "N"
+    }
+
+    
+
     global_secondary_index {
         name               = "PatientGSI"
         hash_key           = "PatientPK"
