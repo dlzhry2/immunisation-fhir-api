@@ -21,6 +21,7 @@ from models.errors import (
 from tests.immunization_utils import create_an_immunization
 from mappings import VaccineTypes
 from parameter_parser import patient_identifier_system, process_search_params
+from tests.utils.generic_utils import load_json_data
 
 
 
@@ -451,6 +452,25 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(response["statusCode"], 400)
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")    
+
+
+    def test_search_immunizations_returns_400_on_passing_superseded_nhs_number_(self):
+        "This method should return 400 as input paramter has superseded nhs number."
+        search_result = load_json_data("sample.json")
+        bundle = Bundle.parse_obj(search_result)
+        self.service.search_immunizations.return_value = bundle
+        vaccine_type = VaccineTypes().all[0]
+        lambda_event = {"multiValueQueryStringParameters": {
+            self.immunization_target_key: [vaccine_type],
+            self.patient_identifier_key: [self.patient_identifier_valid_value]
+        }}
+
+        # When
+        response = self.controller.search_immunizations(lambda_event)
+
+        self.assertEqual(response["statusCode"], 200)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "Bundle")       
 
     def test_self_link_excludes_extraneous_params(self):
         search_result = Bundle.construct()

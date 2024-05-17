@@ -166,7 +166,6 @@ class FhirController:
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
         if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
             return response
-        print(f"response :{response}")
 
         try:
             search_params = process_search_params(process_params(aws_event))
@@ -182,8 +181,6 @@ class FhirController:
             search_params.date_from,
             search_params.date_to,
         )
-        print(f"result_1 :{result}")
-
         if "diagnostics" in result: 
            exp_error = create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
@@ -194,10 +191,9 @@ class FhirController:
            return self.create_response(400, json.dumps(exp_error) ) 
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
-        print(f"result_json_dict:{result_json_dict}")
         if "entry" in result_json_dict:
-            result_json_dict['entry'] = [result_json_dict for entry in result_json_dict['entry'] if entry['resource'].get('status') != 'not-done']
-            total_count = sum(1 for entry in result_json_dict["entry"] if entry.get("search", {}).get("mode") == "match")
+            result_json_dict['entry'] = [entry for entry in result_json_dict['entry'] if entry['resource'].get('status') != 'not-done']
+            total_count = sum(1 for entry in result_json_dict['entry'] if entry.get('search', {}).get('mode') == 'match')
             result_json_dict["total"] = total_count
         if "entry" not in result_json_dict:
             result_json_dict["entry"] = []
