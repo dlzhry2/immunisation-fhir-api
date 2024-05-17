@@ -62,13 +62,12 @@ class FhirService:
         """
         imms_resp = self.immunization_repo.get_immunization_by_id(imms_id)
         
-
         if not imms_resp:
             return None
 
+        imms = imms_resp["Resource"]
+        version = imms_resp["Version"]
         try:
-            imms = imms_resp["Resource"]
-            version = imms_resp["Version"]
             nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
         except (KeyError, IndexError):
             filtered_immunization = imms
