@@ -124,7 +124,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
 
         self.assertDictEqual(res_imms, imms)
         self.table.put_item.assert_called_once_with(
-            Item={"PK": ANY,  "PatientPK": ANY, "PatientSK": ANY, "Resource": ANY, "Patient": self.patient, "IdentifierPK": ANY, "Operation": "CREATE"})
+            Item={"PK": ANY,  "PatientPK": ANY, "PatientSK": ANY, "Resource": ANY, "Patient": self.patient, "IdentifierPK": ANY, "Operation": "CREATE", "Version": int })
 
     def test_create_immunization_makes_new_id(self):
         """create should create new Logical ID even if one is already provided"""
