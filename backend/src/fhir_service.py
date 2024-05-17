@@ -89,10 +89,10 @@ class FhirService:
         else:
             patient = self.pds_service.get_patient_details(nhs_number)
             filtered_immunization = handle_s_flag(imms, patient)
-        return {
+        return ({
             "Version": version,
             "Resource": Immunization.parse_obj(filtered_immunization),
-        }
+        })
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
