@@ -90,7 +90,10 @@ class ImmunizationRepository:
         response = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
 
         if "Item" in response:
-            return None if "DeletedAt" in response["Item"] else json.loads(response["Item"]["Resource"])
+            if "DeletedAt" in response["Item"]:
+                return None  
+            else:
+                return ({"Version":json.loads(response["Item"]["Version"]), "Resource": json.loads(response["Item"]["Resource"])})
         else:
             return None
 

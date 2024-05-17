@@ -60,19 +60,22 @@ class FhirService:
         Get an Immunization by its ID. Return None if not found. If the patient doesn't have an NHS number,
         return the Immunization without calling PDS or checking S flag.
         """
-        imms = self.immunization_repo.get_immunization_by_id(imms_id)
+        imms_resp = self.immunization_repo.get_immunization_by_id(imms_id)
+        
 
-        if not imms:
+        if not imms_resp:
             return None
 
         try:
+            imms = imms_resp["Resource"]
+            version = imms_resp["Version"]
             nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
         except (KeyError, IndexError):
             filtered_immunization = imms
         else:
             patient = self.pds_service.get_patient_details(nhs_number)
             filtered_immunization = handle_s_flag(imms, patient)
-        return Immunization.parse_obj(filtered_immunization)
+        return ({"Version":version, "Resource":Immunization.parse_obj(filtered_immunization)})
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:

@@ -71,7 +71,7 @@ class FhirController:
             return self.create_response(400, id_error)
 
         if resource := self.fhir_service.get_immunization_by_id(imms_id):
-            return FhirController.create_response(200, resource.json())
+            return FhirController.create_response(200, resource["Resource"].json(), {"E-Tag":resource["Version"]} )
         else:
             msg = "The requested resource was not found."
             id_error = create_operation_outcome(
