@@ -64,9 +64,10 @@ class FhirService:
         
         if not imms_resp:
             return None
-
-        imms = imms_resp["Resource"]
-        version = imms_resp["Version"]
+        if imms_resp.get("Resource"):
+            imms = imms_resp["Resource"]
+        if imms_resp.get("Version"):
+            version = imms_resp["Version"]
         try:
             nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
         except (KeyError, IndexError):
