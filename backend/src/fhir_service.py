@@ -1,3 +1,4 @@
+import logging
 import datetime
 import os
 from enum import Enum
@@ -34,6 +35,9 @@ from s_flag_handler import handle_s_flag
 from timer import timed
 from models.errors import Severity, Code
 
+logging.basicConfig()
+logger = logging.getLogger()
+logger.setLevel("INFO")
 
 def get_service_url(
     service_env: str = os.getenv("IMMUNIZATION_ENV"),
@@ -71,6 +75,7 @@ class FhirService:
         return the Immunization without calling PDS or checking S flag.
         """
         imms_resp = self.immunization_repo.get_immunization_by_id(imms_id)
+        logger.info(f"resource inside service:{imms_resp}")
         imms = dict()
         version = str()
         resp = dict()

@@ -1,3 +1,4 @@
+import logging
 import base64
 import boto3
 import json
@@ -32,6 +33,9 @@ from models.errors import (
 from pds_service import PdsService
 from parameter_parser import process_params, process_search_params, create_query_string
 
+logging.basicConfig()
+logger = logging.getLogger()
+logger.setLevel("INFO")
 
 
 def make_controller(
@@ -67,11 +71,12 @@ class FhirController:
             return response
 
         imms_id = aws_event["pathParameters"]["id"]
-
+        logger.info(f"imms_id:{imms_id}")
         if id_error := self._validate_id(imms_id):
             return self.create_response(400, id_error)
 
         if resource := self.fhir_service.get_immunization_by_id(imms_id):
+            logger.info(f"resource inside controller:{resource}")
             version = str()
             if isinstance(resource, Immunization):
                 resp = resource
