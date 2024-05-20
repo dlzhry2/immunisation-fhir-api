@@ -91,9 +91,15 @@ class ImmunizationRepository:
 
         if "Item" in response:
             if "DeletedAt" in response["Item"]:
-                return None  
+                return None
             else:
-                return ({"Version":json.loads(response["Item"]["Version"]), "Resource": json.loads(response["Item"]["Resource"])})
+                resp = dict()
+                item = json.loads(response["Item"])
+                if "Version" in response["Item"]:
+                    resp['Version']=item["Version"]
+                if "Resource" in response["Item"]:
+                    resp['Resource']=item["Resource"]
+                return resp
         else:
             return None
 

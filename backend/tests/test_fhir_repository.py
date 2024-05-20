@@ -26,13 +26,15 @@ class TestGetImmunization(unittest.TestCase):
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
         imms_id = "an-id"
-        resource = {"foo": "bar"}
+        resource = {"Resource":{"foo": "bar"},"Version": 1}
         self.table.get_item = MagicMock(
-            return_value={"Item": {"Resource": json.dumps(resource)}}
+            return_value={"Item": json.dumps(resource)}
         )
 
         imms = self.repository.get_immunization_by_id(imms_id)
-
+        new_resource = dict()
+        new_resource['Resource'] = resource
+        new_resource['Version'] = 1
         self.assertDictEqual(resource, imms)
         self.table.get_item.assert_called_once_with(
             Key={"PK": _make_immunization_pk(imms_id)}

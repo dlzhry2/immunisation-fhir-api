@@ -9,6 +9,10 @@ def create_an_immunization(imms_id, nhs_number=valid_nhs_number) -> Immunization
     base_imms = create_an_immunization_dict(imms_id, nhs_number)
     return Immunization.parse_obj(base_imms)
 
+def create_an_immunization_for_test(imms_id, nhs_number=valid_nhs_number) -> Immunization:
+    base_imms = create_an_immunization_dict(imms_id, nhs_number)
+    return base_imms
+
 
 def create_an_immunization_dict(
     imms_id,

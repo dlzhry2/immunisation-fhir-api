@@ -11,6 +11,7 @@ from authentication import AppRestrictedAuth, Service
 import boto3
 from aws_lambda_typing.events import APIGatewayProxyEventV1
 from botocore.config import Config
+from fhir.resources.R4B.immunization import Immunization
 
 from authorization import Authorization, EndpointOperation, UnknownPermission
 from cache import Cache
@@ -71,7 +72,15 @@ class FhirController:
             return self.create_response(400, id_error)
 
         if resource := self.fhir_service.get_immunization_by_id(imms_id):
-            return FhirController.create_response(200, resource["Resource"].json(), {"E-Tag":resource["Version"]} )
+            print(f"Resource fhir controller: {resource}")
+            version = str()
+            if isinstance(resource, Immunization):
+                service_resp = resource
+            else:
+                service_resp = resource['Resource']
+                if resource.get('Version'):
+                    version = resource["Version"]
+            return FhirController.create_response(200, service_resp.json(), {"E-Tag":version} )
         else:
             msg = "The requested resource was not found."
             id_error = create_operation_outcome(
