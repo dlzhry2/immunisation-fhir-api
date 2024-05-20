@@ -203,8 +203,10 @@ class ImmunizationRepository:
         if "Items" in response and "PatientSK" in response:
 
             # Filter the response to contain only the requested vaccine types
+            # (or return all vaccine types if no vaccine type specified)
+            # TODO: Check behaviour if vaccine_types is None
             if vaccine_types is not None:
-                response = [x for x in response if response["PatientSK"] in vaccine_types]
+                response = [x for x in response if response["PatientSK"].split("#")[0] in vaccine_types]
 
             # Return a list of the FHIR immunization resource JSON items
             return [json.loads(item["Resource"]) for item in response["Items"]]

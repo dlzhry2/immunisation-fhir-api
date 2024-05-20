@@ -400,7 +400,7 @@ class TestFindImmunizations(unittest.TestCase):
     def test_find_immunizations(self):
         """it should find events with patient_identifier"""
         nhs_number = "a-patient-id"
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": []}
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": [], "PatientSK": []}
         self.table.query = MagicMock(return_value=dynamo_response)
 
         condition = Key("PatientPK").eq(_make_patient_pk(nhs_number))
@@ -417,7 +417,7 @@ class TestFindImmunizations(unittest.TestCase):
 
     def test_exclude_deleted(self):
         """it should exclude records with DeletedAt attribute"""
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": []}
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": [], "PatientSK": []}
         self.table.query = MagicMock(return_value=dynamo_response)
 
         is_ = Attr("DeletedAt").not_exists()
@@ -436,7 +436,7 @@ class TestFindImmunizations(unittest.TestCase):
         imms2 = {"id": 2}
         items = [{"Resource": json.dumps(imms1)}, {"Resource": json.dumps(imms2)}]
 
-        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": items}
+        dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": items, "PatientSK": []}
         self.table.query = MagicMock(return_value=dynamo_response)
 
         # When
