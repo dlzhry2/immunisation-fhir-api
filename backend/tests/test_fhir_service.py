@@ -68,12 +68,13 @@ class TestGetImmunization(unittest.TestCase):
         self.pds_service.get_patient_details.return_value = {}
 
         # When
-        resp_imms = self.fhir_service.get_immunization_by_id(imms_id)
-
+        service_resp = self.fhir_service.get_immunization_by_id(imms_id)
+        act_imms = service_resp["Resource"]
+        
         # Then
         self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
-        act_imms =resp_imms['Resource']
-        self.assertEqual(act_imms['id'], imms_id)
+        
+        self.assertEqual(act_imms.id, imms_id)
 
     def test_immunization_not_found(self):
         """it should return None if Immunization doesn't exist"""
@@ -108,7 +109,7 @@ class TestGetImmunization(unittest.TestCase):
         # When
         resp_imms = self.fhir_service.get_immunization_by_id(imms_id)
         act_res =resp_imms["Resource"]
-        filtered_immunization_res=filtered_immunization["Resource"]
+        filtered_immunization_res=Immunization.parse_obj(filtered_immunization["Resource"])
         # Then
         self.assertEqual(act_res, filtered_immunization_res)
 
