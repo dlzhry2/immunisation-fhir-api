@@ -74,26 +74,27 @@ class FhirService:
         imms = dict()
         version = str()
         resp = dict()
+        nhs_number = str()
         if not imms_resp:
             return None
 
         else:
+            if imms_resp.get("Resource"):
+                imms = imms_resp["Resource"]
+            if imms_resp.get("Version"):
+                version = imms_resp["Version"]
             try:
-                if imms_resp.get("Resource"):
-                    imms = imms_resp["Resource"]
-                if imms_resp.get("Version"):
-                    version = imms_resp["Version"]
                 nhs_number = [
                     x for x in imms["contained"] if x["resourceType"] == "Patient"
                 ][0]["identifier"][0]["value"]
-                patient = self.pds_service.get_patient_details(nhs_number)
-                filtered_immunization = handle_s_flag(imms, patient)
-                resp['Version'] = version
-                resp['Resource'] = filtered_immunization
-                return resp
-
             except (KeyError, IndexError):
-                return None
+                imms = imms_resp
+
+            patient = self.pds_service.get_patient_details(nhs_number)
+            filtered_immunization = handle_s_flag(imms, patient)
+            resp["Version"] = version
+            resp["Resource"] = Immunization.parse_obj(filtered_immunization)
+            return resp
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:

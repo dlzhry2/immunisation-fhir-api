@@ -72,13 +72,11 @@ class FhirController:
             return self.create_response(400, id_error)
 
         if resource := self.fhir_service.get_immunization_by_id(imms_id):
-            print(f"Resource fhir controller: {resource}")
             version = str()
             if isinstance(resource, Immunization):
-                service_resp = resource
+                resp = resource
             else:
-                service_resp = resource['Resource']
-                resp = Immunization.parse_obj(service_resp)
+                resp = resource['Resource']
                 if resource.get('Version'):
                     version = resource["Version"]
             return FhirController.create_response(200, resp.json(), {"E-Tag":version} )
