@@ -110,6 +110,23 @@ class InconsistentIdError(ValidationError):
             diagnostics=self.__str__(),
         )
 
+@dataclass
+class IdNonexistentError(RuntimeError):
+    """Return this error when the requested ID does not exist"""
+
+    id: str
+
+    def __str__(self) -> str:
+        return f"The provided id: {self.id} does not exist"
+
+    def to_operation_outcome(self) -> dict:
+        msg = self.__str__()
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.not_found,
+            diagnostics=msg,
+        )
 
 @dataclass
 class CustomValidationError(ValidationError):
