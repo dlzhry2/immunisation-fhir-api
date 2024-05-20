@@ -94,8 +94,8 @@ class ImmunizationRepository:
                 return None
             else:
                 resp = dict()
-                resp['Version']=response["Item"]["Version"]
                 resp['Resource']=json.loads(response["Item"]["Resource"])
+                resp['Version']=response["Item"]["Version"]
                 return resp
         else:
             return None
