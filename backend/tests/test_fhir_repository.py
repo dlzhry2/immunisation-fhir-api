@@ -86,6 +86,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
                 "Patient": ANY,
                 "IdentifierPK": ANY,
                 "Operation": "CREATE",
+                "Version": 1
             }
         )
 
@@ -107,6 +108,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
                 "Patient": self.patient,
                 "IdentifierPK": ANY,
                 "Operation": "CREATE",
+                "Version": 1
             }
         )
 
