@@ -168,7 +168,7 @@ class FhirService:
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         if not nhs_number_mod11_check(nhs_number):
-            diagnostics_error = create_diagnostics(nhs_number)
+            diagnostics_error = create_diagnostics()
             return diagnostics_error
 
         # Obtain all resources which are for the requested nhs number and vaccine type(s)
@@ -184,7 +184,7 @@ class FhirService:
         if patient_details:
             pds_nhs_number = patient_details["identifier"][0]["value"]
             if pds_nhs_number != nhs_number:
-                diagnostics_error = create_diagnostics(nhs_number)
+                diagnostics_error = create_diagnostics()
                 return diagnostics_error
         patient = patient_details if len(resources) > 0 else None
         entries = [
@@ -227,7 +227,7 @@ class FhirService:
         if patient:
             pds_nhs_number = patient["identifier"][0]["value"]
             if pds_nhs_number != nhs_number:
-                diagnostics_error = create_diagnostics(nhs_number)
+                diagnostics_error = create_diagnostics()
                 return diagnostics_error
 
             return patient
