@@ -143,7 +143,7 @@ class TestCreateImmunization(unittest.TestCase):
         create_result = {"diagnostics": "Validation errors: contained[?(@.resourceType=='Patient')].identifier[0].value does not exists"}
         self.service.create_immunization.return_value = create_result
         imms_id = str(uuid.uuid4())
-        imms = create_an_immunization(imms_id)
+        imms = create_covid_19_immunization(imms_id)
         aws_event = {"body": imms.json()}
         # When
         response = self.controller.create_immunization(aws_event)
