@@ -201,15 +201,11 @@ class ImmunizationRepository:
         )
 
         if "Items" in response:
-
             # Filter the response to contain only the requested vaccine types
-            # (or return all vaccine types if no vaccine type specified)
-            # TODO: Check behaviour if vaccine_types is None
-            if vaccine_types is not None:
-                response = [x for x in response if response["Items"]["PatientSK"].split("#")[0] in vaccine_types]
+            items = [x for x in response["Items"] if x["PatientSK"].split("#")[0] in vaccine_types]
 
             # Return a list of the FHIR immunization resource JSON items
-            return [json.loads(item["Resource"]) for item in response["Items"]]
+            return [json.loads(item["Resource"]) for item in items]
         else:
             raise UnhandledResponseError(message=f"Unhandled error. Query failed", response=response)
 
