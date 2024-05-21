@@ -2,7 +2,6 @@ import datetime
 import os
 from enum import Enum
 from typing import Optional
-import uuid
 
 from fhir.resources.R4B.bundle import Bundle as FhirBundle, BundleEntry, BundleLink, BundleEntrySearch
 from fhir.resources.R4B.immunization import Immunization
@@ -17,12 +16,16 @@ from models.errors import (
     InconsistentIdError,
 )
 from models.fhir_immunization import ImmunizationValidator
-from models.utils.generic_utils import nhs_number_mod11_check, get_occurrence_datetime, get_disease_type,create_diagnostics
+from models.utils.generic_utils import (
+    nhs_number_mod11_check,
+    get_occurrence_datetime,
+    create_diagnostics,
+)
 from models.utils.post_validation_utils import MandatoryError, NotApplicableError
+from models.utils.validation_utils import get_vaccine_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
-from models.errors import Severity, Code
 
 
 def get_service_url(
@@ -80,9 +83,9 @@ class FhirService:
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
-        
-        if "diagnostics" in patient: 
-                return (patient)
+
+        if "diagnostics" in patient:
+            return patient
         imms = self.immunization_repo.create_immunization(immunization, patient)
 
         return Immunization.parse_obj(imms)
@@ -98,8 +101,8 @@ class FhirService:
             raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
-        if "diagnostics" in patient: 
-                return (None,patient)
+        if "diagnostics" in patient:
+            return (None, patient)
         try:
             imms = self.immunization_repo.update_immunization(imms_id, immunization, patient)
             return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
@@ -118,8 +121,8 @@ class FhirService:
         return Immunization.parse_obj(imms)
 
     @staticmethod
-    def has_valid_disease_type(immunization: dict, disease_types: list[str]):
-        return get_disease_type(immunization) in disease_types
+    def has_valid_vaccine_type(immunization: dict, vaccine_types: list[str]):
+        return get_vaccine_type(immunization) in vaccine_types
 
     @staticmethod
     def is_valid_date_from(immunization: dict, date_from: datetime.date):
@@ -154,10 +157,10 @@ class FhirService:
     def search_immunizations(
         self,
         nhs_number: str,
-        disease_types: list[str],
+        vaccine_types: list[str],
         params: str,
         date_from: datetime.date = parameter_parser.date_from_default,
-        date_to: datetime.date = parameter_parser.date_to_default
+        date_to: datetime.date = parameter_parser.date_to_default,
     ) -> FhirBundle:
         """find all instances of Immunization(s) for a patient and specified disease type.
         Returns Bundle[Immunization]
@@ -169,13 +172,15 @@ class FhirService:
                 return (diagnostics_error)
         resources = self.immunization_repo.find_immunizations(nhs_number)
         resources = [
-            r for r in resources
-            if FhirService.has_valid_disease_type(r, disease_types)
+            r
+            for r in resources
+            # TODO: BUG This implementation should use the vaccine type indexed on creation
+            if FhirService.has_valid_vaccine_type(r, vaccine_types)
             and FhirService.is_valid_date_from(r, date_from)
             and FhirService.is_valid_date_to(r, date_to)
         ]
         patient_details = self.pds_service.get_patient_details(nhs_number)
-       # To check whether the Superseded NHS number present in PDS 
+        # To check whether the Superseded NHS number present in PDS
         if patient_details:
             pds_nhs_number = patient_details["identifier"][0]["value"]
             if pds_nhs_number != nhs_number:
@@ -183,24 +188,20 @@ class FhirService:
                 return diagnostics_error
         patient = patient_details if len(resources) > 0 else None
         entries = [
-                BundleEntry(
-                    resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
-                    search=BundleEntrySearch(mode="match"),
-                    fullUrl=f"urn:uuid:{imms['id']}"
-                ) for imms in resources
-            ]
+            BundleEntry(
+                resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
+                search=BundleEntrySearch(mode="match"),
+                fullUrl=f"urn:uuid:{imms['id']}",
+            )
+            for imms in resources
+        ]
         if patient:
             entries.append(
                 BundleEntry(
-                    resource=FhirService.process_patient_for_include(patient),
-                    search=BundleEntrySearch(mode="include")
+                    resource=FhirService.process_patient_for_include(patient), search=BundleEntrySearch(mode="include")
                 )
             )
-        fhir_bundle = FhirBundle(
-            resourceType="Bundle",
-            type="searchset",
-            entry=entries
-        )
+        fhir_bundle = FhirBundle(resourceType="Bundle", type="searchset", entry=entries)
         url = f"{get_service_url()}/Immunization?{params}"
         fhir_bundle.link = [BundleLink(relation="self", url=url)]
         return fhir_bundle
@@ -222,7 +223,7 @@ class FhirService:
             return {}
 
         patient = self.pds_service.get_patient_details(nhs_number)
-        # To check whether the Superseded NHS number present in PDS 
+        # To check whether the Superseded NHS number present in PDS
         if patient:
             pds_nhs_number = patient["identifier"][0]["value"]
             if pds_nhs_number != nhs_number :

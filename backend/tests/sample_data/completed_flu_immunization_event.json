@@ -1,6 +1,5 @@
 {
   "resourceType": "Immunization",
-  "id": "an-id",
   "contained": [
     {
       "resourceType": "Practitioner",
@@ -32,7 +31,7 @@
             }
           ],
           "system": "https://fhir.nhs.uk/Id/nhs-number",
-          "value": "9990548609"
+          "value": "9000000009"
         }
       ],
       "name": [
@@ -119,7 +118,7 @@
         "coding": [
           {
             "system": "http://snomed.info/sct",
-            "code": "mockHPVcode1",
+            "code": "822851000000102",
             "display": "Seasonal influenza vaccination (procedure)"
           }
         ]
@@ -216,6 +215,17 @@
   ],
   "protocolApplied": [
     {
+      "targetDisease": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "6142004",
+              "display": "Influenza"
+            }
+          ]
+        }
+      ],
       "doseNumberPositiveInt": 1
     }
   ]
