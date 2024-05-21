@@ -22,7 +22,7 @@ resource "aws_dynamodb_table" "events-dynamodb-table" {
         type = "S"
     }
 
-      global_secondary_index {
+    global_secondary_index {
         name               = "PatientGSI"
         hash_key           = "PatientPK"
         range_key          = "PatientSK"
