@@ -139,7 +139,7 @@ class TestCreateImmunization(unittest.TestCase):
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
     def test_create_bad_request_for_superseded_number_for_create_immunization(self):
-        """it should return 400 if json has superseded nhs number"""
+        """it should return 400 if json has superseded nhs number."""
         create_result = {"diagnostics": "Validation errors: contained[?(@.resourceType=='Patient')].identifier[0].value does not exists"}
         self.service.create_immunization.return_value = create_result
         imms_id = str(uuid.uuid4())
