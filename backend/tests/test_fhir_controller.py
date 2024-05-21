@@ -67,7 +67,6 @@ class TestFhirControllerGetImmunizationById(unittest.TestCase):
 
         # When
         response = self.controller.get_immunization_by_id(lambda_event)
-
         # Then
         self.service.get_immunization_by_id.assert_called_once_with(imms_id)
 

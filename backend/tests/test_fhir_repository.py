@@ -30,11 +30,18 @@ class TestGetImmunization(unittest.TestCase):
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
         imms_id = "an-id"
-        resource = {"foo": "bar"}
-        self.table.get_item = MagicMock(return_value={"Item": {"Resource": json.dumps(resource)}})
-
+        resource = dict()
+        resource['Resource'] = {"foo": "bar"}  
+        resource['Version'] = 1
+        self.table.get_item = MagicMock(
+            return_value={"Item": {
+                'Resource': json.dumps({"foo": "bar"}),
+                'Version': 1
+            }}
+        )
         imms = self.repository.get_immunization_by_id(imms_id)
 
+        # Validate the results
         self.assertDictEqual(resource, imms)
         self.table.get_item.assert_called_once_with(Key={"PK": _make_immunization_pk(imms_id)})
 
@@ -79,6 +86,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
                 "Patient": ANY,
                 "IdentifierPK": ANY,
                 "Operation": "CREATE",
+                "Version": 1
             }
         )
 
@@ -100,6 +108,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
                 "Patient": self.patient,
                 "IdentifierPK": ANY,
                 "Operation": "CREATE",
+                "Version": 1
             }
         )
 
