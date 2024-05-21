@@ -168,8 +168,8 @@ class FhirService:
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         if not nhs_number_mod11_check(nhs_number):
-            diagnostics_error = create_diagnostics(nhs_number)
-            return diagnostics_error
+                diagnostics_error = create_diagnostics()
+                return (diagnostics_error)
         resources = self.immunization_repo.find_immunizations(nhs_number)
         resources = [
             r
@@ -184,7 +184,7 @@ class FhirService:
         if patient_details:
             pds_nhs_number = patient_details["identifier"][0]["value"]
             if pds_nhs_number != nhs_number:
-                diagnostics_error = create_diagnostics(nhs_number)
+                diagnostics_error = create_diagnostics()
                 return diagnostics_error
         patient = patient_details if len(resources) > 0 else None
         entries = [
@@ -226,10 +226,10 @@ class FhirService:
         # To check whether the Superseded NHS number present in PDS
         if patient:
             pds_nhs_number = patient["identifier"][0]["value"]
-            if pds_nhs_number != nhs_number:
-                diagnostics_error = create_diagnostics(nhs_number)
-                return diagnostics_error
-
+            if pds_nhs_number != nhs_number :
+                    diagnostics_error = create_diagnostics()
+                    return diagnostics_error
+        
             return patient
 
         raise InvalidPatientId(patient_identifier=nhs_number)
