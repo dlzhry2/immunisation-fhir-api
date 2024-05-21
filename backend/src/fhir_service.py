@@ -3,7 +3,12 @@ import os
 from enum import Enum
 from typing import Optional
 
-from fhir.resources.R4B.bundle import Bundle as FhirBundle, BundleEntry, BundleLink, BundleEntrySearch
+from fhir.resources.R4B.bundle import (
+    Bundle as FhirBundle,
+    BundleEntry,
+    BundleLink,
+    BundleEntrySearch,
+)
 from fhir.resources.R4B.immunization import Immunization
 from pydantic import ValidationError
 
@@ -58,29 +63,47 @@ class FhirService:
         self.pds_service = pds_service
         self.validator = validator
 
-    def get_immunization_by_id(self, imms_id: str) -> Optional[Immunization]:
+    def get_immunization_by_id(self, imms_id: str) -> Optional[dict]:
         """
         Get an Immunization by its ID. Return None if not found. If the patient doesn't have an NHS number,
         return the Immunization without calling PDS or checking S flag.
         """
-        imms = self.immunization_repo.get_immunization_by_id(imms_id)
-
-        if not imms:
+        imms_resp = self.immunization_repo.get_immunization_by_id(imms_id)
+        imms = dict()
+        version = str()
+        resp = dict()
+        nhs_number = str()
+        if not imms_resp:
             return None
 
-        try:
-            nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
-        except (KeyError, IndexError):
-            filtered_immunization = imms
         else:
-            patient = self.pds_service.get_patient_details(nhs_number)
-            filtered_immunization = handle_s_flag(imms, patient)
-        return Immunization.parse_obj(filtered_immunization)
+
+            if imms_resp.get("Resource"):
+                imms = imms_resp["Resource"]
+            if imms_resp.get("Version"):
+                version = imms_resp["Version"]
+            try:
+                nhs_number = [
+                    x for x in imms["contained"] if x["resourceType"] == "Patient"
+                ][0]["identifier"][0]["value"]
+                patient = self.pds_service.get_patient_details(nhs_number)
+                filtered_immunization = handle_s_flag(imms, patient)
+            except (KeyError, IndexError):
+                filtered_immunization = imms
+
+            resp["Version"] = version
+            resp["Resource"] = Immunization.parse_obj(filtered_immunization)
+            return resp
 
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
             self.validator.validate(immunization)
-        except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
+        except (
+            ValidationError,
+            ValueError,
+            MandatoryError,
+            NotApplicableError,
+        ) as error:
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
 
@@ -90,21 +113,30 @@ class FhirService:
 
         return Immunization.parse_obj(imms)
 
-    def update_immunization(self, imms_id: str, immunization: dict) -> tuple[UpdateOutcome, Immunization]:
+    def update_immunization(
+        self, imms_id: str, immunization: dict
+    ) -> tuple[UpdateOutcome, Immunization]:
         if immunization.get("id", imms_id) != imms_id:
             raise InconsistentIdError(imms_id=imms_id)
         immunization["id"] = imms_id
 
         try:
             self.validator.validate(immunization)
-        except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
+        except (
+            ValidationError,
+            ValueError,
+            MandatoryError,
+            NotApplicableError,
+        ) as error:
             raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
         if "diagnostics" in patient:
             return (None, patient)
         try:
-            imms = self.immunization_repo.update_immunization(imms_id, immunization, patient)
+            imms = self.immunization_repo.update_immunization(
+                imms_id, immunization, patient
+            )
             return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
         except ResourceNotFoundError:
             imms = self.immunization_repo.create_immunization(immunization, patient)
@@ -215,7 +247,9 @@ class FhirService:
         If the NHS number exists, get the patient details from PDS and return the patient details.
         """
         try:
-            nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
+            nhs_number = [
+                x for x in imms["contained"] if x["resourceType"] == "Patient"
+            ][0]["identifier"][0]["value"]
         except (KeyError, IndexError):
             nhs_number = None
 
