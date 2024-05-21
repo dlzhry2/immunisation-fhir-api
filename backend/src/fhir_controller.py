@@ -73,21 +73,14 @@ class FhirController:
 
         
         if resource := self.fhir_service.get_immunization_by_id(imms_id):
-            try:
-                version = str()
-                if isinstance(resource, Immunization):
-                    resp = resource
-                else:
-                    resp = resource['Resource']
-                    if resource.get('Version'):
-                        version = resource["Version"]
-                return FhirController.create_response(200, resp.json(), {"E-Tag":version} )
-            except Exception as e:
-                create_operation_outcome(
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.server_error,
-                diagnostics=str(e))
+            version = str()
+            if isinstance(resource, Immunization):
+                resp = resource
+            else:
+                resp = resource['Resource']
+                if resource.get('Version'):
+                    version = resource["Version"]
+            return FhirController.create_response(200, resp.json(), {"E-Tag":version} )
         else:
             msg = "The requested resource was not found."
             id_error = create_operation_outcome(
