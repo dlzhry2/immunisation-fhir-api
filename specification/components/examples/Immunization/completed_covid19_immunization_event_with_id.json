@@ -1,5 +1,6 @@
 {
   "resourceType": "Immunization",
+  "id": "an-id",
   "contained": [
     {
       "resourceType": "Practitioner",
@@ -37,7 +38,7 @@
             }
           ],
           "system": "https://fhir.nhs.uk/Id/nhs-number",
-          "value": "9000000009"
+          "value": "9990548609"
         }
       ],
       "name": [
@@ -249,7 +250,7 @@
       "actor": {
         "type": "Organization",
         "identifier": {
-          "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+          "system": "https://fhir.hl7.org.uk/Id/urn-school-number",
           "value": "B0C4P"
         },
         "display": "Acme Healthcare"
@@ -269,6 +270,17 @@
   ],
   "protocolApplied": [
     {
+      "targetDisease": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "840539006",
+              "display": "Disease caused by severe acute respiratory syndrome coronavirus 2"
+            }
+          ]
+        }
+      ],
       "doseNumberPositiveInt": 1
     }
   ]
