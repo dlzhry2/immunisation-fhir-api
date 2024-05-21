@@ -64,7 +64,7 @@ class TestGetImmunization(unittest.TestCase):
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
         imms_id = "an-id"
-        self.imms_repo.get_immunization_by_id.return_value = create_covid_19_immunization(imms_id).dict()
+        self.imms_repo.get_immunization_by_id.return_value = {'Resource':create_covid_19_immunization(imms_id).dict()}
         self.pds_service.get_patient_details.return_value = {}
 
         # When

@@ -12,11 +12,6 @@ def create_covid_19_immunization(imms_id, nhs_number=VALID_NHS_NUMBER) -> Immuni
     base_imms = create_covid_19_immunization_dict(imms_id, nhs_number)
     return Immunization.parse_obj(base_imms)
 
-def create_an_immunization_for_test(imms_id, nhs_number=valid_nhs_number) -> Immunization:
-    base_imms = create_an_immunization_dict(imms_id, nhs_number)
-    return base_imms
-
-
 def create_covid_19_immunization_dict(
     imms_id, nhs_number=VALID_NHS_NUMBER, occurrence_date_time="2021-02-07T13:28:17.271+00:00"
 ):
