@@ -250,21 +250,6 @@ class TestUpdateImmunization(unittest.TestCase):
         self.imms_repo.update_immunization.assert_called_once_with(imms_id, req_imms, pds_patient)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
 
-    def test_none_existing_imms(self):
-        """it should create a new record, if it doesn't exist"""
-        imms_id = "an-id"
-        imms = create_an_immunization_dict(imms_id, valid_nhs_number)
-
-        self.imms_repo.update_immunization.side_effect = ResourceNotFoundError("Immunization", imms_id)
-        self.imms_repo.create_immunization.return_value = create_an_immunization_dict(imms_id)
-        self.fhir_service.pds_service.get_patient_details.return_value =  {"identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number","value": "9990548609"}]}
-
-        # When
-        outcome, _ = self.fhir_service.update_immunization(imms_id, imms)
-
-        # Then
-        self.assertEqual(outcome, UpdateOutcome.CREATE)
-        self.imms_repo.create_immunization.assert_called_once()
 
     def test_pre_validation_failed(self):
         """it should throw exception if Immunization is not valid"""

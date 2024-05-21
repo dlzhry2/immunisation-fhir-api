@@ -11,6 +11,7 @@ from unittest.mock import create_autospec, ANY, patch, Mock
 from urllib.parse import urlencode
 from authorization import Authorization
 from fhir_controller import FhirController
+from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome
 from models.errors import (
     ResourceNotFoundError,
@@ -27,8 +28,9 @@ from parameter_parser import patient_identifier_system, process_search_params
 class TestFhirController(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service,self.repository)
 
     def test_create_response(self):
         """it should return application/fhir+json with correct status code"""
@@ -55,8 +57,9 @@ class TestFhirController(unittest.TestCase):
 class TestFhirControllerGetImmunizationById(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service,self.repository)
 
     def test_get_imms_by_id(self):
         """it should return Immunization resource if it exists"""
@@ -108,8 +111,9 @@ class TestFhirControllerGetImmunizationById(unittest.TestCase):
 class TestCreateImmunization(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service, self.repository)
 
     def test_create_immunization(self):
         """it should create Immunization and return resource's location"""
@@ -183,8 +187,9 @@ class TestCreateImmunization(unittest.TestCase):
 class TestUpdateImmunization(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service, self.repository)
 
     def test_create_immunization(self):
         """it should update Immunization"""
@@ -192,7 +197,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms_id = "valid-id"
         aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
         self.service.update_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-
+        self.repository.get_immunization_by_id.return_value = {"resource":"new_value"}
         response = self.controller.update_immunization(aws_event)
 
         self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms))
@@ -269,8 +274,9 @@ class TestUpdateImmunization(unittest.TestCase):
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service,self.repository)
 
     def test_validate_imms_id(self):
         """it should validate lambda's Immunization id"""
@@ -334,8 +340,9 @@ class TestDeleteImmunization(unittest.TestCase):
 class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service, self.repository)
         self.patient_identifier_key = "patient.identifier"
         self.immunization_target_key = "-immunization.target"
         self.date_from_key = "-date.from"

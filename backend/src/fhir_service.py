@@ -100,13 +100,9 @@ class FhirService:
         patient = self._validate_patient(immunization)
         if "diagnostics" in patient: 
                 return (None,patient)
-        try:
-            imms = self.immunization_repo.update_immunization(imms_id, immunization, patient)
-            return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
-        except ResourceNotFoundError:
-            imms = self.immunization_repo.create_immunization(immunization, patient)
 
-            return UpdateOutcome.CREATE, Immunization.parse_obj(imms)
+        imms = self.immunization_repo.update_immunization(imms_id, immunization, patient)
+        return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
 
     def delete_immunization(self, imms_id) -> Immunization:
         """

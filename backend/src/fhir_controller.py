@@ -25,7 +25,6 @@ from models.errors import (
     UnhandledResponseError,
     ValidationError,
     IdentifierDuplicationError,
-    IdNonexistentError,
     ParameterException,
 )
 
@@ -58,9 +57,10 @@ def make_controller(
 class FhirController:
     immunization_id_pattern = r"^[A-Za-z0-9\-.]{1,64}$"
 
-    def __init__(self, authorizer: Authorization, fhir_service: FhirService):
+    def __init__(self, authorizer: Authorization, fhir_service: FhirService, fhir_repository: ImmunizationRepository):
         self.fhir_service = fhir_service
         self.authorizer = authorizer
+        self.fhir_repository = fhir_repository
 
     def get_immunization_by_id(self, aws_event) -> dict:
         if response := self.authorize_request(EndpointOperation.READ, aws_event):
@@ -118,13 +118,21 @@ class FhirController:
             return response
 
         imms_id = aws_event["pathParameters"]["id"]
+        print(f'imms_id: {imms_id}')
         if id_error := self._validate_id(imms_id):
             return FhirController.create_response(400, json.dumps(id_error))
         try:
             """check if ID exists, return error if does not exist"""
-            existing_record =self.fhir_service.get_immunization_by_id(imms_id)
+            existing_record =self.fhir_repository.get_immunization_by_id(imms_id)
             if not existing_record:
-                return self.create_response(404, IdNonexistentError().to_operation_outcome())
+                exp_error = create_operation_outcome(
+                        resource_id=str(uuid.uuid4()),
+                        severity=Severity.error,
+                        code=Code.not_found,
+                        diagnostics="The requested resource was not found."
+                    )
+                return self.create_response(404, json.dumps(exp_error))
+            
             
             imms = json.loads(aws_event["body"], parse_float=Decimal)
         except json.decoder.JSONDecodeError as e:

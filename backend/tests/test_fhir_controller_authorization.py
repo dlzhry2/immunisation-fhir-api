@@ -14,6 +14,7 @@ from authorization import (
     PERMISSIONS_HEADER,
 )
 from fhir_controller import FhirController
+from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome
 from models.errors import UnauthorizedError
 from tests.immunization_utils import create_an_immunization
@@ -45,8 +46,9 @@ class TestFhirControllerAuthorization(unittest.TestCase):
 
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service, self.repository)
 
     # EndpointOperation.READ
     def test_get_imms_by_id_authorized(self):
