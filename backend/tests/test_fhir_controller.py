@@ -230,7 +230,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertEqual(body["resourceType"], "OperationOutcome")
 
     def test_validation_superseded_number_to_give_bad_request_for_update_immunization(self):
-        """it should return 400 if Immunization has superseded nhs number"""
+        """it should return 400 if Immunization has superseded nhs number."""
         update_result = {"diagnostics": "Validation errors: contained[?(@.resourceType=='Patient')].identifier[0].value does not exists"}
         self.service.update_immunization.return_value = None,update_result
         req_imms = "{}"
