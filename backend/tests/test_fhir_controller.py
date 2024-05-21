@@ -453,10 +453,9 @@ class TestSearchImmunizations(unittest.TestCase):
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")    
 
-
-    def test_search_immunizations_returns_400_on_passing_superseded_nhs_number_(self):
-        "This method should return 400 as input paramter has superseded nhs number."
-        search_result = load_json_data("sample.json")
+    def test_search_immunizations_returns_200_remove_vaccine_not_done(self):
+        "This method should return 200 but remove the data which has status as not done"
+        search_result = load_json_data("sample_immunization_response _for _not_done_event.json")
         bundle = Bundle.parse_obj(search_result)
         self.service.search_immunizations.return_value = bundle
         vaccine_type = VaccineTypes().all[0]
@@ -470,7 +469,8 @@ class TestSearchImmunizations(unittest.TestCase):
 
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "Bundle")       
+        for entry in body.get("entry", []):
+            self.assertNotEqual(entry.get("resource", {}).get("status"), "not-done")      
 
     def test_self_link_excludes_extraneous_params(self):
         search_result = Bundle.construct()
