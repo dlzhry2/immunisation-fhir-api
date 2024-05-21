@@ -12,7 +12,7 @@ from utils.mappings import VaccineTypes
 class TestSearchImmunization(ImmunizationBaseTest):
     # NOTE: In each test, the result may contain more hits. We only assert if the resource that we created is
     #  in the result set and assert the one that we don't expect is not present.
-    #  This is to make these tests stateless otherwise; we need to clean up the db after each test
+    # This is to make these tests stateless otherwise; we need to clean up the db after each test
 
     def store_records(self, *resources):
         for res in resources:
