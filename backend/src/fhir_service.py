@@ -79,6 +79,7 @@ class FhirService:
             return None
 
         else:
+
             if imms_resp.get("Resource"):
                 imms = imms_resp["Resource"]
             if imms_resp.get("Version"):
@@ -87,11 +88,11 @@ class FhirService:
                 nhs_number = [
                     x for x in imms["contained"] if x["resourceType"] == "Patient"
                 ][0]["identifier"][0]["value"]
+                patient = self.pds_service.get_patient_details(nhs_number)
+                filtered_immunization = handle_s_flag(imms, patient)
             except (KeyError, IndexError):
-                imms = imms_resp
+                filtered_immunization = imms
 
-            patient = self.pds_service.get_patient_details(nhs_number)
-            filtered_immunization = handle_s_flag(imms, patient)
             resp["Version"] = version
             resp["Resource"] = Immunization.parse_obj(filtered_immunization)
             return resp
