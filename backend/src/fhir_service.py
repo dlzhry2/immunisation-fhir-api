@@ -162,7 +162,7 @@ class FhirService:
         date_from: datetime.date = parameter_parser.date_from_default,
         date_to: datetime.date = parameter_parser.date_to_default,
     ) -> FhirBundle:
-        """find all instances of Immunization(s) for a patient and specified disease type.
+        """find all instances of Immunization(s) for a specified patient which are for the specified vaccine type(s).
         Returns Bundle[Immunization]
         """
         # TODO: is disease type a mandatory field? (I assumed it is)

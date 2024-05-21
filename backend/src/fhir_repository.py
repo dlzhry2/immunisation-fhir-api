@@ -190,7 +190,7 @@ class ImmunizationRepository:
                 )
 
     def find_immunizations(self, patient_identifier: str, vaccine_types: list = None):
-        """it should find all patient's Immunization events for a specified vaccine_type"""
+        """it should find all of the specified patient's Immunization events for all of the specified vaccine_types"""
         condition = Key("PatientPK").eq(_make_patient_pk(patient_identifier))
         is_not_deleted = Attr("DeletedAt").not_exists()
 
