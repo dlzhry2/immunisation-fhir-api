@@ -27,6 +27,7 @@ from models.errors import (
     ValidationError,
     IdentifierDuplicationError,
     ParameterException,
+    InconsistentIdError
 )
 
 from pds_service import PdsService
@@ -127,27 +128,32 @@ class FhirController:
             return response
 
         imms_id = aws_event["pathParameters"]["id"]
-        print(f'imms_id: {imms_id}')
+        
         if id_error := self._validate_id(imms_id):
             return FhirController.create_response(400, json.dumps(id_error))
-        try:
-            """check if ID exists, return error if does not exist"""
-            existing_record =self.fhir_repository.get_immunization_by_id(imms_id)
-            if not existing_record:
-                exp_error = create_operation_outcome(
-                        resource_id=str(uuid.uuid4()),
-                        severity=Severity.error,
-                        code=Code.not_found,
-                        diagnostics="The requested resource was not found."
-                    )
-                return self.create_response(404, json.dumps(exp_error))
-            
-            
+        try:   
             imms = json.loads(aws_event["body"], parse_float=Decimal)
+            if imms.get("id", imms_id) != imms_id:
+                raise InconsistentIdError(imms_id=imms_id)
+        
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(
                 f"Request's body contains malformed JSON: {e}"
             )
+        
+        
+        """check if ID exists, return error if does not exist"""
+        existing_record =self.fhir_repository.get_immunization_by_id(imms_id)
+        if not existing_record:
+            exp_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.not_found,
+                    diagnostics="The requested resource was not found."
+                )
+            return self.create_response(404, json.dumps(exp_error))
+            
+       
 
         try:
             outcome, resource = self.fhir_service.update_immunization(imms_id, imms)
