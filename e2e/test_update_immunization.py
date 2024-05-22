@@ -29,7 +29,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
                 self.assertEqual(response.text, "")
                 self.assertTrue("Location" not in response.headers)
 
-    def test_update_non_unique_identifier(self):
+    def test_update_non_existent_identifier(self):
         """update a record should fail if identifier is not present"""
         imms = create_an_imms_obj()
         _ = self.create_immunization_resource(self.default_imms_api, imms)

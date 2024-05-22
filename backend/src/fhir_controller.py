@@ -138,7 +138,7 @@ class FhirController:
                     resource_id=str(uuid.uuid4()),
                     severity=Severity.error,
                     code=Code.invariant,
-                    diagnostics=f"Validation errors: The provided id:{imms_id} doesn't match with the content of the message"
+                    diagnostics=f"Validation errors: The provided imms id:{imms_id} doesn't match with the content of the message"
                 )
                 return self.create_response(400, json.dumps(exp_error))
         
@@ -155,7 +155,7 @@ class FhirController:
                     resource_id=str(uuid.uuid4()),
                     severity=Severity.error,
                     code=Code.not_found,
-                    diagnostics="The requested resource was not found."
+                    diagnostics= f"The requested imms id:{imms_id} resource was not found."
                 )
             return self.create_response(404, json.dumps(exp_error))
             

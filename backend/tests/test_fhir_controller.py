@@ -19,11 +19,11 @@ from models.errors import (
     InvalidPatientId,
     CustomValidationError,
     ParameterException,
+    InconsistentIdError
 )
-from tests.immunization_utils import create_covid_19_immunization
+from tests.immunization_utils import create_covid_19_immunization, create_covid_19_immunization_dict
 from mappings import VaccineTypes
 from parameter_parser import patient_identifier_system, process_search_params
-
 
 class TestFhirController(unittest.TestCase):
     def setUp(self):
@@ -246,23 +246,24 @@ class TestUpdateImmunization(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")      
 
-    # def test_consistent_imms_id(self):
-    #     """Immunization[id] should be the same as request"""
-    #     req_imms_id = "an-id"
-    #     self.imms_repo.update_immunization.return_value = None
-    #     #self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
+    def test_consistent_imms_id(self):
+        """Immunization[id] should be the same as request"""
+        req_imms_id = "an-id"
+        #self.imms_repo.update_immunization.return_value = None
+        #self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
 
-    #     obj_imms_id = "a-diff-id"
-    #     req_imms = create_covid_19_immunization_dict(obj_imms_id)
+        obj_imms_id = "a-diff-id"
+        req_imms = create_covid_19_immunization_dict(obj_imms_id)
+        aws_event = {"body":req_imms, "pathParameters": obj_imms_id}
 
-    #     with self.assertRaises(InconsistentIdError) as error:
-    #         # When
-    #         self.fhir_service.update_immunization(req_imms_id, req_imms)
+        with self.assertRaises(InconsistentIdError) as error:
+            # When
+            self.controller.update_immunization(req_imms_id, req_imms)
 
-    #     # Then
-    #     self.assertEqual(req_imms_id, error.exception.imms_id)
-    #     self.imms_repo.update_immunization.assert_not_called()
-    #     self.pds_service.get_patient_details.assert_not_called()
+        # Then
+        self.assertEqual(req_imms_id, error.exception.imms_id)
+        #self.imms_repo.update_immunization.assert_not_called()
+        #self.pds_service.get_patient_details.assert_not_called()
 
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
