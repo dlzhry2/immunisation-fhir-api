@@ -50,7 +50,6 @@ class TestUpdateImmunization(ImmunizationBaseTest):
         imms = create_an_imms_obj(msg_id)
         path_id = str(uuid.uuid4())
         response = self.default_imms_api.update_immunization(path_id, imms)
-        
         self.assert_operation_outcome(response, 400, contains=path_id)
 
     # def test_update_deleted_imms(self):
