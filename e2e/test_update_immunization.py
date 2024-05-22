@@ -30,7 +30,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
                 self.assertTrue("Location" not in response.headers)
 
     def test_update_non_unique_identifier(self):
-        """update a record should fail if identifier is not unique"""
+        """update a record should fail if identifier is not present"""
         imms = create_an_imms_obj()
         _ = self.create_immunization_resource(self.default_imms_api, imms)
         # NOTE: there is a difference between id and identifier.
@@ -42,7 +42,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
         # When update the same object (it has the same identifier)
         response = self.default_imms_api.update_immunization(new_imms_id, imms)
         # Then
-        self.assert_operation_outcome(response, 422)
+        self.assert_operation_outcome(response, 404)
 
     def test_update_inconsistent_id(self):
         """update should fail if id in the path doesn't match with the id in the message"""

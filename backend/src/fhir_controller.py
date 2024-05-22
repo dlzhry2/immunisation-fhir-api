@@ -134,7 +134,13 @@ class FhirController:
         try:   
             imms = json.loads(aws_event["body"], parse_float=Decimal)
             if imms.get("id", imms_id) != imms_id:
-                raise InconsistentIdError(imms_id=imms_id)
+                exp_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.invariant,
+                    diagnostics=f"Validation errors: The provided id:{imms_id} doesn't match with the content of the message"
+                )
+                return self.create_response(400, json.dumps(exp_error))
         
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(
