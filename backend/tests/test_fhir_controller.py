@@ -254,11 +254,11 @@ class TestUpdateImmunization(unittest.TestCase):
 
         obj_imms_id = "a-diff-id"
         req_imms = create_covid_19_immunization_dict(obj_imms_id)
-        aws_event = {"body":req_imms, "pathParameters": obj_imms_id}
+        aws_event = {"body":req_imms, "pathParameters":{"id": obj_imms_id} }
 
         with self.assertRaises(InconsistentIdError) as error:
             # When
-            self.controller.update_immunization(req_imms_id, req_imms)
+            self.controller.update_immunization(aws_event)
 
         # Then
         self.assertEqual(req_imms_id, error.exception.imms_id)
