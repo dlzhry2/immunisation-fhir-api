@@ -248,23 +248,10 @@ class TestUpdateImmunization(unittest.TestCase):
 
     def test_consistent_imms_id(self):
         """Immunization[id] should be the same as request"""
-        #req_imms_id = "an-id"
-        #self.imms_repo.update_immunization.return_value = None
-        #self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
         bad_json = '{"id": "a-diff-id"}'
         aws_event = {"body": bad_json, "pathParameters": {"id": "an-id"}}
-        #obj_imms_id = "a-diff-id"
-        #req_imms = create_covid_19_immunization_dict(obj_imms_id)
-        #aws_event = {"body":'{"id":req_imms_id}',"pathParameters":{"id":obj_imms_id}}
-
-        with self.assertRaises(InconsistentIdError) as error:
-            # When
-            self.controller.update_immunization(aws_event)
-
-        # Then
-        self.assertEqual(req_imms_id, error.exception.imms_id)
-        #self.imms_repo.update_immunization.assert_not_called()
-        #self.pds_service.get_patient_details.assert_not_called()
+        response =self.controller.update_immunization(aws_event)
+        self.assertEqual(response["statusCode"], 400)    
 
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
