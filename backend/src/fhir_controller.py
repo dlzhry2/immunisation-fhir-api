@@ -53,7 +53,7 @@ def make_controller(
     authorizer = Authorization()
     service = FhirService(imms_repo=imms_repo, pds_service=pds_service)
 
-    return FhirController(authorizer=authorizer, fhir_service=service)
+    return FhirController(authorizer=authorizer, fhir_service=service, fhir_repository=imms_repo)
 
 
 class FhirController:
