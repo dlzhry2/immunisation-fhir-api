@@ -403,7 +403,8 @@ class PreValidators:
     def pre_validate_organization_identifier_value(self, values: dict) -> dict:
         """
         Pre-validate that, if performer[?(@.actor.type=='Organization').identifier.value]
-        (legacy CSV field name: SITE_CODE) exists, then it is a non-empty string
+        (legacy CSV field name: SITE_CODE) exists, then it is a non-empty string.
+        Also pre-validate it is in format alpha-numeric-alpha-numeric-alpha (e.g. "B0C4P").
         """
         field_location = "performer[?(@.actor.type=='Organization')].actor.identifier.value"
         ODS_code_format = re.compile(r"^[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9]{1}[A-Z]{1}$")
@@ -417,7 +418,7 @@ class PreValidators:
             #(e.g. "X0X0X")    
             if not ODS_code_format.match(field_value):
                 raise ValueError(f"{field_location} must be in expected format" 
-                                + "alpha-numeric-alpha-numeric-alpha (e.g X0X0X)")
+                                + " alpha-numeric-alpha-numeric-alpha (e.g X0X0X)")
         except (KeyError, IndexError, AttributeError):
             pass
 
