@@ -11,6 +11,7 @@ from unittest.mock import create_autospec, ANY, patch, Mock
 from urllib.parse import urlencode
 from authorization import Authorization
 from fhir_controller import FhirController
+from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome
 from models.errors import (
     ResourceNotFoundError,
@@ -18,18 +19,19 @@ from models.errors import (
     InvalidPatientId,
     CustomValidationError,
     ParameterException,
+    InconsistentIdError
 )
-from tests.immunization_utils import create_covid_19_immunization
+from tests.immunization_utils import create_covid_19_immunization, create_covid_19_immunization_dict
 from mappings import VaccineTypes
 from parameter_parser import patient_identifier_system, process_search_params
 from tests.utils.generic_utils import load_json_data
 
-
 class TestFhirController(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service,self.repository)
 
     def test_create_response(self):
         """it should return application/fhir+json with correct status code"""
@@ -56,8 +58,9 @@ class TestFhirController(unittest.TestCase):
 class TestFhirControllerGetImmunizationById(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service,self.repository)
 
     def test_get_imms_by_id(self):
         """it should return Immunization resource if it exists"""
@@ -108,8 +111,9 @@ class TestFhirControllerGetImmunizationById(unittest.TestCase):
 class TestCreateImmunization(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service, self.repository)
 
     def test_create_immunization(self):
         """it should create Immunization and return resource's location"""
@@ -182,8 +186,9 @@ class TestCreateImmunization(unittest.TestCase):
 class TestUpdateImmunization(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service, self.repository)
 
     def test_create_immunization(self):
         """it should update Immunization"""
@@ -191,31 +196,30 @@ class TestUpdateImmunization(unittest.TestCase):
         imms_id = "valid-id"
         aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
         self.service.update_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-
+        self.repository.get_immunization_by_id.return_value = {"resource":"new_value"}
         response = self.controller.update_immunization(aws_event)
 
         self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms))
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
 
-    def test_create_new_imms(self):
-        """it should return 201 if update creates a new record"""
-        req_imms = "{}"
-        path_id = "valid-id"
-        aws_event = {"body": req_imms, "pathParameters": {"id": path_id}}
-
-        new_id = "newly-created-id"
-        created_imms = create_covid_19_immunization(imms_id=new_id)
-        self.service.update_immunization.return_value = UpdateOutcome.CREATE, created_imms
-
+    def test_update_record_exists(self):
+        """it should return not-found OperationOutcome if ID doesn't exist"""
+        # Given
+        imms_id = "a-non-existing-id"
+        self.service.get_immunization_by_id.return_value = None
+        lambda_event = {"pathParameters": {"id": imms_id}}
+        
         # When
-        response = self.controller.update_immunization(aws_event)
-
+        response = self.controller.get_immunization_by_id(lambda_event)
+        
         # Then
-        self.service.update_immunization.assert_called_once_with(path_id, json.loads(req_imms))
-        self.assertEqual(response["statusCode"], 201)
-        self.assertTrue("body" not in response)
-        self.assertTrue(response["headers"]["Location"].endswith(f"Immunization/{new_id}"))
+        self.service.get_immunization_by_id.assert_called_once_with(imms_id)
+
+        self.assertEqual(response["statusCode"], 404)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertEqual(body["issue"][0]["code"], "not-found")
 
     def test_validation_error(self):
         """it should return 400 if Immunization is invalid"""
@@ -242,6 +246,13 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 400)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")      
+
+    def test_consistent_imms_id(self):
+        """Immunization[id] should be the same as request"""
+        bad_json = '{"id": "a-diff-id"}'
+        aws_event = {"body": bad_json, "pathParameters": {"id": "an-id"}}
+        response =self.controller.update_immunization(aws_event)
+        self.assertEqual(response["statusCode"], 400)    
 
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
@@ -270,8 +281,9 @@ class TestUpdateImmunization(unittest.TestCase):
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service,self.repository)
 
     def test_validate_imms_id(self):
         """it should validate lambda's Immunization id"""
@@ -335,8 +347,9 @@ class TestDeleteImmunization(unittest.TestCase):
 class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
+        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service)
+        self.controller = FhirController(self.authorizer, self.service, self.repository)
         self.patient_identifier_key = "patient.identifier"
         self.immunization_target_key = "-immunization.target"
         self.date_from_key = "-date.from"

@@ -116,8 +116,6 @@ class FhirService:
     def update_immunization(
         self, imms_id: str, immunization: dict
     ) -> tuple[UpdateOutcome, Immunization]:
-        if immunization.get("id", imms_id) != imms_id:
-            raise InconsistentIdError(imms_id=imms_id)
         immunization["id"] = imms_id
 
         try:
@@ -131,17 +129,11 @@ class FhirService:
             raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
-        if "diagnostics" in patient:
-            return (None, patient)
-        try:
-            imms = self.immunization_repo.update_immunization(
-                imms_id, immunization, patient
-            )
-            return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
-        except ResourceNotFoundError:
-            imms = self.immunization_repo.create_immunization(immunization, patient)
 
-            return UpdateOutcome.CREATE, Immunization.parse_obj(imms)
+        if "diagnostics" in patient: 
+                return (None,patient)
+        imms = self.immunization_repo.update_immunization(imms_id, immunization, patient)
+        return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
 
     def delete_immunization(self, imms_id) -> Immunization:
         """
