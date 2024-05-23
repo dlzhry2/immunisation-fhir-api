@@ -213,6 +213,7 @@ class FhirController:
             search_params.date_from,
             search_params.date_to,
         )
+
         if "diagnostics" in result: 
            exp_error = create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
@@ -229,8 +230,7 @@ class FhirController:
             result_json_dict["total"] = total_count
         if "entry" not in result_json_dict:
             result_json_dict["entry"] = []
-            result_json_dict["total"] = 0
-            
+            result_json_dict["total"] = 0  
         return self.create_response(200, json.dumps(result_json_dict) )
 
     def _validate_id(self, _id: str) -> Optional[dict]:
