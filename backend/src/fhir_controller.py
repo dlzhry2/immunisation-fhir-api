@@ -27,6 +27,7 @@ from models.errors import (
     ValidationError,
     IdentifierDuplicationError,
     ParameterException,
+    InconsistentIdError
 )
 
 from pds_service import PdsService
@@ -53,15 +54,16 @@ def make_controller(
     authorizer = Authorization()
     service = FhirService(imms_repo=imms_repo, pds_service=pds_service)
 
-    return FhirController(authorizer=authorizer, fhir_service=service)
+    return FhirController(authorizer=authorizer, fhir_service=service, fhir_repository=imms_repo)
 
 
 class FhirController:
     immunization_id_pattern = r"^[A-Za-z0-9\-.]{1,64}$"
 
-    def __init__(self, authorizer: Authorization, fhir_service: FhirService):
+    def __init__(self, authorizer: Authorization, fhir_service: FhirService, fhir_repository: ImmunizationRepository):
         self.fhir_service = fhir_service
         self.authorizer = authorizer
+        self.fhir_repository = fhir_repository
 
     def get_immunization_by_id(self, aws_event) -> dict:
         if response := self.authorize_request(EndpointOperation.READ, aws_event):
@@ -126,14 +128,38 @@ class FhirController:
             return response
 
         imms_id = aws_event["pathParameters"]["id"]
+        
         if id_error := self._validate_id(imms_id):
             return FhirController.create_response(400, json.dumps(id_error))
-        try:
+        try:   
             imms = json.loads(aws_event["body"], parse_float=Decimal)
+            if imms.get("id", imms_id) != imms_id:
+                exp_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.invariant,
+                    diagnostics=f"Validation errors: The provided imms id:{imms_id} doesn't match with the content of the message"
+                )
+                return self.create_response(400, json.dumps(exp_error))
+        
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(
                 f"Request's body contains malformed JSON: {e}"
             )
+        
+        
+        """check if ID exists, return error if does not exist"""
+        existing_record =self.fhir_repository.get_immunization_by_id(imms_id)
+        if not existing_record:
+            exp_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.not_found,
+                    diagnostics= f"The requested imms id:{imms_id} resource was not found."
+                )
+            return self.create_response(404, json.dumps(exp_error))
+            
+       
 
         try:
             outcome, resource = self.fhir_service.update_immunization(imms_id, imms)
@@ -147,9 +173,6 @@ class FhirController:
                 return self.create_response(400, json.dumps(exp_error) )
             if outcome == UpdateOutcome.UPDATE:
                 return self.create_response(200)
-            elif outcome == UpdateOutcome.CREATE:
-                location = f"{get_service_url()}/Immunization/{resource.id}"
-                return self.create_response(201, None, {"Location": location})
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
         except IdentifierDuplicationError as duplicate:

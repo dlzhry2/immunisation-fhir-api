@@ -110,7 +110,6 @@ class InconsistentIdError(ValidationError):
             diagnostics=self.__str__(),
         )
 
-
 @dataclass
 class CustomValidationError(ValidationError):
     """Custom validation error"""
