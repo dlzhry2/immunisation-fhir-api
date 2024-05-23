@@ -150,7 +150,8 @@ class FhirController:
         """check if ID exists, return error if does not exist"""
         existing_record =self.fhir_repository.get_immunization_by_id(imms_id)
         if existing_record["Version"]:
-            print(f"Version: {existing_record["Version"]}")
+            version = existing_record["Version"]
+            print(f"Version: {version}")
         
         if not existing_record:
             exp_error = create_operation_outcome(
