@@ -26,7 +26,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 # Given two patients each with one mmr
                 # TODO: BUG Check why mmr_p2 has flu vaccine type. Also see next test.
                 mmr_p1 = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.mmr)
-                mmr_p2 = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, VaccineTypes.flu)
+                mmr_p2 = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number2, VaccineTypes.mmr)
                 self.store_records(mmr_p1, mmr_p2)
 
                 # When
