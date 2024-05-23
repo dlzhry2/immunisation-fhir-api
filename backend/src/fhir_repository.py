@@ -98,6 +98,17 @@ class ImmunizationRepository:
                 return resp
         else:
             return None
+    
+    def get_immunization_by_id_all(self, imms_id: str) -> Optional[dict]:
+        response = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
+
+        if "Item" in response:
+            resp = dict()
+            resp['Resource']=json.loads(response["Item"]["Resource"])
+            resp['Version']=response["Item"]["Version"]
+            return resp
+        else:
+            return None
 
     def create_immunization(self, immunization: dict, patient: dict) -> dict:
         new_id = str(uuid.uuid4())
@@ -133,7 +144,7 @@ class ImmunizationRepository:
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient, "
-            "Operation = :operation, Version = :version"
+            "Operation = :operation, Version = :version, DeletedAt = :resurrect "
         )
 
         queryResponse = _query_identifier(self.table, "IdentifierGSI", "IdentifierPK", attr.identifier)
@@ -158,7 +169,8 @@ class ImmunizationRepository:
                     ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
                     ":patient": attr.patient,
                     ":operation": "UPDATE",
-                    ":version": existing_resource_version+1
+                    ":version": existing_resource_version+1,
+                    ":resurrect": "reinstated"
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(attr.pk) & Attr("DeletedAt").not_exists(),
