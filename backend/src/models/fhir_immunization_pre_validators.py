@@ -8,7 +8,7 @@ from models.utils.generic_utils import (
     generate_field_location_for_extension,
 )
 from models.utils.pre_validator_utils import PreValidation
-
+import re
 
 class PreValidators:
     """
@@ -406,11 +406,18 @@ class PreValidators:
         (legacy CSV field name: SITE_CODE) exists, then it is a non-empty string
         """
         field_location = "performer[?(@.actor.type=='Organization')].actor.identifier.value"
+        ODS_code_format = re.compile(r"^[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9]{1}[A-Z]{1}$")
         try:
             field_value = [x for x in values["performer"] if x.get("actor").get("type") == "Organization"][0]["actor"][
                 "identifier"
             ]["value"]
             PreValidation.for_string(field_value, field_location)
+            
+            #Validates that organization_identifier_value is in alpha-numeric-alpha-numeric-alpha 
+            #(e.g. "X0X0X")    
+            if not ODS_code_format.match(field_value):
+                raise ValueError(f"{field_location} must be in expected format" 
+                                + "alpha-numeric-alpha-numeric-alpha (e.g X0X0X)")
         except (KeyError, IndexError, AttributeError):
             pass
 

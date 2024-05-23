@@ -386,8 +386,11 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self,
             field_location="performer[?(@.actor.type=='Organization')].actor.identifier.value",
-            valid_strings_to_test=["B0C4P"],
+            valid_strings_to_test=["B0C4P", "D3P5L"],
+            invalid_strings_to_test=["ABCDE", "R99TL"]
         )
+        
+        
 
     def test_pre_validate_organization_display(self):
         """Test pre_validate_organization_display accepts valid values and rejects invalid values"""
