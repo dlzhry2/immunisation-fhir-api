@@ -474,7 +474,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(body["resourceType"], "OperationOutcome")    
 
     def test_search_immunizations_returns_200_remove_vaccine_not_done(self):
-        "This method should return 200 but remove the data which has status as not done"
+        "This method should return 200 but remove the data which has status as not done."
         search_result = load_json_data("sample_immunization_response _for _not_done_event.json")
         bundle = Bundle.parse_obj(search_result)
         self.service.search_immunizations.return_value = bundle
