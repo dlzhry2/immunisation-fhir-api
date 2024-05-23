@@ -477,7 +477,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         for entry in body.get("entry", []):
-            self.assertNotEqual(entry.get("resource", {}).get("status"), "not-done")      
+            self.assertEqual(entry.get("resource", {}).get("status"), "completed")      
 
     def test_self_link_excludes_extraneous_params(self):
         search_result = Bundle.construct()
