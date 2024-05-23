@@ -225,7 +225,7 @@ class FhirController:
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
         if "entry" in result_json_dict:
-            result_json_dict['entry'] = [entry for entry in result_json_dict['entry'] if entry['resource'].get('status') == 'completed']
+            result_json_dict['entry'] = [entry for entry in result_json_dict['entry'] if entry['resource'].get('status') not in ('not-done', 'entered-in-error')]
             total_count = sum(1 for entry in result_json_dict['entry'] if entry.get('search', {}).get('mode') == 'match')
             result_json_dict["total"] = total_count
         if "entry" not in result_json_dict:
