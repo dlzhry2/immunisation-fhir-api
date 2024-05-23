@@ -240,7 +240,7 @@ class TestUpdateImmunization(unittest.TestCase):
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient, "
-            "Operation = :operation, Version = :version, DeletedAt = :resurrect "
+            "Operation = :operation, Version = :version "
         )
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][1]["identifier"][0]["value"]
@@ -259,8 +259,7 @@ class TestUpdateImmunization(unittest.TestCase):
                 ":imms_resource_val": json.dumps(imms),
                 ":patient": self.patient,
                 ":operation": "UPDATE",
-                ":version": 2,
-                ":resurrect": "reinstated"
+                ":version": 2
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,

@@ -167,7 +167,11 @@ class FhirController:
             return self.create_response(400, json.dumps(exp_error))
             
         try:
-            outcome, resource = self.fhir_service.update_immunization(imms_id, imms, existing_resource_version)
+            if existing_record["DeletedAt"] == True:
+                outcome, resource = self.fhir_service.reinstate_immunization(imms_id, imms, existing_resource_version)
+            else:
+                outcome, resource = self.fhir_service.update_immunization(imms_id, imms, existing_resource_version)
+                
             if "diagnostics" in resource: 
                 exp_error = create_operation_outcome(
                         resource_id=str(uuid.uuid4()),
