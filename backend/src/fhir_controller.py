@@ -149,10 +149,6 @@ class FhirController:
         
         """check if ID exists, return error if does not exist"""
         existing_record =self.fhir_repository.get_immunization_by_id(imms_id)
-        if existing_record.get("Version"):
-            version = existing_record["Version"]
-            print(f"Version: {version}")
-        
         if not existing_record:
             exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),
@@ -160,6 +156,15 @@ class FhirController:
                     code=Code.not_found,
                     diagnostics= f"The requested imms id:{imms_id} resource was not found.")
             return self.create_response(404, json.dumps(exp_error))
+        existing_resource_version = existing_record["Version"]
+        resource_version_header = aws_event["headers"]["E-Tag"]
+        if existing_resource_version != resource_version_header:            
+            exp_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.invalid,
+                    diagnostics= f"The requested resource {imms_id} has changed since the last fetch." )
+            return self.create_response(400, json.dumps(exp_error))
             
         try:
             outcome, resource = self.fhir_service.update_immunization(imms_id, imms)
