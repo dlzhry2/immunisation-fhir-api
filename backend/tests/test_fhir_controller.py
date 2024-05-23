@@ -198,7 +198,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.repository.get_immunization_by_id.return_value = {"resource":"new_value","Version":1}
         response = self.controller.update_immunization(aws_event)
 
-        self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms))
+        self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
 

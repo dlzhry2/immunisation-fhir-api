@@ -127,13 +127,13 @@ class ImmunizationRepository:
         else:
             raise UnhandledResponseError(message="Non-200 response from dynamodb", response=response)
 
-    def update_immunization(self, imms_id: str, immunization: dict, patient: dict) -> dict:
+    def update_immunization(self, imms_id: str, immunization: dict, patient: dict, existing_resource_version: int) -> dict:
         attr = RecordAttributes(immunization, patient)
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient, "
-            "Operation = :operation"
+            "Operation = :operation, Version = :version"
         )
 
         queryResponse = _query_identifier(self.table, "IdentifierGSI", "IdentifierPK", attr.identifier)
@@ -158,6 +158,7 @@ class ImmunizationRepository:
                     ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
                     ":patient": attr.patient,
                     ":operation": "UPDATE",
+                    ":version": existing_resource_version+1
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(attr.pk) & Attr("DeletedAt").not_exists(),

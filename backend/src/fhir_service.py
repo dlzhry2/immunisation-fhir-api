@@ -114,7 +114,7 @@ class FhirService:
         return Immunization.parse_obj(imms)
 
     def update_immunization(
-        self, imms_id: str, immunization: dict
+        self, imms_id: str, immunization: dict, existing_resource_version: int
     ) -> tuple[UpdateOutcome, Immunization]:
         immunization["id"] = imms_id
 
@@ -132,7 +132,7 @@ class FhirService:
 
         if "diagnostics" in patient: 
                 return (None,patient)
-        imms = self.immunization_repo.update_immunization(imms_id, immunization, patient)
+        imms = self.immunization_repo.update_immunization(imms_id, immunization, patient, existing_resource_version)
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
 
     def delete_immunization(self, imms_id) -> Immunization:
