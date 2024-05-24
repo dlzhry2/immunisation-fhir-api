@@ -212,11 +212,24 @@ class TestUpdateImmunization(unittest.TestCase):
 
         self.assertEqual(response["statusCode"], 400)
         
-    def test_update_deletedat_immunization(self):
+    def test_update_deletedat_immunization_with_version(self):
         """it should reinstate deletedat Immunization"""
         imms = "{}"
         imms_id = "valid-id"
         aws_event = {"headers": {"E-Tag":1}, "body": imms, "pathParameters": {"id": imms_id}}
+        self.service.reinstate_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
+        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True}
+        response = self.controller.update_immunization(aws_event)
+
+        self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
+        self.assertEqual(response["statusCode"], 200)
+        self.assertTrue("body" not in response)
+    
+    def test_update_deletedat_immunization_without_version(self):
+        """it should reinstate deletedat Immunization"""
+        imms = "{}"
+        imms_id = "valid-id"
+        aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
         self.service.reinstate_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
         self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True}
         response = self.controller.update_immunization(aws_event)
