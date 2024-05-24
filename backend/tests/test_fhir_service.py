@@ -250,24 +250,6 @@ class TestUpdateImmunization(unittest.TestCase):
         self.imms_repo.update_immunization.assert_called_once_with(imms_id, req_imms, pds_patient)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
 
-    def test_none_existing_imms(self):
-        """it should create a new record, if it doesn't exist"""
-        imms_id = "an-id"
-        imms = create_covid_19_immunization_dict(imms_id, VALID_NHS_NUMBER)
-
-        self.imms_repo.update_immunization.side_effect = ResourceNotFoundError("Immunization", imms_id)
-        self.imms_repo.create_immunization.return_value = create_covid_19_immunization_dict(imms_id)
-        self.fhir_service.pds_service.get_patient_details.return_value = {
-            "identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number", "value": "9990548609"}]
-        }
-
-        # When
-        outcome, _ = self.fhir_service.update_immunization(imms_id, imms)
-
-        # Then
-        self.assertEqual(outcome, UpdateOutcome.CREATE)
-        self.imms_repo.create_immunization.assert_called_once()
-
     def test_pre_validation_failed(self):
         """it should throw exception if Immunization is not valid"""
         imms_id = "an-id"
@@ -355,24 +337,6 @@ class TestUpdateImmunization(unittest.TestCase):
         # Then
         passed_imms = self.imms_repo.update_immunization.call_args.args[1]
         self.assertEqual(passed_imms["id"], req_imms_id)
-
-    def test_consistent_imms_id(self):
-        """Immunization[id] should be the same as request"""
-        req_imms_id = "an-id"
-        self.imms_repo.update_immunization.return_value = None
-        self.fhir_service.pds_service.get_patient_details.return_value = {"id": "patient-id"}
-
-        obj_imms_id = "a-diff-id"
-        req_imms = create_covid_19_immunization_dict(obj_imms_id)
-
-        with self.assertRaises(InconsistentIdError) as error:
-            # When
-            self.fhir_service.update_immunization(req_imms_id, req_imms)
-
-        # Then
-        self.assertEqual(req_imms_id, error.exception.imms_id)
-        self.imms_repo.update_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called()
 
     def test_patient_error(self):
         """it should throw error when PDS can't resolve patient"""

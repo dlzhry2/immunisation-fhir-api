@@ -29,8 +29,8 @@ class TestUpdateImmunization(ImmunizationBaseTest):
                 self.assertEqual(response.text, "")
                 self.assertTrue("Location" not in response.headers)
 
-    def test_update_non_unique_identifier(self):
-        """update a record should fail if identifier is not unique"""
+    def test_update_non_existent_identifier(self):
+        """update a record should fail if identifier is not present"""
         imms = create_an_imms_obj()
         _ = self.create_immunization_resource(self.default_imms_api, imms)
         # NOTE: there is a difference between id and identifier.
@@ -42,38 +42,27 @@ class TestUpdateImmunization(ImmunizationBaseTest):
         # When update the same object (it has the same identifier)
         response = self.default_imms_api.update_immunization(new_imms_id, imms)
         # Then
-        self.assert_operation_outcome(response, 422)
-
-    def test_update_none_existing_record(self):
-        """update should create a new Immunization if id doesn't exist"""
-        imms_id = str(uuid.uuid4())
-        imms = create_an_imms_obj(imms_id)
-
-        response = self.default_imms_api.update_immunization(imms_id, imms)
-
-        self.assertEqual(response.status_code, 201, response.text)
+        self.assert_operation_outcome(response, 404)
 
     def test_update_inconsistent_id(self):
         """update should fail if id in the path doesn't match with the id in the message"""
         msg_id = str(uuid.uuid4())
         imms = create_an_imms_obj(msg_id)
         path_id = str(uuid.uuid4())
-
         response = self.default_imms_api.update_immunization(path_id, imms)
-
         self.assert_operation_outcome(response, 400, contains=path_id)
 
-    def test_update_deleted_imms(self):
-        """updating deleted record will undo the delete"""
-        # This behaviour is consistent. Getting a deleted record will result in a 404.
-        #  An update of a non-existent record should result in creating a new record
-        #  Therefore, the new resource's id must be different from the original one
+    # def test_update_deleted_imms(self):
+    #     """updating deleted record will undo the delete"""
+    #     # This behaviour is consistent. Getting a deleted record will result in a 404.
+    #     #  An update of a non-existent record should result in creating a new record
+    #     #  Therefore, the new resource's id must be different from the original one
 
-        imms = self.create_a_deleted_immunization_resource(self.default_imms_api)
-        deleted_id = imms["id"]
+    #     imms = self.create_a_deleted_immunization_resource(self.default_imms_api)
+    #     deleted_id = imms["id"]
 
-        response = self.default_imms_api.update_immunization(deleted_id, imms)
+    #     response = self.default_imms_api.update_immunization(deleted_id, imms)
 
-        self.assertEqual(response.status_code, 201, response.text)
-        new_imms_id = parse_location(response.headers["Location"])
-        self.assertNotEqual(deleted_id, new_imms_id)
+    #     self.assertEqual(response.status_code, 201, response.text)
+    #     new_imms_id = parse_location(response.headers["Location"])
+    #     self.assertNotEqual(deleted_id, new_imms_id)
