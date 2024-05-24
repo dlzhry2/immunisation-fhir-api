@@ -157,7 +157,17 @@ class FhirController:
                     diagnostics= f"The requested imms id:{imms_id} resource was not found.")
             return self.create_response(404, json.dumps(exp_error))
         existing_resource_version = int(existing_record["Version"])
-        resource_version_header = int(aws_event["headers"]["E-Tag"])
+        try:
+            resource_version_header = int(aws_event["headers"]["E-Tag"])
+        except Exception as e:
+            resource_version = aws_event["headers"]["E-Tag"]
+            exp_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.invalid,
+                    diagnostics= f"Imms resource version:{resource_version} in the request is invalid.")
+            return self.create_response(400, json.dumps(exp_error))
+        
         if existing_resource_version != resource_version_header: 
             exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),

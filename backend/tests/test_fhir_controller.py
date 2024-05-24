@@ -202,6 +202,16 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
     
+    def test_update_immunization_for_invalid_version(self):
+        """it should not update Immunization"""
+        imms = "{}"
+        imms_id = "valid-id"
+        aws_event = {"headers": {"E-Tag":"ajjsajj"}, "body": imms, "pathParameters": {"id": imms_id}}
+        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False}
+        response = self.controller.update_immunization(aws_event)
+
+        self.assertEqual(response["statusCode"], 400)
+        
     def test_update_deletedat_immunization(self):
         """it should reinstate deletedat Immunization"""
         imms = "{}"
