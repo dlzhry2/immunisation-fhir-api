@@ -47,7 +47,6 @@ class TestUpdateImmunizations(unittest.TestCase):
 
     def test_update_imms_with_duplicated_identifier_returns_error(self):
         """Should return an IdentifierDuplication error"""
-        # TODO: BUG Implement this test
         lambda_event = {"pathParameters": {"id": "an-id"}}
         error_msg = {'statusCode': 422, 'headers': {'Content-Type': 'application/fhir+json'}, 'body': '{"resourceType": "OperationOutcome", "id": "5c132d8a-a928-4e0e-8792-0c6456e625c2", "meta": {"profile": ["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]}, "issue": [{"severity": "error", "code": "exception", "details": {"coding": [{"system": "https://fhir.nhs.uk/Codesystem/http-error-codes","code": "DUPLICATE"}]}, "diagnostics": "The provided identifier: id-id is duplicated"}]}'}
         self.controller.update_immunization.return_value = error_msg
