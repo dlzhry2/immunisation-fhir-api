@@ -106,7 +106,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
     # EndpointOperation.UPDATE
     def test_update_imms_authorized(self):
         imms_id = str(uuid.uuid4())
-        aws_event = {"pathParameters": {"id": imms_id}, "body": create_covid_19_immunization(imms_id).json()}
+        aws_event = {"headers": {"E-Tag":1},"pathParameters": {"id": imms_id}, "body": create_covid_19_immunization(imms_id).json()}
         self.service.update_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
 
         _ = self.controller.update_immunization(aws_event)
