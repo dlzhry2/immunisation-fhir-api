@@ -27,13 +27,11 @@ from models.errors import (
     ValidationError,
     IdentifierDuplicationError,
     ParameterException,
-    InconsistentIdError
+    InconsistentIdError,
 )
 
 from pds_service import PdsService
 from parameter_parser import process_params, process_search_params, create_query_string
-
- 
 
 
 def make_controller(
@@ -48,19 +46,27 @@ def make_controller(
         service=Service.PDS,
         secret_manager_client=boto3.client("secretsmanager", config=boto_config),
         environment=pds_env,
-        cache=cache)
+        cache=cache,
+    )
     pds_service = PdsService(authenticator, pds_env)
 
     authorizer = Authorization()
     service = FhirService(imms_repo=imms_repo, pds_service=pds_service)
 
-    return FhirController(authorizer=authorizer, fhir_service=service, fhir_repository=imms_repo)
+    return FhirController(
+        authorizer=authorizer, fhir_service=service, fhir_repository=imms_repo
+    )
 
 
 class FhirController:
     immunization_id_pattern = r"^[A-Za-z0-9\-.]{1,64}$"
 
-    def __init__(self, authorizer: Authorization, fhir_service: FhirService, fhir_repository: ImmunizationRepository):
+    def __init__(
+        self,
+        authorizer: Authorization,
+        fhir_service: FhirService,
+        fhir_repository: ImmunizationRepository,
+    ):
         self.fhir_service = fhir_service
         self.authorizer = authorizer
         self.fhir_repository = fhir_repository
@@ -73,16 +79,15 @@ class FhirController:
         if id_error := self._validate_id(imms_id):
             return self.create_response(400, id_error)
 
-        
         if resource := self.fhir_service.get_immunization_by_id(imms_id):
             version = str()
             if isinstance(resource, Immunization):
                 resp = resource
             else:
-                resp = resource['Resource']
-                if resource.get('Version'):
+                resp = resource["Resource"]
+                if resource.get("Version"):
                     version = resource["Version"]
-            return FhirController.create_response(200, resp.json(), {"E-Tag":version} )
+            return FhirController.create_response(200, resp.json(), {"E-Tag": version})
         else:
             msg = "The requested resource was not found."
             id_error = create_operation_outcome(
@@ -106,14 +111,14 @@ class FhirController:
 
         try:
             resource = self.fhir_service.create_immunization(imms)
-            if "diagnostics" in resource: 
+            if "diagnostics" in resource:
                 exp_error = create_operation_outcome(
-                        resource_id=str(uuid.uuid4()),
-                        severity=Severity.error,
-                        code=Code.invariant,
-                        diagnostics=resource["diagnostics"]
-                    )
-                return self.create_response(400, json.dumps(exp_error) )
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.invariant,
+                    diagnostics=resource["diagnostics"],
+                )
+                return self.create_response(400, json.dumps(exp_error))
             location = f"{get_service_url()}/Immunization/{resource.id}"
             return self.create_response(201, None, {"Location": location})
         except ValidationError as error:
@@ -126,51 +131,119 @@ class FhirController:
     def update_immunization(self, aws_event):
         if response := self.authorize_request(EndpointOperation.UPDATE, aws_event):
             return response
-
         imms_id = aws_event["pathParameters"]["id"]
-        
+
+        # Validate the imms id -start
         if id_error := self._validate_id(imms_id):
             return FhirController.create_response(400, json.dumps(id_error))
-        try:   
+        # Validate the imms id -end
+
+        # Validate the body of the request -start
+        try:
             imms = json.loads(aws_event["body"], parse_float=Decimal)
+
+            # Validate the imms id in the path params and body of request -start
             if imms.get("id", imms_id) != imms_id:
                 exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),
                     severity=Severity.error,
                     code=Code.invariant,
-                    diagnostics=f"Validation errors: The provided imms id:{imms_id} doesn't match with the content of the message"
+                    diagnostics=f"Validation errors: The provided imms id:{imms_id} doesn't match with the content of the request body",
                 )
                 return self.create_response(400, json.dumps(exp_error))
-        
+            # Validate the imms id in the path params and body of request -end
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(
                 f"Request's body contains malformed JSON: {e}"
             )
-        
-        
-        """check if ID exists, return error if does not exist"""
-        existing_record =self.fhir_repository.get_immunization_by_id(imms_id)
+        # Validate the body of the request -end
+
+        # Validate if the imms resource does not exists -start
+        existing_record = self.fhir_repository.get_immunization_by_id_all(imms_id)
         if not existing_record:
             exp_error = create_operation_outcome(
-                    resource_id=str(uuid.uuid4()),
-                    severity=Severity.error,
-                    code=Code.not_found,
-                    diagnostics= f"The requested imms id:{imms_id} resource was not found."
-                )
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.not_found,
+                diagnostics=f"Validation errors: The requested imms id:{imms_id} resource was not found.",
+            )
             return self.create_response(404, json.dumps(exp_error))
-            
-       
+        # Validate if the imms resource does not exists -end
 
+        existing_resource_version = int(existing_record["Version"])
         try:
-            outcome, resource = self.fhir_service.update_immunization(imms_id, imms)
-            if "diagnostics" in resource: 
-                exp_error = create_operation_outcome(
+            # Validate if the imms resource to be updated is a logically deleted resource-start
+            if existing_record["DeletedAt"] == True:
+                outcome, resource = self.fhir_service.reinstate_immunization(
+                    imms_id, imms, existing_resource_version
+                )
+            # Validate if the imms resource to be updated is a logically deleted resource-end
+            else:
+                # Validate if imms resource version is part of the request -start
+                if not "E-Tag" in aws_event["headers"]:
+                    exp_error = create_operation_outcome(
                         resource_id=str(uuid.uuid4()),
                         severity=Severity.error,
-                        code=Code.invariant,
-                        diagnostics=resource["diagnostics"]
+                        code=Code.invalid,
+                        diagnostics="Validation errors: Imms resource version not specified in the request headers",
                     )
-                return self.create_response(400, json.dumps(exp_error) )
+                    return self.create_response(400, json.dumps(exp_error))
+                # Validate if imms resource version is part of the request -end
+
+                # Validate the imms resource version provided in the request headers is per standard -start
+                try:
+                    resource_version_header = int(aws_event["headers"]["E-Tag"])
+                except Exception as e:
+                    resource_version = aws_event["headers"]["E-Tag"]
+                    exp_error = create_operation_outcome(
+                        resource_id=str(uuid.uuid4()),
+                        severity=Severity.error,
+                        code=Code.invalid,
+                        diagnostics=f"Validation errors: Imms resource version:{resource_version} in the request headers is invalid.",
+                    )
+                    return self.create_response(400, json.dumps(exp_error))
+                # Validate the imms resource version provided in the request headers is per standard -end
+
+                # Validate if resource version has changed since last retrieve -start
+                if existing_resource_version > resource_version_header:
+                    exp_error = create_operation_outcome(
+                        resource_id=str(uuid.uuid4()),
+                        severity=Severity.error,
+                        code=Code.invalid,
+                        diagnostics=f"Validation errors: The requested resource {imms_id} has changed since the last retrieve.",
+                    )
+                    return self.create_response(400, json.dumps(exp_error))
+                
+                if existing_resource_version < resource_version_header:
+                    exp_error = create_operation_outcome(
+                        resource_id=str(uuid.uuid4()),
+                        severity=Severity.error,
+                        code=Code.invalid,
+                        diagnostics=f"Validation errors: The requested resource {imms_id} version is inconsistent with the existing version.",
+                    )
+                    return self.create_response(400, json.dumps(exp_error))
+                # Validate if resource version has changed since last retrieve -end
+                
+                # Check if the record is reinstated record -start
+                if existing_record["Reinstated"] == True:
+                    outcome, resource = self.fhir_service.update_reinstated_immunization(
+                    imms_id, imms, existing_resource_version
+                    )
+                else:
+                    outcome, resource = self.fhir_service.update_immunization(
+                        imms_id, imms, existing_resource_version
+                    )
+                # Check if the record is reinstated record -end
+
+            # Check for errors returned on update
+            if "diagnostics" in resource:
+                exp_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.invariant,
+                    diagnostics=resource["diagnostics"],
+                )
+                return self.create_response(400, json.dumps(exp_error))
             if outcome == UpdateOutcome.UPDATE:
                 return self.create_response(200)
         except ValidationError as error:
@@ -214,24 +287,33 @@ class FhirController:
             search_params.date_to,
         )
 
-        if "diagnostics" in result: 
-           exp_error = create_operation_outcome(
+        if "diagnostics" in result:
+            exp_error = create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
                 code=Code.invariant,
-                diagnostics=result["diagnostics"]
+                diagnostics=result["diagnostics"],
             )
-           return self.create_response(400, json.dumps(exp_error) ) 
+            return self.create_response(400, json.dumps(exp_error))
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
         if "entry" in result_json_dict:
-            result_json_dict['entry'] = [entry for entry in result_json_dict['entry'] if entry['resource'].get('status') not in ('not-done', 'entered-in-error')]
-            total_count = sum(1 for entry in result_json_dict['entry'] if entry.get('search', {}).get('mode') == 'match')
+            result_json_dict["entry"] = [
+                entry
+                for entry in result_json_dict["entry"]
+                if entry["resource"].get("status")
+                not in ("not-done", "entered-in-error")
+            ]
+            total_count = sum(
+                1
+                for entry in result_json_dict["entry"]
+                if entry.get("search", {}).get("mode") == "match"
+            )
             result_json_dict["total"] = total_count
         if "entry" not in result_json_dict:
             result_json_dict["entry"] = []
-            result_json_dict["total"] = 0  
-        return self.create_response(200, json.dumps(result_json_dict) )
+            result_json_dict["total"] = 0
+        return self.create_response(200, json.dumps(result_json_dict))
 
     def _validate_id(self, _id: str) -> Optional[dict]:
         if not re.match(self.immunization_id_pattern, _id):

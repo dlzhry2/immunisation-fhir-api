@@ -232,7 +232,7 @@ class TestUpdateImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            act_resource = self.repository.update_immunization(imms_id, imms, self.patient)
+            act_resource = self.repository.update_immunization(imms_id, imms, self.patient, 1)
 
         # Then
         self.assertDictEqual(act_resource, resource)
@@ -240,7 +240,7 @@ class TestUpdateImmunization(unittest.TestCase):
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient, "
-            "Operation = :operation"
+            "Operation = :operation, Version = :version "
         )
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][1]["identifier"][0]["value"]
@@ -259,6 +259,7 @@ class TestUpdateImmunization(unittest.TestCase):
                 ":imms_resource_val": json.dumps(imms),
                 ":patient": self.patient,
                 ":operation": "UPDATE",
+                ":version": 2
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,
@@ -277,7 +278,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.update_immunization(imms_id, imms, self.patient)
+            self.repository.update_immunization(imms_id, imms, self.patient, 1)
 
         # Then
         self.assertDictEqual(e.exception.response, response)
@@ -292,7 +293,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         with self.assertRaises(IdentifierDuplicationError) as e:
             # When
-            self.repository.update_immunization(imms_id, imms, self.patient)
+            self.repository.update_immunization(imms_id, imms, self.patient, 1)
 
         self.assertEqual(str(e.exception), f"The provided identifier: {imms['identifier'][0]['value']} is duplicated")
 
