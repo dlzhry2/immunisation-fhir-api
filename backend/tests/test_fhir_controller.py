@@ -196,7 +196,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms_id = "valid-id"
         aws_event = {"headers": {"E-Tag":1}, "body": imms, "pathParameters": {"id": imms_id}}
         self.service.update_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False}
+        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
         response = self.controller.update_immunization(aws_event)
 
         self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
@@ -208,7 +208,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms = "{}"
         imms_id = "valid-id"
         aws_event = {"headers": {"E-Tag":"ajjsajj"}, "body": imms, "pathParameters": {"id": imms_id}}
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False}
+        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
         response = self.controller.update_immunization(aws_event)
 
         self.assertEqual(response["statusCode"], 400)
@@ -219,7 +219,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms_id = "valid-id"
         aws_event = {"headers": {"E-Tag":1}, "body": imms, "pathParameters": {"id": imms_id}}
         self.service.reinstate_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True}
+        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False}
         response = self.controller.update_immunization(aws_event)
 
         self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
@@ -232,7 +232,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms_id = "valid-id"
         aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
         self.service.reinstate_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True}
+        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False}
         response = self.controller.update_immunization(aws_event)
 
         self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
@@ -262,7 +262,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms = "{}"
         aws_event = {"headers": {"E-Tag":1},"body": imms, "pathParameters": {"id": "valid-id"}}
         self.service.update_immunization.side_effect = CustomValidationError(message="invalid")
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False}
+        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
         response = self.controller.update_immunization(aws_event)
 
         self.assertEqual(400, response["statusCode"])
@@ -276,7 +276,7 @@ class TestUpdateImmunization(unittest.TestCase):
         req_imms = "{}"
         path_id = "valid-id"
         aws_event = {"headers": {"E-Tag":1},"body": req_imms, "pathParameters": {"id": path_id}}
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False}
+        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
         # When
         response = self.controller.update_immunization(aws_event)
 
