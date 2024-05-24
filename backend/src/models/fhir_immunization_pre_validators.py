@@ -414,7 +414,7 @@ class PreValidators:
             ]["value"]
             PreValidation.for_string(field_value, field_location)
             
-            #Validates that organization_identifier_value is in alpha-numeric-alpha-numeric-alpha 
+            #Validates that organization_identifier_value SITE CODE is in alpha-numeric-alpha-numeric-alpha 
             #(e.g. "X0X0X")    
             if not ODS_code_format.match(field_value):
                 raise ValueError(f"{field_location} must be in expected format" 
