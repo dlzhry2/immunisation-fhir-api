@@ -76,5 +76,6 @@ class ImmunisationApi:
         updated = {**self.headers, **{
             "X-Correlation-ID": str(uuid.uuid4()),
             "X-Request-ID": str(uuid.uuid4()),
+            "E-Tag": "1"
         }}
         return {**updated, **headers}
