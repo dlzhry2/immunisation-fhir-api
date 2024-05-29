@@ -79,7 +79,7 @@ class Authorization:
     _app_restricted_map = {
         EndpointOperation.READ: {Permission.READ},
         EndpointOperation.CREATE: {Permission.CREATE},
-        EndpointOperation.UPDATE: {Permission.UPDATE},
+        EndpointOperation.UPDATE: {Permission.UPDATE, Permission.CREATE},
         EndpointOperation.DELETE: {Permission.DELETE},
         EndpointOperation.SEARCH: {Permission.SEARCH},
     }
