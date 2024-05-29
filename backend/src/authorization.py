@@ -47,6 +47,15 @@ class Permission(str, Enum):
     DELETE = "immunization:delete"
     SEARCH = "immunization:search"
 
+class VaccineTypePermission(str, Enum):
+    """VaccineTypePermission name for each operation that can be done by an authorized entity
+    An Apigee App should specify a set of these as a comma-separated custom attribute."""
+    VACC_READ = "read"
+    VACC_CREATE = "create"
+    VACC_UPDATE = "update"
+    VACC_DELETE = "delete"
+    VACC_SEARCH = "search"
+
 
 class Authorization:
     """ Authorize the call based on the endpoint and the authentication type.
@@ -70,7 +79,7 @@ class Authorization:
     _app_restricted_map = {
         EndpointOperation.READ: {Permission.READ},
         EndpointOperation.CREATE: {Permission.CREATE},
-        EndpointOperation.UPDATE: {Permission.UPDATE, Permission.CREATE},
+        EndpointOperation.UPDATE: {Permission.UPDATE},
         EndpointOperation.DELETE: {Permission.DELETE},
         EndpointOperation.SEARCH: {Permission.SEARCH},
     }
