@@ -26,6 +26,7 @@ from tests.immunization_utils import (
     VALID_NHS_NUMBER,
 )
 from src.mappings import DiseaseCodes
+from .utils.generic_utils import load_json_data
 
 
 class TestServiceUrl(unittest.TestCase):
@@ -91,26 +92,17 @@ class TestGetImmunization(unittest.TestCase):
     def test_get_immunization_by_id_patient_restricted(self):
         """it should return a filtered Immunization when patient is restricted"""
         imms_id = "restricted_id"
-        with open(
-            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/completed_covid19_immunization_event.json",
-            "r",
-            encoding="utf-8",
-        ) as immunization_data_file:
-            immunization_data = json.load(immunization_data_file)
-        with open(
-            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/"
-            + "completed_covid19_filtered_immunization_event_for_read_return.json",
-            "r",
-            encoding="utf-8",
-        ) as filtered_immunization_data_file:
-            filtered_immunization = json.load(filtered_immunization_data_file)
+        immunization_data = load_json_data("completed_covid19_immunization_event.json")
+        filtered_immunization = load_json_data("completed_covid19_filtered_immunization_event_for_read_return.json")
         self.imms_repo.get_immunization_by_id.return_value = {"Resource": immunization_data}
         patient_data = {"meta": {"security": [{"code": "R"}]}}
         self.fhir_service.pds_service.get_patient_details.return_value = patient_data
+
         # When
         resp_imms = self.fhir_service.get_immunization_by_id(imms_id)
         act_res = resp_imms["Resource"]
         filtered_immunization_res = Immunization.parse_obj(filtered_immunization["Resource"])
+
         # Then
         self.assertEqual(act_res, filtered_immunization_res)
 
