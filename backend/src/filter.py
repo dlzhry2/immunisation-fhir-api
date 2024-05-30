@@ -1,6 +1,6 @@
 """Functions for filtering a FHIR Immunization Resource"""
 
-from src.utils import remove_questionnaire_items
+from base_utils.base_utils import remove_questionnaire_items
 
 
 class Filter:

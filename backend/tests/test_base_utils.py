@@ -3,7 +3,7 @@
 import unittest
 from copy import deepcopy
 
-from src.utils import remove_questionnaire_items
+from src.base_utils.base_utils import remove_questionnaire_items
 from .utils.generic_utils import load_json_data
 
 
