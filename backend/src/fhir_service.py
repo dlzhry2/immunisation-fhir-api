@@ -86,7 +86,7 @@ class FhirService:
 
             # Remove fields which are not to be returned
             imms.pop("identifier")
-            imms = remove_questionnaire_items(["IpAddress", "UserId", "UserName", "UserEmail"])
+            imms = remove_questionnaire_items(imms, ["IpAddress", "UserId", "UserName", "UserEmail"])
 
             # Handle s-flag filtering, where applicable
             try:

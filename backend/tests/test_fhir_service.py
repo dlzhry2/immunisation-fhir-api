@@ -64,16 +64,16 @@ class TestGetImmunization(unittest.TestCase):
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
         imms_id = "an-id"
-        self.imms_repo.get_immunization_by_id.return_value = {'Resource':create_covid_19_immunization(imms_id).dict()}
+        self.imms_repo.get_immunization_by_id.return_value = {"Resource": create_covid_19_immunization(imms_id).dict()}
         self.pds_service.get_patient_details.return_value = {}
 
         # When
         service_resp = self.fhir_service.get_immunization_by_id(imms_id)
         act_imms = service_resp["Resource"]
-        
+
         # Then
         self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
-        
+
         self.assertEqual(act_imms.id, imms_id)
 
     def test_immunization_not_found(self):
@@ -99,18 +99,18 @@ class TestGetImmunization(unittest.TestCase):
             immunization_data = json.load(immunization_data_file)
         with open(
             f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/"
-            + "completed_covid19_filtered_immunization_event.json",
+            + "completed_covid19_filtered_immunization_event_for_read_return.json",
             "r",
             encoding="utf-8",
         ) as filtered_immunization_data_file:
             filtered_immunization = json.load(filtered_immunization_data_file)
-        self.imms_repo.get_immunization_by_id.return_value = {'Resource':immunization_data}
+        self.imms_repo.get_immunization_by_id.return_value = {"Resource": immunization_data}
         patient_data = {"meta": {"security": [{"code": "R"}]}}
         self.fhir_service.pds_service.get_patient_details.return_value = patient_data
         # When
         resp_imms = self.fhir_service.get_immunization_by_id(imms_id)
-        act_res =resp_imms["Resource"]
-        filtered_immunization_res=Immunization.parse_obj(filtered_immunization["Resource"])
+        act_res = resp_imms["Resource"]
+        filtered_immunization_res = Immunization.parse_obj(filtered_immunization["Resource"])
         # Then
         self.assertEqual(act_res, filtered_immunization_res)
 
