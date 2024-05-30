@@ -31,6 +31,7 @@ from models.utils.validation_utils import get_vaccine_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
+from utils import remove_questionnaire_items
 
 
 def get_service_url(
@@ -82,10 +83,16 @@ class FhirService:
                 imms = imms_resp["Resource"]
             if imms_resp.get("Version"):
                 version = imms_resp["Version"]
+
+            # Remove fields which are not to be returned
+            imms.pop("identifier")
+            imms = remove_questionnaire_items(["IpAddress", "UserId", "UserName", "UserEmail"])
+
+            # Handle s-flag filtering, where applicable
             try:
-                nhs_number = [
-                    x for x in imms["contained"] if x["resourceType"] == "Patient"
-                ][0]["identifier"][0]["value"]
+                nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0][
+                    "value"
+                ]
                 patient = self.pds_service.get_patient_details(nhs_number)
                 filtered_immunization = handle_s_flag(imms, patient)
             except (KeyError, IndexError):
@@ -98,12 +105,7 @@ class FhirService:
     def create_immunization(self, immunization: dict) -> Immunization:
         try:
             self.validator.validate(immunization)
-        except (
-            ValidationError,
-            ValueError,
-            MandatoryError,
-            NotApplicableError,
-        ) as error:
+        except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
 
@@ -120,21 +122,16 @@ class FhirService:
 
         try:
             self.validator.validate(immunization)
-        except (
-            ValidationError,
-            ValueError,
-            MandatoryError,
-            NotApplicableError,
-        ) as error:
+        except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
 
-        if "diagnostics" in patient: 
-                return (None,patient)
+        if "diagnostics" in patient:
+            return (None, patient)
         imms = self.immunization_repo.update_immunization(imms_id, immunization, patient, existing_resource_version)
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
-    
+
     def reinstate_immunization(
         self, imms_id: str, immunization: dict, existing_resource_version: int
     ) -> tuple[UpdateOutcome, Immunization]:
@@ -152,11 +149,11 @@ class FhirService:
 
         patient = self._validate_patient(immunization)
 
-        if "diagnostics" in patient: 
-                return (None,patient)
+        if "diagnostics" in patient:
+            return (None, patient)
         imms = self.immunization_repo.reinstate_immunization(imms_id, immunization, patient, existing_resource_version)
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
-    
+
     def update_reinstated_immunization(
         self, imms_id: str, immunization: dict, existing_resource_version: int
     ) -> tuple[UpdateOutcome, Immunization]:
@@ -174,9 +171,11 @@ class FhirService:
 
         patient = self._validate_patient(immunization)
 
-        if "diagnostics" in patient: 
-                return (None,patient)
-        imms = self.immunization_repo.update_reinstated_immunization(imms_id, immunization, patient, existing_resource_version)
+        if "diagnostics" in patient:
+            return (None, patient)
+        imms = self.immunization_repo.update_reinstated_immunization(
+            imms_id, immunization, patient, existing_resource_version
+        )
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
 
     def delete_immunization(self, imms_id) -> Immunization:
@@ -283,9 +282,7 @@ class FhirService:
         If the NHS number exists, get the patient details from PDS and return the patient details.
         """
         try:
-            nhs_number = [
-                x for x in imms["contained"] if x["resourceType"] == "Patient"
-            ][0]["identifier"][0]["value"]
+            nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
         except (KeyError, IndexError):
             nhs_number = None
 
