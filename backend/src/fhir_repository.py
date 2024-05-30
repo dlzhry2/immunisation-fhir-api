@@ -418,7 +418,6 @@ class ImmunizationRepository:
     @staticmethod
     def _check_permission( requested: set, allowed: set) -> set:
         if not requested.issubset(allowed):
-            print(f"allowed:{allowed} ,requested:{requested} ")
             raise UnauthorizedVaxError()
         else:
             return None

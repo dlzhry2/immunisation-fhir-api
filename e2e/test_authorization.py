@@ -17,7 +17,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
     my_app: ApigeeApp
     my_imms_api: ImmunisationApi
 
-    def make_app(self, permissions: Set[Permission]):
+    def make_app(self, permissions: Set[Permission], vaxx_type_perms: Set = None):
         # The super class gives us everything we need, which is useful for test setup;
         #  however, we need to create a new app with required permissions.
         #  This new app and its api are called my_app and my_imms_api, i.e., app under test
@@ -26,7 +26,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         app_data = ApigeeApp(name=str(uuid.uuid4()),
                              apiProducts=[self.product.name])
         app_data.set_display_name(display_name)
-        self.my_app, app_res_cfg = make_app_restricted_app(self.apigee_service, app_data, permissions)
+        self.my_app, app_res_cfg = make_app_restricted_app(self.apigee_service, app_data, permissions, vaxx_type_perms)
 
         app_res_auth = AppRestrictedAuthentication(get_auth_url(), app_res_cfg)
         base_url = get_service_base_path()
@@ -62,6 +62,15 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.create_immunization(imms)
         # Then
         self.assertEqual(response.status_code, 201, response.text)
+        
+    def test_create_imms_unauthorised_vaxx(self):
+        """it should not create Immunization if app does not have the correct vaccine permission"""
+        self.make_app({Permission.CREATE}, {"flu:create"})
+        # When
+        imms = create_an_imms_obj()
+        response = self.my_imms_api.create_immunization(imms)
+        # Then
+        self.assertEqual(response.status_code, 403, response.text)
 
     def test_create_imms_unauthorised(self):
         """it should not create Immunization if app doesn't immunization:create permission"""
@@ -150,7 +159,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
     my_app: ApigeeApp
     my_imms_api: ImmunisationApi
 
-    def make_app(self, permissions: Set[Permission]):
+    def make_app(self, permissions: Set[Permission], vaxx_type_perms: Set = None):
         # The super class gives us everything we need, which is useful for test setup;
         #  however, we need to create a new app with required permissions.
         #  This new app and its api are called my_app and my_imms_api, i.e., app under test
@@ -159,7 +168,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         app_data = ApigeeApp(name=str(uuid.uuid4()),
                              apiProducts=[self.product.name])
         app_data.set_display_name(display_name)
-        self.my_app, app_res_cfg = make_cis2_app(self.apigee_service, app_data, permissions)
+        self.my_app, app_res_cfg = make_cis2_app(self.apigee_service, app_data, permissions, vaxx_type_perms)
 
         app_res_auth = Cis2Authentication(get_auth_url(), app_res_cfg, LoginUser(username=cis2_user))
         base_url = get_service_base_path()
@@ -205,6 +214,15 @@ class TestCis2Authorization(ImmunizationBaseTest):
         result = self.my_imms_api.create_immunization(imms)
         # Then
         self.assertEqual(result.status_code, 403, result.text)
+        
+    def test_create_imms_unauthorised_vaxx(self):
+        """it should not create Immunization if app does not have the correct vaccine permission"""
+        self.make_app({Permission.CREATE}, {"flu:create"})
+        # When
+        imms = create_an_imms_obj()
+        response = self.my_imms_api.create_immunization(imms)
+        # Then
+        self.assertEqual(response.status_code, 403, response.text)
 
     def test_update_imms_authorised(self):
         """it should update Immunization if app has the immunization:update and immunization:create permission"""
