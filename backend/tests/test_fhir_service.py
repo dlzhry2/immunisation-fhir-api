@@ -101,7 +101,7 @@ class TestGetImmunization(unittest.TestCase):
         # When
         resp_imms = self.fhir_service.get_immunization_by_id(imms_id)
         act_res = resp_imms["Resource"]
-        filtered_immunization_res = Immunization.parse_obj(filtered_immunization["Resource"])
+        filtered_immunization_res = Immunization.parse_obj(filtered_immunization)
 
         # Then
         self.assertEqual(act_res, filtered_immunization_res)

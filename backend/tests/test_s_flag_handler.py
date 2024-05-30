@@ -16,7 +16,7 @@ class TestRemovePersonalInfo(unittest.TestCase):
         expected_output = load_json_data("completed_covid19_filtered_immunization_event.json")
         patient = {"meta": {"security": [{"code": "R"}]}}
 
-        result = {'Resource':handle_s_flag(input_immunization, patient)}
+        result = handle_s_flag(input_immunization, patient)
 
         self.assertEqual(result, expected_output)
 

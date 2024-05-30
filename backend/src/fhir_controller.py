@@ -84,10 +84,7 @@ class FhirController:
         else:
             msg = "The requested resource was not found."
             id_error = create_operation_outcome(
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.not_found,
-                diagnostics=msg,
+                resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.not_found, diagnostics=msg
             )
             return FhirController.create_response(404, id_error)
 
