@@ -31,7 +31,7 @@ from models.utils.validation_utils import get_vaccine_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
-from utils import remove_questionnaire_items
+from filtering import Filter
 
 
 def get_service_url(
@@ -84,9 +84,8 @@ class FhirService:
             if imms_resp.get("Version"):
                 version = imms_resp["Version"]
 
-            # Remove fields which are not to be returned
-            imms.pop("identifier")
-            imms = remove_questionnaire_items(imms, ["IpAddress", "UserId", "UserName", "UserEmail"])
+            # Remove fields which are not to be returned for read
+            imms_filtered_for_read = Filter.read(imms)
 
             # Handle s-flag filtering, where applicable
             try:
@@ -94,12 +93,12 @@ class FhirService:
                     "value"
                 ]
                 patient = self.pds_service.get_patient_details(nhs_number)
-                filtered_immunization = handle_s_flag(imms, patient)
+                imms_filtered_for_read_and_s_flag = handle_s_flag(imms_filtered_for_read, patient)
             except (KeyError, IndexError):
-                filtered_immunization = imms
+                imms_filtered_for_read_and_s_flag = imms_filtered_for_read
 
             resp["Version"] = version
-            resp["Resource"] = Immunization.parse_obj(filtered_immunization)
+            resp["Resource"] = Immunization.parse_obj(imms_filtered_for_read_and_s_flag)
             return resp
 
     def create_immunization(self, immunization: dict) -> Immunization:
