@@ -31,7 +31,7 @@ from models.utils.validation_utils import get_vaccine_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
-from src.filter import Filter
+from filter import Filter
 
 
 def get_service_url(
