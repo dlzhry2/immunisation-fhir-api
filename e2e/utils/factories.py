@@ -67,7 +67,7 @@ def make_app_restricted_app(apigee: ApigeeService = None,
             k, v = make_permissions_attribute(permissions)
             app.add_attribute(k, v)
         app.add_attribute("AuthenticationType", AuthType.APP_RESTRICTED.value)
-
+        app.add_attribute("VaccineTypePermissions", "flu:create,covid19:create,mmr:create,hpv:create")
         app.add_product(f"identity-service-{get_apigee_env()}")
 
         resp = apigee.create_application(app)
@@ -94,7 +94,7 @@ def _make_user_restricted_app(auth_type: AuthType,
             k, v = make_permissions_attribute(permissions)
             app.add_attribute(k, v)
         app.add_attribute("AuthenticationType", auth_type.value)
-
+        app.add_attribute("VaccineTypePermissions", "flu:create,covid19:create,mmr:create,hpv:create")
         app.add_product(f"identity-service-{get_apigee_env()}")
 
         resp = apigee.create_application(app)
