@@ -28,6 +28,7 @@ from models.errors import (
     IdentifierDuplicationError,
     ParameterException,
     InconsistentIdError,
+    UnauthorizedVaxError
 )
 
 from pds_service import PdsService
@@ -103,14 +104,26 @@ class FhirController:
             return response
 
         try:
-            imms = json.loads(aws_event["body"], parse_float=Decimal)
+            imms = json.loads(aws_event["body"], parse_float=Decimal)            
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(
                 f"Request's body contains malformed JSON: {e}"
             )
-
+            
         try:
-            resource = self.fhir_service.create_immunization(imms)
+            imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+        except Exception as e:
+            msg = f"Unauthorized request for vaccine type"
+            exp_error = create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.forbidden,
+            diagnostics=msg,
+            )
+            return self.create_response(403, json.dumps(exp_error))
+        
+        try:
+            resource = self.fhir_service.create_immunization(imms,imms_vax_type_perms)
             if "diagnostics" in resource:
                 exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),
@@ -127,6 +140,8 @@ class FhirController:
             return self.create_response(422, duplicate.to_operation_outcome())
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
+        except UnauthorizedVaxError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
 
     def update_immunization(self, aws_event):
         if response := self.authorize_request(EndpointOperation.UPDATE, aws_event):
