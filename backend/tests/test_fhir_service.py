@@ -89,6 +89,26 @@ class TestGetImmunization(unittest.TestCase):
         self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
         self.assertEqual(act_imms, None)
 
+    def test_get_immunization_by_id_patient_not_restricted(self):
+        """
+        Test that get_immunization_by_id returns a FHIR Immunization Resource which has been filtered for read,
+        but not for s-flag, when patient is not restricted
+        """
+        imms_id = "non_restricted_id"
+
+        immunization_data = load_json_data("completed_covid19_immunization_event.json")
+        self.imms_repo.get_immunization_by_id.return_value = {"Resource": immunization_data}
+        self.fhir_service.pds_service.get_patient_details.return_value = {"meta": {}}
+
+        expected_imms = load_json_data("completed_covid19_immunization_event_for_read_return.json")
+        expected_output = Immunization.parse_obj(expected_imms)
+
+        # When
+        actual_output = self.fhir_service.get_immunization_by_id(imms_id)
+
+        # Then
+        self.assertEqual(actual_output["Resource"], expected_output)
+
     def test_get_immunization_by_id_patient_restricted(self):
         """it should return a filtered Immunization when patient is restricted"""
         imms_id = "restricted_id"
