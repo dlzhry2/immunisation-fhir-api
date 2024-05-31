@@ -147,6 +147,14 @@ class FhirController:
         if response := self.authorize_request(EndpointOperation.UPDATE, aws_event):
             return response
         imms_id = aws_event["pathParameters"]["id"]
+        
+        if aws_event.get("headers"):
+            try:
+                imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+            except Exception as e:
+                raise UnauthorizedVaxError()
+        else:
+            raise UnauthorizedVaxError()
 
         # Validate the imms id -start
         if id_error := self._validate_id(imms_id):
