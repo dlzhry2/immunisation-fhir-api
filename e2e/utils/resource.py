@@ -41,7 +41,7 @@ def create_an_imms_obj(
 
 
 def create_a_filtered_imms_obj(
-    crud_operation_to_filter_for: Literal[EndpointOperationNames.READ, EndpointOperationNames.SEARCH] = "",
+    crud_operation_to_filter_for: Literal["READ", "SEARCH", ""] = "",
     filter_for_s_flag: bool = False,
     imms_id: str = str(uuid.uuid4()),
     nhs_number=valid_nhs_number1,

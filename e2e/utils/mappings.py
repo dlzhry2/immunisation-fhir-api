@@ -1,7 +1,4 @@
-from enum import Enum
-
-
-class EndpointOperationNames(Enum):
+class EndpointOperationNames:
     """String enums for the name of each endpoint operation"""
 
     CREATE = "CREATE"
