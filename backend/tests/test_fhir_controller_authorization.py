@@ -41,9 +41,8 @@ class TestFhirControllerAuthorization(unittest.TestCase):
 
     def setUp(self):
         self.service = create_autospec(FhirService)
-        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service, self.repository)
+        self.controller = FhirController(self.authorizer, self.service)
 
     # EndpointOperation.READ
     def test_get_imms_by_id_authorized(self):
@@ -77,7 +76,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
 
     # EndpointOperation.CREATE
     def test_create_imms_authorized(self):
-        aws_event = {"body": create_covid_19_immunization(str(uuid.uuid4())).json()}
+        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"body": create_covid_19_immunization(str(uuid.uuid4())).json()}
 
         _ = self.controller.create_immunization(aws_event)
 
@@ -106,7 +105,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
     # EndpointOperation.UPDATE
     def test_update_imms_authorized(self):
         imms_id = str(uuid.uuid4())
-        aws_event = {"headers": {"E-Tag":1},"pathParameters": {"id": imms_id}, "body": create_covid_19_immunization(imms_id).json()}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"},"pathParameters": {"id": imms_id}, "body": create_covid_19_immunization(imms_id).json()}
         self.service.update_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
 
         _ = self.controller.update_immunization(aws_event)

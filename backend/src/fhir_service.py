@@ -94,6 +94,14 @@ class FhirService:
             resp["Version"] = version
             resp["Resource"] = Immunization.parse_obj(filtered_immunization)
             return resp
+    
+    def get_immunization_by_id_all(self, imms_id: str) -> Optional[dict]:
+        """
+        Get an Immunization by its ID. Return None if not found. If the patient doesn't have an NHS number,
+        return the Immunization without calling PDS or checking S flag.
+        """
+        imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id)
+        return imms_resp
 
     def create_immunization(self, immunization: dict, imms_vax_type_perms) -> Immunization:
         try:

@@ -19,7 +19,8 @@ from models.errors import (
     InvalidPatientId,
     CustomValidationError,
     ParameterException,
-    InconsistentIdError
+    InconsistentIdError,
+    UnauthorizedVaxError
 )
 from tests.immunization_utils import create_covid_19_immunization, create_covid_19_immunization_dict
 from mappings import VaccineTypes
@@ -31,7 +32,7 @@ class TestFhirController(unittest.TestCase):
         self.service = create_autospec(FhirService)
         self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service,self.repository)
+        self.controller = FhirController(self.authorizer, self.service)
 
     def test_create_response(self):
         """it should return application/fhir+json with correct status code"""
@@ -58,9 +59,8 @@ class TestFhirController(unittest.TestCase):
 class TestFhirControllerGetImmunizationById(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
-        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service,self.repository)
+        self.controller = FhirController(self.authorizer, self.service)
 
     def test_get_imms_by_id(self):
         """it should return Immunization resource if it exists"""
@@ -83,7 +83,7 @@ class TestFhirControllerGetImmunizationById(unittest.TestCase):
         # Given
         imms_id = "a-non-existing-id"
         self.service.get_immunization_by_id.return_value = None
-        lambda_event = {"pathParameters": {"id": imms_id}}
+        lambda_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"pathParameters": {"id": imms_id}}
 
         # When
         response = self.controller.get_immunization_by_id(lambda_event)
@@ -111,9 +111,8 @@ class TestFhirControllerGetImmunizationById(unittest.TestCase):
 class TestCreateImmunization(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
-        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service, self.repository)
+        self.controller = FhirController(self.authorizer, self.service)
 
     def test_create_immunization(self):
         """it should create Immunization and return resource's location"""
@@ -137,14 +136,14 @@ class TestCreateImmunization(unittest.TestCase):
         aws_event = {"body": imms.json()}
         self.service.create_immunization.return_value = imms
 
-        response = self.controller.create_immunization(aws_event)
-
-        self.assertEqual(response["statusCode"], 403)
+        with self.assertRaises(UnauthorizedVaxError) as e:
+            # When
+            self.controller.create_immunization(aws_event)
         
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
         bad_json = '{foo: "bar"}'
-        aws_event = {"body": bad_json}
+        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"body": bad_json}
 
         response = self.controller.create_immunization(aws_event)
 
@@ -197,17 +196,16 @@ class TestCreateImmunization(unittest.TestCase):
 class TestUpdateImmunization(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
-        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service, self.repository)
+        self.controller = FhirController(self.authorizer, self.service)
 
     def test_update_immunization(self):
         """it should update Immunization"""
         imms = "{}"
         imms_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":1}, "body": imms, "pathParameters": {"id": imms_id}}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"}, "body": imms, "pathParameters": {"id": imms_id}}
         self.service.update_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
         response = self.controller.update_immunization(aws_event)
 
         self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
@@ -218,8 +216,8 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should not update Immunization"""
         imms = "{}"
         imms_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":"ajjsajj"}, "body": imms, "pathParameters": {"id": imms_id}}
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
+        aws_event = {"headers": {"E-Tag":"ajjsajj","VaccineTypePermissions":"COVID19:create"}, "body": imms, "pathParameters": {"id": imms_id}}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
         response = self.controller.update_immunization(aws_event)
 
         self.assertEqual(response["statusCode"], 400)
@@ -228,9 +226,9 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should reinstate deletedat Immunization"""
         imms = "{}"
         imms_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":1}, "body": imms, "pathParameters": {"id": imms_id}}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"}, "body": imms, "pathParameters": {"id": imms_id}}
         self.service.reinstate_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False}
         response = self.controller.update_immunization(aws_event)
 
         self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
@@ -241,9 +239,9 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should reinstate deletedat Immunization"""
         imms = "{}"
         imms_id = "valid-id"
-        aws_event = {"body": imms, "pathParameters": {"id": imms_id}}
+        aws_event = {"headers": {"VaccineTypePermissions":"COVID19:create"},"body": imms, "pathParameters": {"id": imms_id}}
         self.service.reinstate_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False}
         response = self.controller.update_immunization(aws_event)
 
         self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
@@ -271,9 +269,9 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_validation_error(self):
         """it should return 400 if Immunization is invalid"""
         imms = "{}"
-        aws_event = {"headers": {"E-Tag":1},"body": imms, "pathParameters": {"id": "valid-id"}}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"},"body": imms, "pathParameters": {"id": "valid-id"}}
         self.service.update_immunization.side_effect = CustomValidationError(message="invalid")
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
         response = self.controller.update_immunization(aws_event)
 
         self.assertEqual(400, response["statusCode"])
@@ -286,8 +284,8 @@ class TestUpdateImmunization(unittest.TestCase):
         self.service.update_immunization.return_value = None,update_result
         req_imms = "{}"
         path_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":1},"body": req_imms, "pathParameters": {"id": path_id}}
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"},"body": req_imms, "pathParameters": {"id": path_id}}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
         # When
         response = self.controller.update_immunization(aws_event)
 
@@ -301,8 +299,8 @@ class TestUpdateImmunization(unittest.TestCase):
         self.service.update_immunization.return_value = None,update_result
         req_imms = "{}"
         path_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":1},"body": req_imms, "pathParameters": {"id": path_id}}
-        self.repository.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":2,"DeletedAt": False}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"},"body": req_imms, "pathParameters": {"id": path_id}}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":2,"DeletedAt": False}
         # When
         response = self.controller.update_immunization(aws_event)
 
@@ -313,14 +311,14 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_consistent_imms_id(self):
         """Immunization[id] should be the same as request"""
         bad_json = '{"id": "a-diff-id"}'
-        aws_event = {"body": bad_json, "pathParameters": {"id": "an-id"}}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"},"body": bad_json, "pathParameters": {"id": "an-id"}}
         response =self.controller.update_immunization(aws_event)
         self.assertEqual(response["statusCode"], 400)    
 
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
         bad_json = '{foo: "bar"}'
-        aws_event = {"body": bad_json, "pathParameters": {"id": "valid-id"}}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"},"body": bad_json, "pathParameters": {"id": "valid-id"}}
 
         response = self.controller.update_immunization(aws_event)
 
@@ -331,9 +329,9 @@ class TestUpdateImmunization(unittest.TestCase):
 
     def test_validate_imms_id(self):
         """it should validate lambda's Immunization id"""
-        invalid_id = {"pathParameters": {"id": "invalid %$ id"}}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"},"pathParameters": {"id": "invalid %$ id"}}
 
-        response = self.controller.update_immunization(invalid_id)
+        response = self.controller.update_immunization(aws_event)
 
         self.assertEqual(self.service.update_immunization.call_count, 0)
         self.assertEqual(response["statusCode"], 400)
@@ -344,9 +342,8 @@ class TestUpdateImmunization(unittest.TestCase):
 class TestDeleteImmunization(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
-        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service,self.repository)
+        self.controller = FhirController(self.authorizer, self.service)
 
     def test_validate_imms_id(self):
         """it should validate lambda's Immunization id"""
@@ -410,9 +407,8 @@ class TestDeleteImmunization(unittest.TestCase):
 class TestSearchImmunizations(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)
-        self.repository = create_autospec(ImmunizationRepository)
         self.authorizer = create_autospec(Authorization)
-        self.controller = FhirController(self.authorizer, self.service, self.repository)
+        self.controller = FhirController(self.authorizer, self.service)
         self.patient_identifier_key = "patient.identifier"
         self.immunization_target_key = "-immunization.target"
         self.date_from_key = "-date.from"
