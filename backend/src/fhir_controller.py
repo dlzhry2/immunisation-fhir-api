@@ -104,6 +104,9 @@ class FhirController:
         if aws_event.get("headers"):
             try:
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                if len(imms_vax_type_perms) == 0:
+                    raise UnauthorizedVaxError()
+                    
             except Exception as e:
                 raise UnauthorizedVaxError()
         else:
@@ -146,6 +149,9 @@ class FhirController:
         if aws_event.get("headers"):
             try:
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                if len(imms_vax_type_perms) == 0:
+                    raise UnauthorizedVaxError()
+                    
             except Exception as e:
                 raise UnauthorizedVaxError()
         else:
@@ -191,10 +197,12 @@ class FhirController:
         # Validate if the imms resource does not exists -end
         
         # Check vaxx type permissions on the existing record - start
-        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-        vax_type_perm= self._vaccine_permission(existing_record["VaccineType"], "update")
-        print(f"Allowed:{vax_type_perms}, Requested{vax_type_perm}")
-        self._check_permission(vax_type_perm,vax_type_perms)
+        try:
+            vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+            vax_type_perm= self._vaccine_permission(existing_record["VaccineType"], "update")
+            self._check_permission(vax_type_perm,vax_type_perms)
+        except UnauthorizedVaxError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
         # Check vaxx type permissions on the existing record - end
         
         existing_resource_version = int(existing_record["Version"])
