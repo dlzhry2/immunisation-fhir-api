@@ -118,9 +118,11 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update"},"pathParameters": {"id": imms_id}, "body": create_covid_19_immunization(imms_id).json()}
         self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "VaccineType":"Flu"}
         
-        with self.assertRaises(UnauthorizedVaxError) as e:
-            # When
-            self.controller.update_immunization(aws_event)
+        response = self.controller.update_immunization(aws_event)
+        self.assertEqual(response["statusCode"], 403)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertEqual(body["issue"][0]["code"], "forbidden")            
             
         self.authorizer.authorize.assert_called_once_with(EndpointOperation.UPDATE, aws_event)
 
