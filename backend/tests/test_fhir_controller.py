@@ -19,7 +19,8 @@ from models.errors import (
     InvalidPatientId,
     CustomValidationError,
     ParameterException,
-    InconsistentIdError
+    InconsistentIdError,
+    UnauthorizedVaxError
 )
 from tests.immunization_utils import create_covid_19_immunization, create_covid_19_immunization_dict
 from mappings import VaccineTypes
@@ -83,7 +84,7 @@ class TestFhirControllerGetImmunizationById(unittest.TestCase):
         # Given
         imms_id = "a-non-existing-id"
         self.service.get_immunization_by_id.return_value = None
-        lambda_event = {"pathParameters": {"id": imms_id}}
+        lambda_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"pathParameters": {"id": imms_id}}
 
         # When
         response = self.controller.get_immunization_by_id(lambda_event)
@@ -137,14 +138,14 @@ class TestCreateImmunization(unittest.TestCase):
         aws_event = {"body": imms.json()}
         self.service.create_immunization.return_value = imms
 
-        response = self.controller.create_immunization(aws_event)
-
-        self.assertEqual(response["statusCode"], 403)
+        with self.assertRaises(UnauthorizedVaxError) as e:
+            # When
+            self.controller.create_immunization(aws_event)
         
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
         bad_json = '{foo: "bar"}'
-        aws_event = {"body": bad_json}
+        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"body": bad_json}
 
         response = self.controller.create_immunization(aws_event)
 
