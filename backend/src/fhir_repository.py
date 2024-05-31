@@ -179,7 +179,8 @@ class ImmunizationRepository:
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
         vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "create")
+        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
+        print(f"Allowed:{vax_type_perms}, Requested{vax_type_perm}")
         self._check_permission(vax_type_perm,vax_type_perms)
         # "Resource" is a dynamodb reserved word
         update_exp = (
@@ -242,7 +243,8 @@ class ImmunizationRepository:
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
         vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "create")
+        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
+        print(f"Allowed:{vax_type_perms}, Requested{vax_type_perm}")
         self._check_permission(vax_type_perm,vax_type_perms)
         # "Resource" is a dynamodb reserved word
         update_exp = (
@@ -305,7 +307,8 @@ class ImmunizationRepository:
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
         vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "create")
+        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
+        print(f"Allowed:{vax_type_perms}, Requested{vax_type_perm}")
         self._check_permission(vax_type_perm,vax_type_perms)
         # "Resource" is a dynamodb reserved word
         update_exp = (

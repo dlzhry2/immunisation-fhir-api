@@ -239,7 +239,7 @@ class TestUpdateImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            act_resource = self.repository.update_immunization(imms_id, imms, self.patient, 1)
+            act_resource = self.repository.update_immunization(imms_id, imms, self.patient, 1,"COVID19:update")
 
         # Then
         self.assertDictEqual(act_resource, resource)
@@ -285,7 +285,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.update_immunization(imms_id, imms, self.patient, 1)
+            self.repository.update_immunization(imms_id, imms, self.patient, 1,"COVID19:update")
 
         # Then
         self.assertDictEqual(e.exception.response, response)
@@ -300,7 +300,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         with self.assertRaises(IdentifierDuplicationError) as e:
             # When
-            self.repository.update_immunization(imms_id, imms, self.patient, 1)
+            self.repository.update_immunization(imms_id, imms, self.patient, 1,"COVID19:update")
 
         self.assertEqual(str(e.exception), f"The provided identifier: {imms['identifier'][0]['value']} is duplicated")
 

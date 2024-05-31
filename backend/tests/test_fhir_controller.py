@@ -208,7 +208,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False, "VaccineType":"COVID19"}
         response = self.controller.update_immunization(aws_event)
 
-        self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
+        self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms),1,"COVID19:update")
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
     
@@ -231,7 +231,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False, "VaccineType":"COVID19"}
         response = self.controller.update_immunization(aws_event)
 
-        self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
+        self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1,"COVID19:update")
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
     
@@ -244,7 +244,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False, "VaccineType":"COVID19"}
         response = self.controller.update_immunization(aws_event)
 
-        self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
+        self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1,"COVID19:update")
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
 
