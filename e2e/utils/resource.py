@@ -40,6 +40,38 @@ def create_an_imms_obj(
     return imms
 
 
+def create_a_filtered_imms_obj(
+    crud_operation_to_filter_for: str = "",
+    filter_for_s_flag: bool = False,
+    imms_id: str = str(uuid.uuid4()),
+    nhs_number=valid_nhs_number1,
+    vaccine_type=VaccineTypes.covid_19,
+    occurrence_date_time: str = None,
+) -> dict:
+    """
+    Creates a filtered FHIR Immunization Resource dictionary, which includes an id, using the sample filtered data for
+    the given vaccine type and crud operation as a base, and updates the id, nhs_number and occurrence_date_time
+    as required.
+
+    NOTE: The filtered sample data files use the corresponding unfiltered sample data files as a base, and this
+    function can therefore be used in combination with the create_an_imms_obj function for testing filtering
+    """
+    s_flag_string = "_and_s_flag" if filter_for_s_flag else ""
+    file_name = (
+        f"Immunization/completed_{vaccine_type.lower()}_immunization_event_with_id"
+        + f"_filtered_for_{crud_operation_to_filter_for}{s_flag_string}"
+    )
+    imms = deepcopy(load_example(f"{file_name}.json"))
+
+    imms["id"] = imms_id
+
+    imms["contained"][1]["identifier"][0]["value"] = nhs_number
+    if occurrence_date_time is not None:
+        imms["occurrenceDateTime"] = occurrence_date_time
+
+    return imms
+
+
 def get_patient_id(imms: dict) -> str:
     patients = [resource for resource in imms["contained"] if resource["resourceType"] == "Patient"]
     return patients[0]["identifier"][0]["value"]
