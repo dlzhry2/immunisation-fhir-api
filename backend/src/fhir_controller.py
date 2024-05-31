@@ -142,7 +142,7 @@ class FhirController:
             return response
         imms_id = aws_event["pathParameters"]["id"]
         
-        # Check vaxx type permissions
+        # Check vaxx type permissions- start
         if aws_event.get("headers"):
             try:
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
@@ -150,6 +150,7 @@ class FhirController:
                 raise UnauthorizedVaxError()
         else:
             raise UnauthorizedVaxError()
+        # Check vaxx type permissions- end
         
         # Validate the imms id -start
         if id_error := self._validate_id(imms_id):
@@ -178,6 +179,7 @@ class FhirController:
 
         # Validate if the imms resource does not exists -start
         existing_record = self.fhir_service.get_immunization_by_id_all(imms_id)
+        
         if not existing_record:
             exp_error = create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
@@ -187,13 +189,20 @@ class FhirController:
             )
             return self.create_response(404, json.dumps(exp_error))
         # Validate if the imms resource does not exists -end
-
+        
+        # Check vaxx type permissions on the existing record - start
+        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+        vax_type_perm= self._vaccine_permission(existing_record["VaccineType"], "update")
+        print(f"Allowed:{vax_type_perms}, Requested{vax_type_perm}")
+        self._check_permission(vax_type_perm,vax_type_perms)
+        # Check vaxx type permissions on the existing record - end
+        
         existing_resource_version = int(existing_record["Version"])
         try:
             # Validate if the imms resource to be updated is a logically deleted resource-start
             if existing_record["DeletedAt"] == True:
                 outcome, resource = self.fhir_service.reinstate_immunization(
-                    imms_id, imms, existing_resource_version
+                    imms_id, imms, existing_resource_version, imms_vax_type_perms
                 )
             # Validate if the imms resource to be updated is a logically deleted resource-end
             else:
@@ -245,11 +254,11 @@ class FhirController:
                 # Check if the record is reinstated record -start
                 if existing_record["Reinstated"] == True:
                     outcome, resource = self.fhir_service.update_reinstated_immunization(
-                    imms_id, imms, existing_resource_version
+                    imms_id, imms, existing_resource_version, imms_vax_type_perms
                     )
                 else:
                     outcome, resource = self.fhir_service.update_immunization(
-                        imms_id, imms, existing_resource_version
+                        imms_id, imms, existing_resource_version, imms_vax_type_perms
                     )
                 # Check if the record is reinstated record -end
 
@@ -390,3 +399,24 @@ class FhirController:
             "headers": headers if headers else {},
             **({"body": body} if body else {}),
         }
+        
+    @staticmethod
+    def _vaccine_permission( vaccine_type, operation) -> set:
+        vaccine_permission = set()
+        vaccine_permission.add(str.lower(f"{vaccine_type}:{operation}"))
+        return vaccine_permission
+    
+    @staticmethod
+    def _parse_vaccine_permissions(imms_vax_type_perms) -> set:
+        parsed = [str.strip(str.lower(s)) for s in imms_vax_type_perms.split(",")]
+        vaccine_permissions = set()
+        for s in parsed:
+            vaccine_permissions.add(s)
+        return vaccine_permissions
+    
+    @staticmethod
+    def _check_permission( requested: set, allowed: set) -> set:
+        if not requested.issubset(allowed):
+            raise UnauthorizedVaxError()
+        else:
+            return None

@@ -203,9 +203,9 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should update Immunization"""
         imms = "{}"
         imms_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"}, "body": imms, "pathParameters": {"id": imms_id}}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update"}, "body": imms, "pathParameters": {"id": imms_id}}
         self.service.update_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False, "VaccineType":"COVID19"}
         response = self.controller.update_immunization(aws_event)
 
         self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
@@ -216,8 +216,8 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should not update Immunization"""
         imms = "{}"
         imms_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":"ajjsajj","VaccineTypePermissions":"COVID19:create"}, "body": imms, "pathParameters": {"id": imms_id}}
-        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
+        aws_event = {"headers": {"E-Tag":"ajjsajj","VaccineTypePermissions":"COVID19:update"}, "body": imms, "pathParameters": {"id": imms_id}}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False, "VaccineType":"COVID19"}
         response = self.controller.update_immunization(aws_event)
 
         self.assertEqual(response["statusCode"], 400)
@@ -226,9 +226,9 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should reinstate deletedat Immunization"""
         imms = "{}"
         imms_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"}, "body": imms, "pathParameters": {"id": imms_id}}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update"}, "body": imms, "pathParameters": {"id": imms_id}}
         self.service.reinstate_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False, "VaccineType":"COVID19"}
         response = self.controller.update_immunization(aws_event)
 
         self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
@@ -239,9 +239,9 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should reinstate deletedat Immunization"""
         imms = "{}"
         imms_id = "valid-id"
-        aws_event = {"headers": {"VaccineTypePermissions":"COVID19:create"},"body": imms, "pathParameters": {"id": imms_id}}
+        aws_event = {"headers": {"VaccineTypePermissions":"COVID19:update"},"body": imms, "pathParameters": {"id": imms_id}}
         self.service.reinstate_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
-        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": True, "Reinstated":False, "VaccineType":"COVID19"}
         response = self.controller.update_immunization(aws_event)
 
         self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms),1)
@@ -269,9 +269,9 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_validation_error(self):
         """it should return 400 if Immunization is invalid"""
         imms = "{}"
-        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"},"body": imms, "pathParameters": {"id": "valid-id"}}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update"},"body": imms, "pathParameters": {"id": "valid-id"}}
         self.service.update_immunization.side_effect = CustomValidationError(message="invalid")
-        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False, "VaccineType":"COVID19"}
         response = self.controller.update_immunization(aws_event)
 
         self.assertEqual(400, response["statusCode"])
@@ -284,8 +284,8 @@ class TestUpdateImmunization(unittest.TestCase):
         self.service.update_immunization.return_value = None,update_result
         req_imms = "{}"
         path_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"},"body": req_imms, "pathParameters": {"id": path_id}}
-        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update"},"body": req_imms, "pathParameters": {"id": path_id}}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "Reinstated":False, "VaccineType":"COVID19"}
         # When
         response = self.controller.update_immunization(aws_event)
 
@@ -299,8 +299,8 @@ class TestUpdateImmunization(unittest.TestCase):
         self.service.update_immunization.return_value = None,update_result
         req_imms = "{}"
         path_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:create"},"body": req_imms, "pathParameters": {"id": path_id}}
-        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":2,"DeletedAt": False}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update"},"body": req_imms, "pathParameters": {"id": path_id}}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":2,"DeletedAt": False, "VaccineType":"COVID19"}
         # When
         response = self.controller.update_immunization(aws_event)
 
