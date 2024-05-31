@@ -1,3 +1,14 @@
+from enum import Enum
+
+
+class EndpointOperationNames(Enum):
+    """String enums for the name of each endpoint operation"""
+
+    CREATE = "CREATE"
+    READ = "READ"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+    SEARCH = "SEARCH"
 
 
 class VaccineTypes:
