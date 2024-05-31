@@ -12,10 +12,6 @@ class TestSrcUtils(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test. This runs before every test"""
-        self.covid_json_data = load_json_data(filename="completed_covid19_immunization_event.json")
-        self.covid_json_data_for_read_return = load_json_data(
-            filename="completed_covid19_immunization_event_for_read_return.json"
-        )
         self.input_data = {
             "resourceType": "Immunization",
             "contained": [

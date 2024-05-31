@@ -13,7 +13,7 @@ class TestRemovePersonalInfo(unittest.TestCase):
     def test_remove_personal_info(self):
         """Test that personal info is removed for s_flagged patients"""
         input_immunization = load_json_data("completed_covid19_immunization_event.json")
-        expected_output = load_json_data("completed_covid19_filtered_immunization_event.json")
+        expected_output = load_json_data("completed_covid19_immunization_event_filtered_for_s_flag.json")
         patient = {"meta": {"security": [{"code": "R"}]}}
 
         result = handle_s_flag(input_immunization, patient)

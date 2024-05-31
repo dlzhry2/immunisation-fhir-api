@@ -100,7 +100,7 @@ class TestGetImmunization(unittest.TestCase):
         self.imms_repo.get_immunization_by_id.return_value = {"Resource": immunization_data}
         self.fhir_service.pds_service.get_patient_details.return_value = {"meta": {}}
 
-        expected_imms = load_json_data("completed_covid19_immunization_event_for_read_return.json")
+        expected_imms = load_json_data("completed_covid19_immunization_event_filtered_for_read.json")
         expected_output = Immunization.parse_obj(expected_imms)
 
         # When
@@ -113,7 +113,7 @@ class TestGetImmunization(unittest.TestCase):
         """it should return a filtered Immunization when patient is restricted"""
         imms_id = "restricted_id"
         immunization_data = load_json_data("completed_covid19_immunization_event.json")
-        filtered_immunization = load_json_data("completed_covid19_filtered_immunization_event_for_read_return.json")
+        filtered_immunization = load_json_data("completed_covid19_immunization_event_filtered_for_s_flag_and_read.json")
         self.imms_repo.get_immunization_by_id.return_value = {"Resource": immunization_data}
         patient_data = {"meta": {"security": [{"code": "R"}]}}
         self.fhir_service.pds_service.get_patient_details.return_value = patient_data

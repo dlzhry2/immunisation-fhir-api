@@ -12,5 +12,5 @@ class TestFilter(unittest.TestCase):
     def test_filter_read(self):
         """Tests to ensure Filter.read appropriately filters a FHIR Immunization Resource"""
         unfiltered_imms = load_json_data("completed_covid19_immunization_event.json")
-        expected_output = load_json_data("completed_covid19_immunization_event_for_read_return.json")
+        expected_output = load_json_data("completed_covid19_immunization_event_filtered_for_read.json")
         self.assertEqual(Filter.read(unfiltered_imms), expected_output)
