@@ -107,8 +107,8 @@ class FhirController:
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
                     
-            except Exception as e:
-                raise UnauthorizedVaxError()
+            except UnauthorizedVaxError as unauthorized:
+                return self.create_response(403, unauthorized.to_operation_outcome())
         else:
             raise UnauthorizedVaxError()
         
@@ -152,8 +152,8 @@ class FhirController:
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
                     
-            except Exception as e:
-                raise UnauthorizedVaxError()
+            except UnauthorizedVaxError as unauthorized:
+                return self.create_response(403, unauthorized.to_operation_outcome())
         else:
             raise UnauthorizedVaxError()
         # Check vaxx type permissions- end
