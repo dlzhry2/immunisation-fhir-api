@@ -173,7 +173,7 @@ class FhirController:
                     resource_id=str(uuid.uuid4()),
                     severity=Severity.error,
                     code=Code.invariant,
-                    diagnostics=f"Validation errors: The provided imms id:{imms_id} doesn't match with the content of the request body",
+                    diagnostics=f"Validation errors: The provided immunization id:{imms_id} doesn't match with the content of the request body",
                 )
                 return self.create_response(400, json.dumps(exp_error))
             # Validate the imms id in the path params and body of request -end
@@ -191,7 +191,7 @@ class FhirController:
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
                 code=Code.not_found,
-                diagnostics=f"Validation errors: The requested imms id:{imms_id} resource was not found.",
+                diagnostics=f"Validation errors: The requested immunization resource with id:{imms_id} was not found.",
             )
             return self.create_response(404, json.dumps(exp_error))
         # Validate if the imms resource does not exists -end
@@ -219,8 +219,8 @@ class FhirController:
                     exp_error = create_operation_outcome(
                         resource_id=str(uuid.uuid4()),
                         severity=Severity.error,
-                        code=Code.invalid,
-                        diagnostics="Validation errors: Imms resource version not specified in the request headers",
+                        code=Code.invariant,
+                        diagnostics="Validation errors: Immunization resource version not specified in the request headers",
                     )
                     return self.create_response(400, json.dumps(exp_error))
                 # Validate if imms resource version is part of the request -end
@@ -233,8 +233,8 @@ class FhirController:
                     exp_error = create_operation_outcome(
                         resource_id=str(uuid.uuid4()),
                         severity=Severity.error,
-                        code=Code.invalid,
-                        diagnostics=f"Validation errors: Imms resource version:{resource_version} in the request headers is invalid.",
+                        code=Code.invariant,
+                        diagnostics=f"Validation errors: Immunization resource version:{resource_version} in the request headers is invalid.",
                     )
                     return self.create_response(400, json.dumps(exp_error))
                 # Validate the imms resource version provided in the request headers is per standard -end
@@ -244,8 +244,8 @@ class FhirController:
                     exp_error = create_operation_outcome(
                         resource_id=str(uuid.uuid4()),
                         severity=Severity.error,
-                        code=Code.invalid,
-                        diagnostics=f"Validation errors: The requested resource {imms_id} has changed since the last retrieve.",
+                        code=Code.invariant,
+                        diagnostics=f"Validation errors: The requested immunization resource {imms_id} has changed since the last retrieve.",
                     )
                     return self.create_response(400, json.dumps(exp_error))
                 
@@ -253,8 +253,8 @@ class FhirController:
                     exp_error = create_operation_outcome(
                         resource_id=str(uuid.uuid4()),
                         severity=Severity.error,
-                        code=Code.invalid,
-                        diagnostics=f"Validation errors: The requested resource {imms_id} version is inconsistent with the existing version.",
+                        code=Code.invariant,
+                        diagnostics=f"Validation errors: The requested immunization resource {imms_id} version is inconsistent with the existing version.",
                     )
                     return self.create_response(400, json.dumps(exp_error))
                 # Validate if resource version has changed since last retrieve -end
