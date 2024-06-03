@@ -41,6 +41,18 @@ class UnauthorizedVaxError(RuntimeError):
             code=Code.forbidden,
             diagnostics=msg,
         )
+        
+@dataclass
+class InconsistentVaxTypeError(RuntimeError):
+    @staticmethod
+    def to_operation_outcome() -> dict:
+        msg = f"Requested vaccine type update does not match vaccine type present on record"
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.invariant,
+            diagnostics=msg,
+        )
 
 
 @dataclass

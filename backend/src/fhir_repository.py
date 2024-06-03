@@ -14,7 +14,8 @@ from models.errors import (
     ResourceNotFoundError,
     UnhandledResponseError,
     IdentifierDuplicationError,
-    UnauthorizedVaxError
+    UnauthorizedVaxError,
+    InconsistentVaxTypeError
 )
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 
@@ -175,12 +176,10 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
-        imms_vax_type_perms: str
+        existing_vax_type: str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
-        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
-        self._check_permission(vax_type_perm,vax_type_perms)
+        self._vaccine_type_difference(attr.vaccine_type, existing_vax_type)
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
@@ -238,12 +237,10 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
-        imms_vax_type_perms: str
+        existing_vax_type: str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
-        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
-        self._check_permission(vax_type_perm,vax_type_perms)
+        self._vaccine_type_difference(attr.vaccine_type, existing_vax_type)
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
@@ -301,12 +298,10 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
-        imms_vax_type_perms: str
+        existing_vax_type: str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
-        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
-        self._check_permission(vax_type_perm,vax_type_perms)
+        self._vaccine_type_difference(attr.vaccine_type, existing_vax_type)
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
@@ -441,3 +436,10 @@ class ImmunizationRepository:
     def _vaccine_type( patientsk ) -> str:
         parsed = [str.strip(str.lower(s)) for s in patientsk.split("#")]
         return parsed[0]
+    
+    @staticmethod
+    def _vaccine_type_difference(requested_vax_type, existing_vax_type):
+        if str.lower(requested_vax_type) != str.lower(existing_vax_type):
+            raise InconsistentVaxTypeError()
+        else:
+            return None
