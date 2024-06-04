@@ -28,8 +28,7 @@ from models.errors import (
     IdentifierDuplicationError,
     ParameterException,
     InconsistentIdError,
-    UnauthorizedVaxError,
-    InconsistentVaxTypeError
+    UnauthorizedVaxError
 )
 
 from pds_service import PdsService
@@ -200,8 +199,7 @@ class FhirController:
         # Check vaxx type permissions on the existing record - start
         try:
             vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-            existing_vax_type = existing_record["VaccineType"]
-            vax_type_perm= self._vaccine_permission(existing_vax_type, "update")
+            vax_type_perm= self._vaccine_permission(existing_record["VaccineType"], "update")
             self._check_permission(vax_type_perm,vax_type_perms)
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
@@ -212,7 +210,7 @@ class FhirController:
             # Validate if the imms resource to be updated is a logically deleted resource-start
             if existing_record["DeletedAt"] == True:
                 outcome, resource = self.fhir_service.reinstate_immunization(
-                    imms_id, imms, existing_resource_version, existing_vax_type
+                    imms_id, imms, existing_resource_version, imms_vax_type_perms
                 )
             # Validate if the imms resource to be updated is a logically deleted resource-end
             else:
@@ -264,11 +262,11 @@ class FhirController:
                 # Check if the record is reinstated record -start
                 if existing_record["Reinstated"] == True:
                     outcome, resource = self.fhir_service.update_reinstated_immunization(
-                    imms_id, imms, existing_resource_version, existing_vax_type
+                    imms_id, imms, existing_resource_version, imms_vax_type_perms
                     )
                 else:
                     outcome, resource = self.fhir_service.update_immunization(
-                        imms_id, imms, existing_resource_version, existing_vax_type
+                        imms_id, imms, existing_resource_version, imms_vax_type_perms
                     )
                 # Check if the record is reinstated record -end
 
@@ -285,8 +283,6 @@ class FhirController:
                 return self.create_response(200)
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
-        except InconsistentVaxTypeError as inconsistent:
-            return self.create_response(400, inconsistent.to_operation_outcome())      
         except IdentifierDuplicationError as duplicate:
             return self.create_response(422, duplicate.to_operation_outcome())
         except UnauthorizedVaxError as unauthorized:

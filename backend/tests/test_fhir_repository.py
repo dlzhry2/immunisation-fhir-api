@@ -9,7 +9,7 @@ from boto3.dynamodb.conditions import Attr, Key
 from src.mappings import DiseaseCodes, VaccineTypes
 from src.fhir_repository import ImmunizationRepository
 from src.models.utils.validation_utils import get_vaccine_type
-from models.errors import ResourceNotFoundError, UnhandledResponseError, IdentifierDuplicationError, UnauthorizedVaxError, InconsistentVaxTypeError
+from models.errors import ResourceNotFoundError, UnhandledResponseError, IdentifierDuplicationError, UnauthorizedVaxError
 from tests.utils.generic_utils import update_target_disease_code
 from tests.immunization_utils import create_covid_19_immunization_dict
 
@@ -239,7 +239,7 @@ class TestUpdateImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            act_resource = self.repository.update_immunization(imms_id, imms, self.patient, 1,"COVID19")
+            act_resource = self.repository.update_immunization(imms_id, imms, self.patient, 1,"COVID19:update")
 
         # Then
         self.assertDictEqual(act_resource, resource)
@@ -285,7 +285,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.update_immunization(imms_id, imms, self.patient, 1,"COVID19")
+            self.repository.update_immunization(imms_id, imms, self.patient, 1,"COVID19:update")
 
         # Then
         self.assertDictEqual(e.exception.response, response)
@@ -300,18 +300,9 @@ class TestUpdateImmunization(unittest.TestCase):
 
         with self.assertRaises(IdentifierDuplicationError) as e:
             # When
-            self.repository.update_immunization(imms_id, imms, self.patient, 1,"COVID19")
+            self.repository.update_immunization(imms_id, imms, self.patient, 1,"COVID19:update")
 
         self.assertEqual(str(e.exception), f"The provided identifier: {imms['identifier'][0]['value']} is duplicated")
-    
-    def test_update_differing_vax_type(self):
-        """it should not update vax record"""
-        imms_id = "an-imms-id"
-        imms = create_covid_19_immunization_dict(imms_id)
-        imms["patient"] = self.patient
-
-        with self.assertRaises(InconsistentVaxTypeError) as e:
-            self.repository.update_immunization(imms_id, imms, self.patient, 1,"FLU")
 
 
 class TestDeleteImmunization(unittest.TestCase):
