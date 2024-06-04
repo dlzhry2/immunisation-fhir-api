@@ -46,7 +46,7 @@ class UnauthorizedVaxError(RuntimeError):
 class InconsistentVaxTypeError(RuntimeError):
     @staticmethod
     def to_operation_outcome() -> dict:
-        msg = f"Requested vaccine type update does not match vaccine type present on record"
+        msg = f"Requested protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code does not match the stored record"
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()),
             severity=Severity.error,
