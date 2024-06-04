@@ -28,6 +28,7 @@ from models.errors import (
     IdentifierDuplicationError,
     ParameterException,
     InconsistentIdError,
+    UnauthorizedVaxError
 )
 
 from pds_service import PdsService
@@ -102,15 +103,23 @@ class FhirController:
         if response := self.authorize_request(EndpointOperation.CREATE, aws_event):
             return response
 
+        if aws_event.get("headers"):
+            try:
+                imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+            except Exception as e:
+                raise UnauthorizedVaxError()
+        else:
+            raise UnauthorizedVaxError()
+        
         try:
-            imms = json.loads(aws_event["body"], parse_float=Decimal)
+            imms = json.loads(aws_event["body"], parse_float=Decimal)            
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(
                 f"Request's body contains malformed JSON: {e}"
             )
-
+            
         try:
-            resource = self.fhir_service.create_immunization(imms)
+            resource = self.fhir_service.create_immunization(imms,imms_vax_type_perms)
             if "diagnostics" in resource:
                 exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),
@@ -127,12 +136,17 @@ class FhirController:
             return self.create_response(422, duplicate.to_operation_outcome())
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
+        except UnauthorizedVaxError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
 
     def update_immunization(self, aws_event):
         if response := self.authorize_request(EndpointOperation.UPDATE, aws_event):
             return response
         imms_id = aws_event["pathParameters"]["id"]
-
+        
+        # Check vaxx type permissions
+        
+        
         # Validate the imms id -start
         if id_error := self._validate_id(imms_id):
             return FhirController.create_response(400, json.dumps(id_error))

@@ -95,7 +95,7 @@ class FhirService:
             resp["Resource"] = Immunization.parse_obj(filtered_immunization)
             return resp
 
-    def create_immunization(self, immunization: dict) -> Immunization:
+    def create_immunization(self, immunization: dict, imms_vax_type_perms) -> Immunization:
         try:
             self.validator.validate(immunization)
         except (
@@ -109,7 +109,7 @@ class FhirService:
 
         if "diagnostics" in patient:
             return patient
-        imms = self.immunization_repo.create_immunization(immunization, patient)
+        imms = self.immunization_repo.create_immunization(immunization, patient, imms_vax_type_perms)
 
         return Immunization.parse_obj(imms)
 
