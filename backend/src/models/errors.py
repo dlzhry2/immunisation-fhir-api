@@ -34,7 +34,7 @@ class UnauthorizedError(RuntimeError):
 class UnauthorizedVaxError(RuntimeError):
     @staticmethod
     def to_operation_outcome() -> dict:
-        msg = f"Unauthorized request for vaccine type"
+        msg = "Unauthorized request for protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
         return create_operation_outcome(
             resource_id=str(uuid.uuid4()),
             severity=Severity.error,
