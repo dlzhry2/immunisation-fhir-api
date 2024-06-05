@@ -28,7 +28,8 @@ from models.errors import (
     IdentifierDuplicationError,
     ParameterException,
     InconsistentIdError,
-    UnauthorizedVaxError
+    UnauthorizedVaxError,
+    UnauthorizedVaxOnRecordError
 )
 
 from pds_service import PdsService
@@ -201,7 +202,7 @@ class FhirController:
             vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
             vax_type_perm= self._vaccine_permission(existing_record["VaccineType"], "update")
             self._check_permission(vax_type_perm,vax_type_perms)
-        except UnauthorizedVaxError as unauthorized:
+        except UnauthorizedVaxOnRecordError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
         # Check vaxx type permissions on the existing record - end
         
@@ -425,6 +426,6 @@ class FhirController:
     @staticmethod
     def _check_permission( requested: set, allowed: set) -> set:
         if not requested.issubset(allowed):
-            raise UnauthorizedVaxError()
+            raise UnauthorizedVaxOnRecordError()
         else:
             return None

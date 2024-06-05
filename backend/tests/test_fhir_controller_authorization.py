@@ -113,7 +113,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
 
         self.authorizer.authorize.assert_called_once_with(EndpointOperation.UPDATE, aws_event)
     
-    def test_update_imms_authorized_vaxx_in_record(self):
+    def test_update_imms_unauthorized_vaxx_in_record(self):
         imms_id = str(uuid.uuid4())
         aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update"},"pathParameters": {"id": imms_id}, "body": create_covid_19_immunization(imms_id).json()}
         self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "VaccineType":"Flu"}
