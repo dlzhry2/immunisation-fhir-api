@@ -257,14 +257,13 @@ class TestCis2Authorization(ImmunizationBaseTest):
         # Then
         self.assertEqual(response.status_code, 403, response.text)
 
-    def test_update_imms_unauthorised_2(self):
-        """it should not update Immunization if app doesn't have the immunization:create permission"""
+    def test_update_imms_unauthorised_vaxx(self):
+        """it should not update Immunization if app does not have the correct vaccine permission"""
         imms = create_an_imms_obj()
         imms_id = self.create_immunization_resource(self.default_imms_api, imms)
         imms["id"] = imms_id
 
-        perms = app_full_access(exclude={Permission.CREATE})
-        self.make_app(perms)
+        self.make_app({Permission.CREATE, Permission.UPDATE}, {"flu:create"})
         # When
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
