@@ -14,6 +14,7 @@ from models.errors import (
     ResourceNotFoundError,
     UnhandledResponseError,
     IdentifierDuplicationError,
+    UnauthorizedVaxError
 )
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 
@@ -115,27 +116,32 @@ class ImmunizationRepository:
                     resp["Resource"] = json.loads(response["Item"]["Resource"])
                     resp["Version"] = response["Item"]["Version"]
                     resp["DeletedAt"] = True
+                    resp["VaccineType"] = self._vaccine_type(response["Item"]["PatientSK"])
                     return resp
                 else:
                     resp["Resource"] = json.loads(response["Item"]["Resource"])
                     resp["Version"] = response["Item"]["Version"]
                     resp["DeletedAt"] = False
                     resp["Reinstated"] = True
+                    resp["VaccineType"] = self._vaccine_type(response["Item"]["PatientSK"])
                     return resp
             else:
                 resp["Resource"] = json.loads(response["Item"]["Resource"])
                 resp["Version"] = response["Item"]["Version"]
                 resp["DeletedAt"] = False
                 resp["Reinstated"] = False
+                resp["VaccineType"] = self._vaccine_type(response["Item"]["PatientSK"])
                 return resp
         else:
             return None
 
-    def create_immunization(self, immunization: dict, patient: dict) -> dict:
+    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
-
+        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "create")
+        self._check_permission(vax_type_perm,vax_type_perms)
         query_response = _query_identifier(
             self.table, "IdentifierGSI", "IdentifierPK", attr.identifier
         )
@@ -169,8 +175,12 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
+        imms_vax_type_perms: str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
+        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
+        self._check_permission(vax_type_perm,vax_type_perms)
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
@@ -228,8 +238,12 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
+        imms_vax_type_perms: str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
+        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
+        self._check_permission(vax_type_perm,vax_type_perms)
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
@@ -287,8 +301,12 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
+        imms_vax_type_perms: str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
+        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+        vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
+        self._check_permission(vax_type_perm,vax_type_perms)
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
@@ -397,3 +415,29 @@ class ImmunizationRepository:
             raise UnhandledResponseError(
                 message="Non-200 response from dynamodb", response=response
             )
+            
+    @staticmethod
+    def _vaccine_permission( vaccine_type, operation) -> set:
+        vaccine_permission = set()
+        vaccine_permission.add(str.lower(f"{vaccine_type}:{operation}"))
+        return vaccine_permission
+    
+    @staticmethod
+    def _parse_vaccine_permissions(imms_vax_type_perms) -> set:
+        parsed = [str.strip(str.lower(s)) for s in imms_vax_type_perms.split(",")]
+        vaccine_permissions = set()
+        for s in parsed:
+            vaccine_permissions.add(s)
+        return vaccine_permissions
+    
+    @staticmethod
+    def _check_permission( requested: set, allowed: set) -> set:
+        if not requested.issubset(allowed):
+            raise UnauthorizedVaxError()
+        else:
+            return None
+        
+    @staticmethod
+    def _vaccine_type( patientsk ) -> str:
+        parsed = [str.strip(str.lower(s)) for s in patientsk.split("#")]
+        return parsed[0]

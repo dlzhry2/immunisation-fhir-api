@@ -150,10 +150,10 @@ class TestCreateImmunization(unittest.TestCase):
         req_imms = create_covid_19_immunization_dict(imms_id, nhs_number)
 
         # When
-        stored_imms = self.fhir_service.create_immunization(req_imms)
+        stored_imms = self.fhir_service.create_immunization(req_imms,"COVID19:create")
 
         # Then
-        self.imms_repo.create_immunization.assert_called_once_with(req_imms, pds_patient)
+        self.imms_repo.create_immunization.assert_called_once_with(req_imms, pds_patient,"COVID19:create" )
         self.validator.validate.assert_called_once_with(req_imms)
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
         self.assertIsInstance(stored_imms, Immunization)
@@ -166,7 +166,7 @@ class TestCreateImmunization(unittest.TestCase):
 
         with self.assertRaises(CustomValidationError) as error:
             # When
-            self.pre_validate_fhir_service.create_immunization(imms)
+            self.pre_validate_fhir_service.create_immunization(imms,"COVID19:create")
 
         # Then
         self.assertTrue(expected_msg in error.exception.message)
@@ -198,7 +198,7 @@ class TestCreateImmunization(unittest.TestCase):
         # Create
         # Invalid target_disease
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.create_immunization(bad_target_disease_imms)
+            fhir_service.create_immunization(bad_target_disease_imms,"COVID19:create")
 
         self.assertEqual(bad_target_disease_msg, error.exception.message)
         self.imms_repo.create_immunization.assert_not_called()
@@ -206,7 +206,7 @@ class TestCreateImmunization(unittest.TestCase):
 
         # Missing patient name (Mandatory field)
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.create_immunization(bad_patient_name_imms)
+            fhir_service.create_immunization(bad_patient_name_imms,"COVID19:create")
 
         self.assertTrue(bad_patient_name_msg in error.exception.message)
         self.imms_repo.create_immunization.assert_not_called()
@@ -214,7 +214,7 @@ class TestCreateImmunization(unittest.TestCase):
 
         # Not Applicable field present
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.create_immunization(bad_na_imms)
+            fhir_service.create_immunization(bad_na_imms,"COVID19:create")
 
         self.assertTrue(bad_na_msg in error.exception.message)
         self.imms_repo.create_immunization.assert_not_called()
@@ -228,7 +228,7 @@ class TestCreateImmunization(unittest.TestCase):
 
         with self.assertRaises(InvalidPatientId) as e:
             # When
-            self.fhir_service.create_immunization(bad_patient_imms)
+            self.fhir_service.create_immunization(bad_patient_imms,"COVID19:create")
 
         # Then
         self.assertEqual(e.exception.patient_identifier, invalid_nhs_number)
@@ -255,11 +255,11 @@ class TestUpdateImmunization(unittest.TestCase):
         req_imms = create_covid_19_immunization_dict(imms_id, nhs_number)
 
         # When
-        outcome, _ = self.fhir_service.update_immunization(imms_id, req_imms, 1)
+        outcome, _ = self.fhir_service.update_immunization(imms_id, req_imms, 1,"COVID19:update")
 
         # Then
         self.assertEqual(outcome, UpdateOutcome.UPDATE)
-        self.imms_repo.update_immunization.assert_called_once_with(imms_id, req_imms, pds_patient, 1)
+        self.imms_repo.update_immunization.assert_called_once_with(imms_id, req_imms, pds_patient, 1,"COVID19:update")
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
 
     def test_pre_validation_failed(self):
@@ -281,7 +281,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         with self.assertRaises(CustomValidationError) as error:
             # When
-            self.fhir_service.update_immunization("an-id", imms, 1)
+            self.fhir_service.update_immunization("an-id", imms, 1,"COVID19:update")
 
         # Then
         self.assertEqual(error.exception.message, expected_msg)
@@ -310,7 +310,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         # Invalid target_disease
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_target_disease_imms, 1)
+            fhir_service.update_immunization("an-id", bad_target_disease_imms, 1,"COVID19:update")
 
         self.assertEqual(bad_target_disease_msg, error.exception.message)
         self.imms_repo.update_immunization.assert_not_called()
@@ -318,7 +318,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         # Missing patient name (Mandatory field)
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_patient_name_imms, 1)
+            fhir_service.update_immunization("an-id", bad_patient_name_imms, 1,"COVID19:update")
 
         self.assertTrue(bad_patient_name_msg in error.exception.message)
         self.imms_repo.update_immunization.assert_not_called()
@@ -326,7 +326,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         # Not Applicable field present
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_na_imms, 1)
+            fhir_service.update_immunization("an-id", bad_na_imms, 1,"COVID19:update")
 
         self.assertTrue(bad_na_msg in error.exception.message)
         self.imms_repo.update_immunization.assert_not_called()
@@ -344,7 +344,7 @@ class TestUpdateImmunization(unittest.TestCase):
         del req_imms["id"]
 
         # When
-        self.fhir_service.update_immunization(req_imms_id, req_imms, 1)
+        self.fhir_service.update_immunization(req_imms_id, req_imms, 1,"COVID19:update")
 
         # Then
         passed_imms = self.imms_repo.update_immunization.call_args.args[1]
@@ -359,7 +359,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         with self.assertRaises(InvalidPatientId) as e:
             # When
-            self.fhir_service.update_immunization(imms_id, bad_patient_imms, 1)
+            self.fhir_service.update_immunization(imms_id, bad_patient_imms, 1,"COVID19:update")
 
         # Then
         self.assertEqual(e.exception.patient_identifier, invalid_nhs_number)
