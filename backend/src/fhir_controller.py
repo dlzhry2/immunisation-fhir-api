@@ -271,8 +271,7 @@ class FhirController:
                         imms_id, imms, existing_resource_version, imms_vax_type_perms
 
                     )
-                else:
-                    outcome, resource = self.fhir_service.update_immunization(imms_id, imms, existing_resource_version)
+
                 # Check if the record is reinstated record -end
 
             # Check for errors returned on update
