@@ -314,14 +314,30 @@ class FhirController:
 
         if id_error := self._validate_id(imms_id):
             return FhirController.create_response(400, id_error)
-
+        
         try:
-            self.fhir_service.delete_immunization(imms_id)
+            if aws_event.get("headers"):
+                try:
+                    imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                    if len(imms_vax_type_perms) == 0:
+                        raise UnauthorizedVaxError()
+                        
+                except UnauthorizedVaxError as unauthorized:
+                    return self.create_response(403, unauthorized.to_operation_outcome())
+            else:
+                raise UnauthorizedVaxError()
+        except UnauthorizedVaxError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
+        
+        try:
+            self.fhir_service.delete_immunization(imms_id, imms_vax_type_perms)
             return self.create_response(204)
         except ResourceNotFoundError as not_found:
             return self.create_response(404, not_found.to_operation_outcome())
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
+        except UnauthorizedVaxError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
 
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
         if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
