@@ -78,25 +78,42 @@ class FhirController:
         imms_id = aws_event["pathParameters"]["id"]
         if id_error := self._validate_id(imms_id):
             return self.create_response(400, id_error)
-
-        if resource := self.fhir_service.get_immunization_by_id(imms_id):
-            version = str()
-            if isinstance(resource, Immunization):
-                resp = resource
+        
+        try:
+            if aws_event.get("headers"):
+                try:
+                    imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                    if len(imms_vax_type_perms) == 0:
+                        raise UnauthorizedVaxError()
+                        
+                except UnauthorizedVaxError as unauthorized:
+                    return self.create_response(403, unauthorized.to_operation_outcome())
             else:
-                resp = resource["Resource"]
-                if resource.get("Version"):
-                    version = resource["Version"]
-            return FhirController.create_response(200, resp.json(), {"E-Tag": version})
-        else:
-            msg = "The requested resource was not found."
-            id_error = create_operation_outcome(
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.not_found,
-                diagnostics=msg,
-            )
-            return FhirController.create_response(404, id_error)
+                raise UnauthorizedVaxError()
+        except UnauthorizedVaxError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
+        
+        try:
+            if resource := self.fhir_service.get_immunization_by_id(imms_id, imms_vax_type_perms):
+                version = str()
+                if isinstance(resource, Immunization):
+                    resp = resource
+                else:
+                    resp = resource["Resource"]
+                    if resource.get("Version"):
+                        version = resource["Version"]
+                return FhirController.create_response(200, resp.json(), {"E-Tag": version})
+            else:
+                msg = "The requested resource was not found."
+                id_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.not_found,
+                    diagnostics=msg,
+                )
+                return FhirController.create_response(404, id_error)
+        except UnauthorizedVaxError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
 
     def create_immunization(self, aws_event):
         if response := self.authorize_request(EndpointOperation.CREATE, aws_event):
