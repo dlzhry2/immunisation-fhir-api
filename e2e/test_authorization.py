@@ -295,7 +295,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.delete_immunization("doesn't-matter")
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-    
+
     def test_delete_imms__unauthorised_vaxx(self):
         """it should not delete Immunization if app does not have the correct vaccine permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
@@ -304,7 +304,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.delete_immunization(imms_id)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        
+
     def test_search_imms_authorised(self):
         """it should search Immunization if app has immunization:search permission"""
         mmr = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.mmr)
