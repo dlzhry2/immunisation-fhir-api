@@ -229,7 +229,7 @@ class FhirController:
                 # Validate the imms resource version provided in the request headers is per standard -start
                 try:
                     resource_version_header = int(aws_event["headers"]["E-Tag"])
-                except Exception as e:
+                except (TypeError, ValueError):
                     resource_version = aws_event["headers"]["E-Tag"]
                     exp_error = create_operation_outcome(
                         resource_id=str(uuid.uuid4()),
