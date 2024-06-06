@@ -207,7 +207,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.get_immunization_by_id("id-doesn't-matter")
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        
+
     def test_get_imms__unauthorised_vaxx(self):
         """it should not get Immunization if app does not have the correct vaccine permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
