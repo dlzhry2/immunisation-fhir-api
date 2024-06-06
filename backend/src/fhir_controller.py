@@ -309,20 +309,43 @@ class FhirController:
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
         if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
             return response
-
+        
         try:
             search_params = process_search_params(process_params(aws_event))
         except ParameterException as e:
             return self._create_bad_request(e.message)
         if search_params is None:
             raise Exception("Failed to parse parameters.")
-
+        
+        # Check vaxx type permissions- start
+        try:
+            if aws_event.get("headers"):
+                try:
+                    imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                    if len(imms_vax_type_perms) == 0:
+                        raise UnauthorizedVaxError()
+                    
+                except UnauthorizedVaxError as unauthorized:
+                    return self.create_response(403, unauthorized.to_operation_outcome())
+            else:
+                raise UnauthorizedVaxError()
+        except UnauthorizedVaxError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())    
+        # Check vaxx type permissions on the existing record - start
+        try:
+            vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+            vax_type_perm= self._vaccine_permission(search_params.immunization_targets, "search")
+            self._check_permission(vax_type_perm,vax_type_perms)
+        except UnauthorizedVaxOnRecordError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
+        # Check vaxx type permissions on the existing record - end
+        
         result = self.fhir_service.search_immunizations(
             search_params.patient_identifier,
             search_params.immunization_targets,
             create_query_string(search_params),
             search_params.date_from,
-            search_params.date_to,
+            search_params.date_to
         )
 
         if "diagnostics" in result:
@@ -412,8 +435,13 @@ class FhirController:
     @staticmethod
     def _vaccine_permission( vaccine_type, operation) -> set:
         vaccine_permission = set()
-        vaccine_permission.add(str.lower(f"{vaccine_type}:{operation}"))
-        return vaccine_permission
+        if isinstance(vaccine_type, list):
+            for x in vaccine_type:
+                vaccine_permission.add(str.lower(f"{x}:{operation}"))
+            return vaccine_permission    
+        else:
+            vaccine_permission.add(str.lower(f"{vaccine_type}:{operation}"))
+            return vaccine_permission
     
     @staticmethod
     def _parse_vaccine_permissions(imms_vax_type_perms) -> set:

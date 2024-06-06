@@ -426,6 +426,7 @@ class TestSearchImmunizations(unittest.TestCase):
             [(f"{self.patient_identifier_key}", f"{self.patient_identifier_valid_value}")]
         )
         lambda_event = {
+            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"COVID19:search"},
             "multiValueQueryStringParameters": {
                 self.immunization_target_key: [vaccine_type],
                 self.patient_identifier_key: [self.patient_identifier_valid_value],
@@ -443,6 +444,28 @@ class TestSearchImmunizations(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
 
+    def test_get_search_immunizations_unauthorized(self):
+        """it should search based on patient_identifier and immunization_target"""
+        search_result = Bundle.construct()
+        self.service.search_immunizations.return_value = search_result
+
+        vaccine_type = VaccineTypes().all[0]
+        params = f"{self.immunization_target_key}={vaccine_type}&" + urllib.parse.urlencode(
+            [(f"{self.patient_identifier_key}", f"{self.patient_identifier_valid_value}")]
+        )
+        lambda_event = {
+            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"FLU:search"},
+            "multiValueQueryStringParameters": {
+                self.immunization_target_key: [vaccine_type],
+                self.patient_identifier_key: [self.patient_identifier_valid_value],
+            }
+        }
+
+        # When
+        response = self.controller.search_immunizations(lambda_event)
+
+        self.assertEqual(response["statusCode"], 403)
+    
     def test_post_search_immunizations(self):
         """it should search based on patient_identifier and immunization_target"""
         search_result = Bundle.construct()
@@ -464,7 +487,7 @@ class TestSearchImmunizations(unittest.TestCase):
         # Construct the lambda event
         lambda_event = {
             "httpMethod": "POST",
-            "headers": {"Content-Type": "application/x-www-form-urlencoded"},
+            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"COVID19:search"},
             "body": base64_encoded_body,
         }
         # When
@@ -520,7 +543,9 @@ class TestSearchImmunizations(unittest.TestCase):
         self.service.search_immunizations.return_value = search_result
 
         vaccine_type = VaccineTypes().all[0]
-        lambda_event = {"multiValueQueryStringParameters": {
+        lambda_event = {
+            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"COVID19:search"},
+            "multiValueQueryStringParameters": {
             self.immunization_target_key: [vaccine_type],
             self.patient_identifier_key: [self.patient_identifier_valid_value]
         }}
@@ -538,7 +563,9 @@ class TestSearchImmunizations(unittest.TestCase):
         bundle = Bundle.parse_obj(search_result)
         self.service.search_immunizations.return_value = bundle
         vaccine_type = VaccineTypes().all[0]
-        lambda_event = {"multiValueQueryStringParameters": {
+        lambda_event = {
+            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"COVID19:search"},
+            "multiValueQueryStringParameters": {
             self.immunization_target_key: [vaccine_type],
             self.patient_identifier_key: [self.patient_identifier_valid_value]
         }}
@@ -567,7 +594,7 @@ class TestSearchImmunizations(unittest.TestCase):
                 "a": ["b,a"],
             },
             "body": None,
-            "headers": {"Content-Type": "application/x-www-form-urlencoded"},
+            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"COVID19:search"},
             "httpMethod": "POST",
         }
 
