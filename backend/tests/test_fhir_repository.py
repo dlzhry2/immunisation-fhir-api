@@ -47,7 +47,7 @@ class TestGetImmunization(unittest.TestCase):
         self.table.get_item.assert_called_once_with(Key={"PK": _make_immunization_pk(imms_id)})
         
     def test_unauthorized_get_immunization_by_id(self):
-        """it should find an Immunization by id"""
+        """it should not get an Immunization by id if vax perms do not exist"""
         imms_id = "an-id"
         resource = dict()
         resource['Resource'] = {"foo": "bar"}  
@@ -349,7 +349,7 @@ class TestDeleteImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            _id = self.repository.delete_immunization(imms_id)
+            _id = self.repository.delete_immunization(imms_id, "COVID:delete")
 
         # Then
         self.table.update_item.assert_called_once_with(
@@ -370,12 +370,19 @@ class TestDeleteImmunization(unittest.TestCase):
             "Attributes": {"Resource": json.dumps(resource)},
         }
         self.table.update_item = MagicMock(return_value=dynamo_response)
+        self.table.get_item = MagicMock(
+            return_value={"Item": {
+                'Resource': json.dumps({"foo": "bar"}),
+                'Version': 1,
+                'PatientSK': "COVID19#2516525251"
+            }}
+        )
 
         now_epoch = 123456
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            act_resource = self.repository.delete_immunization(imms_id)
+            act_resource = self.repository.delete_immunization(imms_id, "COVID19:delete")
 
         # Then
         self.table.update_item.assert_called_once_with(
@@ -386,18 +393,40 @@ class TestDeleteImmunization(unittest.TestCase):
             ReturnValues="ALL_NEW",
         )
         self.assertDictEqual(act_resource, resource)
-
+    
+    def test_unauthorised_vax_delete(self):
+        """when delete is called for a resource without proper vax permission"""
+        imms_id = "an-id"
+        self.table.get_item = MagicMock(
+            return_value={"Item": {
+                'Resource': json.dumps({"foo": "bar"}),
+                'Version': 1,
+                'PatientSK': "FLU#2516525251"
+            }}
+        )
+        
+        with self.assertRaises(UnauthorizedVaxError) as e:
+            self.repository.delete_immunization(imms_id, "COVID19:delete")
+    
+    
     def test_multiple_delete_should_not_update_timestamp(self):
         """when delete is called multiple times, or when it doesn't exist, it should not update DeletedAt,
         and it should return Error"""
         imms_id = "an-id"
         error_res = {"Error": {"Code": "ConditionalCheckFailedException"}}
+        self.table.get_item = MagicMock(
+            return_value={"Item": {
+                'Resource': json.dumps({"foo": "bar"}),
+                'Version': 1,
+                'PatientSK': "COVID19#2516525251"
+            }}
+        )
         self.table.update_item.side_effect = botocore.exceptions.ClientError(
             error_response=error_res, operation_name="an-op"
         )
 
         with self.assertRaises(ResourceNotFoundError) as e:
-            self.repository.delete_immunization(imms_id)
+            self.repository.delete_immunization(imms_id, "COVID19:delete")
 
         # Then
         self.table.update_item.assert_called_once_with(
@@ -417,11 +446,18 @@ class TestDeleteImmunization(unittest.TestCase):
         imms_id = "an-id"
         bad_request = 400
         response = {"ResponseMetadata": {"HTTPStatusCode": bad_request}}
+        self.table.get_item = MagicMock(
+            return_value={"Item": {
+                'Resource': json.dumps({"foo": "bar"}),
+                'Version': 1,
+                'PatientSK': "COVID19#2516525251"
+            }}
+        )
         self.table.update_item = MagicMock(return_value=response)
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.delete_immunization(imms_id)
+            self.repository.delete_immunization(imms_id,"COVID19:delete")
 
         # Then
         self.assertDictEqual(e.exception.response, response)
