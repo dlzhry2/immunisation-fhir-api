@@ -163,6 +163,18 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         # Then
         self.assertEqual(response.status_code, 403, response.text)
 
+    def test_search_imms_unauthorised_vax(self):
+        """it should not search Immunization if app does not have proper vax permissions"""
+        mmr = create_an_imms_obj(str(uuid.uuid4()), valid_nhs_number1, VaccineTypes.mmr)
+        _ = self.create_immunization_resource(self.default_imms_api, mmr)
+
+        self.make_app({Permission.SEARCH}, {"flu:read"})
+        # When
+        response = self.my_imms_api.search_immunizations(
+            valid_nhs_number1, VaccineTypes.mmr
+        )
+        # Then
+        self.assertEqual(response.status_code, 403, response.text)
 
 class TestCis2Authorization(ImmunizationBaseTest):
     my_app: ApigeeApp
