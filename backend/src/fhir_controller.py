@@ -368,8 +368,9 @@ class FhirController:
         # Check vaxx type permissions on the existing record - start
         try:
             vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-            vax_type_perm= self._vaccine_permission(search_params.immunization_targets, "search")
-            self._check_search_permissions(vax_type_perm,vax_type_perms)
+            vax_type_perm= self._new_vaccine_request(search_params.immunization_targets, "search", vax_type_perms)
+            if not vax_type_perm:
+                raise UnauthorizedVaxErrorOnSearch
         except UnauthorizedVaxErrorOnSearch as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
         # Check vaxx type permissions on the existing record - end
@@ -492,9 +493,15 @@ class FhirController:
         else:
             return None
 
-    @staticmethod
-    def _check_search_permissions( requested: set, allowed: set) -> set:
-        if not requested.issubset(allowed):
-            raise UnauthorizedVaxErrorOnSearch()
+    @staticmethod    
+    def _new_vaccine_request( vaccine_type, operation, vaccine_type_permissions: None) -> Optional[list]:
+        vaccine_permission = list()
+        if isinstance(vaccine_type, list):
+            for x in vaccine_type:
+                vaccs_prms = set()
+                vaccs_prms.add(str.lower(f"{x}:{operation}"))
+                if vaccs_prms.issubset(vaccine_type_permissions):
+                    vaccine_permission.append(x)
+            return vaccine_permission
         else:
-            return None
+            return vaccine_permission
