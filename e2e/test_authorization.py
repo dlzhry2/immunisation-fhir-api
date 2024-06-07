@@ -176,6 +176,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         # Then
         self.assertEqual(response.status_code, 403, response.text)
 
+
 class TestCis2Authorization(ImmunizationBaseTest):
     my_app: ApigeeApp
     my_imms_api: ImmunisationApi
