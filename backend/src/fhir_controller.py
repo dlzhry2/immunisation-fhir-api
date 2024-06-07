@@ -29,7 +29,8 @@ from models.errors import (
     ParameterException,
     InconsistentIdError,
     UnauthorizedVaxError,
-    UnauthorizedVaxOnRecordError
+    UnauthorizedVaxOnRecordError,
+    UnauthorizedVaxErrorOnSearch
 )
 
 from pds_service import PdsService
@@ -335,8 +336,8 @@ class FhirController:
         try:
             vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
             vax_type_perm= self._vaccine_permission(search_params.immunization_targets, "search")
-            self._check_permission(vax_type_perm,vax_type_perms)
-        except UnauthorizedVaxOnRecordError as unauthorized:
+            self._check_search_permissions(vax_type_perm,vax_type_perms)
+        except UnauthorizedVaxErrorOnSearch as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
         # Check vaxx type permissions on the existing record - end
         
@@ -455,5 +456,12 @@ class FhirController:
     def _check_permission( requested: set, allowed: set) -> set:
         if not requested.issubset(allowed):
             raise UnauthorizedVaxOnRecordError()
+        else:
+            return None
+
+    @staticmethod
+    def _check_search_permissions( requested: set, allowed: set) -> set:
+        if not requested.issubset(allowed):
+            raise UnauthorizedVaxErrorOnSearch()
         else:
             return None
