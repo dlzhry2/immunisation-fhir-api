@@ -53,17 +53,6 @@ class UnauthorizedVaxOnRecordError(RuntimeError):
             code=Code.forbidden,
             diagnostics=msg,
         )
-@dataclass
-class UnauthorizedVaxErrorOnSearch(RuntimeError):
-    @staticmethod
-    def to_operation_outcome() -> dict:
-        msg = "Unauthorized request for one or more vaccine types present in query"
-        return create_operation_outcome(
-            resource_id=str(uuid.uuid4()),
-            severity=Severity.error,
-            code=Code.forbidden,
-            diagnostics=msg,
-        )
         
 @dataclass
 class ResourceNotFoundError(RuntimeError):

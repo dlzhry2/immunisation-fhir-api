@@ -29,8 +29,7 @@ from models.errors import (
     ParameterException,
     InconsistentIdError,
     UnauthorizedVaxError,
-    UnauthorizedVaxOnRecordError,
-    UnauthorizedVaxErrorOnSearch
+    UnauthorizedVaxOnRecordError
 )
 
 from pds_service import PdsService
@@ -370,8 +369,8 @@ class FhirController:
             vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
             vax_type_perm= self._new_vaccine_request(search_params.immunization_targets, "search", vax_type_perms)
             if not vax_type_perm:
-                raise UnauthorizedVaxErrorOnSearch
-        except UnauthorizedVaxErrorOnSearch as unauthorized:
+                raise UnauthorizedVaxError
+        except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
         # Check vaxx type permissions on the existing record - end
         
