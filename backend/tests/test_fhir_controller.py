@@ -248,23 +248,23 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
 
-    # def test_update_record_exists(self):
-    #     """it should return not-found OperationOutcome if ID doesn't exist"""
-    #     # Given
-    #     imms_id = "a-non-existing-id"
-    #     self.service.get_immunization_by_id.return_value = None
-    #     lambda_event = {"pathParameters": {"id": imms_id}}
+    def test_update_record_exists(self):
+        """it should return not-found OperationOutcome if ID doesn't exist"""
+        # Given
+        imms_id = "a-non-existing-id"
+        self.service.get_immunization_by_id.return_value = None
+        lambda_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update"},"pathParameters": {"id": imms_id}}
         
-    #     # When
-    #     response = self.controller.get_immunization_by_id(lambda_event)
+        # When
+        response = self.controller.get_immunization_by_id(lambda_event)
         
-    #     # Then
-    #     self.service.get_immunization_by_id.assert_called_once_with(imms_id)
+        # Then
+        self.service.get_immunization_by_id.assert_called_once_with(imms_id, "COVID19:update")
 
-    #     self.assertEqual(response["statusCode"], 404)
-    #     body = json.loads(response["body"])
-    #     self.assertEqual(body["resourceType"], "OperationOutcome")
-    #     self.assertEqual(body["issue"][0]["code"], "not-found")
+        self.assertEqual(response["statusCode"], 404)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertEqual(body["issue"][0]["code"], "not-found")
 
     def test_validation_error(self):
         """it should return 400 if Immunization is invalid"""

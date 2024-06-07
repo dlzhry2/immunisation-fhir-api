@@ -47,7 +47,7 @@ class TestGetImmunization(unittest.TestCase):
         self.table.get_item.assert_called_once_with(Key={"PK": _make_immunization_pk(imms_id)})
         
     def test_unauthorized_get_immunization_by_id(self):
-        """it should find an Immunization by id"""
+        """it should not get an Immunization by id if vax perms do not exist"""
         imms_id = "an-id"
         resource = dict()
         resource['Resource'] = {"foo": "bar"}  
