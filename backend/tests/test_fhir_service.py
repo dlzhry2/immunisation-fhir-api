@@ -68,11 +68,11 @@ class TestGetImmunization(unittest.TestCase):
         self.pds_service.get_patient_details.return_value = {}
 
         # When
-        service_resp = self.fhir_service.get_immunization_by_id(imms_id)
+        service_resp = self.fhir_service.get_immunization_by_id(imms_id,"COVID19:read")
         act_imms = service_resp["Resource"]
         
         # Then
-        self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
+        self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id, "COVID19:read")
         
         self.assertEqual(act_imms.id, imms_id)
 
@@ -82,10 +82,10 @@ class TestGetImmunization(unittest.TestCase):
         self.imms_repo.get_immunization_by_id.return_value = None
 
         # When
-        act_imms = self.fhir_service.get_immunization_by_id(imms_id)
+        act_imms = self.fhir_service.get_immunization_by_id(imms_id,"COVID19:read")
 
         # Then
-        self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id)
+        self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id, "COVID19:read")
         self.assertEqual(act_imms, None)
 
     def test_get_immunization_by_id_patient_restricted(self):
@@ -108,7 +108,7 @@ class TestGetImmunization(unittest.TestCase):
         patient_data = {"meta": {"security": [{"code": "R"}]}}
         self.fhir_service.pds_service.get_patient_details.return_value = patient_data
         # When
-        resp_imms = self.fhir_service.get_immunization_by_id(imms_id)
+        resp_imms = self.fhir_service.get_immunization_by_id(imms_id, "COVID19:read")
         act_res =resp_imms["Resource"]
         filtered_immunization_res=Immunization.parse_obj(filtered_immunization["Resource"])
         # Then
@@ -370,10 +370,10 @@ class TestDeleteImmunization(unittest.TestCase):
         self.imms_repo.delete_immunization.return_value = imms
 
         # When
-        act_imms = self.fhir_service.delete_immunization(imms_id)
+        act_imms = self.fhir_service.delete_immunization(imms_id, "COVID:delete")
 
         # Then
-        self.imms_repo.delete_immunization.assert_called_once_with(imms_id)
+        self.imms_repo.delete_immunization.assert_called_once_with(imms_id, "COVID:delete")
         self.assertIsInstance(act_imms, Immunization)
         self.assertEqual(act_imms.id, imms_id)
 
