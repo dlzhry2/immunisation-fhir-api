@@ -36,21 +36,39 @@ class TestGetImmunization(unittest.TestCase):
         self.table.get_item = MagicMock(
             return_value={"Item": {
                 'Resource': json.dumps({"foo": "bar"}),
-                'Version': 1
+                'Version': 1,
+                'PatientSK': "COVID19#2516525251"
             }}
         )
-        imms = self.repository.get_immunization_by_id(imms_id)
+        imms = self.repository.get_immunization_by_id(imms_id, "COVID19:read")
 
         # Validate the results
         self.assertDictEqual(resource, imms)
         self.table.get_item.assert_called_once_with(Key={"PK": _make_immunization_pk(imms_id)})
+        
+    def test_unauthorized_get_immunization_by_id(self):
+        """it should find an Immunization by id"""
+        imms_id = "an-id"
+        resource = dict()
+        resource['Resource'] = {"foo": "bar"}  
+        resource['Version'] = 1
+        self.table.get_item = MagicMock(
+            return_value={"Item": {
+                'Resource': json.dumps({"foo": "bar"}),
+                'Version': 1,
+                'PatientSK': "COVID19#2516525251"
+            }}
+        )
+        with self.assertRaises(UnauthorizedVaxError) as e:
+            # When
+            self.repository.get_immunization_by_id(imms_id, "FLU:read")
 
     def test_immunization_not_found(self):
         """it should return None if Immunization doesn't exist"""
         imms_id = "non-existent-id"
         self.table.get_item = MagicMock(return_value={})
 
-        imms = self.repository.get_immunization_by_id(imms_id)
+        imms = self.repository.get_immunization_by_id(imms_id, "COVID19:read")
         self.assertIsNone(imms)
 
 
@@ -315,7 +333,7 @@ class TestDeleteImmunization(unittest.TestCase):
         imms_id = "a-deleted-id"
         self.table.get_item = MagicMock(return_value={"Item": {"Resource": "{}", "DeletedAt": time.time()}})
 
-        imms = self.repository.get_immunization_by_id(imms_id)
+        imms = self.repository.get_immunization_by_id(imms_id,"COVID19:read")
         self.assertIsNone(imms)
 
     def test_delete_immunization(self):
