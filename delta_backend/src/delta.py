@@ -61,6 +61,7 @@ def handler(event, context):
             if record["eventName"] != "REMOVE":
                 new_image = record["dynamodb"]["NewImage"]
                 imms_id = new_image["PK"]["S"].split("#")[1]
+                vaccine_type = _vaccine_type(new_image["PatientSK"]["S"])
                 operation = new_image["Operation"]["S"]
                 if operation == "CREATE":
                     operation = "NEW"
@@ -69,6 +70,8 @@ def handler(event, context):
                         "PK": str(uuid.uuid4()),
                         "ImmsID": imms_id,
                         "Operation": operation,
+                        "VaccineType": vaccine_type,
+                        "SupplierSystem": "default",
                         "DateTimeStamp": approximate_creation_time.isoformat(),
                         "Source": delta_source,
                         "Imms": new_image["Resource"]["S"],
@@ -79,11 +82,14 @@ def handler(event, context):
                 operation = "REMOVE"
                 new_image = record["dynamodb"]["Keys"]
                 imms_id = new_image["PK"]["S"].split("#")[1]
+                vaccine_type = _vaccine_type(new_image["PatientSK"]["S"])
                 response = delta_table.put_item(
                     Item={
                         "PK": str(uuid.uuid4()),
                         "ImmsID": imms_id,
                         "Operation": "REMOVE",
+                        "VaccineType": vaccine_type,
+                        "SupplierSystem": "default",
                         "DateTimeStamp": approximate_creation_time.isoformat(),
                         "Source": delta_source,
                         "Imms": "",
@@ -124,3 +130,8 @@ def handler(event, context):
         firehose_log["event"] = log_data
         firehose_logger.send_log(firehose_log)
         raise Exception(f"Delta Lambda failure: {e}")
+    
+@staticmethod
+def _vaccine_type( patientsk ) -> str:
+    parsed = [str.strip(str.lower(s)) for s in patientsk.split("#")]
+    return parsed[0]
