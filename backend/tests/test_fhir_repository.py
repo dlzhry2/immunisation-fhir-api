@@ -103,6 +103,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
                 "Resource": json.dumps(imms),
                 "Patient": ANY,
                 "IdentifierPK": ANY,
+                "SupplierSystem": "default",
                 "Operation": "CREATE",
                 "Version": 1
             }
@@ -125,6 +126,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
                 "Resource": ANY,
                 "Patient": self.patient,
                 "IdentifierPK": ANY,
+                "SupplierSystem": "default",
                 "Operation": "CREATE",
                 "Version": 1
             }
