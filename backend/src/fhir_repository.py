@@ -112,7 +112,8 @@ class ImmunizationRepository:
 
     def get_immunization_by_id_all(self, imms_id: str,imms:dict ) -> Optional[dict]:
         response = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
-        diagnostics = check_organisation_system_value(response,imms)
+        if response:
+         diagnostics = check_organisation_system_value(response,imms)
         if diagnostics:
             return diagnostics
         else:
