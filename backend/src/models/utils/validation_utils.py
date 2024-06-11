@@ -2,6 +2,8 @@
 
 from typing import Union
 from mappings import vaccine_type_mappings
+import json
+from generic_utils import create_diagnostics_error
 
 
 def disease_codes_to_vaccine_type(disease_codes_input: list) -> Union[str, None]:
@@ -41,3 +43,24 @@ def has_valid_vaccine_type(immunization: dict):
         return get_vaccine_type(immunization)
     except ValueError:
         return False
+    
+def check_organisation_system_value(response, imms: dict):
+    """Returns vaccine type if combination of disease codes is valid, otherwise returns False"""
+        
+    actor_identifier_system_request = imms['performer'][1]['actor']['identifier']['system']
+    actor_identifier_value_request = imms['performer'][1]['actor']['identifier']['value']
+    resource = json.loads(response['Item']['Resource'])
+    actor_identifier = resource['performer'][1]['actor']['identifier']
+    actor_identifier_system_response = actor_identifier['system']
+    actor_identifier_value_response = actor_identifier['value']
+
+    if actor_identifier_system_request != actor_identifier_system_response and actor_identifier_value_request != actor_identifier_value_response:
+        value = "Both"
+        diagnostics_error = create_diagnostics_error(value)
+    if actor_identifier_system_request != actor_identifier_system_response:
+        value = "System"
+        diagnostics_error = create_diagnostics_error(value)
+    if actor_identifier_value_request != actor_identifier_value_response:
+        value = "Value"
+        diagnostics_error = create_diagnostics_error(value)
+    return diagnostics_error 

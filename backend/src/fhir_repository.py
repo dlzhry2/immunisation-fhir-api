@@ -18,7 +18,7 @@ from models.errors import (
 )
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 
-from models.utils.validation_utils import get_vaccine_type
+from models.utils.validation_utils import get_vaccine_type,check_organisation_system_value
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -110,34 +110,38 @@ class ImmunizationRepository:
         else:
             return None
 
-    def get_immunization_by_id_all(self, imms_id: str) -> Optional[dict]:
+    def get_immunization_by_id_all(self, imms_id: str,imms:dict ) -> Optional[dict]:
         response = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
         print(f"response:{response}")
-        if "Item" in response:
-            resp = dict()
-            if "DeletedAt" in response["Item"]:
-                if response["Item"]["DeletedAt"] != "reinstated":
-                    resp["Resource"] = json.loads(response["Item"]["Resource"])
-                    resp["Version"] = response["Item"]["Version"]
-                    resp["DeletedAt"] = True
-                    resp["VaccineType"] = self._vaccine_type(response["Item"]["PatientSK"])
-                    return resp
+        diagnostics = check_organisation_system_value(response,imms)
+        if diagnostics:
+            return diagnostics
+        else:
+            if "Item" in response:
+                resp = dict()
+                if "DeletedAt" in response["Item"]:
+                    if response["Item"]["DeletedAt"] != "reinstated":
+                        resp["Resource"] = json.loads(response["Item"]["Resource"])
+                        resp["Version"] = response["Item"]["Version"]
+                        resp["DeletedAt"] = True
+                        resp["VaccineType"] = self._vaccine_type(response["Item"]["PatientSK"])
+                        return resp
+                    else:
+                        resp["Resource"] = json.loads(response["Item"]["Resource"])
+                        resp["Version"] = response["Item"]["Version"]
+                        resp["DeletedAt"] = False
+                        resp["Reinstated"] = True
+                        resp["VaccineType"] = self._vaccine_type(response["Item"]["PatientSK"])
+                        return resp
                 else:
                     resp["Resource"] = json.loads(response["Item"]["Resource"])
                     resp["Version"] = response["Item"]["Version"]
                     resp["DeletedAt"] = False
-                    resp["Reinstated"] = True
+                    resp["Reinstated"] = False
                     resp["VaccineType"] = self._vaccine_type(response["Item"]["PatientSK"])
                     return resp
             else:
-                resp["Resource"] = json.loads(response["Item"]["Resource"])
-                resp["Version"] = response["Item"]["Version"]
-                resp["DeletedAt"] = False
-                resp["Reinstated"] = False
-                resp["VaccineType"] = self._vaccine_type(response["Item"]["PatientSK"])
-                return resp
-        else:
-            return None
+                return None
 
     def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms) -> dict:
         new_id = str(uuid.uuid4())
