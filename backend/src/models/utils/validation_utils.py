@@ -3,7 +3,7 @@
 from typing import Union
 from mappings import vaccine_type_mappings
 import json
-from generic_utils import create_diagnostics_error
+from .generic_utils import create_diagnostics_error
 
 
 def disease_codes_to_vaccine_type(disease_codes_input: list) -> Union[str, None]:
