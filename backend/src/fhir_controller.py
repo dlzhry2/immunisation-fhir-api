@@ -202,7 +202,8 @@ class FhirController:
 
         # Validate if the imms resource does not exists -start
         existing_record = self.fhir_service.get_immunization_by_id_all(imms_id,imms)
-        if "diagnostics" in existing_record:
+        
+        if "diagnostics" in existing_record and existing_record is not None:
                 exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),
                     severity=Severity.error,
