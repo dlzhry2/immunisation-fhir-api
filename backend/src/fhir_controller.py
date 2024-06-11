@@ -203,14 +203,6 @@ class FhirController:
         # Validate if the imms resource does not exists -start
         existing_record = self.fhir_service.get_immunization_by_id_all(imms_id,imms)
         
-        if "diagnostics" in existing_record and existing_record is not None:
-                exp_error = create_operation_outcome(
-                    resource_id=str(uuid.uuid4()),
-                    severity=Severity.error,
-                    code=Code.invariant,
-                    diagnostics=existing_record["diagnostics"],
-                )
-                return self.create_response(400, json.dumps(exp_error))
         if not existing_record:
             exp_error = create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
@@ -219,6 +211,15 @@ class FhirController:
                 diagnostics=f"Validation errors: The requested immunization resource with id:{imms_id} was not found.",
             )
             return self.create_response(404, json.dumps(exp_error))
+        
+        if "diagnostics" in existing_record and existing_record is not None:
+                exp_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.invariant,
+                    diagnostics=existing_record["diagnostics"],
+                )
+                return self.create_response(400, json.dumps(exp_error))
         # Validate if the imms resource does not exists -end
         
         # Check vaxx type permissions on the existing record - start
