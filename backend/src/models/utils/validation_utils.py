@@ -57,10 +57,12 @@ def check_organisation_system_value(response, imms: dict):
     if actor_identifier_system_request != actor_identifier_system_response and actor_identifier_value_request != actor_identifier_value_response:
         value = "Both"
         diagnostics_error = create_diagnostics_error(value)
+        return diagnostics_error 
     if actor_identifier_system_request != actor_identifier_system_response:
         value = "System"
         diagnostics_error = create_diagnostics_error(value)
+        return diagnostics_error 
     if actor_identifier_value_request != actor_identifier_value_response:
         value = "Value"
         diagnostics_error = create_diagnostics_error(value)
-    return diagnostics_error 
+        return diagnostics_error 
