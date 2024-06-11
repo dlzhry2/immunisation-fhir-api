@@ -293,6 +293,19 @@ class TestUpdateImmunization(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome") 
     
+    def test_validation_identifier_to_give_bad_request_for_update_immunization(self):
+        """it should return 400 if Identifier system and value  doesn't match with the stored content.""" 
+        req_imms = "{}"
+        path_id = "valid-id"
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update"},"body": req_imms, "pathParameters": {"id": path_id}}
+        self.service.get_immunization_by_id_all.return_value = {"diagnostics": "Validation errors: contained[?(@.resourceType=='Patient')].identifier[0].value doesn't match with the stored content."}
+        # When
+        response = self.controller.update_immunization(aws_event)
+
+        self.assertEqual(response["statusCode"], 400)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome") 
+    
     def test_version_mismatch_for_update_immunization(self):
         """it should return 400 if resource version mismatch"""
         update_result = {"diagnostics": "Validation errors: contained[?(@.resourceType=='Patient')].identifier[0].value does not exists"}

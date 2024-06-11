@@ -45,24 +45,26 @@ def has_valid_vaccine_type(immunization: dict):
         return False
     
 def check_organisation_system_value(response, imms: dict):
-    """Returns vaccine type if combination of disease codes is valid, otherwise returns False"""
+    """Returns diagnostics if contained.identifier's system and value does not match with the stored content"""
         
-    actor_identifier_system_request = imms['performer'][1]['actor']['identifier']['system']
-    actor_identifier_value_request = imms['performer'][1]['actor']['identifier']['value']
+    practitioner = imms["contained"][0]
+    identifier = practitioner["identifier"][0]
+    identifier_system_request = identifier["system"]
+    identifier_value_request = identifier["value"]
     resource = json.loads(response['Item']['Resource'])
-    actor_identifier = resource['performer'][1]['actor']['identifier']
-    actor_identifier_system_response = actor_identifier['system']
-    actor_identifier_value_response = actor_identifier['value']
+    identifier = resource['contained'][0]['identifier'][0]
+    identifier_system_response = identifier['system']
+    identifier_value_response = identifier['value']
 
-    if actor_identifier_system_request != actor_identifier_system_response and actor_identifier_value_request != actor_identifier_value_response:
+    if identifier_system_request != identifier_system_response and identifier_value_request != identifier_value_response:
         value = "Both"
         diagnostics_error = create_diagnostics_error(value)
         return diagnostics_error 
-    if actor_identifier_system_request != actor_identifier_system_response:
-        value = "System"
+    if identifier_system_request != identifier_system_response:
+        value = "system"
         diagnostics_error = create_diagnostics_error(value)
         return diagnostics_error 
-    if actor_identifier_value_request != actor_identifier_value_response:
-        value = "Value"
+    if identifier_value_request != identifier_value_response:
+        value = "value"
         diagnostics_error = create_diagnostics_error(value)
         return diagnostics_error 
