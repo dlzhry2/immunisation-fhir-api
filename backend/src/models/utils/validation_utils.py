@@ -47,14 +47,19 @@ def has_valid_vaccine_type(immunization: dict):
 def check_organisation_system_value(response, imms: dict):
     """Returns diagnostics if contained.identifier's system and value does not match with the stored content"""
         
-    practitioner = imms["contained"][0]
-    identifier = practitioner["identifier"][0]
-    identifier_system_request = identifier["system"]
-    identifier_value_request = identifier["value"]
-    resource = json.loads(response['Item']['Resource'])
-    identifier = resource['contained'][0]['identifier'][0]
-    identifier_system_response = identifier['system']
-    identifier_value_response = identifier['value']
+    for item in imms["contained"]:
+        if item["resourceType"] == "Practitioner":
+            identifier_system_request = item["identifier"][0]["system"]
+            identifier_value_request = item["identifier"][0]["value"]
+    resource_str = response['Item']['Resource']
+    resource = json.loads(resource_str)
+    contained = resource.get('contained', [])
+    for item in contained:
+        if item.get('resourceType') == 'Practitioner':
+            identifiers = item.get('identifier', [])
+            for identifier in identifiers:
+                identifier_system_response = identifier.get('system', '')
+                identifier_value_response = identifier.get('value', '')
 
     if identifier_system_request != identifier_system_response and identifier_value_request != identifier_value_response:
         value = "Both"
