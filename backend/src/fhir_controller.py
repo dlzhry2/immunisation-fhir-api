@@ -55,12 +55,15 @@ def make_controller(
     authorizer = Authorization()
     service = FhirService(imms_repo=imms_repo, pds_service=pds_service)
 
+
     return FhirController(
         authorizer=authorizer, fhir_service=service)
 
 
+
 class FhirController:
     immunization_id_pattern = r"^[A-Za-z0-9\-.]{1,64}$"
+
 
     def __init__(
         self,
@@ -195,9 +198,7 @@ class FhirController:
                 return self.create_response(400, json.dumps(exp_error))
             # Validate the imms id in the path params and body of request -end
         except json.decoder.JSONDecodeError as e:
-            return self._create_bad_request(
-                f"Request's body contains malformed JSON: {e}"
-            )
+            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
         # Validate the body of the request -end
 
         # Validate if the imms resource does not exists -start
@@ -237,9 +238,11 @@ class FhirController:
         try:
             # Validate if the imms resource to be updated is a logically deleted resource-start
             if existing_record["DeletedAt"] == True:
+
                 outcome, resource = self.fhir_service.reinstate_immunization(
                     imms_id, imms, existing_resource_version, imms_vax_type_perms
                 )
+
             # Validate if the imms resource to be updated is a logically deleted resource-end
             else:
                 # Validate if imms resource version is part of the request -start
@@ -276,7 +279,7 @@ class FhirController:
                         diagnostics=f"Validation errors: The requested immunization resource {imms_id} has changed since the last retrieve.",
                     )
                     return self.create_response(400, json.dumps(exp_error))
-                
+
                 if existing_resource_version < resource_version_header:
                     exp_error = create_operation_outcome(
                         resource_id=str(uuid.uuid4()),
@@ -286,16 +289,19 @@ class FhirController:
                     )
                     return self.create_response(400, json.dumps(exp_error))
                 # Validate if resource version has changed since last retrieve -end
-                
+
                 # Check if the record is reinstated record -start
                 if existing_record["Reinstated"] == True:
                     outcome, resource = self.fhir_service.update_reinstated_immunization(
+
                     imms_id, imms, existing_resource_version, imms_vax_type_perms
                     )
                 else:
                     outcome, resource = self.fhir_service.update_immunization(
                         imms_id, imms, existing_resource_version, imms_vax_type_perms
+
                     )
+
                 # Check if the record is reinstated record -end
 
             # Check for errors returned on update
@@ -406,13 +412,10 @@ class FhirController:
             result_json_dict["entry"] = [
                 entry
                 for entry in result_json_dict["entry"]
-                if entry["resource"].get("status")
-                not in ("not-done", "entered-in-error")
+                if entry["resource"].get("status") not in ("not-done", "entered-in-error")
             ]
             total_count = sum(
-                1
-                for entry in result_json_dict["entry"]
-                if entry.get("search", {}).get("mode") == "match"
+                1 for entry in result_json_dict["entry"] if entry.get("search", {}).get("mode") == "match"
             )
             result_json_dict["total"] = total_count
         if "entry" not in result_json_dict:
@@ -422,9 +425,7 @@ class FhirController:
 
     def _validate_id(self, _id: str) -> Optional[dict]:
         if not re.match(self.immunization_id_pattern, _id):
-            msg = (
-                "the provided event ID is either missing or not in the expected format."
-            )
+            msg = "the provided event ID is either missing or not in the expected format."
             return create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
@@ -443,9 +444,7 @@ class FhirController:
         )
         return self.create_response(400, error)
 
-    def authorize_request(
-        self, operation: EndpointOperation, aws_event: dict
-    ) -> Optional[dict]:
+    def authorize_request(self, operation: EndpointOperation, aws_event: dict) -> Optional[dict]:
         try:
             self.authorizer.authorize(operation, aws_event)
         except UnauthorizedError as e:

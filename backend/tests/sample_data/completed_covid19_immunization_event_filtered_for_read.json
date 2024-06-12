@@ -1,6 +1,5 @@
 {
   "resourceType": "Immunization",
-  "id": "an-id",
   "contained": [
     {
       "resourceType": "Practitioner",
@@ -38,7 +37,7 @@
             }
           ],
           "system": "https://fhir.nhs.uk/Id/nhs-number",
-          "value": "9990548609"
+          "value": "9000000009"
         }
       ],
       "name": [
@@ -116,42 +115,10 @@
           ]
         },
         {
-          "linkId": "IpAddress",
-          "answer": [
-            {
-              "valueString": "IP_ADDRESS"
-            }
-          ]
-        },
-        {
-          "linkId": "UserId",
-          "answer": [
-            {
-              "valueString": "USER_ID"
-            }
-          ]
-        },
-        {
-          "linkId": "UserName",
-          "answer": [
-            {
-              "valueString": "USER_NAME"
-            }
-          ]
-        },
-        {
           "linkId": "SubmittedTimeStamp",
           "answer": [
             {
               "valueDateTime": "2021-02-07T13:44:07+00:00"
-            }
-          ]
-        },
-        {
-          "linkId": "UserEmail",
-          "answer": [
-            {
-              "valueString": "USER_EMAIL"
             }
           ]
         },
@@ -180,12 +147,6 @@
       }
     }
   ],
-  "identifier": [
-    {
-      "system": "https://supplierABC/identifiers/vacc",
-      "value": "ACME-vacc123456"
-    }
-  ],
   "status": "completed",
   "vaccineCode": {
     "coding": [
@@ -199,7 +160,7 @@
   "patient": {
     "reference": "#Pat1"
   },
-  "occurrenceDateTime": "2021-02-07T13:28:17+00:00",
+  "occurrenceDateTime": "2021-02-07T13:28:17.271+00:00",
   "recorded": "2021-02-07",
   "primarySource": true,
   "reportOrigin": {
@@ -250,7 +211,7 @@
       "actor": {
         "type": "Organization",
         "identifier": {
-          "system": "https://fhir.hl7.org.uk/Id/urn-school-number",
+          "system": "https://fhir.nhs.uk/Id/ods-organization-code",
           "value": "B0C4P"
         },
         "display": "Acme Healthcare"

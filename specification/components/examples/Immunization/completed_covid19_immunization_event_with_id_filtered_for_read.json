@@ -116,42 +116,10 @@
           ]
         },
         {
-          "linkId": "IpAddress",
-          "answer": [
-            {
-              "valueString": "IP_ADDRESS"
-            }
-          ]
-        },
-        {
-          "linkId": "UserId",
-          "answer": [
-            {
-              "valueString": "USER_ID"
-            }
-          ]
-        },
-        {
-          "linkId": "UserName",
-          "answer": [
-            {
-              "valueString": "USER_NAME"
-            }
-          ]
-        },
-        {
           "linkId": "SubmittedTimeStamp",
           "answer": [
             {
               "valueDateTime": "2021-02-07T13:44:07+00:00"
-            }
-          ]
-        },
-        {
-          "linkId": "UserEmail",
-          "answer": [
-            {
-              "valueString": "USER_EMAIL"
             }
           ]
         },
@@ -178,12 +146,6 @@
           }
         ]
       }
-    }
-  ],
-  "identifier": [
-    {
-      "system": "https://supplierABC/identifiers/vacc",
-      "value": "ACME-vacc123456"
     }
   ],
   "status": "completed",
