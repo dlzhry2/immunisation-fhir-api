@@ -114,6 +114,77 @@ class TestGetImmunization(unittest.TestCase):
         # Then
         self.assertEqual(act_res, filtered_immunization_res)
 
+    def test_pre_validation_failed(self):
+        """it should throw exception if Immunization is not valid"""
+        imms_id = "an-id"
+        imms = create_covid_19_immunization_dict(imms_id)
+        imms["patient"] = {"identifier": {"value": VALID_NHS_NUMBER}}
+
+        self.imms_repo.get_immunization_by_id_all.return_value = {}
+
+        validation_error = ValidationError(
+            [
+                ErrorWrapper(TypeError("bad type"), "/type"),
+            ],
+            Immunization,
+        )
+        self.validator.validate.side_effect = validation_error
+        expected_msg = str(validation_error)
+
+        with self.assertRaises(CustomValidationError) as error:
+            # When
+            self.fhir_service.get_immunization_by_id_all("an-id", imms)
+
+        # Then
+        self.assertEqual(error.exception.message, expected_msg)
+        self.imms_repo.update_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+    def test_post_validation_failed(self):
+        valid_imms = create_covid_19_immunization_dict("an-id", VALID_NHS_NUMBER)
+
+        bad_target_disease_imms = deepcopy(valid_imms)
+        bad_target_disease_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "bad-code"
+        bad_target_disease_msg = "['bad-code'] is not a valid combination of disease codes for this service"
+
+        bad_patient_name_imms = deepcopy(valid_imms)
+        del bad_patient_name_imms["contained"][1]["name"][0]["given"]
+        bad_patient_name_msg = "contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
+
+        bad_na_imms = deepcopy(valid_imms)
+        bad_na_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = DiseaseCodes.flu
+        bad_na_msg = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='IpAddress')].answer[0].valueString must not be provided for this vaccine type"
+        )
+
+        fhir_service = FhirService(self.imms_repo, self.pds_service)
+
+        # Invalid target_disease
+        with self.assertRaises(CustomValidationError) as error:
+            fhir_service.get_immunization_by_id_all("an-id", bad_target_disease_imms)
+
+        self.assertEqual(bad_target_disease_msg, error.exception.message)
+        self.imms_repo.get_immunization_by_id_all.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+        # Missing patient name (Mandatory field)
+        with self.assertRaises(CustomValidationError) as error:
+            fhir_service.get_immunization_by_id_all("an-id", bad_patient_name_imms)
+
+        self.assertTrue(bad_patient_name_msg in error.exception.message)
+        self.imms_repo.get_immunization_by_id_all.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+        # Not Applicable field present
+        with self.assertRaises(CustomValidationError) as error:
+            fhir_service.get_immunization_by_id_all("an-id", bad_na_imms)
+
+        self.assertTrue(bad_na_msg in error.exception.message)
+        self.imms_repo.get_immunization_by_id_all.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+    
+
 
 class TestCreateImmunization(unittest.TestCase):
     """Tests for FhirService.create_immunization"""
@@ -250,31 +321,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.imms_repo.update_immunization.assert_called_once_with(imms_id, req_imms, pds_patient, 1,"COVID19:update")
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
 
-    def test_pre_validation_failed(self):
-        """it should throw exception if Immunization is not valid"""
-        imms_id = "an-id"
-        imms = create_covid_19_immunization_dict(imms_id)
-        imms["patient"] = {"identifier": {"value": VALID_NHS_NUMBER}}
-
-        self.imms_repo.update_immunization.return_value = {}
-
-        validation_error = ValidationError(
-            [
-                ErrorWrapper(TypeError("bad type"), "/type"),
-            ],
-            Immunization,
-        )
-        self.validator.validate.side_effect = validation_error
-        expected_msg = str(validation_error)
-
-        with self.assertRaises(CustomValidationError) as error:
-            # When
-            self.fhir_service.update_immunization("an-id", imms, 1,"COVID19:update")
-
-        # Then
-        self.assertEqual(error.exception.message, expected_msg)
-        self.imms_repo.update_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called()
+    
 
     def test_post_validation_failed(self):
         valid_imms = create_covid_19_immunization_dict("an-id", VALID_NHS_NUMBER)
@@ -298,26 +345,26 @@ class TestUpdateImmunization(unittest.TestCase):
 
         # Invalid target_disease
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_target_disease_imms, 1,"COVID19:update")
+            fhir_service.get_immunization_by_id_all("an-id", bad_target_disease_imms)
 
         self.assertEqual(bad_target_disease_msg, error.exception.message)
-        self.imms_repo.update_immunization.assert_not_called()
+        self.imms_repo.get_immunization_by_id_all.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
         # Missing patient name (Mandatory field)
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_patient_name_imms, 1,"COVID19:update")
+            fhir_service.get_immunization_by_id_all("an-id", bad_patient_name_imms)
 
         self.assertTrue(bad_patient_name_msg in error.exception.message)
-        self.imms_repo.update_immunization.assert_not_called()
+        self.imms_repo.get_immunization_by_id_all.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
         # Not Applicable field present
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_na_imms, 1,"COVID19:update")
+            fhir_service.get_immunization_by_id_all("an-id", bad_na_imms)
 
         self.assertTrue(bad_na_msg in error.exception.message)
-        self.imms_repo.update_immunization.assert_not_called()
+        self.imms_repo.get_immunization_by_id_all.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
     def test_id_not_present(self):
