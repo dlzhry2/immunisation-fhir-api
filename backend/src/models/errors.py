@@ -53,7 +53,7 @@ class UnauthorizedVaxOnRecordError(RuntimeError):
             code=Code.forbidden,
             diagnostics=msg,
         )
-
+        
 @dataclass
 class ResourceNotFoundError(RuntimeError):
     """Return this error when the requested FHIR resource does not exist"""
