@@ -1,9 +1,13 @@
+from decimal import Decimal
+
 from utils.base_test import ImmunizationBaseTest
 from utils.immunisation_api import parse_location
-from utils.resource import create_an_imms_obj
+from utils.resource import create_an_imms_obj, create_a_filtered_imms_obj
+from utils.mappings import EndpointOperationNames
 
 
 class TestGetImmunization(ImmunizationBaseTest):
+
     def test_get_imms(self):
         """it should get a FHIR Immunization resource"""
         for imms_api in self.imms_apis:
@@ -13,6 +17,9 @@ class TestGetImmunization(ImmunizationBaseTest):
                 response = imms_api.create_immunization(imms)
                 assert response.status_code == 201, response.text
                 imms_id = parse_location(response.headers["Location"])
+                expected_response = create_a_filtered_imms_obj(
+                    crud_operation_to_filter_for=EndpointOperationNames.READ, imms_id=imms_id
+                )
 
                 # When
                 response = imms_api.get_immunization_by_id(imms_id)
@@ -20,6 +27,7 @@ class TestGetImmunization(ImmunizationBaseTest):
                 # Then
                 self.assertEqual(response.status_code, 200, response.text)
                 self.assertEqual(response.json()["id"], imms_id)
+                self.assertEqual(response.json(parse_float=Decimal), expected_response)
 
     def not_found(self):
         """it should return 404 if resource doesn't exist"""
