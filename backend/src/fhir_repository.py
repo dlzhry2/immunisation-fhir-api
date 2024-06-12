@@ -18,7 +18,7 @@ from models.errors import (
 )
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 
-from models.utils.validation_utils import get_vaccine_type,check_organisation_system_value
+from models.utils.validation_utils import get_vaccine_type,check_identifier_system_value
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -113,7 +113,7 @@ class ImmunizationRepository:
     def get_immunization_by_id_all(self, imms_id: str,imms:dict ) -> Optional[dict]:
         response = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
         if "Item" in response:
-         diagnostics = check_organisation_system_value(response,imms)
+         diagnostics = check_identifier_system_value(response,imms)
          if diagnostics:
             return diagnostics
         

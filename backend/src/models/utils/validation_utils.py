@@ -44,7 +44,7 @@ def has_valid_vaccine_type(immunization: dict):
     except ValueError:
         return False
     
-def check_organisation_system_value(response, imms: dict):
+def check_identifier_system_value(response, imms: dict):
     """Returns diagnostics if contained.identifier's system and value does not match with the stored content"""
         
     for item in imms["contained"]:
