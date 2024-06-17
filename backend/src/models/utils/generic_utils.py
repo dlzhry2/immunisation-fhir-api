@@ -236,9 +236,9 @@ def create_diagnostics():
 
 def create_diagnostics_error(value):
                 if value == "Both":
-                  diagnostics=f"Validation errors: contained[?(@.resourceType=='Practitioner')].identifier[0].system and contained[?(@.resourceType=='Practitioner')].identifier[0].value doesn't match with the stored content"  
+                  diagnostics=f"Validation errors: identifier[0].system and identifier[0].value doesn't match with the stored content"  
                 else:
-                  diagnostics=f"Validation errors: contained[?(@.resourceType=='Practitioner')].identifier[0].{value} doesn't match with the stored content"
+                  diagnostics=f"Validation errors: identifier[0].{value} doesn't match with the stored content"
                 exp_error = {
                              "diagnostics": diagnostics
                             }

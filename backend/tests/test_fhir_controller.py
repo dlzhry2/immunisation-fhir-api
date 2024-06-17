@@ -298,7 +298,7 @@ class TestUpdateImmunization(unittest.TestCase):
         req_imms = "{}"
         path_id = "valid-id"
         aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update"},"body": req_imms, "pathParameters": {"id": path_id}}
-        self.service.get_immunization_by_id_all.return_value = {"diagnostics": "Validation errors: contained[?(@.resourceType=='Practitioner')].identifier[0].system doesn't match with the stored content"}
+        self.service.get_immunization_by_id_all.return_value = {"diagnostics": "Validation errors: identifier[0].system doesn't match with the stored content"}
         # When
         response = self.controller.update_immunization(aws_event)
 
