@@ -83,9 +83,10 @@ class RecordAttributes:
         self.resource = imms
         self.timestamp = int(time.time())
         self.vaccine_type = get_vaccine_type(imms)
-
+        self.system_id = imms["identifier"][0]["system"]
+        self.system_value = imms["identifier"][0]["value"]
         self.patient_sk = f"{self.vaccine_type}#{imms_id}"
-        self.identifier = imms["identifier"][0]["value"]
+        self.identifier = f"{self.system_id}#{self.system_value}"
 
 
 class ImmunizationRepository:
