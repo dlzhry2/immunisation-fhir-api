@@ -161,7 +161,7 @@ class ImmunizationRepository:
                 "Resource": json.dumps(attr.resource, cls=DecimalEncoder),
                 "Patient": attr.patient,
                 "IdentifierPK": attr.identifier,
-                "SupplierSystem": "default",
+                "AppId": "default",
                 "Operation": "CREATE",
                 "Version": 1,
             }

@@ -66,7 +66,7 @@ def handler(event, context):
                 new_image = record["dynamodb"]["NewImage"]
                 imms_id = new_image["PK"]["S"].split("#")[1]
                 vaccine_type = get_vaccine_type(new_image["PatientSK"]["S"])
-                supplier_system = new_image["SupplierSystem"]["S"]
+                supplier_system = new_image["IdentifierPK"]["S"]
                 operation = new_image["Operation"]["S"]
                 if operation == "CREATE":
                     operation = "NEW"
