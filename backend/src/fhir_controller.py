@@ -86,7 +86,7 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
-                app_id = aws_event["headers"]["AppId"]
+                app_id = aws_event["headers"]["ApplicationId"]
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
                 if len(app_id) == 0:
@@ -129,7 +129,7 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
-                app_id = aws_event["headers"]["AppId"]
+                app_id = aws_event["headers"]["ApplicationId"]
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
                 if len(app_id) == 0:
@@ -180,7 +180,7 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
-                app_id = aws_event["headers"]["AppId"]
+                app_id = aws_event["headers"]["ApplicationId"]
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
                 if len(app_id) == 0:
@@ -350,7 +350,7 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
-                app_id = aws_event["headers"]["AppId"]
+                app_id = aws_event["headers"]["ApplicationId"]
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
                 if len(app_id) == 0:
@@ -389,7 +389,7 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
-                app_id = aws_event["headers"]["AppId"]
+                app_id = aws_event["headers"]["ApplicationId"]
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
                 if len(app_id) == 0:
