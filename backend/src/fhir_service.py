@@ -119,7 +119,7 @@ class FhirService:
         imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id,imms)
         return imms_resp
 
-    def create_immunization(self, immunization: dict, imms_vax_type_perms) -> Immunization:
+    def create_immunization(self, immunization: dict, imms_vax_type_perms, app_id) -> Immunization:
         try:
             self.validator.validate(immunization)
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
@@ -128,7 +128,7 @@ class FhirService:
 
         if "diagnostics" in patient:
             return patient
-        imms = self.immunization_repo.create_immunization(immunization, patient, imms_vax_type_perms)
+        imms = self.immunization_repo.create_immunization(immunization, patient, imms_vax_type_perms,app_id)
 
         return Immunization.parse_obj(imms)
 
