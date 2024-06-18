@@ -26,6 +26,7 @@ from tests.immunization_utils import (
     VALID_NHS_NUMBER,
 )
 from src.mappings import DiseaseCodes
+from .utils.generic_utils import load_json_data
 
 
 class TestServiceUrl(unittest.TestCase):
@@ -64,13 +65,13 @@ class TestGetImmunization(unittest.TestCase):
     def test_get_immunization_by_id(self):
         """it should find an Immunization by id"""
         imms_id = "an-id"
-        self.imms_repo.get_immunization_by_id.return_value = {'Resource':create_covid_19_immunization(imms_id).dict()}
+        self.imms_repo.get_immunization_by_id.return_value = {"Resource": create_covid_19_immunization(imms_id).dict()}
         self.pds_service.get_patient_details.return_value = {}
 
         # When
         service_resp = self.fhir_service.get_immunization_by_id(imms_id,"COVID19:read")
         act_imms = service_resp["Resource"]
-        
+
         # Then
         self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id, "COVID19:read")
         
@@ -88,31 +89,112 @@ class TestGetImmunization(unittest.TestCase):
         self.imms_repo.get_immunization_by_id.assert_called_once_with(imms_id, "COVID19:read")
         self.assertEqual(act_imms, None)
 
+    def test_get_immunization_by_id_patient_not_restricted(self):
+        """
+        Test that get_immunization_by_id returns a FHIR Immunization Resource which has been filtered for read,
+        but not for s-flag, when patient is not restricted
+        """
+        imms_id = "non_restricted_id"
+
+        immunization_data = load_json_data("completed_covid19_immunization_event.json")
+        self.imms_repo.get_immunization_by_id.return_value = {"Resource": immunization_data}
+        self.fhir_service.pds_service.get_patient_details.return_value = {"meta": {}}
+
+        expected_imms = load_json_data("completed_covid19_immunization_event_filtered_for_read.json")
+        expected_output = Immunization.parse_obj(expected_imms)
+
+        # When
+        actual_output = self.fhir_service.get_immunization_by_id(imms_id,"COVID19:read")
+
+        # Then
+        self.assertEqual(actual_output["Resource"], expected_output)
+
     def test_get_immunization_by_id_patient_restricted(self):
         """it should return a filtered Immunization when patient is restricted"""
         imms_id = "restricted_id"
-        with open(
-            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/completed_covid19_immunization_event.json",
-            "r",
-            encoding="utf-8",
-        ) as immunization_data_file:
-            immunization_data = json.load(immunization_data_file)
-        with open(
-            f"{os.path.dirname(os.path.abspath(__file__))}/sample_data/"
-            + "completed_covid19_filtered_immunization_event.json",
-            "r",
-            encoding="utf-8",
-        ) as filtered_immunization_data_file:
-            filtered_immunization = json.load(filtered_immunization_data_file)
-        self.imms_repo.get_immunization_by_id.return_value = {'Resource':immunization_data}
+        immunization_data = load_json_data("completed_covid19_immunization_event.json")
+        filtered_immunization = load_json_data("completed_covid19_immunization_event_filtered_for_s_flag_and_read.json")
+        self.imms_repo.get_immunization_by_id.return_value = {"Resource": immunization_data}
         patient_data = {"meta": {"security": [{"code": "R"}]}}
         self.fhir_service.pds_service.get_patient_details.return_value = patient_data
+
         # When
         resp_imms = self.fhir_service.get_immunization_by_id(imms_id, "COVID19:read")
         act_res =resp_imms["Resource"]
-        filtered_immunization_res=Immunization.parse_obj(filtered_immunization["Resource"])
+        filtered_immunization_res=Immunization.parse_obj(filtered_immunization)
         # Then
         self.assertEqual(act_res, filtered_immunization_res)
+
+    def test_pre_validation_failed(self):
+        """it should throw exception if Immunization is not valid"""
+        imms_id = "an-id"
+        imms = create_covid_19_immunization_dict(imms_id)
+        imms["patient"] = {"identifier": {"value": VALID_NHS_NUMBER}}
+
+        self.imms_repo.get_immunization_by_id_all.return_value = {}
+
+        validation_error = ValidationError(
+            [
+                ErrorWrapper(TypeError("bad type"), "/type"),
+            ],
+            Immunization,
+        )
+        self.validator.validate.side_effect = validation_error
+        expected_msg = str(validation_error)
+
+        with self.assertRaises(CustomValidationError) as error:
+            # When
+            self.fhir_service.get_immunization_by_id_all("an-id", imms)
+
+        # Then
+        self.assertEqual(error.exception.message, expected_msg)
+        self.imms_repo.update_immunization.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+    def test_post_validation_failed(self):
+        valid_imms = create_covid_19_immunization_dict("an-id", VALID_NHS_NUMBER)
+
+        bad_target_disease_imms = deepcopy(valid_imms)
+        bad_target_disease_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "bad-code"
+        bad_target_disease_msg = "['bad-code'] is not a valid combination of disease codes for this service"
+
+        bad_patient_name_imms = deepcopy(valid_imms)
+        del bad_patient_name_imms["contained"][1]["name"][0]["given"]
+        bad_patient_name_msg = "contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
+
+        bad_na_imms = deepcopy(valid_imms)
+        bad_na_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = DiseaseCodes.flu
+        bad_na_msg = (
+            "contained[?(@.resourceType=='QuestionnaireResponse')]"
+            + ".item[?(@.linkId=='IpAddress')].answer[0].valueString must not be provided for this vaccine type"
+        )
+
+        fhir_service = FhirService(self.imms_repo, self.pds_service)
+
+        # Invalid target_disease
+        with self.assertRaises(CustomValidationError) as error:
+            fhir_service.get_immunization_by_id_all("an-id", bad_target_disease_imms)
+
+        self.assertEqual(bad_target_disease_msg, error.exception.message)
+        self.imms_repo.get_immunization_by_id_all.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+        # Missing patient name (Mandatory field)
+        with self.assertRaises(CustomValidationError) as error:
+            fhir_service.get_immunization_by_id_all("an-id", bad_patient_name_imms)
+
+        self.assertTrue(bad_patient_name_msg in error.exception.message)
+        self.imms_repo.get_immunization_by_id_all.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+
+        # Not Applicable field present
+        with self.assertRaises(CustomValidationError) as error:
+            fhir_service.get_immunization_by_id_all("an-id", bad_na_imms)
+
+        self.assertTrue(bad_na_msg in error.exception.message)
+        self.imms_repo.get_immunization_by_id_all.assert_not_called()
+        self.pds_service.get_patient_details.assert_not_called()
+    
 
 
 class TestCreateImmunization(unittest.TestCase):
@@ -249,76 +331,6 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertEqual(outcome, UpdateOutcome.UPDATE)
         self.imms_repo.update_immunization.assert_called_once_with(imms_id, req_imms, pds_patient, 1,"COVID19:update")
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
-
-    def test_pre_validation_failed(self):
-        """it should throw exception if Immunization is not valid"""
-        imms_id = "an-id"
-        imms = create_covid_19_immunization_dict(imms_id)
-        imms["patient"] = {"identifier": {"value": VALID_NHS_NUMBER}}
-
-        self.imms_repo.update_immunization.return_value = {}
-
-        validation_error = ValidationError(
-            [
-                ErrorWrapper(TypeError("bad type"), "/type"),
-            ],
-            Immunization,
-        )
-        self.validator.validate.side_effect = validation_error
-        expected_msg = str(validation_error)
-
-        with self.assertRaises(CustomValidationError) as error:
-            # When
-            self.fhir_service.update_immunization("an-id", imms, 1,"COVID19:update")
-
-        # Then
-        self.assertEqual(error.exception.message, expected_msg)
-        self.imms_repo.update_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called()
-
-    def test_post_validation_failed(self):
-        valid_imms = create_covid_19_immunization_dict("an-id", VALID_NHS_NUMBER)
-
-        bad_target_disease_imms = deepcopy(valid_imms)
-        bad_target_disease_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "bad-code"
-        bad_target_disease_msg = "['bad-code'] is not a valid combination of disease codes for this service"
-
-        bad_patient_name_imms = deepcopy(valid_imms)
-        del bad_patient_name_imms["contained"][1]["name"][0]["given"]
-        bad_patient_name_msg = "contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
-
-        bad_na_imms = deepcopy(valid_imms)
-        bad_na_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = DiseaseCodes.flu
-        bad_na_msg = (
-            "contained[?(@.resourceType=='QuestionnaireResponse')]"
-            + ".item[?(@.linkId=='IpAddress')].answer[0].valueString must not be provided for this vaccine type"
-        )
-
-        fhir_service = FhirService(self.imms_repo, self.pds_service)
-
-        # Invalid target_disease
-        with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_target_disease_imms, 1,"COVID19:update")
-
-        self.assertEqual(bad_target_disease_msg, error.exception.message)
-        self.imms_repo.update_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called()
-
-        # Missing patient name (Mandatory field)
-        with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_patient_name_imms, 1,"COVID19:update")
-
-        self.assertTrue(bad_patient_name_msg in error.exception.message)
-        self.imms_repo.update_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called()
-
-        # Not Applicable field present
-        with self.assertRaises(CustomValidationError) as error:
-            fhir_service.update_immunization("an-id", bad_na_imms, 1,"COVID19:update")
-
-        self.assertTrue(bad_na_msg in error.exception.message)
-        self.imms_repo.update_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called()
 
     def test_id_not_present(self):
         """it should populate id in the message if it is not present"""

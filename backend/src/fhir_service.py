@@ -31,6 +31,7 @@ from models.utils.validation_utils import get_vaccine_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
+from filter import Filter
 
 
 def get_service_url(
@@ -82,36 +83,46 @@ class FhirService:
                 imms = imms_resp["Resource"]
             if imms_resp.get("Version"):
                 version = imms_resp["Version"]
+
+            # Remove fields which are not to be returned for read
+            imms_filtered_for_read = Filter.read(imms)
+
+            # Handle s-flag filtering, where applicable
             try:
-                nhs_number = [
-                    x for x in imms["contained"] if x["resourceType"] == "Patient"
-                ][0]["identifier"][0]["value"]
+                nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0][
+                    "value"
+                ]
                 patient = self.pds_service.get_patient_details(nhs_number)
-                filtered_immunization = handle_s_flag(imms, patient)
+                imms_filtered_for_read_and_s_flag = handle_s_flag(imms_filtered_for_read, patient)
             except (KeyError, IndexError):
-                filtered_immunization = imms
+                imms_filtered_for_read_and_s_flag = imms_filtered_for_read
 
             resp["Version"] = version
-            resp["Resource"] = Immunization.parse_obj(filtered_immunization)
+            resp["Resource"] = Immunization.parse_obj(imms_filtered_for_read_and_s_flag)
             return resp
     
-    def get_immunization_by_id_all(self, imms_id: str) -> Optional[dict]:
+    def get_immunization_by_id_all(self, imms_id: str,imms: dict) -> Optional[dict]:
         """
         Get an Immunization by its ID. Return None if not found. If the patient doesn't have an NHS number,
         return the Immunization without calling PDS or checking S flag.
         """
-        imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id)
-        return imms_resp
-
-    def create_immunization(self, immunization: dict, imms_vax_type_perms) -> Immunization:
+        imms["id"] = imms_id
         try:
-            self.validator.validate(immunization)
+            self.validator.validate(imms)
         except (
             ValidationError,
             ValueError,
             MandatoryError,
             NotApplicableError,
         ) as error:
+            raise CustomValidationError(message=str(error)) from error
+        imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id,imms)
+        return imms_resp
+
+    def create_immunization(self, immunization: dict, imms_vax_type_perms) -> Immunization:
+        try:
+            self.validator.validate(immunization)
+        except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
             raise CustomValidationError(message=str(error)) from error
         patient = self._validate_patient(immunization)
 
@@ -126,65 +137,39 @@ class FhirService:
     ) -> tuple[UpdateOutcome, Immunization]:
         immunization["id"] = imms_id
 
-        try:
-            self.validator.validate(immunization)
-        except (
-            ValidationError,
-            ValueError,
-            MandatoryError,
-            NotApplicableError,
-        ) as error:
-            raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
 
         if "diagnostics" in patient: 
                 return (None,patient)
         imms = self.immunization_repo.update_immunization(imms_id, immunization, patient, existing_resource_version, imms_vax_type_perms)
+
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
-    
+
     def reinstate_immunization(
         self, imms_id: str, immunization: dict, existing_resource_version: int, imms_vax_type_perms: str
     ) -> tuple[UpdateOutcome, Immunization]:
         immunization["id"] = imms_id
-
-        try:
-            self.validator.validate(immunization)
-        except (
-            ValidationError,
-            ValueError,
-            MandatoryError,
-            NotApplicableError,
-        ) as error:
-            raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
 
         if "diagnostics" in patient: 
                 return (None,patient)
         imms = self.immunization_repo.reinstate_immunization(imms_id, immunization, patient, existing_resource_version, imms_vax_type_perms)
+
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
-    
+
     def update_reinstated_immunization(
         self, imms_id: str, immunization: dict, existing_resource_version: int, imms_vax_type_perms: str
     ) -> tuple[UpdateOutcome, Immunization]:
         immunization["id"] = imms_id
-
-        try:
-            self.validator.validate(immunization)
-        except (
-            ValidationError,
-            ValueError,
-            MandatoryError,
-            NotApplicableError,
-        ) as error:
-            raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
 
         if "diagnostics" in patient: 
                 return (None,patient)
         imms = self.immunization_repo.update_reinstated_immunization(imms_id, immunization, patient, existing_resource_version, imms_vax_type_perms)
+
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
 
     def delete_immunization(self, imms_id, imms_vax_type_perms) -> Immunization:
@@ -291,9 +276,7 @@ class FhirService:
         If the NHS number exists, get the patient details from PDS and return the patient details.
         """
         try:
-            nhs_number = [
-                x for x in imms["contained"] if x["resourceType"] == "Patient"
-            ][0]["identifier"][0]["value"]
+            nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
         except (KeyError, IndexError):
             nhs_number = None
 

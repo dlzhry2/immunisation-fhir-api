@@ -18,7 +18,7 @@ from models.errors import (
 )
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 
-from models.utils.validation_utils import get_vaccine_type
+from models.utils.validation_utils import get_vaccine_type,check_identifier_system_value
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -110,10 +110,14 @@ class ImmunizationRepository:
         else:
             return None
 
-    def get_immunization_by_id_all(self, imms_id: str) -> Optional[dict]:
+    def get_immunization_by_id_all(self, imms_id: str,imms:dict ) -> Optional[dict]:
         response = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
-
         if "Item" in response:
+         diagnostics = check_identifier_system_value(response,imms)
+         if diagnostics:
+            return diagnostics
+        
+         else: 
             resp = dict()
             if "DeletedAt" in response["Item"]:
                 if response["Item"]["DeletedAt"] != "reinstated":
@@ -137,7 +141,7 @@ class ImmunizationRepository:
                 resp["VaccineType"] = self._vaccine_type(response["Item"]["PatientSK"])
                 return resp
         else:
-            return None
+                return None
 
     def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms, app_id) -> dict:
         new_id = str(uuid.uuid4())
