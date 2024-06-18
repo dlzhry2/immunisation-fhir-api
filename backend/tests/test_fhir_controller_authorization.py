@@ -76,7 +76,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
 
     # EndpointOperation.CREATE
     def test_create_imms_authorized(self):
-        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"body": create_covid_19_immunization(str(uuid.uuid4())).json()}
+        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create","AppId":"TestApp"},"body": create_covid_19_immunization(str(uuid.uuid4())).json()}
 
         _ = self.controller.create_immunization(aws_event)
 

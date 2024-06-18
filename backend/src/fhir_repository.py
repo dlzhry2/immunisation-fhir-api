@@ -139,7 +139,7 @@ class ImmunizationRepository:
         else:
             return None
 
-    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms) -> dict:
+    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms, app_id) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
@@ -161,7 +161,7 @@ class ImmunizationRepository:
                 "Resource": json.dumps(attr.resource, cls=DecimalEncoder),
                 "Patient": attr.patient,
                 "IdentifierPK": attr.identifier,
-                "AppId": "default",
+                "AppId": app_id,
                 "Operation": "CREATE",
                 "Version": 1,
             }

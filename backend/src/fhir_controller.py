@@ -122,6 +122,7 @@ class FhirController:
         if aws_event.get("headers"):
             try:
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                app_id = aws_event["headers"]["AppId"]
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
                     
@@ -138,7 +139,7 @@ class FhirController:
             )
             
         try:
-            resource = self.fhir_service.create_immunization(imms,imms_vax_type_perms)
+            resource = self.fhir_service.create_immunization(imms,imms_vax_type_perms,app_id)
             if "diagnostics" in resource:
                 exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),

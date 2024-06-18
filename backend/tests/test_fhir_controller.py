@@ -118,13 +118,13 @@ class TestCreateImmunization(unittest.TestCase):
         """it should create Immunization and return resource's location"""
         imms_id = str(uuid.uuid4())
         imms = create_covid_19_immunization(imms_id)
-        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"body": imms.json()}
+        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create","AppId":"TestApp"},"body": imms.json()}
         self.service.create_immunization.return_value = imms
 
         response = self.controller.create_immunization(aws_event)
 
         imms_obj = json.loads(aws_event["body"])
-        self.service.create_immunization.assert_called_once_with(imms_obj,"COVID19:create")
+        self.service.create_immunization.assert_called_once_with(imms_obj,"COVID19:create","TestApp")
         self.assertEqual(response["statusCode"], 201)
         self.assertTrue("body" not in response)
         self.assertTrue(response["headers"]["Location"].endswith(f"Immunization/{imms_id}"))
@@ -143,7 +143,7 @@ class TestCreateImmunization(unittest.TestCase):
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
         bad_json = '{foo: "bar"}'
-        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"body": bad_json}
+        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create","AppId":"TestApp"},"body": bad_json}
 
         response = self.controller.create_immunization(aws_event)
 
@@ -158,7 +158,7 @@ class TestCreateImmunization(unittest.TestCase):
         self.service.create_immunization.return_value = create_result
         imms_id = str(uuid.uuid4())
         imms = create_covid_19_immunization(imms_id)
-        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"body": imms.json()}
+        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create","AppId":"TestApp"},"body": imms.json()}
         # When
         response = self.controller.create_immunization(aws_event)
 
@@ -169,7 +169,7 @@ class TestCreateImmunization(unittest.TestCase):
     def test_invalid_nhs_number(self):
         """it should handle ValidationError when patient doesn't exist"""
         imms = Immunization.construct()
-        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"body": imms.json()}
+        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create","AppId":"TestApp"},"body": imms.json()}
         invalid_nhs_num = "a-bad-id"
         self.service.create_immunization.side_effect = InvalidPatientId(patient_identifier=invalid_nhs_num)
 
@@ -183,7 +183,7 @@ class TestCreateImmunization(unittest.TestCase):
     def test_pds_unhandled_error(self):
         """it should respond with 500 if PDS returns error"""
         imms = Immunization.construct()
-        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create"},"body": imms.json()}
+        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create","AppId":"TestApp"},"body": imms.json()}
         self.service.create_immunization.side_effect = UnhandledResponseError(response={}, message="a message")
 
         response = self.controller.create_immunization(aws_event)
