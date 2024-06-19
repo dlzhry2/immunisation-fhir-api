@@ -142,6 +142,7 @@ class FhirController:
             
         try:
             resource = self.fhir_service.create_immunization(imms,imms_vax_type_perms)
+            print(resource)
             if "diagnostics" in resource:
                 exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),
