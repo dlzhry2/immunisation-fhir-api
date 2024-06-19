@@ -48,6 +48,8 @@ def check_identifier_system_value(response, imms, app_id):
     """Returns diagnostics if identifier's system and value does not match with the stored content"""
     
     app_id_response = response['Item'].get('ApplicationId', None)
+    print(f"app_id:{app_id}")
+    print(f"app_id_response:{app_id_response}")
     if app_id != app_id_response:
         value = "Unauthorized"
         diagnostics_error = create_diagnostics_error(value)
