@@ -118,7 +118,6 @@ class FhirService:
             ) as error:
                 raise CustomValidationError(message=str(error)) from error
             imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id,imms,app_id)
-            print(f"imms_resp:{imms_resp}")
             return imms_resp
         else:
            imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id,None,app_id)

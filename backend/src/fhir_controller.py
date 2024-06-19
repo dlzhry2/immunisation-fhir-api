@@ -181,7 +181,6 @@ class FhirController:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
                 app_id = aws_event["headers"]["ApplicationId"]
-                print(f"app_id:{app_id}")
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
                 if len(app_id) == 0:
@@ -221,7 +220,6 @@ class FhirController:
         # Validate if the imms resource does not exists -start
         try:
             existing_record = self.fhir_service.get_immunization_by_id_all(imms_id,imms,app_id)
-            print(f"existing_record:{existing_record}")
             if not existing_record:
                 exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),
@@ -357,7 +355,6 @@ class FhirController:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
                 app_id = aws_event["headers"]["ApplicationId"]
-                print(f"app_id:{app_id}")
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
                 if len(app_id) == 0:
@@ -372,7 +369,6 @@ class FhirController:
             return self.create_response(403, unauthorized.to_operation_outcome())
         try:
             existing_record = self.fhir_service.get_immunization_by_id_all(imms_id,None,app_id)
-            print(f"existing_record:{existing_record}")
             if not existing_record:
                 exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),
