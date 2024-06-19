@@ -45,7 +45,7 @@ def has_valid_vaccine_type(immunization: dict):
         return False
     
 def check_identifier_system_value(response, imms: dict):
-    """Returns diagnostics if identifier's system and value does not match with the stored content"""
+    """Returns diagnostics if identifier's system and value does not match with the stored content """
         
     identifier_system_request = imms["identifier"][0]["system"]
     identifier_value_request = imms["identifier"][0]["value"]
