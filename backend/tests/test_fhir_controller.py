@@ -21,7 +21,8 @@ from models.errors import (
     ParameterException,
     InconsistentIdError,
     UnauthorizedVaxError,
-    UnauthorizedError
+    UnauthorizedError,
+    UnauthorizedSystemError
 )
 from tests.immunization_utils import create_covid_19_immunization, create_covid_19_immunization_dict
 from mappings import VaccineTypes
@@ -390,7 +391,7 @@ class TestDeleteImmunization(unittest.TestCase):
         response = self.controller.delete_immunization(lambda_event)
 
         # Then
-        self.service.delete_immunization.assert_called_once_with(imms_id,"COVID19:delete")
+        self.service.delete_immunization.assert_called_once_with(imms_id,"COVID19:delete","TestApp")
 
         self.assertEqual(response["statusCode"], 204)
         self.assertTrue("body" not in response)
@@ -412,12 +413,12 @@ class TestDeleteImmunization(unittest.TestCase):
         self.assertEqual(body["issue"][0]["code"], "not-found")
 
 
-    def test_validation_update_for_unauthorized_system(self):
+    def test_validation_delete_for_unauthorized_system(self):
         """it should return 403 for unauthorized system"""
-        req_imms = "{}"
-        path_id = "valid-id"
-        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:delete","ApplicationId":"TestApp"},"body": req_imms, "pathParameters": {"id": path_id}}
-        self.service.get_immunization_by_id_all.return_value = {"diagnostics": "Unauthorized system","error":'Unauthorized'}
+        error = UnauthorizedSystemError()
+        self.service.delete_immunization.side_effect = error 
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:delete","ApplicationId":"TestApp"},"pathParameters": {"id": "a-non-existing-id"}}
+
         # When
         response = self.controller.delete_immunization(aws_event)
 

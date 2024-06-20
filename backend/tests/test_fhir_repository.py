@@ -351,7 +351,7 @@ class TestDeleteImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            _id = self.repository.delete_immunization(imms_id, "COVID:delete")
+            _id = self.repository.delete_immunization(imms_id, "COVID:delete","test")
 
         # Then
         self.table.update_item.assert_called_once_with(
@@ -376,7 +376,8 @@ class TestDeleteImmunization(unittest.TestCase):
             return_value={"Item": {
                 'Resource': json.dumps({"foo": "bar"}),
                 'Version': 1,
-                'PatientSK': "COVID19#2516525251"
+                'PatientSK': "COVID19#2516525251",
+                'AppId':"test"
             }}
         )
 
@@ -384,7 +385,7 @@ class TestDeleteImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            act_resource = self.repository.delete_immunization(imms_id, "COVID19:delete")
+            act_resource = self.repository.delete_immunization(imms_id, "COVID19:delete","test")
 
         # Then
         self.table.update_item.assert_called_once_with(
@@ -403,12 +404,13 @@ class TestDeleteImmunization(unittest.TestCase):
             return_value={"Item": {
                 'Resource': json.dumps({"foo": "bar"}),
                 'Version': 1,
-                'PatientSK': "FLU#2516525251"
+                'PatientSK': "FLU#2516525251",
+                'AppId':"test"
             }}
         )
         
         with self.assertRaises(UnauthorizedVaxError) as e:
-            self.repository.delete_immunization(imms_id, "COVID19:delete")
+            self.repository.delete_immunization(imms_id, "COVID19:delete","test")
     
     
     def test_multiple_delete_should_not_update_timestamp(self):
@@ -420,7 +422,8 @@ class TestDeleteImmunization(unittest.TestCase):
             return_value={"Item": {
                 'Resource': json.dumps({"foo": "bar"}),
                 'Version': 1,
-                'PatientSK': "COVID19#2516525251"
+                'PatientSK': "COVID19#2516525251",
+                'AppId':"test"
             }}
         )
         self.table.update_item.side_effect = botocore.exceptions.ClientError(
@@ -428,7 +431,7 @@ class TestDeleteImmunization(unittest.TestCase):
         )
 
         with self.assertRaises(ResourceNotFoundError) as e:
-            self.repository.delete_immunization(imms_id, "COVID19:delete")
+            self.repository.delete_immunization(imms_id, "COVID19:delete","test")
 
         # Then
         self.table.update_item.assert_called_once_with(
@@ -452,14 +455,15 @@ class TestDeleteImmunization(unittest.TestCase):
             return_value={"Item": {
                 'Resource': json.dumps({"foo": "bar"}),
                 'Version': 1,
-                'PatientSK': "COVID19#2516525251"
+                'PatientSK': "COVID19#2516525251",
+                'AppId':"test"
             }}
         )
         self.table.update_item = MagicMock(return_value=response)
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.delete_immunization(imms_id,"COVID19:delete")
+            self.repository.delete_immunization(imms_id,"COVID19:delete","test")
 
         # Then
         self.assertDictEqual(e.exception.response, response)

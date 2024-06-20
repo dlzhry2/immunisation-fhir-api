@@ -367,26 +367,9 @@ class FhirController:
             return self.create_response(403, unauthorized.to_operation_outcome())
         except UnauthorizedSystemError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
+         
         try:
-            existing_record = self.fhir_service.get_immunization_by_id_all(imms_id,None,app_id)
-            if not existing_record:
-                exp_error = create_operation_outcome(
-                    resource_id=str(uuid.uuid4()),
-                    severity=Severity.error,
-                    code=Code.not_found,
-                    diagnostics=f"Validation errors: The requested immunization resource with id:{imms_id} was not found.",
-                )
-                return self.create_response(404, json.dumps(exp_error))
-            
-            if "error" in existing_record and existing_record is not None:
-                    raise UnauthorizedSystemError
-        except ValidationError as error:
-            return self.create_response(400, error.to_operation_outcome())
-        except UnauthorizedSystemError as unauthorized:
-            return self.create_response(403, unauthorized.to_operation_outcome())
-        
-        try:
-            self.fhir_service.delete_immunization(imms_id, imms_vax_type_perms)
+            self.fhir_service.delete_immunization(imms_id, imms_vax_type_perms,app_id)
             return self.create_response(204)
         except ResourceNotFoundError as not_found:
             return self.create_response(404, not_found.to_operation_outcome())
@@ -394,7 +377,8 @@ class FhirController:
             return self.create_response(500, unhandled_error.to_operation_outcome())
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
-
+        except UnauthorizedSystemError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
         if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
             return response

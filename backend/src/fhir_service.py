@@ -106,22 +106,18 @@ class FhirService:
         Get an Immunization by its ID. Return None if not found. If the patient doesn't have an NHS number,
         return the Immunization without calling PDS or checking S flag.
         """
-        if imms is not None:
-            imms["id"] = imms_id
-            try:
-                self.validator.validate(imms)
-            except (
-                ValidationError,
-                ValueError,
-                MandatoryError,
-                NotApplicableError,
-            ) as error:
-                raise CustomValidationError(message=str(error)) from error
-            imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id,imms,app_id)
-            return imms_resp
-        else:
-           imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id,None,app_id)
-           return imms_resp 
+        imms["id"] = imms_id
+        try:
+            self.validator.validate(imms)
+        except (
+            ValidationError,
+            ValueError,
+            MandatoryError,
+            NotApplicableError,
+        ) as error:
+            raise CustomValidationError(message=str(error)) from error
+        imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id,imms,app_id)
+        return imms_resp
 
     def create_immunization(self, immunization: dict, imms_vax_type_perms, app_id) -> Immunization:
         try:
@@ -176,13 +172,13 @@ class FhirService:
 
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
 
-    def delete_immunization(self, imms_id, imms_vax_type_perms) -> Immunization:
+    def delete_immunization(self, imms_id, imms_vax_type_perms,app_id) -> Immunization:
         """
         Delete an Immunization if it exits and return the ID back if successful.
         Exception will be raised if resource didn't exit. Multiple calls to this method won't change
         the record in the database.
         """
-        imms = self.immunization_repo.delete_immunization(imms_id, imms_vax_type_perms)
+        imms = self.immunization_repo.delete_immunization(imms_id, imms_vax_type_perms,app_id)
         return Immunization.parse_obj(imms)
 
     @staticmethod
