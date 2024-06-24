@@ -410,10 +410,7 @@ class FhirController:
         # Check vaxx type permissions on the existing record - start
         try:
             vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-            print(f"vax_type_perms:{vax_type_perms}")
-            print(f"search_params.immunization_targets:{search_params.immunization_targets}") 
             vax_type_perm= self._new_vaccine_request(search_params.immunization_targets, "search", vax_type_perms)
-            print(f"vax_type_perm:{vax_type_perm}")
             if not vax_type_perm:
                 raise UnauthorizedVaxError
         except UnauthorizedVaxError as unauthorized:
@@ -439,7 +436,6 @@ class FhirController:
             return self.create_response(400, json.dumps(exp_error))
         # Workaround for fhir.resources JSON removing the empty "entry" list.
         result_json_dict: dict = json.loads(result.json())
-        print(f"result_json_dict:{result_json_dict}") 
         if "entry" in result_json_dict:
             result_json_dict["entry"] = [
                 entry
