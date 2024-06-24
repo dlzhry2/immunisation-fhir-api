@@ -411,6 +411,7 @@ class FhirController:
         try:
             vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
             print(f"vax_type_perms:{vax_type_perms}")
+            print(f"search_params.immunization_targets:{search_params.immunization_targets}") 
             vax_type_perm= self._new_vaccine_request(search_params.immunization_targets, "search", vax_type_perms)
             print(f"vax_type_perm:{vax_type_perm}")
             if not vax_type_perm:
