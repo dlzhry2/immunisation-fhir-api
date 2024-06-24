@@ -144,7 +144,7 @@ class TestGetImmunization(unittest.TestCase):
 
         with self.assertRaises(CustomValidationError) as error:
             # When
-            self.fhir_service.get_immunization_by_id_all("an-id", imms)
+            self.fhir_service.get_immunization_by_id_all("an-id", imms,"test")
 
         # Then
         self.assertEqual(error.exception.message, expected_msg)
@@ -173,7 +173,7 @@ class TestGetImmunization(unittest.TestCase):
 
         # Invalid target_disease
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.get_immunization_by_id_all("an-id", bad_target_disease_imms)
+            fhir_service.get_immunization_by_id_all("an-id", bad_target_disease_imms,"test")
 
         self.assertEqual(bad_target_disease_msg, error.exception.message)
         self.imms_repo.get_immunization_by_id_all.assert_not_called()
@@ -181,7 +181,7 @@ class TestGetImmunization(unittest.TestCase):
 
         # Missing patient name (Mandatory field)
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.get_immunization_by_id_all("an-id", bad_patient_name_imms)
+            fhir_service.get_immunization_by_id_all("an-id", bad_patient_name_imms,"test")
 
         self.assertTrue(bad_patient_name_msg in error.exception.message)
         self.imms_repo.get_immunization_by_id_all.assert_not_called()
@@ -189,7 +189,7 @@ class TestGetImmunization(unittest.TestCase):
 
         # Not Applicable field present
         with self.assertRaises(CustomValidationError) as error:
-            fhir_service.get_immunization_by_id_all("an-id", bad_na_imms)
+            fhir_service.get_immunization_by_id_all("an-id", bad_na_imms,"test")
 
         self.assertTrue(bad_na_msg in error.exception.message)
         self.imms_repo.get_immunization_by_id_all.assert_not_called()
@@ -382,10 +382,10 @@ class TestDeleteImmunization(unittest.TestCase):
         self.imms_repo.delete_immunization.return_value = imms
 
         # When
-        act_imms = self.fhir_service.delete_immunization(imms_id, "COVID:delete")
+        act_imms = self.fhir_service.delete_immunization(imms_id, "COVID:delete","test")
 
         # Then
-        self.imms_repo.delete_immunization.assert_called_once_with(imms_id, "COVID:delete")
+        self.imms_repo.delete_immunization.assert_called_once_with(imms_id, "COVID:delete","test")
         self.assertIsInstance(act_imms, Immunization)
         self.assertEqual(act_imms.id, imms_id)
 

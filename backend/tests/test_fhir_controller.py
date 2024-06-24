@@ -21,7 +21,8 @@ from models.errors import (
     ParameterException,
     InconsistentIdError,
     UnauthorizedVaxError,
-    UnauthorizedError
+    UnauthorizedError,
+    UnauthorizedSystemError
 )
 from tests.immunization_utils import create_covid_19_immunization, create_covid_19_immunization_dict
 from mappings import VaccineTypes
@@ -290,6 +291,19 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 400)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome") 
+
+    def test_validation_update_for_unauthorized_system(self):
+        """it should return 403 for unauthorized system"""
+        req_imms = "{}"
+        path_id = "valid-id"
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update","ApplicationId":"TestApp"},"body": req_imms, "pathParameters": {"id": path_id}}
+        self.service.get_immunization_by_id_all.return_value = {"diagnostics": "Unauthorized system","error":'Unauthorized'}
+        # When
+        response = self.controller.update_immunization(aws_event)
+
+        self.assertEqual(response["statusCode"], 403)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")     
     
     def test_validation_identifier_to_give_bad_request_for_update_immunization(self):
         """it should return 400 if Identifier system and value  doesn't match with the stored content.""" 
@@ -377,7 +391,7 @@ class TestDeleteImmunization(unittest.TestCase):
         response = self.controller.delete_immunization(lambda_event)
 
         # Then
-        self.service.delete_immunization.assert_called_once_with(imms_id,"COVID19:delete")
+        self.service.delete_immunization.assert_called_once_with(imms_id,"COVID19:delete","TestApp")
 
         self.assertEqual(response["statusCode"], 204)
         self.assertTrue("body" not in response)
@@ -397,6 +411,20 @@ class TestDeleteImmunization(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
         self.assertEqual(body["issue"][0]["code"], "not-found")
+
+
+    def test_validation_delete_for_unauthorized_system(self):
+        """it should return 403 for unauthorized system"""
+        error = UnauthorizedSystemError()
+        self.service.delete_immunization.side_effect = error 
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:delete","ApplicationId":"TestApp"},"pathParameters": {"id": "a-non-existing-id"}}
+
+        # When
+        response = self.controller.delete_immunization(aws_event)
+
+        self.assertEqual(response["statusCode"], 403)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")  
 
     def test_immunization_unhandled_error(self):
         """it should return server-error OperationOutcome if service throws UnhandledResponseError"""
