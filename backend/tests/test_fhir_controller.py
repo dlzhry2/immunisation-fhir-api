@@ -545,8 +545,8 @@ class TestSearchImmunizations(unittest.TestCase):
         bundle = Bundle.parse_obj(search_result)
         self.service.search_immunizations.return_value = bundle
 
-        vaccine_type = VaccineTypes().all[0]
-    
+        vaccine_type = VaccineTypes().all[0],VaccineTypes().all[1]
+        vaccine_type = ','.join(vaccine_type)
         # Construct the application/x-www-form-urlencoded body
         body = {
             self.patient_identifier_key: self.patient_identifier_valid_value,
