@@ -12,9 +12,13 @@ class TestRemovePersonalInfo(unittest.TestCase):
 
     def data_for_sflag_tests(self):
         '''JSON data used in test cases'''
-        self.input_immunization = load_json_data("completed_covid19_immunization_event.json")
-        self.expected_output = load_json_data("completed_covid19_immunization_event_filtered_for_s_flag.json")
+        self.input_immunization = load_json_data("completed_covid19_immunization_event_filtered_for_read.json")
+        self.expected_output = load_json_data("completed_covid19_immunization_event_filtered_for_s_flag_and_read.json")
         self.patient = {"meta": {"security": [{"code":"R"}]}}
+        result = handle_s_flag(self.input_immunization, self.patient)
+        
+        print(result)
+        print(F"OUTPUT: {self.expected_output}")
         
     def test_remove_personal_info(self):
         """Test that personal info is removed for s_flagged patients"""
@@ -55,3 +59,12 @@ class TestRemovePersonalInfo(unittest.TestCase):
         result = handle_s_flag(self.input_immunization, self.patient)
         patient_data = result.get("contained", [])[1]
         self.assertEqual(patient_data["address"][0]["postalCode"], "ZZ99 3CZ")
+        
+    def test_amend_display_to_null(self):
+        '''Test that display field is amended to null'''
+        self.data_for_sflag_tests()
+        result = handle_s_flag(self.input_immunization, self.patient)
+        consent_answers = result["contained"][2]["item"][1]["answer"]
+        for answer in consent_answers:
+            if "valueCoding" in answer and "display" in answer["valueCoding"]:
+                self.assertIsNone(answer["valueCoding"]["display"])

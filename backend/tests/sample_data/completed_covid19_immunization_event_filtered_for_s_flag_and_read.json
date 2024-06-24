@@ -67,6 +67,17 @@
               }
             }
           ]
+        },{
+          "linkId": "Consent",
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "310375005",
+                "system": "http://snomed.info/sct",
+                "display": null
+              }
+            }
+          ]
         },
         {
           "linkId": "CareSetting",

@@ -70,13 +70,13 @@ def handle_s_flag(imms, patient):
     
             
     # Handle Questionnaire removals
-    questionnaire_items_to_remove = ["Consent"]
-    if contained_questionnaire and contained_questionnaire.get("item"):
-        contained_questionnaire["item"] = [
-            item
-            for item in contained_questionnaire.get("item", [])
-            if "linkId" not in item or item["linkId"] not in questionnaire_items_to_remove
-    ]
+    if contained_questionnaire and contained_questionnaire.get("item"): 
+            for item in contained_questionnaire["item"]:
+                if "linkId" in item and item["linkId"] == "Consent":
+                    if "answer" in item:
+                        for answer in item["answer"]:
+                            if "valueCoding" in answer:
+                                answer["valueCoding"]["display"] = None  # Set display to null
 
     # Handle reportOrigin
     try:
