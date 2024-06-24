@@ -422,7 +422,7 @@ class FhirController:
         
         result = self.fhir_service.search_immunizations(
             search_params.patient_identifier,
-            search_params.immunization_targets,
+            vax_type_perm,
             create_query_string(search_params),
             search_params.date_from,
             search_params.date_to
