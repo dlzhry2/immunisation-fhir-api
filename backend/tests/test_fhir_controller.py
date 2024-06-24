@@ -539,6 +539,38 @@ class TestSearchImmunizations(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
 
+    def test_post_search_immunizations_for_unauthorized_vaccine_type_search(self):
+        """it should search based on patient_identifier and immunization_target"""
+        search_result = load_json_data("sample_immunization_response _for _not_done_event.json")
+        bundle = Bundle.parse_obj(search_result)
+        self.service.search_immunizations.return_value = bundle
+
+        vaccine_type = VaccineTypes().all[0]
+    
+        # Construct the application/x-www-form-urlencoded body
+        body = {
+            self.patient_identifier_key: self.patient_identifier_valid_value,
+            self.immunization_target_key: vaccine_type,
+        }
+        encoded_body = urlencode(body)
+        # Base64 encode the body
+        base64_encoded_body = base64.b64encode(encoded_body.encode("utf-8")).decode("utf-8")
+
+        # Construct the lambda event
+        lambda_event = {
+            "httpMethod": "POST",
+            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"flu:search", "ApplicationId":"TestApp"},
+            "body": base64_encoded_body,
+        }
+        # When
+        response = self.controller.search_immunizations(lambda_event)
+        self.assertEqual(response["statusCode"], 200)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "Bundle")
+        # Check if any resource in entry has resourceType "OperationOutcome"
+        operation_outcome_present = any(entry["resource"]["resourceType"] == "OperationOutcome" for entry in body.get("entry", []))
+        self.assertTrue(operation_outcome_present, "OperationOutcome resource is not present in the response")
+
     @patch("fhir_controller.process_search_params", wraps=process_search_params)
     def test_uses_parameter_parser(self, process_search_params: Mock):
         lambda_event = {
