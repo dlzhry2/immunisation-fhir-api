@@ -44,9 +44,16 @@ def has_valid_vaccine_type(immunization: dict):
     except ValueError:
         return False
     
-def check_identifier_system_value(response, imms: dict):
-    """Returns diagnostics if identifier's system and value does not match with the stored content """
-        
+def check_identifier_system_value(response, imms, app_id):
+    """Returns diagnostics if identifier's system and value does not match with the stored content"""
+    
+    app_id_response = response['Item'].get('AppId', None)
+    if app_id != app_id_response:
+        value = "Unauthorized"
+        diagnostics_error = create_diagnostics_error(value)
+        return diagnostics_error 
+
+    
     identifier_system_request = imms["identifier"][0]["system"]
     identifier_value_request = imms["identifier"][0]["value"]
     resource_str = response['Item']['Resource']
@@ -65,4 +72,4 @@ def check_identifier_system_value(response, imms: dict):
     if identifier_value_request != identifier_value_response:
         value = "value"
         diagnostics_error = create_diagnostics_error(value)
-        return diagnostics_error 
+        return diagnostics_error   
