@@ -58,7 +58,6 @@ class SFlagBaseTest(ImmunizationBaseTest):
                 if "valueCoding" in answer:
                     self.assertTrue(answer["valueCoding"].get("display") is None)
 
-
         performer_actor_organizations = (
             item
             for item in imms["performer"]
