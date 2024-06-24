@@ -101,15 +101,25 @@ class FhirService:
             resp["Resource"] = Immunization.parse_obj(imms_filtered_for_read_and_s_flag)
             return resp
     
-    def get_immunization_by_id_all(self, imms_id: str) -> Optional[dict]:
+    def get_immunization_by_id_all(self, imms_id: str,imms: dict) -> Optional[dict]:
         """
         Get an Immunization by its ID. Return None if not found. If the patient doesn't have an NHS number,
         return the Immunization without calling PDS or checking S flag.
         """
-        imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id)
+        imms["id"] = imms_id
+        try:
+            self.validator.validate(imms)
+        except (
+            ValidationError,
+            ValueError,
+            MandatoryError,
+            NotApplicableError,
+        ) as error:
+            raise CustomValidationError(message=str(error)) from error
+        imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id,imms)
         return imms_resp
 
-    def create_immunization(self, immunization: dict, imms_vax_type_perms) -> Immunization:
+    def create_immunization(self, immunization: dict, imms_vax_type_perms, app_id) -> Immunization:
         try:
             self.validator.validate(immunization)
         except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
@@ -118,7 +128,7 @@ class FhirService:
 
         if "diagnostics" in patient:
             return patient
-        imms = self.immunization_repo.create_immunization(immunization, patient, imms_vax_type_perms)
+        imms = self.immunization_repo.create_immunization(immunization, patient, imms_vax_type_perms,app_id)
 
         return Immunization.parse_obj(imms)
 
@@ -127,10 +137,6 @@ class FhirService:
     ) -> tuple[UpdateOutcome, Immunization]:
         immunization["id"] = imms_id
 
-        try:
-            self.validator.validate(immunization)
-        except (ValidationError, ValueError, MandatoryError, NotApplicableError) as error:
-            raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
 
@@ -145,16 +151,6 @@ class FhirService:
     ) -> tuple[UpdateOutcome, Immunization]:
         immunization["id"] = imms_id
 
-        try:
-            self.validator.validate(immunization)
-        except (
-            ValidationError,
-            ValueError,
-            MandatoryError,
-            NotApplicableError,
-        ) as error:
-            raise CustomValidationError(message=str(error)) from error
-
         patient = self._validate_patient(immunization)
 
         if "diagnostics" in patient: 
@@ -167,16 +163,6 @@ class FhirService:
         self, imms_id: str, immunization: dict, existing_resource_version: int, imms_vax_type_perms: str
     ) -> tuple[UpdateOutcome, Immunization]:
         immunization["id"] = imms_id
-
-        try:
-            self.validator.validate(immunization)
-        except (
-            ValidationError,
-            ValueError,
-            MandatoryError,
-            NotApplicableError,
-        ) as error:
-            raise CustomValidationError(message=str(error)) from error
 
         patient = self._validate_patient(immunization)
 

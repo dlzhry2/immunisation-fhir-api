@@ -233,3 +233,13 @@ def create_diagnostics():
                              "diagnostics": diagnostics
                             }
                 return (exp_error)
+
+def create_diagnostics_error(value):
+                if value == "Both":
+                  diagnostics=f"Validation errors: identifier[0].system and identifier[0].value doesn't match with the stored content"  
+                else:
+                  diagnostics=f"Validation errors: identifier[0].{value} doesn't match with the stored content"
+                exp_error = {
+                             "diagnostics": diagnostics
+                            }
+                return (exp_error)

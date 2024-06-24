@@ -18,7 +18,7 @@ from models.errors import (
 )
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 
-from models.utils.validation_utils import get_vaccine_type
+from models.utils.validation_utils import get_vaccine_type,check_identifier_system_value
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -83,9 +83,10 @@ class RecordAttributes:
         self.resource = imms
         self.timestamp = int(time.time())
         self.vaccine_type = get_vaccine_type(imms)
-
+        self.system_id = imms["identifier"][0]["system"]
+        self.system_value = imms["identifier"][0]["value"]
         self.patient_sk = f"{self.vaccine_type}#{imms_id}"
-        self.identifier = imms["identifier"][0]["value"]
+        self.identifier = f"{self.system_id}#{self.system_value}"
 
 
 class ImmunizationRepository:
@@ -110,10 +111,14 @@ class ImmunizationRepository:
         else:
             return None
 
-    def get_immunization_by_id_all(self, imms_id: str) -> Optional[dict]:
+    def get_immunization_by_id_all(self, imms_id: str,imms:dict ) -> Optional[dict]:
         response = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
-
         if "Item" in response:
+         diagnostics = check_identifier_system_value(response,imms)
+         if diagnostics:
+            return diagnostics
+        
+         else: 
             resp = dict()
             if "DeletedAt" in response["Item"]:
                 if response["Item"]["DeletedAt"] != "reinstated":
@@ -137,9 +142,9 @@ class ImmunizationRepository:
                 resp["VaccineType"] = self._vaccine_type(response["Item"]["PatientSK"])
                 return resp
         else:
-            return None
+                return None
 
-    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms) -> dict:
+    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms, app_id) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
@@ -161,6 +166,7 @@ class ImmunizationRepository:
                 "Resource": json.dumps(attr.resource, cls=DecimalEncoder),
                 "Patient": attr.patient,
                 "IdentifierPK": attr.identifier,
+                "AppId": app_id,
                 "Operation": "CREATE",
                 "Version": 1,
             }
