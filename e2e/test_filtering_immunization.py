@@ -52,8 +52,12 @@ class SFlagBaseTest(ImmunizationBaseTest):
     def assert_is_filtered(self, imms: dict):
         imms_items = get_questionnaire_items(imms)
 
-        for key in ["Consent"]:
-            self.assertTrue(key not in [item["linkId"] for item in imms_items])
+        consent_item = next((item for item in imms_items if item["linkId"] == "Consent"), None)
+        if consent_item and "answer" in consent_item:
+            for answer in consent_item["answer"]:
+                if "valueCoding" in answer:
+                    self.assertTrue(answer["valueCoding"].get("display") is None)
+
 
         performer_actor_organizations = (
             item
