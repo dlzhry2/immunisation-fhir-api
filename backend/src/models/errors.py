@@ -6,6 +6,7 @@ from typing import Union
 
 class Severity(str, Enum):
     error = "error"
+    warning = "warning"
 
 
 class Code(str, Enum):
@@ -16,6 +17,8 @@ class Code(str, Enum):
     invariant = "invariant"
     not_supported = "not-supported"
     duplicate = "duplicate"
+    #Added an unauthorized code its used when returning a response for an unauthorized vaccine type search.
+    unauthorized = "unauthorized"
 
 
 @dataclass

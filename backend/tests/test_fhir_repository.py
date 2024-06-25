@@ -101,7 +101,6 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
                 "PatientPK": ANY,
                 "PatientSK": ANY,
                 "Resource": json.dumps(imms),
-                "Patient": ANY,
                 "IdentifierPK": ANY,
                 "AppId": "TestApp",
                 "Operation": "CREATE",
@@ -124,7 +123,6 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
                 "PatientPK": ANY,
                 "PatientSK": ANY,
                 "Resource": ANY,
-                "Patient": self.patient,
                 "IdentifierPK": ANY,
                 "AppId": "TestApp",
                 "Operation": "CREATE",
@@ -266,7 +264,7 @@ class TestUpdateImmunization(unittest.TestCase):
 
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient, "
+            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
             "Operation = :operation, Version = :version "
         )
         patient_id = self.patient["identifier"]["value"]
@@ -284,7 +282,6 @@ class TestUpdateImmunization(unittest.TestCase):
                 ":patient_pk": _make_patient_pk(patient_id),
                 ":patient_sk": patient_sk,
                 ":imms_resource_val": json.dumps(imms),
-                ":patient": self.patient,
                 ":operation": "UPDATE",
                 ":version": 2
             },
