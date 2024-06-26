@@ -811,7 +811,7 @@ class PreValidators:
                     target_disease_coding = values["protocolApplied"][0]["targetDisease"][i]["coding"]
                     target_disease_coding_code = [x for x in target_disease_coding if x.get("system") == url][0]["code"]
                     PreValidation.for_string(target_disease_coding_code, field_location)
-                except KeyError:
+                except (KeyError, IndexError):
                     pass
         except KeyError:
             pass
