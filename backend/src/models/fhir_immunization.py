@@ -7,19 +7,16 @@ from models.utils.generic_utils import get_generic_questionnaire_response_value
 
 
 class ImmunizationValidator:
-    """Validate the FHIR Immunization model against the NHS specific validators and Immunization FHIR profile"""
+    """
+    Validate the FHIR Immunization Resource JSON data against the NHS specific validators
+    and Immunization FHIR profile
+    """
 
     def __init__(self, add_post_validators: bool = True) -> None:
-        self.immunization: Immunization
         self.reduce_validation_code: bool
         self.add_post_validators = add_post_validators
         self.pre_validators: PreValidators
         self.post_validators: PostValidators
-        self.errors = []
-
-    def initialize_immunization_and_run_fhir_validators(self, json_data):
-        """Initialize immunization with data after parsing it through the FHIR validator"""
-        self.immunization = Immunization.parse_obj(json_data)
 
     def initialize_pre_validators(self, immunization):
         """Initialize pre validators with data."""
@@ -30,17 +27,22 @@ class ImmunizationValidator:
         self.post_validators = PostValidators(immunization)
 
     def run_pre_validators(self):
-        """Run custom pre validators to the data"""
+        """Run custom pre validators on the data"""
         error = self.pre_validators.validate()
         if error:
             raise ValueError(error)
 
+    def run_fhir_validators(self, json_data):
+        """Run the FHIR validator on the data"""
+        Immunization.parse_obj(json_data)
+
     def run_post_validators(self):
-        """Run custom pre validators to the data"""
+        """Run custom pre validators on the data"""
         error = self.post_validators.validate()
         if error:
             raise ValueError(error)
 
+    # TODO: Update this as reduce_validation_code is no longer found in the payload after data minimisation
     def set_reduce_validation_code(self, json_data):
         """Set the reduce validation code (default to false if no reduceValidation code is given)"""
         reduce_validation_code = False
@@ -70,14 +72,14 @@ class ImmunizationValidator:
             raise e
 
         # FHIR validations
-        self.initialize_immunization_and_run_fhir_validators(json_data)
+        self.run_fhir_validators(json_data)
 
         # Post-FHIR validations
         if self.add_post_validators and not self.reduce_validation_code:
-            self.initialize_post_validators(self.immunization)
+            self.initialize_post_validators(json_data)
             try:
                 self.run_post_validators()
             except Exception as e:
                 raise e
 
-        return self.immunization
+        return json_data
