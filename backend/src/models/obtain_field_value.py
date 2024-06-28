@@ -177,7 +177,7 @@ class ObtainFieldValue:
     @staticmethod
     def dose_quantity_code(imms: dict):
         """Obtains dose_quantity_code value"""
-        return imms["doseQucantity"]["code"]
+        return imms["doseQuantity"]["code"]
 
     @staticmethod
     def dose_quantity_unit(imms: dict):
