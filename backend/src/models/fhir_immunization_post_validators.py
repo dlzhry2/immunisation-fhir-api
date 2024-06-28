@@ -20,28 +20,24 @@ class PostValidators:
         self.errors = []
 
         # Note that the majority of fields require standard validation. Exceptions not included in the below list are
-        # vaccine_type, reason_code_coding_code and reason_code_coding_field (these have their own bespoke validation
-        # functions). Status is mandatory in FHIR, so there is no post-validation for status as it is handled by the
-        # FHIR validator.
+        # vaccine_type and reason_code_coding_code (each of these have their own bespoke validation functions).
+        # Status is mandatory in FHIR, so there is no post-validation for status as it is handled by the FHIR validator.
         self.fields_with_standard_validation = [
-            FieldNames.occurrence_date_time,
             FieldNames.patient_identifier_value,
             FieldNames.patient_name_given,
             FieldNames.patient_name_family,
             FieldNames.patient_birth_date,
             FieldNames.patient_gender,
             FieldNames.patient_address_postal_code,
+            FieldNames.occurrence_date_time,
             FieldNames.organization_identifier_value,
-            FieldNames.organization_display,
+            FieldNames.organization_identifier_system,
             FieldNames.identifier_value,
             FieldNames.identifier_system,
             FieldNames.practitioner_name_given,
             FieldNames.practitioner_name_family,
-            FieldNames.practitioner_identifier_value,
-            FieldNames.practitioner_identifier_system,
             FieldNames.recorded,
             FieldNames.primary_source,
-            FieldNames.report_origin_text,
             FieldNames.vaccination_procedure_code,
             FieldNames.vaccination_procedure_display,
             FieldNames.dose_number_positive_int,
@@ -57,9 +53,6 @@ class PostValidators:
             FieldNames.dose_quantity_value,
             FieldNames.dose_quantity_code,
             FieldNames.dose_quantity_unit,
-            FieldNames.nhs_number_verification_status_code,
-            FieldNames.nhs_number_verification_status_display,
-            FieldNames.organization_identifier_system,
             FieldNames.location_identifier_value,
             FieldNames.location_identifier_system,
         ]
@@ -95,10 +88,10 @@ class PostValidators:
         field_value = obtain_field_value(self.imms, field_name)
         self.run_field_validation(mandation_functions, validation_set, field_name, field_location, field_value)
 
-    def validate_reason_code_coding_field(self, mandation_functions, validation_set, field_type):
+    def validate_reason_code_coding_code(self, mandation_functions: MandationFunctions, validation_set: dict):
         """
-        Runs standard validation for each instance of reason_code_coding_{field_type} (note that, because reason_code
-        is a list, there may be multiple instances of reason_code_coding_{field_type}, hence the need to iterate).
+        Runs standard validation for each instance of reason_code_coding_code (note that, because reason_code
+        is a list, there may be multiple instances of reason_code_coding_code, hence the need to iterate).
         """
 
         # Identify the number of elements of reason_code for validation to inform the number of times to iterate.
@@ -108,25 +101,25 @@ class PostValidators:
         # Validate the field for each element of reason_code
         for index in range(number_of_iterations):
 
-            field_name = f"reason_code_coding_{field_type}"
-            field_location = f"reasonCode[{index}].coding[0].{field_type}"
+            field_name = FieldNames.reason_code_coding_code
+            field_location = "reasonCode[{index}].coding[0].code"
 
             # Obtain the field value from the imms json data, or set it to None if the value can't be found
             try:
-                field_value = getattr(ObtainFieldValue, f"reason_code_coding_{field_type}")(self.imms, index)
+                field_value = getattr(ObtainFieldValue, field_name)(self.imms, index)
             except (KeyError, IndexError):
                 field_value = None
 
             self.run_field_validation(mandation_functions, validation_set, field_name, field_location, field_value)
 
-    def validate_and_set_vaccine_type(self, imms: dict) -> dict:
+    def validate_and_set_vaccine_type(self) -> None:
         """
         Validates that the combination of targetDisease codes maps to a valid vaccine type.
         Sets the vaccine type accordingly.
         """
         try:
             # Obtain list of target_disease_codes
-            target_disease_codes = get_target_disease_codes(imms)
+            target_disease_codes = get_target_disease_codes(self.imms)
 
             # Use the list of target_disease_codes to ascertain the vaccine type
             # Note that disease_codes_to_vaccine_type will raise a value error if the combination of codes is invalid
@@ -147,15 +140,22 @@ class PostValidators:
         # Vaccine_type is a critical validation that other validations rely on, so if it fails an error is raised
         # immediately and no further validation is performed
         try:
-            self.validate_and_set_vaccine_type(self.imms)
+            self.validate_and_set_vaccine_type()
         except (ValueError, TypeError, IndexError, AttributeError, MandatoryError) as e:
             raise ValueError(str(e)) from e
 
         # Initialise the mandation validation functions
         mandation_functions = MandationFunctions(self.imms, self.vaccine_type)
 
-        # Obtain the relevant validation set based on the vaccine type
-        validation_set = getattr(ValidationSets, self.vaccine_type.lower())
+        # Identify whether to use the vaccine_type_agnostic, or else a vaccine type specific, validation rule set
+        validation_set_to_use = (
+            "vaccine_type_agnostic"
+            if self.vaccine_type in ValidationSets.vaccine_types_which_use_agnostic_set
+            else self.vaccine_type.lower()
+        )
+
+        # Obtain the relevant validation set
+        validation_set = getattr(ValidationSets, validation_set_to_use)
 
         # Validate all fields which have standard validation
         for field_name in self.fields_with_standard_validation:
@@ -163,8 +163,7 @@ class PostValidators:
 
         # Validate reason_code_coding fields. Note that there may be multiple of each of these
         # - all instances of the field will be validated by the validate_reason_code_coding_field validator
-        self.validate_reason_code_coding_field(mandation_functions, validation_set, "code")
-        self.validate_reason_code_coding_field(mandation_functions, validation_set, "display")
+        self.validate_reason_code_coding_code(mandation_functions, validation_set)
 
         # Raise any errors
         if self.errors:

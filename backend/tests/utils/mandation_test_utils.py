@@ -5,7 +5,7 @@ from copy import deepcopy
 from pydantic import ValidationError
 
 from jsonpath_ng.ext import parse
-from src.mappings import Mandation, VaccineTypes, vaccine_type_mappings
+from src.mappings import VaccineTypes, vaccine_type_mappings
 
 
 class MandationTests:
@@ -91,61 +91,3 @@ class MandationTests:
             with test_instance.assertRaises(ValueError) as error:
                 test_instance.validator.validate(invalid_json_data)
             test_instance.assertEqual(expected_error_message, str(error.exception))
-
-    @staticmethod
-    def test_mandation_rule_met(
-        test_instance: unittest.TestCase,
-        field_location: str,
-        mandation: str,
-        valid_json_data: dict,
-        expected_error_message: str = None,
-        expected_error_type: str = "value_error",
-    ):
-        """Test that data is rejected or accepted as appropriate when field is present or absent)"""
-        if mandation == Mandation.mandatory:
-            MandationTests.test_present_field_accepted(test_instance, valid_json_data)
-            MandationTests.test_missing_mandatory_field_rejected(
-                test_instance, field_location, valid_json_data, expected_error_message, expected_error_type
-            )
-
-        if mandation == Mandation.required or mandation == Mandation.optional:
-            MandationTests.test_present_field_accepted(test_instance, valid_json_data)
-            MandationTests.test_missing_field_accepted(test_instance, field_location, valid_json_data)
-
-    @staticmethod
-    def test_mandation_for_interdependent_fields(
-        test_instance: unittest.TestCase,
-        dependent_field_location: str,
-        dependent_on_field_location: str,
-        vaccine_type: VaccineTypes,
-        mandation_when_dependent_on_field_present: Mandation,
-        mandation_when_dependent_on_field_absent: Mandation,
-        expected_error_message: str = None,
-        expected_error_type: str = "value_error",
-        valid_json_data: dict = None,
-    ):
-        """Test both the cases where dependent_on_field is present and where it isabsent"""
-        # Set the vaccination procedure code based on vaccine type
-        valid_json_data = MandationTests.update_target_disease(test_instance, vaccine_type, json_data=valid_json_data)
-
-        # Test cases where depent_on_field is present
-        MandationTests.test_mandation_rule_met(
-            test_instance,
-            field_location=dependent_field_location,
-            mandation=mandation_when_dependent_on_field_present,
-            valid_json_data=deepcopy(valid_json_data),
-            expected_error_message=expected_error_message,
-            expected_error_type=expected_error_type,
-        )
-
-        # Test case where depent_on_field is absent
-        valid_json_data = parse(dependent_on_field_location).filter(lambda d: True, valid_json_data)
-
-        MandationTests.test_mandation_rule_met(
-            test_instance,
-            field_location=dependent_field_location,
-            mandation=mandation_when_dependent_on_field_absent,
-            valid_json_data=deepcopy(valid_json_data),
-            expected_error_message=expected_error_message,
-            expected_error_type=expected_error_type,
-        )

@@ -1,126 +1,48 @@
 """Validation sets for each vaccine type"""
 
 from models.mandation_functions import MandationRules
+from mappings import VaccineTypes
 
 
 class ValidationSets:
     """
     Validation sets for each vaccine type.
-    Each validation set identifies the mandation rule which applies for each field
+    Each validation set identifies the mandation rule which applies for each field.
+
+    TO ADD A NEW VACCINE TYPE:
+    * If the mandation rules for the new vaccine type are identical to the vaccine_type_agnostic rules, then
+      add the vaccine type to the vaccine_types_which_use_agnostic_set list.
+    * If some of the mandation rules for the new vaccine type are different than the agnostic rules, then create a
+      new validation set, with the same name as the vaccine type. This can be done by copying and pasting the
+      vaccine_type_agnostic set, and amending any rules as required.
+    The validator will then automatically pick up the correct validation set.
     """
 
     def __init__(self) -> None:
         pass
 
-    covid19 = {
-        "occurrence_date_time": MandationRules.mandatory,
+    vaccine_types_which_use_agnostic_set = [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]
+
+    vaccine_type_agnostic = {
         "patient_identifier_value": MandationRules.required,
         "patient_name_given": MandationRules.mandatory,
         "patient_name_family": MandationRules.mandatory,
         "patient_birth_date": MandationRules.mandatory,
         "patient_gender": MandationRules.mandatory,
         "patient_address_postal_code": MandationRules.mandatory,
+        "occurrence_date_time": MandationRules.mandatory,
         "organization_identifier_value": MandationRules.mandatory,
-        "organization_display": "optional",
+        "organization_identifier_system": MandationRules.mandatory,
         "identifier_value": MandationRules.mandatory,
         "identifier_system": MandationRules.mandatory,
         "practitioner_name_given": MandationRules.optional,
-        "practitioner_name_family": "optional",
-        "practitioner_identifier_value": MandationRules.required,
-        "practitioner_identifier_system": MandationRules.mandatory_when_practitioner_identifier_value_present,
+        "practitioner_name_family": MandationRules.optional,
         "recorded": MandationRules.mandatory,
         "primary_source": MandationRules.mandatory,
-        "report_origin_text": MandationRules.mandatory_when_primary_source_is_false,
-        "vaccination_procedure_code": MandationRules.mandatory,
-        "vaccination_procedure_display": MandationRules.required,
-        "dose_number_positive_int": MandationRules.mandatory,
-        "vaccine_code_coding_code": MandationRules.mandatory,
-        "vaccine_code_coding_display": MandationRules.required,
-        "manufacturer_display": MandationRules.mandatory,
-        "lot_number": MandationRules.mandatory,
-        "expiration_date": MandationRules.mandatory,
-        "site_coding_code": MandationRules.required,
-        "site_coding_display": MandationRules.required,
-        "route_coding_code": MandationRules.mandatory,
-        "route_coding_display": MandationRules.required,
-        "dose_quantity_value": MandationRules.mandatory,
-        "dose_quantity_code": MandationRules.mandatory,
-        "dose_quantity_unit": MandationRules.required,
-        "nhs_number_verification_status_code": MandationRules.mandatory,
-        "nhs_number_verification_status_display": MandationRules.required,
-        "organization_identifier_system": MandationRules.mandatory,
-        "location_identifier_value": MandationRules.mandatory,
-        "location_identifier_system": MandationRules.mandatory,
-        "reason_code_coding_code": MandationRules.required,
-        "reason_code_coding_display": MandationRules.required,
-    }
-
-    flu = {
-        "occurrence_date_time": MandationRules.mandatory,
-        "patient_identifier_value": MandationRules.required,
-        "patient_name_given": MandationRules.mandatory,
-        "patient_name_family": MandationRules.mandatory,
-        "patient_birth_date": MandationRules.mandatory,
-        "patient_gender": MandationRules.mandatory,
-        "patient_address_postal_code": MandationRules.mandatory,
-        "organization_identifier_value": MandationRules.mandatory,
-        "organization_display": "optional",
-        "identifier_value": MandationRules.mandatory,
-        "identifier_system": MandationRules.mandatory,
-        "practitioner_name_given": "optional",
-        "practitioner_name_family": "optional",
-        "practitioner_identifier_value": MandationRules.required,
-        "practitioner_identifier_system": MandationRules.mandatory_when_practitioner_identifier_value_present,
-        "recorded": MandationRules.mandatory,
-        "primary_source": MandationRules.mandatory,
-        "report_origin_text": MandationRules.mandatory_when_primary_source_is_false,
-        "vaccination_procedure_code": MandationRules.mandatory,
-        "vaccination_procedure_display": MandationRules.required,
-        "dose_number_positive_int": MandationRules.mandatory,
-        "vaccine_code_coding_code": MandationRules.mandatory,
-        "vaccine_code_coding_display": MandationRules.required,
-        "manufacturer_display": MandationRules.required,
-        "lot_number": MandationRules.required,
-        "expiration_date": MandationRules.required,
-        "site_coding_code": MandationRules.required,
-        "site_coding_display": MandationRules.required,
-        "route_coding_code": MandationRules.mandatory,
-        "route_coding_display": MandationRules.required,
-        "dose_quantity_value": MandationRules.mandatory,
-        "dose_quantity_code": MandationRules.mandatory,
-        "dose_quantity_unit": MandationRules.required,
-        "nhs_number_verification_status_code": MandationRules.mandatory,
-        "nhs_number_verification_status_display": MandationRules.required,
-        "organization_identifier_system": MandationRules.mandatory,
-        "location_identifier_value": MandationRules.mandatory,
-        "location_identifier_system": MandationRules.mandatory,
-        "reason_code_coding_code": MandationRules.required,
-        "reason_code_coding_display": MandationRules.required,
-    }
-
-    hpv = {
-        "occurrence_date_time": MandationRules.mandatory,
-        "patient_identifier_value": MandationRules.required,
-        "patient_name_given": MandationRules.mandatory,
-        "patient_name_family": MandationRules.mandatory,
-        "patient_birth_date": MandationRules.mandatory,
-        "patient_gender": MandationRules.mandatory,
-        "patient_address_postal_code": MandationRules.mandatory,
-        "organization_identifier_value": MandationRules.mandatory,
-        "organization_display": "optional",
-        "identifier_value": MandationRules.mandatory,
-        "identifier_system": MandationRules.mandatory,
-        "practitioner_name_given": "optional",
-        "practitioner_name_family": "optional",
-        "practitioner_identifier_value": MandationRules.required,
-        "practitioner_identifier_system": "optional",
-        "recorded": MandationRules.mandatory,
-        "primary_source": MandationRules.mandatory,
-        "report_origin_text": MandationRules.mandatory_when_primary_source_is_false,
         "vaccination_procedure_code": MandationRules.mandatory,
         "vaccination_procedure_display": MandationRules.required,
         "dose_number_positive_int": MandationRules.required,
-        "vaccine_code_coding_code": MandationRules.mandatory,
+        "vaccine_code_coding_code": MandationRules.required,
         "vaccine_code_coding_display": MandationRules.required,
         "manufacturer_display": MandationRules.required,
         "lot_number": MandationRules.required,
@@ -132,54 +54,7 @@ class ValidationSets:
         "dose_quantity_value": MandationRules.required,
         "dose_quantity_code": MandationRules.required,
         "dose_quantity_unit": MandationRules.required,
-        "nhs_number_verification_status_code": MandationRules.mandatory,
-        "nhs_number_verification_status_display": MandationRules.required,
-        "organization_identifier_system": MandationRules.mandatory,
+        "reason_code_coding_code": MandationRules.required,
         "location_identifier_value": MandationRules.mandatory,
         "location_identifier_system": MandationRules.mandatory,
-        "reason_code_coding_code": MandationRules.required,
-        "reason_code_coding_display": MandationRules.required,
-    }
-
-    mmr = {
-        "occurrence_date_time": MandationRules.mandatory,
-        "patient_identifier_value": MandationRules.required,
-        "patient_name_given": MandationRules.mandatory,
-        "patient_name_family": MandationRules.mandatory,
-        "patient_birth_date": MandationRules.mandatory,
-        "patient_gender": MandationRules.mandatory,
-        "patient_address_postal_code": MandationRules.mandatory,
-        "organization_identifier_value": MandationRules.mandatory,
-        "organization_display": "optional",
-        "identifier_value": MandationRules.mandatory,
-        "identifier_system": MandationRules.mandatory,
-        "practitioner_name_given": "optional",
-        "practitioner_name_family": "optional",
-        "practitioner_identifier_value": "optional",
-        "practitioner_identifier_system": "optional",
-        "recorded": MandationRules.mandatory,
-        "primary_source": MandationRules.mandatory,
-        "report_origin_text": MandationRules.mandatory_when_primary_source_is_false,
-        "vaccination_procedure_code": MandationRules.mandatory,
-        "vaccination_procedure_display": MandationRules.required,
-        "dose_number_positive_int": MandationRules.required,
-        "vaccine_code_coding_code": MandationRules.mandatory,
-        "vaccine_code_coding_display": MandationRules.required,
-        "manufacturer_display": MandationRules.required,
-        "lot_number": MandationRules.required,
-        "expiration_date": MandationRules.required,
-        "site_coding_code": MandationRules.required,
-        "site_coding_display": MandationRules.required,
-        "route_coding_code": MandationRules.required,
-        "route_coding_display": MandationRules.required,
-        "dose_quantity_value": MandationRules.required,
-        "dose_quantity_code": MandationRules.required,
-        "dose_quantity_unit": MandationRules.required,
-        "nhs_number_verification_status_code": MandationRules.mandatory,
-        "nhs_number_verification_status_display": MandationRules.required,
-        "organization_identifier_system": MandationRules.mandatory,
-        "location_identifier_value": MandationRules.mandatory,  # TODO: Check as this was previously N/A
-        "location_identifier_system": MandationRules.mandatory,  # TODO: Check as this was previously N/A
-        "reason_code_coding_code": MandationRules.required,
-        "reason_code_coding_display": MandationRules.required,
     }
