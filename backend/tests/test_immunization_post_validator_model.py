@@ -30,47 +30,24 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         self.all_vaccine_types = [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]
 
     def test_collected_errors(self):
-        """Test that when passed multiple validation errors, it returns a list of all expected errors."""
-        # TODO: BUG Fix this test so that it collects post-validation errors (the ones here are pre-validation)
+        """Test that when passed multiple validation errors, it returns a list of all expected errors"""
 
         covid_19_json_data = deepcopy(self.completed_json_data[VaccineTypes.covid_19])
 
-        # remove name[0].given for 'Patient'
-        for item in covid_19_json_data.get("contained", []):
-            if item.get("resourceType") == "Patient":
-                if "name" in item and item["name"] and "given" in item["name"][0]:
-                    item["name"][0]["given"] = None
+        for practitioner in covid_19_json_data["contained"]:
+            if practitioner["resourceType"] == "Practitioner":
+                for identifier in practitioner["identifier"]:
+                    if identifier.get("system") == "https://fhir.hl7.org.uk/Id/nmc-number":
+                        del identifier["system"]
 
-        # remove actor.identifier.value for 'Organization'
-        for performer in covid_19_json_data.get("performer", []):
-            if performer.get("actor", {}).get("type") == "Organization":
-                if "identifier" in performer["actor"]:
-                    performer["actor"]["identifier"]["value"] = None
-                if "display" in performer["actor"]:
-                    performer["actor"]["display"] = None
-
-        # remove postalCode for 'Patient'
-        for item in covid_19_json_data.get("contained", []):
-            if item.get("resourceType") == "Patient":
-                if "address" in item and item["address"]:
-                    item["address"][0]["postalCode"] = None
-
-        # remove 'given' for 'Practitioner'
-        for item in covid_19_json_data.get("contained", []):
-            if item.get("resourceType") == "Practitioner":
-                if "name" in item and item["name"] and "given" in item["name"][0]:
-                    item["name"][0]["given"] = None
-
-        # remove 'primarySource'
-        covid_19_json_data["primarySource"] = None
+        for performer in covid_19_json_data["performer"]:
+            if performer["actor"].get("type") == "Organization":
+                if performer["actor"]["identifier"].get("system") == "https://fhir.nhs.uk/Id/ods-organization-code":
+                    del performer["actor"]["identifier"]["system"]                
 
         expected_errors = [
-            "Validation errors: contained[?(@.resourceType=='Patient')].name[0].given must be an array",
-            "performer[?(@.actor.type=='Organization')].actor.identifier.value must be a string",
-            "performer[?@.actor.type == 'Organization'].actor.display must be a string",
-            "contained[?(@.resourceType=='Patient')].address[0].postalCode must be a string",
-            "contained[?(@.resourceType=='Practitioner')].name[0].given must be an array",
-            "primarySource must be a boolean",
+            f"contained[?(@.resourceType=='Practitioner')].identifier[0].system is mandatory when contained[?(@.resourceType=='Practitioner')].identifier[0].value is present and vaccination type is {VaccineTypes.covid_19}",
+            "performer[?(@.actor.type=='Organization')].actor.identifier.system is a mandatory field"
         ]
 
         # assert ValueError raised

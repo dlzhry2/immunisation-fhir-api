@@ -419,11 +419,12 @@ class FhirController:
         
         result = self.fhir_service.search_immunizations(
             search_params.patient_identifier,
-            search_params.immunization_targets,
+            vax_type_perm,
             create_query_string(search_params),
             search_params.date_from,
             search_params.date_to
         )
+
 
         if "diagnostics" in result:
             exp_error = create_operation_outcome(
@@ -445,6 +446,14 @@ class FhirController:
                 1 for entry in result_json_dict["entry"] if entry.get("search", {}).get("mode") == "match"
             )
             result_json_dict["total"] = total_count
+            if sorted(search_params.immunization_targets) != sorted(vax_type_perm):
+                exp_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.warning,
+                    code=Code.unauthorized,
+                    diagnostics="Your search contains details that you are not authorised to request"
+                )
+                result_json_dict['entry'].append({'resource': exp_error})
         if "entry" not in result_json_dict:
             result_json_dict["entry"] = []
             result_json_dict["total"] = 0

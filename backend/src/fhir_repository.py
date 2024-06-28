@@ -165,7 +165,6 @@ class ImmunizationRepository:
                 "PatientPK": attr.patient_pk,
                 "PatientSK": attr.patient_sk,
                 "Resource": json.dumps(attr.resource, cls=DecimalEncoder),
-                "Patient": attr.patient,
                 "IdentifierPK": attr.identifier,
                 "AppId": app_id,
                 "Operation": "CREATE",
@@ -195,7 +194,7 @@ class ImmunizationRepository:
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient, "
+            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
             "Operation = :operation, Version = :version "
         )
 
@@ -221,7 +220,6 @@ class ImmunizationRepository:
                     ":patient_pk": attr.patient_pk,
                     ":patient_sk": attr.patient_sk,
                     ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
-                    ":patient": attr.patient,
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
                 },
@@ -258,7 +256,7 @@ class ImmunizationRepository:
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient, "
+            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
             "Operation = :operation, Version = :version, DeletedAt = :respawn "
         )
 
@@ -284,7 +282,6 @@ class ImmunizationRepository:
                     ":patient_pk": attr.patient_pk,
                     ":patient_sk": attr.patient_sk,
                     ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
-                    ":patient": attr.patient,
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
                     ":respawn": "reinstated",
@@ -321,7 +318,7 @@ class ImmunizationRepository:
         # "Resource" is a dynamodb reserved word
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, Patient = :patient, "
+            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
             "Operation = :operation, Version = :version "
         )
 
@@ -347,7 +344,6 @@ class ImmunizationRepository:
                     ":patient_pk": attr.patient_pk,
                     ":patient_sk": attr.patient_sk,
                     ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
-                    ":patient": attr.patient,
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
                 },
