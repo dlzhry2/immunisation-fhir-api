@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from models.utils.post_validation_utils import MandatoryError
 from models.field_locations import FieldLocations
+from models.field_names import FieldNames
 from base_utils.base_utils import obtain_field_value
 
 
@@ -44,8 +45,8 @@ class MandationFunctions:
     def mandatory_when_practitioner_identifier_value_present(self, field_value, field_location: str) -> None:
         """Raises MandatoryError if practitioner_identifier_field is present and given field value is None"""
 
-        practitioner_identifier_value = obtain_field_value(self.imms, "practitioner_identifier_value")
-        practitioner_identifier_value_field_location = getattr(FieldLocations, "practitioner_identifier_value")
+        practitioner_identifier_value = obtain_field_value(self.imms, FieldNames.practitioner_identifier_value)
+        practitioner_identifier_value_field_location = getattr(FieldLocations, FieldNames.practitioner_identifier_value)
 
         if practitioner_identifier_value is not None and field_value is None:
             raise MandatoryError(
@@ -56,8 +57,8 @@ class MandationFunctions:
     def mandatory_when_primary_source_is_false(self, field_value, field_location: str) -> None:
         """Raises MandatoryError if primary_source is false and given field value is None"""
 
-        primary_source = obtain_field_value(self.imms, "primary_source")
-        primary_source_field_location = getattr(FieldLocations, "primary_source")
+        primary_source = obtain_field_value(self.imms, FieldNames.primary_source)
+        primary_source_field_location = getattr(FieldLocations, FieldNames.primary_source)
 
         if primary_source is False and field_value is None:
             raise MandatoryError(f"{field_location} is mandatory when {primary_source_field_location} is false")

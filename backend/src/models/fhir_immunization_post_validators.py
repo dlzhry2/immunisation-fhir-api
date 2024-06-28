@@ -7,6 +7,7 @@ from models.field_locations import FieldLocations
 from models.obtain_field_value import ObtainFieldValue
 from models.validation_sets import ValidationSets
 from models.mandation_functions import MandationFunctions
+from models.field_names import FieldNames
 from base_utils.base_utils import obtain_field_value, obtain_field_location
 
 
@@ -23,44 +24,44 @@ class PostValidators:
         # functions). Status is mandatory in FHIR, so there is no post-validation for status as it is handled by the
         # FHIR validator.
         self.fields_with_standard_validation = [
-            "occurrence_date_time",
-            "patient_identifier_value",
-            "patient_name_given",
-            "patient_name_family",
-            "patient_birth_date",
-            "patient_gender",
-            "patient_address_postal_code",
-            "organization_identifier_value",
-            "organization_display",
-            "identifier_value",
-            "identifier_system",
-            "practitioner_name_given",
-            "practitioner_name_family",
-            "practitioner_identifier_value",
-            "practitioner_identifier_system",
-            "recorded",
-            "primary_source",
-            "report_origin_text",
-            "vaccination_procedure_code",
-            "vaccination_procedure_display",
-            "dose_number_positive_int",
-            "vaccine_code_coding_code",
-            "vaccine_code_coding_display",
-            "manufacturer_display",
-            "lot_number",
-            "expiration_date",
-            "site_coding_code",
-            "site_coding_display",
-            "route_coding_code",
-            "route_coding_display",
-            "dose_quantity_value",
-            "dose_quantity_code",
-            "dose_quantity_unit",
-            "nhs_number_verification_status_code",
-            "nhs_number_verification_status_display",
-            "organization_identifier_system",
-            "location_identifier_value",
-            "location_identifier_system",
+            FieldNames.occurrence_date_time,
+            FieldNames.patient_identifier_value,
+            FieldNames.patient_name_given,
+            FieldNames.patient_name_family,
+            FieldNames.patient_birth_date,
+            FieldNames.patient_gender,
+            FieldNames.patient_address_postal_code,
+            FieldNames.organization_identifier_value,
+            FieldNames.organization_display,
+            FieldNames.identifier_value,
+            FieldNames.identifier_system,
+            FieldNames.practitioner_name_given,
+            FieldNames.practitioner_name_family,
+            FieldNames.practitioner_identifier_value,
+            FieldNames.practitioner_identifier_system,
+            FieldNames.recorded,
+            FieldNames.primary_source,
+            FieldNames.report_origin_text,
+            FieldNames.vaccination_procedure_code,
+            FieldNames.vaccination_procedure_display,
+            FieldNames.dose_number_positive_int,
+            FieldNames.vaccine_code_coding_code,
+            FieldNames.vaccine_code_coding_display,
+            FieldNames.manufacturer_display,
+            FieldNames.lot_number,
+            FieldNames.expiration_date,
+            FieldNames.site_coding_code,
+            FieldNames.site_coding_display,
+            FieldNames.route_coding_code,
+            FieldNames.route_coding_display,
+            FieldNames.dose_quantity_value,
+            FieldNames.dose_quantity_code,
+            FieldNames.dose_quantity_unit,
+            FieldNames.nhs_number_verification_status_code,
+            FieldNames.nhs_number_verification_status_display,
+            FieldNames.organization_identifier_system,
+            FieldNames.location_identifier_value,
+            FieldNames.location_identifier_system,
         ]
 
     def run_field_validation(
@@ -137,7 +138,7 @@ class PostValidators:
 
         # If no target_disease_codes were found then raise a Mandatory error
         except (KeyError, IndexError, TypeError, MandatoryError) as error:
-            field_location = getattr(FieldLocations, "target_disease_codes")
+            field_location = getattr(FieldLocations, FieldNames.target_disease_codes)
             raise MandatoryError(f"{field_location} is a mandatory field") from error
 
     def validate(self):
