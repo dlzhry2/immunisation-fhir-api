@@ -34,20 +34,19 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         covid_19_json_data = deepcopy(self.completed_json_data[VaccineTypes.covid_19])
 
-        for practitioner in covid_19_json_data["contained"]:
-            if practitioner["resourceType"] == "Practitioner":
-                for identifier in practitioner["identifier"]:
-                    if identifier.get("system") == "https://fhir.hl7.org.uk/Id/nmc-number":
-                        del identifier["system"]
+        for patient in covid_19_json_data["contained"]:
+            if patient["resourceType"] == "Patient":
+                for name in patient["name"]:
+                    del name["family"]
 
         for performer in covid_19_json_data["performer"]:
             if performer["actor"].get("type") == "Organization":
                 if performer["actor"]["identifier"].get("system") == "https://fhir.nhs.uk/Id/ods-organization-code":
-                    del performer["actor"]["identifier"]["system"]                
+                    del performer["actor"]["identifier"]["system"]
 
         expected_errors = [
-            f"contained[?(@.resourceType=='Practitioner')].identifier[0].system is mandatory when contained[?(@.resourceType=='Practitioner')].identifier[0].value is present and vaccination type is {VaccineTypes.covid_19}",
-            "performer[?(@.actor.type=='Organization')].actor.identifier.system is a mandatory field"
+            "contained[?(@.resourceType=='Patient')].name[0].family is a mandatory field",
+            "performer[?(@.actor.type=='Organization')].actor.identifier.system is a mandatory field",
         ]
 
         # assert ValueError raised
