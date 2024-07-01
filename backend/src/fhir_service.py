@@ -265,29 +265,19 @@ class FhirService:
             )
         fhir_bundle = FhirBundle(resourceType="Bundle", type="searchset", entry=entries)
         url = f"{get_service_url()}/Immunization?{params}"
+        # Splitting the URL into base_url and query_string
+        base_url, query_string = url.split('?')
 
-        targets = ",".join(vaccine_types)
-        # Parse the URL to manipulate its components
-        parsed_url = urllib.parse.urlparse(url)
+        # Splitting the query_string into key-value pairs
+        parameters = query_string.split('&')
 
-        # Parse the query parameters
-        query_params = urllib.parse.parse_qs(parsed_url.query)
+        # Finding and updating the immunization.target parameter
+        for i, param in enumerate(parameters):
+            if param.startswith('-immunization.target='):
+                parameters[i] = f"immunization.target={','.join(vaccine_types)}"
 
-        # Update the immunization.target parameter
-        query_params["-immunization.target"] = targets
-
-        # Construct the new query string
-        new_query_string = urllib.parse.urlencode(query_params, doseq=True)
-
-        # Construct the new URL
-        new_url = urllib.parse.urlunparse((
-            parsed_url.scheme,
-            parsed_url.netloc,
-            parsed_url.path,
-            parsed_url.params,
-            new_query_string,
-            parsed_url.fragment
-        ))
+        # Constructing the new URL
+        new_url = base_url + '?' + '&'.join(parameters)
         fhir_bundle.link = [BundleLink(relation="self", url=new_url)]
         return fhir_bundle
 
