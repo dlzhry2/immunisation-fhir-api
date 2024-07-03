@@ -57,20 +57,12 @@ def get_generic_questionnaire_response_value(
 
 
 def get_generic_extension_value(
-    json_data: dict,
-    url: str,
-    system: str,
-    field_type: Literal["code", "display"],
+    json_data: dict, url: str, system: str, field_type: Literal["code", "display"]
 ) -> Union[str, None]:
-    """
-    Get the value of an extension field, given its url, field_type, and system
-    """
-    value_codeable_concept_coding = [x for x in json_data["extension"] if x.get("url") == url][0][
-        "valueCodeableConcept"
-    ]["coding"]
-
+    """Get the value of an extension field, given its url, field_type, and system"""
+    value_codeable_concept = [x for x in json_data["extension"] if x.get("url") == url][0]["valueCodeableConcept"]
+    value_codeable_concept_coding = value_codeable_concept["coding"]
     value = [x for x in value_codeable_concept_coding if x.get("system") == system][0][field_type]
-
     return value
 
 
@@ -91,7 +83,7 @@ def generate_field_location_for_questionnaire_response(
 
 def generate_field_location_for_extension(url: str, system: str, field_type: Literal["code", "display"]) -> str:
     """Generate the field location string for extension items"""
-    return f"extension[?(@.url=='{url}')].valueCodeableConcept." + f"coding[?(@.system=='{system}')].{field_type}"
+    return f"extension[?(@.url=='{url}')].valueCodeableConcept.coding[?(@.system=='{system}')].{field_type}"
 
 
 def is_organization(x):
@@ -128,17 +120,6 @@ def nhs_number_mod11_check(nhs_number: str) -> bool:
         is_mod11 = check_digit == int(nhs_number[-1])
 
     return is_mod11
-
-
-def get_target_disease_codes(immunization: dict):
-    """Takes a FHIR immunization resource and returns a list of target disease codes"""
-    target_diseases = []
-    target_disease_list = immunization.get("protocolApplied")[0].get("targetDisease")
-    for element in target_disease_list:
-        code = [x.get("code") for x in element.get("coding") if x.get("system") == "http://snomed.info/sct"][0]
-        if code is not None:
-            target_diseases.append(code)
-    return target_diseases
 
 
 def get_occurrence_datetime(immunization: dict) -> Optional[datetime.datetime]:

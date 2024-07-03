@@ -57,7 +57,7 @@ vaccine_type_mappings = [
     ([DiseaseCodes.covid_19], VaccineTypes.covid_19),
     ([DiseaseCodes.flu], VaccineTypes.flu),
     ([DiseaseCodes.hpv], VaccineTypes.hpv),
-    # FOR VACCINE_TYPES WHICH TARGET MULTIPLE DISEASES ENSURE THAT THE DISEASE CODES ARE SORTED ALPHABETICALLY
+    # IMPORTANT: FOR VACCINE_TYPES WHICH TARGET MULTIPLE DISEASES ENSURE THAT DISEASE CODES ARE SORTED ALPHABETICALLY
     # This allows order-insensitive comparison with other lists, by alphabetically sorting the list for comparison
     (sorted([DiseaseCodes.measles, DiseaseCodes.rubella, DiseaseCodes.mumps]), VaccineTypes.mmr),
 ]

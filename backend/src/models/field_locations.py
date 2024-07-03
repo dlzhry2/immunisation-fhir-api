@@ -16,6 +16,7 @@ class FieldLocations:
     json data
     """
 
+    target_disease = "protocolApplied[0].targetDisease"
     target_disease_codes = f"protocolApplied[0].targetDisease[*].coding[?(@.system=='{Urls.snomed}')].code"
     patient_identifier_value = (
         "contained[?(@.resourceType=='Patient')].identifier[0].value"  # TODO: Fix to use nhs number url lookup

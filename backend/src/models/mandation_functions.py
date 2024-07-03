@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from models.utils.post_validation_utils import MandatoryError
+from models.errors import MandatoryError
 from models.field_locations import FieldLocations
 from models.field_names import FieldNames
 from base_utils.base_utils import obtain_field_value

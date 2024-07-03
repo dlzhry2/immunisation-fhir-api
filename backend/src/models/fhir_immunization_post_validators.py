@@ -1,9 +1,7 @@
 "FHIR Immunization Post Validators"
 
-from models.utils.generic_utils import get_target_disease_codes
-from models.utils.validation_utils import disease_codes_to_vaccine_type
-from models.utils.post_validation_utils import MandatoryError
-from models.field_locations import FieldLocations
+from models.utils.validation_utils import get_vaccine_type
+from models.errors import MandatoryError
 from models.obtain_field_value import ObtainFieldValue
 from models.validation_sets import ValidationSets
 from models.mandation_functions import MandationFunctions
@@ -102,7 +100,7 @@ class PostValidators:
         for index in range(number_of_iterations):
 
             field_name = FieldNames.reason_code_coding_code
-            field_location = "reasonCode[{index}].coding[0].code"
+            field_location = f"reasonCode[{index}].coding[0].code"
 
             # Obtain the field value from the imms json data, or set it to None if the value can't be found
             try:
@@ -112,36 +110,16 @@ class PostValidators:
 
             self.run_field_validation(mandation_functions, validation_set, field_name, field_location, field_value)
 
-    def validate_and_set_vaccine_type(self) -> None:
-        """
-        Validates that the combination of targetDisease codes maps to a valid vaccine type.
-        Sets the vaccine type accordingly.
-        """
-        try:
-            # Obtain list of target_disease_codes
-            target_disease_codes = get_target_disease_codes(self.imms)
-
-            # Use the list of target_disease_codes to ascertain the vaccine type
-            # Note that disease_codes_to_vaccine_type will raise a value error if the combination of codes is invalid
-            if target_disease_codes:
-                self.vaccine_type = disease_codes_to_vaccine_type(target_disease_codes)
-            # If no target_disease_codes are found then raise an error
-            else:
-                raise MandatoryError
-
-        # If no target_disease_codes were found then raise a Mandatory error
-        except (KeyError, IndexError, TypeError, MandatoryError) as error:
-            field_location = getattr(FieldLocations, FieldNames.target_disease_codes)
-            raise MandatoryError(f"{field_location} is a mandatory field") from error
-
     def validate(self):
         """Run all post-validation checks."""
 
-        # Vaccine_type is a critical validation that other validations rely on, so if it fails an error is raised
-        # immediately and no further validation is performed
+        # Identify and set the vaccine type.
+        # Note: get_vaccine_type also validates that vaccine type is valid and raises a value error if not.
         try:
-            self.validate_and_set_vaccine_type()
-        except (ValueError, TypeError, IndexError, AttributeError, MandatoryError) as e:
+            self.vaccine_type = get_vaccine_type(self.imms)
+        except ValueError as e:
+            # Note: Vaccine_type is a critical validation that other validations rely on, so if it fails an error
+            # is raised immediately and no further validation is performed
             raise ValueError(str(e)) from e
 
         # Initialise the mandation validation functions
@@ -161,7 +139,7 @@ class PostValidators:
         for field_name in self.fields_with_standard_validation:
             self.validate_field(mandation_functions, validation_set, field_name)
 
-        # Validate reason_code_coding fields. Note that there may be multiple of each of these
+        # Validate reason_code_coding_code fields. Note that there may be multiple of each of these
         # - all instances of the field will be validated by the validate_reason_code_coding_field validator
         self.validate_reason_code_coding_code(mandation_functions, validation_set)
 

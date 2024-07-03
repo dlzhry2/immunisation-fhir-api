@@ -16,6 +16,10 @@ class ObtainFieldValue:
         pass
 
     @staticmethod
+    def target_disease(imms: dict):
+        return imms["protocolApplied"][0]["targetDisease"]
+
+    @staticmethod
     def occurrence_date_time(imms: dict):
         """Obtains occurrence_date_time value"""
         return imms["occurrenceDateTime"]

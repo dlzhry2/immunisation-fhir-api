@@ -17,7 +17,7 @@ class Code(str, Enum):
     invariant = "invariant"
     not_supported = "not-supported"
     duplicate = "duplicate"
-    #Added an unauthorized code its used when returning a response for an unauthorized vaccine type search.
+    # Added an unauthorized code its used when returning a response for an unauthorized vaccine type search.
     unauthorized = "unauthorized"
 
 
@@ -33,6 +33,7 @@ class UnauthorizedError(RuntimeError):
             diagnostics=msg,
         )
 
+
 @dataclass
 class UnauthorizedSystemError(RuntimeError):
     @staticmethod
@@ -45,6 +46,7 @@ class UnauthorizedSystemError(RuntimeError):
             diagnostics=msg,
         )
 
+
 @dataclass
 class UnauthorizedVaxError(RuntimeError):
     @staticmethod
@@ -56,7 +58,8 @@ class UnauthorizedVaxError(RuntimeError):
             code=Code.forbidden,
             diagnostics=msg,
         )
-        
+
+
 @dataclass
 class UnauthorizedVaxOnRecordError(RuntimeError):
     @staticmethod
@@ -68,7 +71,8 @@ class UnauthorizedVaxOnRecordError(RuntimeError):
             code=Code.forbidden,
             diagnostics=msg,
         )
-        
+
+
 @dataclass
 class ResourceNotFoundError(RuntimeError):
     """Return this error when the requested FHIR resource does not exist"""
@@ -105,6 +109,11 @@ class UnhandledResponseError(RuntimeError):
             code=Code.server_error,
             diagnostics=self.__str__(),
         )
+
+
+class MandatoryError(Exception):
+    def __init__(self, message=None):
+        self.message = message
 
 
 class ValidationError(RuntimeError):
@@ -148,6 +157,7 @@ class InconsistentIdError(ValidationError):
             diagnostics=self.__str__(),
         )
 
+
 @dataclass
 class CustomValidationError(ValidationError):
     """Custom validation error"""
@@ -185,18 +195,12 @@ class IdentifierDuplicationError(RuntimeError):
         )
 
 
-def create_operation_outcome(
-    resource_id: str, severity: Severity, code: Code, diagnostics: str
-) -> dict:
+def create_operation_outcome(resource_id: str, severity: Severity, code: Code, diagnostics: str) -> dict:
     """Create an OperationOutcome object. Do not use `fhir.resource` library since it adds unnecessary validations"""
     return {
         "resourceType": "OperationOutcome",
         "id": resource_id,
-        "meta": {
-            "profile": [
-                "https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"
-            ]
-        },
+        "meta": {"profile": ["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},
         "issue": [
             {
                 "severity": severity,

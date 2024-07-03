@@ -3,7 +3,7 @@
 import unittest
 from copy import deepcopy
 
-from src.models.utils.validation_utils import disease_codes_to_vaccine_type, get_vaccine_type
+from src.models.utils.validation_utils import convert_disease_codes_to_vaccine_type, get_vaccine_type
 from src.mappings import VaccineTypes, DiseaseCodes
 from .utils.generic_utils import load_json_data, update_target_disease_code
 
@@ -15,7 +15,7 @@ class TestGenericUtils(unittest.TestCase):
         """Set up for each test. This runs before every test"""
         self.json_data = load_json_data(filename="completed_mmr_immunization_event.json")
 
-    def test_disease_codes_to_vaccine_type(self):
+    def test_convert_disease_codes_to_vaccine_type(self):
         """
         Test that disease_codes_to_vaccine_type returns correct vaccine type for valid combinations,
         of disease codes, or raises a value error otherwise
@@ -31,7 +31,7 @@ class TestGenericUtils(unittest.TestCase):
         ]
 
         for combination, vaccine_type in valid_combinations:
-            self.assertEqual(disease_codes_to_vaccine_type(combination), vaccine_type)
+            self.assertEqual(convert_disease_codes_to_vaccine_type(combination), vaccine_type)
 
         # Invalid combinations raise value error
         invalid_combinations = [
@@ -43,7 +43,7 @@ class TestGenericUtils(unittest.TestCase):
 
         for invalid_combination in invalid_combinations:
             with self.assertRaises(ValueError):
-                disease_codes_to_vaccine_type(invalid_combination)
+                convert_disease_codes_to_vaccine_type(invalid_combination)
 
     def test_get_vaccine_type(self):
         """

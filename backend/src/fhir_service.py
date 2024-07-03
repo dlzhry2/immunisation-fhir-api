@@ -26,7 +26,7 @@ from models.utils.generic_utils import (
     get_occurrence_datetime,
     create_diagnostics,
 )
-from models.utils.post_validation_utils import MandatoryError
+from models.errors import MandatoryError
 from models.utils.validation_utils import get_vaccine_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag

@@ -1,12 +1,33 @@
 """Utils for backend folder"""
 
+import json
+
+
 from typing import Union
 from mappings import vaccine_type_mappings
-import json
 from .generic_utils import create_diagnostics_error
+from base_utils.base_utils import obtain_field_location
+from models.obtain_field_value import ObtainFieldValue
+from models.field_names import FieldNames
+from constants import Urls
 
 
-def disease_codes_to_vaccine_type(disease_codes_input: list) -> Union[str, None]:
+def get_target_disease_codes(immunization: dict):
+    """Takes a FHIR immunization resource and returns a list of target disease codes"""
+    target_diseases = []
+    target_disease_list = ObtainFieldValue.target_disease(immunization)
+    for element in target_disease_list:
+        code = [x.get("code") for x in element["coding"] if x.get("system") == Urls.snomed][0]
+        if code is None:
+            raise ValueError(
+                f"'None' is not a valid value for '{obtain_field_location(FieldNames.target_disease_codes)}'"
+            )
+        target_diseases.append(code)
+
+    return target_diseases
+
+
+def convert_disease_codes_to_vaccine_type(disease_codes_input: list) -> Union[str, None]:
     """
     Takes a list of disease codes and returns the corresponding vaccine type if found,
     otherwise raises a value error
@@ -26,50 +47,48 @@ def get_vaccine_type(immunization: dict):
     Take a FHIR immunization resource and returns the vaccine type based on the combination of target diseases.
     If combination of disease types does not map to a valid vaccine type, a value error is raised
     """
+    # Obtain list of target diseases
     try:
-        target_diseases = []
-        target_disease_list = immunization["protocolApplied"][0]["targetDisease"]
-        for element in target_disease_list:
-            code = [x.get("code") for x in element["coding"] if x.get("system") == "http://snomed.info/sct"][0]
-            target_diseases.append(code)
+        target_diseases = get_target_disease_codes(immunization)
+        if not target_diseases:
+            raise ValueError
     except (KeyError, IndexError, AttributeError) as error:
         raise ValueError("No target disease codes found") from error
-    return disease_codes_to_vaccine_type(target_diseases)
+    except ValueError as error:
+        raise ValueError(f"{obtain_field_location(FieldNames.target_disease_codes)} is a mandatory field") from error
+
+    # Convert list of target diseases to vaccine type
+    return convert_disease_codes_to_vaccine_type(target_diseases)
 
 
-def has_valid_vaccine_type(immunization: dict):
-    """Returns vaccine type if combination of disease codes is valid, otherwise returns False"""
-    try:
-        return get_vaccine_type(immunization)
-    except ValueError:
-        return False
-    
 def check_identifier_system_value(response, imms, app_id):
     """Returns diagnostics if identifier's system and value does not match with the stored content"""
-    
-    app_id_response = response['Item'].get('AppId', None)
+
+    app_id_response = response["Item"].get("AppId", None)
     if app_id != app_id_response:
         value = "Unauthorized"
         diagnostics_error = create_diagnostics_error(value)
-        return diagnostics_error 
+        return diagnostics_error
 
-    
     identifier_system_request = imms["identifier"][0]["system"]
     identifier_value_request = imms["identifier"][0]["value"]
-    resource_str = response['Item']['Resource']
+    resource_str = response["Item"]["Resource"]
     resource = json.loads(resource_str)
     identifier_system_response = resource["identifier"][0]["system"]
     identifier_value_response = resource["identifier"][0]["value"]
 
-    if identifier_system_request != identifier_system_response and identifier_value_request != identifier_value_response:
+    if (
+        identifier_system_request != identifier_system_response
+        and identifier_value_request != identifier_value_response
+    ):
         value = "Both"
         diagnostics_error = create_diagnostics_error(value)
-        return diagnostics_error 
+        return diagnostics_error
     if identifier_system_request != identifier_system_response:
         value = "system"
         diagnostics_error = create_diagnostics_error(value)
-        return diagnostics_error 
+        return diagnostics_error
     if identifier_value_request != identifier_value_response:
         value = "value"
         diagnostics_error = create_diagnostics_error(value)
-        return diagnostics_error   
+        return diagnostics_error

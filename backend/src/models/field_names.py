@@ -12,6 +12,7 @@ class FieldNames:
     Stores the field location names for fields of note within the FHIR Immunization Resource JSON data
     """
 
+    target_disease = "target_disease"
     target_disease_codes = "target_disease_codes"
     patient_identifier_value = "patient_identifier_value"
     patient_name_given = "patient_name_given"
