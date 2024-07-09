@@ -1,16 +1,11 @@
-"""
-File containing the field location strings for identifying the location of a field within the FHIR immunization 
-resource json data
-"""
+"""File containing name strings for each field of note"""
 
 from dataclasses import dataclass
 
 
 @dataclass
 class FieldNames:
-    """
-    Stores the field location names for fields of note within the FHIR Immunization Resource JSON data
-    """
+    """Stores the field name strings for fields of note within the FHIR Immunization Resource JSON data"""
 
     target_disease = "target_disease"
     target_disease_codes = "target_disease_codes"

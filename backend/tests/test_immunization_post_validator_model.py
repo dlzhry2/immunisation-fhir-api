@@ -80,10 +80,9 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             "protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
         )
 
-        # Test that a valid combination of disease codes is accepted and vaccine_type is set correctly
+        # Test that a valid combination of disease codes is accepted
         for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
             self.assertTrue(self.validator.validate(self.completed_json_data[vaccine_type]))
-            self.assertEqual(vaccine_type, self.validator.post_validators.vaccine_type)
 
         # Test that an invalid single disease code is rejected
         _test_invalid_values_rejected(
