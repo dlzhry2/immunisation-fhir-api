@@ -49,7 +49,6 @@ class TestGetImmunization(ImmunizationBaseTest):
         """it should get a FHIR Immunization resource if the nhs number is TBC"""
         imms = create_an_imms_obj()
         del imms["contained"][1]["identifier"][0]["value"]
-      
         imms_id = self.create_immunization_resource(self.default_imms_api, imms)
 
         response = self.default_imms_api.get_immunization_by_id(imms_id)
