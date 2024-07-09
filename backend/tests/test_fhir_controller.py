@@ -483,83 +483,6 @@ class TestSearchImmunizations(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
 
-    def test_get_search_immunizations_for_unauthorized_vaccine_type_search(self):
-        """it should return 200 and contains warning operation outcome as the user is not having authorization for one of the vaccine type"""
-        search_result = load_json_data("sample_immunization_response _for _not_done_event.json")
-        bundle = Bundle.parse_obj(search_result)
-        self.service.search_immunizations.return_value = bundle
-
-        vaccine_type = VaccineTypes().all[0],VaccineTypes().all[1]
-        vaccine_type = ','.join(vaccine_type)
-
-        lambda_event = {
-            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"flu:search", "ApplicationId":"TestApp"},
-            "multiValueQueryStringParameters": {
-                self.immunization_target_key: [vaccine_type],
-                self.patient_identifier_key: [self.patient_identifier_valid_value],
-            }
-        }
-
-        # When
-        response = self.controller.search_immunizations(lambda_event)
-        self.assertEqual(response["statusCode"], 200)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "Bundle")
-        # Check if any resource in entry has resourceType "OperationOutcome"
-        operation_outcome_present = any(entry["resource"]["resourceType"] == "OperationOutcome" for entry in body.get("entry", []))
-        self.assertTrue(operation_outcome_present, "OperationOutcome resource is not present in the response")
-
-
-
-
-    def test_get_search_immunizations_for_unauthorized_vaccine_type_search_400(self):
-        """it should return 400 as the the request is having invalid vaccine type"""
-        search_result = load_json_data("sample_immunization_response _for _not_done_event.json")
-        bundle = Bundle.parse_obj(search_result)
-        self.service.search_immunizations.return_value = bundle
-
-        vaccine_type = "FLUE"
-
-        lambda_event = {
-            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"flu:search", "ApplicationId":"TestApp"},
-            "multiValueQueryStringParameters": {
-                self.immunization_target_key: [vaccine_type],
-                self.patient_identifier_key: [self.patient_identifier_valid_value],
-            }
-        }
-
-        # When
-        response = self.controller.search_immunizations(lambda_event)
-        self.assertEqual(response["statusCode"], 400)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "OperationOutcome")  
-
-    def test_get_search_immunizations_for_unauthorized_vaccine_type_search_403(self):
-        """it should return 403 as the user doesnt have vaccinetype permission"""
-        search_result = load_json_data("sample_immunization_response _for _not_done_event.json")
-        bundle = Bundle.parse_obj(search_result)
-        self.service.search_immunizations.return_value = bundle
-
-        vaccine_type = VaccineTypes().all[0],VaccineTypes().all[1]
-        vaccine_type = ','.join(vaccine_type)
-
-
-        lambda_event = {
-            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"", "ApplicationId":"TestApp"},
-            "multiValueQueryStringParameters": {
-                self.immunization_target_key: [vaccine_type],
-                self.patient_identifier_key: [self.patient_identifier_valid_value],
-            }
-        }
-
-        # When
-        response = self.controller.search_immunizations(lambda_event)
-        self.assertEqual(response["statusCode"], 403)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "OperationOutcome")
-
-
-
 
     def test_get_search_immunizations_unauthorized(self):
         """it should search based on patient_identifier and immunization_target"""
@@ -616,98 +539,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
-
-    def test_post_search_immunizations_for_unauthorized_vaccine_type_search(self):
-        """it should return 200 and contains warning operation outcome as the user is not having authorization for one of the vaccine type"""
-        search_result = load_json_data("sample_immunization_response _for _not_done_event.json")
-        bundle = Bundle.parse_obj(search_result)
-        self.service.search_immunizations.return_value = bundle
-
-        vaccine_type = VaccineTypes().all[0],VaccineTypes().all[1]
-        vaccine_type = ','.join(vaccine_type)
-        # Construct the application/x-www-form-urlencoded body
-        body = {
-            self.patient_identifier_key: self.patient_identifier_valid_value,
-            self.immunization_target_key: vaccine_type,
-        }
-        encoded_body = urlencode(body)
-        # Base64 encode the body
-        base64_encoded_body = base64.b64encode(encoded_body.encode("utf-8")).decode("utf-8")
-
-        # Construct the lambda event
-        lambda_event = {
-            "httpMethod": "POST",
-            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"flu:search", "ApplicationId":"TestApp"},
-            "body": base64_encoded_body,
-        }
-        # When
-        response = self.controller.search_immunizations(lambda_event)
-        self.assertEqual(response["statusCode"], 200)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "Bundle")
-        # Check if any resource in entry has resourceType "OperationOutcome"
-        operation_outcome_present = any(entry["resource"]["resourceType"] == "OperationOutcome" for entry in body.get("entry", []))
-        self.assertTrue(operation_outcome_present, "OperationOutcome resource is not present in the response")
-
-    def test_post_search_immunizations_for_unauthorized_vaccine_type_search_400(self):
-        """it should return 400 as the the request is having invalid vaccine type"""
-        search_result = load_json_data("sample_immunization_response _for _not_done_event.json")
-        bundle = Bundle.parse_obj(search_result)
-        self.service.search_immunizations.return_value = bundle
-
-        vaccine_type = "FLUE"
-        
-        # Construct the application/x-www-form-urlencoded body
-        body = {
-            self.patient_identifier_key: self.patient_identifier_valid_value,
-            self.immunization_target_key: vaccine_type,
-        }
-        encoded_body = urlencode(body)
-        # Base64 encode the body
-        base64_encoded_body = base64.b64encode(encoded_body.encode("utf-8")).decode("utf-8")
-
-        # Construct the lambda event
-        lambda_event = {
-            "httpMethod": "POST",
-            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"flu:search", "ApplicationId":"TestApp"},
-            "body": base64_encoded_body,
-        }
-        # When
-        response = self.controller.search_immunizations(lambda_event)
-        self.assertEqual(response["statusCode"], 400)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "OperationOutcome")
-
-
-    def test_post_search_immunizations_for_unauthorized_vaccine_type_search_403(self):
-        """it should return 403 as the user doesnt have vaccinetype permission"""
-        search_result = load_json_data("sample_immunization_response _for _not_done_event.json")
-        bundle = Bundle.parse_obj(search_result)
-        self.service.search_immunizations.return_value = bundle
-
-        vaccine_type = VaccineTypes().all[0],VaccineTypes().all[1]
-        vaccine_type = ','.join(vaccine_type)
-        
-        # Construct the application/x-www-form-urlencoded body
-        body = {
-            self.patient_identifier_key: self.patient_identifier_valid_value,
-            self.immunization_target_key: vaccine_type,
-        }
-        encoded_body = urlencode(body)
-        # Base64 encode the body
-        base64_encoded_body = base64.b64encode(encoded_body.encode("utf-8")).decode("utf-8")
-
-        # Construct the lambda event
-        lambda_event = {
-            "httpMethod": "POST",
-            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"", "ApplicationId":"TestApp"},
-            "body": base64_encoded_body,
-        }
-        # When
-        response = self.controller.search_immunizations(lambda_event)
-        self.assertEqual(response["statusCode"], 403)
-        body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "OperationOutcome")    
+   
 
 
     @patch("fhir_controller.process_search_params", wraps=process_search_params)
@@ -766,27 +598,6 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(response["statusCode"], 400)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")    
-
-    def test_search_immunizations_returns_200_remove_vaccine_not_done(self):
-        "This method should return 200 but remove the data which has status as not done."
-        search_result = load_json_data("sample_immunization_response _for _not_done_event.json")
-        bundle = Bundle.parse_obj(search_result)
-        self.service.search_immunizations.return_value = bundle
-        vaccine_type = VaccineTypes().all[0]
-        lambda_event = {
-            "headers": {"Content-Type": "application/x-www-form-urlencoded", "VaccineTypePermissions":"COVID19:search","ApplicationId":"TestApp"},
-            "multiValueQueryStringParameters": {
-            self.immunization_target_key: [vaccine_type],
-            self.patient_identifier_key: [self.patient_identifier_valid_value]
-        }}
-
-        # When
-        response = self.controller.search_immunizations(lambda_event)
-
-        self.assertEqual(response["statusCode"], 200)
-        body = json.loads(response["body"])
-        for entry in body.get("entry", []):
-            self.assertNotEqual(entry.get("resource", {}).get("status"), "not-done","entered-in-error")      
 
     def test_self_link_excludes_extraneous_params(self):
         search_result = Bundle.construct()

@@ -46,8 +46,6 @@ class PreValidators:
             self.pre_validate_practitioner_name,
             self.pre_validate_practitioner_name_given,
             self.pre_validate_practitioner_name_family,
-            self.pre_validate_practitioner_identifier_value,
-            self.pre_validate_practitioner_identifier_system,
             self.pre_validate_recorded,
             self.pre_validate_primary_source,
             self.pre_validate_extension_urls,
@@ -65,6 +63,7 @@ class PreValidators:
             self.pre_validate_target_disease_codings,
             self.pre_validate_disease_type_coding_codes,
             self.pre_validate_vaccine_code_coding,
+            self.pre_validate_status_reason_coding_display,
             self.pre_validate_vaccine_code_coding_code,
             self.pre_validate_vaccine_code_coding_display,
             self.pre_validate_manufacturer_display,
@@ -82,11 +81,10 @@ class PreValidators:
             self.pre_validate_reason_code_codings,
             self.pre_validate_reason_code_coding_codes,
             self.pre_validate_patient_identifier_extension,
-            self.pre_validate_nhs_number_verification_status_code,
-            self.pre_validate_nhs_number_verification_status_display,
             self.pre_validate_organization_identifier_system,
             self.pre_validate_location_identifier_value,
             self.pre_validate_location_identifier_system,
+            self.pre_validate_location_type
         ]
 
         for method in validation_methods:
@@ -457,35 +455,6 @@ class PreValidators:
                 "family"
             ]
             PreValidation.for_string(field_name, field_location)
-        except (KeyError, IndexError):
-            pass
-
-
-    def pre_validate_practitioner_identifier_value(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier[0].value (legacy CSV field name:
-        PERFORMING_PROFESSIONAL_BODY_REG_CODE) exists, then it is a non-empty string
-        """
-        field_location = "contained[?(@.resourceType=='Practitioner')].identifier[0].value"
-        try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["identifier"][
-                0
-            ]["value"]
-            PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError):
-            pass
-
-    def pre_validate_practitioner_identifier_system(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier[0].system (legacy CSV field name:
-        PERFORMING_PROFESSIONAL_BODY_REG_URI) exists, then it is a non-empty string
-        """
-        field_location = "contained[?(@.resourceType=='Practitioner')].identifier[0].system"
-        try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["identifier"][
-                0
-            ]["system"]
-            PreValidation.for_string(field_value, field_location)
         except (KeyError, IndexError):
             pass
 
@@ -940,54 +909,6 @@ class PreValidators:
             pass
 
 
-    def pre_validate_nhs_number_verification_status_code(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='Patient')].extension[?(@.url=='https://fhir.hl7.org.uk/
-        StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')].valueCodeableConcept.coding[0].code
-        (legacy CSV field name: NHS_NUMBER_STATUS_INDICATOR_CODE) exists, then it is a non-empty string
-        """
-        url_1 = "https://fhir.nhs.uk/Id/nhs-number"
-        url_2 = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
-        system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
-        field_type = "code"
-        field_location = (
-            f"contained[?(@.resourceType=='Patient')].identifier[?(@.system=='{url_1}')]."
-            + generate_field_location_for_extension(url_2, system, field_type)
-        )
-        try:
-            patient_identifier = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["identifier"]
-            patient_identifier_extension_item = [x for x in patient_identifier if x.get("system") == url_1][0]
-            nhs_number_verification_status_code = get_generic_extension_value(
-                patient_identifier_extension_item, url_2, system, field_type
-            )
-            PreValidation.for_string(nhs_number_verification_status_code, field_location)
-        except (KeyError, IndexError):
-            pass
-
-    def pre_validate_nhs_number_verification_status_display(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='Patient')].extension[?(@.url=='https://fhir.hl7.org.uk/
-        StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')].valueCodeableConcept.coding[0].display
-        (legacy CSV field name: NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION) exists, then it is a non-empty string
-        """
-        url_1 = "https://fhir.nhs.uk/Id/nhs-number"
-        url_2 = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
-        system = "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
-        field_type = "display"
-        field_location = (
-            f"contained[?(@.resourceType=='Patient')].identifier[?(@.system=='{url_1}')]."
-            + generate_field_location_for_extension(url_2, system, field_type)
-        )
-        try:
-            patient_identifier = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["identifier"]
-            patient_identifier_extension_item = [x for x in patient_identifier if x.get("system") == url_1][0]
-            nhs_number_verification_status_code = get_generic_extension_value(
-                patient_identifier_extension_item, url_2, system, field_type
-            )
-            PreValidation.for_string(nhs_number_verification_status_code, field_location)
-        except (KeyError, IndexError):
-            pass
-
     def pre_validate_organization_identifier_system(self, values: dict) -> dict:
         """
         Pre-validate that, if performer[?(@.actor.type=='Organization').identifier.system]
@@ -1023,3 +944,14 @@ class PreValidators:
             PreValidation.for_string(field_value, "location.identifier.system")
         except KeyError:
             pass
+
+    def pre_validate_location_type(self, values: dict) -> dict:
+        """
+        Pre-validate that, if location.identifier.value (legacy CSV field name: LOCATION_CODE) exists,
+        then it is a non-empty string
+        """
+        try:
+            field_value = values["location"]["type"]
+            PreValidation.for_string(field_value, "location.type",valid_value="Location")
+        except KeyError:
+            pass    
