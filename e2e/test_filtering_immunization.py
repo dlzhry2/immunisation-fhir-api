@@ -3,7 +3,7 @@ from typing import List
 from utils.base_test import ImmunizationBaseTest
 from utils.constants import valid_nhs_number1, valid_nhs_number_with_s_flag
 from utils.immunisation_api import ImmunisationApi
-from utils.resource import get_questionnaire_items, create_an_imms_obj, get_patient_id, get_vaccine_type
+from utils.resource import create_an_imms_obj, get_patient_id, get_vaccine_type
 from utils.resource import get_patient_postal_code
 
 
