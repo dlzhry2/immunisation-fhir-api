@@ -215,8 +215,8 @@ class TestCreateImmunization(unittest.TestCase):
     def test_pre_validation_failed(self):
         """it should throw exception if Immunization is not valid"""
         imms = create_covid_19_immunization_dict("an-id", "9990548609")
-        imms["recorded"] = "20201214"
-        expected_msg = 'recorded must be a valid date string in the format "YYYY-MM-DD"'
+        imms["lotNumber"] = 1234
+        expected_msg = "lotNumber must be a string"
 
         with self.assertRaises(CustomValidationError) as error:
             # When
