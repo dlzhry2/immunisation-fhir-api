@@ -64,6 +64,7 @@ class PreValidators:
             self.pre_validate_target_disease_codings,
             self.pre_validate_disease_type_coding_codes,
             self.pre_validate_vaccine_code_coding,
+            self.pre_validate_status_reason_coding_display,
             self.pre_validate_vaccine_code_coding_code,
             self.pre_validate_vaccine_code_coding_display,
             self.pre_validate_manufacturer_display,
@@ -80,9 +81,13 @@ class PreValidators:
             self.pre_validate_dose_quantity_unit,
             self.pre_validate_reason_code_codings,
             self.pre_validate_reason_code_coding_codes,
+            self.pre_validate_patient_identifier_extension,
+            self.pre_validate_nhs_number_verification_status_code,
+            self.pre_validate_nhs_number_verification_status_display,
             self.pre_validate_organization_identifier_system,
             self.pre_validate_location_identifier_value,
             self.pre_validate_location_identifier_system,
+            self.pre_validate_location_type
         ]
 
         for method in validation_methods:
@@ -455,6 +460,7 @@ class PreValidators:
         except (KeyError, IndexError):
             pass
 
+
     def pre_validate_practitioner_identifier_value(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier[0].value (legacy CSV field name:
@@ -482,6 +488,7 @@ class PreValidators:
             PreValidation.for_string(field_value, field_location)
         except (KeyError, IndexError):
             pass
+
 
     def pre_validate_recorded(self, values: dict) -> dict:
         """
@@ -934,6 +941,7 @@ class PreValidators:
         except (KeyError, IndexError):
             pass
 
+
     def pre_validate_nhs_number_verification_status_code(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].extension[?(@.url=='https://fhir.hl7.org.uk/
@@ -1017,3 +1025,14 @@ class PreValidators:
             PreValidation.for_string(field_value, "location.identifier.system")
         except KeyError:
             pass
+
+    def pre_validate_location_type(self, values: dict) -> dict:
+        """
+        Pre-validate that, if location.identifier.value (legacy CSV field name: LOCATION_CODE) exists,
+        then it is a non-empty string
+        """
+        try:
+            field_value = values["location"]["type"]
+            PreValidation.for_string(field_value, "location.type",valid_value="Location")
+        except KeyError:
+            pass    

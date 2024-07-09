@@ -394,6 +394,31 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         field_location = "contained[?(@.resourceType=='Practitioner')].name[0].family"
         ValidatorModelTests.test_string_value(self, field_location, valid_strings_to_test=["test"])
 
+
+    def test_pre_validate_practitioner_identifier_value(self):
+        """Test pre_validate_practitioner_identifier_value accepts valid values and rejects invalid values"""
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='Practitioner')].identifier[0].value",
+            valid_strings_to_test=[
+                "e045626e-4dc5-4df3-bc35-da25263f901e",
+                "ACME-vacc123456",
+                "ACME-CUSTOMER1-vacc123456",
+            ],
+        )
+
+    def test_pre_validate_practitioner_identifier_system(self):
+        """Test pre_validate_practitioner_identifier_system accepts valid values and rejects invalid values"""
+        valid_strings_to_test = [
+            "https://supplierABC/identifiers/vacc",
+            "https://supplierABC/ODSCode_NKO41/identifiers/vacc",
+        ]
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location="contained[?(@.resourceType=='Practitioner')].identifier[0].system",
+            valid_strings_to_test=valid_strings_to_test,
+        )
+
     def test_pre_validate_recorded(self):
         """Test pre_validate_recorded accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_date_time_value(self, field_location="recorded")
@@ -725,6 +750,51 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 self, field_location=f"reasonCode[{i}].coding[0].code", valid_strings_to_test=["ABC123"]
             )
 
+    def test_pre_validate_patient_identifier_extension(self):
+        """Test pre_validate_patient_identifier_extension accepts valid values and rejects invalid values"""
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier"
+            + "[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')].extension"
+        )
+
+        ValidatorModelTests.test_unique_list(
+            self,
+            field_location=field_location,
+            valid_lists_to_test=[[ValidValues.nhs_number_verification_status]],
+            invalid_list_with_duplicates_to_test=[
+                ValidValues.nhs_number_verification_status,
+                ValidValues.nhs_number_verification_status,
+            ],
+            expected_error_message=f"{field_location}[?(@.url=='https://fhir.hl7.org.uk"
+            + "/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus')] must be unique",
+        )
+
+    
+
+    def test_pre_validate_nhs_number_verification_status_code(self):
+        """Test pre_validate_nhs_number_verification_status_code accepts valid values and rejects invalid values"""
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-NHSNumberVerificationStatus')].valueCodeableConcept.coding[?(@.system=="
+            + "'https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland')].code"
+        )
+
+        ValidatorModelTests.test_string_value(self, field_location, valid_strings_to_test=["01"])
+
+    def test_pre_validate_nhs_number_verification_status_display(self):
+        """Test pre_validate_nhs_number_verification_status_display accepts valid values and rejects invalid values"""
+        field_location = (
+            "contained[?(@.resourceType=='Patient')].identifier[?(@.system=='https://fhir.nhs.uk/Id/nhs-number')]."
+            + "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/"
+            + "Extension-UKCore-NHSNumberVerificationStatus')].valueCodeableConcept.coding[?(@.system=="
+            + "'https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland')].display"
+        )
+
+        ValidatorModelTests.test_string_value(
+            self, field_location, valid_strings_to_test=["Number present and verified"]
+        )
+
     def test_pre_validate_organisation_identifier_system(self):
         """Test pre_validate_organization_identifier_system accepts valid systems and rejects invalid systems"""
         ValidatorModelTests.test_string_value(
@@ -745,6 +815,13 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self, field_location, valid_strings_to_test=["https://fhir.hl7.org.uk/Id/140565"]
         )
+
+    def test_pre_validate_location_type(self):
+        """Test pre_validate_location_identifier_system accepts valid values and rejects invalid values"""
+        field_location = "location.type"
+        ValidatorModelTests.test_string_value(
+            self, field_location,valid_strings_to_test=["Location"]
+        )    
 
 
 class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCase):
