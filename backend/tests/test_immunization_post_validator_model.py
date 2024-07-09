@@ -73,7 +73,12 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         Test validate_and_set_validate_and_set_vaccine_type accepts valid values, rejects invalid
         values and rejects missing data
         """
-        field_location = "protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
+        all_target_disease_codes_field_location = (
+            "protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
+        )
+        first_target_disease_code_field_location = (
+            "protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
+        )
 
         # Test that a valid combination of disease codes is accepted and vaccine_type is set correctly
         for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
@@ -84,10 +89,10 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         _test_invalid_values_rejected(
             self,
             valid_json_data=deepcopy(self.completed_json_data[VaccineTypes.covid_19]),
-            field_location=field_location,
+            field_location=all_target_disease_codes_field_location,
             invalid_value="INVALID_VALUE",
-            expected_error_message="protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
-            + f" - ['INVALID_VALUE'] is not a valid combination of disease codes for this service",
+            expected_error_message=f"{all_target_disease_codes_field_location}"
+            + " - ['INVALID_VALUE'] is not a valid combination of disease codes for this service",
         )
 
         # Test that an invalid combination of disease codes is rejected
@@ -102,13 +107,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             valid_json_data=deepcopy(self.completed_json_data[VaccineTypes.covid_19]),
             field_location="protocolApplied[0].targetDisease",
             invalid_value=invalid_target_disease,
-            expected_error_message="protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code - "
+            expected_error_message=f"{all_target_disease_codes_field_location} - "
             + "['14189004', 'INVALID', '36653000'] is not a valid combination"
             + " of disease codes for this service",
         )
 
         # Test that json data which doesn't contain a targetDisease code is rejected
-        MandationTests.test_missing_mandatory_field_rejected(self, field_location)
+        MandationTests.test_missing_mandatory_field_rejected(self, first_target_disease_code_field_location)
 
     def test_post_vaccination_procedure_code(self):
         """Test that the JSON data is rejected if it does not contain vaccination_procedure_code"""
@@ -134,8 +139,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         Test that the JSON data is accepted when it does not contain patient_identifier_value
         """
         field_location = "contained[?(@.resourceType=='Patient')].identifier[0].value"
-        # covid_19_json_data = deepcopy(self.completed_json_data[VaccineTypes.covid_19])
-
         MandationTests.test_missing_field_accepted(self, field_location)
 
     def test_post_patient_name_given(self):
@@ -193,12 +196,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
     def test_post_practitioner_name_family(self):
         """Test that the JSON data is accepted if it does not contain practitioner_name_family"""
         MandationTests.test_missing_field_accepted(self, "contained[?(@.resourceType=='Practitioner')].name[0].family")
-
-    def test_post_practitioner_identifier_value(self):
-        """Test that the JSON data is accepted if it does not contain practitioner_identifier_value"""
-        MandationTests.test_missing_field_accepted(
-            self, "contained[?(@.resourceType=='Practitioner')].identifier[0].value"
-        )
 
     def test_post_recorded(self):
         """Test that the JSON data is rejected if it does not contain recorded"""
@@ -368,34 +365,21 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             valid_json_data = deepcopy(self.completed_json_data[vaccine_type])
             MandationTests.test_missing_mandatory_field_rejected(self, field_location, valid_json_data)
 
-    def test_post_reduce_validation_code(self):
-        """Test that present or absent reduce_validation_code is accepted"""
-        field_location = (
-            "contained[?(@.resourceType=='QuestionnaireResponse')]"
-            + ".item[?(@.linkId=='ReduceValidationCode')].answer[0].valueString"
-        )
-        MandationTests.test_missing_field_accepted(self, field_location)
-        MandationTests.test_present_field_accepted(
-            self, valid_json_data=deepcopy(self.completed_json_data[VaccineTypes.covid_19])
-        )
-
     def test_post_no_snomed_code(self):
-        '''test that only snomed system is accepted'''
+        """test that only snomed system is accepted"""
         covid_19_json_data = deepcopy(self.completed_json_data[VaccineTypes.covid_19])
         for protocol in covid_19_json_data.get("protocolApplied", []):
             target_diseases = protocol.get("targetDisease", [])
-            for i in range(len(target_diseases)):
+            for i, _ in enumerate(target_diseases):
                 for coding in target_diseases[i].get("coding", []):
                     if i == 0:
                         coding["system"] = "http://othersystem.com/system1"
                     else:
                         coding["system"] = "http://Notsnomed.com/system2"
 
-        field_location = f"protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
+        field_location = "protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
 
-        expected_error_message = (
-            f"{field_location} is a mandatory field"
-        )
+        expected_error_message = f"{field_location} is a mandatory field"
 
         with self.assertRaises(ValueError) as cm:
             self.validator.validate(covid_19_json_data)

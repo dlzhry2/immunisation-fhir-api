@@ -39,9 +39,10 @@ def convert_disease_codes_to_vaccine_type(disease_codes_input: list) -> Union[st
             if sorted(disease_codes_input) == disease_codes
         )
     except Exception as e:
-        raise ValueError(f"protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code - "
-                         f"{disease_codes_input} is not a valid combination of disease codes for this service"
-                         ) from e
+        raise ValueError(
+            f"protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code - "
+            f"{disease_codes_input} is not a valid combination of disease codes for this service"
+        ) from e
 
 
 def get_vaccine_type(immunization: dict):
@@ -54,9 +55,9 @@ def get_vaccine_type(immunization: dict):
         target_diseases = get_target_disease_codes(immunization)
         if not target_diseases:
             raise ValueError
-    except (KeyError, IndexError, AttributeError) as error:
+    except (KeyError, AttributeError) as error:
         raise ValueError("No target disease codes found") from error
-    except ValueError as error:
+    except (IndexError, ValueError) as error:
         raise ValueError(f"{obtain_field_location(FieldNames.target_disease_codes)} is a mandatory field") from error
 
     # Convert list of target diseases to vaccine type
