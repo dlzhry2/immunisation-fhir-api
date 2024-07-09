@@ -9,15 +9,27 @@ from .generic_utils import create_diagnostics_error
 from base_utils.base_utils import obtain_field_location
 from models.obtain_field_value import ObtainFieldValue
 from models.field_names import FieldNames
+from models.errors import MandatoryError
 from constants import Urls
 
 
 def get_target_disease_codes(immunization: dict):
     """Takes a FHIR immunization resource and returns a list of target disease codes"""
     target_diseases = []
-    target_disease_list = ObtainFieldValue.target_disease(immunization)
-    for element in target_disease_list:
-        code = [x.get("code") for x in element["coding"] if x.get("system") == Urls.snomed][0]
+    try:
+        target_disease_list = ObtainFieldValue.target_disease(immunization)
+    except (KeyError, IndexError) as error:
+        raise MandatoryError("No target disease codes found") from error
+
+    for i, element in enumerate(target_disease_list):
+
+        try:
+            code = [x.get("code") for x in element["coding"] if x.get("system") == Urls.snomed][0]
+        except (KeyError, IndexError) as error:
+            raise MandatoryError(
+                f"protocolApplied[0].targetDisease[{i}].coding[?(@.system=='http://snomed.info/sct')].code is a mandatory field"
+            ) from error
+
         if code is None:
             raise ValueError(
                 f"'None' is not a valid value for '{obtain_field_location(FieldNames.target_disease_codes)}'"
@@ -55,9 +67,11 @@ def get_vaccine_type(immunization: dict):
         target_diseases = get_target_disease_codes(immunization)
         if not target_diseases:
             raise ValueError
-    except (KeyError, AttributeError) as error:
+    except AttributeError as error:
         raise ValueError("No target disease codes found") from error
-    except (IndexError, ValueError) as error:
+    except MandatoryError as error:
+        raise ValueError(str(error)) from error
+    except ValueError as error:
         raise ValueError(f"{obtain_field_location(FieldNames.target_disease_codes)} is a mandatory field") from error
 
     # Convert list of target diseases to vaccine type
