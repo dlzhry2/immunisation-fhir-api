@@ -36,12 +36,9 @@ class PreValidators:
             self.pre_validate_patient_address,
             self.pre_validate_patient_address_postal_code,
             self.pre_validate_occurrence_date_time,
-            self.pre_validate_questionnaire_response_item,
-            self.pre_validate_questionnaire_answers,
             self.pre_validate_performer_actor_type,
             self.pre_validate_performer_actor_reference,
             self.pre_validate_organization_identifier_value,
-            self.pre_validate_organization_display,
             self.pre_validate_identifier,
             self.pre_validate_identifier_value,
             self.pre_validate_identifier_system,
@@ -49,13 +46,10 @@ class PreValidators:
             self.pre_validate_practitioner_name,
             self.pre_validate_practitioner_name_given,
             self.pre_validate_practitioner_name_family,
-            self.pre_validate_practitioner_identifier,
             self.pre_validate_practitioner_identifier_value,
             self.pre_validate_practitioner_identifier_system,
-            self.pre_validate_performer_sds_job_role,
             self.pre_validate_recorded,
             self.pre_validate_primary_source,
-            self.pre_validate_report_origin_text,
             self.pre_validate_extension_urls,
             self.pre_validate_extension_value_codeable_concept_codings,
             self.pre_validate_vaccination_procedure_code,
@@ -64,7 +58,6 @@ class PreValidators:
             self.pre_validate_vaccination_situation_display,
             self.pre_validate_status_reason_coding,
             self.pre_validate_status_reason_coding_code,
-            self.pre_validate_status_reason_coding_display,
             self.pre_validate_protocol_applied,
             self.pre_validate_dose_number_positive_int,
             self.pre_validate_dose_number_string,
@@ -88,27 +81,12 @@ class PreValidators:
             self.pre_validate_dose_quantity_unit,
             self.pre_validate_reason_code_codings,
             self.pre_validate_reason_code_coding_codes,
-            self.pre_validate_reason_code_coding_displays,
             self.pre_validate_patient_identifier_extension,
-            self.pre_validate_nhs_number_verification_status_coding,
             self.pre_validate_nhs_number_verification_status_code,
             self.pre_validate_nhs_number_verification_status_display,
             self.pre_validate_organization_identifier_system,
-            self.pre_validate_local_patient_value,
-            self.pre_validate_local_patient_system,
-            self.pre_validate_consent_code,
-            self.pre_validate_consent_display,
-            self.pre_validate_care_setting_code,
-            self.pre_validate_care_setting_display,
-            self.pre_validate_ip_address,
-            self.pre_validate_user_id,
-            self.pre_validate_user_name,
-            self.pre_validate_user_email,
-            self.pre_validate_submitted_time_stamp,
             self.pre_validate_location_identifier_value,
             self.pre_validate_location_identifier_system,
-            self.pre_validate_reduce_validation,
-            self.pre_validate_reduce_validation_reason,
         ]
 
         for method in validation_methods:
@@ -295,38 +273,6 @@ class PreValidators:
         except KeyError:
             pass
 
-    def pre_validate_questionnaire_response_item(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item exists,
-        then each linkId is unique
-        """
-        field_location = "contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='FIELD_TO_REPLACE')]"
-        try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "QuestionnaireResponse"][0][
-                "item"
-            ]
-            PreValidation.for_unique_list(field_value, "linkId", field_location)
-        except (KeyError, IndexError):
-            pass
-
-    def pre_validate_questionnaire_answers(self, values: dict) -> dict:
-        """
-        Pre-validate that, if they exist, each contained[?(@.resourceType=='QuestionnaireResponse')].item[index].answer
-        is a list of length 1
-        """
-        try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "QuestionnaireResponse"][0][
-                "item"
-            ]
-            for index, value in enumerate(field_value):
-                field_location = f"contained[?(@.resourceType=='QuestionnaireResponse')].item[{index}].answer"
-                try:
-                    questionnaire_answer = value["answer"]
-                    PreValidation.for_list(questionnaire_answer, field_location, defined_length=1)
-                except KeyError:
-                    pass
-        except (KeyError, IndexError):
-            pass
 
     def pre_validate_performer_actor_type(self, values: dict) -> dict:
         """
@@ -422,19 +368,6 @@ class PreValidators:
         except (KeyError, IndexError, AttributeError):
             pass
 
-    def pre_validate_organization_display(self, values: dict) -> dict:
-        """
-        Pre-validate that, if performer[?@.actor.type == 'Organization'].actor.display
-        (legacy CSV field name: SITE_NAME) exists, then it is a non-empty string
-        """
-        field_location = "performer[?@.actor.type == 'Organization'].actor.display"
-        try:
-            field_value = [x for x in values["performer"] if x.get("actor").get("type") == "Organization"][0]["actor"][
-                "display"
-            ]
-            PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError, AttributeError):
-            pass
 
     def pre_validate_identifier(self, values: dict) -> dict:
         """Pre-validate that, if identifier exists, then it is a list of length 1"""
@@ -527,17 +460,6 @@ class PreValidators:
         except (KeyError, IndexError):
             pass
 
-    def pre_validate_practitioner_identifier(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier exists,
-        then it is a list of length 1
-        """
-        field_location = "contained[?(@.resourceType=='Practitioner')].identifier"
-        try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["identifier"]
-            PreValidation.for_list(field_value, field_location, defined_length=1)
-        except (KeyError, IndexError):
-            pass
 
     def pre_validate_practitioner_identifier_value(self, values: dict) -> dict:
         """
@@ -567,18 +489,6 @@ class PreValidators:
         except (KeyError, IndexError):
             pass
 
-    def pre_validate_performer_sds_job_role(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='PerformerSDSJob
-        Role')].answer[0].valueString (legacy CSV field name: SDS_JOB_ROLE_NAME) exists, then it is a non-empty string
-        """
-        answer_type = "valueString"
-        field_location = generate_field_location_for_questionnaire_response("PerformerSDSJobRole", answer_type)
-        try:
-            field_value = get_generic_questionnaire_response_value(values, "PerformerSDSJobRole", answer_type)
-            PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError):
-            pass
 
     def pre_validate_recorded(self, values: dict) -> dict:
         """
@@ -587,7 +497,7 @@ class PreValidators:
         """
         try:
             recorded = values["recorded"]
-            PreValidation.for_date(recorded, "recorded")
+            PreValidation.for_date_time(recorded, "recorded")
         except KeyError:
             pass
 
@@ -598,17 +508,6 @@ class PreValidators:
         try:
             primary_source = values["primarySource"]
             PreValidation.for_boolean(primary_source, "primarySource")
-        except KeyError:
-            pass
-
-    def pre_validate_report_origin_text(self, values: dict) -> dict:
-        """
-        Pre-validate that, if reportOrigin.text (legacy CSV field name: REPORT_ORIGIN_TEXT)
-        exists, then it is a non-empty string with maximum length 100 characters
-        """
-        try:
-            report_origin_text = values["reportOrigin"]["text"]
-            PreValidation.for_string(report_origin_text, "reportOrigin.text", max_length=100)
         except KeyError:
             pass
 
@@ -760,13 +659,13 @@ class PreValidators:
 
     def pre_validate_dose_number_string(self, values: dict) -> dict:
         """
-        Pre-validate that, if protocolApplied[0].doseNumberString exists, then it is the string
-        "Dose sequence not recorded"
+        Pre-validate that, if protocolApplied[0].doseNumberString exists, then it 
+        is a non-empty string
         """
         field_location = "protocolApplied[0].doseNumberString"
         try:
             field_value = values["protocolApplied"][0]["doseNumberString"]
-            PreValidation.for_string(field_value, field_location, predefined_values="Dose sequence not recorded")
+            PreValidation.for_string(field_value, field_location)
         except (KeyError, IndexError):
             pass
 
@@ -811,7 +710,7 @@ class PreValidators:
                     target_disease_coding = values["protocolApplied"][0]["targetDisease"][i]["coding"]
                     target_disease_coding_code = [x for x in target_disease_coding if x.get("system") == url][0]["code"]
                     PreValidation.for_string(target_disease_coding_code, field_location)
-                except KeyError:
+                except (KeyError, IndexError):
                     pass
         except KeyError:
             pass
@@ -1023,21 +922,6 @@ class PreValidators:
         except KeyError:
             pass
 
-    def pre_validate_reason_code_coding_displays(self, values: dict) -> dict:
-        """
-        Pre-validate that, if they exist, each reasonCode[{index}].coding[0].display
-        (legacy CSV field name: INDICATION_TERM) is a non-empty string
-        """
-        try:
-            for index, value in enumerate(values["reasonCode"]):
-                try:
-                    field_value = value["coding"][0]["display"]
-                    PreValidation.for_string(field_value, f"reasonCode[{index}].coding[0].display")
-                except KeyError:
-                    pass
-        except (KeyError, IndexError):
-            pass
-
     def pre_validate_patient_identifier_extension(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].identifier
@@ -1055,25 +939,6 @@ class PreValidators:
         except (KeyError, IndexError):
             pass
 
-    def pre_validate_nhs_number_verification_status_coding(self, values: dict) -> dict:
-        """
-        Pre-validate that, if "contained[?(@.resourceType=='Patient')].identifier[?(@.system=='https://fhir.nhs.uk/Id
-        /nhs-number')].extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-
-        NHSNumberVerificationStatus')].valueCodeableConcept.coding exists, then each url is unique
-        """
-        url_1 = "https://fhir.nhs.uk/Id/nhs-number"
-        url_2 = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
-        field_location = (
-            f"contained[?(@.resourceType=='Patient')].identifier[?(@.system=='{url_1}')].extension[?(@.url=="
-            + f"'{url_2}')].valueCodeableConcept.coding[?(@.system=='FIELD_TO_REPLACE')]"
-        )
-        try:
-            patient_identifier = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["identifier"]
-            patient_extension = [x for x in patient_identifier if x.get("system") == url_1][0]["extension"]
-            field_value = [x for x in patient_extension if x.get("url") == url_2][0]["valueCodeableConcept"]["coding"]
-            PreValidation.for_unique_list(field_value, "system", field_location)
-        except (KeyError, IndexError):
-            pass
 
     def pre_validate_nhs_number_verification_status_code(self, values: dict) -> dict:
         """
@@ -1137,108 +1002,6 @@ class PreValidators:
         except (KeyError, IndexError, AttributeError):
             pass
 
-    def pre_validate_local_patient_value(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='LocalPatient')].
-        valueReference.identifier.value (legacy CSV field name: LOCAL_PATIENT_ID) exists, then it is a non-empty string
-        """
-        answer_type = "valueReference"
-        field_type = "value"
-        field_location = generate_field_location_for_questionnaire_response("LocalPatient", answer_type, field_type)
-        try:
-            field_value = get_generic_questionnaire_response_value(values, "LocalPatient", answer_type, field_type)
-            PreValidation.for_string(field_value, field_location, max_length=20)
-        except (KeyError, IndexError):
-            pass
-
-    def pre_validate_local_patient_system(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='LocalPatient')].
-        valueReference.identifier.system (legacy CSV field name: LOCAL_PATIENT_URI) exists,
-        then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(
-            values, link_id="LocalPatient", answer_type="valueReference", field_type="system"
-        )
-
-    def pre_validate_consent_code(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='Consent')].
-        answer[0].valueCoding.code (legacy CSV field name: CONSENT_FOR_TREATMENT_CODE) exists,
-        then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(
-            values, link_id="Consent", answer_type="valueCoding", field_type="code"
-        )
-
-    def pre_validate_consent_display(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='Consent')].
-        answer[0].valueCoding.display (legacy CSV field name: CONSENT_FOR_TREATMENT_DESCRIPTION) exists,
-        then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(
-            values, link_id="Consent", answer_type="valueCoding", field_type="display"
-        )
-
-    def pre_validate_care_setting_code(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='CareSetting')].
-        answer[0].valueCoding.code (legacy CSV field name: CARE_SETTING_TYPE_CODE) exists,
-        then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(
-            values, link_id="CareSetting", answer_type="valueCoding", field_type="code"
-        )
-
-    def pre_validate_care_setting_display(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='CareSetting')].
-        answer[0].valueCoding.display (legacy CSV field name: CARE_SETTING_TYPE_DESCRIPTION) exists,
-        then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(
-            values, link_id="CareSetting", answer_type="valueCoding", field_type="display"
-        )
-
-    def pre_validate_ip_address(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='IpAddress')].
-        answer[0].valueString (legacy CSV field name: IP_ADDRESS) exists, then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(values, link_id="IpAddress", answer_type="valueString")
-
-    def pre_validate_user_id(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='UserId')].
-        answer[0].valueString (legacy CSV field name: USER_ID) exists, then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(values, link_id="UserId", answer_type="valueString")
-
-    def pre_validate_user_name(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='UserName')].
-        answer[0].valueString (legacy CSV field name: USER_NAME) exists, then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(values, link_id="UserName", answer_type="valueString")
-
-    def pre_validate_user_email(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='UserEmail')].
-        answer[0].valueString (legacy CSV field name: USER_EMAIL) exists, then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(values, link_id="UserEmail", answer_type="valueString")
-
-    def pre_validate_submitted_time_stamp(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId==
-        'SubmittedTimeStamp')].answer[0].valueDateTime (legacy CSV field name: SUBMITTED_TIMESTAMP), then it is a string
-        in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz" (i.e. date and time, including
-        timezone offset in hours and minutes), representing a valid datetime. Milliseconds are optional after the
-        seconds (e.g. 2021-01-01T00:00:00.000+00:00).
-        """
-        PreValidation.for_questionnaire_response(values, link_id="SubmittedTimeStamp", answer_type="valueDateTime")
-
     def pre_validate_location_identifier_value(self, values: dict) -> dict:
         """
         Pre-validate that, if location.identifier.value (legacy CSV field name: LOCATION_CODE) exists,
@@ -1260,18 +1023,3 @@ class PreValidators:
             PreValidation.for_string(field_value, "location.identifier.system")
         except KeyError:
             pass
-
-    def pre_validate_reduce_validation(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId=='ReduceValidation')
-        ].answer[0].valueBoolean (legacy CSV field name: REDUCE_VALIDATION_CODE) exists, then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(values, link_id="ReduceValidation", answer_type="valueBoolean")
-
-    def pre_validate_reduce_validation_reason(self, values: dict) -> dict:
-        """
-        Pre-validate that, if contained[?(@.resourceType=='QuestionnaireResponse')].item[?(@.linkId==
-        'ReduceValidationReason')].answer[0].valueString" (legacy CSV field name: REDUCE_VALIDATION_REASON) exists,
-        then it is a non-empty string
-        """
-        PreValidation.for_questionnaire_response(values, link_id="ReduceValidationReason", answer_type="valueString")
