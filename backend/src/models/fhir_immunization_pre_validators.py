@@ -10,6 +10,7 @@ from models.utils.generic_utils import (
 from models.utils.pre_validator_utils import PreValidation
 import re
 
+
 class PreValidators:
     """
     Validators which run prior to the FHIR validators and check that, where values exist, they
@@ -46,8 +47,6 @@ class PreValidators:
             self.pre_validate_practitioner_name,
             self.pre_validate_practitioner_name_given,
             self.pre_validate_practitioner_name_family,
-            self.pre_validate_practitioner_identifier_value,
-            self.pre_validate_practitioner_identifier_system,
             self.pre_validate_recorded,
             self.pre_validate_primary_source,
             self.pre_validate_extension_urls,
@@ -81,9 +80,6 @@ class PreValidators:
             self.pre_validate_dose_quantity_unit,
             self.pre_validate_reason_code_codings,
             self.pre_validate_reason_code_coding_codes,
-            self.pre_validate_patient_identifier_extension,
-            self.pre_validate_nhs_number_verification_status_code,
-            self.pre_validate_nhs_number_verification_status_display,
             self.pre_validate_organization_identifier_system,
             self.pre_validate_location_identifier_value,
             self.pre_validate_location_identifier_system,
@@ -261,7 +257,7 @@ class PreValidators:
         Pre-validate that, if occurrenceDateTime exists (legacy CSV field name: DATE_AND_TIME),
         then it is a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz"
         (i.e. date and time, including timezone offset in hours and minutes), representing a valid
-        datetime. Milliseconds are optional after the seconds (e.g. 2021-01-01T00:00:00.000+00:00)."
+        datetime. Milliseconds are optional after the seconds (e.g. 2021-01-01T00:00:00.000+00:00).
 
         NOTE: occurrenceDateTime is a mandatory FHIR field. A value of None will be rejected by the
         FHIR model before pre-validators are run.
@@ -272,7 +268,6 @@ class PreValidators:
             PreValidation.for_date_time(field_value, field_location)
         except KeyError:
             pass
-
 
     def pre_validate_performer_actor_type(self, values: dict) -> dict:
         """
@@ -359,15 +354,15 @@ class PreValidators:
                 "identifier"
             ]["value"]
             PreValidation.for_string(field_value, field_location)
-            
-            #Validates that organization_identifier_value SITE CODE is in alpha-numeric-alpha-numeric-alpha 
-            #(e.g. "X0X0X")    
+
+            # Validates that organization_identifier_value SITE CODE is in alpha-numeric-alpha-numeric-alpha
+            # (e.g. "X0X0X")
             if not ODS_code_format.match(field_value):
-                raise ValueError(f"{field_location} must be in expected format" 
-                                + " alpha-numeric-alpha-numeric-alpha (e.g X0X0X)")
+                raise ValueError(
+                    f"{field_location} must be in expected format" + " alpha-numeric-alpha-numeric-alpha (e.g X0X0X)"
+                )
         except (KeyError, IndexError, AttributeError):
             pass
-
 
     def pre_validate_identifier(self, values: dict) -> dict:
         """Pre-validate that, if identifier exists, then it is a list of length 1"""
@@ -460,7 +455,6 @@ class PreValidators:
         except (KeyError, IndexError):
             pass
 
-
     def pre_validate_practitioner_identifier_value(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Practitioner')].identifier[0].value (legacy CSV field name:
@@ -489,11 +483,12 @@ class PreValidators:
         except (KeyError, IndexError):
             pass
 
-
     def pre_validate_recorded(self, values: dict) -> dict:
         """
-        Pre-validate that, if recorded (legacy CSV field name: RECORDED_DATE) exists, then it is a
-        string in the format YYYY-MM-DD, representing a valid date
+        Pre-validate that, if occurrenceDateTime exists (legacy CSV field name: RECORDED_DATE),
+        then it is a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or "YYYY-MM-DDThh:mm:ss-zz:zz"
+        (i.e. date and time, including timezone offset in hours and minutes), representing a valid
+        datetime. Milliseconds are optional after the seconds (e.g. 2021-01-01T00:00:00.000+00:00).
         """
         try:
             recorded = values["recorded"]
@@ -659,7 +654,7 @@ class PreValidators:
 
     def pre_validate_dose_number_string(self, values: dict) -> dict:
         """
-        Pre-validate that, if protocolApplied[0].doseNumberString exists, then it 
+        Pre-validate that, if protocolApplied[0].doseNumberString exists, then it
         is a non-empty string
         """
         field_location = "protocolApplied[0].doseNumberString"
@@ -938,7 +933,6 @@ class PreValidators:
             PreValidation.for_unique_list(field_value, "url", field_location)
         except (KeyError, IndexError):
             pass
-
 
     def pre_validate_nhs_number_verification_status_code(self, values: dict) -> dict:
         """
