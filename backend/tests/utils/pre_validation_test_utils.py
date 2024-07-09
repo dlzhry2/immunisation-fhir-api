@@ -29,7 +29,7 @@ class ValidatorModelTests:
         spaces_allowed: bool = True,
         invalid_strings_with_spaces_to_test: list = None,
         is_postal_code: bool = False,
-        is_mandatory_fhir: bool = False
+        is_mandatory_fhir: bool = False,
     ):
         """
         Test that a FHIR model accepts valid string values and rejects the following invalid values:
