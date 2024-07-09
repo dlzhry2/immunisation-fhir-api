@@ -418,7 +418,6 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
         assert "location" in imms
 
     def assert_is_filtered(imms):
-        
         performer_actor_organizations = (
             item for item in imms["performer"] if item.get("actor", {}).get("type") == "Organization"
         )
