@@ -13,15 +13,12 @@ class ImmunizationValidator:
     """
 
     def __init__(self, add_post_validators: bool = True) -> None:
-        self.reduce_validation_code: bool
         self.add_post_validators = add_post_validators
-        self.vaccine_type: str
 
     @staticmethod
     def run_pre_validators(immunization: dict) -> None:
         """Run pre validation on the FHIR Immunization Resource JSON data"""
-        error = PreValidators(immunization).validate()
-        if error:
+        if error := PreValidators(immunization).validate():
             raise ValueError(error)
 
     def run_fhir_validators(self, immunization: dict) -> None:
@@ -31,21 +28,22 @@ class ImmunizationValidator:
     @staticmethod
     def run_post_validators(immunization: dict, vaccine_type: str) -> None:
         """Run post validation on the FHIR Immunization Resource JSON data"""
-        error = PostValidators(immunization, vaccine_type).validate()
-        if error:
+        if error := PostValidators(immunization, vaccine_type).validate():
             raise ValueError(error)
 
-    # TODO: Update this as reduce_validation_code is no longer found in the payload after data minimisation
-    def set_reduce_validation_code(self):
-        """Set the reduce validation code (default to false if no reduceValidation code is given)"""
-        self.reduce_validation_code = False
+    # TODO: Update this function as reduce_validation_code is no longer found in the payload after data minimisation
+    @staticmethod
+    def is_reduce_validation():
+        """Identify if reduced validation applies (default to false if no reduce validation information is given)"""
+        return False
 
     def validate(self, immunization_json_data: dict) -> Immunization:
         """
         Generate the Immunization model. Note that run_pre_validators, run_fhir_validators, get_vaccine_type and
         run_post_validators will each raise errors if validation is failed.
         """
-        self.set_reduce_validation_code()
+        # Identify whether to apply reduced validation
+        reduce_validation =  self.is_reduce_validation()
 
         # Pre-FHIR validations
         self.run_pre_validators(immunization_json_data)
@@ -57,5 +55,5 @@ class ImmunizationValidator:
         vaccine_type = get_vaccine_type(immunization_json_data)
 
         # Post-FHIR validations
-        if self.add_post_validators and not self.reduce_validation_code:
+        if self.add_post_validators and not reduce_validation:
             self.run_post_validators(immunization_json_data, vaccine_type)

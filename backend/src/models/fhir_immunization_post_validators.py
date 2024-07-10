@@ -16,8 +16,8 @@ class PostValidators:
         self.vaccine_type = vaccine_type
         self.errors = []
 
-        # Note that the majority of fields require standard validation. Exceptions not included in the below list are
-        # vaccine_type and reason_code_coding_code (each of these have their own bespoke validation functions).
+        # Note that the majority of fields require standard validation. Exception not included in the below list is
+        # reason_code_coding_code, which has its own bespoke validation function.
         # Status is mandatory in FHIR, so there is no post-validation for status as it is handled by the FHIR validator.
         self.fields_with_standard_validation = [
             FieldNames.patient_identifier_value,

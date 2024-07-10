@@ -1,7 +1,5 @@
 """Utils for backend src code"""
 
-from copy import deepcopy
-
 from models.obtain_field_value import ObtainFieldValue
 from models.field_locations import FieldLocations
 
@@ -24,21 +22,3 @@ def obtain_field_value(imms, field_name):
 def obtain_field_location(field_name):
     """Returns the field location string"""
     return getattr(FieldLocations, field_name)
-
-
-def remove_questionnaire_items(imms: dict, items_to_remove: list):
-    """Removes questionnaire items from an FHIR Immunization Resource"""
-
-    result = deepcopy(imms)
-
-    questionnaire = next(
-        (record for record in result.get("contained", []) if record.get("resourceType") == "QuestionnaireResponse"),
-        None,
-    )
-
-    if questionnaire and questionnaire.get("item"):
-        questionnaire["item"] = [
-            item for item in questionnaire.get("item", []) if item.get("linkId") not in items_to_remove
-        ]
-
-    return result
