@@ -15,7 +15,15 @@ def handle_s_flag(imms, patient):
 
     result = copy.deepcopy(imms)
 
-   
+    contained_questionnaire = next(
+        (
+            record
+            for record in result.get("contained", [])
+            if record["resourceType"] == "QuestionnaireResponse"
+        ),
+        None,
+    )
+
     contained_patient = next(
         (
             record
@@ -41,6 +49,7 @@ def handle_s_flag(imms, patient):
             performer_actor_organization["actor"]["identifier"][
                 "system"
             ] = "https://fhir.nhs.uk/Id/ods-organization-code"
+            del performer_actor_organization["actor"]["display"]
         except KeyError:
             pass
         
@@ -50,6 +59,22 @@ def handle_s_flag(imms, patient):
         except (KeyError, IndexError):
             pass
     
+            
+    # Handle Questionnaire removals
+    if contained_questionnaire and contained_questionnaire.get("item"): 
+            for item in contained_questionnaire["item"]:
+                if "linkId" in item and item["linkId"] == "Consent":
+                    if "answer" in item:
+                        for answer in item["answer"]:
+                            if "valueCoding" in answer:
+                                answer["valueCoding"]["display"] = None  # Set display to null
+
+    # Handle reportOrigin
+    try:
+        del result["reportOrigin"]
+    except KeyError:
+        pass
+
     # Handle Location
     try:
         del result["location"]
