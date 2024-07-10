@@ -113,13 +113,6 @@ def get_vaccine_type(immunization: dict):
     return disease_codes_to_vaccine_type(target_diseases)
 
 
-def get_questionnaire_items(imms: dict):
-    questionnaire = next(
-        contained for contained in imms["contained"] if contained["resourceType"] == "QuestionnaireResponse"
-    )
-    return questionnaire["item"]
-
-
 def get_patient_postal_code(imms: dict):
     patients = [record
                 for record in imms.get("contained", [])

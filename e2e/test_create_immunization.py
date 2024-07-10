@@ -71,7 +71,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
         """it should accept the request if nhs-number is missing and verification status is 04"""
         imms = create_an_imms_obj()
         del imms["contained"][1]["identifier"][0]["value"]
-        imms["contained"][1]["identifier"][0]["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "04"
 
         response = self.default_imms_api.create_immunization(imms)
 
