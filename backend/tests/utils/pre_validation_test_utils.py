@@ -24,7 +24,7 @@ class ValidatorModelTests:
         defined_length: int = None,
         max_length: int = None,
         invalid_length_strings_to_test: list = None,
-        predefined_values: tuple = None,
+        predefined_values: list = None,
         invalid_strings_to_test: list = None,
         spaces_allowed: bool = True,
         invalid_strings_with_spaces_to_test: list = None,

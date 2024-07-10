@@ -21,7 +21,8 @@ class ImmunizationValidator:
         if error := PreValidators(immunization).validate():
             raise ValueError(error)
 
-    def run_fhir_validators(self, immunization: dict) -> None:
+    @staticmethod
+    def run_fhir_validators(immunization: dict) -> None:
         """Run the FHIR validator on the FHIR Immunization Resource JSON data"""
         Immunization.parse_obj(immunization)
 
@@ -43,7 +44,7 @@ class ImmunizationValidator:
         run_post_validators will each raise errors if validation is failed.
         """
         # Identify whether to apply reduced validation
-        reduce_validation =  self.is_reduce_validation()
+        reduce_validation = self.is_reduce_validation()
 
         # Pre-FHIR validations
         self.run_pre_validators(immunization_json_data)

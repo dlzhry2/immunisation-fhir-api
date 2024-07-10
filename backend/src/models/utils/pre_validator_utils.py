@@ -14,10 +14,9 @@ class PreValidation:
         field_location: str,
         defined_length: int = None,
         max_length: int = None,
-        predefined_values: tuple = None,
+        predefined_values: list = None,
         is_postal_code: bool = False,
         spaces_allowed: bool = True,
-        valid_value: str = None,
     ):
         """
         Apply pre-validation to a string field to ensure it is a non-empty string which meets
@@ -57,10 +56,6 @@ class PreValidation:
         if not spaces_allowed:
             if " " in field_value:
                 raise ValueError(f"{field_location} must not contain spaces")
-
-        if valid_value:
-            if field_value != valid_value:
-                raise ValueError(f"{field_location} must be equal to Location")
 
     @staticmethod
     def for_list(

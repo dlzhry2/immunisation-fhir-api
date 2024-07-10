@@ -393,17 +393,9 @@ class PreValidators:
 
     def pre_validate_status(self, values: dict) -> dict:
         """
-        Pre-validate that, if status (legacy CSV field names ACTION_FLAG or NOT_GIVEN) exists,
-        then it is a non-empty string which is one of the following: completed, entered-in-error,
-        not-done.
+        Pre-validate that, if status exists, then its value is "completed"
 
-        NOTE 1: The following mapping applies:
-        # TODO: Check this mapping with Imms team
-        * NOT_GIVEN is True & ACTION_FLAG is "new" or "update" or "delete" <---> Status is 'not-done'
-        * NOT_GIVEN is False & ACTION_FLAG is "new" or "update" <---> Status is 'completed'
-        * NOT_GIVEN is False and ACTION_FLAG is "delete" <---> Status is entered-in-error'
-
-        NOTE 2: Status is a mandatory FHIR field. A value of None will be rejected by the
+        NOTE: Status is a mandatory FHIR field. A value of None will be rejected by the
         FHIR model before pre-validators are run.
         """
         try:
@@ -923,12 +915,9 @@ class PreValidators:
             pass
 
     def pre_validate_location_type(self, values: dict) -> dict:
-        """
-        Pre-validate that, if location.identifier.value (legacy CSV field name: LOCATION_CODE) exists,
-        then it is a non-empty string
-        """
+        """Pre-validate that, if location.type exists, then its value is 'Location'"""
         try:
             field_value = values["location"]["type"]
-            PreValidation.for_string(field_value, "location.type", valid_value="Location")
+            PreValidation.for_string(field_value, "location.type", predefined_values=["Location"])
         except KeyError:
             pass

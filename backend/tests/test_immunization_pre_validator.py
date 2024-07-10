@@ -192,7 +192,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="contained[?(@.resourceType=='Patient')].gender",
             valid_strings_to_test=["male", "female", "other", "unknown"],
-            predefined_values=("male", "female", "other", "unknown"),
+            predefined_values=["male", "female", "other", "unknown"],
             invalid_strings_to_test=InvalidValues.for_genders,
         )
 
@@ -362,9 +362,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self,
             field_location="status",
-            valid_strings_to_test=["completed", "entered-in-error", "not-done"],
-            predefined_values=("completed", "entered-in-error", "not-done"),
-            invalid_strings_to_test=["1", "complete", "enteredinerror"],
+            valid_strings_to_test=["completed"],
+            predefined_values=["completed"],
+            invalid_strings_to_test=["1", "complete", "entered-in-error", "not-done"],
             is_mandatory_fhir=True,
         )
 
@@ -747,9 +747,15 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         )
 
     def test_pre_validate_location_type(self):
-        """Test pre_validate_location_identifier_system accepts valid values and rejects invalid values"""
+        """Test pre_validate_location_type accepts valid values and rejects invalid values"""
         field_location = "location.type"
-        ValidatorModelTests.test_string_value(self, field_location, valid_strings_to_test=["Location"])
+        ValidatorModelTests.test_string_value(
+            self,
+            field_location,
+            valid_strings_to_test=["Location"],
+            predefined_values=["Location"],
+            invalid_strings_to_test=["Invalid"],
+        )
 
 
 class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCase):
