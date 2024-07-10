@@ -33,7 +33,7 @@ class MandationTests:
     def test_present_field_accepted(test_instance: unittest.TestCase, valid_json_data: dict = None):
         """Test that JSON data is accepted when a field is present"""
         valid_json_data = MandationTests.prepare_json_data(test_instance, valid_json_data)
-        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+        test_instance.assertIsNone(test_instance.validator.validate(valid_json_data))
 
     @staticmethod
     def test_missing_field_accepted(
@@ -47,7 +47,7 @@ class MandationTests:
         valid_json_data = parse(field_location).filter(lambda d: True, valid_json_data)
 
         # Test that the valid data is accepted by the model
-        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+        test_instance.assertIsNone(test_instance.validator.validate(valid_json_data))
 
     @staticmethod
     def test_missing_mandatory_field_rejected(

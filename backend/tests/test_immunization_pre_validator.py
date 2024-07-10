@@ -509,7 +509,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
         valid_json_data = load_json_data(filename="completed_mmr_immunization_event.json")
 
-        self.assertTrue(self.validator.validate(valid_json_data))
+        self.assertIsNone(self.validator.validate(valid_json_data))
 
         invalid_target_disease = [
             {"coding": [{"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"}]},

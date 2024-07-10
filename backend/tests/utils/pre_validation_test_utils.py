@@ -510,7 +510,7 @@ class ValidatorModelTests:
         valid_json_data = parse("contained").update(valid_json_data, contained)
         valid_json_data = parse("performer").update(valid_json_data, performer)
 
-        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+        test_instance.assertIsNone(test_instance.validator.validate(valid_json_data))
 
     @staticmethod
     def test_invalid_performer_actor_reference_rejected(
@@ -550,7 +550,7 @@ class ValidatorModelTests:
         valid_json_data = parse("contained").update(valid_json_data, contained)
         valid_json_data = parse("patient").update(valid_json_data, patient)
 
-        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+        test_instance.assertIsNone(test_instance.validator.validate(valid_json_data))
 
     @staticmethod
     def test_invalid_patient_reference_rejected(

@@ -66,7 +66,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
     def test_sample_data(self):
         """Test that each piece of valid sample data passes post validation"""
         for json_data in list(self.completed_json_data.values()):
-            self.assertTrue(self.validator.validate(json_data))
+            self.assertIsNone(self.validator.validate(json_data))
 
     def test_post_validate_and_set_vaccine_type(self):
         """
@@ -82,7 +82,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # Test that a valid combination of disease codes is accepted
         for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
-            self.assertTrue(self.validator.validate(self.completed_json_data[vaccine_type]))
+            self.assertIsNone(self.validator.validate(self.completed_json_data[vaccine_type]))
 
         # Test that an invalid single disease code is rejected
         _test_invalid_values_rejected(

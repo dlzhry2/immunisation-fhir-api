@@ -59,5 +59,3 @@ class ImmunizationValidator:
         # Post-FHIR validations
         if self.add_post_validators and not self.reduce_validation_code:
             self.run_post_validators(immunization_json_data, vaccine_type)
-
-        return immunization_json_data
