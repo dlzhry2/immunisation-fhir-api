@@ -1,6 +1,5 @@
 "FHIR Immunization Post Validators"
 
-from models.utils.validation_utils import get_vaccine_type
 from models.errors import MandatoryError
 from models.obtain_field_value import ObtainFieldValue
 from models.validation_sets import ValidationSets
@@ -12,9 +11,9 @@ from base_utils.base_utils import obtain_field_value, obtain_field_location
 class PostValidators:
     """FHIR Immunization Post Validators"""
 
-    def __init__(self, imms):
+    def __init__(self, imms, vaccine_type):
         self.imms = imms
-        self.vaccine_type: str
+        self.vaccine_type = vaccine_type
         self.errors = []
 
         # Note that the majority of fields require standard validation. Exceptions not included in the below list are
@@ -112,15 +111,6 @@ class PostValidators:
 
     def validate(self):
         """Run all post-validation checks."""
-
-        # Identify and set the vaccine type.
-        # Note: get_vaccine_type also validates that vaccine type is valid and raises a value error if not.
-        try:
-            self.vaccine_type = get_vaccine_type(self.imms)
-        except ValueError as e:
-            # Note: Vaccine_type is a critical validation that other validations rely on, so if it fails an error
-            # is raised immediately and no further validation is performed
-            raise ValueError(str(e)) from e
 
         # Initialise the mandation validation functions
         mandation_functions = MandationFunctions(self.imms, self.vaccine_type)

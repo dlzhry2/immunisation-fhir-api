@@ -3,6 +3,7 @@
 from fhir.resources.R4B.immunization import Immunization
 from models.fhir_immunization_pre_validators import PreValidators
 from models.fhir_immunization_post_validators import PostValidators
+from models.utils.validation_utils import get_vaccine_type
 
 
 class ImmunizationValidator:
@@ -14,6 +15,7 @@ class ImmunizationValidator:
     def __init__(self, add_post_validators: bool = True) -> None:
         self.reduce_validation_code: bool
         self.add_post_validators = add_post_validators
+        self.vaccine_type: str
 
     @staticmethod
     def run_pre_validators(immunization: dict) -> None:
@@ -27,9 +29,9 @@ class ImmunizationValidator:
         Immunization.parse_obj(immunization)
 
     @staticmethod
-    def run_post_validators(immunization: dict) -> None:
+    def run_post_validators(immunization: dict, vaccine_type: str) -> None:
         """Run post validation on the FHIR Immunization Resource JSON data"""
-        error = PostValidators(immunization).validate()
+        error = PostValidators(immunization, vaccine_type).validate()
         if error:
             raise ValueError(error)
 
@@ -39,23 +41,23 @@ class ImmunizationValidator:
         self.reduce_validation_code = False
 
     def validate(self, immunization_json_data: dict) -> Immunization:
-        """Generate the Immunization model"""
+        """
+        Generate the Immunization model. Note that run_pre_validators, run_fhir_validators, get_vaccine_type and
+        run_post_validators will each raise errors if validation is failed.
+        """
         self.set_reduce_validation_code()
 
         # Pre-FHIR validations
-        try:
-            self.run_pre_validators(immunization_json_data)
-        except Exception as e:
-            raise e
+        self.run_pre_validators(immunization_json_data)
 
         # FHIR validations
         self.run_fhir_validators(immunization_json_data)
 
+        # Identify and validate vaccine type
+        vaccine_type = get_vaccine_type(immunization_json_data)
+
         # Post-FHIR validations
         if self.add_post_validators and not self.reduce_validation_code:
-            try:
-                self.run_post_validators(immunization_json_data)
-            except Exception as e:
-                raise e
+            self.run_post_validators(immunization_json_data, vaccine_type)
 
         return immunization_json_data
