@@ -15,28 +15,36 @@ from constants import Urls
 
 def get_target_disease_codes(immunization: dict):
     """Takes a FHIR immunization resource and returns a list of target disease codes"""
-    target_diseases = []
-    try:
-        target_disease_list = ObtainFieldValue.target_disease(immunization)
-    except (KeyError, IndexError) as error:
-        raise MandatoryError("No target disease codes found") from error
 
-    for i, element in enumerate(target_disease_list):
+    target_disease_codes = []
+
+    # Obtain the target disease element from the immunization resource
+    try:
+        target_disease = ObtainFieldValue.target_disease(immunization)
+    except (KeyError, IndexError) as error:
+        raise MandatoryError(
+            f"{obtain_field_location(FieldNames.target_disease_codes)} is a mandatory field"
+        ) from error
+
+    # For each item in the target disease list, extract the snomed code
+    for i, element in enumerate(target_disease):
 
         try:
-            code = [x.get("code") for x in element["coding"] if x.get("system") == Urls.snomed][0]
+            code = [x["code"] for x in element["coding"] if x.get("system") == Urls.snomed][0]
         except (KeyError, IndexError) as error:
             raise MandatoryError(
-                f"protocolApplied[0].targetDisease[{i}].coding[?(@.system=='http://snomed.info/sct')].code is a mandatory field"
+                f"protocolApplied[0].targetDisease[{i}].coding[?(@.system=='http://snomed.info/sct')].code"
+                + " is a mandatory field"
             ) from error
 
         if code is None:
             raise ValueError(
                 f"'None' is not a valid value for '{obtain_field_location(FieldNames.target_disease_codes)}'"
             )
-        target_diseases.append(code)
 
-    return target_diseases
+        target_disease_codes.append(code)
+
+    return target_disease_codes
 
 
 def convert_disease_codes_to_vaccine_type(disease_codes_input: list) -> Union[str, None]:
@@ -67,8 +75,6 @@ def get_vaccine_type(immunization: dict):
         target_diseases = get_target_disease_codes(immunization)
         if not target_diseases:
             raise ValueError
-    except AttributeError as error:
-        raise ValueError("No target disease codes found") from error
     except MandatoryError as error:
         raise ValueError(str(error)) from error
     except ValueError as error:
