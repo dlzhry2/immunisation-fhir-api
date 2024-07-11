@@ -50,8 +50,6 @@ class PreValidators:
             self.pre_validate_vaccination_procedure_display,
             self.pre_validate_vaccination_situation_code,
             self.pre_validate_vaccination_situation_display,
-            self.pre_validate_status_reason_coding,
-            self.pre_validate_status_reason_coding_code,
             self.pre_validate_protocol_applied,
             self.pre_validate_dose_number_positive_int,
             self.pre_validate_dose_number_string,
@@ -59,7 +57,6 @@ class PreValidators:
             self.pre_validate_target_disease_codings,
             self.pre_validate_disease_type_coding_codes,
             self.pre_validate_vaccine_code_coding,
-            self.pre_validate_status_reason_coding_display,
             self.pre_validate_vaccine_code_coding_code,
             self.pre_validate_vaccine_code_coding_display,
             self.pre_validate_manufacturer_display,
@@ -551,44 +548,6 @@ class PreValidators:
         field_location = generate_field_location_for_extension(url, system, field_type)
         try:
             field_value = get_generic_extension_value(values, url, system, field_type)
-            PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError):
-            pass
-
-    def pre_validate_status_reason_coding(self, values: dict) -> dict:
-        """
-        Pre-validate that, if statusReason.coding (legacy CSV field name: REASON_GIVEN_CODE)
-        exists, then each coding system value is unique
-        """
-        field_location = "statusReason.coding[?(@.system=='FIELD_TO_REPLACE')]"
-        try:
-            field_value = values["statusReason"]["coding"]
-            PreValidation.for_unique_list(field_value, "system", field_location)
-        except KeyError:
-            pass
-
-    def pre_validate_status_reason_coding_code(self, values: dict) -> dict:
-        """
-        Pre-validate that, if statusReason.coding[?(@.system=='http://snomed.info/sct')].code (legacy CSV field
-        location: REASON_NOT_GIVEN_CODE) exists, then it is a non-empty string
-        """
-        url = "http://snomed.info/sct"
-        field_location = f"statusReason.coding[?(@.system=='{url}')].code"
-        try:
-            field_value = [x for x in values["statusReason"]["coding"] if x.get("system") == url][0]["code"]
-            PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError):
-            pass
-
-    def pre_validate_status_reason_coding_display(self, values: dict) -> dict:
-        """
-        Pre-validate that, if statusReason.coding[?(@.system=='http://snomed.info/sct')].display (legacy CSV field name:
-        REASON_NOT_GIVEN_TERM) exists, then it is a non-empty string
-        """
-        url = "http://snomed.info/sct"
-        field_location = f"statusReason.coding[?(@.system=='{url}')].display"
-        try:
-            field_value = [x for x in values["statusReason"]["coding"] if x.get("system") == url][0]["display"]
             PreValidation.for_string(field_value, field_location)
         except (KeyError, IndexError):
             pass
