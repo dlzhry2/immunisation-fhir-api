@@ -27,6 +27,7 @@ from tests.immunization_utils import (
 )
 from src.mappings import DiseaseCodes
 from .utils.generic_utils import load_json_data
+from src.constants import NHS_NUMBER_USED_IN_SAMPLE_DATA
 
 
 class TestServiceUrl(unittest.TestCase):
@@ -369,6 +370,7 @@ class TestSearchImmunizations(unittest.TestCase):
         self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
         self.nhs_search_param = "patient.identifier"
         self.vaccine_type_search_param = "-immunization.target"
+        self.sample_patient_resource = load_json_data("bundle_patient_resource.json")
 
     def test_vaccine_type_search(self):
         """It should search for the correct vaccine type"""
@@ -386,19 +388,20 @@ class TestSearchImmunizations(unittest.TestCase):
         """It should return a FHIR Bundle resource"""
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
-        self.imms_repo.find_immunizations.return_value = imms_list
-        self.pds_service.get_patient_details.return_value = {}
-        nhs_number = VALID_NHS_NUMBER
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+        self.pds_service.get_patient_details.return_value = deepcopy(self.sample_patient_resource)
+        nhs_number = NHS_NUMBER_USED_IN_SAMPLE_DATA
         vaccine_types = [VaccineTypes.covid_19]
         params = f"{self.nhs_search_param}={nhs_number}&{self.vaccine_type_search_param}={vaccine_types}"
         # When
         result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, params)
+        searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
         # Then
         self.assertIsInstance(result, FhirBundle)
         self.assertEqual(result.type, "searchset")
-        self.assertEqual(len(imms_ids), len(result.entry))
+        self.assertEqual(len(imms_ids), len(searched_imms))
         # Assert each entry in the bundle
-        for i, entry in enumerate(result.entry):
+        for i, entry in enumerate(searched_imms):
             self.assertIsInstance(entry, BundleEntry)
             self.assertEqual(entry.resource.resource_type, "Immunization")
             self.assertEqual(entry.resource.id, imms_ids[i])
@@ -408,19 +411,21 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_date_from_is_used_to_filter(self):
         """It should return only Immunizations after date_from"""
+        # Arrange
         imms = [("imms-1", "2021-02-07T13:28:17.271+00:00"), ("imms-2", "2021-02-08T13:28:17.271+00:00")]
         imms_list = [
             create_covid_19_immunization_dict(imms_id, occurrence_date_time=occcurrence_date_time)
             for (imms_id, occcurrence_date_time) in imms
         ]
         imms_ids = [imms[0] for imms in imms]
-        self.imms_repo.find_immunizations.return_value = imms_list
-        self.pds_service.get_patient_details.return_value = {}
-        nhs_number = VALID_NHS_NUMBER
+        self.pds_service.get_patient_details.return_value = deepcopy(self.sample_patient_resource)
+        nhs_number = NHS_NUMBER_USED_IN_SAMPLE_DATA
         vaccine_types = [VaccineTypes.covid_19]
 
+        # CASE: Day before.
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+
         # When
-        # Day before.
         result = self.fhir_service.search_immunizations(
             nhs_number, vaccine_types, "", date_from=datetime.date(2021, 2, 6)
         )
@@ -431,8 +436,10 @@ class TestSearchImmunizations(unittest.TestCase):
         for i, entry in enumerate(searched_imms):
             self.assertEqual(imms_ids[i], entry.resource.id)
 
+        # CASE:Day of first, inclusive search.
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+
         # When
-        # Day of first, inclusive search.
         result = self.fhir_service.search_immunizations(
             nhs_number, vaccine_types, "", date_from=datetime.date(2021, 2, 7)
         )
@@ -443,8 +450,10 @@ class TestSearchImmunizations(unittest.TestCase):
         for i, entry in enumerate(searched_imms):
             self.assertEqual(imms_ids[i], entry.resource.id)
 
+        # CASE: Day of second, inclusive search.
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+
         # When
-        # Day of second, inclusive search.
         result = self.fhir_service.search_immunizations(
             nhs_number, vaccine_types, "", date_from=datetime.date(2021, 2, 8)
         )
@@ -454,8 +463,10 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(1, len(searched_imms))
         self.assertEqual(imms_ids[1], searched_imms[0].resource.id)
 
+        # CASE: Day after.
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+
         # When
-        # Day after.
         result = self.fhir_service.search_immunizations(
             nhs_number, vaccine_types, "", date_from=datetime.date(2021, 2, 9)
         )
@@ -466,12 +477,15 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_date_from_is_optional(self):
         """It should return everything when no date_from is specified"""
+        # Arrange
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
-        self.imms_repo.find_immunizations.return_value = imms_list
-        self.pds_service.get_patient_details.return_value = {}
-        nhs_number = VALID_NHS_NUMBER
+        self.pds_service.get_patient_details.return_value = deepcopy(self.sample_patient_resource)
+        nhs_number = NHS_NUMBER_USED_IN_SAMPLE_DATA
         vaccine_types = [VaccineTypes.covid_19]
+
+        # CASE: Without date_from
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
 
         # When
         result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
@@ -480,6 +494,9 @@ class TestSearchImmunizations(unittest.TestCase):
         # Then
         for i, entry in enumerate(searched_imms):
             self.assertEqual(entry.resource.id, imms_ids[i])
+
+        # CASE: With date_from
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
 
         # When
         result = self.fhir_service.search_immunizations(
@@ -493,19 +510,21 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_date_to_is_used_to_filter(self):
         """It should return only Immunizations before date_to"""
+        # Arrange
         imms = [("imms-1", "2021-02-07T13:28:17.271+00:00"), ("imms-2", "2021-02-08T13:28:17.271+00:00")]
         imms_list = [
             create_covid_19_immunization_dict(imms_id, occurrence_date_time=occcurrence_date_time)
             for (imms_id, occcurrence_date_time) in imms
         ]
         imms_ids = [imms[0] for imms in imms]
-        self.imms_repo.find_immunizations.return_value = imms_list
-        self.pds_service.get_patient_details.return_value = {}
-        nhs_number = VALID_NHS_NUMBER
+        self.pds_service.get_patient_details.return_value = deepcopy(self.sample_patient_resource)
+        nhs_number = NHS_NUMBER_USED_IN_SAMPLE_DATA
         vaccine_types = [VaccineTypes.covid_19]
 
+        # CASE: Day after.
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+
         # When
-        # Day after.
         result = self.fhir_service.search_immunizations(
             nhs_number, vaccine_types, "", date_to=datetime.date(2021, 2, 9)
         )
@@ -516,8 +535,10 @@ class TestSearchImmunizations(unittest.TestCase):
         for i, entry in enumerate(searched_imms):
             self.assertEqual(entry.resource.id, imms_ids[i])
 
+        # CASE: Day of second, inclusive search.
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+
         # When
-        # Day of second, inclusive search.
         result = self.fhir_service.search_immunizations(
             nhs_number, vaccine_types, "", date_to=datetime.date(2021, 2, 8)
         )
@@ -528,8 +549,10 @@ class TestSearchImmunizations(unittest.TestCase):
         for i, entry in enumerate(searched_imms):
             self.assertEqual(entry.resource.id, imms_ids[i])
 
+        # CASE: Day of first, inclusive search.
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+
         # When
-        # Day of first, inclusive search.
         result = self.fhir_service.search_immunizations(
             nhs_number, vaccine_types, "", date_to=datetime.date(2021, 2, 7)
         )
@@ -539,8 +562,10 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(len(searched_imms), 1)
         self.assertEqual(searched_imms[0].resource.id, imms_ids[0])
 
+        # CASE: Day before.
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+
         # When
-        # Day before.
         result = self.fhir_service.search_immunizations(
             nhs_number, vaccine_types, "", date_to=datetime.date(2021, 2, 6)
         )
@@ -551,12 +576,15 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_date_to_is_optional(self):
         """It should return everything when no date_to is specified"""
+        # Arrange
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
-        self.imms_repo.find_immunizations.return_value = imms_list
-        self.pds_service.get_patient_details.return_value = {}
-        nhs_number = VALID_NHS_NUMBER
+        self.pds_service.get_patient_details.return_value = deepcopy(self.sample_patient_resource)
+        nhs_number = NHS_NUMBER_USED_IN_SAMPLE_DATA
         vaccine_types = [VaccineTypes.covid_19]
+
+        # CASE 1: Without date_to argument
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
 
         # When
         result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
@@ -565,6 +593,9 @@ class TestSearchImmunizations(unittest.TestCase):
         # Then
         for i, entry in enumerate(searched_imms):
             self.assertEqual(entry.resource.id, imms_ids[i])
+
+        # CASE 2: With date_to argument
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
 
         # When
         result = self.fhir_service.search_immunizations(
@@ -584,8 +615,8 @@ class TestSearchImmunizations(unittest.TestCase):
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
-        self.pds_service.get_patient_details.return_value = {}
-        nhs_number = VALID_NHS_NUMBER
+        self.pds_service.get_patient_details.return_value = deepcopy(self.sample_patient_resource)
+        nhs_number = NHS_NUMBER_USED_IN_SAMPLE_DATA
         vaccine_types = [VaccineTypes.covid_19]
 
         # When

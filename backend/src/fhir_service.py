@@ -241,6 +241,7 @@ class FhirService:
             for r in resources
             if FhirService.is_valid_date_from(r, date_from) and FhirService.is_valid_date_to(r, date_to)
         ]
+
         patient_details = self.pds_service.get_patient_details(nhs_number)
         # To check whether the Superseded NHS number present in PDS
         if patient_details:
@@ -249,13 +250,16 @@ class FhirService:
                 diagnostics_error = create_diagnostics()
                 return diagnostics_error
         patient = patient_details if len(resources) > 0 else None
+
+        resources_filtered_for_search = [Filter.search(imms, patient) for imms in resources]
+
         entries = [
             BundleEntry(
                 resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
                 search=BundleEntrySearch(mode="match"),
                 fullUrl=f"urn:uuid:{imms['id']}",
             )
-            for imms in resources
+            for imms in resources_filtered_for_search
         ]
         if patient:
             entries.append(
@@ -266,18 +270,18 @@ class FhirService:
         fhir_bundle = FhirBundle(resourceType="Bundle", type="searchset", entry=entries)
         url = f"{get_service_url()}/Immunization?{params}"
         # Splitting the URL into base_url and query_string
-        base_url, query_string = url.split('?')
+        base_url, query_string = url.split("?")
 
         # Splitting the query_string into key-value pairs
-        parameters = query_string.split('&')
+        parameters = query_string.split("&")
 
         # Finding and updating the immunization.target parameter
         for i, param in enumerate(parameters):
-            if param.startswith('-immunization.target='):
+            if param.startswith("-immunization.target="):
                 parameters[i] = f"immunization.target={','.join(vaccine_types)}"
 
         # Constructing the new URL
-        new_url = base_url + '?' + '&'.join(parameters)
+        new_url = base_url + "?" + "&".join(parameters)
         fhir_bundle.link = [BundleLink(relation="self", url=new_url)]
         return fhir_bundle
 

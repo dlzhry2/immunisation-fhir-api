@@ -43,6 +43,15 @@ def is_organization(x):
         return False
 
 
+def is_actor_referencing_contained_resource(element, contained_resource_id):
+    """Returns boolean indicating whether the input dictionary is for an actor which references a contained resource"""
+    try:
+        reference = element["actor"]["reference"]
+        return reference == f"#{contained_resource_id}"
+    except KeyError:
+        return False
+
+
 def nhs_number_mod11_check(nhs_number: str) -> bool:
     """
     Parameters:-
