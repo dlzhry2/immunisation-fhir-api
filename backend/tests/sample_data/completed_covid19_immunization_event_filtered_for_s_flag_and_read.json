@@ -3,7 +3,7 @@
   "contained": [
     {
       "resourceType": "Practitioner",
-      "id": "Pract1", 
+      "id": "Pract1",
       "name": [
         {
           "family": "Nightingale",
@@ -31,7 +31,8 @@
       "address": [
         {
           "postalCode": "ZZ99 3CZ"
-        }]
+        }
+      ]
     }
   ],
   "extension": [
@@ -61,8 +62,8 @@
   "patient": {
     "reference": "#Pat1"
   },
-  "occurrenceDateTime": "2021-02-07T13:28:17.271+00:00",
-  "recorded": "2021-02-07T13:28:17.271+00:00",
+  "occurrenceDateTime": "2021-02-07T13:28:17+00:00",
+  "recorded": "2021-02-07T13:28:17+00:00",
   "primarySource": true,
   "manufacturer": {
     "display": "AstraZeneca Ltd"
