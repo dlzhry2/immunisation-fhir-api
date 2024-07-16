@@ -19,12 +19,9 @@ from models.errors import (
     InvalidPatientId,
     CustomValidationError,
     ParameterException,
-    InconsistentIdError,
-    UnauthorizedVaxError,
-    UnauthorizedError,
     UnauthorizedSystemError,
 )
-from tests.immunization_utils import create_covid_19_immunization, create_covid_19_immunization_dict
+from tests.immunization_utils import create_covid_19_immunization
 from mappings import VaccineTypes
 from parameter_parser import patient_identifier_system, process_search_params
 from tests.utils.generic_utils import load_json_data

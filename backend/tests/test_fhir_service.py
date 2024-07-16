@@ -1,31 +1,21 @@
 import json
 import datetime
-import os
 import unittest
 from copy import deepcopy
 from unittest.mock import create_autospec
+from decimal import Decimal
 
 from fhir.resources.R4B.bundle import Bundle as FhirBundle, BundleEntry
 from fhir.resources.R4B.immunization import Immunization
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome, get_service_url
 from mappings import VaccineTypes
-from models.errors import (
-    InvalidPatientId,
-    CustomValidationError,
-    ResourceNotFoundError,
-    InconsistentIdError,
-)
+from models.errors import InvalidPatientId, CustomValidationError
 from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
-from tests.immunization_utils import (
-    create_covid_19_immunization,
-    create_covid_19_immunization_dict,
-    VALID_NHS_NUMBER,
-)
-from src.mappings import DiseaseCodes
+from tests.immunization_utils import create_covid_19_immunization, create_covid_19_immunization_dict, VALID_NHS_NUMBER
 from .utils.generic_utils import load_json_data
 from src.constants import NHS_NUMBER_USED_IN_SAMPLE_DATA
 
@@ -607,6 +597,38 @@ class TestSearchImmunizations(unittest.TestCase):
         for i, entry in enumerate(searched_imms):
             self.assertEqual(entry.resource.id, imms_ids[i])
 
+    def test_immunization_resources_are_filtered(self):
+        """Test that each immunization resource returned is filtered to include only the appropriate fields"""
+        # Arrange
+        imms_ids = ["imms-1", "imms-2"]
+        imms_list = [
+            create_covid_19_immunization_dict(imms_id, occurrence_date_time="2021-02-07T13:28:17+00:00")
+            for imms_id in imms_ids
+        ]
+        self.pds_service.get_patient_details.return_value = deepcopy(self.sample_patient_resource)
+        nhs_number = NHS_NUMBER_USED_IN_SAMPLE_DATA
+        vaccine_types = [VaccineTypes.covid_19]
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+
+        # When
+        result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
+        searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
+
+        # Then
+        expected_output_resource = load_json_data(
+            "completed_covid19_immunization_event_filtered_for_search_using_bundle_patient_resource.json"
+        )
+
+        for i, entry in enumerate(searched_imms):
+            # Convert entry to dictionary to allow for comparison
+            resource_json_dict = json.loads(entry.json(), parse_float=Decimal)["resource"]
+
+            self.assertEqual(entry.resource.id, imms_ids[i])
+
+            # Check that output is as expected (filtered, with id added)
+            expected_output_resource["id"] = imms_ids[i]
+            self.assertEqual(resource_json_dict, expected_output_resource)
+
     def test_matches_contain_fullUrl(self):
         """All matches must have a fullUrl consisting of their id.
         See http://hl7.org/fhir/R4B/bundle-definitions.html#Bundle.entry.fullUrl.
@@ -627,6 +649,7 @@ class TestSearchImmunizations(unittest.TestCase):
         for i, entry in enumerate(entries):
             self.assertEqual(entry.fullUrl, f"urn:uuid:{imms_ids[i]}")
 
+    # TODO: Implement this functionality and reinstate test
     @unittest.skip("Patient fullUrl not implemented")
     def test_patient_contains_fullUrl(self):
         """Patient must have a fullUrl consisting of its id.
