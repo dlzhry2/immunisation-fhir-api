@@ -93,7 +93,7 @@ class PostValidators:
 
         # Identify the number of elements of reason_code for validation to inform the number of times to iterate.
         # If there are no elements then set number of iterations to 1 as validation must be run at least once.
-        number_of_iterations = len(self.imms["reasonCode"]) if self.imms["reasonCode"] else 1
+        number_of_iterations = len(self.imms["reasonCode"]) if self.imms.get("reasonCode") else 1
 
         # Validate the field for each element of reason_code
         for index in range(number_of_iterations):
