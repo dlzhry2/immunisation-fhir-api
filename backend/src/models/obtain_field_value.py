@@ -189,32 +189,6 @@ class ObtainFieldValue:
         return imms["doseQuantity"]["unit"]
 
     @staticmethod
-    def nhs_number_verification_status_code(imms: dict):
-        """Obtains nhs_number_verification_status_code value"""
-        patient_identifier = get_contained_patient(imms)["identifier"]
-        patient_identifier_extension_item = [x for x in patient_identifier if x.get("system") == Urls.nhs_number][0]
-        nhs_number_verification_status_code = get_generic_extension_value(
-            patient_identifier_extension_item,
-            url=Urls.nhs_number_verification_status_structure_definition,
-            system=Urls.nhs_number_verification_status_code_system,
-            field_type="code",
-        )
-        return nhs_number_verification_status_code
-
-    @staticmethod
-    def nhs_number_verification_status_display(imms: dict):
-        """Obtains nhs_number_verification_status_display value"""
-        patient_identifier = get_contained_patient(imms)["identifier"]
-        patient_identifier_extension_item = [x for x in patient_identifier if x.get("system") == Urls.nhs_number][0]
-        nhs_number_verification_status_display = get_generic_extension_value(
-            patient_identifier_extension_item,
-            url=Urls.nhs_number_verification_status_structure_definition,
-            system=Urls.nhs_number_verification_status_code_system,
-            field_type="display",
-        )
-        return nhs_number_verification_status_display
-
-    @staticmethod
     def organization_identifier_system(imms: dict):
         """Obtains organization_identifier_system value"""
         return [x for x in imms.get("performer") if is_organization(x)][0]["actor"]["identifier"]["system"]
