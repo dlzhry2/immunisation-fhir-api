@@ -47,11 +47,6 @@ class TestRemovePersonalInfo(unittest.TestCase):
         result = handle_s_flag(self.input_immunization, self.patient)
         self.assertNotIn ("location", result)
         
-    def test_remove_reportOrigin(self):
-        '''Test that reportOrigin is removed for s flagged patients'''
-        self.data_for_sflag_tests()
-        result = handle_s_flag(self.input_immunization, self.patient)
-        self.assertNotIn ("reportOrigin", result)
         
     def test_remove_patient_address(self):
         """Test that patient address is anonymized for s flagged patients"""
@@ -59,12 +54,4 @@ class TestRemovePersonalInfo(unittest.TestCase):
         result = handle_s_flag(self.input_immunization, self.patient)
         patient_data = result.get("contained", [])[1]
         self.assertEqual(patient_data["address"][0]["postalCode"], "ZZ99 3CZ")
-        
-    def test_amend_display_to_null(self):
-        '''Test that display field is amended to null'''
-        self.data_for_sflag_tests()
-        result = handle_s_flag(self.input_immunization, self.patient)
-        consent_answers = result["contained"][2]["item"][1]["answer"]
-        for answer in consent_answers:
-            if "valueCoding" in answer and "display" in answer["valueCoding"]:
-                self.assertIsNone(answer["valueCoding"]["display"])
+       

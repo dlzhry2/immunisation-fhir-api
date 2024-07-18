@@ -33,15 +33,6 @@ def handle_s_flag(imms, patient):
         None,
     )
 
-    contained_practitioner = next(
-        (
-            record
-            for record in result.get("contained", [])
-            if record["resourceType"] == "Practitioner"
-        ),
-        None,
-    )
-
     # Handle Questionnaire SiteCode
     performer_actor_organization = next(
         (
