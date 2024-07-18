@@ -13,7 +13,7 @@ def obtain_field_value(imms, field_name):
     # Obtain the field value, or set it to none if it can't be found
     try:
         field_value = function_for_obtaining_field_value(imms)
-    except (KeyError, IndexError):
+    except (KeyError, IndexError, TypeError):
         field_value = None
 
     return field_value

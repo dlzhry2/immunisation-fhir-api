@@ -3,6 +3,7 @@
 import unittest
 from copy import deepcopy
 from pydantic import ValidationError
+from fhir.resources.R4B.immunization import Immunization
 
 
 from src.mappings import VaccineTypes
