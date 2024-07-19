@@ -18,3 +18,5 @@ class Urls:
     nhs_number_verification_status_code_system = (
         "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland"
     )
+    ods_organization_code = "https://fhir.nhs.uk/Id/ods-organization-code"
+    urn_school_number = "https://fhir.hl7.org.uk/Id/urn-school-number"

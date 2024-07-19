@@ -14,12 +14,7 @@ from pydantic import ValidationError
 
 import parameter_parser
 from fhir_repository import ImmunizationRepository
-from models.errors import (
-    InvalidPatientId,
-    CustomValidationError,
-    ResourceNotFoundError,
-    InconsistentIdError,
-)
+from models.errors import InvalidPatientId, CustomValidationError
 from models.fhir_immunization import ImmunizationValidator
 from models.utils.generic_utils import (
     nhs_number_mod11_check,
@@ -32,7 +27,6 @@ from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
 from filter import Filter
-import urllib.parse
 
 
 def get_service_url(
