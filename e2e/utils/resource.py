@@ -65,7 +65,7 @@ def create_a_filtered_imms_obj(
     NOTE: The filtered sample data files use the corresponding unfiltered sample data files as a base, and this
     function can therefore be used in combination with the create_an_imms_obj function for testing filtering.
     NOTE: New sample data files can be added by copying the sample data file for the releavant vaccine type and
-    removing, obfuscating or amending the relevant fields as required. 
+    removing, obfuscating or amending the relevant fields as required.
     The new file name must be consistent with the existing sample data file names.
     """
     # Load the data
@@ -80,7 +80,6 @@ def create_a_filtered_imms_obj(
     imms["id"] = imms_id
     if imms_identifier_value:
         imms["identifier"][0]["value"] = imms_identifier_value
-
 
     # Note that NHS number is found in a different place on a search return
     if crud_operation_to_filter_for == "SEARCH":
