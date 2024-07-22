@@ -16,6 +16,7 @@
   ],
   "identifier": [
     {
+      "use": "official",
       "system": "https://supplierABC/identifiers/vacc",
       "value": "ACME-vacc123456"
     }
@@ -31,7 +32,7 @@
     ]
   },
   "patient": {
-    "reference": "MOCK REFERENCE",
+    "reference": "THIS VALUE SHOULD BE REPLACED WITH PATIENT_UUID_FOR_FULL_URL",
     "type": "Patient",
     "identifier": {
       "system": "https://fhir.nhs.uk/Id/nhs-number",
@@ -47,8 +48,8 @@
   "location": {
     "type": "Location",
     "identifier": {
-      "value": "X99999",
-      "system": "https://fhir.nhs.uk/Id/ods-organization-code"
+      "value": "GB",
+      "system": "urn:iso:std:iso:3166"
     }
   },
   "lotNumber": "4120Z001",

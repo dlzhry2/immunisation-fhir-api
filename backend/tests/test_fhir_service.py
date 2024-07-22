@@ -147,7 +147,10 @@ class TestGetImmunization(unittest.TestCase):
 
         bad_target_disease_imms = deepcopy(valid_imms)
         bad_target_disease_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "bad-code"
-        bad_target_disease_msg = "protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code - ['bad-code'] is not a valid combination of disease codes for this service"
+        bad_target_disease_msg = (
+            "protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
+            + " - ['bad-code'] is not a valid combination of disease codes for this service"
+        )
 
         bad_patient_name_imms = deepcopy(valid_imms)
         del bad_patient_name_imms["contained"][1]["name"][0]["given"]
@@ -612,22 +615,28 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # When
         result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
-        searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
+        searched_imms = [
+            json.loads(entry.json(), parse_float=Decimal)
+            for entry in result.entry
+            if entry.resource.resource_type == "Immunization"
+        ]
+        searched_patient = [
+            json.loads(entry.json()) for entry in result.entry if entry.resource.resource_type == "Patient"
+        ][0]
 
         # Then
         expected_output_resource = load_json_data(
             "completed_covid19_immunization_event_filtered_for_search_using_bundle_patient_resource.json"
         )
+        expected_output_resource["patient"]["reference"] = searched_patient["fullUrl"].split(":")[2]
 
         for i, entry in enumerate(searched_imms):
-            # Convert entry to dictionary to allow for comparison
-            resource_json_dict = json.loads(entry.json(), parse_float=Decimal)["resource"]
-
-            self.assertEqual(entry.resource.id, imms_ids[i])
+            # Check that entry has correct resource id
+            self.assertEqual(entry["resource"]["id"], imms_ids[i])
 
             # Check that output is as expected (filtered, with id added)
             expected_output_resource["id"] = imms_ids[i]
-            self.assertEqual(resource_json_dict, expected_output_resource)
+            self.assertEqual(entry["resource"], expected_output_resource)
 
     def test_matches_contain_fullUrl(self):
         """All matches must have a fullUrl consisting of their id.

@@ -1,3 +1,4 @@
+from uuid import uuid4
 import datetime
 import os
 from enum import Enum
@@ -14,25 +15,15 @@ from pydantic import ValidationError
 
 import parameter_parser
 from fhir_repository import ImmunizationRepository
-from models.errors import (
-    InvalidPatientId,
-    CustomValidationError,
-    ResourceNotFoundError,
-    InconsistentIdError,
-)
+from models.errors import InvalidPatientId, CustomValidationError
 from models.fhir_immunization import ImmunizationValidator
-from models.utils.generic_utils import (
-    nhs_number_mod11_check,
-    get_occurrence_datetime,
-    create_diagnostics,
-)
+from models.utils.generic_utils import nhs_number_mod11_check, get_occurrence_datetime, create_diagnostics
 from models.errors import MandatoryError
 from models.utils.validation_utils import get_vaccine_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
 from filter import Filter
-import urllib.parse
 
 
 def get_service_url(
@@ -251,7 +242,14 @@ class FhirService:
                 return diagnostics_error
         patient = patient_details if len(resources) > 0 else None
 
-        resources_filtered_for_search = [Filter.search(imms, patient) for imms in resources]
+        # Assign a uuid for fullUrl value.
+        # NOTE: This UUID is assigned when a SEARCH request is received and used only for referencing from immunisation
+        # resources within the bundle. The fullUrl value we are using is a urn (hence the FHIR key name of "fullUrl" is
+        # somewhat misleading) which cannot be used to locate any externally stored patient resource. This is as agreed
+        # with VDS team for backwards compatibility with Immunisation History API.
+        patient_uuid_for_full_url = str(uuid4())
+
+        resources_filtered_for_search = [Filter.search(imms, patient_uuid_for_full_url, patient) for imms in resources]
 
         entries = [
             BundleEntry(
@@ -261,12 +259,16 @@ class FhirService:
             )
             for imms in resources_filtered_for_search
         ]
+
         if patient:
             entries.append(
                 BundleEntry(
-                    resource=FhirService.process_patient_for_include(patient), search=BundleEntrySearch(mode="include")
+                    resource=FhirService.process_patient_for_include(patient),
+                    search=BundleEntrySearch(mode="include"),
+                    fullUrl=f"urn:uuid:{patient_uuid_for_full_url}",
                 )
             )
+
         fhir_bundle = FhirBundle(resourceType="Bundle", type="searchset", entry=entries)
         url = f"{get_service_url()}/Immunization?{params}"
         # Splitting the URL into base_url and query_string

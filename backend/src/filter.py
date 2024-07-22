@@ -21,15 +21,31 @@ def remove_reference_to_contained_practitioner(imms: dict) -> dict:
     return imms
 
 
-def create_reference_to_patient_resource(patient: dict) -> dict:
-    """Creates a reference to the patient which includes the nhs number identifier"""
+def create_reference_to_patient_resource(patient_uuid_for_full_url: str, patient: dict) -> dict:
+    """
+    Returns a reference to the given patient which includes the patient nhs number identifier (system and value fields
+    only) and patient uuid. "Type" field is set to "Patient".
+    """
     patient_nhs_number_identifier = [x for x in patient["identifier"] if x.get("system") == Urls.nhs_number][0]
 
     return {
-        "reference": "MOCK REFERENCE",  # TODO: Where to get reference from?
+        "reference": patient_uuid_for_full_url,
         "type": "Patient",
-        "identifier": patient_nhs_number_identifier,
+        "identifier": {
+            "system": patient_nhs_number_identifier["system"],
+            "value": patient_nhs_number_identifier["value"],
+        },
     }
+
+
+def add_use_to_identifier(imms: dict) -> dict:
+    """
+    Add use of "offical" to immunisation identifier if no use currently specified
+    (if use is currently specified it is left as it is i.e. it doesn't get overwritten)
+    """
+    if "use" not in imms["identifier"][0]:
+        imms["identifier"][0]["use"] = "official"
+    return imms
 
 
 class Filter:
@@ -42,9 +58,15 @@ class Filter:
         return imms
 
     @staticmethod
-    def search(imms: dict, bundle_patient: dict = None):
+    def search(imms: dict, patient_uuid_for_full_url: str, bundle_patient: dict = None):
         """Apply filtering for an individual FHIR Immunization Resource as part of SEARCH request"""
         imms = remove_reference_to_contained_practitioner(imms)
         imms.pop("contained")
-        imms["patient"] = create_reference_to_patient_resource(bundle_patient)
+        imms["patient"] = create_reference_to_patient_resource(patient_uuid_for_full_url, bundle_patient)
+        imms = add_use_to_identifier(imms)
+        # Location identifier system and value are to be overwritten
+        # (for backwards compatibility with Immunisation History API, as agreed with VDS team)
+        imms["location"]["identifier"]["system"] = "urn:iso:std:iso:3166"
+        imms["location"]["identifier"]["value"] = "GB"
+        imms["location"]["type"] = "Location"
         return imms
