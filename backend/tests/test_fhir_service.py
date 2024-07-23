@@ -1,4 +1,5 @@
 import json
+import uuid
 import datetime
 import unittest
 from copy import deepcopy
@@ -628,7 +629,7 @@ class TestSearchImmunizations(unittest.TestCase):
         expected_output_resource = load_json_data(
             "completed_covid19_immunization_event_filtered_for_search_using_bundle_patient_resource.json"
         )
-        expected_output_resource["patient"]["reference"] = searched_patient["fullUrl"].split(":")[2]
+        expected_output_resource["patient"]["reference"] = searched_patient["fullUrl"]
 
         for i, entry in enumerate(searched_imms):
             # Check that entry has correct resource id
@@ -656,10 +657,10 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # Then
         for i, entry in enumerate(entries):
-            self.assertEqual(entry.fullUrl, f"urn:uuid:{imms_ids[i]}")
+            self.assertEqual(
+                entry.fullUrl, f"https://api.service.nhs.uk/immunisation-fhir-api/Immunization/{imms_ids[i]}"
+            )
 
-    # TODO: Implement this functionality and reinstate test
-    @unittest.skip("Patient fullUrl not implemented")
     def test_patient_contains_fullUrl(self):
         """Patient must have a fullUrl consisting of its id.
         See http://hl7.org/fhir/R4B/bundle-definitions.html#Bundle.entry.fullUrl.
@@ -668,8 +669,8 @@ class TestSearchImmunizations(unittest.TestCase):
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
-        self.pds_service.get_patient_details.return_value = {}
-        nhs_number = VALID_NHS_NUMBER
+        self.pds_service.get_patient_details.return_value = deepcopy(self.sample_patient_resource)
+        nhs_number = NHS_NUMBER_USED_IN_SAMPLE_DATA
         vaccine_types = [VaccineTypes.covid_19]
 
         # When
@@ -677,7 +678,12 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # Then
         patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"), None)
-        self.assertEqual(patient_entry.fullUrl, "???")
+        patient_full_url = patient_entry.fullUrl
+        self.assertTrue(patient_full_url.startswith("urn:uuid:"))
+
+        # Check that final part of fullUrl is a uuid
+        patient_full_url_uuid = patient_full_url.split(":")[2]
+        self.assertTrue(uuid.UUID(patient_full_url_uuid))
 
     def test_patient_included(self):
         """Patient is included in the results."""

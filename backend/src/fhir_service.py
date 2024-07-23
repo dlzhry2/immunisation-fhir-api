@@ -267,24 +267,22 @@ class FhirService:
             if pds_patient["identifier"][0]["value"] != nhs_number:
                 return create_diagnostics()
 
-        # Assign a uuid for patient fullUrl value.
+        # Create the patient URN for the fullUrl field.
         # NOTE: This UUID is assigned when a SEARCH request is received and used only for referencing the patient
         # resource from immunisation resources within the bundle. The fullUrl value we are using is a urn (hence the
         # FHIR key name of "fullUrl" is somewhat misleading) which cannot be used to locate any externally stored
         # patient resource. This is as agreed with VDS team for backwards compatibility with Immunisation History API.
-        patient_uuid_for_full_url = str(uuid4())
+        patient_full_url = f"urn:uuid:{str(uuid4())}"
 
         # Filter and amend the immunization resources for the SEARCH response
-        resources_filtered_for_search = [
-            Filter.search(imms, patient_uuid_for_full_url, pds_patient) for imms in resources
-        ]
+        resources_filtered_for_search = [Filter.search(imms, patient_full_url, pds_patient) for imms in resources]
 
         # Add bundle entries for each of the immunization resources
         entries = [
             BundleEntry(
                 resource=Immunization.parse_obj(handle_s_flag(imms, pds_patient)),
                 search=BundleEntrySearch(mode="match"),
-                fullUrl=f"urn:uuid:{imms['id']}",
+                fullUrl=f"https://api.service.nhs.uk/immunisation-fhir-api/Immunization/{imms['id']}",
             )
             for imms in resources_filtered_for_search
         ]
@@ -295,7 +293,7 @@ class FhirService:
                 BundleEntry(
                     resource=self.process_patient_for_bundle(pds_patient),
                     search=BundleEntrySearch(mode="include"),
-                    fullUrl=f"urn:uuid:{patient_uuid_for_full_url}",
+                    fullUrl=patient_full_url,
                 )
             )
 
