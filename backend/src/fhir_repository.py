@@ -99,7 +99,17 @@ class ImmunizationRepository:
 
         if "Item" in response:
             if "DeletedAt" in response["Item"]:
-                return None
+                if response["Item"]["DeletedAt"] != "reinstated":
+                    resp = dict()
+                    vaccine_type = self._vaccine_type(response["Item"]["PatientSK"])
+                    vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+                    vax_type_perm= self._vaccine_permission(vaccine_type, "read")
+                    self._check_permission(vax_type_perm,vax_type_perms)
+                    resp["Resource"] = json.loads(response["Item"]["Resource"])
+                    resp["Version"] = response["Item"]["Version"]
+                    return resp
+                else:
+                    return None
             else:
                 resp = dict()
                 vaccine_type = self._vaccine_type(response["Item"]["PatientSK"])
