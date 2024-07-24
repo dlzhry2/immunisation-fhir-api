@@ -65,6 +65,9 @@ def replace_organization_values(imms: dict) -> dict:
             if performer["actor"].get("display") is not None:
                 del performer["actor"]["display"]
 
+    return imms
+
+
 def add_use_to_identifier(imms: dict) -> dict:
     """
     Add use of "offical" to immunisation identifier if no use currently specified
@@ -85,7 +88,7 @@ class Filter:
         return imms
 
     @staticmethod
-    def search(imms: dict, bundle_patient: dict = None) -> dict:
+    def search(imms: dict, patient_full_url: str, bundle_patient: dict = None) -> dict:
         """Apply filtering for an individual FHIR Immunization Resource as part of SEARCH request"""
         imms = remove_reference_to_contained_practitioner(imms)
         imms.pop("contained")

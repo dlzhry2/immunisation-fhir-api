@@ -7,11 +7,8 @@ import unittest
 
 from src.constants import Urls
 from src.filter import (
-    (
     Filter,
-   
     remove_reference_to_contained_practitioner,
-   
     create_reference_to_patient_resource,
     add_use_to_identifier,
     replace_address_postal_codes,
@@ -131,11 +128,11 @@ class TestFilter(unittest.TestCase):
     def test_filter_search(self):
         """Tests to ensure Filter.search appropriately filters a FHIR Immunization Resource"""
         bundle_patient = deepcopy(self.bundle_patient_resource)
-        patient_uuid = str(uuid4())
+        patient_full_url = f"urn:uuid:{str(uuid4())}"
         unfiltered_imms = deepcopy(self.covid_19_immunization_event)
         expected_output = load_json_data(
             "completed_covid19_immunization_event_filtered_for_search_using_bundle_patient_resource.json"
         )
-        expected_output["patient"]["reference"] = patient_uuid
+        expected_output["patient"]["reference"] = patient_full_url
 
-        self.assertEqual(Filter.search(unfiltered_imms, patient_uuid, bundle_patient), expected_output)
+        self.assertEqual(Filter.search(unfiltered_imms, patient_full_url, bundle_patient), expected_output)
