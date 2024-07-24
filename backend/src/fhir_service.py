@@ -226,7 +226,7 @@ class FhirService:
     def create_url_for_bundle_link(params, vaccine_types):
         """
         Updates the immunization.target parameter to include the given vaccine types and returns the url for the search
-        bundle
+        bundle.
         """
         base_url = f"{get_service_url()}/Immunization"
 
