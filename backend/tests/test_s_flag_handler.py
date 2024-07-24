@@ -24,7 +24,7 @@ class TestRemovePersonalInfo(unittest.TestCase):
     def test_when_missing_patient_fields_do_not_remove_personal_info(self):
         """Test that personal info is not removed when no patient fields are present"""
         self.data_for_sflag_tests()
-        patient = {"meta": {}}
+        patient = {"meta": {"security": [{"code": "U"}]}}
         result = handle_s_flag(self.input_immunization, patient)
         self.assertEqual(result, self.input_immunization)
 
