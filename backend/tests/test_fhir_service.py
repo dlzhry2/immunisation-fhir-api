@@ -1,4 +1,5 @@
 import json
+import uuid
 import datetime
 import unittest
 from copy import deepcopy
@@ -147,7 +148,10 @@ class TestGetImmunization(unittest.TestCase):
 
         bad_target_disease_imms = deepcopy(valid_imms)
         bad_target_disease_imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = "bad-code"
-        bad_target_disease_msg = "protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code - ['bad-code'] is not a valid combination of disease codes for this service"
+        bad_target_disease_msg = (
+            "protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
+            + " - ['bad-code'] is not a valid combination of disease codes for this service"
+        )
 
         bad_patient_name_imms = deepcopy(valid_imms)
         del bad_patient_name_imms["contained"][1]["name"][0]["given"]
@@ -612,22 +616,28 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # When
         result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
-        searched_imms = [entry for entry in result.entry if entry.resource.resource_type == "Immunization"]
+        searched_imms = [
+            json.loads(entry.json(), parse_float=Decimal)
+            for entry in result.entry
+            if entry.resource.resource_type == "Immunization"
+        ]
+        searched_patient = [
+            json.loads(entry.json()) for entry in result.entry if entry.resource.resource_type == "Patient"
+        ][0]
 
         # Then
         expected_output_resource = load_json_data(
             "completed_covid19_immunization_event_filtered_for_search_using_bundle_patient_resource.json"
         )
+        expected_output_resource["patient"]["reference"] = searched_patient["fullUrl"]
 
         for i, entry in enumerate(searched_imms):
-            # Convert entry to dictionary to allow for comparison
-            resource_json_dict = json.loads(entry.json(), parse_float=Decimal)["resource"]
-
-            self.assertEqual(entry.resource.id, imms_ids[i])
+            # Check that entry has correct resource id
+            self.assertEqual(entry["resource"]["id"], imms_ids[i])
 
             # Check that output is as expected (filtered, with id added)
             expected_output_resource["id"] = imms_ids[i]
-            self.assertEqual(resource_json_dict, expected_output_resource)
+            self.assertEqual(entry["resource"], expected_output_resource)
 
     def test_matches_contain_fullUrl(self):
         """All matches must have a fullUrl consisting of their id.
@@ -647,10 +657,10 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # Then
         for i, entry in enumerate(entries):
-            self.assertEqual(entry.fullUrl, f"urn:uuid:{imms_ids[i]}")
+            self.assertEqual(
+                entry.fullUrl, f"https://api.service.nhs.uk/immunisation-fhir-api/Immunization/{imms_ids[i]}"
+            )
 
-    # TODO: Implement this functionality and reinstate test
-    @unittest.skip("Patient fullUrl not implemented")
     def test_patient_contains_fullUrl(self):
         """Patient must have a fullUrl consisting of its id.
         See http://hl7.org/fhir/R4B/bundle-definitions.html#Bundle.entry.fullUrl.
@@ -659,8 +669,8 @@ class TestSearchImmunizations(unittest.TestCase):
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [create_covid_19_immunization_dict(imms_id) for imms_id in imms_ids]
         self.imms_repo.find_immunizations.return_value = imms_list
-        self.pds_service.get_patient_details.return_value = {}
-        nhs_number = VALID_NHS_NUMBER
+        self.pds_service.get_patient_details.return_value = deepcopy(self.sample_patient_resource)
+        nhs_number = NHS_NUMBER_USED_IN_SAMPLE_DATA
         vaccine_types = [VaccineTypes.covid_19]
 
         # When
@@ -668,7 +678,12 @@ class TestSearchImmunizations(unittest.TestCase):
 
         # Then
         patient_entry = next((entry for entry in result.entry if entry.resource.resource_type == "Patient"), None)
-        self.assertEqual(patient_entry.fullUrl, "???")
+        patient_full_url = patient_entry.fullUrl
+        self.assertTrue(patient_full_url.startswith("urn:uuid:"))
+
+        # Check that final part of fullUrl is a uuid
+        patient_full_url_uuid = patient_full_url.split(":")[2]
+        self.assertTrue(uuid.UUID(patient_full_url_uuid))
 
     def test_patient_included(self):
         """Patient is included in the results."""

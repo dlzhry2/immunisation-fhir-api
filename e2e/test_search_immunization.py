@@ -103,21 +103,24 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 # Check patient structure
                 response_patient = response_patients[0]
                 self.assertEqual(response_patient["search"], {"mode": "include"})
-                # self.assertIn("fullUrl", response_patient) #TODO: Check if fullUrl should be present
+                self.assertTrue(response_patient["fullUrl"].startswith("urn:uuid:"))
+                self.assertTrue(uuid.UUID(response_patient["fullUrl"].split(":")[2]))
                 expected_patient_resource_keys = ["resourceType", "id", "identifier", "birthDate"]
                 self.assertEqual(sorted(response_patient["resource"].keys()), sorted(expected_patient_resource_keys))
                 self.assertEqual(response_patient["resource"]["id"], valid_nhs_number1)
                 patient_identifier = response_patient["resource"]["identifier"]
                 # NOTE: If PDS response ever changes to send more than one identifier then the below will break
                 self.assertEqual(len(patient_identifier), 1)
+                self.assertEqual(sorted(patient_identifier[0].keys()), sorted(["system", "value"]))
                 self.assertEqual(patient_identifier[0]["system"], "https://fhir.nhs.uk/Id/nhs-number")
                 self.assertEqual(patient_identifier[0]["value"], valid_nhs_number1)
 
                 # Check structure of one of the imms resources
+                expected_imms_resource["patient"]["reference"] = response_patient["fullUrl"]
                 response_imm = next(item for item in entries if item["resource"]["id"] == imms_id)
                 self.assertEqual(
-                    response_imm["fullUrl"], f"urn:uuid:{imms_id}"
-                )  # TODO: Check if this is correct, Imms history don't reference the id
+                    response_imm["fullUrl"], f"https://api.service.nhs.uk/immunisation-fhir-api/Immunization/{imms_id}"
+                )
                 self.assertEqual(response_imm["search"], {"mode": "match"})
                 self.assertEqual(response_imm["resource"], expected_imms_resource)
 
@@ -334,10 +337,23 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
         # Matches Immunisation History API in that it doesn't matter if you don't pass "_include".
 
-        # Ignore self link which will always differ.
+        # Ignore link, patient full url and immunisation patient reference as these will always differ.
         result["link"] = []
         result_without_include["link"] = []
-        assert result == result_without_include
+
+        for entry in result["entry"]:
+            if entry["resource"]["resourceType"] == "Immunization":
+                entry["resource"]["patient"]["reference"] = "MOCK VALUE"
+            elif entry["resource"]["resourceType"] == "Patient":
+                entry["fullUrl"] = "MOCK VALUE"
+
+        for entry in result_without_include["entry"]:
+            if entry["resource"]["resourceType"] == "Immunization":
+                entry["resource"]["patient"]["reference"] = "MOCK VALUE"
+            elif entry["resource"]["resourceType"] == "Patient":
+                entry["fullUrl"] = "MOCK VALUE"
+
+        self.assertEqual(result, result_without_include)
 
     def test_search_reject_tbc(self):
         # Given patient has a vaccine with no NHS number

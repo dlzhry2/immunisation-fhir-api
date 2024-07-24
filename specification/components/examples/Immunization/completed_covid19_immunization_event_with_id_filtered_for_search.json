@@ -18,6 +18,7 @@
   ],
   "identifier": [
     {
+      "use": "official",
       "system": "https://supplierABC/identifiers/vacc",
       "value": "ACME-vacc123456"
     }
@@ -33,24 +34,9 @@
     ]
   },
   "patient": {
-    "reference": "MOCK REFERENCE",
+    "reference": "THIS VALUE SHOULD BE REPLACED WITH PATIENT_UUID_FOR_FULL_URL",
     "type": "Patient",
     "identifier": {
-      "extension": [
-        {
-          "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
-          "valueCodeableConcept": {
-            "coding": [
-              {
-                "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatus",
-                "code": "01",
-                "display": "Number present and verified",
-                "version": "1.0.0"
-              }
-            ]
-          }
-        }
-      ],
       "system": "https://fhir.nhs.uk/Id/nhs-number",
       "value": "9000000009"
     }
@@ -64,8 +50,8 @@
   "location": {
     "type": "Location",
     "identifier": {
-      "value": "X99999",
-      "system": "https://fhir.nhs.uk/Id/ods-organization-code"
+      "value": "GB",
+      "system": "urn:iso:std:iso:3166"
     }
   },
   "lotNumber": "4120Z001",
