@@ -13,9 +13,8 @@ def remove_reference_to_contained_practitioner(imms: dict) -> dict:
         return imms
 
     # Remove reference to the contained practitioner from imms[performer]
-    contained_practitioner_id = contained_practitioner["id"]
     imms["performer"] = [
-        x for x in imms["performer"] if not is_actor_referencing_contained_resource(x, contained_practitioner_id)
+        x for x in imms["performer"] if not is_actor_referencing_contained_resource(x, contained_practitioner["id"])
     ]
 
     return imms
@@ -24,7 +23,7 @@ def remove_reference_to_contained_practitioner(imms: dict) -> dict:
 def create_reference_to_patient_resource(patient_full_url: str, patient: dict) -> dict:
     """
     Returns a reference to the given patient which includes the patient nhs number identifier (system and value fields
-    only) and patient uuid. "Type" field is set to "Patient".
+    only) and a reference to patient full url. "Type" field is set to "Patient".
     """
     patient_nhs_number_identifier = [x for x in patient["identifier"] if x.get("system") == Urls.nhs_number][0]
 
@@ -40,9 +39,9 @@ def create_reference_to_patient_resource(patient_full_url: str, patient: dict) -
 
 def replace_address_postal_codes(imms: dict) -> dict:
     """Replace any postal codes found in contained patient address with 'ZZ99 3CZ'"""
-    for resource in imms.get("contained", []):
+    for resource in imms.get("contained", [{}]):
         if resource.get("resourceType") == "Patient":
-            for address in resource.get("address", []):
+            for address in resource.get("address", [{}]):
                 if address.get("postalCode") is not None:
                     address["postalCode"] = "ZZ99 3CZ"
 
@@ -54,7 +53,7 @@ def replace_organization_values(imms: dict) -> dict:
     Replace organization_identifier_values with N2N9I, organization_identifier_systems with
     https://fhir.nhs.uk/Id/ods-organization-code, and remove any organization_displays
     """
-    for performer in imms.get("performer", []):
+    for performer in imms.get("performer", [{}]):
         if performer.get("actor", {}).get("type") == "Organization":
             if performer["actor"].get("identifier", {}).get("value") is not None:
                 performer["actor"]["identifier"]["value"] = "N2N9I"
@@ -103,6 +102,7 @@ class Filter:
 
     @staticmethod
     def s_flag(imms: dict) -> dict:
+        """Apply filtering for patients with 'RESTRICTED' flag"""
         imms = replace_address_postal_codes(imms)
         imms = replace_organization_values(imms)
         if imms.get("location"):

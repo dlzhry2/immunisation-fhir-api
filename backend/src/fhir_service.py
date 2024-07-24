@@ -2,7 +2,7 @@ from uuid import uuid4
 import datetime
 import os
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 from fhir.resources.R4B.bundle import (
     Bundle as FhirBundle,
@@ -15,6 +15,8 @@ from pydantic import ValidationError
 
 import parameter_parser
 from fhir_repository import ImmunizationRepository
+from base_utils.base_utils import obtain_field_value
+from models.field_names import FieldNames
 from models.errors import InvalidPatientId, CustomValidationError
 from models.fhir_immunization import ImmunizationValidator
 from models.utils.generic_utils import nhs_number_mod11_check, get_occurrence_datetime, create_diagnostics
@@ -60,37 +62,26 @@ class FhirService:
         Get an Immunization by its ID. Return None if not found. If the patient doesn't have an NHS number,
         return the Immunization without calling PDS or checking S flag.
         """
-        imms_resp = self.immunization_repo.get_immunization_by_id(imms_id, imms_vax_type_perms)
-        imms = dict()
-        version = str()
-        resp = dict()
-        nhs_number = str()
-        if not imms_resp:
+        if not (imms_resp := self.immunization_repo.get_immunization_by_id(imms_id, imms_vax_type_perms)):
             return None
 
+        # Remove fields rom the imms resource which are not to be returned for read
+        imms_filtered_for_read = Filter.read(imms_resp.get("Resource", {}))
+
+        # Handle s-flag filtering, where applicable
+        nhs_number = obtain_field_value(imms_filtered_for_read, FieldNames.patient_identifier_value)
+        if not nhs_number:
+            imms_filtered_for_read_and_s_flag = imms_filtered_for_read
         else:
-
-            if imms_resp.get("Resource"):
-                imms = imms_resp["Resource"]
-            if imms_resp.get("Version"):
-                version = imms_resp["Version"]
-
-            # Remove fields which are not to be returned for read
-            imms_filtered_for_read = Filter.read(imms)
-
-            # Handle s-flag filtering, where applicable
-            try:
-                nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0][
-                    "value"
-                ]
-                patient = self.pds_service.get_patient_details(nhs_number)
+            if patient := self.pds_service.get_patient_details(nhs_number):
                 imms_filtered_for_read_and_s_flag = handle_s_flag(imms_filtered_for_read, patient)
-            except (KeyError, IndexError):
-                imms_filtered_for_read_and_s_flag = imms_filtered_for_read
+            else:
+                raise ValidationError("nhs number not found by PDS")  # TODO: Fix this error type/ message
 
-            resp["Version"] = version
-            resp["Resource"] = Immunization.parse_obj(imms_filtered_for_read_and_s_flag)
-            return resp
+        return {
+            "Version": imms_resp.get("Version", ""),
+            "Resource": Immunization.parse_obj(imms_filtered_for_read_and_s_flag),
+        }
 
     def get_immunization_by_id_all(self, imms_id: str, imms: Optional[dict], app_id: str) -> Optional[dict]:
         """
@@ -173,7 +164,7 @@ class FhirService:
         return Immunization.parse_obj(imms)
 
     @staticmethod
-    def is_valid_date_from(immunization: dict, date_from: datetime.date):
+    def is_valid_date_from(immunization: dict, date_from: Union[datetime.date, None]):
         """
         Returns False if immunization occurrence is earlier than the date_from, or True otherwise
         (also returns True if date_from is None)
@@ -188,7 +179,7 @@ class FhirService:
         return occurrence_datetime.date() >= date_from
 
     @staticmethod
-    def is_valid_date_to(immunization: dict, date_to: datetime.date):
+    def is_valid_date_to(immunization: dict, date_to: Union[datetime.date, None]):
         """
         Returns False if immunization occurrence is later than the date_to, or True otherwise
         (also returns True if date_to is None)
