@@ -84,7 +84,7 @@ def get_vaccine_type(immunization: dict):
     return convert_disease_codes_to_vaccine_type(target_diseases)
 
 
-def check_identifier_system_value(response, imms):
+def check_identifier_system_value(response, imms: dict):
     """Returns diagnostics if identifier's system and value does not match with the stored content"""
 
     identifier_system_request = imms["identifier"][0]["system"]
