@@ -95,9 +95,7 @@ class Filter:
         imms = add_use_to_identifier(imms)
         # Location identifier system and value are to be overwritten
         # (for backwards compatibility with Immunisation History API, as agreed with VDS team)
-        imms["location"]["identifier"]["system"] = "urn:iso:std:iso:3166"
-        imms["location"]["identifier"]["value"] = "GB"
-        imms["location"]["type"] = "Location"
+        imms["location"] = {"identifier": {"system": "urn:iso:std:iso:3166", "value": "GB"}}
         return imms
 
     @staticmethod
@@ -106,5 +104,5 @@ class Filter:
         imms = replace_address_postal_codes(imms)
         imms = replace_organization_values(imms)
         if imms.get("location"):
-            del imms["location"]
+            imms["location"] = {"identifier": {"system": "urn:iso:std:iso:3166", "value": "GB"}}
         return imms

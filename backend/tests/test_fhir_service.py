@@ -616,8 +616,11 @@ class TestSearchImmunizations(unittest.TestCase):
         for i, entry in enumerate(searched_imms):
             self.assertEqual(entry.resource.id, imms_ids[i])
 
-    def test_immunization_resources_are_filtered(self):
-        """Test that each immunization resource returned is filtered to include only the appropriate fields"""
+    def test_immunization_resources_are_filtered_for_search(self):
+        """
+        Test that each immunization resource returned is filtered to include only the appropriate fields for a search
+        response when the patient is Unrestricted
+        """
         # Arrange
         imms_ids = ["imms-1", "imms-2"]
         imms_list = [
@@ -646,6 +649,50 @@ class TestSearchImmunizations(unittest.TestCase):
         # Then
         expected_output_resource = load_json_data(
             "completed_covid19_immunization_event_filtered_for_search_using_bundle_patient_resource.json"
+        )
+        expected_output_resource["patient"]["reference"] = searched_patient["fullUrl"]
+
+        for i, entry in enumerate(searched_imms):
+            # Check that entry has correct resource id
+            self.assertEqual(entry["resource"]["id"], imms_ids[i])
+
+            # Check that output is as expected (filtered, with id added)
+            expected_output_resource["id"] = imms_ids[i]
+            self.assertEqual(entry["resource"], expected_output_resource)
+
+    def test_immunization_resources_are_filtered_for_search_and_s_flag(self):
+        """
+        Test that each immunization resource returned is filtered to include only the appropriate fields for a search
+        response when the patient is Restricted
+        """
+        # Arrange
+        imms_ids = ["imms-1", "imms-2"]
+        imms_list = [
+            create_covid_19_immunization_dict(imms_id, occurrence_date_time="2021-02-07T13:28:17+00:00")
+            for imms_id in imms_ids
+        ]
+        self.pds_service.get_patient_details.return_value = {
+            **deepcopy(self.sample_patient_resource),
+            "meta": {"security": [{"code": "R"}]},
+        }
+        nhs_number = NHS_NUMBER_USED_IN_SAMPLE_DATA
+        vaccine_types = [VaccineTypes.covid_19]
+        self.imms_repo.find_immunizations.return_value = deepcopy(imms_list)
+
+        # When
+        result = self.fhir_service.search_immunizations(nhs_number, vaccine_types, "")
+        searched_imms = [
+            json.loads(entry.json(), parse_float=Decimal)
+            for entry in result.entry
+            if entry.resource.resource_type == "Immunization"
+        ]
+        searched_patient = [
+            json.loads(entry.json()) for entry in result.entry if entry.resource.resource_type == "Patient"
+        ][0]
+
+        # Then
+        expected_output_resource = load_json_data(
+            "completed_covid19_immunization_event_filtered_for_search_and_s_flag_using_bundle_patient_resource.json"
         )
         expected_output_resource["patient"]["reference"] = searched_patient["fullUrl"]
 
