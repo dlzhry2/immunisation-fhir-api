@@ -15,7 +15,14 @@ def get_imms_handler(event, context):
 
 def get_immunization_by_id(event, controller: FhirController):
     try:
-        return controller.get_immunization_by_id(event)
+        print(f"event{event}")
+        identifier = "identifierSystem" in event['headers']
+        if identifier:
+            print("2")
+            return controller.get_immunization_by_identifier(event)
+        else:
+            return controller.get_immunization_by_id(event)
+    
     except Exception as e:
         exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
                                              code=Code.server_error,
