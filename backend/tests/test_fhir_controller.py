@@ -58,6 +58,96 @@ class TestFhirController(unittest.TestCase):
         self.assertTrue("body" not in res)
 
 
+class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
+    def setUp(self):
+        self.service = create_autospec(FhirService)
+        self.authorizer = create_autospec(Authorization)
+        self.controller = FhirController(self.authorizer, self.service)
+
+    def test_get_imms_by_identifer(self):
+        """it should return Immunization resource if it exists"""
+        # Given
+        imms_id = "a-id"
+        self.service.get_immunization_by_identifier.return_value = {"id":"test"}
+        lambda_event = {
+            "headers": {"identifierSystem":"an-id","VaccineTypePermissions": "COVID19:read"},
+            "pathParameters": {"id": imms_id},
+        }
+        identifier = lambda_event["headers"]["identifierSystem"]
+        imms =f"{identifier}#{imms_id}"
+
+        # When
+        response = self.controller.get_immunization_by_identifier(lambda_event)
+        # Then
+        self.service.get_immunization_by_identifier.assert_called_once_with(imms, "COVID19:read")
+
+        self.assertEqual(response["statusCode"], 200)
+        body = json.loads(response["body"])
+        self.assertEqual(body["id"], "test")
+
+    def test_not_found_for_identifier(self):
+        """it should return not-found OperationOutcome if it doesn't exist"""
+        # Given
+        imms_id = "a-non-existing-id"
+        self.service.get_immunization_by_identifier.return_value = None
+        lambda_event = {
+            "headers": {"identifierSystem":"an-id","VaccineTypePermissions": "COVID19:read"},
+            "pathParameters": {"id": imms_id},
+        }
+        identifier = lambda_event["headers"]["identifierSystem"]
+        imms =f"{identifier}#{imms_id}"
+        # When
+        response = self.controller.get_immunization_by_identifier(lambda_event)
+
+        # Then
+        self.service.get_immunization_by_identifier.assert_called_once_with(imms, "COVID19:read")
+
+        self.assertEqual(response["statusCode"], 404)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertEqual(body["issue"][0]["code"], "not-found")
+
+    def test_validate_imms_id(self):
+        """it should validate lambda's Immunization id"""
+        imms_id = "an-id"
+        self.service.get_immunization_by_identifier.return_value = {"resourceType":"OperationOutcome","id":"f6857e0e-40d0-4e5e-9e2f-463f87d357c6","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"invalid","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"INVALID"}]},"diagnostics":"The provided identifiervalue is either missing or not in the expected format."}]}
+        lambda_event = {
+            "headers": {"identifierSystem":"","VaccineTypePermissions": "COVID19:read"},
+            "pathParameters": {"id": imms_id},
+        }
+        identifier = lambda_event["headers"]["identifierSystem"]
+        response = self.controller.get_immunization_by_identifier(lambda_event)
+
+        self.assertEqual(self.service.get_immunization_by_identifier.call_count, 0)
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")
+
+    def test_validate_imms_id_invalid_vaccinetype(self):
+        """it should validate lambda's Immunization id"""
+        # Given
+        imms_id = "a-non-existing-id"
+        self.service.get_immunization_by_identifier.side_effect = UnauthorizedVaxError()
+        lambda_event = {
+            "headers": {"identifierSystem":"an-id","VaccineTypePermissions": "MMR:read"},
+            "pathParameters": {"id": imms_id},
+        }
+        identifier = lambda_event["headers"]["identifierSystem"]
+        imms =f"{identifier}#{imms_id}"
+        # When
+        response = self.controller.get_immunization_by_identifier(lambda_event)
+
+        # Then
+        self.service.get_immunization_by_identifier.assert_called_once_with(imms, "MMR:read")
+
+        self.assertEqual(response["statusCode"], 403)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertEqual(body["issue"][0]["code"], "forbidden")    
+
+
+
+
 class TestFhirControllerGetImmunizationById(unittest.TestCase):
     def setUp(self):
         self.service = create_autospec(FhirService)

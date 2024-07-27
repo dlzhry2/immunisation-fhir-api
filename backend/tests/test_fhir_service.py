@@ -180,6 +180,43 @@ class TestGetImmunization(unittest.TestCase):
         self.imms_repo.get_immunization_by_id_all.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
+class TestGetImmunizationIdentifier(unittest.TestCase):
+    """Tests for FhirService.get_immunization_by_id"""
+
+    def setUp(self):
+        self.imms_repo = create_autospec(ImmunizationRepository)
+        self.pds_service = create_autospec(PdsService)
+        self.validator = create_autospec(ImmunizationValidator)
+        self.fhir_service = FhirService(self.imms_repo, self.pds_service, self.validator)
+
+    def test_get_immunization_by_identifier(self):
+        """it should find an Immunization by id"""
+        imms_id = "a-id"
+        imms = "an-id#an-id"
+        self.imms_repo.get_immunization_by_identifier.return_value = {"Resource": create_covid_19_immunization(imms_id).dict()}
+        self.pds_service.get_patient_details.return_value = {}
+
+        # When
+        service_resp = self.fhir_service.get_immunization_by_identifier(imms, "COVID19:read")
+        act_imms = service_resp["Resource"]
+
+        # Then
+        self.imms_repo.get_immunization_by_identifier.assert_called_once_with(imms, "COVID19:read")
+
+        self.assertEqual(act_imms['id'], imms_id)
+
+    def test_immunization_not_found(self):
+        """it should return None if Immunization doesn't exist"""
+        imms_id = ""
+        self.imms_repo.get_immunization_by_identifier.return_value = None
+
+        # When
+        act_imms = self.fhir_service.get_immunization_by_identifier(imms_id, "COVID19:read")
+
+        # Then
+        self.imms_repo.get_immunization_by_identifier.assert_called_once_with(imms_id, "COVID19:read")
+        self.assertEqual(act_imms, None)     
+
 
 class TestCreateImmunization(unittest.TestCase):
     """Tests for FhirService.create_immunization"""
