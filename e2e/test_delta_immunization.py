@@ -32,6 +32,8 @@ class TestDeltaImmunization(ImmunizationBaseTest):
         # It should add 4 rows in Delta Storage table
         create_update_imms = create_an_imms_obj()
         create_delete_imms = create_an_imms_obj()
+        del create_update_imms["id"]
+        del create_delete_imms["id"]
         create_update_response = self.default_imms_api.create_immunization(
             create_update_imms
         )

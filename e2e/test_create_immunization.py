@@ -24,6 +24,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
     def test_non_unique_identifier(self):
         """it should give 422 if the identifier is not unique"""
         imms = create_an_imms_obj()
+        del imms["id"]
         _ = self.create_immunization_resource(self.default_imms_api, imms)
         new_id = str(uuid.uuid4())
         imms["id"] = new_id
@@ -62,7 +63,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
         imms = create_an_imms_obj()
         invalid_datetime = "2020-12-14"
         imms["occurrenceDateTime"] = invalid_datetime
-
         # When
         response = self.default_imms_api.create_immunization(imms)
 
@@ -73,6 +73,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         """it should accept the request if nhs-number is missing"""
         imms = create_an_imms_obj()
         del imms["contained"][1]["identifier"][0]["value"]
+        del imms["id"]
 
         response = self.default_imms_api.create_immunization(imms)
 
