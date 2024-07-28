@@ -28,6 +28,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         _ = self.create_immunization_resource(self.default_imms_api, imms)
         new_id = str(uuid.uuid4())
         imms["id"] = new_id
+        del imms["id"]
 
         # When update the same object (it has the same identifier)
         response = self.default_imms_api.create_immunization(imms)

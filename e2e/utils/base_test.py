@@ -125,6 +125,7 @@ class ImmunizationBaseTest(unittest.TestCase):
         imms_id = parse_location(response.headers["Location"])
         response = imms_api.delete_immunization(imms_id)
         assert response.status_code == 204, response.text
+        imms["id"] = str(uuid.uuid4()),
 
         return imms
 
