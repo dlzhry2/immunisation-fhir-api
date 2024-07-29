@@ -441,7 +441,7 @@ class TestDeleteImmunization(unittest.TestCase):
             UpdateExpression=ANY,
             ExpressionAttributeValues=ANY,
             ReturnValues=ANY,
-            ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id)) & Attr("DeletedAt").not_exists(),
+            ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id)) & (Attr("DeletedAt").not_exists() | Attr("DeletedAt").eq("reinstated")),
         )
 
         self.assertIsInstance(e.exception, ResourceNotFoundError)

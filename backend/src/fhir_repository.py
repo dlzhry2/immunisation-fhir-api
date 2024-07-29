@@ -377,7 +377,13 @@ class ImmunizationRepository:
             resp = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
 
             if "Item" in resp:
-                if not "DeletedAt" in resp["Item"]:
+                if "DeletedAt" in resp["Item"]:
+                    if resp["Item"]["DeletedAt"] == "reinstated":
+                        vaccine_type = self._vaccine_type(resp["Item"]["PatientSK"])
+                        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+                        vax_type_perm= self._vaccine_permission(vaccine_type, "delete")
+                        self._check_permission(vax_type_perm,vax_type_perms)                      
+                else:
                     vaccine_type = self._vaccine_type(resp["Item"]["PatientSK"])
                     vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
                     vax_type_perm= self._vaccine_permission(vaccine_type, "delete")
@@ -392,7 +398,7 @@ class ImmunizationRepository:
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id))
-                & Attr("DeletedAt").not_exists(),
+                & (Attr("DeletedAt").not_exists() | Attr("DeletedAt").eq("reinstated"))
             )
             return self._handle_dynamo_response(response)
 
