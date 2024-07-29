@@ -480,7 +480,7 @@ class FhirController:
         else:
             return None
 
-    def validate_identifier(_id, __value):
+    def _validate_identifier_system(self, _id: str,__value: str) -> Optional[dict]:
         if _id and __value and __value != ':id':
             return None
         elif not _id and (__value == ':id' or not __value):

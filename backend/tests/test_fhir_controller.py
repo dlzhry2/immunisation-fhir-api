@@ -65,7 +65,7 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
         self.controller = FhirController(self.authorizer, self.service)
 
     def test_get_imms_by_identifer(self):
-        """it should return Immunization resource if it exists"""
+        """it should return Immunization Id if it exists"""
         # Given
         imms_id = "a-id"
         self.service.get_immunization_by_identifier.return_value = {"id":"test"}
@@ -107,13 +107,41 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
         self.assertEqual(body["resourceType"], "OperationOutcome")
         self.assertEqual(body["issue"][0]["code"], "not-found")
 
-    def test_validate_imms_id(self):
-        """it should validate lambda's Immunization id"""
+    def test_validate_identifier_value_and_identifier_system_missing(self):
+        """it should return 400 as identifierSystem is missing"""
         imms_id = "an-id"
         self.service.get_immunization_by_identifier.return_value = {"resourceType":"OperationOutcome","id":"f6857e0e-40d0-4e5e-9e2f-463f87d357c6","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"invalid","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"INVALID"}]},"diagnostics":"The provided identifiervalue is either missing or not in the expected format."}]}
         lambda_event = {
             "headers": {"identifierSystem":"","VaccineTypePermissions": "COVID19:read"},
             "pathParameters": {"id": imms_id},
+        }
+        response = self.controller.get_immunization_by_identifier(lambda_event)
+
+        self.assertEqual(self.service.get_immunization_by_identifier.call_count, 0)
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")
+
+    def test_invalidate_identifier_value_or_missing(self):
+        """it should return 400 as identifierValue is missing"""
+        self.service.get_immunization_by_identifier.return_value = {"resourceType":"OperationOutcome","id":"f6857e0e-40d0-4e5e-9e2f-463f87d357c6","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"invalid","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"INVALID"}]},"diagnostics":"The provided identifiervalue is either missing or not in the expected format."}]}
+        lambda_event = {
+            "headers": {"identifierSystem":"an-id","VaccineTypePermissions": "COVID19:read"},
+            "pathParameters": {"id": ""},
+        }
+        response = self.controller.get_immunization_by_identifier(lambda_event)
+
+        self.assertEqual(self.service.get_immunization_by_identifier.call_count, 0)
+        self.assertEqual(response["statusCode"], 400)
+        outcome = json.loads(response["body"])
+        self.assertEqual(outcome["resourceType"], "OperationOutcome") 
+
+    def test_invalid_identifier_value_and_identifier_system_missing(self):
+        """it should return 400 as identifierValue and identifierSystem are missing"""
+        self.service.get_immunization_by_identifier.return_value = {"resourceType":"OperationOutcome","id":"f6857e0e-40d0-4e5e-9e2f-463f87d357c6","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"invalid","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"INVALID"}]},"diagnostics":"The provided identifiervalue is either missing or not in the expected format."}]}
+        lambda_event = {
+            "headers": {"identifierSystem":"","VaccineTypePermissions": "COVID19:read"},
+            "pathParameters": {"id": ""},
         }
         identifier = lambda_event["headers"]["identifierSystem"]
         response = self.controller.get_immunization_by_identifier(lambda_event)
