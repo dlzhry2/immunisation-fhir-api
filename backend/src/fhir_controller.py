@@ -480,33 +480,21 @@ class FhirController:
         else:
             return None
 
-    def _validate_identifier_system(self, _id: str,__value: str) -> Optional[dict]:
-        if _id != '' and __value != ':id':
+    def validate_identifier(_id, __value):
+        if _id and __value and __value != ':id':
             return None
-        elif _id == '' and  __value == ':id':
-            msg = "The provided identifier system and identifier value is either missing or not in the expected format."
-            return create_operation_outcome(
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.invalid,
-                diagnostics=msg,
-            )
-        elif __value == ':id':
+        elif not _id and (__value == ':id' or not __value):
+            msg = "The provided identifier system and identifier value are either missing or not in the expected format."
+        elif not __value or __value == ':id':
             msg = "The provided identifier value is either missing or not in the expected format."
-            return create_operation_outcome(
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.invalid,
-                diagnostics=msg,
-            )
-        elif _id == '':
+        elif not _id:
             msg = "The provided identifier system is either missing or not in the expected format."
-            return create_operation_outcome(
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.invalid,
-                diagnostics=msg,
-            ) 
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.invalid,
+            diagnostics=msg,
+        )
 
     def _create_bad_request(self, message):
         error = create_operation_outcome(
