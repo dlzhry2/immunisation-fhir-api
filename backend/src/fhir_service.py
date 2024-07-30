@@ -128,10 +128,7 @@ class FhirService:
             # Check each contained resource
             for contained_resource in immunization.get("contained", []):
                 resource_type = contained_resource.get("resourceType")
-                if resource_type not in Constants.allowed_contained_resources:
-                    all_errors.append(f"resourcetype Practitioner and Patient are only allowed in contained resource for this service")
-                else:
-                    all_errors.extend(check_for_unknown_elements(contained_resource, Constants.allowed_keys[resource_type], resource_type))
+                all_errors.extend(check_for_unknown_elements(contained_resource, Constants.allowed_keys[resource_type], resource_type))
 
             # Concatenate errors into a single string separated by semicolons
             error = "; ".join(all_errors)
@@ -162,10 +159,7 @@ class FhirService:
         # Check each contained resource
         for contained_resource in immunization.get("contained", []):
             resource_type = contained_resource.get("resourceType")
-            if resource_type not in Constants.allowed_contained_resources:
-                all_errors.append(f"resourcetype Practitioner and Patient are only allowed in contained resource for this service")
-            else:
-                all_errors.extend(check_for_unknown_elements(contained_resource, Constants.allowed_keys[resource_type], resource_type))
+            all_errors.extend(check_for_unknown_elements(contained_resource, Constants.allowed_keys[resource_type], resource_type))
 
         # Concatenate errors into a single string separated by semicolons
         error = "; ".join(all_errors)
@@ -196,10 +190,7 @@ class FhirService:
         # Check each contained resource
         for contained_resource in immunization.get("contained", []):
             resource_type = contained_resource.get("resourceType")
-            if resource_type not in Constants.allowed_contained_resources:
-                all_errors.append(f"resourcetype Practitioner and Patient are only allowed in contained resource for this service")
-            else:
-                all_errors.extend(check_for_unknown_elements(contained_resource, Constants.allowed_keys[resource_type], resource_type))
+            all_errors.extend(check_for_unknown_elements(contained_resource, Constants.allowed_keys[resource_type], resource_type))
 
         # Concatenate errors into a single string separated by semicolons
         error = "; ".join(all_errors)
@@ -229,10 +220,7 @@ class FhirService:
         # Check each contained resource
         for contained_resource in immunization.get("contained", []):
             resource_type = contained_resource.get("resourceType")
-            if resource_type not in Constants.allowed_contained_resources:
-                all_errors.append(f"resourcetype Practitioner and Patient are only allowed in contained resource for this service")
-            else:
-                all_errors.extend(check_for_unknown_elements(contained_resource, Constants.allowed_keys[resource_type], resource_type))
+            all_errors.extend(check_for_unknown_elements(contained_resource, Constants.allowed_keys[resource_type], resource_type))
 
         # Concatenate errors into a single string separated by semicolons
         error = "; ".join(all_errors)

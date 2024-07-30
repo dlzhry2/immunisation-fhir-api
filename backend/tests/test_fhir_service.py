@@ -275,7 +275,7 @@ class TestCreateImmunization(unittest.TestCase):
         self.pds_service.get_patient_details.assert_not_called()
 
     def test_top_level_element_for_with_issubpotent(self):
-        """it should throw exception if issubpotent present in create Immunization is not valid"""
+        """it should throw exception if extra element present in create Immunization is not valid"""
         imms = create_covid_19_immunization_dict("an-id", "9990548609")
         expected_msg = "isSubpotent is not an allowed element of the Immunization resource for this service"
         del imms["id"]
@@ -290,7 +290,7 @@ class TestCreateImmunization(unittest.TestCase):
         self.pds_service.get_patient_details.assert_not_called() 
 
     def test_top_level_element_in_practitioner_with_extra_field(self):
-        """it should throw exception if issubpotent present in create Immunization is not valid"""
+        """it should throw exception if extra element present in create Immunization of contained.practitioner is not valid"""
         imms = create_covid_19_immunization_dict("an-id", "9990548609")
         expected_msg = "identifier is not an allowed element of the Practitioner resource for this service"
         del imms["id"]
@@ -305,7 +305,7 @@ class TestCreateImmunization(unittest.TestCase):
         self.pds_service.get_patient_details.assert_not_called() 
 
     def test_top_level_element_in_patient_with_extra_field(self):
-        """it should throw exception if issubpotent present in create Immunization is not valid"""
+        """it should throw exception if extra element present in create Immunization of contained.patient is not valid"""
         imms = create_covid_19_immunization_dict("an-id", "9990548609")
         expected_msg = "extension is not an allowed element of the Patient resource for this service"
         del imms["id"]
@@ -319,42 +319,18 @@ class TestCreateImmunization(unittest.TestCase):
         self.imms_repo.create_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called() 
 
-    def test_top_level_element_in_contained_with_extra_field(self):
-        """it should throw exception if issubpotent present in create Immunization is not valid"""
-        imms = create_covid_19_immunization_dict("an-id", "9990548609")
-        expected_msg = "resourcetype Practitioner and Patient are only allowed in contained resource for this service"
-        del imms["id"]
-        new_resource = {"resourceType": "QuestionnaireResponse","id": "QR1","status": "completed","item": [{"linkId": "Immunisation","answer": [{"valueReference": {"reference": "#"}}]}]}
-        imms["contained"].append(new_resource)
-        with self.assertRaises(CustomValidationError) as error:
-            # When
-            self.pre_validate_fhir_service.create_immunization(imms, "COVID19:create")
-
-        # Then
-        self.assertTrue(expected_msg in error.exception.message)
-        self.imms_repo.create_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called() 
-
     def test_top_level_element_collected_errors_with_extra_field(self):
-        """it should throw exception if issubpotent present in create Immunization is not valid"""
+        """it should throw exception if extra element present in create Immunization  is not valid"""
         imms = create_covid_19_immunization_dict("an-id", "9990548609")
         expected_msg = (
             "id is not an allowed element of the Immunization resource for this service; "
             "isSubpotent is not an allowed element of the Immunization resource for this service; "
             "identifier is not an allowed element of the Practitioner resource for this service; "
-            "extension is not an allowed element of the Patient resource for this service; "
-            "resourcetype Practitioner and Patient are only allowed in contained resource for this service"
+            "extension is not an allowed element of the Patient resource for this service"
         )
         imms["isSubpotent"] = True
         imms["contained"][0]["identifier"] = []
         imms["contained"][1]["extension"] = []
-        new_resource = {
-            "resourceType": "QuestionnaireResponse",
-            "id": "QR1",
-            "status": "completed",
-            "item": [{"linkId": "Immunisation", "answer": [{"valueReference": {"reference": "#"}}]}]
-        }
-        imms["contained"].append(new_resource)
         with self.assertRaises(CustomValidationError) as error:
             # When
             self.pre_validate_fhir_service.create_immunization(imms, "COVID19:create")
@@ -408,7 +384,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.fhir_service.pds_service.get_patient_details.assert_called_once_with(nhs_number)
 
     def test_top_level_element_for_with_id(self):
-        """it should throw exception if id present in create Immunization is not valid"""
+        """it should throw exception if extra element present in update Immunization is not valid"""
         imms_id = "an-id"
         imms = create_covid_19_immunization_dict("an-id", "9990548609")
         expected_msg = "reportOrigin is not an allowed element of the Immunization resource for this service"
@@ -424,11 +400,10 @@ class TestUpdateImmunization(unittest.TestCase):
         self.pds_service.get_patient_details.assert_not_called()
 
     def test_top_level_element_for_with_issubpotent(self):
-        """it should throw exception if issubpotent present in create Immunization is not valid"""
+        """it should throw exception if extra element present in update Immunization is not valid"""
         imms_id = "an-id"
         imms = create_covid_19_immunization_dict("an-id", "9990548609")
         expected_msg = "isSubpotent is not an allowed element of the Immunization resource for this service"
-        del imms["id"]
         imms["isSubpotent"]=True
         with self.assertRaises(ValueError) as error:
             # When
@@ -441,7 +416,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.pds_service.get_patient_details.assert_not_called()
 
     def test_top_level_element_in_practitioner_with_extra_field(self):
-        """it should throw exception if issubpotent present in create Immunization is not valid"""
+        """it should throw exception if extra element present in update Immunization of contained.practitioner is not valid"""
         imms_id = "an-id"
         imms = create_covid_19_immunization_dict("an-id", "9990548609")
         expected_msg = "identifier is not an allowed element of the Practitioner resource for this service"
@@ -457,7 +432,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.pds_service.get_patient_details.assert_not_called()
 
     def test_top_level_element_in_patient_with_extra_field(self):
-        """it should throw exception if issubpotent present in create Immunization is not valid"""
+        """it should throw exception if extra element present in update Immunization of contained.patient is not valid"""
         imms_id = "an-id"
         imms = create_covid_19_immunization_dict("an-id", "9990548609")
         expected_msg = "extension is not an allowed element of the Patient resource for this service"
@@ -472,46 +447,20 @@ class TestUpdateImmunization(unittest.TestCase):
         self.imms_repo.update_immunization.assert_not_called()
         self.pds_service.get_patient_details.assert_not_called()
 
-
-    def test_top_level_element_in_contained_with_extra_field(self):
-        """it should throw exception if issubpotent present in create Immunization is not valid"""
-        imms_id = "an-id"
-        imms = create_covid_19_immunization_dict("an-id", "9990548609")
-        expected_msg = "resourcetype Practitioner and Patient are only allowed in contained resource for this service"
-        new_resource = {"resourceType": "QuestionnaireResponse","id": "QR1","status": "completed","item": [{"linkId": "Immunisation","answer": [{"valueReference": {"reference": "#"}}]}]}
-        imms["contained"].append(new_resource)
-        with self.assertRaises(ValueError) as error:
-            # When
-            self.fhir_service.update_immunization(imms_id, imms, 1, "COVID19:update")
-        
-
-        # Then
-        self.assertTrue(expected_msg in str(error.exception))
-        self.imms_repo.update_immunization.assert_not_called()
-        self.pds_service.get_patient_details.assert_not_called()
-
     def test_top_level_element_collected_errors_with_extra_field(self):
-        """it should throw exception if issubpotent present in create Immunization is not valid"""
+        """it should throw exception if extra element present in update Immunization is not valid"""
         imms_id = "an-id"
         imms = create_covid_19_immunization_dict("an-id", "9990548609")
         expected_msg = (
             "reportOrigin is not an allowed element of the Immunization resource for this service; "
             "isSubpotent is not an allowed element of the Immunization resource for this service; "
             "identifier is not an allowed element of the Practitioner resource for this service; "
-            "extension is not an allowed element of the Patient resource for this service; "
-            "resourcetype Practitioner and Patient are only allowed in contained resource for this service"
+            "extension is not an allowed element of the Patient resource for this service"
         )
         imms["reportOrigin"]={}
         imms["isSubpotent"] = True
         imms["contained"][0]["identifier"] = []
         imms["contained"][1]["extension"] = []
-        new_resource = {
-            "resourceType": "QuestionnaireResponse",
-            "id": "QR1",
-            "status": "completed",
-            "item": [{"linkId": "Immunisation", "answer": [{"valueReference": {"reference": "#"}}]}]
-        }
-        imms["contained"].append(new_resource)
         with self.assertRaises(ValueError) as error:
             # When
             self.fhir_service.update_immunization(imms_id, imms, 1, "COVID19:update")
