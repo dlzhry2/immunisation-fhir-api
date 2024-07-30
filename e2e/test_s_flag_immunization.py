@@ -11,17 +11,17 @@ from utils.mappings import VaccineTypes
 class SFlagBaseTest(ImmunizationBaseTest):
     """Parent class with helper for storing immunisation events in the IEDS"""
 
-def store_imms(self, imms_api: ImmunisationApi, patient_is_restricted: bool) -> dict:
-    """
-    Store an immunisation event in the IEDS using valid_nhs_number_with_s_flag if patient is restricted, or
-    valid_nhs_number_1 otherwise
-    """
-    nhs_number = valid_nhs_number_with_s_flag if patient_is_restricted else valid_nhs_number1
-    imms = create_an_imms_obj(nhs_number=nhs_number, vaccine_type=VaccineTypes.covid_19)
-    return self.create_immunization_resource(imms_api, imms)
+    def store_imms(self, imms_api: ImmunisationApi, patient_is_restricted: bool) -> dict:
+        """
+        Store an immunisation event in the IEDS using valid_nhs_number_with_s_flag if patient is restricted, or
+        valid_nhs_number_1 otherwise
+        """
+        nhs_number = valid_nhs_number_with_s_flag if patient_is_restricted else valid_nhs_number1
+        imms = create_an_imms_obj(nhs_number=nhs_number, vaccine_type=VaccineTypes.covid_19)
+        return self.create_immunization_resource(imms_api, imms)
 
 
-class TestGetSFlagImmunization(ImmunizationBaseTest):
+class TestGetSFlagImmunization(SFlagBaseTest):
     """Test that sensitive data is filtered out for a READ if and only if the patient is s-flagged"""
 
     def test_get_s_flagged_imms(self):
@@ -53,7 +53,7 @@ class TestGetSFlagImmunization(ImmunizationBaseTest):
                 self.assertEqual(read_imms, expected_response)
 
 
-class TestSearchSFlagImmunization(ImmunizationBaseTest):
+class TestSearchSFlagImmunization(SFlagBaseTest):
     """Test that sensitive data is filtered out for a SEARCH if and only if the patient is s-flagged"""
 
     def test_search_s_flagged_imms(self):
