@@ -15,7 +15,6 @@ from models.errors import (
     UnhandledResponseError,
     IdentifierDuplicationError,
     UnauthorizedVaxError,
-    UnauthorizedSystemError
 )
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 
@@ -98,10 +97,19 @@ class ImmunizationRepository:
         response = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
 
         if "Item" in response:
+            resp = dict()
             if "DeletedAt" in response["Item"]:
-                return None
+                if response["Item"]["DeletedAt"] == "reinstated":
+                    vaccine_type = self._vaccine_type(response["Item"]["PatientSK"])
+                    vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+                    vax_type_perm= self._vaccine_permission(vaccine_type, "read")
+                    self._check_permission(vax_type_perm,vax_type_perms)
+                    resp["Resource"] = json.loads(response["Item"]["Resource"])
+                    resp["Version"] = response["Item"]["Version"]
+                    return resp
+                else:
+                    return None
             else:
-                resp = dict()
                 vaccine_type = self._vaccine_type(response["Item"]["PatientSK"])
                 vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
                 vax_type_perm= self._vaccine_permission(vaccine_type, "read")
@@ -112,10 +120,10 @@ class ImmunizationRepository:
         else:
             return None
 
-    def get_immunization_by_id_all(self, imms_id: str,imms: Optional[dict],app_id: str ) -> Optional[dict]:
+    def get_immunization_by_id_all(self, imms_id: str,imms: dict) -> Optional[dict]:
         response = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
         if "Item" in response:
-         diagnostics = check_identifier_system_value(response,imms,app_id)
+         diagnostics = check_identifier_system_value(response,imms)
          if diagnostics:
             return diagnostics
         
@@ -145,7 +153,7 @@ class ImmunizationRepository:
         else:
                 return None
 
-    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms, app_id) -> dict:
+    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
@@ -166,7 +174,6 @@ class ImmunizationRepository:
                 "PatientSK": attr.patient_sk,
                 "Resource": json.dumps(attr.resource, cls=DecimalEncoder),
                 "IdentifierPK": attr.identifier,
-                "AppId": app_id,
                 "Operation": "CREATE",
                 "Version": 1,
             }
@@ -364,17 +371,20 @@ class ImmunizationRepository:
                     response=error.response,
                 )
 
-    def delete_immunization(self, imms_id: str, imms_vax_type_perms: str,app_id: str) -> dict:
+    def delete_immunization(self, imms_id: str, imms_vax_type_perms: str) -> dict:
         now_timestamp = int(time.time())
         try:
             resp = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
 
             if "Item" in resp:
-                if not "DeletedAt" in resp["Item"]:
+                if "DeletedAt" in resp["Item"]:
+                    if resp["Item"]["DeletedAt"] == "reinstated":
+                        vaccine_type = self._vaccine_type(resp["Item"]["PatientSK"])
+                        vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+                        vax_type_perm= self._vaccine_permission(vaccine_type, "delete")
+                        self._check_permission(vax_type_perm,vax_type_perms)                      
+                else:
                     vaccine_type = self._vaccine_type(resp["Item"]["PatientSK"])
-                    app_id_response =resp["Item"]["AppId"]
-                    if app_id != app_id_response:
-                        raise UnauthorizedSystemError
                     vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
                     vax_type_perm= self._vaccine_permission(vaccine_type, "delete")
                     self._check_permission(vax_type_perm,vax_type_perms)
@@ -388,7 +398,7 @@ class ImmunizationRepository:
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id))
-                & Attr("DeletedAt").not_exists(),
+                & (Attr("DeletedAt").not_exists() | Attr("DeletedAt").eq("reinstated"))
             )
             return self._handle_dynamo_response(response)
 
