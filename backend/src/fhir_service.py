@@ -1,3 +1,4 @@
+from uuid import uuid4
 import datetime
 import os
 from enum import Enum
@@ -14,25 +15,14 @@ from pydantic import ValidationError
 
 import parameter_parser
 from fhir_repository import ImmunizationRepository
-from models.errors import (
-    InvalidPatientId,
-    CustomValidationError,
-    ResourceNotFoundError,
-    InconsistentIdError,
-)
+from models.errors import InvalidPatientId, CustomValidationError
 from models.fhir_immunization import ImmunizationValidator
-from models.utils.generic_utils import (
-    nhs_number_mod11_check,
-    get_occurrence_datetime,
-    create_diagnostics,
-)
+from models.utils.generic_utils import nhs_number_mod11_check, get_occurrence_datetime, create_diagnostics
 from models.errors import MandatoryError
-from models.utils.validation_utils import get_vaccine_type
 from pds_service import PdsService
 from s_flag_handler import handle_s_flag
 from timer import timed
 from filter import Filter
-import urllib.parse
 
 
 def get_service_url(
@@ -183,16 +173,15 @@ class FhirService:
         return Immunization.parse_obj(imms)
 
     @staticmethod
-    def has_valid_vaccine_type(immunization: dict, vaccine_types: list[str]):
-        return get_vaccine_type(immunization) in vaccine_types
-
-    @staticmethod
     def is_valid_date_from(immunization: dict, date_from: datetime.date):
+        """
+        Returns False if immunization occurrence is earlier than the date_from, or True otherwise
+        (also returns True if date_from is None)
+        """
         if date_from is None:
             return True
 
-        occurrence_datetime = get_occurrence_datetime(immunization)
-        if occurrence_datetime is None:
+        if (occurrence_datetime := get_occurrence_datetime(immunization)) is None:
             # TODO: Log error if no date.
             return True
 
@@ -200,21 +189,54 @@ class FhirService:
 
     @staticmethod
     def is_valid_date_to(immunization: dict, date_to: datetime.date):
+        """
+        Returns False if immunization occurrence is later than the date_to, or True otherwise
+        (also returns True if date_to is None)
+        """
         if date_to is None:
             return True
 
-        occurrence_datetime = get_occurrence_datetime(immunization)
-        if occurrence_datetime is None:
+        if (occurrence_datetime := get_occurrence_datetime(immunization)) is None:
             # TODO: Log error if no date.
             return True
 
         return occurrence_datetime.date() <= date_to
 
     @staticmethod
-    def process_patient_for_include(patient: dict):
+    def process_patient_for_bundle(patient: dict):
+        """
+        Create a patient resource to be returned as part of the bundle by keeping the required fields from the
+        patient resource
+        """
+
+        # Remove unwanted top-level fields
         fields_to_keep = ["id", "resourceType", "identifier", "birthDate"]
         new_patient = {k: v for k, v in patient.items() if k in fields_to_keep}
+
+        # Remove unwanted identifier fields
+        new_identifiers = []
+        for identifier in new_patient["identifier"]:
+            identifier_fields_to_keep = ["system", "value"]
+            new_identifiers.append({k: v for k, v in identifier.items() if k in identifier_fields_to_keep})
+        new_patient["identifier"] = new_identifiers
+
         return new_patient
+
+    @staticmethod
+    def create_url_for_bundle_link(params, vaccine_types):
+        """
+        Updates the immunization.target parameter to include the given vaccine types and returns the url for the search
+        bundle.
+        """
+        base_url = f"{get_service_url()}/Immunization"
+
+        # Update the immunization.target parameter
+        new_immunization_target_param = f"immunization.target={','.join(vaccine_types)}"
+        parameters = "&".join(
+            [new_immunization_target_param if x.startswith("-immunization.target=") else x for x in params.split("&")]
+        )
+
+        return f"{base_url}?{parameters}"
 
     def search_immunizations(
         self,
@@ -224,61 +246,61 @@ class FhirService:
         date_from: datetime.date = parameter_parser.date_from_default,
         date_to: datetime.date = parameter_parser.date_to_default,
     ) -> FhirBundle:
-        """find all instances of Immunization(s) for a specified patient which are for the specified vaccine type(s).
-        Returns Bundle[Immunization]
+        """
+        Finds all instances of Immunization(s) for a specified patient which are for the specified vaccine type(s).
+        Bundles the resources with the relevant patient resource and returns the bundle.
         """
         # TODO: is disease type a mandatory field? (I assumed it is)
         #  i.e. Should we provide a search option for getting Patient's entire imms history?
         if not nhs_number_mod11_check(nhs_number):
-            diagnostics_error = create_diagnostics()
-            return diagnostics_error
+            return create_diagnostics()
 
-        # Obtain all resources which are for the requested nhs number and vaccine type(s)
-        resources = self.immunization_repo.find_immunizations(nhs_number, vaccine_types)
-
+        # Obtain all resources which are for the requested nhs number and vaccine type(s) and within the date range
         resources = [
             r
-            for r in resources
-            if FhirService.is_valid_date_from(r, date_from) and FhirService.is_valid_date_to(r, date_to)
+            for r in self.immunization_repo.find_immunizations(nhs_number, vaccine_types)
+            if self.is_valid_date_from(r, date_from) and self.is_valid_date_to(r, date_to)
         ]
-        patient_details = self.pds_service.get_patient_details(nhs_number)
-        # To check whether the Superseded NHS number present in PDS
-        if patient_details:
-            pds_nhs_number = patient_details["identifier"][0]["value"]
-            if pds_nhs_number != nhs_number:
-                diagnostics_error = create_diagnostics()
-                return diagnostics_error
-        patient = patient_details if len(resources) > 0 else None
+
+        # Check whether the Superseded NHS number present in PDS
+        if pds_patient := self.pds_service.get_patient_details(nhs_number):
+            if pds_patient["identifier"][0]["value"] != nhs_number:
+                return create_diagnostics()
+
+        # Create the patient URN for the fullUrl field.
+        # NOTE: This UUID is assigned when a SEARCH request is received and used only for referencing the patient
+        # resource from immunisation resources within the bundle. The fullUrl value we are using is a urn (hence the
+        # FHIR key name of "fullUrl" is somewhat misleading) which cannot be used to locate any externally stored
+        # patient resource. This is as agreed with VDS team for backwards compatibility with Immunisation History API.
+        patient_full_url = f"urn:uuid:{str(uuid4())}"
+
+        # Filter and amend the immunization resources for the SEARCH response
+        resources_filtered_for_search = [Filter.search(imms, patient_full_url, pds_patient) for imms in resources]
+
+        # Add bundle entries for each of the immunization resources
         entries = [
             BundleEntry(
-                resource=Immunization.parse_obj(handle_s_flag(imms, patient)),
+                resource=Immunization.parse_obj(handle_s_flag(imms, pds_patient)),
                 search=BundleEntrySearch(mode="match"),
-                fullUrl=f"urn:uuid:{imms['id']}",
+                fullUrl=f"https://api.service.nhs.uk/immunisation-fhir-api/Immunization/{imms['id']}",
             )
-            for imms in resources
+            for imms in resources_filtered_for_search
         ]
-        if patient:
+
+        # Add patient resource if there is at least one immunization resource
+        if len(resources) > 0:
             entries.append(
                 BundleEntry(
-                    resource=FhirService.process_patient_for_include(patient), search=BundleEntrySearch(mode="include")
+                    resource=self.process_patient_for_bundle(pds_patient),
+                    search=BundleEntrySearch(mode="include"),
+                    fullUrl=patient_full_url,
                 )
             )
+
+        # Create the bundle
         fhir_bundle = FhirBundle(resourceType="Bundle", type="searchset", entry=entries)
-        url = f"{get_service_url()}/Immunization?{params}"
-        # Splitting the URL into base_url and query_string
-        base_url, query_string = url.split('?')
+        fhir_bundle.link = [BundleLink(relation="self", url=self.create_url_for_bundle_link(params, vaccine_types))]
 
-        # Splitting the query_string into key-value pairs
-        parameters = query_string.split('&')
-
-        # Finding and updating the immunization.target parameter
-        for i, param in enumerate(parameters):
-            if param.startswith('-immunization.target='):
-                parameters[i] = f"immunization.target={','.join(vaccine_types)}"
-
-        # Constructing the new URL
-        new_url = base_url + '?' + '&'.join(parameters)
-        fhir_bundle.link = [BundleLink(relation="self", url=new_url)]
         return fhir_bundle
 
     @timed

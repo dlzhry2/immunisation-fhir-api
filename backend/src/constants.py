@@ -2,6 +2,7 @@
 
 # Constants for use within the test
 VALID_NHS_NUMBER = "1345678940"  # Valid for pre, FHIR and post validators
+NHS_NUMBER_USED_IN_SAMPLE_DATA = "9000000009"
 ADDRESS_UNKNOWN_POSTCODE = "ZZ99 3WZ"
 
 
