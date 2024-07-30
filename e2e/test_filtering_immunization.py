@@ -9,19 +9,23 @@ from utils.mappings import VaccineTypes
 
 
 class SFlagBaseTest(ImmunizationBaseTest):
-    """parent class with a set of assertion helpers"""
+    """Parent class with helper for storing immunisation events in the IEDS"""
 
-    def store_imms(self, imms_api: ImmunisationApi, patient_is_restricted: bool) -> dict:
-        nhs_number = valid_nhs_number_with_s_flag if patient_is_restricted else valid_nhs_number1
-        imms = create_an_imms_obj(nhs_number=nhs_number, vaccine_type=VaccineTypes.covid_19)
-        return self.create_immunization_resource(imms_api, imms)
+def store_imms(self, imms_api: ImmunisationApi, patient_is_restricted: bool) -> dict:
+    """
+    Store an immunisation event in the IEDS using valid_nhs_number_with_s_flag if patient is restricted, or
+    valid_nhs_number_1 otherwise
+    """
+    nhs_number = valid_nhs_number_with_s_flag if patient_is_restricted else valid_nhs_number1
+    imms = create_an_imms_obj(nhs_number=nhs_number, vaccine_type=VaccineTypes.covid_19)
+    return self.create_immunization_resource(imms_api, imms)
 
 
-class TestGetSFlagImmunization(SFlagBaseTest):
-    """An s-flagged patient contains sensitive data that must be filtered out by backend before being returned"""
+class TestGetSFlagImmunization(ImmunizationBaseTest):
+    """Test that sensitive data is filtered out for a READ if and only if the patient is s-flagged"""
 
     def test_get_s_flagged_imms(self):
-        """it should filter certain fields if patient is s-flagged"""
+        """Test that sensitive data is filtered out for a READ when the patient is s-flagged"""
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 imms_id = self.store_imms(imms_api, patient_is_restricted=True)
@@ -35,6 +39,7 @@ class TestGetSFlagImmunization(SFlagBaseTest):
                 self.assertEqual(read_imms, expected_response)
 
     def test_get_not_s_flagged_imms(self):
+        """Test that sensitive data is not filtered out for a READ when the patient is not s-flagged"""
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 imms = self.store_imms(imms_api, patient_is_restricted=False)
@@ -48,11 +53,11 @@ class TestGetSFlagImmunization(SFlagBaseTest):
                 self.assertEqual(read_imms, expected_response)
 
 
-class TestSearchSFlagImmunization(SFlagBaseTest):
-    """An s-flagged patient contains sensitive data that must be filtered out by backend before being returned"""
+class TestSearchSFlagImmunization(ImmunizationBaseTest):
+    """Test that sensitive data is filtered out for a SEARCH if and only if the patient is s-flagged"""
 
     def test_search_s_flagged_imms(self):
-        """it should perform filtering for all search results"""
+        """Test that sensitive data is filtered out for a SEARCH when the patient is s-flagged"""
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 imms1 = self.store_imms(imms_api, patient_is_restricted=True)
@@ -77,6 +82,7 @@ class TestSearchSFlagImmunization(SFlagBaseTest):
                     self.assertEqual(hit_imm, expected_response)
 
     def test_search_not_s_flagged_imms(self):
+        """Test that sensitive data is not filtered out for a SEARCH when the patient is not s-flagged"""
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 imms_id_1 = self.store_imms(imms_api, patient_is_restricted=False)
@@ -102,4 +108,5 @@ class TestSearchSFlagImmunization(SFlagBaseTest):
 
     @staticmethod
     def filter_my_imms_from_search_result(search_body: dict, *my_ids) -> List[dict]:
+        """Returns all immunisation entries for which the id is in my_ids"""
         return [entry["resource"] for entry in search_body["entry"] if entry["resource"]["id"] in my_ids]

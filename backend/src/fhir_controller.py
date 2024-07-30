@@ -164,6 +164,8 @@ class FhirController:
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
 
+
+
     def update_immunization(self, aws_event):
         if response := self.authorize_request(EndpointOperation.UPDATE, aws_event):
             return response

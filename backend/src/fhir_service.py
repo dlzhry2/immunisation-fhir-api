@@ -17,7 +17,7 @@ import parameter_parser
 from fhir_repository import ImmunizationRepository
 from base_utils.base_utils import obtain_field_value
 from models.field_names import FieldNames
-from models.errors import InvalidPatientId, CustomValidationError
+from models.errors import InvalidPatientId, CustomValidationError, UnhandledResponseError
 from models.fhir_immunization import ImmunizationValidator
 from models.utils.generic_utils import nhs_number_mod11_check, get_occurrence_datetime, create_diagnostics
 from models.errors import MandatoryError
@@ -69,14 +69,13 @@ class FhirService:
         imms_filtered_for_read = Filter.read(imms_resp.get("Resource", {}))
 
         # Handle s-flag filtering, where applicable
-        nhs_number = obtain_field_value(imms_filtered_for_read, FieldNames.patient_identifier_value)
-        if not nhs_number:
+        if not (nhs_number := obtain_field_value(imms_filtered_for_read, FieldNames.patient_identifier_value)):
             imms_filtered_for_read_and_s_flag = imms_filtered_for_read
         else:
             if patient := self.pds_service.get_patient_details(nhs_number):
                 imms_filtered_for_read_and_s_flag = handle_s_flag(imms_filtered_for_read, patient)
             else:
-                raise ValidationError("nhs number not found by PDS")  # TODO: Fix this error type/ message
+                raise UnhandledResponseError("unable to validate NHS number with downstream service")
 
         return {
             "Version": imms_resp.get("Version", ""),
@@ -101,6 +100,7 @@ class FhirService:
             self.validator.validate(immunization)
         except (ValidationError, ValueError, MandatoryError) as error:
             raise CustomValidationError(message=str(error)) from error
+        
         patient = self._validate_patient(immunization)
 
         if "diagnostics" in patient:
