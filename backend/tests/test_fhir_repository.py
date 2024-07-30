@@ -35,7 +35,7 @@ class TestGetImmunizationByIdentifier(unittest.TestCase):
         """it should find an Immunization by id"""
         imms_id = "a-id#an-id"
         resource = dict()
-        resource["Resource"] = {"id": "test"}
+        resource["Resource"] = {"id": "test","Version":1}
         self.table.query = MagicMock(
             return_value={
                 "Items": [{"Resource": json.dumps({"foo": "bar","id":"test"}), "Version": 1, "PatientSK": "COVID19#2516525251"}]
