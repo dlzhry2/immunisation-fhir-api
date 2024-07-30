@@ -11,6 +11,7 @@ from utils.mappings import VaccineTypes
 class SFlagBaseTest(ImmunizationBaseTest):
     """Parent class with helper for storing immunisation events in the IEDS"""
 
+
 def store_imms(self, imms_api: ImmunisationApi, patient_is_restricted: bool) -> dict:
     """
     Store an immunisation event in the IEDS using valid_nhs_number_with_s_flag if patient is restricted, or
