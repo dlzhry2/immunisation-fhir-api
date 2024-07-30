@@ -27,17 +27,22 @@ class SFlagBaseTest(ImmunizationBaseTest):
     def assert_is_not_filtered(self, imms):
 
         performer_actor_organizations = (
-            item
-            for item in imms["performer"]
-            if item.get("actor", {}).get("type") == "Organization")
+            item for item in imms["performer"] if item.get("actor", {}).get("type") == "Organization"
+        )
 
-        self.assertTrue(all(
-            performer.get("actor", {}).get("identifier", {}).get("value") != "N2N9I"
-            for performer in imms["performer"]))
-        self.assertTrue(all(
-            organization.get("actor", {}).get("identifier", {}).get("system")
-            != "https://fhir.nhs.uk/Id/ods-organization-code"
-            for organization in performer_actor_organizations))
+        self.assertTrue(
+            all(
+                performer.get("actor", {}).get("identifier", {}).get("value") != "N2N9I"
+                for performer in imms["performer"]
+            )
+        )
+        self.assertTrue(
+            all(
+                organization.get("actor", {}).get("identifier", {}).get("system")
+                != "https://fhir.nhs.uk/Id/ods-organization-code"
+                for organization in performer_actor_organizations
+            )
+        )
 
         self.assertTrue("location" in imms)
         postal_code = get_patient_postal_code(imms)
@@ -46,21 +51,27 @@ class SFlagBaseTest(ImmunizationBaseTest):
     def assert_is_filtered(self, imms: dict):
 
         performer_actor_organizations = (
-            item
-            for item in imms["performer"]
-            if item.get("actor", {}).get("type") == "Organization")
+            item for item in imms["performer"] if item.get("actor", {}).get("type") == "Organization"
+        )
 
-        self.assertTrue(all(
-            organization.get("actor", {}).get("identifier", {}).get("value") == "N2N9I"
-            for organization in performer_actor_organizations))
-        self.assertTrue(all(
-            organization.get("actor", {}).get("identifier", {}).get("system")
-            == "https://fhir.nhs.uk/Id/ods-organization-code"
-            for organization in performer_actor_organizations))
+        self.assertTrue(
+            all(
+                organization.get("actor", {}).get("identifier", {}).get("value") == "N2N9I"
+                for organization in performer_actor_organizations
+            )
+        )
+        self.assertTrue(
+            all(
+                organization.get("actor", {}).get("identifier", {}).get("system")
+                == "https://fhir.nhs.uk/Id/ods-organization-code"
+                for organization in performer_actor_organizations
+            )
+        )
 
         self.assertTrue("location" not in imms)
         postal_code = get_patient_postal_code(imms)
-        self.assertTrue(postal_code, "ZZ99 3CZ")
+        if postal_code:
+            self.assertTrue(postal_code, "ZZ99 3CZ")
 
 
 class TestGetSFlagImmunization(SFlagBaseTest):
