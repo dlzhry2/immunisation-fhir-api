@@ -97,7 +97,7 @@ class TestFilter(unittest.TestCase):
 
         self.assertEqual(replace_address_postal_codes(input_imms), expected_output)
 
-    def test_replace_organziation_values(self):
+    def test_replace_organization_values(self):
         """
         Test that replace_organziation_values replaces the relevant organization values and leave all other data
         unaltered
@@ -111,13 +111,39 @@ class TestFilter(unittest.TestCase):
         # existing must be handled)
         input_imms["performer"][1]["actor"]["display"] = "test"
 
-        # Prepare the expected_output
+        # Prepare expected output data
         expected_output = deepcopy(input_imms)
-        expected_output["performer"][1]["actor"]["identifier"]["system"] = Urls.ods_organization_code
-        expected_output["performer"][1]["actor"]["identifier"]["value"] = "N2N9I"
         del expected_output["performer"][1]["actor"]["display"]
 
-        self.assertEqual(replace_organization_values(input_imms), expected_output)
+        # TEST CASE: Input data has organization identifier value and system
+        input_imms_data = deepcopy(input_imms)
+        expected_output_data = deepcopy(expected_output)
+        expected_organization_identifier = {"system": "https://fhir.nhs.uk/Id/ods-organization-code", "value": "N2N9I"}
+        expected_output_data["performer"][1]["actor"]["identifier"] = expected_organization_identifier
+        self.assertEqual(replace_organization_values(deepcopy(input_imms)), expected_output_data)
+
+        # TEST CASE: Input data has organization identifier value, does not have organization identifier system
+        input_imms_data = deepcopy(input_imms)
+        del input_imms_data["performer"][1]["actor"]["identifier"]["system"]
+        expected_output_data = deepcopy(expected_output)
+        expected_organization_identifier = {"system": "https://fhir.nhs.uk/Id/ods-organization-code", "value": "N2N9I"}
+        expected_output_data["performer"][1]["actor"]["identifier"] = expected_organization_identifier
+        self.assertEqual(replace_organization_values(input_imms_data), expected_output_data)
+
+        # TEST CASE: Input data does not have organization identifier system, does have organization identifier value
+        input_imms_data = deepcopy(input_imms)
+        del input_imms_data["performer"][1]["actor"]["identifier"]["value"]
+        expected_output_data = deepcopy(expected_output)
+        expected_organization_identifier = {"system": "https://fhir.nhs.uk/Id/ods-organization-code"}
+        expected_output_data["performer"][1]["actor"]["identifier"] = expected_organization_identifier
+        self.assertEqual(replace_organization_values(input_imms_data), expected_output_data)
+
+        # TEST CASE: Input data does not have organization identifier system or value
+        input_imms_data = deepcopy(input_imms)
+        del input_imms_data["performer"][1]["actor"]["identifier"]
+        expected_output_data = deepcopy(expected_output)
+        del expected_output_data["performer"][1]["actor"]["identifier"]
+        self.assertEqual(replace_organization_values(input_imms_data), expected_output_data)
 
     def test_filter_read(self):
         """Tests to ensure Filter.read appropriately filters a FHIR Immunization Resource"""

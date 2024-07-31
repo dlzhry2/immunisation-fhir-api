@@ -55,10 +55,12 @@ def replace_organization_values(imms: dict) -> dict:
     """
     for performer in imms.get("performer", [{}]):
         if performer.get("actor", {}).get("type") == "Organization":
+
             if performer["actor"].get("identifier", {}).get("value") is not None:
                 performer["actor"]["identifier"]["value"] = "N2N9I"
+                performer["actor"]["identifier"]["system"] = Urls.ods_organization_code
 
-            if performer["actor"].get("identifier", {}).get("system") is not None:
+            elif performer["actor"].get("identifier", {}).get("system") is not None:
                 performer["actor"]["identifier"]["system"] = Urls.ods_organization_code
 
             if performer["actor"].get("display") is not None:
