@@ -18,6 +18,7 @@ class SFlagBaseTest(ImmunizationBaseTest):
         """
         nhs_number = valid_nhs_number_with_s_flag if patient_is_restricted else valid_nhs_number1
         imms = create_an_imms_obj(nhs_number=nhs_number, vaccine_type=VaccineTypes.covid_19)
+        del imms["id"]
         return self.create_immunization_resource(imms_api, imms)
 
 
