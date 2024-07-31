@@ -46,7 +46,6 @@
     "display": "AstraZeneca Ltd"
   },
   "location": {
-    "type": "Location",
     "identifier": {
       "value": "GB",
       "system": "urn:iso:std:iso:3166"

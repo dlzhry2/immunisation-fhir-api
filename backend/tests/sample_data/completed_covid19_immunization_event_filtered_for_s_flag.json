@@ -126,6 +126,9 @@
       ]
     }
   ],
+  "location": {
+    "identifier": { "system": "urn:iso:std:iso:3166", "value": "GB" }
+  },
   "protocolApplied": [
     {
       "targetDisease": [
