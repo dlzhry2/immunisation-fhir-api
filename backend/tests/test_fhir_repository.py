@@ -500,7 +500,7 @@ class TestFindImmunizations(unittest.TestCase):
         dynamo_response = {"ResponseMetadata": {"HTTPStatusCode": 200}, "Items": []}
         self.table.query = MagicMock(return_value=dynamo_response)
 
-        is_ = Attr("DeletedAt").not_exists()
+        is_ = Attr("DeletedAt").not_exists() | Attr("DeletedAt").eq("reinstated")
 
         # When
         _ = self.repository.find_immunizations("an-id", [VaccineTypes.covid_19])
