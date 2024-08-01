@@ -502,7 +502,7 @@ class TestFindImmunizations(unittest.TestCase):
 
         is_ = Attr("DeletedAt").not_exists() | Attr("DeletedAt").eq("reinstated")
 
-        # Whenn
+        # When
         _ = self.repository.find_immunizations("an-id", [VaccineTypes.covid_19])
 
         # Then
