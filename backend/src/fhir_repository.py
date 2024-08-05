@@ -107,7 +107,7 @@ class ImmunizationRepository:
             self._check_permission(vax_type_perm,vax_type_perms)
             resource = json.loads(item["Resource"])
             resp["id"] = resource.get('id')
-            resp["Version"] = int(response['Items'][0]['Version'])
+            resp["version"] = int(response['Items'][0]['Version'])
             return resp
         else:
             return None
