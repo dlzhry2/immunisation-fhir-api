@@ -20,7 +20,7 @@ def search_imms_handler(event: events.APIGatewayProxyEventV1, context: context_)
 def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController):
     try:
         print(f"firstevent:{event}")
-        if '-immunization.identifier' in event.get('queryStringParameters', {}) or '-immunization.identifier' in event.get('multiValueQueryStringParameters', {}):
+        if '-immunization.identifier' in event.get('queryStringParameters', {}):
             return controller.get_immunization_by_identifier(event)
         else:
             response = controller.search_immunizations(event)
@@ -66,11 +66,11 @@ if __name__ == "__main__":
     parser.add_argument("--date.from", type=str, required=False, dest="date_from")
     parser.add_argument("--date.to", type=str, required=False, dest="date_to")
     parser.add_argument(
-        "--identifier",
+        "--immunization.identifier",
         help="Identifier of System",
         type=str,
         required=False,
-        dest="identifier"
+        dest="immunization_identifier"
     )
     args = parser.parse_args()
 
@@ -80,8 +80,7 @@ if __name__ == "__main__":
             "-immunization.target": [",".join(args.immunization_target)],
             "-date.from": [args.date_from] if args.date_from else [],
             "-date.to": [args.date_to] if args.date_to else [],
-            "_include": ["Immunization:patient"],
-            "-identifier":[args.identifier] if args.identifier else []
+            "_include": ["Immunization:patient"]
         },
         "httpMethod": "POST",
         "headers": {
