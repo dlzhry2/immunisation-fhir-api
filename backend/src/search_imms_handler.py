@@ -20,26 +20,27 @@ def search_imms_handler(event: events.APIGatewayProxyEventV1, context: context_)
 def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController):
     try:
         print(f"firstevent:{event}")
-        if  event.get('queryStringParameters') != None:
-         if '-immunization.identifier' in event.get('queryStringParameters', {}):
-            return controller.get_immunization_by_identifier(event)
-        else:
-            print("else")
+        query_params = event.get('queryStringParameters', {})
+        if query_params:
+            if '-immunization.identifier' in query_params:
+                return controller.get_immunization_by_identifier(event)
+            
             response = controller.search_immunizations(event)
-            print(f"search_response:{response}")
-            result_json = json.dumps(response)
-            result_size = len(result_json.encode("utf-8"))
-            if result_size > 6 * 1024 * 1024:
-                exp_error = create_operation_outcome(
-                    resource_id=str(uuid.uuid4()),
-                    severity=Severity.error,
-                    code=Code.invalid,
-                    diagnostics="Search returned too many results. Please narrow down the search",
-                )
-                return FhirController.create_response(400, exp_error)
-            else:
-                print("true")
-                return response
+        else:
+            response = controller.search_immunizations(event)
+
+        result_json = json.dumps(response)
+        result_size = len(result_json.encode("utf-8"))
+
+        if result_size > 6 * 1024 * 1024:
+            exp_error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.invalid,
+                diagnostics="Search returned too many results. Please narrow down the search",
+            )
+            return FhirController.create_response(400, exp_error)
+        return response
     except Exception as e:
         exp_error = create_operation_outcome(
             resource_id=str(uuid.uuid4()),
