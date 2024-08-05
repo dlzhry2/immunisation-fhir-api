@@ -20,7 +20,8 @@ def search_imms_handler(event: events.APIGatewayProxyEventV1, context: context_)
 def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController):
     try:
         print(f"firstevent:{event}")
-        if '-immunization.identifier' in event.get('queryStringParameters', {}):
+        if  event.get('queryStringParameters') != None:
+         if '-immunization.identifier' in event.get('queryStringParameters', {}):
             return controller.get_immunization_by_identifier(event)
         else:
             response = controller.search_immunizations(event)
