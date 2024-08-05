@@ -24,7 +24,9 @@ def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController
          if '-immunization.identifier' in event.get('queryStringParameters', {}):
             return controller.get_immunization_by_identifier(event)
         else:
+            print("else")
             response = controller.search_immunizations(event)
+            print(f"search_response:{response}")
             result_json = json.dumps(response)
             result_size = len(result_json.encode("utf-8"))
             if result_size > 6 * 1024 * 1024:
@@ -36,6 +38,7 @@ def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController
                 )
                 return FhirController.create_response(400, exp_error)
             else:
+                print("true")
                 return response
     except Exception as e:
         exp_error = create_operation_outcome(
