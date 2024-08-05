@@ -20,19 +20,22 @@ def search_imms_handler(event: events.APIGatewayProxyEventV1, context: context_)
 def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController):
     try:
         print(f"firstevent:{event}")
-        response = controller.search_immunizations(event)
-        result_json = json.dumps(response)
-        result_size = len(result_json.encode("utf-8"))
-        if result_size > 6 * 1024 * 1024:
-            exp_error = create_operation_outcome(
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.invalid,
-                diagnostics="Search returned too many results. Please narrow down the search",
-            )
-            return FhirController.create_response(400, exp_error)
+        if '-immunization.identifier' in event.get('queryStringParameters', {}) or '-immunization.identifier' in event.get('multiValueQueryStringParameters', {}):
+            return controller.get_immunization_by_identifier(event)
         else:
-            return response
+            response = controller.search_immunizations(event)
+            result_json = json.dumps(response)
+            result_size = len(result_json.encode("utf-8"))
+            if result_size > 6 * 1024 * 1024:
+                exp_error = create_operation_outcome(
+                    resource_id=str(uuid.uuid4()),
+                    severity=Severity.error,
+                    code=Code.invalid,
+                    diagnostics="Search returned too many results. Please narrow down the search",
+                )
+                return FhirController.create_response(400, exp_error)
+            else:
+                return response
     except Exception as e:
         exp_error = create_operation_outcome(
             resource_id=str(uuid.uuid4()),

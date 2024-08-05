@@ -67,19 +67,19 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
     def test_get_imms_by_identifer(self):
         """it should return Immunization Id if it exists"""
         # Given
-        imms_id = "a-id"
-        self.service.get_immunization_by_identifier.return_value = {"id":"test"}
+        self.service.get_immunization_by_identifier.return_value = {"id":"test","Version":1}
         lambda_event = {
-            "headers": {"identifierSystem":"an-id","VaccineTypePermissions": "COVID19:read"},
-            "pathParameters": {"id": imms_id},
-        }
-        identifier = lambda_event["headers"]["identifierSystem"]
-        imms =f"{identifier}#{imms_id}"
+            "headers": {"VaccineTypePermissions": "COVID19:search"},
+            'queryStringParameters': {'-immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184'}
 
+        }
+        identifier = lambda_event.get('queryStringParameters', {}).get('-immunization.identifier')
+
+        identifiers = identifier.replace('|', '#')
         # When
         response = self.controller.get_immunization_by_identifier(lambda_event)
         # Then
-        self.service.get_immunization_by_identifier.assert_called_once_with(imms, "COVID19:read")
+        self.service.get_immunization_by_identifier.assert_called_once_with(identifiers, "COVID19:search")
 
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
@@ -88,32 +88,33 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
     def test_not_found_for_identifier(self):
         """it should return not-found OperationOutcome if it doesn't exist"""
         # Given
-        imms_id = "a-non-existing-id"
         self.service.get_immunization_by_identifier.return_value = None
         lambda_event = {
-            "headers": {"identifierSystem":"an-id","VaccineTypePermissions": "COVID19:read"},
-            "pathParameters": {"id": imms_id},
+            "headers": {"VaccineTypePermissions": "COVID19:search"},
+            'queryStringParameters': {'-immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184'}
+
         }
-        identifier = lambda_event["headers"]["identifierSystem"]
-        imms =f"{identifier}#{imms_id}"
+        identifier = lambda_event.get('queryStringParameters', {}).get('-immunization.identifier')
+
+        imms = identifier.replace('|', '#')
         # When
         response = self.controller.get_immunization_by_identifier(lambda_event)
 
         # Then
-        self.service.get_immunization_by_identifier.assert_called_once_with(imms, "COVID19:read")
+        self.service.get_immunization_by_identifier.assert_called_once_with(imms, "COVID19:search")
 
         self.assertEqual(response["statusCode"], 404)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
         self.assertEqual(body["issue"][0]["code"], "not-found")
 
-    def test_validate_identifier_value_and_identifier_system_missing(self):
+    def test_validate_immunization_identifier_is_empty(self):
         """it should return 400 as identifierSystem is missing"""
-        imms_id = "an-id"
         self.service.get_immunization_by_identifier.return_value = {"resourceType":"OperationOutcome","id":"f6857e0e-40d0-4e5e-9e2f-463f87d357c6","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"invalid","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"INVALID"}]},"diagnostics":"The provided identifiervalue is either missing or not in the expected format."}]}
         lambda_event = {
-            "headers": {"identifierSystem":"","VaccineTypePermissions": "COVID19:read"},
-            "pathParameters": {"id": imms_id},
+            "headers": {"VaccineTypePermissions": "COVID19:search"},
+            'queryStringParameters': {'-immunization.identifier': ''}
+
         }
         response = self.controller.get_immunization_by_identifier(lambda_event)
 
@@ -122,12 +123,13 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
 
-    def test_invalidate_identifier_value_or_missing(self):
-        """it should return 400 as identifierValue is missing"""
-        self.service.get_immunization_by_identifier.return_value = {"resourceType":"OperationOutcome","id":"f6857e0e-40d0-4e5e-9e2f-463f87d357c6","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"invalid","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"INVALID"}]},"diagnostics":"The provided identifiervalue is either missing or not in the expected format."}]}
+    def test_validate_immunization_identifier_in_invalid_format(self):
+        """it should return 400 as identifierSystem is missing"""
+        self.service.get_immunization_by_identifier.return_value = {"resourceType":"OperationOutcome","id":"f6857e0e-40d0-4e5e-9e2f-463f87d357c6","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"invalid","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"INVALID"}]},"diagnostics":"immunization.identifier must be in the format of immunization.identifier.system|immunization.identifier.value e.g. http://pinnacle.org/vaccs|2345-gh3s-r53h7-12ny"}]}
         lambda_event = {
-            "headers": {"identifierSystem":"an-id","VaccineTypePermissions": "COVID19:read"},
-            "pathParameters": {"id": ""},
+            "headers": {"VaccineTypePermissions": "COVID19:search"},
+            'queryStringParameters': {'-immunization.identifier': 'https://supplierABC/identifiers/vaccf10b59b3-fc73-4616-99c9-9e882ab31184'}
+
         }
         response = self.controller.get_immunization_by_identifier(lambda_event)
 
@@ -136,37 +138,39 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome") 
 
-    def test_invalid_identifier_value_and_identifier_system_missing(self):
-        """it should return 400 as identifierValue and identifierSystem are missing"""
+
+    def test_validate_immunization_identifier_having_whitespace(self):
+        """it should return 400 as identifierSystem is missing"""
         self.service.get_immunization_by_identifier.return_value = {"resourceType":"OperationOutcome","id":"f6857e0e-40d0-4e5e-9e2f-463f87d357c6","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"invalid","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"INVALID"}]},"diagnostics":"The provided identifiervalue is either missing or not in the expected format."}]}
         lambda_event = {
-            "headers": {"identifierSystem":"","VaccineTypePermissions": "COVID19:read"},
-            "pathParameters": {"id": ""},
+            "headers": {"VaccineTypePermissions": "COVID19:search"},
+            'queryStringParameters': {'-immunization.identifier': 'https://supplierABC/identifiers/vacc  |   f10b59b3-fc73-4616-99c9-9e882ab31184'}
+
         }
-        identifier = lambda_event["headers"]["identifierSystem"]
         response = self.controller.get_immunization_by_identifier(lambda_event)
 
         self.assertEqual(self.service.get_immunization_by_identifier.call_count, 0)
         self.assertEqual(response["statusCode"], 400)
         outcome = json.loads(response["body"])
-        self.assertEqual(outcome["resourceType"], "OperationOutcome")
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")       
 
     def test_validate_imms_id_invalid_vaccinetype(self):
         """it should validate lambda's Immunization id"""
         # Given
-        imms_id = "a-non-existing-id"
         self.service.get_immunization_by_identifier.side_effect = UnauthorizedVaxError()
         lambda_event = {
-            "headers": {"identifierSystem":"an-id","VaccineTypePermissions": "MMR:read"},
-            "pathParameters": {"id": imms_id},
+            "headers": {"VaccineTypePermissions": "COVID19:search"},
+            'queryStringParameters': {'-immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184'}
+
         }
-        identifier = lambda_event["headers"]["identifierSystem"]
-        imms =f"{identifier}#{imms_id}"
+        identifier = lambda_event.get('queryStringParameters', {}).get('-immunization.identifier')
+
+        identifiers = identifier.replace('|', '#')
         # When
         response = self.controller.get_immunization_by_identifier(lambda_event)
 
         # Then
-        self.service.get_immunization_by_identifier.assert_called_once_with(imms, "MMR:read")
+        self.service.get_immunization_by_identifier.assert_called_once_with(identifiers, "COVID19:search")
 
         self.assertEqual(response["statusCode"], 403)
         body = json.loads(response["body"])

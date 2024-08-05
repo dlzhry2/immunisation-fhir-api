@@ -28,6 +28,21 @@ class TestSearchImmunizations(unittest.TestCase):
         self.controller.search_immunizations.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
 
+    def test_search_immunizations_to_get_imms_id(self):
+        """it should return a list of Immunizations"""
+        lambda_event = {"pathParameters": {"id": "an-id"},
+                        "queryStringParameters": {'-immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184'}}
+        exp_res = {"a-key": "a-value"}
+
+        self.controller.get_immunization_by_identifier.return_value = exp_res
+
+        # When
+        act_res = search_imms(lambda_event, self.controller)
+
+        # Then
+        self.controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
+        self.assertDictEqual(exp_res, act_res)    
+
     def test_search_immunizations_lambda_size_limit(self):
         """it should return 400 as search returned too many results."""
         lambda_event = {"pathParameters": {"id": "an-id"}}

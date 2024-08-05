@@ -72,14 +72,14 @@ class FhirController:
     def get_immunization_by_identifier(self, aws_event) -> dict:
         if response := self.authorize_request(EndpointOperation.READ, aws_event):
             return response
-        identifier = aws_event["headers"]["identifierSystem"]
-        identifier_pk = aws_event["pathParameters"]["id"]
+        identifier = aws_event.get('queryStringParameters', {}).get('-immunization.identifier')
+        # If not found, retrieve from multiValueQueryStringParameters
+        
         print("11")
         print(f"identifier:{identifier}")
-        if id_error := self._validate_identifier_system(identifier,identifier_pk):
+        if id_error := self._validate_identifier_system(identifier):
             return self.create_response(400, id_error)
-        identifiers = f"{identifier}#{identifier_pk}"
-        
+        identifiers = identifier.replace('|', '#')
         try:
             if aws_event.get("headers"):
                 try:
@@ -474,21 +474,33 @@ class FhirController:
         else:
             return None
 
-    def _validate_identifier_system(self, _id: str,__value: str) -> Optional[dict]:
-        if _id and __value and __value != ':id':
-            return None
-        elif not _id and (__value == ':id' or not __value):
-            msg = "The provided identifier system and identifier value are either missing or not in the expected format."
-        elif not __value or __value == ':id':
-            msg = "The provided identifier value is either missing or not in the expected format."
-        elif not _id:
-            msg = "The provided identifier system is either missing or not in the expected format."
-        return create_operation_outcome(
-            resource_id=str(uuid.uuid4()),
-            severity=Severity.error,
-            code=Code.invalid,
-            diagnostics=msg,
-        )
+    def _validate_identifier_system(self, _id: str) -> Optional[dict]:
+
+        if not _id :
+            return create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.invalid,
+                diagnostics=(
+                    "immunization.identifier is missing and must be in the format of "
+                    "\"immunization.identifier.system|immunization.identifier.value\" "
+                    "e.g. \"http://pinnacle.org/vaccs|2345-gh3s-r53h7-12ny\""
+                )
+            )
+        if "|" not in _id or ' ' in _id:
+            return create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.invalid,
+                diagnostics=(
+                    "immunization.identifier must be in the format of "
+                    "\"immunization.identifier.system|immunization.identifier.value\" "
+                    "e.g. \"http://pinnacle.org/vaccs|2345-gh3s-r53h7-12ny\""
+                )
+            )
+        else:
+            None
+
 
     def _create_bad_request(self, message):
         error = create_operation_outcome(
