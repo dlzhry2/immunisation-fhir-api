@@ -19,6 +19,7 @@ def search_imms_handler(event: events.APIGatewayProxyEventV1, context: context_)
 
 def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController):
     try:
+        print(f"firstevent:{event}")
         response = controller.search_immunizations(event)
         result_json = json.dumps(response)
         result_size = len(result_json.encode("utf-8"))
@@ -61,7 +62,13 @@ if __name__ == "__main__":
     )
     parser.add_argument("--date.from", type=str, required=False, dest="date_from")
     parser.add_argument("--date.to", type=str, required=False, dest="date_to")
-
+    parser.add_argument(
+        "--identifier",
+        help="Identifier of System",
+        type=str,
+        required=False,
+        dest="identifier"
+    )
     args = parser.parse_args()
 
     event: events.APIGatewayProxyEventV1 = {
@@ -71,6 +78,7 @@ if __name__ == "__main__":
             "-date.from": [args.date_from] if args.date_from else [],
             "-date.to": [args.date_to] if args.date_to else [],
             "_include": ["Immunization:patient"],
+            "-identifier":[args.identifier] if args.identifier else []
         },
         "httpMethod": "POST",
         "headers": {
