@@ -482,7 +482,7 @@ class FhirController:
                 severity=Severity.error,
                 code=Code.invalid,
                 diagnostics=(
-                    "immunization.identifier is missing and must be in the format of "
+                    "Search parameter -immunization.identifier is missing and must be in the format of "
                     "\"immunization.identifier.system|immunization.identifier.value\" "
                     "e.g. \"http://pinnacle.org/vaccs|2345-gh3s-r53h7-12ny\""
                 )
@@ -493,7 +493,7 @@ class FhirController:
                 severity=Severity.error,
                 code=Code.invalid,
                 diagnostics=(
-                    "immunization.identifier must be in the format of "
+                    "Search parameter -immunization.identifier must be in the format of "
                     "\"immunization.identifier.system|immunization.identifier.value\" "
                     "e.g. \"http://pinnacle.org/vaccs|2345-gh3s-r53h7-12ny\""
                 )
