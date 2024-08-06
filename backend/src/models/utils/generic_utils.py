@@ -137,6 +137,7 @@ def form_json(response, _element, identifier, baseurl):
     
     # Add 'meta' if specified
     if 'meta' in elements:
+        json['entry'][0]['resource']['id'] = response['id']
         json['entry'][0]['resource']['meta'] = {
             "versionId": response["version"]
         }
