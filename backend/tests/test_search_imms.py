@@ -16,7 +16,7 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_search_immunizations(self):
         """it should return a list of Immunizations"""
-        lambda_event = {"pathParameters": {"id": "an-id"}}
+        lambda_event = {"pathParameters": {"id": "an-id"},"body":None}
         exp_res = {"a-key": "a-value"}
 
         self.controller.search_immunizations.return_value = exp_res
@@ -31,7 +31,8 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_search_immunizations_to_get_imms_id(self):
         """it should return a list of Immunizations"""
         lambda_event = {"pathParameters": {"id": "an-id"},
-                        "queryStringParameters": {'-immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184'}}
+                        "queryStringParameters": {'immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184'},
+                        "body":None}
         exp_res = {"a-key": "a-value"}
 
         self.controller.get_immunization_by_identifier.return_value = exp_res
@@ -45,7 +46,7 @@ class TestSearchImmunizations(unittest.TestCase):
 
     def test_search_immunizations_lambda_size_limit(self):
         """it should return 400 as search returned too many results."""
-        lambda_event = {"pathParameters": {"id": "an-id"}}
+        lambda_event = {"pathParameters": {"id": "an-id"},"body":None}
         request_file = script_location / "sample_data" / "sample_input_search_imms.json"
         with open(request_file) as f:
             exp_res = json.load(f)

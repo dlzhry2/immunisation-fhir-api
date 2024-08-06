@@ -42,7 +42,7 @@ class TestGetImmunizationByIdentifier(unittest.TestCase):
             }
         )
         
-        imms = self.repository.get_immunization_by_identifier(imms_id, "COVID19:read")
+        imms = self.repository.get_immunization_by_identifier(imms_id, "COVID19:search")
 
         # Validate the results
         self.assertDictEqual(resource["Resource"], imms)

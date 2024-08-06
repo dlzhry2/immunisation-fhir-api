@@ -10,6 +10,8 @@ from authorization import Permission
 from fhir_controller import FhirController, make_controller
 from models.errors import Severity, Code, create_operation_outcome
 from log_structure import function_info
+import base64
+import urllib.parse
 
 
 @function_info
@@ -21,8 +23,21 @@ def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController
     try:
         print(f"firstevent:{event}")
         query_params = event.get('queryStringParameters', {})
-        if query_params:
-            if '-immunization.identifier' in query_params:
+        body=event["body"]
+        body_has_immunization_identifier = False
+        query_string_has_immunization_identifier = False
+        if not (query_params == None and body== None) or not (query_params and body):
+            query_string_has_immunization_identifier = 'immunization.identifier' in event.get('queryStringParameters', {})
+        
+            # Decode body from base64
+            if event['body']:
+                decoded_body = base64.b64decode(event['body']).decode('utf-8')
+                # Parse the URL encoded body
+                parsed_body = urllib.parse.parse_qs(decoded_body)
+
+                # Check for 'immunization.identifier' in body
+                body_has_immunization_identifier = 'immunization.identifier' in parsed_body
+            if query_string_has_immunization_identifier or body_has_immunization_identifier:
                 return controller.get_immunization_by_identifier(event)
             
             response = controller.search_immunizations(event)

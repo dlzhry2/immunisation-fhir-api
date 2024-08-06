@@ -359,30 +359,33 @@ class TestGetImmunizationIdentifier(unittest.TestCase):
 
     def test_get_immunization_by_identifier(self):
         """it should find an Immunization by id"""
-        imms_id = "a-id"
         imms = "an-id#an-id"
-        self.imms_repo.get_immunization_by_identifier.return_value = {"Resource": create_covid_19_immunization(imms_id).dict()}
+        identifier ='test'
+        element = 'id'
+        self.imms_repo.get_immunization_by_identifier.return_value = {'id':'test','version':2}
         self.pds_service.get_patient_details.return_value = {}
 
         # When
-        service_resp = self.fhir_service.get_immunization_by_identifier(imms, "COVID19:read")
-        act_imms = service_resp["Resource"]
+        service_resp = self.fhir_service.get_immunization_by_identifier(imms, "COVID19:search",identifier,element)
+        act_imms = service_resp
 
         # Then
-        self.imms_repo.get_immunization_by_identifier.assert_called_once_with(imms, "COVID19:read")
+        self.imms_repo.get_immunization_by_identifier.assert_called_once_with(imms, "COVID19:search")
 
-        self.assertEqual(act_imms['id'], imms_id)
+        self.assertEqual(act_imms['resourceType'], 'Bundle')
 
     def test_immunization_not_found(self):
         """it should return None if Immunization doesn't exist"""
-        imms_id = ""
+        imms_id = "none"
+        identifier ='test'
+        element = 'id'
         self.imms_repo.get_immunization_by_identifier.return_value = None
 
         # When
-        act_imms = self.fhir_service.get_immunization_by_identifier(imms_id, "COVID19:read")
+        act_imms = self.fhir_service.get_immunization_by_identifier(imms_id, "COVID19:search",identifier,element)
 
         # Then
-        self.imms_repo.get_immunization_by_identifier.assert_called_once_with(imms_id, "COVID19:read")
+        self.imms_repo.get_immunization_by_identifier.assert_called_once_with(imms_id, "COVID19:search")
         self.assertEqual(act_imms, None)     
 
 
