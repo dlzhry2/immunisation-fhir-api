@@ -27,7 +27,8 @@ def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController
         body_has_immunization_identifier = False
         query_string_has_immunization_identifier = False
         if not (query_params == None and body== None) or not (query_params and body):
-            query_string_has_immunization_identifier = 'immunization.identifier' in event.get('queryStringParameters', {})
+            if query_params:
+             query_string_has_immunization_identifier = 'immunization.identifier' in event.get('queryStringParameters', {})
         
             # Decode body from base64
             if event['body']:
