@@ -394,6 +394,7 @@ class FhirController:
 
         try:
             search_params = process_search_params(process_params(aws_event))
+            print(f"search_params:{search_params}")
         except ParameterException as e:
             return self._create_bad_request(e.message)
         if search_params is None:
