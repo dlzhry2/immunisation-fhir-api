@@ -1,11 +1,22 @@
 import json
 def convert_to_flat_json(resource_json, operation):
+    gender_map = {"male": "1", "female": "2", "other": "9", "unknown": "0"}
+    operation = operation.lower()
+    def get_person_details(resource, resource_type):
+        if resource.get("resourceType", "").lower() == resource_type:
+            given_name = resource.get("name", [{}])[0].get("given", None)
+            family_name = resource.get("name", [{}])[0].get("family", None)
+            return given_name, family_name
+        return None, None
+    
+    person_given_name, person_family_name = get_person_details(resource_json.get("contained", [None, {}])[1], "patient")
+    professional_given_name, professional_family_name = get_person_details(resource_json.get("contained", [None, {}])[0], "practitioner")
     flat_dict = {
                     "NHS_NUMBER": resource_json.get("contained", [None, {}])[1].get("identifier", [{}])[0].get("value", None),
-                    "PERSON_FORENAME": resource_json.get("contained", [None, {}])[1].get("name", [{}])[0].get("given", None),
-                    "PERSON_SURNAME": resource_json.get("contained", [None, {}])[1].get("name", [{}])[0].get("family", None),
+                    "PERSON_FORENAME": person_given_name,
+                    "PERSON_SURNAME": person_family_name,
                     "PERSON_DOB": resource_json.get("contained", [None, {}])[1].get("birthDate", None),
-                    "PERSON_GENDER_CODE": resource_json.get("contained", [None, {}])[1].get("gender", None),
+                    "PERSON_GENDER_CODE": gender_map.get(resource_json.get("contained", [None, {}])[1].get("gender", 0), None),
                     "PERSON_POSTCODE": resource_json.get("contained", [None, {}])[1].get("address", [{}])[0].get("postalCode", None),
                     "DATE_AND_TIME": resource_json.get("occurrenceDateTime", None),
                     "SITE_CODE": resource_json.get("performer", [None, {}])[1].get("actor", {}).get("identifier", {}).get("value", None),
@@ -13,10 +24,10 @@ def convert_to_flat_json(resource_json, operation):
                     "UNIQUE_ID": resource_json.get("identifier", [{}])[0].get("value", None),
                     "UNIQUE_ID_URI": resource_json.get("identifier", [{}])[0].get("system", None),
                     "ACTION_FLAG": operation,  # Based on the operation.
-                    "PERFORMING_PROFESSIONAL_FORENAME": resource_json.get("contained", [None, {}])[0].get("name", [{}])[0].get("given", None),
-                    "PERFORMING_PROFESSIONAL_SURNAME": resource_json.get("contained", [None, {}])[0].get("name", [{}])[0].get("family", None),
+                    "PERFORMING_PROFESSIONAL_FORENAME": professional_given_name,
+                    "PERFORMING_PROFESSIONAL_SURNAME": professional_family_name,
                     "RECORDED_DATE": resource_json.get("recorded", None),
-                    "PRIMARY_SOURCE": resource_json.get("primarySource", None),
+                    "PRIMARY_SOURCE": str(resource_json.get("primarySource", None)).lower(),
                     "VACCINATION_PROCEDURE_CODE": resource_json.get("extension", [{}])[0].get("valueCodeableConcept", {}).get("coding", [{}])[0].get("code", None),
                     "VACCINATION_PROCEDURE_TERM": resource_json.get("extension", [{}])[0].get("valueCodeableConcept", {}).get("coding", [{}])[0].get("display", None),
                     "DOSE_SEQUENCE": resource_json.get("protocolApplied", [{}])[0].get("doseNumberPositiveInt", None),
