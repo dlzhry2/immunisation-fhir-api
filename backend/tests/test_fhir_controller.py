@@ -93,7 +93,7 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
         self.service.get_immunization_by_identifier.return_value = {"resourceType": "Bundle", "type": "searchset","link": [{"relation": "self","url": "https://internal-dev.api.service.nhs.uk/immunisation-fhir-api-pr-224/Immunization?immunization.target=COVID19&patient.identifier=https%3A%2F%2Ffhir.nhs.uk%2FId%2Fnhs-number%7C1345678940"}],"entry": [],"total": 0}
         lambda_event = {
             "headers": {"VaccineTypePermissions": "COVID19:search"},
-            'queryStringParameters': {'immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184','_element':'id'},
+            'queryStringParameters': {'immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184','_element':'id,meta'},
             'body':None
 
         }

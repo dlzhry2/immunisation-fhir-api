@@ -122,8 +122,6 @@ def form_json(response, _element, identifier, baseurl):
         "total": 0
     }
         return json
-    __elements = _element.lower()
-    elements = _element.split(',')
     
     # Basic structure for the JSON output
     json = {
@@ -132,7 +130,7 @@ def form_json(response, _element, identifier, baseurl):
         "link": [
             {
                 "relation": "self",
-                "url": f"{baseurl}?immunization.identifier={identifier}&_elements={elements}"
+                "url": f"{baseurl}?immunization.identifier={identifier}&_elements={_element}"
             }
         ],
         "entry": [
@@ -145,6 +143,7 @@ def form_json(response, _element, identifier, baseurl):
         ],
         "total": 1
     }
+    __elements = _element.lower()
     element = __elements.split(',')
     # Add 'id' if specified
     if 'id' in element:
