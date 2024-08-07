@@ -361,7 +361,7 @@ class TestGetImmunizationIdentifier(unittest.TestCase):
         """it should find an Immunization by id"""
         imms = "an-id#an-id"
         identifier ='test'
-        element = 'id'
+        element = 'id,mEta'
         self.imms_repo.get_immunization_by_identifier.return_value = {'id':'test','version':2}
         self.pds_service.get_patient_details.return_value = {}
 
