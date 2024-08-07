@@ -108,6 +108,20 @@ def create_diagnostics_error(value):
 
 def form_json(response, _element, identifier, baseurl):
     # Elements to include, based on the '_element' parameter
+    if not response:
+        json = {
+        "resourceType": "Bundle",
+        "type": "searchset",
+        "link": [
+            {
+                "relation": "self",
+                "url": f"{baseurl}?immunization.identifier={identifier}&_elements={_element}"
+            }
+        ],
+        "entry": [],
+        "total": 0
+    }
+        return json
     elements = _element.split(',')
     
     # Basic structure for the JSON output

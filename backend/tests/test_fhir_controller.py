@@ -90,7 +90,7 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
     def test_not_found_for_identifier(self):
         """it should return not-found OperationOutcome if it doesn't exist"""
         # Given
-        self.service.get_immunization_by_identifier.return_value = None
+        self.service.get_immunization_by_identifier.return_value = {"resourceType": "Bundle", "type": "searchset","link": [{"relation": "self","url": "https://internal-dev.api.service.nhs.uk/immunisation-fhir-api-pr-224/Immunization?immunization.target=COVID19&patient.identifier=https%3A%2F%2Ffhir.nhs.uk%2FId%2Fnhs-number%7C1345678940"}],"entry": [],"total": 0}
         lambda_event = {
             "headers": {"VaccineTypePermissions": "COVID19:search"},
             'queryStringParameters': {'immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184','_element':'id'},
@@ -107,10 +107,11 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
         # Then
         self.service.get_immunization_by_identifier.assert_called_once_with(imms, "COVID19:search",identifier,_element)
 
-        self.assertEqual(response["statusCode"], 404)
+        self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
-        self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "not-found")
+        self.assertEqual(body["resourceType"], "Bundle")
+        self.assertEqual(body["entry"], [])
+        self.assertEqual(body["total"], 0)
 
     def test_validate_immunization_identifier_is_empty(self):
         """it should return 400 as identifierSystem is missing"""

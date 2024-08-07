@@ -73,6 +73,18 @@ class FhirController:
     def get_immunization_by_identifier(self, aws_event) -> dict:
         if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
             return response
+        query_params = aws_event.get('queryStringParameters', {})
+        body=aws_event["body"]
+        if query_params and body:
+                error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.invalid,
+                diagnostics=(
+                    "Parameters may not be duplicated. Use commas for \"or\"."
+                )
+            )
+                return(self.create_response(400, error))
         identifier,element,not_required = self.fetch_identifier_system_and_element(aws_event)
         if  not_required:
                  error = create_operation_outcome(
@@ -108,15 +120,6 @@ class FhirController:
             if resource := self.fhir_service.get_immunization_by_identifier(identifiers, imms_vax_type_perms, identifier, element):
                 print(f"resource:{resource}")
                 return FhirController.create_response(200, resource)
-            else:
-                msg = "The requested resource was not found."
-                id_error = create_operation_outcome(
-                    resource_id=str(uuid.uuid4()),
-                    severity=Severity.error,
-                    code=Code.not_found,
-                    diagnostics=msg,
-                )
-                return FhirController.create_response(404, id_error)
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())    
 
@@ -487,6 +490,16 @@ class FhirController:
 
     def _validate_identifier_system(self, _id: str, _element: str) -> Optional[dict]:
 
+        if not _id and _element:
+            return create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.invalid,
+                diagnostics=(
+                    "Search parameter immunization.identifier is missing"
+                )
+            )
+        
         if not _id :
             return create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
@@ -569,10 +582,14 @@ class FhirController:
                 decoded_body = base64.b64decode(body).decode('utf-8')
                 parsed_body = urllib.parse.parse_qs(decoded_body)
                 # Attempt to extract 'immunization.identifier' and '_element'
-                immunization_identifier = parsed_body.get('immunization.identifier')
-                converted_identifer = ''.join(immunization_identifier)
-                _element = parsed_body.get('_element')
-                converted_element = ''.join(_element)
+                converted_identifer = ''
+                converted_element =''
+                immunization_identifier = parsed_body.get('immunization.identifier','')
+                if immunization_identifier:
+                 converted_identifer = ''.join(immunization_identifier)
+                _element = parsed_body.get('_element','')
+                if _element:
+                 converted_element = ''.join(_element)
                 body_check = check_keys_in_sources(event, not_required_keys)
                 return converted_identifer,converted_element,body_check
             

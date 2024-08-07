@@ -386,7 +386,7 @@ class TestGetImmunizationIdentifier(unittest.TestCase):
 
         # Then
         self.imms_repo.get_immunization_by_identifier.assert_called_once_with(imms_id, "COVID19:search")
-        self.assertEqual(act_imms, None)     
+        self.assertEqual(act_imms["entry"], [])     
 
 
 class TestCreateImmunization(unittest.TestCase):
