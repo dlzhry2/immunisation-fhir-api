@@ -2,15 +2,18 @@ import json
 def convert_to_flat_json(resource_json, operation):
     gender_map = {"male": "1", "female": "2", "other": "9", "unknown": "0"}
     operation = operation.lower()
-    def get_person_details(resource, resource_type):
-        if resource.get("resourceType", "").lower() == resource_type:
-            given_name = resource.get("name", [{}])[0].get("given", None)
-            family_name = resource.get("name", [{}])[0].get("family", None)
-            return given_name, family_name
+    def get_person_details(resource_json, resource_type):
+        for res in resource_json.get("contained", []):
+            if res.get("resourceType", "").lower() == resource_type:
+                given_name = res.get("name", [{}])[0].get("given", None)
+                family_name = res.get("name", [{}])[0].get("family", None)
+                return given_name, family_name
         return None, None
     
-    person_given_name, person_family_name = get_person_details(resource_json.get("contained", [None, {}])[1], "patient")
-    professional_given_name, professional_family_name = get_person_details(resource_json.get("contained", [None, {}])[0], "practitioner")
+    
+    professional_given_name, professional_family_name = get_person_details(resource_json, "practitioner")
+    person_given_name, person_family_name = get_person_details(resource_json, "patient")
+
     flat_dict = {
                     "NHS_NUMBER": resource_json.get("contained", [None, {}])[1].get("identifier", [{}])[0].get("value", None),
                     "PERSON_FORENAME": person_given_name,
