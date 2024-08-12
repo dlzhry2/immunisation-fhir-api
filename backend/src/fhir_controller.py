@@ -477,18 +477,6 @@ class FhirController:
             return None
 
     def _validate_identifier_system(self, _id: str, _element: str) -> Optional[dict]:
-
-        if not _id and _element:
-            return create_operation_outcome(
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.invalid,
-                diagnostics=(
-                    "Search parameter -immunization.identifier must have one value and must be in the format of "
-                    "\"immunization.identifier.system|immunization.identifier.value\" "
-                    "e.g. \"http://pinnacle.org/vaccs|2345-gh3s-r53h7-12ny\""
-                )
-            )
         
         if not _id :
             return create_operation_outcome(
@@ -498,7 +486,7 @@ class FhirController:
                 diagnostics=(
                     "Search parameter -immunization.identifier must have one value and must be in the format of "
                     "\"immunization.identifier.system|immunization.identifier.value\" "
-                    "e.g. \"http://pinnacle.org/vaccs|2345-gh3s-r53h7-12ny\""
+                    "e.g. \"http://xyz.org/vaccs|2345-gh3s-r53h7-12ny\""
                 )
             )
         if "|" not in _id or ' ' in _id:
@@ -509,7 +497,7 @@ class FhirController:
                 diagnostics=(
                     "Search parameter -immunization.identifier must be in the format of "
                     "\"immunization.identifier.system|immunization.identifier.value\" "
-                    "e.g. \"http://pinnacle.org/vaccs|2345-gh3s-r53h7-12ny\""
+                    "e.g. \"http://xyz.org/vaccs|2345-gh3s-r53h7-12ny\""
                 )
             )
         if not _element :
