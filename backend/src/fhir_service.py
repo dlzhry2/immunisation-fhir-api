@@ -111,7 +111,7 @@ class FhirService:
         imms_resp = self.immunization_repo.get_immunization_by_id_all(imms_id, imms)
         return imms_resp
 
-    def create_immunization(self, immunization: dict, imms_vax_type_perms) -> Immunization:
+    def create_immunization(self, immunization: dict, imms_vax_type_perms, supplier_system) -> Immunization:
         try:
             self.validator.validate(immunization)
             # Initialize errors list
@@ -136,12 +136,12 @@ class FhirService:
 
         if "diagnostics" in patient:
             return patient
-        imms = self.immunization_repo.create_immunization(immunization, patient, imms_vax_type_perms)
+        imms = self.immunization_repo.create_immunization(immunization, patient, imms_vax_type_perms, supplier_system)
 
         return Immunization.parse_obj(imms)
 
     def update_immunization(
-        self, imms_id: str, immunization: dict, existing_resource_version: int, imms_vax_type_perms: str
+        self, imms_id: str, immunization: dict, existing_resource_version: int, imms_vax_type_perms: str, supplier_system : str
     ) -> tuple[UpdateOutcome, Immunization]:
         immunization["id"] = imms_id
 
@@ -150,7 +150,7 @@ class FhirService:
         if "diagnostics" in patient:
             return (None, patient)
         imms = self.immunization_repo.update_immunization(
-            imms_id, immunization, patient, existing_resource_version, imms_vax_type_perms
+            imms_id, immunization, patient, existing_resource_version, imms_vax_type_perms, supplier_system
         )
 
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)

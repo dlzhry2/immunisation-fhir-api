@@ -153,7 +153,7 @@ class ImmunizationRepository:
         else:
                 return None
 
-    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms) -> dict:
+    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms, supplier_system) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
@@ -176,6 +176,7 @@ class ImmunizationRepository:
                 "IdentifierPK": attr.identifier,
                 "Operation": "CREATE",
                 "Version": 1,
+                "Supplier": supplier_system,
             }
         )
 
@@ -192,7 +193,8 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
-        imms_vax_type_perms: str
+        imms_vax_type_perms: str,
+        supplier_system : str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
         vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
@@ -229,6 +231,7 @@ class ImmunizationRepository:
                     ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
+                    ":supplier_system" : supplier_system,
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(attr.pk)
