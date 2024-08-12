@@ -1,4 +1,4 @@
-import json
+import simplejson as json
 import os
 import time
 import uuid
@@ -19,16 +19,6 @@ from models.errors import (
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 
 from models.utils.validation_utils import get_vaccine_type,check_identifier_system_value
-
-
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, o):
-        # if passed in object is instance of Decimal
-        # convert it to a string
-        if isinstance(o, Decimal):
-            return float(o)
-        # otherwise use the default behavior
-        return json.JSONEncoder.default(self, o)
 
 
 def create_table(table_name=None, endpoint_url=None, region_name="eu-west-2"):
@@ -172,7 +162,7 @@ class ImmunizationRepository:
                 "PK": attr.pk,
                 "PatientPK": attr.patient_pk,
                 "PatientSK": attr.patient_sk,
-                "Resource": json.dumps(attr.resource, cls=DecimalEncoder),
+                "Resource": json.dumps(attr.resource, use_decimal=True),
                 "IdentifierPK": attr.identifier,
                 "Operation": "CREATE",
                 "Version": 1,
@@ -226,7 +216,7 @@ class ImmunizationRepository:
                     ":timestamp": attr.timestamp,
                     ":patient_pk": attr.patient_pk,
                     ":patient_sk": attr.patient_sk,
-                    ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
+                    ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
                 },
@@ -288,7 +278,7 @@ class ImmunizationRepository:
                     ":timestamp": attr.timestamp,
                     ":patient_pk": attr.patient_pk,
                     ":patient_sk": attr.patient_sk,
-                    ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
+                    ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
                     ":respawn": "reinstated",
@@ -350,7 +340,7 @@ class ImmunizationRepository:
                     ":timestamp": attr.timestamp,
                     ":patient_pk": attr.patient_pk,
                     ":patient_sk": attr.patient_sk,
-                    ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
+                    ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
                 },
