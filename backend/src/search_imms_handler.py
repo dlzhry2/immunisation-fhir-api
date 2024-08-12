@@ -21,7 +21,6 @@ def search_imms_handler(event: events.APIGatewayProxyEventV1, context: context_)
 
 def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController):
     try:
-        print(f"firstevent:{event}")
         query_params = event.get('queryStringParameters', {})
         body=event["body"]
         body_has_immunization_identifier = False

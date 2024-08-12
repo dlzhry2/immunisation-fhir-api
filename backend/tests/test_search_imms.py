@@ -31,7 +31,7 @@ class TestSearchImmunizations(unittest.TestCase):
     def test_search_immunizations_to_get_imms_id(self):
         """it should return a list of Immunizations"""
         lambda_event = {"pathParameters": {"id": "an-id"},
-                        "queryStringParameters": {'immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184'},
+                        "queryStringParameters": {'immunization.identifier': 'https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184','_element':'id,meta'},
                         "body":None}
         exp_res = {"a-key": "a-value"}
 
@@ -86,6 +86,20 @@ class TestSearchImmunizations(unittest.TestCase):
         # Then
         self.controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
+
+    def test_search_immunizations_get_id_from_body_imms_identifer(self):
+        """it should enter into  get_immunization_by_identifier  only immunization.identifier paramter is present"""
+        lambda_event = {"pathParameters": {"id": "an-id"},"body":'aW1tdW5pemF0aW9uLmlkZW50aWZpZXI9aWQlMkNtZXRh','queryStringParameters':None}
+        exp_res = {"a-key": "a-value"}
+
+        self.controller.get_immunization_by_identifier.return_value = exp_res
+
+        # When
+        act_res = search_imms(lambda_event, self.controller)
+
+        # Then
+        self.controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
+        self.assertDictEqual(exp_res, act_res)   
         
     def test_search_immunizations_lambda_size_limit(self):
         """it should return 400 as search returned too many results."""

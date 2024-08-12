@@ -85,20 +85,10 @@ class FhirController:
                 )
             )
                 return(self.create_response(400, error))
-        identifier,element,not_required = self.fetch_identifier_system_and_element(aws_event)
+        identifier,element,not_required,has_imms_identifier,has_element = self.fetch_identifier_system_and_element(aws_event)
         if  not_required:
-                 error = create_operation_outcome(
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.invalid,
-                diagnostics=(
-                    "Search parameter immunization.identifier should only have _element search paramter"
-                )
-            )
-                 return(self.create_response(400, error))
+                return(self.create_response_for_identifier(not_required,has_imms_identifier,has_element)) 
         # If not found, retrieve from multiValueQueryStringParameters
-        print("11")
-        print(f"identifier:{identifier}")
         if id_error := self._validate_identifier_system(identifier,element):
             return self.create_response(400, id_error)
         identifiers = identifier.replace('|', '#')
@@ -118,7 +108,6 @@ class FhirController:
         
         try:
             if resource := self.fhir_service.get_immunization_by_identifier(identifiers, imms_vax_type_perms, identifier, element):
-                print(f"resource:{resource}")
                 return FhirController.create_response(200, resource)
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())    
@@ -407,7 +396,6 @@ class FhirController:
 
         try:
             search_params = process_search_params(process_params(aws_event))
-            print(f"search_params:{search_params}")
         except ParameterException as e:
             return self._create_bad_request(e.message)
         if search_params is None:
@@ -532,13 +520,13 @@ class FhirController:
             )
         element_lower = _element.lower()
         result = element_lower.split(',')
-        is_present = any(key in result for key in ['id','meta'])
+        is_present = all(key in ['id', 'meta'] for key in result)
         if not is_present:
             return create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
                 code=Code.invalid,
-                diagnostics= "Search parameter _element contains unsupportted value" 
+                diagnostics= "_element must be one or more of the following: id,meta" 
             )
 
 
@@ -572,12 +560,13 @@ class FhirController:
             not_required_keys = ['-date.from', '-date.to', '-immunization.target', '_include', 'patient.identifier']
             if query_params and not body:
                 # Check for the presence of 'immunization.identifier' and '_element'
-                
+                query_string_has_immunization_identifier = 'immunization.identifier' in event.get('queryStringParameters', {})
+                query_string_has_element = '_element' in event.get('queryStringParameters', {}) 
                 immunization_identifier = query_params.get('immunization.identifier','')
                 element = query_params.get('_element','')
                 query_check = check_keys_in_sources(event, not_required_keys)
                 
-                return immunization_identifier,element,query_check
+                return immunization_identifier,element,query_check,query_string_has_immunization_identifier,query_string_has_element
             if body and not query_params:
                 decoded_body = base64.b64decode(body).decode('utf-8')
                 parsed_body = urllib.parse.parse_qs(decoded_body)
@@ -590,9 +579,39 @@ class FhirController:
                 _element = parsed_body.get('_element','')
                 if _element:
                  converted_element = ''.join(_element)
+                body_has_immunization_identifier = 'immunization.identifier' in parsed_body
+                body_has_immunization_element = '_element' in parsed_body
                 body_check = check_keys_in_sources(event, not_required_keys)
-                return converted_identifer,converted_element,body_check
-            
+                return converted_identifer,converted_element,body_check,body_has_immunization_identifier,body_has_immunization_element
+
+    def create_response_for_identifier(self, not_required, has_identifier, has_element):
+        if 'patient.identifier' in  not_required and  has_identifier:
+            error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.server_error,
+                diagnostics="Search parameter should have either immunization.identifier or patient.identifier",
+            )
+            return self.create_response(400, error)
+        
+        if  not_required and  has_element:
+            error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.server_error,
+                diagnostics="Search parameter _element must have  the following parameter: immunization.identifier",
+            )
+            return self.create_response(400, error)
+        
+        if 'patient.identifier' not in  not_required and  not_required and has_identifier :
+            error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.server_error,
+                diagnostics="Search parameter immunization.identifier must have the following parameter: _element",
+            )
+            return self.create_response(400, error)
+
 
     @staticmethod
     def create_response(status_code, body=None, headers=None):

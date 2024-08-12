@@ -158,7 +158,7 @@ def form_json(response, _element, identifier, baseurl):
 
     return json
 
-def check_keys_in_sources(event, required_keys):
+def check_keys_in_sources(event, not_required_keys):
     # Decode and parse the body, assuming it is JSON and base64-encoded
     def decode_and_parse_body(encoded_body):
         if encoded_body:
@@ -166,7 +166,6 @@ def check_keys_in_sources(event, required_keys):
                 return urllib.parse.parse_qs(base64.b64decode(encoded_body).decode('utf-8'))
         else:
             return {}
-
     # Extracting queryStringParameters and body content
     query_params = event.get('queryStringParameters', {})
     body_content = decode_and_parse_body(event.get('body'))
@@ -175,14 +174,14 @@ def check_keys_in_sources(event, required_keys):
     if query_params:
      keys = query_params.keys()
      list_keys=list(keys)
-
-     query_check = any(k in required_keys for k in list_keys)
+ 
+     query_check = [k for k in list_keys if k in not_required_keys]
      return query_check
 
     # Check for presence of all required keys in body content
     if body_content:
      keys = body_content.keys()
      list_keys=list(keys)
-     body_check = any(k in required_keys for k in list_keys)
+     body_check = [k for k in list_keys if k in not_required_keys]
      return body_check
     
