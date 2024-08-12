@@ -484,7 +484,9 @@ class FhirController:
                 severity=Severity.error,
                 code=Code.invalid,
                 diagnostics=(
-                    "Search parameter immunization.identifier must have one value."
+                    "Search parameter -immunization.identifier must have one value and must be in the format of "
+                    "\"immunization.identifier.system|immunization.identifier.value\" "
+                    "e.g. \"http://pinnacle.org/vaccs|2345-gh3s-r53h7-12ny\""
                 )
             )
         
