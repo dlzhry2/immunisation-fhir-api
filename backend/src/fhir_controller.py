@@ -484,7 +484,7 @@ class FhirController:
                 severity=Severity.error,
                 code=Code.invalid,
                 diagnostics=(
-                    "Search parameter immunization.identifier is missing"
+                    "Search parameter immunization.identifier must have one value."
                 )
             )
         
@@ -494,7 +494,7 @@ class FhirController:
                 severity=Severity.error,
                 code=Code.invalid,
                 diagnostics=(
-                    "Search parameter -immunization.identifier is missing and must be in the format of "
+                    "Search parameter -immunization.identifier must have one value and must be in the format of "
                     "\"immunization.identifier.system|immunization.identifier.value\" "
                     "e.g. \"http://pinnacle.org/vaccs|2345-gh3s-r53h7-12ny\""
                 )
@@ -515,8 +515,7 @@ class FhirController:
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
                 code=Code.invalid,
-                diagnostics="Search parameter _element is missing"
-                
+                diagnostics="_element must be one or more of the following: id,meta"
             )
         element_lower = _element.lower()
         result = element_lower.split(',')
@@ -594,14 +593,6 @@ class FhirController:
             )
             return self.create_response(400, error)
         
-        if  not_required and  has_element:
-            error = create_operation_outcome(
-                resource_id=str(uuid.uuid4()),
-                severity=Severity.error,
-                code=Code.server_error,
-                diagnostics="Search parameter _element must have  the following parameter: immunization.identifier",
-            )
-            return self.create_response(400, error)
         
         if 'patient.identifier' not in  not_required and  not_required and has_identifier :
             error = create_operation_outcome(
@@ -609,6 +600,15 @@ class FhirController:
                 severity=Severity.error,
                 code=Code.server_error,
                 diagnostics="Search parameter immunization.identifier must have the following parameter: _element",
+            )
+            return self.create_response(400, error)
+        
+        if  not_required and  has_element:
+            error = create_operation_outcome(
+                resource_id=str(uuid.uuid4()),
+                severity=Severity.error,
+                code=Code.server_error,
+                diagnostics="Search parameter _element must have  the following parameter: immunization.identifier",
             )
             return self.create_response(400, error)
 
