@@ -80,7 +80,7 @@ def handler(event, context):
                         "ImmsID": imms_id,
                         "Operation": operation,
                         "VaccineType": vaccine_type,
-                        "SupplierSystem": supplier_system,
+                        "SupplierSystem": "Pinnacle",
                         "DateTimeStamp": approximate_creation_time.isoformat(),
                         "Source": delta_source,
                         "Imms": flat_json,
