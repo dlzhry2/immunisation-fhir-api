@@ -338,18 +338,22 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                supplier_system = aws_event["headers"]["SupplierSystem"]
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
+                if len(supplier_system) == 0:
+                    raise UnauthorizedSystemError()
             else:
                 raise UnauthorizedError()
         except UnauthorizedError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
         except UnauthorizedVaxError as unauthorized:
-
+            return self.create_response(403, unauthorized.to_operation_outcome())
+        except UnauthorizedSystemError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
          
         try:
-            self.fhir_service.delete_immunization(imms_id, imms_vax_type_perms)
+            self.fhir_service.delete_immunization(imms_id, imms_vax_type_perms, supplier_system)
             return self.create_response(204)
         except ResourceNotFoundError as not_found:
             return self.create_response(404, not_found.to_operation_outcome())

@@ -601,10 +601,10 @@ class TestDeleteImmunization(unittest.TestCase):
         self.imms_repo.delete_immunization.return_value = imms
 
         # When
-        act_imms = self.fhir_service.delete_immunization(imms_id, "COVID:delete")
+        act_imms = self.fhir_service.delete_immunization(imms_id, "COVID:delete", "Test")
 
         # Then
-        self.imms_repo.delete_immunization.assert_called_once_with(imms_id, "COVID:delete")
+        self.imms_repo.delete_immunization.assert_called_once_with(imms_id, "COVID:delete", "Test")
         self.assertIsInstance(act_imms, Immunization)
         self.assertEqual(act_imms.id, imms_id)
 

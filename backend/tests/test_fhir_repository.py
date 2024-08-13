@@ -355,13 +355,13 @@ class TestDeleteImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            _id = self.repository.delete_immunization(imms_id, "COVID:delete")
+            _id = self.repository.delete_immunization(imms_id, "COVID:delete", "Test")
 
         # Then
         self.table.update_item.assert_called_once_with(
             Key={"PK": _make_immunization_pk(imms_id)},
-            UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation",
-            ExpressionAttributeValues={":timestamp": now_epoch, ":operation": "DELETE"},
+            UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation, SupplierSystem = :supplier_system",
+            ExpressionAttributeValues={":timestamp": now_epoch, ":operation": "DELETE", ":supplier_system" : "Test"},
             ReturnValues=ANY,
             ConditionExpression=ANY,
         )
@@ -390,7 +390,7 @@ class TestDeleteImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            act_resource = self.repository.delete_immunization(imms_id, "COVID19:delete")
+            act_resource = self.repository.delete_immunization(imms_id, "COVID19:delete", "Test")
 
         # Then
         self.table.update_item.assert_called_once_with(
@@ -416,7 +416,7 @@ class TestDeleteImmunization(unittest.TestCase):
         )
 
         with self.assertRaises(UnauthorizedVaxError) as e:
-            self.repository.delete_immunization(imms_id, "COVID19:delete")
+            self.repository.delete_immunization(imms_id, "COVID19:delete", "Test")
 
     def test_multiple_delete_should_not_update_timestamp(self):
         """when delete is called multiple times, or when it doesn't exist, it should not update DeletedAt,
@@ -437,7 +437,7 @@ class TestDeleteImmunization(unittest.TestCase):
         )
 
         with self.assertRaises(ResourceNotFoundError) as e:
-            self.repository.delete_immunization(imms_id, "COVID19:delete")
+            self.repository.delete_immunization(imms_id, "COVID19:delete", "Test")
 
         # Then
         self.table.update_item.assert_called_once_with(
@@ -470,7 +470,7 @@ class TestDeleteImmunization(unittest.TestCase):
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.delete_immunization(imms_id, "COVID19:delete")
+            self.repository.delete_immunization(imms_id, "COVID19:delete", "Test")
 
         # Then
         self.assertDictEqual(e.exception.response, response)

@@ -185,13 +185,13 @@ class FhirService:
 
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
 
-    def delete_immunization(self, imms_id, imms_vax_type_perms) -> Immunization:
+    def delete_immunization(self, imms_id, imms_vax_type_perms, supplier_system) -> Immunization:
         """
         Delete an Immunization if it exits and return the ID back if successful.
         Exception will be raised if resource didn't exit. Multiple calls to this method won't change
         the record in the database.
         """
-        imms = self.immunization_repo.delete_immunization(imms_id, imms_vax_type_perms)
+        imms = self.immunization_repo.delete_immunization(imms_id, imms_vax_type_perms, supplier_system)
         return Immunization.parse_obj(imms)
 
     @staticmethod

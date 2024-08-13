@@ -489,7 +489,7 @@ class TestDeleteImmunization(unittest.TestCase):
         imms_id = "an-id"
         self.service.delete_immunization.return_value = Immunization.construct()
         lambda_event = {
-            "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:delete"},
+            "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:delete", "SupplierSystem" : "Test"},
             "pathParameters": {"id": imms_id},
         }
 
@@ -497,7 +497,7 @@ class TestDeleteImmunization(unittest.TestCase):
         response = self.controller.delete_immunization(lambda_event)
 
         # Then
-        self.service.delete_immunization.assert_called_once_with(imms_id, "COVID19:delete")
+        self.service.delete_immunization.assert_called_once_with(imms_id, "COVID19:delete", "Test")
 
         self.assertEqual(response["statusCode"], 204)
         self.assertTrue("body" not in response)
@@ -508,7 +508,7 @@ class TestDeleteImmunization(unittest.TestCase):
         error = ResourceNotFoundError(resource_type="Immunization", resource_id="an-error-id")
         self.service.delete_immunization.side_effect = error
         lambda_event = {
-            "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:delete"},
+            "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:delete", "SupplierSystem" : "Test"},
             "pathParameters": {"id": "a-non-existing-id"},
         }
 
@@ -528,7 +528,7 @@ class TestDeleteImmunization(unittest.TestCase):
         error = UnhandledResponseError(message="a message", response={})
         self.service.delete_immunization.side_effect = error
         lambda_event = {
-            "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:delete"},
+            "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:delete", "SupplierSystem" : "Test"},
             "pathParameters": {"id": "a-non-existing-id"},
         }
 

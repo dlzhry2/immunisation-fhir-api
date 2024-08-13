@@ -374,7 +374,7 @@ class ImmunizationRepository:
                     response=error.response,
                 )
 
-    def delete_immunization(self, imms_id: str, imms_vax_type_perms: str) -> dict:
+    def delete_immunization(self, imms_id: str, imms_vax_type_perms: str, supplier_system : str) -> dict:
         now_timestamp = int(time.time())
         try:
             resp = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
@@ -394,10 +394,11 @@ class ImmunizationRepository:
                     
             response = self.table.update_item(
                 Key={"PK": _make_immunization_pk(imms_id)},
-                UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation",
+                UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation, SupplierSystem = :supplier_system",
                 ExpressionAttributeValues={
                     ":timestamp": now_timestamp,
                     ":operation": "DELETE",
+                    ":supplier_system" : supplier_system,
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id))
