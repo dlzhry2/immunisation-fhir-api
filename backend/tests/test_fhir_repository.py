@@ -271,7 +271,7 @@ class TestUpdateImmunization(unittest.TestCase):
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system, "
+            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][1]["identifier"][0]["value"]
