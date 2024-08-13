@@ -238,6 +238,8 @@ class FhirController:
             # Validate the imms id in the path params and body of request -end
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+        except Exception as e:
+            return self._create_bad_request(f"Request's body contains string")
         # Validate the body of the request -end
 
         # Validate if the imms resource does not exists -start
