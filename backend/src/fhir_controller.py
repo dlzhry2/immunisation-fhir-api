@@ -30,6 +30,7 @@ from models.errors import (
     InconsistentIdError,
     UnauthorizedVaxError,
     UnauthorizedVaxOnRecordError,
+    UnauthorizedSystemError,
 )
 
 from pds_service import PdsService
