@@ -204,7 +204,7 @@ class ImmunizationRepository:
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system, "
+            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
 
         queryResponse = _query_identifier(
