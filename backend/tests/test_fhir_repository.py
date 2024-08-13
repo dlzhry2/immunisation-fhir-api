@@ -385,6 +385,7 @@ class TestDeleteImmunization(unittest.TestCase):
                 }
             }
         )
+        
 
         now_epoch = 123456
         with patch("time.time") as mock_time:
