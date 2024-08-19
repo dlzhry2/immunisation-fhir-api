@@ -26,6 +26,7 @@ def _make_immunization_pk(_id):
 def _make_patient_pk(_id):
     return f"Patient#{_id}"
 
+
 class TestGetImmunizationByIdentifier(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
@@ -35,20 +36,28 @@ class TestGetImmunizationByIdentifier(unittest.TestCase):
         """it should find an Immunization by id"""
         imms_id = "a-id#an-id"
         resource = dict()
-        resource["Resource"] = {"id": "test","version":1}
+        resource["Resource"] = {"id": "test", "version": 1}
         self.table.query = MagicMock(
             return_value={
-                "Items": [{"Resource": json.dumps({"foo": "bar","id":"test"}), "Version": 1, "PatientSK": "COVID19#2516525251"}]
+                "Items": [
+                    {
+                        "Resource": json.dumps({"foo": "bar", "id": "test"}),
+                        "Version": 1,
+                        "PatientSK": "COVID19#2516525251",
+                    }
+                ]
             }
         )
-        
+
         imms = self.repository.get_immunization_by_identifier(imms_id, "COVID19:search")
 
         # Validate the results
         self.assertDictEqual(resource["Resource"], imms)
         # self.table.get_item.assert_called_once_with(Key={"PK": (imms_id)})
-        self.table.query.assert_called_once_with(IndexName='IdentifierGSI',
-                                    KeyConditionExpression=Key('IdentifierPK').eq(imms_id))
+        self.table.query.assert_called_once_with(
+            IndexName="IdentifierGSI",
+            KeyConditionExpression=Key("IdentifierPK").eq(imms_id),
+        )
 
     def test_unauthorized_get_immunization_by_identifier(self):
         """it should not get an Immunization by id if vax perms do not exist"""
@@ -58,7 +67,13 @@ class TestGetImmunizationByIdentifier(unittest.TestCase):
         resource["Version"] = 1
         self.table.query = MagicMock(
             return_value={
-                "Items": [{"Resource": json.dumps({"foo": "bar","id":"test"}), "Version": 1, "PatientSK": "COVID19#2516525251"}]
+                "Items": [
+                    {
+                        "Resource": json.dumps({"foo": "bar", "id": "test"}),
+                        "Version": 1,
+                        "PatientSK": "COVID19#2516525251",
+                    }
+                ]
             }
         )
         with self.assertRaises(UnauthorizedVaxError) as e:
@@ -72,7 +87,8 @@ class TestGetImmunizationByIdentifier(unittest.TestCase):
 
         imms = self.repository.get_immunization_by_identifier(imms_id, "COVID19:read")
         self.assertIsNone(imms)
-        
+
+
 class TestGetImmunization(unittest.TestCase):
     def setUp(self):
         self.table = MagicMock()
@@ -773,7 +789,7 @@ class TestImmunizationDecimals(unittest.TestCase):
         imms["doseQuantity"] = 1.590
         imms["patient"] = self.patient
 
-        resource = {"doseQuantity": 1.5, "foo": "bar"}
+        resource = {"doseQuantity": 1.590, "foo": "bar"}
         dynamo_response = {
             "ResponseMetadata": {"HTTPStatusCode": 200},
             "Attributes": {"Resource": json.dumps(resource)},
