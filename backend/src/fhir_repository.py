@@ -274,7 +274,8 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
-        imms_vax_type_perms: str
+        imms_vax_type_perms: str,
+        supplier_system : str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
         vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
@@ -284,7 +285,7 @@ class ImmunizationRepository:
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version, DeletedAt = :respawn "
+            "Operation = :operation, Version = :version, DeletedAt = :respawn, SupplierSystem = :supplier_system "
         )
 
         queryResponse = _query_identifier(
@@ -312,6 +313,7 @@ class ImmunizationRepository:
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
                     ":respawn": "reinstated",
+                    ":supplier_system" : supplier_system,
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(attr.pk) & Attr("DeletedAt").exists(),
@@ -336,7 +338,8 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
-        imms_vax_type_perms: str
+        imms_vax_type_perms: str,
+        supplier_system : str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
         vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
@@ -346,7 +349,7 @@ class ImmunizationRepository:
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version "
+            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
 
         queryResponse = _query_identifier(
@@ -373,6 +376,7 @@ class ImmunizationRepository:
                     ":imms_resource_val": json.dumps(attr.resource, cls=DecimalEncoder),
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
+                    ":supplier_system" : supplier_system,
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(attr.pk) & Attr("DeletedAt").exists(),

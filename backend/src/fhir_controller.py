@@ -290,7 +290,7 @@ class FhirController:
             if existing_record["DeletedAt"] == True:
 
                 outcome, resource = self.fhir_service.reinstate_immunization(
-                    imms_id, imms, existing_resource_version, imms_vax_type_perms
+                    imms_id, imms, existing_resource_version, imms_vax_type_perms, supplier_system
                 )
 
             # Validate if the imms resource to be updated is a logically deleted resource-end
@@ -343,7 +343,7 @@ class FhirController:
                 # Check if the record is reinstated record -start
                 if existing_record["Reinstated"] == True:
                     outcome, resource = self.fhir_service.update_reinstated_immunization(
-                        imms_id, imms, existing_resource_version, imms_vax_type_perms
+                        imms_id, imms, existing_resource_version, imms_vax_type_perms, supplier_system
                     )
                 else:
                     outcome, resource = self.fhir_service.update_immunization(

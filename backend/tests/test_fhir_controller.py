@@ -760,7 +760,7 @@ class TestUpdateImmunization(unittest.TestCase):
         }
         response = self.controller.update_immunization(aws_event)
 
-        self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms), 1, "COVID19:update")
+        self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms), 1, "COVID19:update", "Test")
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
 
@@ -783,7 +783,7 @@ class TestUpdateImmunization(unittest.TestCase):
         }
         response = self.controller.update_immunization(aws_event)
 
-        self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms), 1, "COVID19:update")
+        self.service.reinstate_immunization.assert_called_once_with(imms_id, json.loads(imms), 1, "COVID19:update", "Test")
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
 
