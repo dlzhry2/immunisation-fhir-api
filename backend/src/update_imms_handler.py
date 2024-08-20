@@ -20,7 +20,7 @@ def update_imms(event, controller: FhirController):
     except Exception as e:
         exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
                                              code=Code.server_error,
-                                             diagnostics= str(e))
+                                             diagnostics=str(e))
         return FhirController.create_response(500, exp_error)
 
 
