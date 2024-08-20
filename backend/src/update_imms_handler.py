@@ -7,7 +7,6 @@ from fhir_controller import FhirController, make_controller
 from local_lambda import load_string
 from models.errors import Severity, Code, create_operation_outcome
 from log_structure import function_info
-import traceback
 
 
 @function_info
@@ -21,7 +20,7 @@ def update_imms(event, controller: FhirController):
     except Exception as e:
         exp_error = create_operation_outcome(resource_id=str(uuid.uuid4()), severity=Severity.error,
                                              code=Code.server_error,
-                                             diagnostics= traceback.format_exc())
+                                             diagnostics= str(e))
         return FhirController.create_response(500, exp_error)
 
 
