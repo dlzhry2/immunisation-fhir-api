@@ -216,6 +216,8 @@ class FhirController:
             return self.create_response(403, unauthorized.to_operation_outcome())
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
+        except Exception as e:
+            return self._create_bad_request(f"Request's header is faulty")
         # Check vaxx type permissions- end
 
         # Validate the imms id -start
@@ -238,6 +240,8 @@ class FhirController:
             # Validate the imms id in the path params and body of request -end
         except json.decoder.JSONDecodeError as e:
             return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+        except Exception as e:
+            return self._create_bad_request(f"Request's body contains string")
         # Validate the body of the request -end
 
         # Validate if the imms resource does not exists -start
