@@ -69,24 +69,32 @@ def handler(event, context):
                 imms_id = new_image["PK"]["S"].split("#")[1]
                 vaccine_type = get_vaccine_type(new_image["PatientSK"]["S"])
                 supplier_system = new_image["IdentifierPK"]["S"]
-                operation = new_image["Operation"]["S"]
-                if operation == "CREATE":
-                    operation = "NEW"
-                resource_json = json.loads(new_image["Resource"]["S"])    
-                flat_json = convert_to_flat_json(resource_json, operation)
-                response = delta_table.put_item(
-                    Item={
-                        "PK": str(uuid.uuid4()),
-                        "ImmsID": imms_id,
-                        "Operation": operation,
-                        "VaccineType": vaccine_type,
-                        "SupplierSystem": supplier_system,
-                        "DateTimeStamp": approximate_creation_time.isoformat(),
-                        "Source": delta_source,
-                        "Imms": flat_json,
-                        "ExpiresAt": expiry_time_epoch,
-                    }
-                )
+                if supplier_system != "DPS":
+                    operation = new_image["Operation"]["S"]
+                    if operation == "CREATE":
+                        operation = "NEW"
+                    resource_json = json.loads(new_image["Resource"]["S"])    
+                    flat_json = convert_to_flat_json(resource_json, operation)
+                    response = delta_table.put_item(
+                        Item={
+                            "PK": str(uuid.uuid4()),
+                            "ImmsID": imms_id,
+                            "Operation": operation,
+                            "VaccineType": vaccine_type,
+                            "SupplierSystem": "Pinnacle",
+                            "DateTimeStamp": approximate_creation_time.isoformat(),
+                            "Source": delta_source,
+                            "Imms": flat_json,
+                            "ExpiresAt": expiry_time_epoch,
+                        }
+                    )
+                else:
+                    operation_outcome["status"] = "200"
+                    operation_outcome["status_code"] = "Record from DPS skipped"
+                    log_data["operation_outcome"] = operation_outcome
+                    firehose_log["event"] = log_data
+                    firehose_logger.send_log(firehose_log)
+                    return {"statusCode": 200, "body": "Record from DPS skipped"}
             else:
                 operation = "REMOVE"
                 new_image = record["dynamodb"]["Keys"]
