@@ -683,7 +683,7 @@ class TestImmunizationDecimals(unittest.TestCase):
         self.table.query = MagicMock(return_value={})
 
         res_imms = self.repository.create_immunization(
-            imms, self.patient, "COVID19:create"
+            imms, self.patient, "COVID19:create", "Test"
         )
 
         self.assertEqual(res_imms["doseQuantity"], imms["doseQuantity"])
@@ -699,6 +699,7 @@ class TestImmunizationDecimals(unittest.TestCase):
             "IdentifierPK": ANY,
             "Operation": "CREATE",
             "Version": 1,
+            "SupplierSystem": "Test",
         }
 
         # Assert that put_item was called with the expected data
@@ -739,7 +740,7 @@ class TestImmunizationDecimals(unittest.TestCase):
             mock_time.return_value = now_epoch
 
             act_resource = self.repository.update_immunization(
-                imms_id, imms, self.patient, 1, "COVID19:update"
+                imms_id, imms, self.patient, 1, "COVID19:update", "Test"
             )
 
         self.assertDictEqual(act_resource, resource)
@@ -747,7 +748,7 @@ class TestImmunizationDecimals(unittest.TestCase):
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version "
+            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][1]["identifier"][0]["value"]
@@ -766,6 +767,7 @@ class TestImmunizationDecimals(unittest.TestCase):
                 ":imms_resource_val": json.dumps(imms, use_decimal=True),
                 ":operation": "UPDATE",
                 ":version": 2,
+                ":supplier_system": "Test",
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,
@@ -803,7 +805,7 @@ class TestImmunizationDecimals(unittest.TestCase):
             mock_time.return_value = now_epoch
 
             act_resource = self.repository.update_immunization(
-                imms_id, imms, self.patient, 1, "COVID19:update"
+                imms_id, imms, self.patient, 1, "COVID19:update", "Test"
             )
 
         self.assertDictEqual(act_resource, resource)
@@ -811,7 +813,7 @@ class TestImmunizationDecimals(unittest.TestCase):
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version "
+            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][1]["identifier"][0]["value"]
@@ -829,6 +831,7 @@ class TestImmunizationDecimals(unittest.TestCase):
                 ":imms_resource_val": json.dumps(imms, use_decimal=True),
                 ":operation": "UPDATE",
                 ":version": 2,
+                ":supplier_system": "Test",
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,
