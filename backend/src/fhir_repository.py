@@ -160,7 +160,7 @@ class ImmunizationRepository:
         else:
                 return None
 
-    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms) -> dict:
+    def create_immunization(self, immunization: dict, patient: dict , imms_vax_type_perms, supplier_system) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, patient)
@@ -183,6 +183,7 @@ class ImmunizationRepository:
                 "IdentifierPK": attr.identifier,
                 "Operation": "CREATE",
                 "Version": 1,
+                "SupplierSystem": supplier_system,
             }
         )
 
@@ -199,7 +200,8 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
-        imms_vax_type_perms: str
+        imms_vax_type_perms: str,
+        supplier_system : str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
         vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
@@ -209,7 +211,7 @@ class ImmunizationRepository:
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version "
+            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
 
         queryResponse = _query_identifier(
@@ -236,6 +238,7 @@ class ImmunizationRepository:
                     ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
+                    ":supplier_system" : supplier_system,
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(attr.pk)
@@ -261,7 +264,8 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
-        imms_vax_type_perms: str
+        imms_vax_type_perms: str,
+        supplier_system : str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
         vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
@@ -271,7 +275,7 @@ class ImmunizationRepository:
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version, DeletedAt = :respawn "
+            "Operation = :operation, Version = :version, DeletedAt = :respawn, SupplierSystem = :supplier_system "
         )
 
         queryResponse = _query_identifier(
@@ -299,6 +303,7 @@ class ImmunizationRepository:
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
                     ":respawn": "reinstated",
+                    ":supplier_system" : supplier_system,
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(attr.pk) & Attr("DeletedAt").exists(),
@@ -323,7 +328,8 @@ class ImmunizationRepository:
         immunization: dict,
         patient: dict,
         existing_resource_version: int,
-        imms_vax_type_perms: str
+        imms_vax_type_perms: str,
+        supplier_system : str
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
         vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
@@ -333,7 +339,7 @@ class ImmunizationRepository:
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version "
+            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
 
         queryResponse = _query_identifier(
@@ -360,6 +366,7 @@ class ImmunizationRepository:
                     ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
+                    ":supplier_system" : supplier_system,
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(attr.pk) & Attr("DeletedAt").exists(),
@@ -378,7 +385,7 @@ class ImmunizationRepository:
                     response=error.response,
                 )
 
-    def delete_immunization(self, imms_id: str, imms_vax_type_perms: str) -> dict:
+    def delete_immunization(self, imms_id: str, imms_vax_type_perms: str, supplier_system : str) -> dict:
         now_timestamp = int(time.time())
         try:
             resp = self.table.get_item(Key={"PK": _make_immunization_pk(imms_id)})
@@ -398,10 +405,11 @@ class ImmunizationRepository:
                     
             response = self.table.update_item(
                 Key={"PK": _make_immunization_pk(imms_id)},
-                UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation",
+                UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation, SupplierSystem = :supplier_system",
                 ExpressionAttributeValues={
                     ":timestamp": now_timestamp,
                     ":operation": "DELETE",
+                    ":supplier_system" : supplier_system,
                 },
                 ReturnValues="ALL_NEW",
                 ConditionExpression=Attr("PK").eq(_make_immunization_pk(imms_id))

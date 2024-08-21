@@ -30,6 +30,7 @@ from models.errors import (
     InconsistentIdError,
     UnauthorizedVaxError,
     UnauthorizedVaxOnRecordError,
+    UnauthorizedSystemError,
 )
 from models.utils.generic_utils import  check_keys_in_sources
 from pds_service import PdsService
@@ -162,13 +163,18 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                supplier_system = aws_event["headers"]["SupplierSystem"]
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
+                if len(supplier_system) == 0:
+                    raise UnauthorizedSystemError()
             else:
                 raise UnauthorizedError()
         except UnauthorizedError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
         except UnauthorizedVaxError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
+        except UnauthorizedSystemError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
         
         try:
@@ -177,7 +183,7 @@ class FhirController:
             return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
 
         try:
-            resource = self.fhir_service.create_immunization(imms,imms_vax_type_perms)
+            resource = self.fhir_service.create_immunization(imms,imms_vax_type_perms,supplier_system)
             if "diagnostics" in resource:
                 exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),
@@ -208,16 +214,22 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                supplier_system = aws_event["headers"]["SupplierSystem"]
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
+                if len(supplier_system) == 0:
+                    raise UnauthorizedSystemError()
             else:
                 raise UnauthorizedError()
         except UnauthorizedError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
+        except UnauthorizedSystemError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
         except Exception as e:
             return self._create_bad_request(f"Request's header is faulty")
+
         # Check vaxx type permissions- end
 
         # Validate the imms id -start
@@ -283,7 +295,7 @@ class FhirController:
             if existing_record["DeletedAt"] == True:
 
                 outcome, resource = self.fhir_service.reinstate_immunization(
-                    imms_id, imms, existing_resource_version, imms_vax_type_perms
+                    imms_id, imms, existing_resource_version, imms_vax_type_perms, supplier_system
                 )
 
             # Validate if the imms resource to be updated is a logically deleted resource-end
@@ -336,11 +348,11 @@ class FhirController:
                 # Check if the record is reinstated record -start
                 if existing_record["Reinstated"] == True:
                     outcome, resource = self.fhir_service.update_reinstated_immunization(
-                        imms_id, imms, existing_resource_version, imms_vax_type_perms
+                        imms_id, imms, existing_resource_version, imms_vax_type_perms, supplier_system
                     )
                 else:
                     outcome, resource = self.fhir_service.update_immunization(
-                        imms_id, imms, existing_resource_version, imms_vax_type_perms
+                        imms_id, imms, existing_resource_version, imms_vax_type_perms, supplier_system
                     )
 
                 # Check if the record is reinstated record -end
@@ -375,18 +387,22 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                supplier_system = aws_event["headers"]["SupplierSystem"]
                 if len(imms_vax_type_perms) == 0:
                     raise UnauthorizedVaxError()
+                if len(supplier_system) == 0:
+                    raise UnauthorizedSystemError()
             else:
                 raise UnauthorizedError()
         except UnauthorizedError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
         except UnauthorizedVaxError as unauthorized:
-
+            return self.create_response(403, unauthorized.to_operation_outcome())
+        except UnauthorizedSystemError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
          
         try:
-            self.fhir_service.delete_immunization(imms_id, imms_vax_type_perms)
+            self.fhir_service.delete_immunization(imms_id, imms_vax_type_perms, supplier_system)
             return self.create_response(204)
         except ResourceNotFoundError as not_found:
             return self.create_response(404, not_found.to_operation_outcome())

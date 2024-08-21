@@ -167,9 +167,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
         )
         self.table.query = MagicMock(return_value={})
 
-        res_imms = self.repository.create_immunization(
-            imms, self.patient, "COVID19:create"
-        )
+        res_imms = self.repository.create_immunization(imms, self.patient, "COVID19:create", "Test")
 
         self.assertDictEqual(res_imms, imms)
         self.table.put_item.assert_called_once_with(
@@ -181,6 +179,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
                 "IdentifierPK": ANY,
                 "Operation": "CREATE",
                 "Version": 1,
+                "SupplierSystem" : "Test"
             }
         )
 
@@ -192,9 +191,8 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
         )
         self.table.query = MagicMock(return_value={})
 
-        res_imms = self.repository.create_immunization(
-            imms, self.patient, "COVID19:create"
-        )
+        res_imms = self.repository.create_immunization(imms, self.patient, "COVID19:create", "Test")
+
 
         self.assertDictEqual(res_imms, imms)
         self.table.put_item.assert_called_once_with(
@@ -206,6 +204,8 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
                 "IdentifierPK": ANY,
                 "Operation": "CREATE",
                 "Version": 1,
+                "SupplierSystem" : "Test"
+                
             }
         )
 
@@ -218,7 +218,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
         )
         self.table.query = MagicMock(return_value={})
 
-        _ = self.repository.create_immunization(imms, self.patient, "COVID19:create")
+        _ = self.repository.create_immunization(imms, self.patient, "COVID19:create", "Test")
 
         item = self.table.put_item.call_args.kwargs["Item"]
         self.assertTrue(item["PK"].startswith("Immunization#"))
@@ -233,9 +233,8 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
         )
         self.table.query = MagicMock(return_value={})
 
-        response = self.repository.create_immunization(
-            imms, self.patient, "COVID19:create"
-        )
+        response = self.repository.create_immunization(imms, self.patient, "COVID19:create", "Test")
+
 
         self.assertNotEqual(response["id"], imms_id)
 
@@ -249,10 +248,8 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
         with self.assertRaises(UnhandledResponseError) as e:
             # When
             self.repository.create_immunization(
-                create_covid_19_immunization_dict("an-id"),
-                self.patient,
-                "COVID19:create",
-            )
+
+                create_covid_19_immunization_dict("an-id"), self.patient, "COVID19:create", "Test")
 
         # Then
         self.assertDictEqual(e.exception.response, response)
@@ -271,7 +268,7 @@ class TestCreateImmunizationMainIndex(unittest.TestCase):
         )
         with self.assertRaises(IdentifierDuplicationError) as e:
             # When
-            self.repository.create_immunization(imms, self.patient, "COVID19:create")
+            self.repository.create_immunization(imms, self.patient, "COVID19:create", "Test")
 
         self.assertEqual(
             str(e.exception), f"The provided identifier: {identifier} is duplicated"
@@ -299,7 +296,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         self.table.query = MagicMock(return_value={})
 
         # When
-        _ = self.repository.create_immunization(imms, self.patient, "COVID19:create")
+        _ = self.repository.create_immunization(imms, self.patient, "COVID19:create", "Test")
 
         # Then
         item = self.table.put_item.call_args.kwargs["Item"]
@@ -318,7 +315,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         )
 
         # When
-        _ = self.repository.create_immunization(imms, self.patient, "FLU:create")
+        _ = self.repository.create_immunization(imms, self.patient, "FLU:create", "Test")
 
         # Then
         item = self.table.put_item.call_args.kwargs["Item"]
@@ -331,7 +328,7 @@ class TestCreateImmunizationPatientIndex(unittest.TestCase):
         update_target_disease_code(imms, DiseaseCodes.flu)
         with self.assertRaises(UnauthorizedVaxError) as e:
             # When
-            self.repository.create_immunization(imms, self.patient, "COVID:create")
+            self.repository.create_immunization(imms, self.patient, "COVID:create", "Test")
 
 
 class TestUpdateImmunization(unittest.TestCase):
@@ -358,9 +355,9 @@ class TestUpdateImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            act_resource = self.repository.update_immunization(
-                imms_id, imms, self.patient, 1, "COVID19:update"
-            )
+
+            act_resource = self.repository.update_immunization(imms_id, imms, self.patient, 1, "COVID19:update", "Test")
+
 
         # Then
         self.assertDictEqual(act_resource, resource)
@@ -368,7 +365,7 @@ class TestUpdateImmunization(unittest.TestCase):
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version "
+            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][1]["identifier"][0]["value"]
@@ -387,6 +384,7 @@ class TestUpdateImmunization(unittest.TestCase):
                 ":imms_resource_val": json.dumps(imms),
                 ":operation": "UPDATE",
                 ":version": 2,
+                ":supplier_system" : "Test",
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,
@@ -405,9 +403,9 @@ class TestUpdateImmunization(unittest.TestCase):
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.update_immunization(
-                imms_id, imms, self.patient, 1, "COVID19:update"
-            )
+
+            self.repository.update_immunization(imms_id, imms, self.patient, 1, "COVID19:update", "Test")
+
 
         # Then
         self.assertDictEqual(e.exception.response, response)
@@ -426,9 +424,9 @@ class TestUpdateImmunization(unittest.TestCase):
 
         with self.assertRaises(IdentifierDuplicationError) as e:
             # When
-            self.repository.update_immunization(
-                imms_id, imms, self.patient, 1, "COVID19:update"
-            )
+
+            self.repository.update_immunization(imms_id, imms, self.patient, 1, "COVID19:update", "Test")
+
 
         self.assertEqual(
             str(e.exception), f"The provided identifier: {identifier} is duplicated"
@@ -463,13 +461,13 @@ class TestDeleteImmunization(unittest.TestCase):
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            _id = self.repository.delete_immunization(imms_id, "COVID:delete")
+            _id = self.repository.delete_immunization(imms_id, "COVID:delete", "Test")
 
         # Then
         self.table.update_item.assert_called_once_with(
             Key={"PK": _make_immunization_pk(imms_id)},
-            UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation",
-            ExpressionAttributeValues={":timestamp": now_epoch, ":operation": "DELETE"},
+            UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation, SupplierSystem = :supplier_system",
+            ExpressionAttributeValues={":timestamp": now_epoch, ":operation": "DELETE", ":supplier_system" : "Test"},
             ReturnValues=ANY,
             ConditionExpression=ANY,
         )
@@ -493,14 +491,15 @@ class TestDeleteImmunization(unittest.TestCase):
                 }
             }
         )
+        
 
         now_epoch = 123456
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
             # When
-            act_resource = self.repository.delete_immunization(
-                imms_id, "COVID19:delete"
-            )
+
+            act_resource = self.repository.delete_immunization(imms_id, "COVID19:delete", "Test")
+
 
         # Then
         self.table.update_item.assert_called_once_with(
@@ -526,7 +525,7 @@ class TestDeleteImmunization(unittest.TestCase):
         )
 
         with self.assertRaises(UnauthorizedVaxError) as e:
-            self.repository.delete_immunization(imms_id, "COVID19:delete")
+            self.repository.delete_immunization(imms_id, "COVID19:delete", "Test")
 
     def test_multiple_delete_should_not_update_timestamp(self):
         """when delete is called multiple times, or when it doesn't exist, it should not update DeletedAt,
@@ -547,7 +546,7 @@ class TestDeleteImmunization(unittest.TestCase):
         )
 
         with self.assertRaises(ResourceNotFoundError) as e:
-            self.repository.delete_immunization(imms_id, "COVID19:delete")
+            self.repository.delete_immunization(imms_id, "COVID19:delete", "Test")
 
         # Then
         self.table.update_item.assert_called_once_with(
@@ -581,7 +580,7 @@ class TestDeleteImmunization(unittest.TestCase):
 
         with self.assertRaises(UnhandledResponseError) as e:
             # When
-            self.repository.delete_immunization(imms_id, "COVID19:delete")
+            self.repository.delete_immunization(imms_id, "COVID19:delete", "Test")
 
         # Then
         self.assertDictEqual(e.exception.response, response)
@@ -684,7 +683,7 @@ class TestImmunizationDecimals(unittest.TestCase):
         self.table.query = MagicMock(return_value={})
 
         res_imms = self.repository.create_immunization(
-            imms, self.patient, "COVID19:create"
+            imms, self.patient, "COVID19:create", "Test"
         )
 
         self.assertEqual(res_imms["doseQuantity"], imms["doseQuantity"])
@@ -700,6 +699,7 @@ class TestImmunizationDecimals(unittest.TestCase):
             "IdentifierPK": ANY,
             "Operation": "CREATE",
             "Version": 1,
+            "SupplierSystem": "Test",
         }
 
         # Assert that put_item was called with the expected data
@@ -740,7 +740,7 @@ class TestImmunizationDecimals(unittest.TestCase):
             mock_time.return_value = now_epoch
 
             act_resource = self.repository.update_immunization(
-                imms_id, imms, self.patient, 1, "COVID19:update"
+                imms_id, imms, self.patient, 1, "COVID19:update", "Test"
             )
 
         self.assertDictEqual(act_resource, resource)
@@ -748,7 +748,7 @@ class TestImmunizationDecimals(unittest.TestCase):
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version "
+            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][1]["identifier"][0]["value"]
@@ -767,6 +767,7 @@ class TestImmunizationDecimals(unittest.TestCase):
                 ":imms_resource_val": json.dumps(imms, use_decimal=True),
                 ":operation": "UPDATE",
                 ":version": 2,
+                ":supplier_system": "Test",
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,
@@ -804,7 +805,7 @@ class TestImmunizationDecimals(unittest.TestCase):
             mock_time.return_value = now_epoch
 
             act_resource = self.repository.update_immunization(
-                imms_id, imms, self.patient, 1, "COVID19:update"
+                imms_id, imms, self.patient, 1, "COVID19:update", "Test"
             )
 
         self.assertDictEqual(act_resource, resource)
@@ -812,7 +813,7 @@ class TestImmunizationDecimals(unittest.TestCase):
         update_exp = (
             "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version "
+            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][1]["identifier"][0]["value"]
@@ -830,6 +831,7 @@ class TestImmunizationDecimals(unittest.TestCase):
                 ":imms_resource_val": json.dumps(imms, use_decimal=True),
                 ":operation": "UPDATE",
                 ":version": 2,
+                ":supplier_system": "Test",
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,
