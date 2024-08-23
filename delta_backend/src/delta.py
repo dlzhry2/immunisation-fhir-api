@@ -68,7 +68,7 @@ def handler(event, context):
                 print(f"new_image:{new_image}")
                 imms_id = new_image["PK"]["S"].split("#")[1]
                 vaccine_type = get_vaccine_type(new_image["PatientSK"]["S"])
-                supplier_system = new_image["IdentifierPK"]["S"]
+                supplier_system = new_image["SupplierSystem"]["S"]
                 if supplier_system != "DPS":
                     operation = new_image["Operation"]["S"]
                     if operation == "CREATE":
@@ -81,7 +81,7 @@ def handler(event, context):
                             "ImmsID": imms_id,
                             "Operation": operation,
                             "VaccineType": vaccine_type,
-                            "SupplierSystem": "Pinnacle",
+                            "SupplierSystem": supplier_system,
                             "DateTimeStamp": approximate_creation_time.isoformat(),
                             "Source": delta_source,
                             "Imms": flat_json,
