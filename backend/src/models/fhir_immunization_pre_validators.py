@@ -3,6 +3,7 @@
 from models.constants import Constants
 from models.utils.generic_utils import get_generic_extension_value, generate_field_location_for_extension
 from models.utils.pre_validator_utils import PreValidation
+from models.errors import MandatoryError
 import re
 
 
@@ -610,8 +611,8 @@ class PreValidators:
             for element in field_value:
                 if "coding" not in element:
                     raise ValueError("Every element of protocolApplied[0].targetDisease must have 'coding' property")
-        except (KeyError, IndexError):
-            pass
+        except (KeyError, IndexError) as error:
+            raise MandatoryError("protocolApplied[0].targetDisease is a mandatory field") from error
 
     def pre_validate_target_disease_codings(self, values: dict) -> dict:
         """
