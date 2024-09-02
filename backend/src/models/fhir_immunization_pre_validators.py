@@ -3,6 +3,7 @@
 from models.constants import Constants
 from models.utils.generic_utils import get_generic_extension_value, generate_field_location_for_extension
 from models.utils.pre_validator_utils import PreValidation
+from models.errors import MandatoryError
 import re
 
 
@@ -20,6 +21,7 @@ class PreValidators:
     def validate(self):
         """Run all pre-validation checks."""
         validation_methods = [
+            self.pre_validate_resource_type,
             self.pre_validate_contained_contents,
             self.pre_validate_patient_reference,
             self.pre_validate_patient_identifier,
@@ -44,6 +46,7 @@ class PreValidators:
             self.pre_validate_practitioner_name_family,
             self.pre_validate_recorded,
             self.pre_validate_primary_source,
+            self.pre_validate_extension,
             self.pre_validate_extension_urls,
             self.pre_validate_extension_value_codeable_concept_codings,
             self.pre_validate_vaccination_procedure_code,
@@ -89,12 +92,23 @@ class PreValidators:
             all_errors = "; ".join(self.errors)
             raise ValueError(f"Validation errors: {all_errors}")
 
+    def pre_validate_resource_type(self, values: dict) -> dict:
+        """Pre-validate that resourceType is 'Immunization'"""
+        if values.get("resourceType") != "Immunization":
+            raise ValueError(
+                "This service only accepts FHIR Immunization Resources "
+                + "(i.e. resourceType must equal 'Immunization')"
+            )
+
     def pre_validate_contained_contents(self, values: dict) -> dict:
         """
-        Pre-validate that there is exactly one patient resource in contained, a maximum of one practitioner resource,
-        and no other resources
+        Pre-validate that contained exists and there is exactly one patient resource in contained,
+        a maximum of one practitioner resource, and no other resources
         """
-        contained = values["contained"]
+        try:
+            contained = values["contained"]
+        except KeyError as error:
+            raise MandatoryError("contained is a mandatory field") from error
 
         # Contained must be a non-empty list of non-empty dictionaries
         PreValidation.for_list(contained, "contained", elements_are_dicts=True)
@@ -376,12 +390,12 @@ class PreValidators:
             pass
 
     def pre_validate_identifier(self, values: dict) -> dict:
-        """Pre-validate that, if identifier exists, then it is a list of length 1"""
+        """Pre-validate that identifier exists and is a list of length 1"""
         try:
             field_value = values["identifier"]
             PreValidation.for_list(field_value, "identifier", defined_length=1)
-        except KeyError:
-            pass
+        except KeyError as error:
+            raise MandatoryError("identifier is a mandatory field") from error
 
     def pre_validate_identifier_value(self, values: dict) -> dict:
         """
@@ -480,6 +494,11 @@ class PreValidators:
             PreValidation.for_boolean(primary_source, "primarySource")
         except KeyError:
             pass
+
+    def pre_validate_extension(self, values: dict) -> dict:
+        """Pre-validate that extension exists"""
+        if not "extension" in values:
+            raise MandatoryError("extension is a mandatory field")
 
     def pre_validate_extension_urls(self, values: dict) -> dict:
         """Pre-validate that, if extension exists, then each url is unique"""
