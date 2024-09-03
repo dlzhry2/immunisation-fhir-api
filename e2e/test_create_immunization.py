@@ -51,6 +51,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         imms = create_an_imms_obj()
         # Id field should not be sent as part of a create
         del imms["id"]
+
         imms["doseQuantity"]["value"] = Decimal("0.12345")
 
         response = self.default_imms_api.create_immunization(imms)
@@ -66,6 +67,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         imms = create_an_imms_obj()
         # Id field should not be sent as part of a create
         del imms["id"]
+
         invalid_datetime = "2020-12-14"
         imms["occurrenceDateTime"] = invalid_datetime
         # When
