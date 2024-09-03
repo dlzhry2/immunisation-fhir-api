@@ -1,7 +1,11 @@
 "FHIR Immunization Pre Validators"
-
+from typing import Union
 from models.constants import Constants
-from models.utils.generic_utils import get_generic_extension_value, generate_field_location_for_extension
+from models.utils.generic_utils import (
+    get_generic_extension_value,
+    generate_field_location_for_extension,
+    check_for_unknown_elements,
+)
 from models.utils.pre_validator_utils import PreValidation
 from models.errors import MandatoryError
 import re
@@ -11,7 +15,8 @@ class PreValidators:
     """
     Validators which run prior to the FHIR validators and check that, where values exist, they
     meet the NHS custom requirements. Note that validation of the existence of a value (i.e. it
-    exists if mandatory, or doesn't exist if is not applicable) is done by the post validators.
+    exists if mandatory, or doesn't exist if is not applicable) is done by the post validator except for a few key
+    elements, the existence of which is explicitly checked as part of pre-validation.
     """
 
     def __init__(self, immunization: dict):
@@ -23,6 +28,7 @@ class PreValidators:
         validation_methods = [
             self.pre_validate_resource_type,
             self.pre_validate_contained_contents,
+            self.pre_validate_top_level_elements,
             self.pre_validate_patient_reference,
             self.pre_validate_patient_identifier,
             self.pre_validate_patient_identifier_value,
@@ -96,8 +102,7 @@ class PreValidators:
         """Pre-validate that resourceType is 'Immunization'"""
         if values.get("resourceType") != "Immunization":
             raise ValueError(
-                "This service only accepts FHIR Immunization Resources "
-                + "(i.e. resourceType must equal 'Immunization')"
+                "This service only accepts FHIR Immunization Resources (i.e. resourceType must equal 'Immunization')"
             )
 
     def pre_validate_contained_contents(self, values: dict) -> dict:
@@ -105,6 +110,7 @@ class PreValidators:
         Pre-validate that contained exists and there is exactly one patient resource in contained,
         a maximum of one practitioner resource, and no other resources
         """
+        # Contained must exist
         try:
             contained = values["contained"]
         except KeyError as error:
@@ -130,6 +136,22 @@ class PreValidators:
             errors.append("contained must contain exactly one Patient resource")
         if practitioner_count > 1:
             errors.append("contained must contain a maximum of one Practitioner resource")
+
+        # Raise errors
+        if errors:
+            raise ValueError("; ".join(errors))
+
+    def pre_validate_top_level_elements(self, values: dict) -> dict:
+        """Pre-validate that disallowed top level elements are not present"""
+        errors = []
+
+        # Check the top-level Immunization resource
+        errors.extend(check_for_unknown_elements(values, "Immunization"))
+
+        # Check each contained resource
+        for contained_resource in values.get("contained", []):
+            if (resource_type := contained_resource.get("resourceType")) in Constants.ALLOWED_CONTAINED_RESOURCES:
+                errors.extend(check_for_unknown_elements(contained_resource, resource_type))
 
         # Raise errors
         if errors:

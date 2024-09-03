@@ -6,7 +6,6 @@ from decimal import Decimal
 from jsonpath_ng.ext import parse
 
 from src.models.fhir_immunization import ImmunizationValidator
-from src.models.errors import MandatoryError
 from src.mappings import DiseaseCodes
 from .utils.generic_utils import (
     # these have an underscore to avoid pytest collecting them as tests
@@ -171,6 +170,35 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         # Create invalid json data by amending the value of the relevant field
         invalid_json_data = parse(field_location).update(deepcopy(self.json_data), invalid_value)
 
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(invalid_json_data)
+
+        full_error_message = str(error.exception)
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+
+        for expected_error_message in expected_error_messages:
+            self.assertIn(expected_error_message, actual_error_messages)
+
+    def test_pre_validate_top_level_elements(self):
+        """Test pre_validate_top_level_elements accepts valid values and rejects invalid values"""
+        # ACCEPT: Full resource with id
+        valid_json_data = deepcopy(self.json_data)
+        valid_json_data["id"] = "an-id"
+        self.assertIsNone(self.validator.validate(valid_json_data))
+
+        # REJECT: Immunization with subpotent and reportOrigin elements,
+        # Patient with extension element, Practitioner with identifier element
+        invalid_json_data = deepcopy(self.json_data)
+        invalid_json_data["isSubpotent"] = True
+        invalid_json_data["reportOrigin"] = "test"
+        invalid_json_data["contained"][1]["extension"] = []
+        invalid_json_data["contained"][0]["identifier"] = []
+        expected_error_messages = [
+            "isSubpotent is not an allowed element of the Immunization resource for this service",
+            "reportOrigin is not an allowed element of the Immunization resource for this service",
+            "extension is not an allowed element of the Patient resource for this service",
+            "identifier is not an allowed element of the Practitioner resource for this service",
+        ]
         with self.assertRaises(ValueError) as error:
             self.validator.validate(invalid_json_data)
 

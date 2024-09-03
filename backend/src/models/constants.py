@@ -7,35 +7,7 @@ class Constants:
     STATUSES = ["completed"]
     GENDERS = ["male", "female", "other", "unknown"]
     NOT_DONE_VACCINE_CODES = ["NAVU", "UNC", "UNK", "NA"]
-    allowed_keys = {
-        "Immunization": {
-            "resourceType",
-            "meta",
-            "narrative",
-            "contained",
-            "extension",
-            "identifier",
-            "status",
-            "vaccineCode",
-            "patient",
-            "occurrenceDateTime",
-            "recorded",
-            "primarySource",
-            "manufacturer",
-            "location",
-            "lotNumber",
-            "expirationDate",
-            "site",
-            "route",
-            "doseQuantity",
-            "performer",
-            "reasonCode",
-            "protocolApplied",
-        },
-        "Practitioner": {"resourceType", "id", "name"},
-        "Patient": {"resourceType", "id", "identifier", "name", "gender", "birthDate", "address"},
-    }
-    allowed_keys_with_id = {
+    ALLOWED_KEYS = {
         "Immunization": {
             "resourceType",
             "meta",
@@ -60,7 +32,9 @@ class Constants:
             "performer",
             "reasonCode",
             "protocolApplied",
-        }
+        },
+        "Practitioner": {"resourceType", "id", "name"},
+        "Patient": {"resourceType", "id", "identifier", "name", "gender", "birthDate", "address"},
     }
 
-    allowed_contained_resources = {"Practitioner", "Patient"}
+    ALLOWED_CONTAINED_RESOURCES = {"Practitioner", "Patient"}
