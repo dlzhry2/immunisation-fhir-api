@@ -122,7 +122,9 @@ class PreValidation:
         if not isinstance(field_value, str):
             raise TypeError(f"{field_location} must be a string")
 
-        date_time_pattern_with_timezone = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.[0-9]+)?(\+|-)\d{2}:\d{2}")
+        date_time_pattern_with_timezone = re.compile(
+            r"\d{4}-\d{2}-\d{2}?T\d{2}:\d{2}:\d{2}(\.[0-9]+)?(\+|-)\d{2}:\d{2}"
+        )
 
         if not date_time_pattern_with_timezone.fullmatch(field_value):
             raise ValueError(
