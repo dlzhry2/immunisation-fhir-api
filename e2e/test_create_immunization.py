@@ -49,6 +49,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         """it should reject the request if doseQuantity.value is more than 4 decimal places"""
 
         imms = create_an_imms_obj()
+        del imms["id"]
         imms["doseQuantity"]["value"] = Decimal("0.12345")
 
         response = self.default_imms_api.create_immunization(imms)
@@ -62,7 +63,8 @@ class TestCreateImmunization(ImmunizationBaseTest):
         # NOTE: This e2e test is here to prove validation logic is wired to the backend.
         #  validation is thoroughly unit tested in the backend code
         imms = create_an_imms_obj()
-        invalid_datetime = "2020-12-14"
+        del imms["id"]
+        invalid_datetime = "2020-12-32"
         imms["occurrenceDateTime"] = invalid_datetime
         # When
         response = self.default_imms_api.create_immunization(imms)
