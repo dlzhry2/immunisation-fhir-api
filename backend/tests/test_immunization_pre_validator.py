@@ -30,16 +30,14 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
         covid_data = deepcopy(self.json_data)
 
-        # remove identifier[0].value from resource
-        covid_data["recorded"] = "2021-07-01"
+        # add a second identifier instance
+        covid_data["identifier"].append({"value": "another_value"})
 
         # remove coding.code from 'reasonCode'
         covid_data["reasonCode"][0]["coding"][0]["code"] = None
 
         expected_errors = [
-            'Validation errors: recorded must be a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or '
-            + '"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, including timezone offset in hours and minutes). '
-            + "Milliseconds are optional after the seconds (e.g. 2021-01-01T00:00:00.000+00:00).",
+            "Validation errors: identifier must be an array of length 1",
             "reasonCode[0].coding[0].code must be a string",
         ]
         # assert ValueError raised
