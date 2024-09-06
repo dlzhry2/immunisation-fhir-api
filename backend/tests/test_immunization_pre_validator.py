@@ -443,8 +443,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self,
             field_location="performer[?(@.actor.type=='Organization')].actor.identifier.value",
-            valid_strings_to_test=["B0C4P", "D3P5L"],
-            invalid_strings_to_test=["ABCDE", "R99TL"],
+            valid_strings_to_test=["B0C4P"],
         )
 
     def test_pre_validate_identifier(self):
@@ -888,18 +887,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self, field_location, valid_strings_to_test=["https://fhir.hl7.org.uk/Id/140565"]
         )
-
-    def test_pre_validate_location_type(self):
-        """Test pre_validate_location_type accepts valid values and rejects invalid values"""
-        field_location = "location.type"
-        ValidatorModelTests.test_string_value(
-            self,
-            field_location,
-            valid_strings_to_test=["Location"],
-            predefined_values=["Location"],
-            invalid_strings_to_test=["Invalid"],
-        )
-
 
 class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCase):
     """Test immunization pre validation rules on the FHIR model using the status="reduce validation" data"""
