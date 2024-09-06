@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from utils.base_test import ImmunizationBaseTest
 from utils.immunisation_api import parse_location
-from utils.resource import create_an_imms_obj, create_a_filtered_imms_obj
+from utils.resource import generate_imms_resource, generate_filtered_imms_resource
 from utils.mappings import EndpointOperationNames
 
 
@@ -13,11 +13,13 @@ class TestGetImmunization(ImmunizationBaseTest):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 # Given
-                imms = create_an_imms_obj()
+                imms = generate_imms_resource()
                 response = imms_api.create_immunization(imms)
                 assert response.status_code == 201, response.text
                 imms_id = parse_location(response.headers["Location"])
-                expected_response = create_a_filtered_imms_obj(crud_operation_to_filter_for=EndpointOperationNames.READ)
+                expected_response = generate_filtered_imms_resource(
+                    crud_operation_to_filter_for=EndpointOperationNames.READ
+                )
                 expected_response["id"] = imms_id
 
                 # When
@@ -46,7 +48,7 @@ class TestGetImmunization(ImmunizationBaseTest):
 
     def test_get_imms_with_tbc_pk(self):
         """it should get a FHIR Immunization resource if the nhs number is TBC"""
-        imms = create_an_imms_obj()
+        imms = generate_imms_resource()
         del imms["contained"][1]["identifier"][0]["value"]
         imms_id = self.create_immunization_resource(self.default_imms_api, imms)
 

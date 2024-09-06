@@ -20,7 +20,7 @@ from utils.factories import (
     make_apigee_product,
 )
 from utils.immunisation_api import ImmunisationApi, parse_location
-from utils.resource import create_an_imms_obj
+from utils.resource import generate_imms_resource
 
 
 class ImmunizationBaseTest(unittest.TestCase):
@@ -97,7 +97,7 @@ class ImmunizationBaseTest(unittest.TestCase):
     @staticmethod
     def create_immunization_resource(imms_api: ImmunisationApi, resource: dict = None) -> str:
         """creates an Immunization resource and returns the resource url"""
-        imms = resource if resource else create_an_imms_obj()
+        imms = resource if resource else generate_imms_resource()
         response = imms_api.create_immunization(imms)
         assert response.status_code == 201, (response.status_code, response.text)
         return parse_location(response.headers["Location"])
@@ -105,7 +105,7 @@ class ImmunizationBaseTest(unittest.TestCase):
     @staticmethod
     def create_a_deleted_immunization_resource(imms_api: ImmunisationApi, resource: dict = None) -> dict:
         """it creates a new Immunization and then delete it, it returns the created imms"""
-        imms = resource if resource else create_an_imms_obj()
+        imms = resource if resource else generate_imms_resource()
         response = imms_api.create_immunization(imms)
         assert response.status_code == 201, response.text
         imms_id = parse_location(response.headers["Location"])

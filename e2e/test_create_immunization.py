@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 from utils.base_test import ImmunizationBaseTest
-from utils.resource import create_an_imms_obj, get_full_row_from_identifier
+from utils.resource import generate_imms_resource, get_full_row_from_identifier
 
 
 class TestCreateImmunization(ImmunizationBaseTest):
@@ -10,7 +10,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 # Given
-                imms = create_an_imms_obj()
+                imms = generate_imms_resource()
 
                 # When
                 response = imms_api.create_immunization(imms)
@@ -22,7 +22,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
     def test_non_unique_identifier(self):
         """it should give 422 if the identifier is not unique"""
-        imms = create_an_imms_obj()
+        imms = generate_imms_resource()
         _ = self.create_immunization_resource(self.default_imms_api, imms)
         new_id = str(uuid.uuid4())
         imms["id"] = new_id
@@ -36,7 +36,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
     def test_bad_nhs_number(self):
         """it should reject the request if nhs-number does not exist"""
         bad_nhs_number = "7463384756"
-        imms = create_an_imms_obj(nhs_number=bad_nhs_number)
+        imms = generate_imms_resource(nhs_number=bad_nhs_number)
 
         response = self.default_imms_api.create_immunization(imms)
 
@@ -45,7 +45,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
     def test_bad_dose_quantity_value(self):
         """it should reject the request if doseQuantity.value is more than 4 decimal places"""
 
-        imms = create_an_imms_obj()
+        imms = generate_imms_resource()
         imms["doseQuantity"]["value"] = Decimal("0.12345")
 
         response = self.default_imms_api.create_immunization(imms)
@@ -58,7 +58,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         """it should validate Immunization"""
         # NOTE: This e2e test is here to prove validation logic is wired to the backend.
         #  validation is thoroughly unit tested in the backend code
-        imms = create_an_imms_obj()
+        imms = generate_imms_resource()
         invalid_datetime = "2020-12-32"
         imms["occurrenceDateTime"] = invalid_datetime
         # When
@@ -69,7 +69,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
     def test_no_nhs_number(self):
         """it should accept the request if nhs-number is missing"""
-        imms = create_an_imms_obj()
+        imms = generate_imms_resource()
         del imms["contained"][1]["identifier"][0]["value"]
 
         response = self.default_imms_api.create_immunization(imms)
@@ -85,7 +85,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
     def test_no_patient_identifier(self):
         """it should accept the request if patient identifier is missing"""
-        imms = create_an_imms_obj()
+        imms = generate_imms_resource()
         del imms["contained"][1]["identifier"]
 
         response = self.default_imms_api.create_immunization(imms)
@@ -101,7 +101,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
     def test_create_imms_for_mandatory_fields_only(self):
         """Test that data containing only the mandatory fields is accepted for create"""
-        imms = create_an_imms_obj(
+        imms = generate_imms_resource(
             nhs_number=None, sample_data_file_name="completed_covid19_immunization_event_mandatory_fields_only"
         )
 
@@ -115,7 +115,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
     def test_create_imms_with_missing_mandatory_field(self):
         """Test that data  is rejected for create if one of the mandatory fields is missing"""
-        imms = create_an_imms_obj(
+        imms = generate_imms_resource(
             nhs_number=None, sample_data_file_name="completed_covid19_immunization_event_mandatory_fields_only"
         )
         del imms["primarySource"]
