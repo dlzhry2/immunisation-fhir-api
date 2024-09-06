@@ -77,7 +77,6 @@ class PreValidators:
             self.pre_validate_organization_identifier_system,
             self.pre_validate_location_identifier_value,
             self.pre_validate_location_identifier_system,
-            self.pre_validate_location_type,
         ]
 
         for method in validation_methods:
@@ -357,22 +356,13 @@ class PreValidators:
         """
         Pre-validate that, if performer[?(@.actor.type=='Organization').identifier.value]
         (legacy CSV field name: SITE_CODE) exists, then it is a non-empty string.
-        Also pre-validate it is in format alpha-numeric-alpha-numeric-alpha (e.g. "B0C4P").
         """
         field_location = "performer[?(@.actor.type=='Organization')].actor.identifier.value"
-        ODS_code_format = re.compile(r"^[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9]{1}[A-Z]{1}$")
         try:
             field_value = [x for x in values["performer"] if x.get("actor").get("type") == "Organization"][0]["actor"][
                 "identifier"
             ]["value"]
             PreValidation.for_string(field_value, field_location)
-
-            # Validates that organization_identifier_value SITE CODE is in alpha-numeric-alpha-numeric-alpha
-            # (e.g. "X0X0X")
-            if not ODS_code_format.match(field_value):
-                raise ValueError(
-                    f"{field_location} must be in expected format" + " alpha-numeric-alpha-numeric-alpha (e.g X0X0X)"
-                )
         except (KeyError, IndexError, AttributeError):
             pass
 
@@ -891,13 +881,5 @@ class PreValidators:
         try:
             field_value = values["location"]["identifier"]["system"]
             PreValidation.for_string(field_value, "location.identifier.system")
-        except KeyError:
-            pass
-
-    def pre_validate_location_type(self, values: dict) -> dict:
-        """Pre-validate that, if location.type exists, then its value is 'Location'"""
-        try:
-            field_value = values["location"]["type"]
-            PreValidation.for_string(field_value, "location.type", predefined_values=["Location"])
         except KeyError:
             pass
