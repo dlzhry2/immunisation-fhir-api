@@ -16,9 +16,11 @@ class TestSearchImmunization(ImmunizationBaseTest):
     # This is to make these tests stateless otherwise; we need to clean up the db after each test
 
     def store_records(self, *resources):
+        ids = []
         for res in resources:
             imms_id = self.create_immunization_resource(self.default_imms_api, res)
-            res["id"] = imms_id
+            ids.append(imms_id)
+        return ids[0] if len(ids) == 1 else tuple(ids)
 
     def test_search_imms(self):
         """it should search records given nhs-number and vaccine type"""
@@ -27,7 +29,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 # Given two patients each with one covid_19
                 covid_19_p1 = generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19)
                 covid_19_p2 = generate_imms_resource(valid_nhs_number2, VaccineTypes.covid_19)
-                self.store_records(covid_19_p1, covid_19_p2)
+                covid_19_p1_id, covid_19_p2_id = self.store_records(covid_19_p1, covid_19_p2)
 
                 # When
                 response = imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.covid_19)
@@ -38,14 +40,14 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 self.assertEqual(body["resourceType"], "Bundle")
 
                 resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
-                self.assertTrue(covid_19_p1["id"] in resource_ids)
-                self.assertTrue(covid_19_p2["id"] not in resource_ids)
+                self.assertTrue(covid_19_p1_id in resource_ids)
+                self.assertTrue(covid_19_p2_id not in resource_ids)
 
     def test_search_patient_multiple_diseases(self):
         # Given patient has two vaccines
         covid_19 = generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19)
         flu = generate_imms_resource(valid_nhs_number1, VaccineTypes.flu)
-        self.store_records(covid_19, flu)
+        covid_19_id, flu_id = self.store_records(covid_19, flu)
 
         # When
         response = self.default_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.covid_19)
@@ -55,8 +57,8 @@ class TestSearchImmunization(ImmunizationBaseTest):
         body = response.json()
 
         resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
-        self.assertIn(covid_19["id"], resource_ids)
-        self.assertNotIn(flu["id"], resource_ids)
+        self.assertIn(covid_19_id, resource_ids)
+        self.assertNotIn(flu_id, resource_ids)
 
     def test_search_backwards_compatible(self):
         """Test that SEARCH 200 response body is backwards compatible with Immunisation History FHIR API"""
@@ -65,8 +67,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 # Given that the patient has a covid_19 vaccine event stored in the IEDS
                 stored_imms_resource = generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19)
                 imms_identifier_value = stored_imms_resource["identifier"][0]["value"]
-                self.store_records(stored_imms_resource)
-                imms_id = stored_imms_resource["id"]
+                imms_id = self.store_records(stored_imms_resource)
 
                 # Prepare the imms resource expected from the response. Note that id and identifier_value need to be
                 # updated to match those assigned by the create_an_imms_obj and store_records functions.
@@ -128,7 +129,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         # Given patient has three vaccines and the last one is deleted
         mmr1 = generate_imms_resource(valid_nhs_number1, VaccineTypes.mmr)
         mmr2 = generate_imms_resource(valid_nhs_number1, VaccineTypes.mmr)
-        self.store_records(mmr1, mmr2)
+        mmr1_id, mmr2_id = self.store_records(mmr1, mmr2)
 
         to_delete_mmr = generate_imms_resource(valid_nhs_number1, VaccineTypes.mmr)
         deleted_mmr = self.create_a_deleted_immunization_resource(self.default_imms_api, to_delete_mmr)
@@ -141,8 +142,8 @@ class TestSearchImmunization(ImmunizationBaseTest):
         body = response.json()
 
         resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
-        self.assertTrue(mmr1["id"] in resource_ids)
-        self.assertTrue(mmr2["id"] in resource_ids)
+        self.assertTrue(mmr1_id in resource_ids)
+        self.assertTrue(mmr2_id in resource_ids)
         self.assertTrue(deleted_mmr["id"] not in resource_ids)
 
     def test_search_immunization_parameter_smoke_tests(self):
@@ -158,8 +159,8 @@ class TestSearchImmunization(ImmunizationBaseTest):
             generate_imms_resource(valid_nhs_number2, VaccineTypes.covid_19),
         ]
 
-        self.store_records(*stored_records)
-        created_resource_ids = [result["id"] for result in stored_records]
+        created_resource_ids = list(self.store_records(*stored_records))
+        # created_resource_ids = [result["id"] for result in stored_records]
 
         # When
         class SearchTestParams(NamedTuple):
@@ -304,7 +305,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
         # Arrange
         imms_obj = generate_imms_resource(valid_nhs_number1, VaccineTypes.mmr)
-        self.store_records(imms_obj)
+        imms_obj_id = self.store_records(imms_obj)
 
         response = self.default_imms_api.search_immunizations_full(
             "POST",
@@ -318,7 +319,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         entries = result["entry"]
 
         entry_ids = [result["resource"]["id"] for result in result["entry"]]
-        assert imms_obj["id"] in entry_ids
+        assert imms_obj_id in entry_ids
 
         patient_entry = next(entry for entry in entries if entry["resource"]["resourceType"] == "Patient")
         assert patient_entry["search"]["mode"] == "include"
