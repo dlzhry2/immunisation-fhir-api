@@ -73,10 +73,6 @@ def replace_organization_values(imms: dict) -> dict:
             keys_to_remove = [key for key in identifier.keys() if key not in keys]
             for key in keys_to_remove:
                 del identifier[key]
-
-            # Remove display if it exists
-            if performer["actor"].get("display") is not None:
-                del performer["actor"]["display"]
             
             # Remove all other fields except 'identifier' in actor
             keys_to_remove = [key for key in performer["actor"].keys() if key not in ("identifier","type")]
