@@ -68,7 +68,7 @@ def replace_organization_values(imms: dict) -> dict:
             if identifier.get("system") is not None:
                 identifier["system"] = Urls.ods_organization_code
             
-            # Ensure only 'system' and 'value' remain in identifier
+            # Ensure only 'system' and 'value' remain in identifier.
             keys = {"system", "value"}
             keys_to_remove = [key for key in identifier.keys() if key not in keys]
             for key in keys_to_remove:
