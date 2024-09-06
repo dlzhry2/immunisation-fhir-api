@@ -240,7 +240,7 @@ class FhirController:
         try:
             imms = json.loads(aws_event["body"], parse_float=Decimal)
             # Validate the imms id in the path params and body of request -start
-            if imms.get("id", imms_id) != imms_id:
+            if imms.get("id") != imms_id:
                 exp_error = create_operation_outcome(
                     resource_id=str(uuid.uuid4()),
                     severity=Severity.error,
