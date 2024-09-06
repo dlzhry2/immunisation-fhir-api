@@ -20,11 +20,11 @@ def load_example(path: str) -> dict:
 
 
 def create_an_imms_obj(
-    imms_id: str = str(uuid.uuid4()),
     nhs_number=valid_nhs_number1,
     vaccine_type=VaccineTypes.covid_19,
     occurrence_date_time: str = None,
-    sample_data_file_name: str = "completed_[vaccine_type]_immunization_event_with_id",
+    sample_data_file_name: str = "completed_[vaccine_type]_immunization_event",
+    include_id: bool = False,
 ) -> dict:
     """
     Creates a FHIR Immunization Resource dictionary, which includes an id, using the sample data for the given
@@ -36,7 +36,8 @@ def create_an_imms_obj(
     imms = deepcopy(load_example(f"Immunization/{sample_data_file_name}.json"))
 
     # Amend data fields as appropriate
-    imms["id"] = imms_id
+    if include_id:
+        imms["id"] = str(uuid.uuid4())
     imms["identifier"][0]["value"] = str(uuid.uuid4())
 
     if nhs_number is not None:
@@ -51,11 +52,11 @@ def create_an_imms_obj(
 def create_a_filtered_imms_obj(
     crud_operation_to_filter_for: Literal["READ", "SEARCH", ""] = "",
     filter_for_s_flag: bool = False,
-    imms_id: str = str(uuid.uuid4()),
     imms_identifier_value: str = None,
     nhs_number=valid_nhs_number1,
     vaccine_type=VaccineTypes.covid_19,
     occurrence_date_time: str = None,
+    include_id: bool = False,
 ) -> dict:
     """
     Creates a filtered FHIR Immunization Resource dictionary, which includes an id, using the sample filtered data for
@@ -71,13 +72,14 @@ def create_a_filtered_imms_obj(
     # Load the data
     s_flag_string = "_and_s_flag" if filter_for_s_flag else ""
     file_name = (
-        f"Immunization/completed_{vaccine_type.lower()}_immunization_event_with_id"
+        f"Immunization/completed_{vaccine_type.lower()}_immunization_event"
         + f"_filtered_for_{crud_operation_to_filter_for.lower()}{s_flag_string}"
     )
     imms = deepcopy(load_example(f"{file_name}.json"))
 
     # Amend values as required
-    imms["id"] = imms_id
+    if include_id:
+        imms["id"] = str(uuid.uuid4())
     if imms_identifier_value:
         imms["identifier"][0]["value"] = imms_identifier_value
 

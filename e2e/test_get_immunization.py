@@ -14,13 +14,11 @@ class TestGetImmunization(ImmunizationBaseTest):
             with self.subTest(imms_api):
                 # Given
                 imms = create_an_imms_obj()
-                del imms["id"]
                 response = imms_api.create_immunization(imms)
                 assert response.status_code == 201, response.text
                 imms_id = parse_location(response.headers["Location"])
-                expected_response = create_a_filtered_imms_obj(
-                    crud_operation_to_filter_for=EndpointOperationNames.READ, imms_id=imms_id
-                )
+                expected_response = create_a_filtered_imms_obj(crud_operation_to_filter_for=EndpointOperationNames.READ)
+                expected_response["id"] = imms_id
 
                 # When
                 response = imms_api.get_immunization_by_id(imms_id)

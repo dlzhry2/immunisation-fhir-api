@@ -14,7 +14,6 @@ class TestUpdateImmunization(ImmunizationBaseTest):
             with self.subTest(imms_api):
                 # Given
                 imms = create_an_imms_obj()
-                del imms["id"]
                 response = imms_api.create_immunization(imms)
                 assert response.status_code == 201
                 imms_id = parse_location(response.headers["Location"])
@@ -48,11 +47,13 @@ class TestUpdateImmunization(ImmunizationBaseTest):
     def test_update_inconsistent_id(self):
         """update should fail if id in the path doesn't match with the id in the message"""
         msg_id = str(uuid.uuid4())
-        imms = create_an_imms_obj(msg_id)
+        imms = create_an_imms_obj()
+        imms["id"] = msg_id
         path_id = str(uuid.uuid4())
         response = self.default_imms_api.update_immunization(path_id, imms)
         self.assert_operation_outcome(response, 400, contains=path_id)
 
+    # TODO: Uncomment this test if it is needed
     # def test_update_deleted_imms(self):
     #     """updating deleted record will undo the delete"""
     #     # This behaviour is consistent. Getting a deleted record will result in a 404.

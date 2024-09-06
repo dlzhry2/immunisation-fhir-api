@@ -98,8 +98,6 @@ class ImmunizationBaseTest(unittest.TestCase):
     def create_immunization_resource(imms_api: ImmunisationApi, resource: dict = None) -> str:
         """creates an Immunization resource and returns the resource url"""
         imms = resource if resource else create_an_imms_obj()
-        if "id" in imms:
-            del imms["id"]
         response = imms_api.create_immunization(imms)
         assert response.status_code == 201, (response.status_code, response.text)
         return parse_location(response.headers["Location"])
@@ -108,8 +106,6 @@ class ImmunizationBaseTest(unittest.TestCase):
     def create_a_deleted_immunization_resource(imms_api: ImmunisationApi, resource: dict = None) -> dict:
         """it creates a new Immunization and then delete it, it returns the created imms"""
         imms = resource if resource else create_an_imms_obj()
-        if "id" in imms:
-            del imms["id"]
         response = imms_api.create_immunization(imms)
         assert response.status_code == 201, response.text
         imms_id = parse_location(response.headers["Location"])
