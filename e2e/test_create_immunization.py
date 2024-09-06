@@ -49,7 +49,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         """it should reject the request if doseQuantity.value is more than 4 decimal places"""
 
         imms = create_an_imms_obj()
-        # Id field should not be sent as part of a create
+        # Id field should not be sent as part of a create request
         del imms["id"]
 
         imms["doseQuantity"]["value"] = Decimal("0.12345")
