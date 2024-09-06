@@ -1054,7 +1054,7 @@ class TestUpdateImmunization(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
 
-    def test_consistent_imms_id(self):
+    def test_inconsistent_imms_id(self):
         """Immunization[id] should be the same as request"""
         bad_json = '{"id": "a-diff-id"}'
         aws_event = {
@@ -1064,6 +1064,25 @@ class TestUpdateImmunization(unittest.TestCase):
         }
         response = self.controller.update_immunization(aws_event)
         self.assertEqual(response["statusCode"], 400)
+        self.assertIn(
+            "The provided immunization id:an-id doesn't match with the content of the request body",
+            json.loads(response["body"])["issue"][0]["diagnostics"],
+        )
+
+    def test_missing_imms_id(self):
+        """Immunization[id] should exist and be the same as request"""
+        bad_json = "{}"
+        aws_event = {
+            "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:create", "SupplierSystem": "Test"},
+            "body": bad_json,
+            "pathParameters": {"id": "an-id"},
+        }
+        response = self.controller.update_immunization(aws_event)
+        self.assertEqual(response["statusCode"], 400)
+        self.assertIn(
+            "The provided immunization id:an-id doesn't match with the content of the request body",
+            json.loads(response["body"])["issue"][0]["diagnostics"],
+        )
 
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
