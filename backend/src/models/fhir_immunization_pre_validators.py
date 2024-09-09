@@ -18,9 +18,17 @@ class PreValidators:
 
     def validate(self):
         """Run all pre-validation checks."""
+
+        # Run check on contained contents first and raise any errors found immediately. This is because other validators
+        # rely on the contained contents being as expected.
+        try:
+            self.pre_validate_contained_contents(self.immunization)
+        except (ValueError, TypeError, IndexError, AttributeError) as error:
+            raise ValueError(f"Validation errors: {str(error)}") from error
+
         validation_methods = [
-            self.pre_validate_contained_contents,
             self.pre_validate_patient_reference,
+            self.pre_validate_practitioner_reference,
             self.pre_validate_patient_identifier,
             self.pre_validate_patient_identifier_value,
             self.pre_validate_patient_name,
@@ -32,7 +40,6 @@ class PreValidators:
             self.pre_validate_patient_address_postal_code,
             self.pre_validate_occurrence_date_time,
             self.pre_validate_performer_actor_type,
-            self.pre_validate_performer_actor_reference,
             self.pre_validate_organization_identifier_value,
             self.pre_validate_identifier,
             self.pre_validate_identifier_value,
@@ -115,7 +122,21 @@ class PreValidators:
         if practitioner_count > 1:
             errors.append("contained must contain a maximum of one Practitioner resource")
 
-        # Raise errors
+        # Raise errors (don't check ids if incorrect resources are contained)
+        if errors:
+            raise ValueError("; ".join(errors))
+
+        # Check ids exist and aren't duplicated.
+        if (patient_id := [x.get("id") for x in values["contained"] if x["resourceType"] == "Patient"][0]) is None:
+            errors.append("The contained Patient resource must have an 'id' field")
+        elif practitioner_count == 1:
+            practitioner_id = [x.get("id") for x in values["contained"] if x["resourceType"] == "Practitioner"][0]
+            if practitioner_id is None:
+                errors.append("The contained Practitioner resource must have an 'id' field")
+            elif patient_id == practitioner_id:
+                errors.append("ids must not be duplicated amongst contained resources")
+
+        # Raise id errors
         if errors:
             raise ValueError("; ".join(errors))
 
@@ -137,18 +158,52 @@ class PreValidators:
         # Obtain the contained patient resource
         contained_patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]
 
-        try:
-            # Try to obtain the contained patient resource id
-            contained_patient_id = contained_patient["id"]
+        # If the reference is not equal to the contained patient id then raise an error
+        if ("#" + contained_patient["id"]) != patient_reference:
+            raise ValueError(
+                f"The reference '{patient_reference}' does not match the id of the contained Patient resource"
+            )
 
-            # If the reference is not equal to the ID then raise an error
-            if ("#" + contained_patient_id) != patient_reference:
+    def pre_validate_practitioner_reference(self, values: dict) -> dict:
+        """
+        Pre-validate that, if there is a contained Practitioner resource, there is exactly one reference to it from
+        the performer, and that the performer does not reference any other internal resources
+        """
+        # Obtain all of the internal references within performer
+        performer_internal_references = [
+            x.get("actor", {}).get("reference")
+            for x in values.get("performer", [])
+            if x.get("actor", {}).get("reference").startswith("#")
+        ]
+
+        # If there is no practitioner then check that there are no internal references within performer
+        if not (practitioner := [x for x in values["contained"] if x.get("resourceType") == "Practitioner"]):
+            if len(performer_internal_references) != 0:
                 raise ValueError(
-                    f"The reference '{patient_reference}' does not exist in the contained Patient resource"
+                    "performer must not contain internal references when there is no contained Practitioner resource"
                 )
-        except KeyError as error:
-            # If the contained Patient resource has no id raise an error
-            raise ValueError("The contained Patient resource must have an 'id' field") from error
+            return None
+
+        practitioner_id = str(practitioner[0]["id"])
+
+        # Ensure that there are no internal references other than to the contained practitioner
+        if sum(1 for x in performer_internal_references if x != "#" + practitioner_id) != 0:
+            raise ValueError(
+                "performer must not contain any internal references other than"
+                + " to the contained Practitioner resource"
+            )
+
+        # Separate out the references to the contained practitioner and ensure that there is exactly one such reference
+        practitioner_references = [x for x in performer_internal_references if x == "#" + practitioner_id]
+
+        if len(practitioner_references) == 0:
+            raise ValueError(
+                f"contained Practitioner resource id '{practitioner_id}' must be referenced from performer"
+            )
+        elif len(practitioner_references) > 1:
+            raise ValueError(
+                f"contained Practitioner resource id '{practitioner_id}' must only be referenced once from performer"
+            )
 
     def pre_validate_patient_identifier(self, values: dict) -> dict:
         """
@@ -293,62 +348,6 @@ class PreValidators:
 
         except (KeyError, AttributeError):
             pass
-
-    def pre_validate_performer_actor_reference(self, values: dict) -> dict:
-        """
-        Pre-validate that:
-        - if performer.actor.reference exists then it is a single reference
-        - if there is no contained Practitioner resource, then there is no performer.actor.reference
-        - if there is a contained Practitioner resource, then there is a performer.actor.reference
-        - if there is a contained Practitioner resource, then it has an id
-        - If there is a contained Practitioner resource, then the performer.actor.reference is equal
-          to the ID
-        """
-
-        # Obtain the performer.actor.references that are internal references (#)
-        performer_actor_internal_references = []
-        for item in values.get("performer", []):
-            reference = item.get("actor", {}).get("reference")
-            if isinstance(reference, str) and reference.startswith("#"):
-                performer_actor_internal_references.append(reference)
-
-        # Check that we have a maximum of 1 internal reference
-        if len(performer_actor_internal_references) > 1:
-            raise ValueError(
-                "performer.actor.reference must be a single reference to a contained Practitioner resource. "
-                + f"References found: {performer_actor_internal_references}"
-            )
-
-        # Obtain the contained practitioner resource
-        try:
-            contained_practitioner = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]
-
-            try:
-                # Try to obtain the contained practitioner resource id
-                contained_practitioner_id = contained_practitioner["id"]
-
-                # If there is a contained practitioner resource, but no reference raise an error
-                if len(performer_actor_internal_references) == 0:
-                    raise ValueError("contained Practitioner ID must be referenced by performer.actor.reference")
-
-                # If the reference is not equal to the ID then raise an error
-                if ("#" + contained_practitioner_id) != performer_actor_internal_references[0]:
-                    raise ValueError(
-                        f"The reference '{performer_actor_internal_references[0]}' does "
-                        + "not exist in the contained Practitioner resources"
-                    )
-            except KeyError as error:
-                # If the contained practitioner resource has no id raise an error
-                raise ValueError("The contained Practitioner resource must have an 'id' field") from error
-
-        except (IndexError, KeyError) as error:
-            # Entering this exception block implies that there is no contained practitioner resource
-            # therefore if there is a reference then raise an error
-            if len(performer_actor_internal_references) != 0:
-                raise ValueError(
-                    f"The reference(s) {performer_actor_internal_references} do "
-                    + "not exist in the contained Practitioner resources"
-                ) from error
 
     def pre_validate_organization_identifier_value(self, values: dict) -> dict:
         """
