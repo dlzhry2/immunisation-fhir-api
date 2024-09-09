@@ -211,6 +211,12 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         invalid_json_data = deepcopy(self.json_data)
         del invalid_json_data["contained"][1]["id"]
 
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(invalid_json_data)
+
+        full_error_message = str(error.exception)
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+
         self.assertIn("The contained Patient resource must have an 'id' field", actual_error_messages)
 
         # REJECT: Missing practitioner id
@@ -304,9 +310,10 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             valid_json_data=deepcopy(valid_json_data_no_practitioner),
             field_location=field_location,
-            valid_values_to_test=[[valid_organization, valid_practitioner_reference]],
+            valid_values_to_test=[[valid_organization]],
         )
 
+        # TODO: Tests for references other than to practitioner
         # REJECT: No contained practitioner, references
         # _test_invalid_values_rejected(
         #     self,

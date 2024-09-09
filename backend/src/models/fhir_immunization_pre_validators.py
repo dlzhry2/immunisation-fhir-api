@@ -212,7 +212,7 @@ class PreValidators:
         performer_internal_references = [
             x.get("actor", {}).get("reference")
             for x in values.get("performer", [])
-            if x.get("actor", {}).get("reference").startswith("#")
+            if x.get("actor", {}).get("reference", "").startswith("#")
         ]
 
         # If there is no practitioner then check that there are no internal references within performer
