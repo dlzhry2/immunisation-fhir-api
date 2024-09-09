@@ -32,6 +32,7 @@ class ValidValues:
     nhs_number = "9990548609"
 
     for_date_times = [
+        "2000-01-01",  # Full date only
         "2000-01-01T00:00:00+00:00",  # Time and offset all zeroes
         "1933-12-31T11:11:11+12:45",  # Positive offset (with hours and minutes not 0)
         "1933-12-31T11:11:11-05:00",  # Negative offset
@@ -175,7 +176,8 @@ class InvalidValues:
         "20000101",  # Date digits only (i.e. without hypens)
         "20000101000000",  # Date and time digits only
         "200001010000000000",  # Date, time and timezone digits only
-        "2000-01-01",  # Date only
+        "2000",  # Year only
+        "2000-01",  # Year and month only
         "2000-01-01T00:00:00",  # Date and time only
         "2000-01-01T00:00:00.000",  # Date and time only (with milliseconds)
         "2000-01-01T00:00:00+00",  # Date and time with GMT timezone offset only in hours
@@ -188,6 +190,7 @@ class InvalidValues:
         "2000-01-01T222222+00:00",  # Missing time colons
         "2000-01-01T22:22:2200:00",  # Missing timezone indicator
         "2000-01-01T22:22:22-0100",  # Missing timezone colon
+        "2000-01-01T22:22:22-01",  # Timezone hours only
         "99-01-01T00:00:00+00:00",  # Missing century (i.e. only 2 digits for year)
         "01-01-2000T00:00:00+00:00",  # Date in wrong order (DD-MM-YYYY)
     ]

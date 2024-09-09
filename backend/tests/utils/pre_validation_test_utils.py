@@ -373,6 +373,13 @@ class ValidatorModelTests:
                 expected_error_message=f"{field_location} must be a string",
             )
 
+            expected_error_message = (
+                f"{field_location} must be a valid datetime in the format 'YYYY-MM-DDThh:mm:ss+zz:zz' (where time "
+                "element is optional, timezone must be given if and only if time is given, and milliseconds can be "
+                + "optionally included after the seconds). Note that partial dates are not allowed for "
+                + f"{field_location} for this service."
+            )
+
         # Test invalid date time string formats
         for invalid_occurrence_date_time in InvalidValues.for_date_time_string_formats:
             test_invalid_values_rejected(
@@ -380,11 +387,7 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_occurrence_date_time,
-                expected_error_message=f"{field_location} must be a string in the format "
-                + '"YYYY-MM-DDThh:mm:ss+zz:zz" or '
-                + '"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, including timezone offset in '
-                + "hours and minutes). Milliseconds are optional after the seconds "
-                + "(e.g. 2021-01-01T00:00:00.000+00:00).",
+                expected_error_message=expected_error_message,
             )
 
         # Test invalid date times
@@ -394,8 +397,9 @@ class ValidatorModelTests:
                 valid_json_data,
                 field_location=field_location,
                 invalid_value=invalid_occurrence_date_time,
-                expected_error_message=f"{field_location} must be a valid datetime",
+                expected_error_message=expected_error_message,
             )
+
 
     @staticmethod
     def test_boolean_value(

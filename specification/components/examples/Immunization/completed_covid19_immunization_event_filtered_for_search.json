@@ -1,7 +1,5 @@
 {
   "resourceType": "Immunization",
-  "id": "an-id",
-
   "extension": [
     {
       "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
