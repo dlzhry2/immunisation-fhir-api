@@ -44,7 +44,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
     def test_bad_dose_quantity_value(self):
         """it should reject the request if doseQuantity.value is more than 4 decimal places"""
-
         imms = generate_imms_resource()
         imms["doseQuantity"]["value"] = Decimal("0.12345")
 
@@ -60,7 +59,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
         #  validation is thoroughly unit tested in the backend code
         imms = generate_imms_resource()
         invalid_datetime = "2020-12-32"
-        imms["occurrenceDateTime"] = invalid_datetime
+        imms["occurrenceDateTime"] = invalid_datetime[
         # When
         response = self.default_imms_api.create_immunization(imms)
 

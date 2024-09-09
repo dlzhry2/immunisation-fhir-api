@@ -1,15 +1,23 @@
 "FHIR Immunization Pre Validators"
-
+from typing import Union
 from models.constants import Constants
-from models.utils.generic_utils import get_generic_extension_value, generate_field_location_for_extension
+from models.utils.generic_utils import (
+    get_generic_extension_value,
+    generate_field_location_for_extension,
+    check_for_unknown_elements,
+)
 from models.utils.pre_validator_utils import PreValidation
+from models.errors import MandatoryError
+from constants import Urls
+import re
 
 
 class PreValidators:
     """
     Validators which run prior to the FHIR validators and check that, where values exist, they
     meet the NHS custom requirements. Note that validation of the existence of a value (i.e. it
-    exists if mandatory, or doesn't exist if is not applicable) is done by the post validators.
+    exists if mandatory, or doesn't exist if is not applicable) is done by the post validator except for a few key
+    elements, the existence of which is explicitly checked as part of pre-validation.
     """
 
     def __init__(self, immunization: dict):
@@ -19,7 +27,9 @@ class PreValidators:
     def validate(self):
         """Run all pre-validation checks."""
         validation_methods = [
+            self.pre_validate_resource_type,
             self.pre_validate_contained_contents,
+            self.pre_validate_top_level_elements,
             self.pre_validate_patient_reference,
             self.pre_validate_patient_identifier,
             self.pre_validate_patient_identifier_value,
@@ -43,6 +53,7 @@ class PreValidators:
             self.pre_validate_practitioner_name_family,
             self.pre_validate_recorded,
             self.pre_validate_primary_source,
+            self.pre_validate_extension,
             self.pre_validate_extension_urls,
             self.pre_validate_extension_value_codeable_concept_codings,
             self.pre_validate_vaccination_procedure_code,
@@ -87,12 +98,23 @@ class PreValidators:
             all_errors = "; ".join(self.errors)
             raise ValueError(f"Validation errors: {all_errors}")
 
+    def pre_validate_resource_type(self, values: dict) -> dict:
+        """Pre-validate that resourceType is 'Immunization'"""
+        if values.get("resourceType") != "Immunization":
+            raise ValueError(
+                "This service only accepts FHIR Immunization Resources (i.e. resourceType must equal 'Immunization')"
+            )
+
     def pre_validate_contained_contents(self, values: dict) -> dict:
         """
-        Pre-validate that there is exactly one patient resource in contained, a maximum of one practitioner resource,
-        and no other resources
+        Pre-validate that contained exists and there is exactly one patient resource in contained,
+        a maximum of one practitioner resource, and no other resources
         """
-        contained = values["contained"]
+        # Contained must exist
+        try:
+            contained = values["contained"]
+        except KeyError as error:
+            raise MandatoryError("contained is a mandatory field") from error
 
         # Contained must be a non-empty list of non-empty dictionaries
         PreValidation.for_list(contained, "contained", elements_are_dicts=True)
@@ -114,6 +136,22 @@ class PreValidators:
             errors.append("contained must contain exactly one Patient resource")
         if practitioner_count > 1:
             errors.append("contained must contain a maximum of one Practitioner resource")
+
+        # Raise errors
+        if errors:
+            raise ValueError("; ".join(errors))
+
+    def pre_validate_top_level_elements(self, values: dict) -> dict:
+        """Pre-validate that disallowed top level elements are not present"""
+        errors = []
+
+        # Check the top-level Immunization resource
+        errors.extend(check_for_unknown_elements(values, "Immunization"))
+
+        # Check each contained resource
+        for contained_resource in values.get("contained", []):
+            if (resource_type := contained_resource.get("resourceType")) in Constants.ALLOWED_CONTAINED_RESOURCES:
+                errors.extend(check_for_unknown_elements(contained_resource, resource_type))
 
         # Raise errors
         if errors:
@@ -365,12 +403,12 @@ class PreValidators:
             pass
 
     def pre_validate_identifier(self, values: dict) -> dict:
-        """Pre-validate that, if identifier exists, then it is a list of length 1"""
+        """Pre-validate that identifier exists and is a list of length 1"""
         try:
             field_value = values["identifier"]
             PreValidation.for_list(field_value, "identifier", defined_length=1)
-        except KeyError:
-            pass
+        except KeyError as error:
+            raise MandatoryError("identifier is a mandatory field") from error
 
     def pre_validate_identifier_value(self, values: dict) -> dict:
         """
@@ -469,6 +507,11 @@ class PreValidators:
             PreValidation.for_boolean(primary_source, "primarySource")
         except KeyError:
             pass
+
+    def pre_validate_extension(self, values: dict) -> dict:
+        """Pre-validate that extension exists"""
+        if not "extension" in values:
+            raise MandatoryError("extension is a mandatory field")
 
     def pre_validate_extension_urls(self, values: dict) -> dict:
         """Pre-validate that, if extension exists, then each url is unique"""
@@ -592,27 +635,30 @@ class PreValidators:
 
     def pre_validate_target_disease(self, values: dict) -> dict:
         """
-        Pre-validate that, if protocolApplied[0].targetDisease exists, then each of its elements contains a coding field
+        Pre-validate that protocolApplied[0].targetDisease exists, and each of its elements contains a coding field
         """
         try:
             field_value = values["protocolApplied"][0]["targetDisease"]
             for element in field_value:
                 if "coding" not in element:
                     raise ValueError("Every element of protocolApplied[0].targetDisease must have 'coding' property")
-        except (KeyError, IndexError):
-            pass
+        except (KeyError, IndexError) as error:
+            raise ValueError("protocolApplied[0].targetDisease is a mandatory field") from error
 
     def pre_validate_target_disease_codings(self, values: dict) -> dict:
         """
-        Pre-validate that, if they exist, each
-        protocolApplied[0].targetDisease[{index}].valueCodeableConcept.coding.system is unique
+        Pre-validate that, if they exist, each protocolApplied[0].targetDisease[{index}].valueCodeableConcept.coding
+        has exactly one element where the system is the snomed url
         """
         try:
             for i in range(len(values["protocolApplied"][0]["targetDisease"])):
-                field_location = f"protocolApplied[0].targetDisease[{i}].coding[?(@.system=='FIELD_TO_REPLACE')]"
+                field_location = f"protocolApplied[0].targetDisease[{i}].coding"
                 try:
-                    field_value = values["protocolApplied"][0]["targetDisease"][i]["coding"]
-                    PreValidation.for_unique_list(field_value, "system", field_location)
+                    coding = values["protocolApplied"][0]["targetDisease"][i]["coding"]
+                    if sum(1 for x in coding if x.get("system") == Urls.snomed) != 1:
+                        raise ValueError(
+                            f"{field_location} must contain exactly one element with a system of {Urls.snomed}"
+                        )
                 except KeyError:
                     pass
         except KeyError:
