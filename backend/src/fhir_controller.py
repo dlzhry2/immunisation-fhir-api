@@ -693,6 +693,6 @@ class FhirController:
     def _identify_supplier_system(aws_event):
         supplier_system = aws_event["headers"]["SupplierSystem"]
         # supplier_system is obtained from the app. For batch app, need to look for the BatchSupplierSystem
-        if supplier_system == "Imms-Batch-App":
+        if "Imms-Batch-App" in supplier_system:
             supplier_system = aws_event["headers"]["BatchSupplierSystem"]
         return supplier_system
