@@ -1,6 +1,6 @@
 from utils.base_test import ImmunizationBaseTest
 from utils.immunisation_api import parse_location
-from utils.resource import create_an_imms_obj
+from utils.resource import generate_imms_resource
 
 
 class TestDeleteImmunization(ImmunizationBaseTest):
@@ -10,8 +10,7 @@ class TestDeleteImmunization(ImmunizationBaseTest):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 # Given
-                imms = create_an_imms_obj()
-                del imms["id"]
+                imms = generate_imms_resource()
                 response = imms_api.create_immunization(imms)
                 assert response.status_code == 201, response.text
                 imms_id = parse_location(response.headers["Location"])
