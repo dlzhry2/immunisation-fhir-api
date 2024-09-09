@@ -381,18 +381,18 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
     def test_post_no_snomed_code(self):
         """test that only snomed system is accepted"""
         covid_19_json_data = deepcopy(self.completed_json_data[VaccineTypes.covid_19])
-        for protocol in covid_19_json_data.get("protocolApplied", []):
-            target_diseases = protocol.get("targetDisease", [])
-            for i, _ in enumerate(target_diseases):
-                for coding in target_diseases[i].get("coding", []):
-                    if i == 0:
-                        coding["system"] = "http://othersystem.com/system1"
-                    else:
-                        coding["system"] = "http://Notsnomed.com/system2"
 
-        field_location = "protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
+        invalid_target_disease_value = [
+            {"coding": [{"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"}]},
+            {"coding": [{"system": "http://snomed.info/sct", "display": "Mumps"}]},
+            {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]},
+        ]
+        covid_19_json_data["protocolApplied"][0]["targetDisease"] = invalid_target_disease_value
 
-        expected_error_message = f"{field_location} is a mandatory field"
+        expected_error_message = (
+            "protocolApplied[0].targetDisease[1].coding[?(@.system=='http://snomed.info/sct')].code"
+            + " is a mandatory field"
+        )
 
         with self.assertRaises(ValueError) as cm:
             self.validator.validate(covid_19_json_data)
