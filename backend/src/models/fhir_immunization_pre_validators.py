@@ -8,6 +8,7 @@ from models.utils.generic_utils import (
 )
 from models.utils.pre_validator_utils import PreValidation
 from models.errors import MandatoryError
+from constants import Urls
 import re
 
 
@@ -634,27 +635,30 @@ class PreValidators:
 
     def pre_validate_target_disease(self, values: dict) -> dict:
         """
-        Pre-validate that, if protocolApplied[0].targetDisease exists, then each of its elements contains a coding field
+        Pre-validate that protocolApplied[0].targetDisease exists, and each of its elements contains a coding field
         """
         try:
             field_value = values["protocolApplied"][0]["targetDisease"]
             for element in field_value:
                 if "coding" not in element:
                     raise ValueError("Every element of protocolApplied[0].targetDisease must have 'coding' property")
-        except (KeyError, IndexError):
-            pass
+        except (KeyError, IndexError) as error:
+            raise ValueError("protocolApplied[0].targetDisease is a mandatory field") from error
 
     def pre_validate_target_disease_codings(self, values: dict) -> dict:
         """
-        Pre-validate that, if they exist, each
-        protocolApplied[0].targetDisease[{index}].valueCodeableConcept.coding.system is unique
+        Pre-validate that, if they exist, each protocolApplied[0].targetDisease[{index}].valueCodeableConcept.coding
+        has exactly one element where the system is the snomed url
         """
         try:
             for i in range(len(values["protocolApplied"][0]["targetDisease"])):
-                field_location = f"protocolApplied[0].targetDisease[{i}].coding[?(@.system=='FIELD_TO_REPLACE')]"
+                field_location = f"protocolApplied[0].targetDisease[{i}].coding"
                 try:
-                    field_value = values["protocolApplied"][0]["targetDisease"][i]["coding"]
-                    PreValidation.for_unique_list(field_value, "system", field_location)
+                    coding = values["protocolApplied"][0]["targetDisease"][i]["coding"]
+                    if sum(1 for x in coding if x.get("system") == Urls.snomed) != 1:
+                        raise ValueError(
+                            f"{field_location} must contain exactly one element with a system of {Urls.snomed}"
+                        )
                 except KeyError:
                     pass
         except KeyError:
