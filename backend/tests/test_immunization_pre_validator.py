@@ -324,7 +324,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + "Practitioner resource",
         )
 
-        # REJECT: Internal references other than to contained practitioner
+        # REJECT: Contained practitioner, internal references other than to contained practitioner
         _test_invalid_values_rejected(
             self,
             valid_json_data=deepcopy(valid_json_data),
@@ -334,7 +334,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             + " to the contained Practitioner resource",
         )
 
-        # ACCEPT: One reference to contained practitioner
+        # ACCEPT: Contained practitioner, one reference to contained practitioner
         _test_valid_values_accepted(
             self,
             valid_json_data=deepcopy(valid_json_data),
@@ -342,7 +342,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_values_to_test=[[valid_organization, valid_practitioner_reference]],
         )
 
-        # REJECT: No reference to contained practitioner
+        # REJECT: Contained practitioner, no reference to contained practitioner
         _test_invalid_values_rejected(
             self,
             valid_json_data=deepcopy(valid_json_data),
@@ -351,7 +351,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             expected_error_message="contained Practitioner resource id 'Pract1' must be referenced from performer",
         )
 
-        # REJECT: 2 references to contained practitioner
+        # REJECT: Contained practitioner, 2 references to contained practitioner
         _test_invalid_values_rejected(
             self,
             valid_json_data=deepcopy(valid_json_data),
