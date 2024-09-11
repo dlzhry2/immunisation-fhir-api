@@ -296,6 +296,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             }
         }
         valid_practitioner_reference = {"actor": {"reference": "#Pract1"}}
+        invalid_practitioner_reference = {"actor": {"reference": "#Pat1"}}
 
         valid_json_data = deepcopy(self.json_data)
         valid_json_data["contained"] = [
@@ -313,15 +314,25 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_values_to_test=[[valid_organization]],
         )
 
-        # TODO: Tests for references other than to practitioner
-        # REJECT: No contained practitioner, references
-        # _test_invalid_values_rejected(
-        #     self,
-        #     valid_json_data=deepcopy(valid_json_data_no_practitioner),
-        #     field_location=field_location,
-        #     invalid_value=[valid_organization, valid_practitioner_reference],
-        #     expected_error_message="FHIR MESSAGE?",
-        # )
+        # REJECT: No contained practitioner, internal references
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(valid_json_data_no_practitioner),
+            field_location=field_location,
+            invalid_value=[valid_organization, invalid_practitioner_reference],
+            expected_error_message="performer must not contain internal references when there is no contained "
+            + "Practitioner resource",
+        )
+
+        # REJECT: Internal references other than to contained practitioner
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(valid_json_data),
+            field_location=field_location,
+            invalid_value=[valid_organization, valid_practitioner_reference, invalid_practitioner_reference],
+            expected_error_message="performer must not contain any internal references other than"
+            + " to the contained Practitioner resource",
+        )
 
         # ACCEPT: One reference to contained practitioner
         _test_valid_values_accepted(
