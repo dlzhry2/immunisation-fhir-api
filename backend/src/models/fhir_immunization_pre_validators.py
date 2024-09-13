@@ -208,7 +208,7 @@ class PreValidators:
         Pre-validate that, if there is a contained Practitioner resource, there is exactly one reference to it from
         the performer, and that the performer does not reference any other internal resources
         """
-        # Obtain all of the internal references within performer
+        # Obtain all of the internal references found within performer
         performer_internal_references = [
             x.get("actor", {}).get("reference")
             for x in values.get("performer", [])
