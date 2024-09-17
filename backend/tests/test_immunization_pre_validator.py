@@ -84,6 +84,36 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
         self.assertIn(expected_error_message, actual_error_messages)
 
+    def test_pre_validate_top_level_elements(self):
+        """Test pre_validate_top_level_elements accepts valid values and rejects invalid values"""
+        # ACCEPT: Full resource with id
+        valid_json_data = deepcopy(self.json_data)
+        valid_json_data["id"] = "an-id"
+        self.assertIsNone(self.validator.validate(valid_json_data))
+
+        # REJECT: Immunization with subpotent and reportOrigin elements,
+        # Patient with extension element, Practitioner with identifier element
+        invalid_json_data = deepcopy(self.json_data)
+        invalid_json_data["isSubpotent"] = True
+        invalid_json_data["reportOrigin"] = "test"
+        invalid_json_data["contained"][1]["extension"] = []
+        invalid_json_data["contained"][0]["identifier"] = []
+        expected_error_messages = [
+            "isSubpotent is not an allowed element of the Immunization resource for this service",
+            "reportOrigin is not an allowed element of the Immunization resource for this service",
+            "extension is not an allowed element of the Patient resource for this service",
+            "identifier is not an allowed element of the Practitioner resource for this service",
+        ]
+
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(invalid_json_data)
+
+        full_error_message = str(error.exception)
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+
+        for expected_error_message in expected_error_messages:
+            self.assertIn(expected_error_message, actual_error_messages)
+
     def test_pre_validate_contained_contents(self):
         """Test pre_validate_contained_contents accepts valid values and rejects invalid values"""
         field_location = "contained"
@@ -157,7 +187,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             expected_error_message="contained must contain exactly one Patient resource",
         )
 
-        # Reject: No patient, two practitioners, one non-approved
+        # REJECT: No patient, two practitioners, one non-approved
         invalid_value = [practitioner_resource_1, practitioner_resource_2, non_approved_resource]
         expected_error_messages = [
             "contained must contain only Patient and Practitioner resources",
@@ -177,34 +207,41 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         for expected_error_message in expected_error_messages:
             self.assertIn(expected_error_message, actual_error_messages)
 
-    def test_pre_validate_top_level_elements(self):
-        """Test pre_validate_top_level_elements accepts valid values and rejects invalid values"""
-        # ACCEPT: Full resource with id
-        valid_json_data = deepcopy(self.json_data)
-        valid_json_data["id"] = "an-id"
-        self.assertIsNone(self.validator.validate(valid_json_data))
-
-        # REJECT: Immunization with subpotent and reportOrigin elements,
-        # Patient with extension element, Practitioner with identifier element
+        # REJECT: Missing patient id
         invalid_json_data = deepcopy(self.json_data)
-        invalid_json_data["isSubpotent"] = True
-        invalid_json_data["reportOrigin"] = "test"
-        invalid_json_data["contained"][1]["extension"] = []
-        invalid_json_data["contained"][0]["identifier"] = []
-        expected_error_messages = [
-            "isSubpotent is not an allowed element of the Immunization resource for this service",
-            "reportOrigin is not an allowed element of the Immunization resource for this service",
-            "extension is not an allowed element of the Patient resource for this service",
-            "identifier is not an allowed element of the Practitioner resource for this service",
-        ]
+        del invalid_json_data["contained"][1]["id"]
+
         with self.assertRaises(ValueError) as error:
             self.validator.validate(invalid_json_data)
 
         full_error_message = str(error.exception)
         actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
 
-        for expected_error_message in expected_error_messages:
-            self.assertIn(expected_error_message, actual_error_messages)
+        self.assertIn("The contained Patient resource must have an 'id' field", actual_error_messages)
+
+        # REJECT: Missing practitioner id
+        invalid_json_data = deepcopy(self.json_data)
+        del invalid_json_data["contained"][0]["id"]
+
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(invalid_json_data)
+
+        full_error_message = str(error.exception)
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+
+        self.assertIn("The contained Practitioner resource must have an 'id' field", actual_error_messages)
+
+        # REJECT: Duplicate id
+        invalid_json_data = deepcopy(self.json_data)
+        invalid_json_data["contained"][1]["id"] = invalid_json_data["contained"][0]["id"]
+
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(invalid_json_data)
+
+        full_error_message = str(error.exception)
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+
+        self.assertIn("ids must not be duplicated amongst contained resources", actual_error_messages)
 
     def test_pre_validate_patient_reference(self):
         """Test pre_validate_patient_reference accepts valid values and rejects invalid values"""
@@ -237,7 +274,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             valid_contained_with_patient,
             valid_patient_pat2,
-            expected_error_message="The reference '#Pat2' does not exist in the contained Patient resource",
+            expected_error_message="The reference '#Pat2' does not match the id of the contained Patient resource",
         )
         # Test case: contained Patient has no id, patient reference is #Pat1 - reject
         ValidatorModelTests.test_invalid_patient_reference_rejected(
@@ -245,6 +282,83 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             invalid_contained_with_no_id_in_patient,
             valid_patient_pat1,
             expected_error_message="The contained Patient resource must have an 'id' field",
+        )
+
+    def test_pre_validate_practitioner_reference(self):
+        """Test pre_validate_practitioner_reference accepts valid values and rejects invalid values"""
+        # Set up variables for testing
+        field_location = "performer"
+
+        valid_organization = {
+            "actor": {
+                "type": "Organization",
+                "identifier": {"system": "https://fhir.nhs.uk/Id/ods-organization-code", "value": "B0C4P"},
+            }
+        }
+        valid_practitioner_reference = {"actor": {"reference": "#Pract1"}}
+        invalid_practitioner_reference = {"actor": {"reference": "#Pat1"}}
+
+        valid_json_data = deepcopy(self.json_data)
+        valid_json_data["contained"] = [
+            ValidValues.patient_resource_id_Pat1,
+            ValidValues.practitioner_resource_id_Pract1,
+        ]
+
+        # ACCEPT: No contained practitioner, no references
+        valid_json_data_no_practitioner = deepcopy(self.json_data)
+        valid_json_data_no_practitioner["contained"] = [ValidValues.patient_resource_id_Pat1]
+        _test_valid_values_accepted(
+            self,
+            valid_json_data=deepcopy(valid_json_data_no_practitioner),
+            field_location=field_location,
+            valid_values_to_test=[[valid_organization]],
+        )
+
+        # REJECT: No contained practitioner, internal references
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(valid_json_data_no_practitioner),
+            field_location=field_location,
+            invalid_value=[valid_organization, invalid_practitioner_reference],
+            expected_error_message="performer must not contain internal references when there is no contained "
+            + "Practitioner resource",
+        )
+
+        # REJECT: Contained practitioner, internal references other than to contained practitioner
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(valid_json_data),
+            field_location=field_location,
+            invalid_value=[valid_organization, valid_practitioner_reference, invalid_practitioner_reference],
+            expected_error_message="performer must not contain any internal references other than"
+            + " to the contained Practitioner resource",
+        )
+
+        # ACCEPT: Contained practitioner, one reference to contained practitioner
+        _test_valid_values_accepted(
+            self,
+            valid_json_data=deepcopy(valid_json_data),
+            field_location=field_location,
+            valid_values_to_test=[[valid_organization, valid_practitioner_reference]],
+        )
+
+        # REJECT: Contained practitioner, no reference to contained practitioner
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(valid_json_data),
+            field_location=field_location,
+            invalid_value=[valid_organization],
+            expected_error_message="contained Practitioner resource id 'Pract1' must be referenced from performer",
+        )
+
+        # REJECT: Contained practitioner, 2 references to contained practitioner
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(valid_json_data),
+            field_location=field_location,
+            invalid_value=[valid_organization, valid_practitioner_reference, valid_practitioner_reference],
+            expected_error_message="contained Practitioner resource id 'Pract1' must only be referenced once"
+            + " from performer",
         )
 
     def test_pre_validate_patient_identifier(self):
@@ -350,90 +464,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             field_location="performer",
             invalid_value=InvalidValues.performer_with_two_organizations,
             expected_error_message="performer.actor[?@.type=='Organization'] must be unique",
-        )
-
-    def test_pre_validate_performer_actor_reference(self):
-        """Test pre_validate_performer_actor_reference accepts valid values and rejects invalid values"""
-
-        valid_contained_with_no_practitioner = [ValidValues.patient_resource_id_Pat1]
-
-        valid_contained_with_practitioner = [
-            ValidValues.practitioner_resource_id_Pract1,
-            ValidValues.patient_resource_id_Pat1,
-        ]
-
-        invalid_contained_with_no_id_in_practitioner = [
-            InvalidValues.practitioner_resource_with_no_id,
-            ValidValues.patient_resource_id_Pat1,
-        ]
-
-        valid_performer_with_one_pract1 = [
-            ValidValues.performer_actor_reference_internal_Pract1,
-            ValidValues.performer_actor_organization,
-        ]
-
-        valid_performer_with_no_actor_reference = [ValidValues.performer_actor_organization]
-
-        valid_performer_with_two_pract1 = [
-            ValidValues.performer_actor_reference_internal_Pract1,
-            ValidValues.performer_actor_reference_internal_Pract1,
-            ValidValues.performer_actor_organization,
-        ]
-
-        valid_performer_with_one_pract2 = [
-            ValidValues.performer_actor_reference_internal_Pract2,
-            ValidValues.performer_actor_organization,
-        ]
-
-        # Test case: Pract1 in contained, 1 actor of #Pract1 in performer - accept
-        ValidatorModelTests.test_valid_combinations_of_contained_and_performer_accepted(
-            self, valid_contained_with_practitioner, valid_performer_with_one_pract1
-        )
-
-        # Test case: No contained practitioner, no actor reference in performer - accept
-        ValidatorModelTests.test_valid_combinations_of_contained_and_performer_accepted(
-            self, valid_contained_with_no_practitioner, valid_performer_with_no_actor_reference
-        )
-
-        # Test case: Pract1 in contained, 2 actor of #Pract1 in performer - reject
-        ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
-            self,
-            valid_contained_with_practitioner,
-            valid_performer_with_two_pract1,
-            expected_error_message="performer.actor.reference must be a single reference to a "
-            + "contained Practitioner resource. References found: ['#Pract1', '#Pract1']",
-        )
-
-        # Test case: No contained practitioner, 1 actor of #Pract1 in performer - reject
-        ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
-            self,
-            valid_contained_with_no_practitioner,
-            valid_performer_with_one_pract1,
-            expected_error_message="The reference(s) ['#Pract1'] do not exist in the contained Practitioner resources",
-        )
-
-        # Test case: Contained practitioner with no ID, no actor reference in performer - reject
-        ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
-            self,
-            invalid_contained_with_no_id_in_practitioner,
-            valid_performer_with_no_actor_reference,
-            expected_error_message="The contained Practitioner resource must have an 'id' field",
-        )
-
-        # Test case: Pract1 in contained, no actor reference in performer - reject
-        ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
-            self,
-            valid_contained_with_practitioner,
-            valid_performer_with_no_actor_reference,
-            expected_error_message="contained Practitioner ID must be referenced by performer.actor.reference",
-        )
-
-        # Test case: Pract1 in contained, 1 actor of #Pract2 in performer - reject
-        ValidatorModelTests.test_invalid_performer_actor_reference_rejected(
-            self,
-            valid_contained_with_practitioner,
-            valid_performer_with_one_pract2,
-            expected_error_message="The reference '#Pract2' does not exist in the contained Practitioner resources",
         )
 
     def test_pre_validate_organization_identifier_value(self):
@@ -920,6 +950,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self, field_location, valid_strings_to_test=["https://fhir.hl7.org.uk/Id/140565"]
         )
+
 
 class TestImmunizationModelPreValidationRulesForReduceValidation(unittest.TestCase):
     """Test immunization pre validation rules on the FHIR model using the status="reduce validation" data"""
