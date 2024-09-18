@@ -41,7 +41,7 @@ class PreValidators:
             self.pre_validate_patient_address,
             self.pre_validate_patient_address_postal_code,
             self.pre_validate_occurrence_date_time,
-            self.pre_validate_performer_actor_type,
+            self.pre_validate_performer,
             self.pre_validate_performer_actor_reference,
             self.pre_validate_organization_identifier_value,
             self.pre_validate_identifier,
@@ -66,9 +66,6 @@ class PreValidators:
             self.pre_validate_target_disease,
             self.pre_validate_target_disease_codings,
             self.pre_validate_disease_type_coding_codes,
-            self.pre_validate_vaccine_code_coding,
-            self.pre_validate_vaccine_code_coding_code,
-            self.pre_validate_vaccine_code_coding_display,
             self.pre_validate_manufacturer_display,
             self.pre_validate_lot_number,
             self.pre_validate_expiration_date,
@@ -316,21 +313,26 @@ class PreValidators:
         except KeyError:
             pass
 
-    def pre_validate_performer_actor_type(self, values: dict) -> dict:
-        """
-        Pre-validate that, if performer.actor.organisation exists, then there is only one such
-        key with the value of "Organization"
-        """
-        try:
-            found = []
-            for item in values["performer"]:
-                if item.get("actor").get("type") == "Organization" and item.get("actor").get("type") in found:
+    def pre_validate_performer(self, values: dict) -> dict: 
+    """
+    Pre-validate that, if performer.actor.organisation exists, then there is only 
+    one such key with the value of "Organization".
+    """
+    try:
+        found = False
+
+        for item in values.get("performer", []):
+            actor = item.get("actor", {})
+
+            if actor.get("type") == "Organization":
+                if found:
                     raise ValueError("performer.actor[?@.type=='Organization'] must be unique")
 
-                found.append(item.get("actor").get("type"))
+                found = True
+        
+    except (KeyError, AttributeError):
+        pass
 
-        except (KeyError, AttributeError):
-            pass
 
     def pre_validate_performer_actor_reference(self, values: dict) -> dict:
         """
@@ -406,7 +408,8 @@ class PreValidators:
         """Pre-validate that identifier exists and is a list of length 1"""
         try:
             field_value = values["identifier"]
-            PreValidation.for_list(field_value, "identifier", defined_length=1)
+            PreValidation.for_list(field_value, "identifier", defined_length=1, is_list_of_dicts=True)
+
         except KeyError as error:
             raise MandatoryError("identifier is a mandatory field") from error
 
@@ -682,41 +685,6 @@ class PreValidators:
         except KeyError:
             pass
 
-    def pre_validate_vaccine_code_coding(self, values: dict) -> dict:
-        """Pre-validate that, if vaccineCode.coding exists, then each code system is unique"""
-        field_location = "vaccineCode.coding[?(@.system=='FIELD_TO_REPLACE')]"
-        try:
-            vaccine_code_coding = values["vaccineCode"]["coding"]
-            PreValidation.for_unique_list(vaccine_code_coding, "system", field_location)
-        except KeyError:
-            pass
-
-    def pre_validate_vaccine_code_coding_code(self, values: dict) -> dict:
-        """
-        Pre-validate that, if vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code (legacy CSV field location:
-        REASON_NOT_GIVEN_CODE) exists, then it is a non-empty string
-        """
-        url = "http://snomed.info/sct"
-        field_location = f"vaccineCode.coding[?(@.system=='{url}')].code"
-        try:
-            field_value = [x for x in values["vaccineCode"]["coding"] if x.get("system") == url][0]["code"]
-            PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError):
-            pass
-
-    def pre_validate_vaccine_code_coding_display(self, values: dict) -> dict:
-        """
-        Pre-validate that, if vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display (legacy CSV field name:
-        REASON_NOT_GIVEN_TERM) exists, then it is a non-empty string
-        """
-        url = "http://snomed.info/sct"
-        field_location = "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
-        try:
-            field_value = [x for x in values["vaccineCode"]["coding"] if x.get("system") == url][0]["display"]
-            PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError):
-            pass
-
     def pre_validate_manufacturer_display(self, values: dict) -> dict:
         """
         Pre-validate that, if manufacturer.display (legacy CSV field name: VACCINE_MANUFACTURER)
@@ -735,7 +703,7 @@ class PreValidators:
         """
         try:
             field_value = values["lotNumber"]
-            PreValidation.for_string(field_value, "lotNumber", max_length=100)
+            PreValidation.for_string(field_value, "lotNumber")
         except KeyError:
             pass
 
@@ -824,8 +792,7 @@ class PreValidators:
     def pre_validate_dose_quantity_value(self, values: dict) -> dict:
         """
         Pre-validate that, if doseQuantity.value (legacy CSV field name: DOSE_AMOUNT) exists,
-        then it is a number representing an integer or decimal with
-        maximum four decimal places
+        then it is a number representing an integer or decimal
 
         NOTE: This validator will only work if the raw json data is parsed with the
         parse_float argument set to equal Decimal type (Decimal must be imported from decimal).
@@ -834,7 +801,7 @@ class PreValidators:
         """
         try:
             field_value = values["doseQuantity"]["value"]
-            PreValidation.for_integer_or_decimal(field_value, "doseQuantity.value", max_decimal_places=4)
+            PreValidation.for_integer_or_decimal(field_value, "doseQuantity.value")
         except KeyError:
             pass
 

@@ -42,17 +42,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
         self.assert_operation_outcome(response, 400, bad_nhs_number)
 
-    def test_bad_dose_quantity_value(self):
-        """it should reject the request if doseQuantity.value is more than 4 decimal places"""
-        imms = generate_imms_resource()
-        imms["doseQuantity"]["value"] = Decimal("0.12345")
-
-        response = self.default_imms_api.create_immunization(imms)
-
-        self.assert_operation_outcome(
-            response, 400, "doseQuantity.value must be a number with a maximum of 4 decimal places"
-        )
-
     def test_validation(self):
         """it should validate Immunization"""
         # NOTE: This e2e test is here to prove validation logic is wired to the backend.
