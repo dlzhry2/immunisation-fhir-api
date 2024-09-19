@@ -206,7 +206,7 @@ paths:
       description: |
         ## Overview
         Use this endpoint to record the administration of a vaccination.
-
+aa
         This endpoint is not available for when you are authenticated using patient access.
 
         ## Sandbox testing
