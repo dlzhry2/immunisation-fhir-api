@@ -84,6 +84,36 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
         self.assertIn(expected_error_message, actual_error_messages)
 
+    def test_pre_validate_top_level_elements(self):
+        """Test pre_validate_top_level_elements accepts valid values and rejects invalid values"""
+        # ACCEPT: Full resource with id
+        valid_json_data = deepcopy(self.json_data)
+        valid_json_data["id"] = "an-id"
+        self.assertIsNone(self.validator.validate(valid_json_data))
+
+        # REJECT: Immunization with subpotent and reportOrigin elements,
+        # Patient with extension element, Practitioner with identifier element
+        invalid_json_data = deepcopy(self.json_data)
+        invalid_json_data["isSubpotent"] = True
+        invalid_json_data["reportOrigin"] = "test"
+        invalid_json_data["contained"][1]["extension"] = []
+        invalid_json_data["contained"][0]["identifier"] = []
+        expected_error_messages = [
+            "isSubpotent is not an allowed element of the Immunization resource for this service",
+            "reportOrigin is not an allowed element of the Immunization resource for this service",
+            "extension is not an allowed element of the Patient resource for this service",
+            "identifier is not an allowed element of the Practitioner resource for this service",
+        ]
+
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(invalid_json_data)
+
+        full_error_message = str(error.exception)
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+
+        for expected_error_message in expected_error_messages:
+            self.assertIn(expected_error_message, actual_error_messages)
+
     def test_pre_validate_contained_contents(self):
         """Test pre_validate_contained_contents accepts valid values and rejects invalid values"""
         field_location = "contained"
@@ -175,6 +205,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             practitioner_resource_2,
             non_approved_resource,
         ]
+
         expected_error_messages = [
             "contained must contain only Patient and Practitioner resources",
             "contained must contain exactly one Patient resource",
@@ -193,34 +224,41 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         for expected_error_message in expected_error_messages:
             self.assertIn(expected_error_message, actual_error_messages)
 
-    def test_pre_validate_top_level_elements(self):
-        """Test pre_validate_top_level_elements accepts valid values and rejects invalid values"""
-        # ACCEPT: Full resource with id
-        valid_json_data = deepcopy(self.json_data)
-        valid_json_data["id"] = "an-id"
-        self.assertIsNone(self.validator.validate(valid_json_data))
-
-        # REJECT: Immunization with subpotent and reportOrigin elements,
-        # Patient with extension element, Practitioner with identifier element
+        # REJECT: Missing patient id
         invalid_json_data = deepcopy(self.json_data)
-        invalid_json_data["isSubpotent"] = True
-        invalid_json_data["reportOrigin"] = "test"
-        invalid_json_data["contained"][1]["extension"] = []
-        invalid_json_data["contained"][0]["identifier"] = []
-        expected_error_messages = [
-            "isSubpotent is not an allowed element of the Immunization resource for this service",
-            "reportOrigin is not an allowed element of the Immunization resource for this service",
-            "extension is not an allowed element of the Patient resource for this service",
-            "identifier is not an allowed element of the Practitioner resource for this service",
-        ]
+        del invalid_json_data["contained"][1]["id"]
+
         with self.assertRaises(ValueError) as error:
             self.validator.validate(invalid_json_data)
 
         full_error_message = str(error.exception)
         actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
 
-        for expected_error_message in expected_error_messages:
-            self.assertIn(expected_error_message, actual_error_messages)
+        self.assertIn("The contained Patient resource must have an 'id' field", actual_error_messages)
+
+        # REJECT: Missing practitioner id
+        invalid_json_data = deepcopy(self.json_data)
+        del invalid_json_data["contained"][0]["id"]
+
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(invalid_json_data)
+
+        full_error_message = str(error.exception)
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+
+        self.assertIn("The contained Practitioner resource must have an 'id' field", actual_error_messages)
+
+        # REJECT: Duplicate id
+        invalid_json_data = deepcopy(self.json_data)
+        invalid_json_data["contained"][1]["id"] = invalid_json_data["contained"][0]["id"]
+
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(invalid_json_data)
+
+        full_error_message = str(error.exception)
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+
+        self.assertIn("ids must not be duplicated amongst contained resources", actual_error_messages)
 
     def test_pre_validate_patient_reference(self):
         """Test pre_validate_patient_reference accepts valid values and rejects invalid values"""
@@ -256,7 +294,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             valid_contained_with_patient,
             valid_patient_pat2,
-            expected_error_message="The reference '#Pat2' does not exist in the contained Patient resource",
+            expected_error_message="The reference '#Pat2' does not match the id of the contained Patient resource",
         )
         # Test case: contained Patient has no id, patient reference is #Pat1 - reject
         ValidatorModelTests.test_invalid_patient_reference_rejected(
@@ -264,6 +302,83 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             invalid_contained_with_no_id_in_patient,
             valid_patient_pat1,
             expected_error_message="The contained Patient resource must have an 'id' field",
+        )
+
+    def test_pre_validate_practitioner_reference(self):
+        """Test pre_validate_practitioner_reference accepts valid values and rejects invalid values"""
+        # Set up variables for testing
+        field_location = "performer"
+
+        valid_organization = {
+            "actor": {
+                "type": "Organization",
+                "identifier": {"system": "https://fhir.nhs.uk/Id/ods-organization-code", "value": "B0C4P"},
+            }
+        }
+        valid_practitioner_reference = {"actor": {"reference": "#Pract1"}}
+        invalid_practitioner_reference = {"actor": {"reference": "#Pat1"}}
+
+        valid_json_data = deepcopy(self.json_data)
+        valid_json_data["contained"] = [
+            ValidValues.patient_resource_id_Pat1,
+            ValidValues.practitioner_resource_id_Pract1,
+        ]
+
+        # ACCEPT: No contained practitioner, no references
+        valid_json_data_no_practitioner = deepcopy(self.json_data)
+        valid_json_data_no_practitioner["contained"] = [ValidValues.patient_resource_id_Pat1]
+        _test_valid_values_accepted(
+            self,
+            valid_json_data=deepcopy(valid_json_data_no_practitioner),
+            field_location=field_location,
+            valid_values_to_test=[[valid_organization]],
+        )
+
+        # REJECT: No contained practitioner, internal references
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(valid_json_data_no_practitioner),
+            field_location=field_location,
+            invalid_value=[valid_organization, invalid_practitioner_reference],
+            expected_error_message="performer must not contain internal references when there is no contained "
+            + "Practitioner resource",
+        )
+
+        # REJECT: Contained practitioner, internal references other than to contained practitioner
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(valid_json_data),
+            field_location=field_location,
+            invalid_value=[valid_organization, valid_practitioner_reference, invalid_practitioner_reference],
+            expected_error_message="performer must not contain any internal references other than"
+            + " to the contained Practitioner resource",
+        )
+
+        # ACCEPT: Contained practitioner, one reference to contained practitioner
+        _test_valid_values_accepted(
+            self,
+            valid_json_data=deepcopy(valid_json_data),
+            field_location=field_location,
+            valid_values_to_test=[[valid_organization, valid_practitioner_reference]],
+        )
+
+        # REJECT: Contained practitioner, no reference to contained practitioner
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(valid_json_data),
+            field_location=field_location,
+            invalid_value=[valid_organization],
+            expected_error_message="contained Practitioner resource id 'Pract1' must be referenced from performer",
+        )
+
+        # REJECT: Contained practitioner, 2 references to contained practitioner
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(valid_json_data),
+            field_location=field_location,
+            invalid_value=[valid_organization, valid_practitioner_reference, valid_practitioner_reference],
+            expected_error_message="contained Practitioner resource id 'Pract1' must only be referenced once"
+            + " from performer",
         )
 
     def test_pre_validate_patient_identifier(self):
