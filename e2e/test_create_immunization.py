@@ -1,5 +1,4 @@
 import uuid
-from decimal import Decimal
 from utils.base_test import ImmunizationBaseTest
 from utils.resource import generate_imms_resource, get_full_row_from_identifier
 

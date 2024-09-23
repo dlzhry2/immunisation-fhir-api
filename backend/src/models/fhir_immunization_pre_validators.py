@@ -313,26 +313,25 @@ class PreValidators:
         except KeyError:
             pass
 
-    def pre_validate_performer(self, values: dict) -> dict: 
-    """
-    Pre-validate that, if performer.actor.organisation exists, then there is only 
-    one such key with the value of "Organization".
-    """
-    try:
-        found = False
+    def pre_validate_performer(self, values: dict) -> dict:
+        """
+        Pre-validate that, if performer.actor.organisation exists, then there is only
+        one such key with the value of "Organization".
+        """
+        try:
+            found = False
 
-        for item in values.get("performer", []):
-            actor = item.get("actor", {})
+            for item in values.get("performer", []):
+                actor = item.get("actor", {})
 
-            if actor.get("type") == "Organization":
-                if found:
-                    raise ValueError("performer.actor[?@.type=='Organization'] must be unique")
+                if actor.get("type") == "Organization":
+                    if found:
+                        raise ValueError("performer.actor[?@.type=='Organization'] must be unique")
 
-                found = True
-        
-    except (KeyError, AttributeError):
-        pass
+                    found = True
 
+        except (KeyError, AttributeError):
+            pass
 
     def pre_validate_performer_actor_reference(self, values: dict) -> dict:
         """
@@ -405,10 +404,10 @@ class PreValidators:
             pass
 
     def pre_validate_identifier(self, values: dict) -> dict:
-        """Pre-validate that identifier exists and is a list of length 1"""
+        """Pre-validate that identifier exists and is a list of length 1 and are an array of objects"""
         try:
             field_value = values["identifier"]
-            PreValidation.for_list(field_value, "identifier", defined_length=1, is_list_of_dicts=True)
+            PreValidation.for_list(field_value, "identifier", defined_length=1, elements_are_dicts=True)
 
         except KeyError as error:
             raise MandatoryError("identifier is a mandatory field") from error

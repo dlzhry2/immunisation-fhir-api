@@ -497,6 +497,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_lists_to_test=[[valid_list_element]],
             predefined_list_length=1,
             valid_list_element=valid_list_element,
+            is_list_of_dicts=True,
         )
 
     def test_pre_validate_identifier_value(self):
@@ -914,7 +915,8 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="lotNumber",
             valid_strings_to_test=["sample", "0123456789101112"],
-            invalid_length_strings_to_test="",
+            defined_length="",
+            invalid_strings_to_test="",
         )
 
     def test_pre_validate_expiration_date(self):
@@ -980,6 +982,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 Decimal("100.52"),  # 2 decimal places
                 Decimal("32.430"),  # 3 decimal places
                 Decimal("1.1234"),  # 4 decimal places,
+                Decimal("1.123456789"),  # 9 decimal place
             ],
         )
 
