@@ -51,7 +51,6 @@ class PreValidators:
             self.pre_validate_patient_address_postal_code,
             self.pre_validate_occurrence_date_time,
             self.pre_validate_performer,
-            self.pre_validate_performer_actor_reference,
             self.pre_validate_organization_identifier_value,
             self.pre_validate_identifier,
             self.pre_validate_identifier_value,
