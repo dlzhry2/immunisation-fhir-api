@@ -491,7 +491,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_json_data=deepcopy(self.json_data),
             field_location="performer",
             invalid_value=InvalidValues.performer_with_two_organizations,
-            expected_error_message="performer.actor[?@.type=='Organization'] must be unique",
+            expected_error_message=(
+                "There must be exactly one performer.actor[?@.type=='Organization'] with type 'Organization'"
+            ),
         )
 
     def test_pre_validate_organization_identifier_value(self):

@@ -371,20 +371,19 @@ class PreValidators:
 
     def pre_validate_performer(self, values: dict) -> dict:
         """
-        Pre-validate that, if performer.actor.organisation exists, then there is only
-        one such key with the value of "Organization".
+        Pre-validate that there is exactly one performer instance where actor.type is 'Organization'.
         """
         try:
-            found = False
-
+            organization_count = 0
             for item in values.get("performer", []):
                 actor = item.get("actor", {})
-
                 if actor.get("type") == "Organization":
-                    if found:
-                        raise ValueError("performer.actor[?@.type=='Organization'] must be unique")
+                    organization_count += 1
 
-                    found = True
+            if organization_count != 1:
+                raise ValueError(
+                    "There must be exactly one performer.actor[?@.type=='Organization'] with type 'Organization'"
+                )
 
         except (KeyError, AttributeError):
             pass
