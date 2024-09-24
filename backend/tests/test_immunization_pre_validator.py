@@ -496,6 +496,16 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ),
         )
 
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(self.json_data),
+            field_location="performer",
+            invalid_value=InvalidValues.performer_with_no_organizations,
+            expected_error_message=(
+                "There must be exactly one performer.actor[?@.type=='Organization'] with type 'Organization'"
+            ),
+        )
+
     def test_pre_validate_organization_identifier_value(self):
         """Test pre_validate_organization_identifier_value accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_string_value(
@@ -945,7 +955,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self,
             field_location="lotNumber",
-            valid_strings_to_test=["sample", "0123456789101112"],
+            valid_strings_to_test=["sample", ValidValues.for_strings_with_any_length_chars],
             defined_length="",
             invalid_strings_to_test="",
         )
@@ -1006,8 +1016,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="doseQuantity.value",
             valid_decimals_and_integers_to_test=[
-                1,  # small integer
-                100,  # larger integer
                 Decimal("1.0"),  # Only 0s after decimal point
                 Decimal("0.1"),  # 1 decimal place
                 Decimal("100.52"),  # 2 decimal places

@@ -482,7 +482,6 @@ class ValidatorModelTests:
         test_instance: unittest.TestCase,
         field_location: str,
         valid_decimals_and_integers_to_test: list,
-        max_decimal_places: int = None,
     ):
         """
         Test that a FHIR model accepts valid decimal or integer values and rejects the following
@@ -502,13 +501,13 @@ class ValidatorModelTests:
         )
 
         # Test invalid data types
-        for invalid_data_type_for_decimals_or_integers in InvalidDataTypes.for_decimals_or_integers:
+        for invalid_data_type_for_decimals in InvalidDataTypes.for_decimals:
             test_invalid_values_rejected(
                 test_instance,
                 valid_json_data,
                 field_location=field_location,
-                invalid_value=invalid_data_type_for_decimals_or_integers,
-                expected_error_message=f"{field_location} must be a number",
+                invalid_value=invalid_data_type_for_decimals,
+                expected_error_message=f"{field_location} must be a decimal",
             )
 
         # # Test Decimal with more than the maximum number of decimal places
