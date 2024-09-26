@@ -501,13 +501,13 @@ class ValidatorModelTests:
         )
 
         # Test invalid data types
-        for invalid_data_type_for_decimals in InvalidDataTypes.for_decimals:
+        for invalid_data_type_for_decimals_or_integers in InvalidDataTypes.for_decimals_or_integers:
             test_invalid_values_rejected(
                 test_instance,
                 valid_json_data,
                 field_location=field_location,
-                invalid_value=invalid_data_type_for_decimals,
-                expected_error_message=f"{field_location} must be a decimal",
+                invalid_value=invalid_data_type_for_decimals_or_integers,
+                expected_error_message=f"{field_location} must be a number",
             )
 
         # # Test Decimal with more than the maximum number of decimal places

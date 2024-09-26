@@ -18,7 +18,7 @@ class InvalidDataTypes:
     """Store lists of invalid data types for tests"""
 
     for_integers = [None] + floats + decimals + booleans + dicts + lists + strings
-    for_decimals = [None] + floats + booleans + dicts + lists + strings + integers
+    for_decimals_or_integers = [None] + floats + booleans + dicts + lists + strings
     for_booleans = [None] + integers + floats + decimals + dicts + lists + strings
     for_dicts = [None] + integers + floats + decimals + booleans + lists + strings
     for_lists = [None] + integers + decimals + floats + booleans + dicts + strings

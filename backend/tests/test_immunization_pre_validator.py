@@ -1016,6 +1016,8 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="doseQuantity.value",
             valid_decimals_and_integers_to_test=[
+                1,  # small integer
+                100,  # larger integer
                 Decimal("1.0"),  # Only 0s after decimal point
                 Decimal("0.1"),  # 1 decimal place
                 Decimal("100.52"),  # 2 decimal places

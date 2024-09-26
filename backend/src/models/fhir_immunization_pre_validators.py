@@ -790,7 +790,7 @@ class PreValidators:
     def pre_validate_dose_quantity_value(self, values: dict) -> dict:
         """
         Pre-validate that, if doseQuantity.value (legacy CSV field name: DOSE_AMOUNT) exists,
-        then it is a number representing a decimal
+        then it is a number representing an integer or decimal
 
         NOTE: This validator will only work if the raw json data is parsed with the
         parse_float argument set to equal Decimal type (Decimal must be imported from decimal).
@@ -799,7 +799,7 @@ class PreValidators:
         """
         try:
             field_value = values["doseQuantity"]["value"]
-            PreValidation.for_decimal(field_value, "doseQuantity.value")
+            PreValidation.for_integer_or_decimal(field_value, "doseQuantity.value")
         except KeyError:
             pass
 
