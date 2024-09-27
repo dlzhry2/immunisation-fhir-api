@@ -956,7 +956,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="lotNumber",
             valid_strings_to_test=["sample", ValidValues.for_strings_with_any_length_chars],
-            defined_length="",
             invalid_strings_to_test="",
         )
 
