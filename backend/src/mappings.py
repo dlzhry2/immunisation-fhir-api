@@ -14,7 +14,7 @@ class VaccineTypes:
     rsv: str = "RSV"
 
     all: list[str] = field(
-        default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]
+        default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr,VaccineTypes.rsv]
     )
 
 
