@@ -194,14 +194,6 @@ class PreValidation:
         ):
             raise TypeError(f"{field_location} must be a number")
 
-        # if max_decimal_places is not None:
-        #     if isinstance(field_value, Decimal):
-        #         if abs(field_value.as_tuple().exponent) > max_decimal_places:
-        #             raise ValueError(
-        #                 f"{field_location} must be a number with a maximum of {max_decimal_places}" +
-        #                  " decimal places"
-        #             )
-
     @staticmethod
     def for_unique_list(
         list_to_check: list,

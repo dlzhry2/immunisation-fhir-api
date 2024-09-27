@@ -956,7 +956,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="lotNumber",
             valid_strings_to_test=["sample", ValidValues.for_strings_with_any_length_chars],
-            invalid_strings_to_test="",
+            invalid_strings_to_test=["", None, 42, 3.889],
         )
 
     def test_pre_validate_expiration_date(self):
