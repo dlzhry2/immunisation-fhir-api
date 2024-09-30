@@ -10,18 +10,26 @@ class TestDeleteImmunization(ImmunizationBaseTest):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 # Given
-                imms = generate_imms_resource()
-                response = imms_api.create_immunization(imms)
-                assert response.status_code == 201, response.text
-                imms_id = parse_location(response.headers["Location"])
+                immunization_data_list = [
+                    generate_imms_resource(),
+                    generate_imms_resource(sample_data_file_name="completed_rsv_immunization_event")
+                ]
+
+                created_ids = []
+                for imms_data in immunization_data_list:
+                    response = imms_api.create_immunization(imms_data)
+                    self.assertEqual(response.status_code, 201)
+                    created_id = parse_location(response.headers["Location"])
+                    created_ids.append(created_id)
 
                 # When
-                response = imms_api.delete_immunization(imms_id)
+                for imms_id in created_ids:
+                    delete_response = imms_api.delete_immunization(imms_id)
 
-                # Then
-                self.assertEqual(response.status_code, 204, response.text)
-                self.assertEqual(response.text, "")
-                self.assertTrue("Location" not in response.headers)
+                    # Then
+                    self.assertEqual(delete_response.status_code, 204)
+                    self.assertEqual(delete_response.text, "")
+                    self.assertTrue("Location" not in delete_response.headers)
 
     def test_delete_immunization_already_deleted(self):
         """it should return 404 when deleting a deleted resource"""

@@ -72,7 +72,7 @@ class TestGenericUtils(unittest.TestCase):
         valid_target_disease_element = {
             "coding": [
                 {"system": "ANOTHER_SYSTEM_URL", "code": "ANOTHER_CODE", "display": "Respiratory syncytial virus infection"},
-                {"system": "http://snomed.info/sct", "code": f"{DiseaseCodes.rsv}", "display": "Respiratory syncytial virus infection"},
+                {"system": "https://snomed.info/sct", "code": f"{DiseaseCodes.rsv}", "display": "Respiratory syncytial virus infection"},
             ]
         }
         rsv_json_data["protocolApplied"][0]["targetDisease"][0] = valid_target_disease_element
