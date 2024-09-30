@@ -43,7 +43,7 @@ class TestGetImmunization(ImmunizationBaseTest):
 
                     # Then
                     self.assertEqual(response.status_code, 200)
-                    self.assertEqual(response.json()["id"], immunization_id)
+                    self.assertEqual(response.json()["id"], immunization["id"])
                     self.assertEqual(response.json(parse_float=Decimal), immunization["expected"])
 
     def not_found(self):
