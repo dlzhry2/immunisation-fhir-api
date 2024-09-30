@@ -42,8 +42,8 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
                 # Store records for both patients and vaccines
                 for patient in patients_vaccines:
-                    patient["covid_19_id"], = self.store_records(patient["covid_19"])
-                    patient["rsv_id"], = self.store_records(patient["rsv"])
+                    patient["covid_19_id"], _ = self.store_records(patient["covid_19"])
+                    patient["rsv_id"], _ = self.store_records(patient["rsv"])
 
                 # When and Then - Search and verify each vaccine type for valid_nhs_number1
                 for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.rsv]:
