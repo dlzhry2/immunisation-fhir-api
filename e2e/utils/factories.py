@@ -156,7 +156,8 @@ def _make_user_restricted_app(
             app.add_attribute(
                 "VaccineTypePermissions",
                 "flu:create,covid19:create,mmr:create,hpv:create,covid19:update,flu:read,covid19:read,flu:delete,"
-                "covid19:delete,mmr:delete,flu:search,covid19:search,mmr:search"
+                "covid19:delete,mmr:delete,flu:search,covid19:search,mmr:search,rsv:create,rsv:search,rsv:update,"
+                "rsv:read,rsv:delete"
             )
         app.add_product(f"identity-service-{get_apigee_env()}")
 
