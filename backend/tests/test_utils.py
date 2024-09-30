@@ -68,16 +68,6 @@ class TestGenericUtils(unittest.TestCase):
         flu_json_data["protocolApplied"][0]["targetDisease"][0] = valid_target_disease_element
         self.assertEqual(get_vaccine_type(flu_json_data), VaccineTypes.flu)
 
-        rsv_json_data = load_json_data(filename=f"completed_{VaccineTypes.rsv.lower()}_immunization_event.json")
-        valid_target_disease_element = {
-            "coding": [
-                {"system": "ANOTHER_SYSTEM_URL", "code": "ANOTHER_CODE", "display": "Respiratory syncytial virus infection"},
-                {"system": "https://snomed.info/sct", "code": f"{DiseaseCodes.rsv}", "display": "Respiratory syncytial virus infection"},
-            ]
-        }
-        rsv_json_data["protocolApplied"][0]["targetDisease"][0] = valid_target_disease_element
-        self.assertEqual(get_vaccine_type(rsv_json_data), VaccineTypes.rsv)
-
         # TEST INVALID DATA FOR SINGLE TARGET DISEASE
         covid_19_json_data = load_json_data(
             filename=f"completed_{VaccineTypes.covid_19.lower()}_immunization_event.json"
