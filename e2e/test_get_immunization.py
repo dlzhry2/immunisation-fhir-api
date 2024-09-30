@@ -11,7 +11,7 @@ class TestGetImmunization(ImmunizationBaseTest):
     def test_get_imms(self):
         """it should get a FHIR Immunization resource"""
         for imms_api in self.imms_apis:
-            with self.subTest(imms_api=imms_api):
+            with self.subTest(imms_api):
                 # Given
                 immunizations = [
                     {
@@ -43,7 +43,7 @@ class TestGetImmunization(ImmunizationBaseTest):
 
                     # Then
                     self.assertEqual(response.status_code, 200)
-                    self.assertEqual(response.json()["id"])
+                    self.assertEqual(response.json()["id"], immunization_id)
                     self.assertEqual(response.json(parse_float=Decimal), immunization["expected"])
 
     def not_found(self):
