@@ -57,14 +57,12 @@ class AppRestrictedAuthentication(BaseAuthentication):
         self.client_id = config.client_id
         self.kid = config.kid
         self.token_url = f"{auth_url}/token"
-        print(f"self.client_id :{self.client_id}")
 
     def __str__(self):
         return AuthType.APP_RESTRICTED.value
 
     def get_access_token(self):
         now = int(time())
-        print("1")
         claims = {
             "iss": self.client_id,
             "sub": self.client_id,
@@ -73,7 +71,6 @@ class AppRestrictedAuthentication(BaseAuthentication):
             "exp": now + self.expiry,
             "jti": str(uuid.uuid4())
         }
-        print(f"self.client_id :{self.client_id}")
         _jwt = jwt.encode(claims, self.private_key, algorithm='RS512', headers={"kid": self.kid})
 
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
