@@ -25,43 +25,35 @@ class TestSearchImmunization(ImmunizationBaseTest):
     def test_search_imms(self):
         """it should search records given nhs-number and vaccine type"""
         for imms_api in self.imms_apis:
-            with self.subTest(imms_api=imms_api):
-                # Given two patients each with one covid_19 and RSV immunizations
-                patients_vaccines = [
-                    {
-                        "nhs_number": valid_nhs_number1,
-                        "covid_19": generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19),
-                        "rsv": generate_imms_resource(valid_nhs_number1, VaccineTypes.rsv)
-                    },
-                    {
-                        "nhs_number": valid_nhs_number2,
-                        "covid_19": generate_imms_resource(valid_nhs_number2, VaccineTypes.covid_19),
-                        "rsv": generate_imms_resource(valid_nhs_number2, VaccineTypes.rsv)
-                    }
-                ]
+            with self.subTest(imms_api):
+                # Given two patients each with one covid_19
+                covid_19_p1 = generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19)
+                covid_19_p2 = generate_imms_resource(valid_nhs_number2, VaccineTypes.covid_19)
+                rsv_p1 = generate_imms_resource(valid_nhs_number1, VaccineTypes.rsv)
+                rsv_p2 = generate_imms_resource(valid_nhs_number2, VaccineTypes.rsv)
+                covid_19_p1_id, covid_19_p2_id = self.store_records(covid_19_p1, covid_19_p2)
+                rsv_p1_id, rsv_p2_id = self.store_records(rsv_p1, rsv_p2)
 
-                # Store records for both patients and vaccines
-                for patient in patients_vaccines:
-                    patient["covid_19_id"], _ = self.store_records(patient["covid_19"])
-                    patient["rsv_id"], _ = self.store_records(patient["rsv"])
+                # When
+                response = imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.covid_19)
+                response_rsv = imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.rsv)
 
-                # When and Then - Search and verify each vaccine type for valid_nhs_number1
-                for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.rsv]:
-                    response = imms_api.search_immunizations(valid_nhs_number1, vaccine_type)
+                # Then
+                self.assertEqual(response.status_code, 200, response.text)
+                body = response.json()
+                self.assertEqual(body["resourceType"], "Bundle")
 
-                    self.assertEqual(response.status_code, 200)
-                    body = response.json()
-                    self.assertEqual(body["resourceType"], "Bundle")
+                resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
+                self.assertTrue(covid_19_p1_id in resource_ids)
+                self.assertTrue(covid_19_p2_id not in resource_ids)
 
-                    resource_ids = [entry["resource"]["id"] for entry in body.get("entry", [])]
+                self.assertEqual(response_rsv.status_code, 200, response_rsv.text)
+                body_rsv = response_rsv.json()
+                self.assertEqual(body_rsv["resourceType"], "Bundle")
 
-                    # Check for correct presence and absence of vaccine records
-                    if vaccine_type == VaccineTypes.covid_19:
-                        self.assertIn(patients_vaccines[0]["covid_19_id"], resource_ids)
-                        self.assertNotIn(patients_vaccines[1]["covid_19_id"], resource_ids)
-                    elif vaccine_type == VaccineTypes.rsv:
-                        self.assertIn(patients_vaccines[0]["rsv_id"], resource_ids)
-                        self.assertNotIn(patients_vaccines[1]["rsv_id"], resource_ids)
+                resource_ids = [entity["resource"]["id"] for entity in body_rsv["entry"]]
+                self.assertTrue(rsv_p1_id in resource_ids)
+                self.assertTrue(rsv_p2_id not in resource_ids)
 
     def test_search_patient_multiple_diseases(self):
         # Given patient has two vaccines
