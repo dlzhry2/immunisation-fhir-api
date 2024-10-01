@@ -6,7 +6,6 @@ import unittest
 from decimal import Decimal
 from typing import Literal, Any
 from jsonpath_ng.ext import parse
-from pydantic import ValidationError
 
 
 def load_json_data(filename: str):
@@ -32,6 +31,14 @@ def generate_field_location_for_extension(url: str, system: str, field_type: Lit
     return f"extension[?(@.url=='{url}')].valueCodeableConcept." + f"coding[?(@.system=='{system}')].{field_type}"
 
 
+def update_target_disease_code(imms: dict, target_disease_code: str):
+    """
+    Update the disease code found at the first index of coding field,
+    within the first index of targetDisease field with a new code
+    """
+    imms["protocolApplied"][0]["targetDisease"][0]["coding"][0]["code"] = target_disease_code
+
+
 def test_valid_values_accepted(
     test_instance: unittest.TestCase,
     valid_json_data: dict,
@@ -43,7 +50,7 @@ def test_valid_values_accepted(
         # Update the value at the relevant field location to the valid value to be tested
         valid_json_data = parse(field_location).update(valid_json_data, valid_item)
         # Test that the valid data is accepted by the model
-        test_instance.assertTrue(test_instance.validator.validate(valid_json_data))
+        test_instance.assertIsNone(test_instance.validator.validate(valid_json_data))
 
 
 def test_invalid_values_rejected(
@@ -63,13 +70,12 @@ def test_invalid_values_rejected(
     """
     # Create invalid json data by amending the value of the relevant field
     invalid_json_data = parse(field_location).update(valid_json_data, invalid_value)
-    
+
     # Test that correct error type is raised
     with test_instance.assertRaises(ValueError or TypeError) as error:
         test_instance.validator.validate(invalid_json_data)
 
-        
     full_error_message = str(error.exception)
 
-    actual_error_messages = full_error_message.replace('Validation errors: ', '').split('; ')
+    actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
     test_instance.assertIn(expected_error_message, actual_error_messages)

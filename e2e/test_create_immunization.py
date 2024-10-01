@@ -1,6 +1,7 @@
 import uuid
+from decimal import Decimal
 from utils.base_test import ImmunizationBaseTest
-from utils.resource import create_an_imms_obj, get_full_row_from_identifier
+from utils.resource import generate_imms_resource, get_full_row_from_identifier
 
 
 class TestCreateImmunization(ImmunizationBaseTest):
@@ -9,22 +10,27 @@ class TestCreateImmunization(ImmunizationBaseTest):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 # Given
-                imms = create_an_imms_obj()
+                immunizations = [
+                    generate_imms_resource(),
+                    generate_imms_resource(sample_data_file_name="completed_rsv_immunization_event")
+                ]
 
-                # When
-                response = imms_api.create_immunization(imms)
+                for immunization in immunizations:
+                    # When
+                    response = imms_api.create_immunization(immunization)
 
-                # Then
-                self.assertEqual(response.status_code, 201, response.text)
-                self.assertEqual(response.text, "")
-                self.assertTrue("Location" in response.headers)
+                    # Then
+                    self.assertEqual(response.status_code, 201, response.text)
+                    self.assertEqual(response.text, "")
+                    self.assertIn("Location", response.headers)
 
     def test_non_unique_identifier(self):
         """it should give 422 if the identifier is not unique"""
-        imms = create_an_imms_obj()
+        imms = generate_imms_resource()
         _ = self.create_immunization_resource(self.default_imms_api, imms)
         new_id = str(uuid.uuid4())
         imms["id"] = new_id
+        del imms["id"]
 
         # When update the same object (it has the same identifier)
         response = self.default_imms_api.create_immunization(imms)
@@ -34,31 +40,40 @@ class TestCreateImmunization(ImmunizationBaseTest):
     def test_bad_nhs_number(self):
         """it should reject the request if nhs-number does not exist"""
         bad_nhs_number = "7463384756"
-        imms = create_an_imms_obj(nhs_number=bad_nhs_number)
+        imms = generate_imms_resource(nhs_number=bad_nhs_number)
 
         response = self.default_imms_api.create_immunization(imms)
 
         self.assert_operation_outcome(response, 400, bad_nhs_number)
 
+    def test_bad_dose_quantity_value(self):
+        """it should reject the request if doseQuantity.value is more than 4 decimal places"""
+        imms = generate_imms_resource()
+        imms["doseQuantity"]["value"] = Decimal("0.12345")
+
+        response = self.default_imms_api.create_immunization(imms)
+
+        self.assert_operation_outcome(
+            response, 400, "doseQuantity.value must be a number with a maximum of 4 decimal places"
+        )
+
     def test_validation(self):
         """it should validate Immunization"""
         # NOTE: This e2e test is here to prove validation logic is wired to the backend.
         #  validation is thoroughly unit tested in the backend code
-        imms = create_an_imms_obj()
-        invalid_datetime = "2020-12-14"
+        imms = generate_imms_resource()
+        invalid_datetime = "2020-12-32"
         imms["occurrenceDateTime"] = invalid_datetime
-
         # When
         response = self.default_imms_api.create_immunization(imms)
 
         # Then
         self.assert_operation_outcome(response, 400, "occurrenceDateTime")
 
-    def test_no_nhs_number_correct_status(self):
-        """it should accept the request if nhs-number is missing and verification status is 04"""
-        imms = create_an_imms_obj()
+    def test_no_nhs_number(self):
+        """it should accept the request if nhs-number is missing"""
+        imms = generate_imms_resource()
         del imms["contained"][1]["identifier"][0]["value"]
-        imms["contained"][1]["identifier"][0]["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "04"
 
         response = self.default_imms_api.create_immunization(imms)
 
@@ -66,8 +81,50 @@ class TestCreateImmunization(ImmunizationBaseTest):
         self.assertEqual(response.text, "")
         self.assertTrue("Location" in response.headers)
 
+        # Check that nhs_number has been stored in IEDS as TBC
         identifier = response.headers.get("location").split("/")[-1]
-
         patient_pk = get_full_row_from_identifier(identifier).get("PatientPK")
-
         self.assertEqual(patient_pk, "Patient#TBC")
+
+    def test_no_patient_identifier(self):
+        """it should accept the request if patient identifier is missing"""
+        imms = generate_imms_resource()
+        del imms["contained"][1]["identifier"]
+
+        response = self.default_imms_api.create_immunization(imms)
+
+        self.assertEqual(response.status_code, 201, response.text)
+        self.assertEqual(response.text, "")
+        self.assertTrue("Location" in response.headers)
+
+        # Check that nhs_number has been stored in IEDS as TBC
+        identifier = response.headers.get("location").split("/")[-1]
+        patient_pk = get_full_row_from_identifier(identifier).get("PatientPK")
+        self.assertEqual(patient_pk, "Patient#TBC")
+
+    def test_create_imms_for_mandatory_fields_only(self):
+        """Test that data containing only the mandatory fields is accepted for create"""
+        imms = generate_imms_resource(
+            nhs_number=None, sample_data_file_name="completed_covid19_immunization_event_mandatory_fields_only"
+        )
+
+        # When
+        response = self.default_imms_api.create_immunization(imms)
+
+        # Then
+        self.assertEqual(response.status_code, 201, response.text)
+        self.assertEqual(response.text, "")
+        self.assertTrue("Location" in response.headers)
+
+    def test_create_imms_with_missing_mandatory_field(self):
+        """Test that data  is rejected for create if one of the mandatory fields is missing"""
+        imms = generate_imms_resource(
+            nhs_number=None, sample_data_file_name="completed_covid19_immunization_event_mandatory_fields_only"
+        )
+        del imms["primarySource"]
+
+        # When
+        response = self.default_imms_api.create_immunization(imms)
+
+        # Then
+        self.assert_operation_outcome(response, 400, "primarySource is a mandatory field")

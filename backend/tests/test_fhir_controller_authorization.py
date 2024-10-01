@@ -14,9 +14,10 @@ from authorization import (
     PERMISSIONS_HEADER,
 )
 from fhir_controller import FhirController
+from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome
-from models.errors import UnauthorizedError
-from tests.immunization_utils import create_an_immunization
+from models.errors import UnauthorizedError, UnauthorizedVaxError
+from tests.immunization_utils import create_covid_19_immunization
 
 
 def full_access(exclude: Set[Permission] = None) -> Set[Permission]:
@@ -28,20 +29,15 @@ def make_aws_event(auth_type: AuthType, permissions=None) -> dict:
         permissions = full_access()
     header = ",".join(permissions)
 
-    return {
-        "headers": {
-            PERMISSIONS_HEADER: header,
-            AUTHENTICATION_HEADER: str(auth_type)
-        }
-    }
+    return {"headers": {PERMISSIONS_HEADER: header, AUTHENTICATION_HEADER: str(auth_type)}}
 
 
 class TestFhirControllerAuthorization(unittest.TestCase):
     """For each endpoint, we need to test three scenarios.
-        1- Happy path test: make sure authorize() receives correct EndpointOperation, and we pass aws_event
-        2- Unauthorized test: make sure we send a 403 OperationOutcome
-        3- UnknownPermission test: make sure we send a 500 OperationOutcome
-     """
+    1- Happy path test: make sure authorize() receives correct EndpointOperation, and we pass aws_event
+    2- Unauthorized test: make sure we send a 403 OperationOutcome
+    3- UnknownPermission test: make sure we send a 500 OperationOutcome
+    """
 
     def setUp(self):
         self.service = create_autospec(FhirService)
@@ -76,11 +72,11 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")
 
     # EndpointOperation.CREATE
     def test_create_imms_authorized(self):
-        aws_event = {"body": create_an_immunization(str(uuid.uuid4())).json()}
+        aws_event = {"headers":{"VaccineTypePermissions":"COVID19:create", "SupplierSystem" : "Test"},"body": create_covid_19_immunization(str(uuid.uuid4())).json()}
 
         _ = self.controller.create_immunization(aws_event)
 
@@ -104,18 +100,30 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")
 
     # EndpointOperation.UPDATE
     def test_update_imms_authorized(self):
         imms_id = str(uuid.uuid4())
-        aws_event = {
-            "pathParameters": {"id": imms_id},
-            "body": create_an_immunization(imms_id).json()}
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update", "SupplierSystem" : "Test"},"pathParameters": {"id": imms_id}, "body": create_covid_19_immunization(imms_id).json()}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":2,"DeletedAt": False, "VaccineType":"COVID19"}
         self.service.update_immunization.return_value = UpdateOutcome.UPDATE, "value doesn't matter"
 
         _ = self.controller.update_immunization(aws_event)
 
+        self.authorizer.authorize.assert_called_once_with(EndpointOperation.UPDATE, aws_event)
+    
+    def test_update_imms_unauthorized_vaxx_in_record(self):
+        imms_id = str(uuid.uuid4())
+        aws_event = {"headers": {"E-Tag":1,"VaccineTypePermissions":"COVID19:update", "SupplierSystem" : "Test"},"pathParameters": {"id": imms_id}, "body": create_covid_19_immunization(imms_id).json()}
+        self.service.get_immunization_by_id_all.return_value = {"resource":"new_value","Version":1,"DeletedAt": False, "VaccineType":"Flu"}
+        
+        response = self.controller.update_immunization(aws_event)
+        self.assertEqual(response["statusCode"], 403)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertEqual(body["issue"][0]["code"], "forbidden")            
+            
         self.authorizer.authorize.assert_called_once_with(EndpointOperation.UPDATE, aws_event)
 
     def test_update_imms_unauthorized(self):
@@ -136,7 +144,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")
 
     # EndpointOperation.DELETE
     def test_delete_imms_authorized(self):
@@ -166,7 +174,7 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")
 
     # EndpointOperation.SEARCH
     def test_search_imms_authorized(self):
@@ -196,4 +204,4 @@ class TestFhirControllerAuthorization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 500)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
-        self.assertEqual(body["issue"][0]["code"], "internal-server-error")
+        self.assertEqual(body["issue"][0]["code"], "exception")

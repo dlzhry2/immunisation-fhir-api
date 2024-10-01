@@ -1,104 +1,60 @@
 """Immunization FHIR R4B validator"""
-import json
-from typing import Literal
 
 from fhir.resources.R4B.immunization import Immunization
 from models.fhir_immunization_pre_validators import PreValidators
 from models.fhir_immunization_post_validators import PostValidators
-from models.utils.generic_utils import get_generic_questionnaire_response_value, get_generic_extension_value_from_model
-from mappings import vaccination_procedure_snomed_codes
-from models.utils.generic_utils import get_generic_questionnaire_response_value
+from models.utils.validation_utils import get_vaccine_type
 
 
 class ImmunizationValidator:
     """
-    Validate the FHIR Immunization model against the NHS specific validators and Immunization
-    FHIR profile
+    Validate the FHIR Immunization Resource JSON data against the NHS specific validators
+    and Immunization FHIR profile
     """
 
-    def __init__(self, add_post_validators: bool = True, immunization: Immunization = None) -> None:
-        self.immunization = immunization
-        self.reduce_validation_code = False
+    def __init__(self, add_post_validators: bool = True) -> None:
         self.add_post_validators = add_post_validators
-        self.pre_validators = None
-        self.post_validators = None
-        self.errors = []
-        
-    def initialize_immunization(self, json_data):
-        self.immunization = Immunization.parse_obj(json_data)
 
-    def initialize_pre_validators(self, immunization):
-        """Initialize pre validators with data."""
-        self.pre_validators = PreValidators(immunization)
-
-    def initialize_post_validators(self, immunization):
-        """Initialize post validators with data"""
-        self.post_validators = PostValidators(immunization)
-
-    def run_pre_validators(self):
-        """Run custom pre validators to the data"""
-        error = self.pre_validators.validate()
-        if error:
+    @staticmethod
+    def run_pre_validators(immunization: dict) -> None:
+        """Run pre validation on the FHIR Immunization Resource JSON data"""
+        if error := PreValidators(immunization).validate():
             raise ValueError(error)
 
-    def run_post_validators(self):
-        """Run custom pre validators to the data"""
-        error = self.post_validators.validate()
-        if error:
+    @staticmethod
+    def run_fhir_validators(immunization: dict) -> None:
+        """Run the FHIR validator on the FHIR Immunization Resource JSON data"""
+        Immunization.parse_obj(immunization)
+
+    @staticmethod
+    def run_post_validators(immunization: dict, vaccine_type: str) -> None:
+        """Run post validation on the FHIR Immunization Resource JSON data"""
+        if error := PostValidators(immunization, vaccine_type).validate():
             raise ValueError(error)
 
-    def set_reduce_validation_code(self, json_data):
-        """Set the reduce validation code"""
-        reduce_validation_code = False
+    # TODO: Update this function as reduce_validation_code is no longer found in the payload after data minimisation
+    @staticmethod
+    def is_reduce_validation():
+        """Identify if reduced validation applies (default to false if no reduce validation information is given)"""
+        return False
 
-        # If reduce_validation_code field exists then retrieve it's value
-        try:
-            reduce_validation_code = get_generic_questionnaire_response_value(
-                json_data, "ReduceValidation", "valueBoolean"
-            )
-        except (KeyError, IndexError, AttributeError, TypeError):
-            pass
-        finally:
-            # If no value is given, then ReduceValidation default value is False
-            if reduce_validation_code is None:
-                reduce_validation_code = False
+    def validate(self, immunization_json_data: dict) -> Immunization:
+        """
+        Generate the Immunization model. Note that run_pre_validators, run_fhir_validators, get_vaccine_type and
+        run_post_validators will each raise errors if validation is failed.
+        """
+        # Identify whether to apply reduced validation
+        reduce_validation = self.is_reduce_validation()
 
-        self.reduce_validation_code = reduce_validation_code
+        # Pre-FHIR validations
+        self.run_pre_validators(immunization_json_data)
 
-    def set_vaccine_type(self, immunization):
-        """Set vaccine type"""
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
-        system = "http://snomed.info/sct"
-        field_type = "code"
-        try:
-            vaccination_procedure_code = get_generic_extension_value_from_model(immunization, url, system, field_type)
-            self.vaccine_type = vaccination_procedure_snomed_codes.get(
-                vaccination_procedure_code, None
-            )
-        except (KeyError, IndexError, AttributeError, TypeError) as error:
-            raise error
+        # FHIR validations
+        self.run_fhir_validators(immunization_json_data)
 
-    def validate(self, json_data) -> Immunization:
-        """Generate the Immunization model"""
-        if isinstance(json_data, str):
-            json_data = json.loads(json_data)
+        # Identify and validate vaccine type
+        vaccine_type = get_vaccine_type(immunization_json_data)
 
-        self.set_reduce_validation_code(json_data)
-        self.initialize_pre_validators(json_data)
-
-        try:
-            self.run_pre_validators()
-        except Exception as e:
-            raise e
-
-        self.initialize_immunization(json_data)
-        self.set_vaccine_type(self.immunization)
-
-        if self.add_post_validators and not self.reduce_validation_code:
-            self.initialize_post_validators(self.immunization)
-            try:
-                self.run_post_validators()
-            except Exception as e:
-                raise e
-
-        return self.immunization
+        # Post-FHIR validations
+        if self.add_post_validators and not reduce_validation:
+            self.run_post_validators(immunization_json_data, vaccine_type)

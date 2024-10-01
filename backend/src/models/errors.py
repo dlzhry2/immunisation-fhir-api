@@ -1,19 +1,24 @@
 import uuid
 from dataclasses import dataclass
 from enum import Enum
+from typing import Union
 
 
 class Severity(str, Enum):
     error = "error"
+    warning = "warning"
 
 
 class Code(str, Enum):
     forbidden = "forbidden"
     not_found = "not-found"
     invalid = "invalid"
-    server_error = "internal-server-error"
+    server_error = "exception"
     invariant = "invariant"
-    invalid_resource = "invalid_resource"
+    not_supported = "not-supported"
+    duplicate = "duplicate"
+    # Added an unauthorized code its used when returning a response for an unauthorized vaccine type search.
+    unauthorized = "unauthorized"
 
 
 @dataclass
@@ -22,7 +27,36 @@ class UnauthorizedError(RuntimeError):
     def to_operation_outcome() -> dict:
         msg = f"Unauthorized request"
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.forbidden, diagnostics=msg
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.forbidden,
+            diagnostics=msg,
+        )
+
+
+@dataclass
+class UnauthorizedVaxError(RuntimeError):
+    @staticmethod
+    def to_operation_outcome() -> dict:
+        msg = "Unauthorized request for vaccine type"
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.forbidden,
+            diagnostics=msg,
+        )
+
+
+@dataclass
+class UnauthorizedVaxOnRecordError(RuntimeError):
+    @staticmethod
+    def to_operation_outcome() -> dict:
+        msg = "Unauthorized request for vaccine type present in the stored immunization resource"
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.forbidden,
+            diagnostics=msg,
         )
 
 
@@ -38,7 +72,10 @@ class ResourceNotFoundError(RuntimeError):
 
     def to_operation_outcome(self) -> dict:
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.not_found, diagnostics=self.__str__()
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.not_found,
+            diagnostics=self.__str__(),
         )
 
 
@@ -46,7 +83,7 @@ class ResourceNotFoundError(RuntimeError):
 class UnhandledResponseError(RuntimeError):
     """Use this error when the response from an external service (ex: dynamodb) can't be handled"""
 
-    response: dict
+    response: Union[dict, str]
     message: str
 
     def __str__(self):
@@ -54,8 +91,16 @@ class UnhandledResponseError(RuntimeError):
 
     def to_operation_outcome(self) -> dict:
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=self.__str__()
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.server_error,
+            diagnostics=self.__str__(),
         )
+
+
+class MandatoryError(Exception):
+    def __init__(self, message=None):
+        self.message = message
 
 
 class ValidationError(RuntimeError):
@@ -74,7 +119,10 @@ class InvalidPatientId(ValidationError):
 
     def to_operation_outcome(self) -> dict:
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=self.__str__()
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.server_error,
+            diagnostics=self.__str__(),
         )
 
 
@@ -90,7 +138,10 @@ class InconsistentIdError(ValidationError):
 
     def to_operation_outcome(self) -> dict:
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=self.__str__()
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.server_error,
+            diagnostics=self.__str__(),
         )
 
 
@@ -105,7 +156,10 @@ class CustomValidationError(ValidationError):
 
     def to_operation_outcome(self) -> dict:
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invariant, diagnostics=self.__str__()
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.invariant,
+            diagnostics=self.__str__(),
         )
 
 
@@ -121,7 +175,10 @@ class IdentifierDuplicationError(RuntimeError):
     def to_operation_outcome(self) -> dict:
         msg = self.__str__()
         return create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.invalid_resource, diagnostics=msg
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.duplicate,
+            diagnostics=msg,
         )
 
 
@@ -130,7 +187,22 @@ def create_operation_outcome(resource_id: str, severity: Severity, code: Code, d
     return {
         "resourceType": "OperationOutcome",
         "id": resource_id,
-        "issue": [{"severity": severity, "code": code, "diagnostics": diagnostics}],
+        "meta": {"profile": ["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},
+        "issue": [
+            {
+                "severity": severity,
+                "code": code,
+                "details": {
+                    "coding": [
+                        {
+                            "system": "https://fhir.nhs.uk/Codesystem/http-error-codes",
+                            "code": code.upper(),
+                        }
+                    ]
+                },
+                "diagnostics": diagnostics,
+            }
+        ],
     }
 
 
@@ -140,3 +212,16 @@ class ParameterException(RuntimeError):
 
     def __str__(self):
         return self.message
+
+
+@dataclass
+class UnauthorizedSystemError(RuntimeError):
+    @staticmethod
+    def to_operation_outcome() -> dict:
+        msg = f"Unauthorized system"
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.forbidden,
+            diagnostics=msg,
+        )

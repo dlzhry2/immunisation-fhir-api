@@ -1,4 +1,5 @@
 """Store values for use in tests"""
+
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -28,7 +29,10 @@ class InvalidDataTypes:
 class ValidValues:
     """Store valid values for tests"""
 
+    nhs_number = "9990548609"
+
     for_date_times = [
+        "2000-01-01",  # Full date only
         "2000-01-01T00:00:00+00:00",  # Time and offset all zeroes
         "1933-12-31T11:11:11+12:45",  # Positive offset (with hours and minutes not 0)
         "1933-12-31T11:11:11-05:00",  # Negative offset
@@ -38,62 +42,32 @@ class ValidValues:
     ]
 
     # Not a valid snomed code, but is valid coding format for format testing
-    snomed_coding_element = {
-        "system": "http://snomed.info/sct",
-        "code": "ABC123",
-        "display": "test",
-    }
+    snomed_coding_element = {"system": "http://snomed.info/sct", "code": "ABC123", "display": "test"}
 
-    empty_practitioner_resource_id_Pract1 = {
-        "resourceType": "Practitioner",
-        "id": "Pract1",
-    }
+    manufacturer_resource_id_Man1 = {"resourceType": "Manufacturer", "id": "Man1"}
 
-    empty_patient_resource_id_Pat1 = {
-        "resourceType": "Patient",
-        "id": "Pat1",
-    }
+    practitioner_resource_id_Pract1 = {"resourceType": "Practitioner", "id": "Pract1"}
 
-    empty_patient_resource_id_Pat2 = {
-        "resourceType": "Patient",
-        "id": "Pat2",
-    }
+    practitioner_resource_id_Pract2 = {"resourceType": "Practitioner", "id": "Pract2"}
 
-    empty_questionnnaire_resource_id_QR1 = {
-        "resourceType": "QuestionnaireResponse",
-        "id": "QR1",
-        "status": "completed",
-    }
+    patient_resource_id_Pat1 = {"resourceType": "Patient", "id": "Pat1"}
 
-    questionnaire_immunisation = {
-        "linkId": "Immunisation",
-        "answer": [{"valueReference": {"reference": "#"}}],
-    }
+    patient_resource_id_Pat2 = {"resourceType": "Patient", "id": "Pat2"}
 
-    questionnaire_reduce_validation_true = {
-        "linkId": "ReduceValidation",
-        "answer": [{"valueBoolean": True}],
-    }
+    questionnnaire_resource_id_QR1 = {"resourceType": "QuestionnaireResponse", "id": "QR1", "status": "completed"}
 
-    questionnaire_reduce_validation_false = {
-        "linkId": "ReduceValidation",
-        "answer": [{"valueBoolean": False}],
-    }
+    questionnaire_immunisation = {"linkId": "Immunisation", "answer": [{"valueReference": {"reference": "#"}}]}
 
-    questionnaire_ip_address = {
-        "linkId": "IpAddress",
-        "answer": [
-            {"valueString": "IP_ADDRESS"},
-        ],
-    }
+    questionnaire_reduce_validation_true = {"linkId": "ReduceValidation", "answer": [{"valueBoolean": True}]}
+
+    questionnaire_reduce_validation_false = {"linkId": "ReduceValidation", "answer": [{"valueBoolean": False}]}
+
+    questionnaire_ip_address = {"linkId": "IpAddress", "answer": [{"valueString": "IP_ADDRESS"}]}
 
     performer_actor_organization = {
         "actor": {
             "type": "Organization",
-            "identifier": {
-                "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                "value": "B0C4P",
-            },
+            "identifier": {"system": "https://fhir.nhs.uk/Id/ods-organization-code", "value": "B0C4P"},
             "display": "Acme Healthcare",
         }
     }
@@ -102,15 +76,7 @@ class ValidValues:
 
     performer_actor_reference_internal_Pract2 = {"actor": {"reference": "#Pract2"}}
 
-    performer = [
-        {"actor": {"reference": "#Pract1"}},
-        {
-            "actor": {
-                "type": "Organization",
-                "display": "Acme Healthcare",
-            }
-        },
-    ]
+    performer = [{"actor": {"reference": "#Pract1"}}, {"actor": {"type": "Organization", "display": "Acme Healthcare"}}]
 
     vaccination_procedure_coding_with_one_snomed_code = [
         {
@@ -137,25 +103,17 @@ class ValidValues:
     ]
 
     dummy_coding_with_one_snomed_code = [
-        {
-            "system": "http://snomed.info/sct",
-            "code": "DUMMY CODE 1",
-            "display": "DUMMY TERM 1",
-        },
+        {"system": "http://snomed.info/sct", "code": "DUMMY CODE 1", "display": "DUMMY TERM 1"},
     ]
 
     vaccination_procedure_with_one_snomed_code = {
         "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
-        "valueCodeableConcept": {
-            "coding": vaccination_procedure_coding_with_one_snomed_code
-        },
+        "valueCodeableConcept": {"coding": vaccination_procedure_coding_with_one_snomed_code},
     }
 
     vaccination_procedure_with_snomed_and_dmd_codes = {
         "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
-        "valueCodeableConcept": {
-            "coding": vaccination_procedure_coding_with_snomed_and_dmd_codes
-        },
+        "valueCodeableConcept": {"coding": vaccination_procedure_coding_with_snomed_and_dmd_codes},
     }
 
     vaccination_situation_with_one_snomed_code = {
@@ -164,15 +122,13 @@ class ValidValues:
     }
 
     nhs_number_coding_item = {
-        "system": "https://fhir.hl7.org.uk/CodeSystem"
-        + "/UKCore-NHSNumberVerificationStatusEngland",
+        "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
         "code": "NHS_NUMBER_STATUS_INDICATOR_CODE",
         "display": "NHS_NUMBER_STATUS_INDICATOR_DESCRIPTION",
     }
 
     nhs_number_verification_status = {
-        "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-"
-        + "NHSNumberVerificationStatus",
+        "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
         "valueCodeableConcept": {"coding": [nhs_number_coding_item]},
     }
 
@@ -210,7 +166,7 @@ class InvalidValues:
         "2000-13-01",  # Month 13
         "2000-01-00",  # Day 0
         "2000-01-32",  # Day 32
-        "2000-02-30",  # Invalid combnation of month and day
+        "2000-02-30",  # Invalid combination of month and day
     ]
 
     # Strings which are not in acceptable date time format
@@ -220,7 +176,8 @@ class InvalidValues:
         "20000101",  # Date digits only (i.e. without hypens)
         "20000101000000",  # Date and time digits only
         "200001010000000000",  # Date, time and timezone digits only
-        "2000-01-01",  # Date only
+        "2000",  # Year only
+        "2000-01",  # Year and month only
         "2000-01-01T00:00:00",  # Date and time only
         "2000-01-01T00:00:00.000",  # Date and time only (with milliseconds)
         "2000-01-01T00:00:00+00",  # Date and time with GMT timezone offset only in hours
@@ -233,6 +190,7 @@ class InvalidValues:
         "2000-01-01T222222+00:00",  # Missing time colons
         "2000-01-01T22:22:2200:00",  # Missing timezone indicator
         "2000-01-01T22:22:22-0100",  # Missing timezone colon
+        "2000-01-01T22:22:22-01",  # Timezone hours only
         "99-01-01T00:00:00+00:00",  # Missing century (i.e. only 2 digits for year)
         "01-01-2000T00:00:00+00:00",  # Date in wrong order (DD-MM-YYYY)
     ]
@@ -254,45 +212,24 @@ class InvalidValues:
 
     for_lists_of_strings_of_length_1 = [[1], [False], [["Test1"]]]
 
+    for_lists_of_dicts_of_length_1 = [[1], [False], [["Invalid"]], ["Invalid"]]
+
     for_strings_with_max_100_chars = [
-        "This is a really long string with more than 100 "
-        + "characters to test whether the validator is working well"
+        "This is a really long string with more than 100 characters to test whether the validator is working well"
     ]
 
-    for_genders = [
-        "0",
-        "1",
-        "2",
-        "9",
-        "Male",
-        "Female",
-        "Unknown",
-        "Other",
-    ]
+    for_genders = ["0", "1", "2", "9", "Male", "Female", "Unknown", "Other"]
 
     performer_with_two_organizations = [
         {"actor": {"reference": "#Pract1", "type": "Organization"}},
-        {
-            "actor": {
-                "type": "Organization",
-                "display": "Acme Healthcare",
-            }
-        },
+        {"actor": {"type": "Organization", "display": "Acme Healthcare"}},
     ]
 
     practitioner_resource_with_no_id = {"resourceType": "Practitioner"}
 
     dummy_coding_with_two_snomed_codes = [
-        {
-            "system": "http://snomed.info/sct",
-            "code": "DUMMY SNOMED CODE 1",
-            "display": "DUMMY SNOMED TERM 1",
-        },
-        {
-            "system": "http://snomed.info/sct",
-            "code": "DUMMY SNOMED CODE 2",
-            "display": "DUMMY SNOMED TERM 2",
-        },
+        {"system": "http://snomed.info/sct", "code": "DUMMY SNOMED CODE 1", "display": "DUMMY SNOMED TERM 1"},
+        {"system": "http://snomed.info/sct", "code": "DUMMY SNOMED CODE 2", "display": "DUMMY SNOMED TERM 2"},
     ]
 
     vaccination_situation_with_two_snomed_codes = {

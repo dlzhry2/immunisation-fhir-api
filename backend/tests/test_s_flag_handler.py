@@ -1,164 +1,25 @@
+"""Tests for s_flag_handler"""
+
 import unittest
+from copy import deepcopy
 
-from s_flag_handler import handle_s_flag
+from src.s_flag_handler import handle_s_flag
+from tests.utils.generic_utils import load_json_data
 
 
-class TestRemovePersonalInfo(unittest.TestCase):
-    input_immunization = {
-        "resourceType": "Immunization",
-        "contained": [
-            {
-                "resourceType": "Practitioner",
-                "id": "Pract1",
-                "identifier": [
-                    {
-                        "system": "https://fhir.hl7.org.uk/Id/nmc-number",
-                        "value": "99A9999A",
-                    }
-                ],
-                "name": [{"family": "Nightingale", "given": ["Florence"]}],
-            },
-            {
-                "resourceType": "Patient",
-                "id": "Pat1",
-                "identifier": [
-                    {
-                        "extension": [
-                            {
-                                "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
-                                "valueCodeableConcept": {
-                                    "coding": [
-                                        {
-                                            "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
-                                            "code": "01",
-                                            "display": "Number present and verified",
-                                        }
-                                    ]
-                                },
-                            }
-                        ],
-                        "system": "https://fhir.nhs.uk/Id/nhs-number",
-                        "value": "9000000009",
-                    }
-                ],
-                "name": [{"family": "Taylor", "given": ["Sarah"]}],
-                "gender": "unknown",
-                "birthDate": "1965-02-28",
-                "address": [{"postalCode": "EC1A 1BB"}],
-            },
-            {
-                "resourceType": "QuestionnaireResponse",
-                "questionnaire": "Questionnaire/1",
-                "status": "completed",
-                "item": [
-                    {
-                        "linkId": "Consent",
-                        "answer": [
-                            {"valueCoding": {"code": "snomed", "display": "free text"}}
-                        ],
-                    },
-                    {
-                        "linkId": "Example",
-                        "answer": [
-                            {"valueCoding": {"system": "snomed", "code": "M242ND"}}
-                        ],
-                    },
-                ],
-            },
-        ],
-        "patient": {"reference": "#Pat1"},
-        "performer": [
-            {"actor": {"reference": "#Pract1"}},
-            {
-                "actor": {
-                    "type": "Organization",
-                    "identifier": {
-                        "system": "https://fhir.nhs.uk/Id/test-organization-code",
-                        "value": "B0C4P",
-                    },
-                    "display": "Acme Healthcare",
-                }
-            },
-        ],
-        "reportOrigin": {"text": "sample"},
-        "location": {
-            "identifier": {
-                "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                "value": "B0C4P",
-            }
-        },
-    }
+class TestSFlagHandler(unittest.TestCase):
+    """Test that s_flag_handler removes the required fields for patients marked as Restricted"""
 
-    def test_remove_personal_info(self):
-        expected_output = {
-            "resourceType": "Immunization",
-            "contained": [
-                {
-                    "resourceType": "Practitioner",
-                    "id": "Pract1",
-                },
-                {
-                    "resourceType": "Patient",
-                    "id": "Pat1",
-                    "identifier": [
-                        {
-                            "extension": [
-                                {
-                                    "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus",
-                                    "valueCodeableConcept": {
-                                        "coding": [
-                                            {
-                                                "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-NHSNumberVerificationStatusEngland",
-                                                "code": "01",
-                                                "display": "Number present and verified",
-                                            }
-                                        ]
-                                    },
-                                }
-                            ],
-                            "system": "https://fhir.nhs.uk/Id/nhs-number",
-                            "value": "9000000009",
-                        }
-                    ],
-                },
-                {
-                    "resourceType": "QuestionnaireResponse",
-                    "questionnaire": "Questionnaire/1",
-                    "status": "completed",
-                    "item": [
-                        {
-                            "linkId": "Example",
-                            "answer": [
-                                {"valueCoding": {"system": "snomed", "code": "M242ND"}}
-                            ],
-                        },
-                    ],
-                },
-            ],
-            "patient": {"reference": "#Pat1"},
-            "performer": [
-                {"actor": {"reference": "#Pract1"}},
-                {
-                    "actor": {
-                        "type": "Organization",
-                        "identifier": {
-                            "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                            "value": "N2N9I",
-                        },
-                    }
-                },
-            ],
-        }
+    def test_s_flag_handler(self):
+        """Test that personal info is removed for Restricted patients, and not removed for Unrestricted patients"""
+        input_immunization = load_json_data("completed_covid19_immunization_event.json")
+        input_immunization["contained"][1]["address"][0]["city"] = "city"
+        input_immunization["performer"][1]["actor"]["active"] = True
+        input_immunization["performer"][1]["actor"]["identifier"]["text"] = "official"
+        input_immunization["location"]["identifier"]["text"] = "official"
+        filtered_output = load_json_data("completed_covid19_immunization_event_filtered_for_s_flag.json")
+        restricted_patient = {"meta": {"security": [{"code": "R"}]}}
+        unrestricted_patient = {"meta": {"security": [{"code": "U"}]}}
 
-        patient = {"meta": {"security": [{"code": "R"}]}}
-
-        result = handle_s_flag(self.input_immunization, patient)
-        self.assertEqual(result, expected_output)
-
-    def test_when_missing_patient_fields_do_not_remove_personal_info(self):
-        expected_output = self.input_immunization
-
-        patient = {"meta": {}}
-
-        result = handle_s_flag(self.input_immunization, patient)
-        self.assertEqual(result, expected_output)
+        self.assertEqual(handle_s_flag(deepcopy(input_immunization), restricted_patient), filtered_output)
+        self.assertEqual(handle_s_flag(deepcopy(input_immunization), unrestricted_patient), input_immunization)

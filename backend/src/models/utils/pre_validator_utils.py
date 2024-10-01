@@ -3,17 +3,18 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Union
 
-from models.utils.generic_utils import nhs_number_mod11_check
+from .generic_utils import nhs_number_mod11_check
 
 
 class PreValidation:
+
     @staticmethod
     def for_string(
         field_value: str,
         field_location: str,
         defined_length: int = None,
         max_length: int = None,
-        predefined_values: tuple = None,
+        predefined_values: list = None,
         is_postal_code: bool = False,
         spaces_allowed: bool = True,
     ):
@@ -21,7 +22,7 @@ class PreValidation:
         Apply pre-validation to a string field to ensure it is a non-empty string which meets
         the length requirements and predefined values requirements
         """
-            
+
         if not isinstance(field_value, str):
             raise TypeError(f"{field_location} must be a string")
 
@@ -62,10 +63,12 @@ class PreValidation:
         field_location: str,
         defined_length: int = None,
         elements_are_strings: bool = False,
+        elements_are_dicts: bool = False,
     ):
         """
         Apply pre-validation to a list field to ensure it is a non-empty list which meets the length
         requirements and requirements, if applicable, for each list element to be a non-empty string
+        or non-empty dictionary
         """
         if not isinstance(field_value, list):
             raise TypeError(f"{field_location} must be an array")
@@ -84,6 +87,13 @@ class PreValidation:
                 if len(element) == 0:
                     raise ValueError(f"{field_location} must be an array of non-empty strings")
 
+        if elements_are_dicts:
+            for element in field_value:
+                if not isinstance(element, dict):
+                    raise TypeError(f"{field_location} must be an array of objects")
+                if len(element) == 0:
+                    raise ValueError(f"{field_location} must be an array of non-empty objects")
+
     @staticmethod
     def for_date(field_value: str, field_location: str):
         """
@@ -97,38 +107,58 @@ class PreValidation:
             datetime.strptime(field_value, "%Y-%m-%d").date()
         except ValueError as value_error:
             raise ValueError(
-                f"{field_location} must be a valid date string in the format " + '"YYYY-MM-DD"'
+                f'{field_location} must be a valid date string in the format "YYYY-MM-DD"'
             ) from value_error
 
     @staticmethod
     def for_date_time(field_value: str, field_location: str):
         """
-        Apply pre-validation to a datetime field to ensure that it is a string (JSON dates must be
-        written as strings) containing a valid datetime in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or
-        "YYYY-MM-DDThh:mm:ss-zz:zz" (i.e. date and time, including timezone offset in hours and
-        minutes)
+        Apply pre-validation to a datetime field to ensure that it is a string (JSON dates must be written as strings)
+        containing a valid datetime. Note that partial dates are valid for FHIR, but are not allowed for this API.
+        Valid formats are any of the following:
+        * 'YYYY-MM-DD' - Full date only
+        * 'YYYY-MM-DDT00:00:00+00:00' - Full date, time without milliseconds, timezone
+        * 'YYYY-MM-DDT00:00:00.000+00:00' - Full date, time with milliseconds (any level of precision), timezone
         """
 
         if not isinstance(field_value, str):
             raise TypeError(f"{field_location} must be a string")
 
-        date_time_pattern_with_timezone = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.[0-9]+)?(\+|-)\d{2}:\d{2}")
+        error_message = (
+            f"{field_location} must be a valid datetime in the format 'YYYY-MM-DDThh:mm:ss+zz:zz' (where time element "
+            + "is optional, timezone must be given if and only if time is given, and milliseconds can be optionally "
+            + "included after the seconds). Note that partial dates are not allowed for "
+            + f"{field_location} for this service."
+        )
 
-        if not date_time_pattern_with_timezone.fullmatch(field_value):
-            raise ValueError(
-                f'{field_location} must be a string in the format "YYYY-MM-DDThh:mm:ss+zz:zz" or '
-                + '"YYYY-MM-DDThh:mm:ss-zz:zz" (i.e date and time, including timezone offset in '
-                + "hours and minutes). Milliseconds are optional after the seconds "
-                + "(e.g. 2021-01-01T00:00:00.000+00:00)."
-            )
-
-        try:
-            datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S%z")
-        except ValueError:
+        # Full date only
+        if "T" not in field_value:
             try:
-                datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S.%f%z")
-            except ValueError as value_error:
-                raise ValueError(f"{field_location} must be a valid datetime") from value_error
+                datetime.strptime(field_value, "%Y-%m-%d")
+            except ValueError as error:
+                raise ValueError(error_message) from error
+            
+        else:
+            
+            # Using %z in datetime.strptime function is more permissive than FHIR,
+            # so check that timezone meets FHIR format requirements first
+            timezone_pattern = re.compile(r"(\+|-)\d{2}:\d{2}")
+            if not timezone_pattern.fullmatch(field_value[-6:]):
+                raise ValueError(error_message)
+
+            # Full date, time without milliseconds, timezone
+            if "." not in field_value:
+                try:
+                    datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S%z")
+                except ValueError as error:
+                    raise ValueError(error_message) from error
+
+            # Full date, time with milliseconds, timezone
+            else:
+                try:
+                    datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S.%f%z")
+                except ValueError as error:
+                    raise ValueError(error_message) from error
 
     @staticmethod
     def for_boolean(field_value: str, field_location: str):

@@ -7,10 +7,11 @@ import pytest
 from .configuration.config import valid_nhs_number1, valid_nhs_number_with_s_flag
 from .example_loader import load_example
 from .immunisation_api import ImmunisationApi, parse_location
+from e2e.utils.mappings import VaccineTypes
 
 
 def create_an_imms_obj(imms_id: str = str(uuid.uuid4()), nhs_number=valid_nhs_number1) -> dict:
-    imms = copy.deepcopy(load_example("Immunization/POST-Immunization.json"))
+    imms = copy.deepcopy(load_example("Immunization/POST-COVID19-Immunization.json"))
     imms["id"] = imms_id
     imms["identifier"][0]["value"] = str(uuid.uuid4())
     imms["contained"][1]["identifier"][0]["value"] = nhs_number
@@ -173,8 +174,6 @@ def test_get_event_by_id_not_found_nhs_login(nhsd_apim_proxy_url, nhsd_apim_auth
 
     # Act
     result = imms_api.get_immunization_by_id("some-id-that-does-not-exist")
-    if result.status_code != 404:
-        print(result.text)
     res_body = result.json()
 
     # Assert
@@ -382,8 +381,8 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
         assert retrieved_get_imms_result.status_code == 200
     retrieved_get_imms = retrieved_get_imms_result.json()
 
-    sample_disease_code = "COVID19"
-    retrieved_search_imms_result = imms_api.search_immunizations(nhs_number, sample_disease_code)
+    vaccine_type = VaccineTypes.covid_19
+    retrieved_search_imms_result = imms_api.search_immunizations(nhs_number, vaccine_type)
     if retrieved_search_imms_result.status_code != 200:
         pprint.pprint(retrieved_search_imms_result.text)
         assert retrieved_search_imms_result.status_code == 200
@@ -395,18 +394,7 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
     all_retrieved_imms = [retrieved_get_imms, retrieved_search_imms]
     imms_api.delete_immunization(created_imms["id"])
 
-    # Assert
-    def get_questionnaire_items(imms):
-        questionnaire = next(
-            contained for contained in imms["contained"] if contained["resourceType"] == "QuestionnaireResponse"
-        )
-        return questionnaire["item"]
-
     def assert_is_not_filtered(imms):
-        imms_items = get_questionnaire_items(imms)
-
-        for key in ["Consent"]:
-            assert key in [item["linkId"] for item in imms_items]
 
         performer_actor_organizations = (
             item for item in imms["performer"] if item.get("actor", {}).get("type") == "Organization"
@@ -428,11 +416,6 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
         assert "location" in imms
 
     def assert_is_filtered(imms):
-        imms_items = get_questionnaire_items(imms)
-
-        for key in ["Consent"]:
-            assert key not in [item["linkId"] for item in imms_items]
-
         performer_actor_organizations = (
             item for item in imms["performer"] if item.get("actor", {}).get("type") == "Organization"
         )
@@ -442,15 +425,11 @@ def test_get_s_flag_patient(nhsd_apim_proxy_url, nhsd_apim_auth_headers, nhs_num
             for organization in performer_actor_organizations
         )
         assert all(
-            organization.get("actor", {}).get("display") is None for organization in performer_actor_organizations
-        )
-        assert all(
             organization.get("actor", {}).get("identifier", {}).get("system")
             == "https://fhir.nhs.uk/Id/ods-organization-code"
             for organization in performer_actor_organizations
         )
 
-        assert "reportOrigin" not in imms
         assert "location" not in imms
 
     if is_restricted:
