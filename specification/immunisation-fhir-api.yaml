@@ -109,16 +109,6 @@ info:
  
     Access may be restricted to certain functionality based on your user need
      
-    ### User-restricted access
-     
-    Use this [user-restricted access mode](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation#user-restricted-apis) if the end user is a patient:
-    * the end user must have their identity verified to 'high' (P9) level
-    * the NHS number in the request must match the NHS number in the NHS login account
-    * the functionality will be restricted to only allow the end user to search for thier own record
-     
-    To use this access mode, use the following security pattern:
-    * [User-restricted RESTful APIs - NHS login separate authentication and authorisation](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/user-restricted-restful-apis-nhs-login-separate-authentication-and-authorisation)
-    
     contact:
       
       name: Immunization-fhir-api API Support
