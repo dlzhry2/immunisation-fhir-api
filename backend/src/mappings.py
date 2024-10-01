@@ -28,7 +28,7 @@ class DiseaseDisplayTerms:
     measles: str = "Measles"
     mumps: str = "Mumps"
     rubella: str = "Rubella"
-    rsv: str = "Respiratory syncytial virus infection"
+    rsv: str = "Respiratory syncytial virus infection (disorder)"
 
 @dataclass
 class DiseaseCodes:

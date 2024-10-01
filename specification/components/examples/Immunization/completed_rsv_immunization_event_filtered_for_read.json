@@ -135,7 +135,7 @@
             {
               "system": "http://snomed.info/sct",
               "code": "55735004",
-              "display": "Respiratory syncytial virus infection"
+              "display": "Respiratory syncytial virus infection (disorder)"
             }
           ]
         }
