@@ -9,15 +9,19 @@ class TestCreateImmunization(ImmunizationBaseTest):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 # Given
-                imms = generate_imms_resource()
+                immunizations = [
+                    generate_imms_resource(),
+                    generate_imms_resource(sample_data_file_name="completed_rsv_immunization_event")
+                ]
 
-                # When
-                response = imms_api.create_immunization(imms)
+                for immunization in immunizations:
+                    # When
+                    response = imms_api.create_immunization(immunization)
 
-                # Then
-                self.assertEqual(response.status_code, 201, response.text)
-                self.assertEqual(response.text, "")
-                self.assertTrue("Location" in response.headers)
+                    # Then
+                    self.assertEqual(response.status_code, 201, response.text)
+                    self.assertEqual(response.text, "")
+                    self.assertIn("Location", response.headers)
 
     def test_non_unique_identifier(self):
         """it should give 422 if the identifier is not unique"""

@@ -26,8 +26,9 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             VaccineTypes.flu: load_json_data("completed_flu_immunization_event.json"),
             VaccineTypes.hpv: load_json_data("completed_hpv_immunization_event.json"),
             VaccineTypes.mmr: load_json_data("completed_mmr_immunization_event.json"),
+            VaccineTypes.rsv: load_json_data("completed_rsv_immunization_event.json"),
         }
-        self.all_vaccine_types = [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]
+        self.all_vaccine_types = [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr, VaccineTypes.rsv]
 
     def test_collected_errors(self):
         """Test that when passed multiple validation errors, it returns a list of all expected errors"""
@@ -81,7 +82,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
         # Test that a valid combination of disease codes is accepted
-        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr]:
+        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr, VaccineTypes.rsv]:
             self.assertIsNone(self.validator.validate(self.completed_json_data[vaccine_type]))
 
         # Test that an invalid single disease code is rejected
@@ -364,7 +365,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """
         field_location = "location.identifier.value"
         # Test cases for COVID-19, FLU, HPV and MMR where it is mandatory
-        for vaccine_type in (VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr):
+        for vaccine_type in (VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr, VaccineTypes.rsv):
             valid_json_data = deepcopy(self.completed_json_data[vaccine_type])
             MandationTests.test_missing_mandatory_field_rejected(self, field_location, valid_json_data)
 
@@ -374,7 +375,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """
         field_location = "location.identifier.system"
         # Test cases for COVID-19, FLU, HPV and MMR where it is mandatory
-        for vaccine_type in (VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr):
+        for vaccine_type in (VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr, VaccineTypes.rsv):
             valid_json_data = deepcopy(self.completed_json_data[vaccine_type])
             MandationTests.test_missing_mandatory_field_rejected(self, field_location, valid_json_data)
 
