@@ -36,7 +36,7 @@ info:
     There is a limited scope of data validation upon receipt of the data. Whilst the data is generally of a good, reliable quality, consumers must be aware data is shared as received and users should consider the risk of potential absences or inaccuracies of the data. 
 
       
-    ## Who can use this API
+    ## Who can use this API 
     This API can only be used where there is a commercial,legal and clinical basis to do so. Make sure you have a valid use case before you go too far with your development.
    
     You must demonstrate you have a valid use case as part of digital onboarding. As this service is disease type agnostic, there is also a shortened onboarding process for each disease type, to explain the legal, commercial and clinical justifications. 
