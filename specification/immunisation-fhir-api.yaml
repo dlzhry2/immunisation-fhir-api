@@ -18,42 +18,40 @@ info:
     ### You cannot use this API to:
      
     - retrieve the immunisation record of multiple patients at once
-    - retrieve the immunisation events for vaccinations other than for coronavirus (`COVID19`), influenza (`FLU`), human papillomavirus (`HPV`)
-    - record a patient's demographic details
+    - record or update a patient's demographic details
     > To get demographic details from the [Personal Demographics Service](https://digital.nhs.uk/services/personal-demographics-service), use the Personal Demographics FHIR API.
      
-    You can create, read, update and delete the following data:
+    You can create, read, update and delete:
      
-    - immunisation event details for `COVID19`, `FLU`, `HPV`
+    - Vaccination events for the disease types found in this list To be confirm
       
     ### Data availability, timing and quality
  
-    In most cases the record is available within 48 hours of the immunisation event, sometimes sooner.
+    This is a real time service, constrained by the timw taken for providers to transfer vaccination events.In most cases the latest a record willbe available is within 48 hours of the immunisation event.
  
-    If the NHS number is not present on a record then you will not be able to search for that record and will only be able to retrieve the record by reading it using its unique ID.
+    You must have a traced patient NHS Number to use the API search facilities as this works directly from this data. However, you will still able to retrieve and update the record using it's unique ID. 
+
+    The vaccination events for all disease types are limited to vaccinations administered on behalf of NHS England.
  
-    The `COVID19` data is limited to vaccinations recorded on behalf of NHS England.
- 
-    The `FLU` data is limited to vaccinations recorded on behalf of NHS England.
- 
-    The `HPV` data is limited to vaccinations recorded on behalf of NHS England.
-     
-    ## Who can use this API
-    This API can only be used where there is a legal basis to do so. Make sure you have a valid use case before you go too far with your development.
+    There is a limited scope of data validation upon receipt of the data. Whilst the data is generally of a good, reliable quality, consumers must be aware data is shared as received and users should consider the risk of potential absences or inaccuracies of the data. 
+
+      
+    ## Who can use this API 
+    This API can only be used where there is a commercial,legal and clinical basis to do so. Make sure you have a valid use case before you go too far with your development.
    
-    You must demonstrate you have a valid use case as part of digital onboarding.
+    You must demonstrate you have a valid use case as part of digital onboarding. As this service is disease type agnostic, there is also a shortened onboarding process for each disease type, to explain the legal, commercial and clinical justifications. 
    
     You must do this before you can go live (see 'Onboarding' below).
    
-    ### Who can access immunisation event records
+    ### Who can access immunisation event records.
      
     Health and care organisations in England can access immunisation records.
    
     Legitimate direct care examples include NHS organisations delivering healthcare, local authorities delivering care, third sector and private sector health and care organisations, and developers delivering systems to health and care organisations.
    
-    Patients who receive health and social care or make use of NHS services in England.
+    A future capability will be to enable patients who receive health and social care or make use of NHS services in England to access their vaccination records.
    
-    Examples of recognised uses for the immunisation event records include:
+    The immunisation event records captured via the API are used for a number of purposes including (some uses include distribution of the data by means other than this API)
      
     - supporting a patient getting a vaccination
     - supporting patient managing their immunisation health
@@ -81,7 +79,7 @@ info:
      
     It conforms to the [FHIR](https://digital.nhs.uk/developer/guides-and-documentation/our-api-technologies#fhir) global standard for health care data exchange, specifically to [FHIR R4 (v4.0.1)](https://hl7.org/fhir/r4/), except that it does not support the [capabilities](http://hl7.org/fhir/R4/http.html#capabilities) interaction.
      
-    It includes some country-specific FHIR extensions, which conform to [FHIR UK Core](https://digital.nhs.uk/services/fhir-uk-core), specifically [fhir.r4.ukcore.stu1 0.5.1](https://simplifier.net/packages/fhir.r4.ukcore.stu1/0.5.1).
+    It includes some country-specific FHIR extensions, which conform to [FHIR UK Core](https://digital.nhs.uk/services/fhir-uk-core), specifically [fhir.r4.ukcore.stu2](https://simplifier.net/packages/fhir.r4.ukcore.stu2).
      
     You do not need to know much about FHIR to use this API - FHIR APIs are just RESTful APIs that follow specific rules.
     In particular:
@@ -98,9 +96,9 @@ info:
      
     ## Security and authorisation
      
-    This API has two access modes:
+    This API has a single access mode:
     - application-restricted access
-    - user-restricted access search only access 
+     In the future we intend to offer user-restricted access. 
      
     ### Application-restricted access
      
@@ -109,18 +107,8 @@ info:
     To use this access mode, use the following security pattern:
     - [Application-restricted RESTful API - signed JWT authentication](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/application-restricted-restful-apis-signed-jwt-authentication)
  
-    Access may be restricted to certain functionallity based on your user need
+    Access may be restricted to certain functionality based on your user need
      
-    ### User-restricted access
-     
-    Use this [user-restricted access mode](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation#user-restricted-apis) if the end user is a patient:
-    * the end user must have their identity verified to 'high' (P9) level
-    * the NHS number in the request must match the NHS number in the NHS login account
-    * the functionallity will be restricted to only allow the end user to search for thier own record
-     
-    To use this access mode, use the following security pattern:
-    * [User-restricted RESTful APIs - NHS login separate authentication and authorisation](https://digital.nhs.uk/developer/guides-and-documentation/security-and-authorisation/user-restricted-restful-apis-nhs-login-separate-authentication-and-authorisation)
-    
     contact:
       
       name: Immunization-fhir-api API Support
@@ -177,7 +165,7 @@ info:
     
     For read-only testing, we will provide an Immunisation records test pack soon.
 
-    To test updating patient details, you must set up your own test data.
+    To test creating, updating and deleting patient vaccination events, you must set up your own test data.
 
     For more details see [integration testing with our RESTful APIs](https://digital.nhs.uk/developer/guides-and-documentation/testing#integration-testing-with-our-restful-apis).
  
