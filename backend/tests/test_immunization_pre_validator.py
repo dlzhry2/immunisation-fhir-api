@@ -433,7 +433,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="contained[?(@.resourceType=='Patient')].address",
             valid_lists_to_test=[[{"postalCode": "AA1 1AA"}]],
-            predefined_list_length=1,
             valid_list_element={"family": "Test"},
         )
 
@@ -443,7 +442,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="contained[?(@.resourceType=='Patient')].address[0].postalCode",
             valid_strings_to_test=["AA00 00AA", "A0 0AA"],
-            is_postal_code=True,
         )
 
     def test_pre_validate_occurrence_date_time(self):
@@ -653,7 +651,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="protocolApplied[0].doseNumberPositiveInt",
             valid_positive_integers_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
-            max_value=9,
         )
 
     def test_pre_validate_protocol_applied_dose_number_string(self):
@@ -915,8 +912,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ValidatorModelTests.test_list_value(
                 self,
                 field_location=f"reasonCode[{i}].coding",
-                valid_lists_to_test=[[{"code": "ABC123", "display": "test"}]],
-                predefined_list_length=1,
+                valid_lists_to_test=[[{"code": "ABC123", "display": "test"}, {"code": "ABC123", "display": "test"}]],
                 valid_list_element={"code": "ABC123", "display": "test"},
             )
 

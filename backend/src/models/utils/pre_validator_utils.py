@@ -15,7 +15,6 @@ class PreValidation:
         defined_length: int = None,
         max_length: int = None,
         predefined_values: list = None,
-        is_postal_code: bool = False,
         spaces_allowed: bool = True,
     ):
         """
@@ -40,18 +39,6 @@ class PreValidation:
         if predefined_values:
             if field_value not in predefined_values:
                 raise ValueError(f"{field_location} must be one of the following: " + str(", ".join(predefined_values)))
-
-        if is_postal_code:
-            # Validate that field_value contains a single space which divides the two parts
-            # of the postal code
-            if field_value.count(" ") != 1 or field_value.startswith(" ") or field_value.endswith(" "):
-                raise ValueError(
-                    f"{field_location} must contain a single space, " + "which divides the two parts of the postal code"
-                )
-
-            # Validate that max length is 8 (excluding the space)
-            if len(field_value.replace(" ", "")) > 8:
-                raise ValueError(f"{field_location} must be 8 or fewer characters (excluding spaces)")
 
         if not spaces_allowed:
             if " " in field_value:
@@ -137,9 +124,9 @@ class PreValidation:
                 datetime.strptime(field_value, "%Y-%m-%d")
             except ValueError as error:
                 raise ValueError(error_message) from error
-            
+
         else:
-            
+
             # Using %z in datetime.strptime function is more permissive than FHIR,
             # so check that timezone meets FHIR format requirements first
             timezone_pattern = re.compile(r"(\+|-)\d{2}:\d{2}")

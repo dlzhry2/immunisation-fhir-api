@@ -337,7 +337,7 @@ class PreValidators:
         field_location = "contained[?(@.resourceType=='Patient')].address"
         try:
             field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["address"]
-            PreValidation.for_list(field_value, field_location, defined_length=1)
+            PreValidation.for_list(field_value, field_location)
         except (KeyError, IndexError):
             pass
 
@@ -351,7 +351,7 @@ class PreValidators:
             field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["address"][0][
                 "postalCode"
             ]
-            PreValidation.for_string(field_value, field_location, is_postal_code=True)
+            PreValidation.for_string(field_value, field_location)
         except (KeyError, IndexError):
             pass
 
@@ -617,7 +617,7 @@ class PreValidators:
         field_location = "protocolApplied[0].doseNumberPositiveInt"
         try:
             field_value = values["protocolApplied"][0]["doseNumberPositiveInt"]
-            PreValidation.for_positive_integer(field_value, field_location, max_value=9)
+            PreValidation.for_positive_integer(field_value, field_location)
         except (KeyError, IndexError):
             pass
 
@@ -868,7 +868,7 @@ class PreValidators:
             for index, value in enumerate(values["reasonCode"]):
                 try:
                     field_value = value["coding"]
-                    PreValidation.for_list(field_value, f"reasonCode[{index}].coding", defined_length=1)
+                    PreValidation.for_list(field_value, f"reasonCode[{index}].coding")
                 except KeyError:
                     pass
         except KeyError:
