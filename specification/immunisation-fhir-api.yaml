@@ -9,10 +9,10 @@ info:
 
     ### You can:
      
-    - create and record a patient immunisation
+    - create and record a patient immunisation (yet to be released)
     - search for a patient's immunisation records
     - get the details of an immunisation record
-    - update an immunisation record
+    - update an immunisation record (yet to be released)
     - identify an immunisation record as entered in error
      
     ### You cannot use this API to:
@@ -188,17 +188,17 @@ servers:
     description: Integration Server
 paths:
   /Immunization:
-    post:
-      summary: Record a vaccination given to a patient
-      operationId: createImmunization
-      description: |
-        ## Overview
-        Use this endpoint to record the administration of a vaccination.
+    # post:
+    #   summary: Record a vaccination given to a patient
+    #   operationId: createImmunization
+    #   description: |
+    #      ## Overview
+    #      Use this endpoint to record the administration of a vaccination.
 
-        This endpoint is not available for when you are authenticated using patient access.
+    #      This endpoint is not available for when you are authenticated using patient access.
 
-        ## Sandbox testing
-        Yet to be released 
+      #   ## Sandbox testing
+      #   Yet to be released 
 
     #     | Scenario                                | Request                                                                                                                                                         | Response                                                                |
     #     | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
@@ -209,7 +209,7 @@ paths:
     #     - $ref: '#/components/parameters/RequestID'
     #   requestBody:
     #     $ref: '#/components/requestBodies/Immunization' 
-    #   responses:
+    #  responses:
     #     "201":
     #       description: Create Immunization operation successful
     #       headers:
@@ -311,15 +311,15 @@ paths:
                 $ref: '#/components/schemas/Immunization'
         4XX:
           $ref: '#/components/responses/4XX-imms'
-    put:
-      summary: Update a record of vaccination
-      operationId: updateImmunization
-      description: |
-        ## Overview
-        This record allows you to add a new updated record of a vaccination. If no existing record is present then a new record will be recorded.
+    # put:
+    #   summary: Update a record of vaccination
+    #   operationId: updateImmunization
+    #   description: |
+    #     ## Overview
+    #     This record allows you to add a new updated record of a vaccination. If no existing record is present then a new record will be recorded.
 
-        ## Sandbox testing
-        Yet to be released 
+    #     ## Sandbox testing
+    #     Yet to be released 
 
     #     | Scenario                                | Request                                                                                                                                                         | Response                                                                |
     #     | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
@@ -332,7 +332,7 @@ paths:
     #     - $ref: '#/components/parameters/Id'
     #   requestBody:
     #     $ref: '#/components/requestBodies/Immunization'
-    #   responses:
+    #  responses:
     #     "200":
     #       description: Update Immunization operation successful
     #       headers:
@@ -345,15 +345,15 @@ paths:
     #           $ref: components/schemas/Location.yaml
     #     4XX:
     #       $ref: '#/components/responses/4XX-imms'
-    delete:
-      summary: Mark a record of vaccination as being entered in error
-      operationId: deleteImmunization
-      description: |
-        ## Overview
-        This endpoint allows you to mark a record that has been entered in error.
+    # delete:
+    #   summary: Mark a record of vaccination as being entered in error
+    #   operationId: deleteImmunization
+    #   description: |
+    #     ## Overview
+    #     This endpoint allows you to mark a record that has been entered in error.
 
-        ## Sandbox testing
-        Yet to be released
+    #     ## Sandbox testing
+    #     Yet to be released
 
     #     | Scenario                                | Request                                                                                                                                                         | Response                                                                |
     #     | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
