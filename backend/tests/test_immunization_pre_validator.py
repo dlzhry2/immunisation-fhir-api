@@ -395,6 +395,22 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_list_element=valid_list_element,
         )
 
+        invalid_patient_identifier = {
+            "system": "https://fhir.nhs.uk/Id/nhs-number",
+            "value": "9000000009",
+            "extension": "Some text",
+        }
+
+        # CASE: Invalid identifier with extension in one of the elements
+
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(self.json_data),
+            field_location="contained[?(@.resourceType=='Patient')].identifier",
+            invalid_value=invalid_patient_identifier,
+            expected_error_message="contained[?(@.resourceType=='Patient')].identifier[0] must not include an extension",
+        )
+
     def test_pre_validate_patient_identifier_value(self):
         """Test pre_validate_patient_identifier_value accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_string_value(

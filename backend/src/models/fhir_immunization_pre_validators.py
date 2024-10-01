@@ -42,6 +42,7 @@ class PreValidators:
             self.pre_validate_practitioner_reference,
             self.pre_validate_patient_identifier,
             self.pre_validate_patient_identifier_value,
+            self.pre_validate_identifier_extension,
             self.pre_validate_patient_name,
             self.pre_validate_patient_name_given,
             self.pre_validate_patient_name_family,
@@ -268,6 +269,21 @@ class PreValidators:
         except (KeyError, IndexError):
             pass
 
+    def pre_validate_identifier_extension(self, values: dict) -> dict:
+        """
+        Pre-validate that contained[?(@.resourceType=='Patient')].identifier[0].extension does
+        not exist at all. If it exists, raise a ValueError."""
+        try:
+            # Get the first Patient's identifier object
+            patient_identifier = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["identifier"]
+
+            # Check if the 'extension' field exists
+            if "extension" in patient_identifier:
+                raise ValueError("contained[?(@.resourceType=='Patient')].identifier[0] must not include an extension")
+
+        except (KeyError, IndexError):
+            pass
+
     def pre_validate_patient_name(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].name exists, then it is an array of length 1
@@ -341,7 +357,7 @@ class PreValidators:
     def pre_validate_patient_address_postal_code(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].address[0].postalCode (legacy CSV field name:
-        PERSON_POSTCODE) exists, then it is a non-empty string, separated into two parts by a single space
+        PERSON_POSTCODE) exists, then it is a non-empty string
         """
         field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
         try:
