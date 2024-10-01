@@ -29,10 +29,14 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 # Given two patients each with one covid_19
                 covid_19_p1 = generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19)
                 covid_19_p2 = generate_imms_resource(valid_nhs_number2, VaccineTypes.covid_19)
+                rsv_p1 = generate_imms_resource(valid_nhs_number1, VaccineTypes.rsv)
+                rsv_p2 = generate_imms_resource(valid_nhs_number2, VaccineTypes.rsv)
                 covid_19_p1_id, covid_19_p2_id = self.store_records(covid_19_p1, covid_19_p2)
+                rsv_p1_id, rsv_p2_id = self.store_records(rsv_p1, rsv_p2)
 
                 # When
                 response = imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.covid_19)
+                response_rsv = imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.rsv)
 
                 # Then
                 self.assertEqual(response.status_code, 200, response.text)
@@ -42,6 +46,14 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
                 self.assertTrue(covid_19_p1_id in resource_ids)
                 self.assertTrue(covid_19_p2_id not in resource_ids)
+
+                self.assertEqual(response_rsv.status_code, 200, response_rsv.text)
+                body_rsv = response_rsv.json()
+                self.assertEqual(body_rsv["resourceType"], "Bundle")
+
+                resource_ids = [entity["resource"]["id"] for entity in body_rsv["entry"]]
+                self.assertTrue(rsv_p1_id in resource_ids)
+                self.assertTrue(rsv_p2_id not in resource_ids)
 
     def test_search_patient_multiple_diseases(self):
         # Given patient has two vaccines
