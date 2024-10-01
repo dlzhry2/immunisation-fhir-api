@@ -23,11 +23,11 @@ info:
      
     You can create, read, update and delete:
      
-    - Vaccination events for the disease types found in this list To be confirm
+    - Vaccination events for the disease types found in this list {To be confirm}
       
     ### Data availability, timing and quality
  
-    This is a real time service, constrained by the timw taken for providers to transfer vaccination events.In most cases the latest a record willbe available is within 48 hours of the immunisation event.
+    This is a real time service, constrained by the time taken for providers to transfer vaccination events.In most cases the latest a record willbe available is within 48 hours of the immunisation event.
  
     You must have a traced patient NHS Number to use the API search facilities as this works directly from this data. However, you will still able to retrieve and update the record using it's unique ID. 
 
@@ -43,7 +43,7 @@ info:
    
     You must do this before you can go live (see 'Onboarding' below).
    
-    ### Who can access immunisation event records.
+    ## Who can access immunisation event records
      
     Health and care organisations in England can access immunisation records.
    
@@ -198,25 +198,25 @@ paths:
         This endpoint is not available for when you are authenticated using patient access.
 
         ## Sandbox testing
-        You can test the following scenarios in our sandbox environment:
+        Yet to be released 
 
-        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
-        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
-        |                                         |                                                                                                                                                                 |                                                                         |
+    #     | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+    #     | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+    #     |                                         |                                                                                                                                                                 |                                                                         |
 
-      parameters:
-        - $ref: '#/components/parameters/CorrelationID'
-        - $ref: '#/components/parameters/RequestID'
-      requestBody:
-        $ref: '#/components/requestBodies/Immunization' 
-      responses:
-        "201":
-          description: Create Immunization operation successful
-          headers:
-            Location:
-              $ref: components/schemas/Location.yaml
-        4XX:
-          $ref: '#/components/responses/4XX-imms'
+    #   parameters:
+    #     - $ref: '#/components/parameters/CorrelationID'
+    #     - $ref: '#/components/parameters/RequestID'
+    #   requestBody:
+    #     $ref: '#/components/requestBodies/Immunization' 
+    #   responses:
+    #     "201":
+    #       description: Create Immunization operation successful
+    #       headers:
+    #         Location:
+    #           $ref: components/schemas/Location.yaml
+    #     4XX:
+    #       $ref: '#/components/responses/4XX-imms'
     get:
       summary: Search for a patient's immunisation records
       operationId: searchViaGetImmunization
@@ -319,32 +319,32 @@ paths:
         This record allows you to add a new updated record of a vaccination. If no existing record is present then a new record will be recorded.
 
         ## Sandbox testing
-        You can test the following scenarios in our sandbox environment:
+        Yet to be released 
 
-        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
-        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
-        |                                         |                                                                                                                                                                 |                                                                         |
+    #     | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+    #     | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+    #     |                                         |                                                                                                                                                                 |                                                                         |
 
 
-      parameters:
-        - $ref: '#/components/parameters/CorrelationID'
-        - $ref: '#/components/parameters/RequestID'
-        - $ref: '#/components/parameters/Id'
-      requestBody:
-        $ref: '#/components/requestBodies/Immunization'
-      responses:
-        "200":
-          description: Update Immunization operation successful
-          headers:
-            Location:
-              $ref: components/schemas/Location.yaml
-        "201":
-          description: Create Immunization operation successful (requires 'updateCreateEnabled' configuration option)
-          headers:
-            Location:
-              $ref: components/schemas/Location.yaml
-        4XX:
-          $ref: '#/components/responses/4XX-imms'
+    #   parameters:
+    #     - $ref: '#/components/parameters/CorrelationID'
+    #     - $ref: '#/components/parameters/RequestID'
+    #     - $ref: '#/components/parameters/Id'
+    #   requestBody:
+    #     $ref: '#/components/requestBodies/Immunization'
+    #   responses:
+    #     "200":
+    #       description: Update Immunization operation successful
+    #       headers:
+    #         Location:
+    #           $ref: components/schemas/Location.yaml
+    #     "201":
+    #       description: Create Immunization operation successful (requires 'updateCreateEnabled' configuration option)
+    #       headers:
+    #         Location:
+    #           $ref: components/schemas/Location.yaml
+    #     4XX:
+    #       $ref: '#/components/responses/4XX-imms'
     delete:
       summary: Mark a record of vaccination as being entered in error
       operationId: deleteImmunization
@@ -353,26 +353,26 @@ paths:
         This endpoint allows you to mark a record that has been entered in error.
 
         ## Sandbox testing
-        You can test the following scenarios in our sandbox environment:
+        Yet to be released
 
-        | Scenario                                | Request                                                                                                                                                         | Response                                                                |
-        | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
-        |                                         |                                                                                                                                                                 |                                                                         |
+    #     | Scenario                                | Request                                                                                                                                                         | Response                                                                |
+    #     | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
+    #     |                                         |                                                                                                                                                                 |                                                                         |
 
 
 
-      parameters:
-        - $ref: '#/components/parameters/CorrelationID'
-        - $ref: '#/components/parameters/RequestID'
-        - $ref: '#/components/parameters/Id'
-      responses:
-        "204":
-          description: Delete Immunization operation successful
-          headers:
-            Location:
-              $ref: components/schemas/Location.yaml
-        4XX:
-          $ref: '#/components/responses/4XX-imms'
+    #   parameters:
+    #     - $ref: '#/components/parameters/CorrelationID'
+    #     - $ref: '#/components/parameters/RequestID'
+    #     - $ref: '#/components/parameters/Id'
+    #   responses:
+    #     "204":
+    #       description: Delete Immunization operation successful
+    #       headers:
+    #         Location:
+    #           $ref: components/schemas/Location.yaml
+    #     4XX:
+    #       $ref: '#/components/responses/4XX-imms'
 
 components:
   responses:
@@ -441,8 +441,7 @@ components:
                 enum:
                   - "COVID19"
                   - "FLU"
-                  - "HPV"
-                  - "MMR"
+                  - "RSV"
               -date.from:
                 type: string
                 format: date
@@ -531,8 +530,7 @@ components:
         enum:
           - "COVID19"
           - "FLU"
-          - "HPV"
-          - "MMR"
+          - "RSV"
     DateFrom:
       in: query
       name: -date.from
