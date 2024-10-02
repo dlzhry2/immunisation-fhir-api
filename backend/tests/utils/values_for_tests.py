@@ -41,6 +41,10 @@ class ValidValues:
         "1933-12-31T11:11:11.111111+12:45",  # DateTime with milliseconds to 6 decimal places
     ]
 
+    for_strings_with_any_length_chars = (
+        "This is a really long string with more than 100 characters to test whether the validator is working well!! "
+    )
+
     # Not a valid snomed code, but is valid coding format for format testing
     snomed_coding_element = {"system": "http://snomed.info/sct", "code": "ABC123", "display": "test"}
 
@@ -223,6 +227,11 @@ class InvalidValues:
     performer_with_two_organizations = [
         {"actor": {"reference": "#Pract1", "type": "Organization"}},
         {"actor": {"type": "Organization", "display": "Acme Healthcare"}},
+    ]
+
+    performer_with_no_organizations = [
+        {"actor": {"reference": "#Pract1", "type": "NotAnOrganisation"}},
+        {"actor": {"type": "NotAnOrganisation", "display": "Acme Healthcare"}},
     ]
 
     practitioner_resource_with_no_id = {"resourceType": "Practitioner"}
