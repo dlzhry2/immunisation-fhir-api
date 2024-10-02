@@ -137,9 +137,9 @@ class PreValidation:
                 datetime.strptime(field_value, "%Y-%m-%d")
             except ValueError as error:
                 raise ValueError(error_message) from error
-            
+
         else:
-            
+
             # Using %z in datetime.strptime function is more permissive than FHIR,
             # so check that timezone meets FHIR format requirements first
             timezone_pattern = re.compile(r"(\+|-)\d{2}:\d{2}")
@@ -183,11 +183,7 @@ class PreValidation:
                 raise ValueError(f"{field_location} must be an integer in the range 1 to {max_value}")
 
     @staticmethod
-    def for_integer_or_decimal(
-        field_value: Union[int, Decimal],
-        field_location: str,
-        max_decimal_places: int = None,
-    ):
+    def for_integer_or_decimal(field_value: Union[int, Decimal], field_location: str):
         """
         Apply pre-validation to a decimal field to ensure that it is an integer or decimal,
         which does not exceed the maximum allowed number of decimal places (if applicable)
@@ -197,13 +193,6 @@ class PreValidation:
             or type(field_value) is Decimal  # pylint: disable=unidiomatic-typecheck
         ):
             raise TypeError(f"{field_location} must be a number")
-
-        if max_decimal_places is not None:
-            if isinstance(field_value, Decimal):
-                if abs(field_value.as_tuple().exponent) > max_decimal_places:
-                    raise ValueError(
-                        f"{field_location} must be a number with a maximum of {max_decimal_places}" + " decimal places"
-                    )
 
     @staticmethod
     def for_unique_list(

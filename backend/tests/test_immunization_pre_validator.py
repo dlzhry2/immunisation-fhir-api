@@ -148,7 +148,11 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         _test_valid_values_accepted(self, deepcopy(self.json_data), field_location, valid_values_to_test)
 
         # REJECT: One patient, one practitioner, one non-approved
-        invalid_value_to_test = [patient_resource_1, practitioner_resource_1, non_approved_resource]
+        invalid_value_to_test = [
+            patient_resource_1,
+            practitioner_resource_1,
+            non_approved_resource,
+        ]
         _test_invalid_values_rejected(
             self,
             valid_json_data=deepcopy(self.json_data),
@@ -158,7 +162,11 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         )
 
         # REJECT: One patient, two practitioners
-        invalid_value_to_test = [patient_resource_1, practitioner_resource_1, practitioner_resource_2]
+        invalid_value_to_test = [
+            patient_resource_1,
+            practitioner_resource_1,
+            practitioner_resource_2,
+        ]
         _test_invalid_values_rejected(
             self,
             valid_json_data=deepcopy(self.json_data),
@@ -178,7 +186,11 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         )
 
         # REJECT: Two patients, one practitioner
-        invalid_value_to_test = [patient_resource_1, patient_resource_2, practitioner_resource_1]
+        invalid_value_to_test = [
+            patient_resource_1,
+            patient_resource_2,
+            practitioner_resource_1,
+        ]
         _test_invalid_values_rejected(
             self,
             valid_json_data=deepcopy(self.json_data),
@@ -187,8 +199,13 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             expected_error_message="contained must contain exactly one Patient resource",
         )
 
-        # REJECT: No patient, two practitioners, one non-approved
-        invalid_value = [practitioner_resource_1, practitioner_resource_2, non_approved_resource]
+        # Reject: No patient, two practitioners, one non-approved
+        invalid_value = [
+            practitioner_resource_1,
+            practitioner_resource_2,
+            non_approved_resource,
+        ]
+
         expected_error_messages = [
             "contained must contain only Patient and Practitioner resources",
             "contained must contain exactly one Patient resource",
@@ -250,7 +267,10 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
         valid_contained_with_patient = [patient_resource_1, practitioner_resource_1]
 
-        invalid_contained_with_no_id_in_patient = [{"resourceType": "Patient"}, practitioner_resource_1]
+        invalid_contained_with_no_id_in_patient = [
+            {"resourceType": "Patient"},
+            practitioner_resource_1,
+        ]
 
         valid_patient_pat1 = {"reference": "#Pat1"}
         valid_patient_pat2 = {"reference": "#Pat2"}
@@ -363,7 +383,10 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_pre_validate_patient_identifier(self):
         """Test pre_validate_patient_identifier accepts valid values and rejects invalid values"""
-        valid_list_element = {"system": "https://fhir.nhs.uk/Id/nhs-number", "value": "9000000009"}
+        valid_list_element = {
+            "system": "https://fhir.nhs.uk/Id/nhs-number",
+            "value": "9000000009",
+        }
         ValidatorModelTests.test_list_value(
             self,
             field_location="contained[?(@.resourceType=='Patient')].identifier",
@@ -381,7 +404,12 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             defined_length=10,
             invalid_length_strings_to_test=["999054860", "99905486091", ""],
             spaces_allowed=False,
-            invalid_strings_with_spaces_to_test=["99905 8609", " 990548609", "999054860 ", "9990  8609"],
+            invalid_strings_with_spaces_to_test=[
+                "99905 8609",
+                " 990548609",
+                "999054860 ",
+                "9990  8609",
+            ],
         )
 
     def test_pre_validate_patient_name(self):
@@ -452,8 +480,8 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self, field_location="occurrenceDateTime", is_occurrence_date_time=True
         )
 
-    def test_pre_validate_performer_actor_type(self):
-        """Test pre_validate_performer_actor_type accepts valid values and rejects invalid values"""
+    def test_pre_validate_performer(self):
+        """Test pre_validate_performer accepts valid values and rejects invalid values"""
         # Test that valid data is accepted
         _test_valid_values_accepted(self, deepcopy(self.json_data), "performer", [ValidValues.performer])
 
@@ -463,7 +491,19 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_json_data=deepcopy(self.json_data),
             field_location="performer",
             invalid_value=InvalidValues.performer_with_two_organizations,
-            expected_error_message="performer.actor[?@.type=='Organization'] must be unique",
+            expected_error_message=(
+                "There must be exactly one performer.actor[?@.type=='Organization'] with type 'Organization'"
+            ),
+        )
+
+        _test_invalid_values_rejected(
+            self,
+            valid_json_data=deepcopy(self.json_data),
+            field_location="performer",
+            invalid_value=InvalidValues.performer_with_no_organizations,
+            expected_error_message=(
+                "There must be exactly one performer.actor[?@.type=='Organization'] with type 'Organization'"
+            ),
         )
 
     def test_pre_validate_organization_identifier_value(self):
@@ -488,20 +528,30 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         self.assertIn("identifier is a mandatory field", actual_error_messages)
 
         # Test identifier is list of length 1
-        valid_list_element = {"system": "https://supplierABC/identifiers/vacc", "value": "ACME-vacc123456"}
+        valid_list_element = {
+            "system": "https://supplierABC/identifiers/vacc",
+            "value": "ACME-vacc123456",
+        }
         ValidatorModelTests.test_list_value(
             self,
             field_location="identifier",
             valid_lists_to_test=[[valid_list_element]],
             predefined_list_length=1,
             valid_list_element=valid_list_element,
+            is_list_of_dicts=True,
         )
 
     def test_pre_validate_identifier_value(self):
         """Test pre_validate_identifier_value accepts valid values and rejects invalid values"""
-        valid_strings_to_test = ["e045626e-4dc5-4df3-bc35-da25263f901e", "ACME-vacc123456", "ACME-CUSTOMER1-vacc123456"]
+        valid_strings_to_test = [
+            "e045626e-4dc5-4df3-bc35-da25263f901e",
+            "ACME-vacc123456",
+            "ACME-CUSTOMER1-vacc123456",
+        ]
         ValidatorModelTests.test_string_value(
-            self, field_location="identifier[0].value", valid_strings_to_test=valid_strings_to_test
+            self,
+            field_location="identifier[0].value",
+            valid_strings_to_test=valid_strings_to_test,
         )
 
     def test_pre_validate_identifier_system(self):
@@ -631,7 +681,15 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         """Test pre_validate_protocol_applied accepts valid values and rejects invalid values"""
         valid_list_element = {
             "targetDisease": [
-                {"coding": [{"system": "http://snomed.info/sct", "code": "6142004", "display": "Influenza"}]}
+                {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "6142004",
+                            "display": "Influenza",
+                        }
+                    ]
+                }
             ],
             "doseNumberPositiveInt": 1,
         }
@@ -693,9 +751,25 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
         # CASE: targetDisease element missing 'coding' property
         invalid_target_disease = [
-            {"coding": [{"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"}]},
+            {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "14189004",
+                        "display": "Measles",
+                    }
+                ]
+            },
             {"text": "a_disease"},
-            {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]},
+            {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "36653000",
+                        "display": "Rubella",
+                    }
+                ]
+            },
         ]
 
         _test_invalid_values_rejected(
@@ -715,12 +789,36 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             [
                 {
                     "coding": [
-                        {"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"},
-                        {"system": "some_other_system", "code": "a_code", "display": "Measles"},
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "14189004",
+                            "display": "Measles",
+                        },
+                        {
+                            "system": "some_other_system",
+                            "code": "a_code",
+                            "display": "Measles",
+                        },
                     ]
                 },
-                {"coding": [{"system": "http://snomed.info/sct", "code": "36989005", "display": "Mumps"}]},
-                {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]},
+                {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "36989005",
+                            "display": "Mumps",
+                        }
+                    ]
+                },
+                {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "36653000",
+                            "display": "Rubella",
+                        }
+                    ]
+                },
             ]
         ]
 
@@ -734,14 +832,38 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         # CASE: Invalid target disease with two snomed codes in single coding element
 
         invalid_target_disease_value = [
-            {"coding": [{"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"}]},
             {
                 "coding": [
-                    {"system": "http://snomed.info/sct", "code": "36989005", "display": "Mumps"},
-                    {"system": "http://snomed.info/sct", "code": "another_mumps_code", "display": "Mumps"},
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "14189004",
+                        "display": "Measles",
+                    }
                 ]
             },
-            {"coding": [{"system": "http://snomed.info/sct", "code": "36653000", "display": "Rubella"}]},
+            {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "36989005",
+                        "display": "Mumps",
+                    },
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "another_mumps_code",
+                        "display": "Mumps",
+                    },
+                ]
+            },
+            {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "36653000",
+                        "display": "Rubella",
+                    }
+                ]
+            },
         ]
 
         # CASE: Invalid target disease with no snomed codes in one of the coding elements
@@ -756,9 +878,33 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         )
 
         invalid_target_disease_value = [
-            {"coding": [{"system": "http://snomed.info/sct", "code": "14189004", "display": "Measles"}]},
-            {"coding": [{"system": "http://snomed.info/sct", "code": "36989005", "display": "Mumps"}]},
-            {"coding": [{"system": "some_other_system", "code": "36653000", "display": "Rubella"}]},
+            {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "14189004",
+                        "display": "Measles",
+                    }
+                ]
+            },
+            {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "36989005",
+                        "display": "Mumps",
+                    }
+                ]
+            },
+            {
+                "coding": [
+                    {
+                        "system": "some_other_system",
+                        "code": "36653000",
+                        "display": "Rubella",
+                    }
+                ]
+            },
         ]
 
         _test_invalid_values_rejected(
@@ -777,12 +923,20 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="protocolApplied[0].targetDisease[0]."
             + "coding[?(@.system=='http://snomed.info/sct')].code",
-            valid_strings_to_test=[DiseaseCodes.covid_19, DiseaseCodes.flu, DiseaseCodes.hpv],
+            valid_strings_to_test=[
+                DiseaseCodes.covid_19,
+                DiseaseCodes.flu,
+                DiseaseCodes.hpv,
+            ],
             valid_json_data=load_json_data(filename="completed_covid19_immunization_event.json"),
         )
 
         # Test data with multiple disease_type_coding_codes
-        for i, disease_code in [(0, DiseaseCodes.measles), (1, DiseaseCodes.mumps), (2, DiseaseCodes.rubella)]:
+        for i, disease_code in [
+            (0, DiseaseCodes.measles),
+            (1, DiseaseCodes.mumps),
+            (2, DiseaseCodes.rubella),
+        ]:
             ValidatorModelTests.test_string_value(
                 self,
                 field_location=f"protocolApplied[0].targetDisease[{i}]."
@@ -790,29 +944,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 valid_strings_to_test=[disease_code],
                 valid_json_data=load_json_data(filename="completed_mmr_immunization_event.json"),
             )
-
-    def test_pre_validate_vaccine_code_coding(self):
-        """Test pre_validate_vaccine_code_coding accepts valid values and rejects invalid values"""
-        ValidatorModelTests.test_unique_list(
-            self,
-            field_location="vaccineCode.coding",
-            valid_lists_to_test=[[ValidValues.snomed_coding_element]],
-            invalid_list_with_duplicates_to_test=[
-                ValidValues.snomed_coding_element,
-                ValidValues.snomed_coding_element,
-            ],
-            expected_error_message="vaccineCode.coding[?(@.system=='http://snomed.info/sct')]" + " must be unique",
-        )
-
-    def test_pre_validate_vaccine_code_coding_code(self):
-        """Test pre_validate_vaccine_code_coding_code accepts valid values and rejects invalid values"""
-        field_location = "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].code"
-        ValidatorModelTests.test_string_value(self, field_location, valid_strings_to_test=["dummy"])
-
-    def test_pre_validate_vaccine_code_coding_display(self):
-        """Test pre_validate_vaccine_code_coding_display accepts valid values and rejects invalid values"""
-        field_location = "vaccineCode.coding[?(@.system=='http://snomed.info/sct')].display"
-        ValidatorModelTests.test_string_value(self, field_location, valid_strings_to_test=["dummy"])
 
     def test_pre_validate_manufacturer_display(self):
         """Test pre_validate_manufacturer_display accepts valid values and rejects invalid values"""
@@ -824,9 +955,8 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self,
             field_location="lotNumber",
-            valid_strings_to_test=["sample", "0123456789101112"],
-            max_length=100,
-            invalid_length_strings_to_test=InvalidValues.for_strings_with_max_100_chars,
+            valid_strings_to_test=["sample", ValidValues.for_strings_with_any_length_chars],
+            invalid_strings_to_test=["", None, 42, 3.889],
         )
 
     def test_pre_validate_expiration_date(self):
@@ -892,8 +1022,8 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 Decimal("100.52"),  # 2 decimal places
                 Decimal("32.430"),  # 3 decimal places
                 Decimal("1.1234"),  # 4 decimal places,
+                Decimal("1.123456789"),  # 9 decimal place
             ],
-            max_decimal_places=4,
         )
 
     def test_pre_validate_dose_quantity_code(self):
@@ -927,7 +1057,9 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         # rejected when invalid
         for i in range(1):
             ValidatorModelTests.test_string_value(
-                self, field_location=f"reasonCode[{i}].coding[0].code", valid_strings_to_test=["ABC123"]
+                self,
+                field_location=f"reasonCode[{i}].coding[0].code",
+                valid_strings_to_test=["ABC123"],
             )
 
     def test_pre_validate_organisation_identifier_system(self):
@@ -941,14 +1073,18 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
     def test_pre_validate_location_identifier_value(self):
         """Test pre_validate_location_identifier_value accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_string_value(
-            self, field_location="location.identifier.value", valid_strings_to_test=["B0C4P", "140565"]
+            self,
+            field_location="location.identifier.value",
+            valid_strings_to_test=["B0C4P", "140565"],
         )
 
     def test_pre_validate_location_identifier_system(self):
         """Test pre_validate_location_identifier_system accepts valid values and rejects invalid values"""
         field_location = "location.identifier.system"
         ValidatorModelTests.test_string_value(
-            self, field_location, valid_strings_to_test=["https://fhir.hl7.org.uk/Id/140565"]
+            self,
+            field_location,
+            valid_strings_to_test=["https://fhir.hl7.org.uk/Id/140565"],
         )
 
 

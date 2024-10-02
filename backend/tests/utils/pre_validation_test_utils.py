@@ -400,7 +400,6 @@ class ValidatorModelTests:
                 expected_error_message=expected_error_message,
             )
 
-
     @staticmethod
     def test_boolean_value(
         test_instance: unittest.TestCase,
@@ -483,7 +482,6 @@ class ValidatorModelTests:
         test_instance: unittest.TestCase,
         field_location: str,
         valid_decimals_and_integers_to_test: list,
-        max_decimal_places: int = None,
     ):
         """
         Test that a FHIR model accepts valid decimal or integer values and rejects the following
@@ -511,17 +509,6 @@ class ValidatorModelTests:
                 invalid_value=invalid_data_type_for_decimals_or_integers,
                 expected_error_message=f"{field_location} must be a number",
             )
-
-        # Test Decimal with more than the maximum number of decimal places
-        decimal_too_many_dp = Decimal("1." + "1" * (max_decimal_places + 1))
-        test_invalid_values_rejected(
-            test_instance,
-            valid_json_data,
-            field_location=field_location,
-            invalid_value=decimal_too_many_dp,
-            expected_error_message=f"{field_location} must be a number with a maximum of "
-            + f"{max_decimal_places} decimal places",
-        )
 
     @staticmethod
     def test_valid_combinations_of_contained_and_performer_accepted(
