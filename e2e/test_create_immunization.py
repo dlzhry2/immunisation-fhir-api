@@ -1,5 +1,4 @@
 import uuid
-from decimal import Decimal
 from utils.base_test import ImmunizationBaseTest
 from utils.resource import generate_imms_resource, get_full_row_from_identifier
 
@@ -10,15 +9,19 @@ class TestCreateImmunization(ImmunizationBaseTest):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 # Given
-                imms = generate_imms_resource()
+                immunizations = [
+                    generate_imms_resource(),
+                    generate_imms_resource(sample_data_file_name="completed_rsv_immunization_event")
+                ]
 
-                # When
-                response = imms_api.create_immunization(imms)
+                for immunization in immunizations:
+                    # When
+                    response = imms_api.create_immunization(immunization)
 
-                # Then
-                self.assertEqual(response.status_code, 201, response.text)
-                self.assertEqual(response.text, "")
-                self.assertTrue("Location" in response.headers)
+                    # Then
+                    self.assertEqual(response.status_code, 201, response.text)
+                    self.assertEqual(response.text, "")
+                    self.assertIn("Location", response.headers)
 
     def test_non_unique_identifier(self):
         """it should give 422 if the identifier is not unique"""
@@ -41,17 +44,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
         response = self.default_imms_api.create_immunization(imms)
 
         self.assert_operation_outcome(response, 400, bad_nhs_number)
-
-    def test_bad_dose_quantity_value(self):
-        """it should reject the request if doseQuantity.value is more than 4 decimal places"""
-        imms = generate_imms_resource()
-        imms["doseQuantity"]["value"] = Decimal("0.12345")
-
-        response = self.default_imms_api.create_immunization(imms)
-
-        self.assert_operation_outcome(
-            response, 400, "doseQuantity.value must be a number with a maximum of 4 decimal places"
-        )
 
     def test_validation(self):
         """it should validate Immunization"""

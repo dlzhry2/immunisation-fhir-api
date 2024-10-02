@@ -13,21 +13,27 @@ class TestUpdateImmunization(ImmunizationBaseTest):
         for imms_api in self.imms_apis:
             with self.subTest(imms_api):
                 # Given
-                imms = generate_imms_resource()
-                response = imms_api.create_immunization(imms)
-                assert response.status_code == 201
-                imms_id = parse_location(response.headers["Location"])
+                immunization_resources = [
+                    generate_imms_resource(),
+                    generate_imms_resource(sample_data_file_name="completed_rsv_immunization_event")
+                ]
 
-                # When
-                update_payload = copy.deepcopy(imms)
-                update_payload["id"] = imms_id
-                update_payload["location"]["identifier"]["value"] = "Y11111"
-                response = imms_api.update_immunization(imms_id, update_payload)
+                for imms in immunization_resources:
+                    # Create the immunization resource
+                    response = imms_api.create_immunization(imms)
+                    assert response.status_code == 201
+                    imms_id = parse_location(response.headers["Location"])
 
-                # Then
-                self.assertEqual(response.status_code, 200, response.text)
-                self.assertEqual(response.text, "")
-                self.assertTrue("Location" not in response.headers)
+                    # When
+                    update_payload = copy.deepcopy(imms)
+                    update_payload["id"] = imms_id
+                    update_payload["location"]["identifier"]["value"] = "Y11111"
+                    response = imms_api.update_immunization(imms_id, update_payload)
+
+                    # Then
+                    self.assertEqual(response.status_code, 200, response.text)
+                    self.assertEqual(response.text, "")
+                    self.assertNotIn("Location", response.headers)
 
     def test_update_non_existent_identifier(self):
         """update a record should fail if identifier is not present"""
