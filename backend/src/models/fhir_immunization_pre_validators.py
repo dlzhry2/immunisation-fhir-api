@@ -40,9 +40,9 @@ class PreValidators:
             self.pre_validate_top_level_elements,
             self.pre_validate_patient_reference,
             self.pre_validate_practitioner_reference,
+            self.pre_validate_patient_identifier_extension,
             self.pre_validate_patient_identifier,
             self.pre_validate_patient_identifier_value,
-            self.pre_validate_identifier_extension,
             self.pre_validate_patient_name,
             self.pre_validate_patient_name_given,
             self.pre_validate_patient_name_family,
@@ -242,6 +242,23 @@ class PreValidators:
                 f"contained Practitioner resource id '{practitioner_id}' must only be referenced once from performer"
             )
 
+    def pre_validate_patient_identifier_extension(self, values: dict) -> None:
+        """
+        Pre-validate that if contained[?(@.resourceType=='Patient')].identifier[0] contains
+        an extension field, it raises a validation error.
+        """
+        field_location = "contained[?(@.resourceType=='Patient')].identifier[0].extension"
+
+        try:
+            patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]
+            identifier = patient["identifier"][0]
+            # print("identifier_TEST:", identifier)
+            # Check if 'extension' key is present in identifier
+            if "extension" in identifier:
+                raise ValueError("contained[?(@.resourceType=='Patient')].identifier[0] must not include an extension")
+        except (KeyError, IndexError):
+            pass
+
     def pre_validate_patient_identifier(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].identifier exists, then it is a list of length 1
@@ -266,21 +283,6 @@ class PreValidators:
             ]
             PreValidation.for_string(field_value, field_location, defined_length=10, spaces_allowed=False)
             PreValidation.for_nhs_number(field_value, field_location)
-        except (KeyError, IndexError):
-            pass
-
-    def pre_validate_identifier_extension(self, values: dict) -> dict:
-        """
-        Pre-validate that contained[?(@.resourceType=='Patient')].identifier[0].extension does
-        not exist at all. If it exists, raise a ValueError."""
-        try:
-            # Get the first Patient's identifier object
-            patient_identifier = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["identifier"]
-
-            # Check if the 'extension' field exists
-            if "extension" in patient_identifier:
-                raise ValueError("contained[?(@.resourceType=='Patient')].identifier[0] must not include an extension")
-
         except (KeyError, IndexError):
             pass
 
