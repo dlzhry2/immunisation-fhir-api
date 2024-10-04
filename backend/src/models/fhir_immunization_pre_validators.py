@@ -252,8 +252,7 @@ class PreValidators:
         try:
             patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]
             identifier = patient["identifier"][0]
-            # print("identifier_TEST:", identifier)
-            # Check if 'extension' key is present in identifier
+
             if "extension" in identifier:
                 raise ValueError("contained[?(@.resourceType=='Patient')].identifier[0] must not include an extension")
         except (KeyError, IndexError):

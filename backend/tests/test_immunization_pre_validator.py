@@ -398,14 +398,13 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
     def test_pre_validate_patient_identifier_extension(self):
         """Test pre_validate_patient_identifier_extension raises an error if an extension is present"""
 
-        # Add an extension to simulate an invalid identifier
         invalid_list_element_with_extension = {
             "system": "https://fhir.nhs.uk/Id/nhs-number",
             "value": "9000000009",
-            "extension": [{"url": "example.com", "valueString": "example"}],  # Invalid part
+            "extension": [{"url": "example.com", "valueString": "example"}],
         }
 
-        # Test invalid data (with extension should fail)
+        # REJECT identifier if it contains an extension
         _test_invalid_values_rejected(
             test_instance=self,
             valid_json_data=self.json_data,
@@ -479,7 +478,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_list_value(
             self,
             field_location="contained[?(@.resourceType=='Patient')].address",
-            valid_lists_to_test=[[{"postalCode": "AA1 1AA"}]],
+            valid_lists_to_test=[[{"postalCode": "AA1 1AA"}, {"postalCode": "75007"}, {"postalCode": "AA11AA"}]],
             valid_list_element={"family": "Test"},
         )
 
@@ -488,7 +487,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self,
             field_location="contained[?(@.resourceType=='Patient')].address[0].postalCode",
-            valid_strings_to_test=["AA00 00AA", "A0 0AA"],
+            valid_strings_to_test=["AA00 00AA", "A00AA", "75007"],
         )
 
     def test_pre_validate_occurrence_date_time(self):
