@@ -13,7 +13,7 @@ info:
     - search for a patient's immunisation records
     - get the details of an immunisation record
     - update an immunisation record (yet to be released)
-    - identify an immunisation record as entered in error
+    - identify an immunisation record as entered in error (yet to be released)
      
     ### You cannot use this API to:
      
@@ -29,7 +29,7 @@ info:
  
     This is a real time service, constrained by the time taken for providers to transfer vaccination events.In most cases the latest a record will be available is within 48 hours of the immunisation event.
  
-    You must have a traced patient NHS Number to use the API search facilities as this works directly from this data. However, you will still able to retrieve and update the record using it's unique ID. 
+    The API search interaction will only return immunisation records based on a traced NHS number. Other interactions require the immunisation ID assigned by the API to interact with individual records for read, update and delete.
 
     The vaccination events for all disease types are limited to vaccinations administered on behalf of NHS England.
  
@@ -41,7 +41,7 @@ info:
    
     You must demonstrate you have a valid use case as part of digital onboarding. As this service is disease type agnostic, there is also a shortened onboarding process for each disease type, to explain the legal, commercial and clinical justifications. 
    
-    You must do this before you can go live (see 'Onboarding' below).
+    You must do this before you can go live [see 'Onboarding'] link(this.Onboarding).
    
     ## Who can access immunisation event records
      
@@ -98,7 +98,8 @@ info:
      
     This API has a single access mode:
     - application-restricted access
-    > In the future we intend to offer user-restricted access. 
+
+    In the future we intend to offer user-restricted access. 
      
     ### Application-restricted access
      
@@ -146,7 +147,7 @@ info:
     | ----------------- | --------------------------------------------------------------------- |
     |  Sandbox          | `https://sandbox.api.service.nhs.uk/immunisation-fhir-api`            |
     |  Integration      | `https://int.api.service.nhs.uk/immunisation-fhir-api`                |          
-    |  Production       | `Not yet available`                    |
+    |  Production       | `https://api.service.nhs.uk/immunisation-fhir-api`                    |
 
     ### Sandbox testing
     Our [sandbox environment](https://digital.nhs.uk/developer/guides-and-documentation/testing#sandbox-testing):
@@ -189,13 +190,12 @@ servers:
 paths:
   /Immunization:
     post:
-      summary: Record a vaccination given to a patient
+      summary: Record a vaccination given to a patient - yet to be released
       operationId: createImmunization
       description: |
          ## Overview
-         Use this endpoint to record the administration of a vaccination.
-
-         This endpoint is not available for when you are authenticated using patient access.
+         Use this interaction to record the administration of a vaccination.  The immunization resource must include a targetDisease(s) matching the ‘disease types’ enabled in this interaction and represented by the correct SNOMED concept(s) for that ‘disease type’. See another page for details and disease types and coding.  
+         You must be authorised for the create interaction and the disease type associated with the vaccination event in order to submit a new record. 
 
          ## Sandbox testing       
 
@@ -217,11 +217,14 @@ paths:
         4XX:
           $ref: '#/components/responses/4XX-imms'
     get:
-      summary: Search for a patient's immunisation records
+      summary: Search (GET) for a patient's immunisation records
       operationId: searchViaGetImmunization
       description: |
         ## Overview
-        Use this endpoint to search for a patient using their NHS number and DiseaseType.
+        Use this interaction to search for a patient’s vaccination records using their NHS number and DiseaseType. You can request the patient’s vaccination history for one or more specified ‘disease types’. You may limit the vaccination records by specifying date criteria, for example if you only need to know about vaccinations administered in the last 12 months. 
+        Vaccination event details may be obfuscated for sensitive information. The response will not include contained resources for patient or practitioner within each immunization resource it returns. A single, separate patient resource will be included in the bundle and referenced by each immunization. 
+        Vaccination events submitted without an NHS Number will not be available for retrieval via this interaction. Also, where a patient has a change of NHS Number some or all records may be unavailable via this interaction for a short period of time whilst records are updated. 
+        You must be authorised for the search interaction and the disease type(s) specified in your search in order to access the records. 
 
         ## Sandbox testing
         You can test the following scenarios in our sandbox environment:
@@ -230,7 +233,7 @@ paths:
         | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
         |                                         |                                                                                                                                                                 |                                                                         |
         |  Immunisation history found             | `patient.identifier`=`https://fhir.nhs.uk/Id/nhs-number\|9000000009`                                                                                            | HTTP Status 200 with immunisation data in response body                 |
-        |  Bad Request                            | Didn't pass Required fields `patient.identifier`  or  -immunization.target  or  _include             | HTTP Status 422 Unprocessable Entity               |
+        |  Bad Request                            | Didn't pass Required fields `patient.identifier`  or  -immunization.target  or  _include             | HTTP Status 400 Bad Request               |
         
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
@@ -240,6 +243,7 @@ paths:
         - $ref: '#/components/parameters/DateFrom'
         - $ref: '#/components/parameters/DateTo'
         - $ref: '#/components/parameters/Include'
+
       responses:
         "200":
           description: Search immunisation operation successful
@@ -247,11 +251,11 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Bundle'
-        4XX:
+        "400":
           $ref: '#/components/responses/4XX-imms'          
   /Immunization/_search:
     post:
-      summary: Search for a patient's immunisation records
+      summary: Search (POST) for a patient's immunisation records
       operationId: searchViaPOSTImmunization
       description: |
         ## Overview
@@ -264,8 +268,8 @@ paths:
         | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
         |                                         |                                                                                                                                                                 |                                                                         |
         |  Immunisation history found             | `patient.identifier`=`https://fhir.nhs.uk/Id/nhs-number\|9000000009`                                                                                            | HTTP Status 200 with immunisation data in response body                 |
-        |  Bad Request                            | Didn't pass Required fields `patient.identifier`  or  -immunization.target  or  _include             | HTTP Status 422 Unprocessable Entity               |
-
+        |  Bad Request                            | Didn't pass Required fields `patient.identifier`  or  -immunization.target  or  _include             | HTTP Status 400 Bad Request               |
+        
       parameters:
         - $ref: '#/components/parameters/CorrelationID'
         - $ref: '#/components/parameters/RequestID'
@@ -291,7 +295,10 @@ paths:
       operationId: readImmunization
       description: |
         ## Overview
-        This endpoint allows you to retrieve the record of a single vaccination by its identifier.
+        This interaction allows you to retrieve the record of a single vaccination by our assigned id. We will return the full immunization resource as submitted, except vaccination event details may be obfuscated for sensitive information. 
+        The response will include an eTag for the version of the record which has been returned. If you intend to update a record, it is recommended that you use this interaction to obtain the latest version (and eTag for the version). 
+        To retrieve a full vaccination history for a patient, see the search interaction. 
+        You must be authorised for the read interaction and the disease type associated with the vaccination event in order to access the record. 
         
         ## Sandbox testing
         You can test the following scenarios in our sandbox environment:
@@ -300,7 +307,7 @@ paths:
         | ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|
         |                                         |                                                                                                                                                                 |                                                                         |
         |  Immunisation record found              | `id`=`12a33650-6f94-4e8f-a971-1c5c41da5b22`                                                                                            | HTTP Status 200 with immunisation data in response body                 |
-        |  Bad Request                            | Didn't pass Required fields `id`            | HTTP Status 422 Unprocessable Entity               |
+        |  Bad Request                            | Didn't pass Required fields `id`            | HTTP Status 400 Bad Request               |
 
 
       parameters:
@@ -317,11 +324,14 @@ paths:
         4XX:
           $ref: '#/components/responses/4XX-imms'
     put:
-      summary: Update a record of vaccination
+      summary: Update a record of vaccination - yet to be released
       operationId: updateImmunization
       description: |
         ## Overview
-        This record allows you to add a new updated record of a vaccination. If no existing record is present then a new record will be recorded.
+        This record allows you to add a new updated record of a vaccination event. Update replaces the full immunization resource, so you must provide all data fields, not just the change (Patch is not currently supported). You may obtain all the current data for the vaccination event using the read interaction, which will also return an eTag for the version. 
+        You may use update to re-instate a deleted record, but our update interaction does not support creating a new vaccination event where one does not currently exist. 
+        You must not change the identifier when updating a vaccination event. The identifier is used as a primary identifier by downstream systems.  
+        You must be authorised for update interaction and the disease type associated with the vaccination event in order to update the record. 
 
         ## Sandbox testing        
 
@@ -350,11 +360,13 @@ paths:
         4XX:
           $ref: '#/components/responses/4XX-imms'
     delete:
-      summary: Mark a record of vaccination as being entered in error
+      summary: Mark a record of vaccination as being entered in error - yet to be released
       operationId: deleteImmunization
       description: |
         ## Overview
         This endpoint allows you to mark a record that has been entered in error.
+        Deleted records will continue to be stored for a period of time but are not returned in response to read or search requests.
+        A deleted record can be re-instated using the update interaction if it was incorrectly deleted. 
 
         ## Sandbox testing
 
@@ -385,25 +397,24 @@ components:
         error codes, which could be returned in the event of a fault.
         
         
-        | HTTP status | Error code                 | Description |
+        | HTTP status | Error code                 | Description | Example      |
         
         | ----------- | -------------------------- |
-        --------------------------------------------- |
+        --------------------------------------------- |--------------------------------------------------------------------------------------|
         
         | 400         | INVALID                    | The provided event ID is
-        either missing or not in the expected format. |
+        either missing or not in the expected format. |  {"resourceType": "OperationOutcome", "id": "6f4ca309-19d7-4f61-90b3-acbd1f2eb8f8", "meta": {"profile": ["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]}, "issue": [{"severity": "error", "code": "invalid", "details": {"coding": [{"system": "https://fhir.nhs.uk/Codesystem/http-error-codes", "code": "INVALID"}]}, "diagnostics": "the provided event ID is either missing or not in the expected format."}]} |
         
         | 400         | BAD_REQUEST                | Search could not be
-        processed or failed basic FHIR validation rules  |
+        processed or failed basic FHIR validation rules  | {"resourceType": "OperationOutcome", "id": "4ff75db4-6e7d-411d-a490-c55c11f83043", "meta": {"profile": ["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]}, "issue": [{"severity": "error", "code": "invalid", "details": {"coding": [{"system": "https://fhir.nhs.uk/Codesystem/http-error-codes", "code": "INVALID"}]}, "diagnostics": "patient.identifier must be in the format of \"https://fhir.nhs.uk/Id/nhs-number|{NHS number}\" e.g. \"https://fhir.nhs.uk/Id/nhs-number|9000000009\""}]}  |
         
         | 401         | UNAUTHORISED               | Authorization is required
-        for the interaction that was attempted  |
-        
-        | 400         | BAD_REQUEST                | The resource could not be
-        parsed or failed basic FHIR validation rules  |
-        
+        for the interaction that was attempted  | {"resourceType":"OperationOutcome","id":"a5abca2a-4eda-41da-b2cc-95d48c6b791d","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"expired","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"SEND_UNAUTHORIZED"}]},"diagnostics":"The sender has not provided a token or it has expired or is otherwise invalid."}]} |
+
+        | 403         | UNAUTHORISED               | The sender does not have permissions to access this resource  | {"resourceType":"OperationOutcome","id":"a5abca2a-4eda-41da-b2cc-95d48c6b791d","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"forbidden","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"SEND_UNAUTHORIZED"}]},"diagnostics":"The sender does not have permissions to access this resource. Please check your credentials and permissions."}]} |
+               
         | 404         | NOT_FOUND                  | The requested resource was
-        not found. |
+        not found. | {"resourceType": "OperationOutcome", "id": "bc2c3c82-4392-4314-9d6b-a7345f82d923", "meta": {"profile": ["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]}, "issue": [{"severity": "error", "code": "not-found", "details": {"coding": [{"system": "https://fhir.nhs.uk/Codesystem/http-error-codes", "code": "NOT-FOUND"}]}, "diagnostics": "The requested resource was not found."}]}  |
         
         | 405         | NOT_ALLOWED                | The requested method is not
         allowed  |
@@ -417,7 +428,17 @@ components:
           schema:
             $ref: '#/components/schemas/OperationOutcome'
           example:
-            $ref: './components/examples/OperationOutcome/400-invalid.json'
+            resourceType: OperationOutcome
+            id: 3d64df5a-b753-49ec-b3df-f45c157941eb
+            issue:
+              - severity: error
+                code: invalid
+                details:
+                  coding:
+                    - system: 'https://fhir.nhs.uk/Codesystem/http-error-codes'
+                      code: INVALID
+                diagnostics: The provided event ID is either missing or not in the expected format.
+
   requestBodies:
     Immunization:
       content:
