@@ -40,6 +40,7 @@ class PreValidators:
             self.pre_validate_top_level_elements,
             self.pre_validate_patient_reference,
             self.pre_validate_practitioner_reference,
+            self.pre_validate_patient_identifier_extension,
             self.pre_validate_patient_identifier,
             self.pre_validate_patient_identifier_value,
             self.pre_validate_patient_name,
@@ -241,6 +242,22 @@ class PreValidators:
                 f"contained Practitioner resource id '{practitioner_id}' must only be referenced once from performer"
             )
 
+    def pre_validate_patient_identifier_extension(self, values: dict) -> None:
+        """
+        Pre-validate that if contained[?(@.resourceType=='Patient')].identifier[0] contains
+        an extension field, it raises a validation error.
+        """
+        field_location = "contained[?(@.resourceType=='Patient')].identifier[0].extension"
+
+        try:
+            patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]
+            identifier = patient["identifier"][0]
+
+            if "extension" in identifier:
+                raise ValueError("contained[?(@.resourceType=='Patient')].identifier[0] must not include an extension")
+        except (KeyError, IndexError):
+            pass
+
     def pre_validate_patient_identifier(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].identifier exists, then it is a list of length 1
@@ -334,21 +351,21 @@ class PreValidators:
         field_location = "contained[?(@.resourceType=='Patient')].address"
         try:
             field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["address"]
-            PreValidation.for_list(field_value, field_location, defined_length=1)
+            PreValidation.for_list(field_value, field_location)
         except (KeyError, IndexError):
             pass
 
     def pre_validate_patient_address_postal_code(self, values: dict) -> dict:
         """
         Pre-validate that, if contained[?(@.resourceType=='Patient')].address[0].postalCode (legacy CSV field name:
-        PERSON_POSTCODE) exists, then it is a non-empty string, separated into two parts by a single space
+        PERSON_POSTCODE) exists, then it is a non-empty string
         """
         field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
         try:
             field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["address"][0][
                 "postalCode"
             ]
-            PreValidation.for_string(field_value, field_location, is_postal_code=True)
+            PreValidation.for_string(field_value, field_location)
         except (KeyError, IndexError):
             pass
 
@@ -618,7 +635,7 @@ class PreValidators:
         field_location = "protocolApplied[0].doseNumberPositiveInt"
         try:
             field_value = values["protocolApplied"][0]["doseNumberPositiveInt"]
-            PreValidation.for_positive_integer(field_value, field_location, max_value=9)
+            PreValidation.for_positive_integer(field_value, field_location)
         except (KeyError, IndexError):
             pass
 
@@ -833,7 +850,7 @@ class PreValidators:
             for index, value in enumerate(values["reasonCode"]):
                 try:
                     field_value = value["coding"]
-                    PreValidation.for_list(field_value, f"reasonCode[{index}].coding", defined_length=1)
+                    PreValidation.for_list(field_value, f"reasonCode[{index}].coding")
                 except KeyError:
                     pass
         except KeyError:

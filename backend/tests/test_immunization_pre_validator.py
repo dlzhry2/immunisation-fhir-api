@@ -395,6 +395,24 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             valid_list_element=valid_list_element,
         )
 
+    def test_pre_validate_patient_identifier_extension(self):
+        """Test pre_validate_patient_identifier_extension raises an error if an extension is present"""
+
+        invalid_list_element_with_extension = {
+            "system": "https://fhir.nhs.uk/Id/nhs-number",
+            "value": "9000000009",
+            "extension": [{"url": "example.com", "valueString": "example"}],
+        }
+
+        # REJECT identifier if it contains an extension
+        _test_invalid_values_rejected(
+            test_instance=self,
+            valid_json_data=self.json_data,
+            field_location="contained[?(@.resourceType=='Patient')].identifier[0]",
+            invalid_value=invalid_list_element_with_extension,
+            expected_error_message="contained[?(@.resourceType=='Patient')].identifier[0] must not include an extension",
+        )
+
     def test_pre_validate_patient_identifier_value(self):
         """Test pre_validate_patient_identifier_value accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_string_value(
@@ -460,8 +478,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_list_value(
             self,
             field_location="contained[?(@.resourceType=='Patient')].address",
-            valid_lists_to_test=[[{"postalCode": "AA1 1AA"}]],
-            predefined_list_length=1,
+            valid_lists_to_test=[[{"postalCode": "AA1 1AA"}, {"postalCode": "75007"}, {"postalCode": "AA11AA"}]],
             valid_list_element={"family": "Test"},
         )
 
@@ -470,8 +487,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_string_value(
             self,
             field_location="contained[?(@.resourceType=='Patient')].address[0].postalCode",
-            valid_strings_to_test=["AA00 00AA", "A0 0AA"],
-            is_postal_code=True,
+            valid_strings_to_test=["AA00 00AA", "A00AA", "75007"],
         )
 
     def test_pre_validate_occurrence_date_time(self):
@@ -711,7 +727,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="protocolApplied[0].doseNumberPositiveInt",
             valid_positive_integers_to_test=[1, 2, 3, 4, 5, 6, 7, 8, 9],
-            max_value=9,
         )
 
     def test_pre_validate_protocol_applied_dose_number_string(self):
@@ -1045,8 +1060,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             ValidatorModelTests.test_list_value(
                 self,
                 field_location=f"reasonCode[{i}].coding",
-                valid_lists_to_test=[[{"code": "ABC123", "display": "test"}]],
-                predefined_list_length=1,
+                valid_lists_to_test=[[{"code": "ABC123", "display": "test"}, {"code": "ABC123", "display": "test"}]],
                 valid_list_element={"code": "ABC123", "display": "test"},
             )
 
