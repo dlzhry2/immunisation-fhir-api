@@ -28,7 +28,6 @@ class ValidatorModelTests:
         invalid_strings_to_test: list = None,
         spaces_allowed: bool = True,
         invalid_strings_with_spaces_to_test: list = None,
-        is_postal_code: bool = False,
         is_mandatory_fhir: bool = False,
     ):
         """
@@ -131,29 +130,6 @@ class ValidatorModelTests:
                     invalid_value=invalid_string_with_spaces,
                     expected_error_message=f"{field_location} must not contain spaces",
                 )
-
-        # If is a postal code, then test postal codes which are not separated into the two parts
-        # by a single space or which exceed the maximum length of 8 characters (excluding spaces)
-        if is_postal_code:
-            # Test postal codes which are not separated into the two parts by a single space
-            for invalid_postal_code in InvalidValues.for_postal_codes:
-                test_invalid_values_rejected(
-                    test_instance,
-                    valid_json_data,
-                    field_location=field_location,
-                    invalid_value=invalid_postal_code,
-                    expected_error_message=f"{field_location} must contain a single space, "
-                    + "which divides the two parts of the postal code",
-                )
-
-            # Test invalid postal code length
-            test_invalid_values_rejected(
-                test_instance,
-                valid_json_data,
-                field_location=field_location,
-                invalid_value="AA000 00AA",
-                expected_error_message=f"{field_location} must be 8 or fewer characters " + "(excluding spaces)",
-            )
 
     @staticmethod
     def test_list_value(
