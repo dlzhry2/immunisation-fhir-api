@@ -41,7 +41,7 @@ info:
    
     You must demonstrate you have a valid use case as part of digital onboarding. As this service is disease type agnostic, there is also a shortened onboarding process for each disease type, to explain the legal, commercial and clinical justifications. 
    
-    You must do this before you can go live [see 'Onboarding'] link(this.Onboarding).
+    You must do this before you can go live refer 'Onboarding' section.
    
     ## Who can access immunisation event records
      
@@ -58,7 +58,7 @@ info:
     - identifying those to be invited to vaccination nationally
     - identifying those to be invited to vaccination locally
     - supporting the booking of a vaccination appointment
-    - supporting the payment reconciliation process on behalf of NHS England/NHS Business Services Authority
+    - supporting the payment reconciliation process on behalf of NHS England / NHS Business Services Authority
     - supporting measuring the overall success of a vaccination campaign to help inform the success of the [NHS Vaccination Strategy](https://www.england.nhs.uk/long-read/nhs-vaccination-strategy/)
   
     ## API status and roadmap
@@ -412,7 +412,7 @@ components:
         for the interaction that was attempted  | {"resourceType":"OperationOutcome","id":"a5abca2a-4eda-41da-b2cc-95d48c6b791d","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"expired","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"SEND_UNAUTHORIZED"}]},"diagnostics":"The sender has not provided a token or it has expired or is otherwise invalid."}]} |
 
         | 403         | UNAUTHORISED               | The sender does not have permissions to access this resource  | {"resourceType":"OperationOutcome","id":"a5abca2a-4eda-41da-b2cc-95d48c6b791d","meta":{"profile":["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]},"issue":[{"severity":"error","code":"forbidden","details":{"coding":[{"system":"https://fhir.nhs.uk/Codesystem/http-error-codes","code":"SEND_UNAUTHORIZED"}]},"diagnostics":"The sender does not have permissions to access this resource. Please check your credentials and permissions."}]} |
-               
+        
         | 404         | NOT_FOUND                  | The requested resource was
         not found. | {"resourceType": "OperationOutcome", "id": "bc2c3c82-4392-4314-9d6b-a7345f82d923", "meta": {"profile": ["https://simplifier.net/guide/UKCoreDevelopment2/ProfileUKCore-OperationOutcome"]}, "issue": [{"severity": "error", "code": "not-found", "details": {"coding": [{"system": "https://fhir.nhs.uk/Codesystem/http-error-codes", "code": "NOT-FOUND"}]}, "diagnostics": "The requested resource was not found."}]}  |
         
