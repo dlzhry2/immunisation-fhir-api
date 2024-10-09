@@ -84,7 +84,7 @@
                             }
                         }
                     },
-                    "4XX": {
+                    "400": {
                         "$ref": "#/components/responses/4XX-imms"
                     }
                 }
@@ -132,7 +132,7 @@
                             }
                         }
                     },
-                    "4XX": {
+                    "400": {
                         "$ref": "#/components/responses/4XX-imms"
                     }
                 }
@@ -165,7 +165,7 @@
                             }
                         }
                     },
-                    "4XX": {
+                    "400": {
                         "$ref": "#/components/responses/4XX-imms"
                     }
                 }

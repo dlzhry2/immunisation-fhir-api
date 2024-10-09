@@ -287,7 +287,7 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Bundle'
-        4XX:
+        "400":
           $ref: '#/components/responses/4XX-imms'
   /Immunization/{id}:
     get:
@@ -321,7 +321,7 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Immunization'
-        4XX:
+        "400":
           $ref: '#/components/responses/4XX-imms'
     put:
       summary: Update a record of vaccination - yet to be released
