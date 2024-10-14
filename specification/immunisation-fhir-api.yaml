@@ -1245,7 +1245,7 @@ components:
           type: integer
           format: int32
           description: If a set of search matches, this is the total number of entries of type 'match' across all pages in the search.  It does not include search.mode = 'include' or 'outcome' entries and it does not provide a count of the number of entries in the Bundle.
-      examples:
+      example:
         9000000009:
           resourceType: Bundle
           type: searchset
