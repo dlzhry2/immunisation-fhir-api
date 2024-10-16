@@ -323,8 +323,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Immunization'
         "400":
-          description: 
-            $ref: '#/components/responses/4XX-imms'
+          $ref: '#/components/responses/4XX-imms'
           content:
             application/fhir+json:
               schema:
