@@ -20,7 +20,7 @@ data "aws_subnets" "default" {
 }
 
 locals {
-    root_domain = "dev.api.platform.nhs.uk"
+    root_domain = "dev.vds.platform.nhs.uk"
 }
 
 locals {
@@ -45,5 +45,5 @@ variable "region" {
 }
 
 variable "root_domain_name" {
-    default = "dev.api.platform.nhs.uk"
+    default = "dev.vds.platform.nhs.uk"
 }
