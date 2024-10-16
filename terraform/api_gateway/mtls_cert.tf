@@ -13,7 +13,7 @@ data "aws_s3_object" "cert" {
 }
 
 resource "aws_s3_bucket" "truststore_bucket" {
-  bucket = "${var.prefix}-truststore"
+  bucket = "${var.prefix}-truststores"
   force_destroy = true
 }
 
