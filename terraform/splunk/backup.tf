@@ -4,7 +4,7 @@ locals {
     is_temp = length(regexall("[a-z]{2,4}-?[0-9]+", local.environment)) > 0
 }
 resource "aws_s3_bucket" "failed_logs_backup" {
-    bucket = "${local.prefix}-failed-logs"
+    bucket = "${local.prefix}-failure-logs"
     // To facilitate deletion of non empty busckets
     force_destroy = local.is_temp
 }
