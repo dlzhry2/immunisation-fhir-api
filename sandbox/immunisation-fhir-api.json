@@ -120,7 +120,7 @@
                                             }
                                         },
                                         "entry": {
-                                            "description": "List of matching immunisations and associated patients. If there were no matching immunisations, this is an empty list.",
+                                            "description": "List of matching immunisations and associated patient. If there were no matching immunisations, this is an empty list.",
                                             "type": "array",
                                             "items": {
                                                 "type": "object",
@@ -184,12 +184,12 @@
                                                                     ],
                                                                     "properties": {
                                                                         "url": {
-                                                                            "description": "URI for the type of extension - in this case a vaccination procedure.",
+                                                                            "description": "URI for the type of extension - https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure",
                                                                             "type": "string",
                                                                             "example": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
                                                                         },
                                                                         "valueCodeableConcept": {
-                                                                            "description": "Wrapper for the vaccination procedure details.",
+                                                                            "description": "Wrapper for the vaccination procedure coding.",
                                                                             "type": "object",
                                                                             "required": [
                                                                                 "coding"
@@ -207,17 +207,17 @@
                                                                                         ],
                                                                                         "properties": {
                                                                                             "system": {
-                                                                                                "description": "Coding system used for the vaccination procedure. Always SNOMED.",
+                                                                                                "description": "The identification of the code system that defines the meaning of the symbol in the code.",
                                                                                                 "type": "string",
                                                                                                 "example": "http://snomed.info/sct"
                                                                                             },
                                                                                             "code": {
-                                                                                                "description": "SNOMED code for the vaccination procedure.",
+                                                                                                "description": "A particular code in the system.",
                                                                                                 "type": "string",
                                                                                                 "example": "1303503001"
                                                                                             },
                                                                                             "display": {
-                                                                                                "description": "Description of the vaccination procedure.",
+                                                                                                "description": "Representation defined by the system.",
                                                                                                 "type": "string",
                                                                                                 "example": "Administration of RSV (respiratory syncytial virus) vaccine"
                                                                                             }
@@ -286,7 +286,6 @@
                                                                         "description": "Wrapper for the vaccine product details.",
                                                                         "type": "array",
                                                                         "minItems": 1,
-                                                                        "maxItems": 1,
                                                                         "items": {
                                                                             "type": "object",
                                                                             "required": [
@@ -2036,7 +2035,7 @@
                 }
             },
             "put": {
-                "summary": "Update a record of vaccination - `yet to be released`",
+                "summary": "Update a record of vaccination - yet to be released",
                 "operationId": "updateImmunization",
                 "description": "## Overview\nThis record allows you to add a new updated record of a vaccination event. Update replaces the full immunization resource, so you must provide all data fields, not just the change (Patch is not currently supported). You may obtain all the current data for the vaccination event using the read interaction, which will also return an eTag for the version. \nYou may use update to re-instate a deleted record, but our update interaction does not support creating a new vaccination event where one does not currently exist. \nYou must not change the identifier when updating a vaccination event. The identifier is used as a primary identifier by downstream systems.  \nYou must be authorised for update interaction and the disease type associated with the vaccination event in order to update the record. \n\n## Sandbox testing        \n\n| Scenario                                | Request                                                                                                                                                         | Response                                                                |\n| ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|\n|                                         |                                                                                                                                                                 |                                                                         |\n",
                 "parameters": [
@@ -2077,7 +2076,7 @@
                 }
             },
             "delete": {
-                "summary": "Mark a record of vaccination as being entered in error - `yet to be released`",
+                "summary": "Mark a record of vaccination as being entered in error - yet to be released",
                 "operationId": "deleteImmunization",
                 "description": "## Overview\nThis endpoint allows you to mark a record that has been entered in error.\nDeleted records will continue to be stored for a period of time but are not returned in response to read or search requests.\nA deleted record can be re-instated using the update interaction if it was incorrectly deleted. \n\n## Sandbox testing\n\n| Scenario                                | Request                                                                                                                                                         | Response                                                                |\n| ----------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------------------------------------|\n|                                         |                                                                                                                                                                 |                                                                         |\n",
                 "parameters": [

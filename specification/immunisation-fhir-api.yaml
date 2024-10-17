@@ -324,17 +324,21 @@ paths:
                 $ref: '#/components/schemas/Immunization'
         "400":
           $ref: '#/components/responses/4XX-imms'
-          example:
-            resourceType: OperationOutcome
-            id: 3d64df5a-b753-49ec-b3df-f45c157941eb
-            issue:
-              - severity: error
-                code: invalid
-                details:
-                  coding:
-                    - system: 'https://fhir.nhs.uk/Codesystem/http-error-codes'
-                      code: INVALID
-                diagnostics: The provided event ID is either missing or not in the expected format.
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+              example:
+                resourceType: OperationOutcome
+                id: 3d64df5a-b753-49ec-b3df-f45c157941eb
+                issue:
+                  - severity: error
+                    code: invalid
+                    details:
+                      coding:
+                        - system: 'https://fhir.nhs.uk/Codesystem/http-error-codes'
+                          code: INVALID
+                    diagnostics: The provided event ID is either missing or not in the expected format.
     put:
       summary: Update a record of vaccination - `yet to be released`
       operationId: updateImmunization
@@ -1245,114 +1249,104 @@ components:
           type: integer
           format: int32
           description: If a set of search matches, this is the total number of entries of type 'match' across all pages in the search.  It does not include search.mode = 'include' or 'outcome' entries and it does not provide a count of the number of entries in the Bundle.
-      example:
-        9000000009:
-          resourceType: Bundle
-          type: searchset
-          link:
-            - relation: self
-              url: >-
-                https://sandbox.api.service.nhs.uk/immunisation-fhir-api/Immunization?immunization.target=RSV&_include=Immunization%3Apatient&patient.identifier=https%3A%2F%2Ffhir.nhs.uk%2FId%2Fnhs-number%7C9000000009
-          entry:
-            - fullUrl: >-
-                https://sandbox.api.service.nhs.uk/immunisation-fhir-api/Immunization/191f288a-17f3-4cd5-a33c-a52aade6473c
-              resource:
-                resourceType: Immunization
-                id: 191f288a-17f3-4cd5-a33c-a52aade6473c
-                extension:
-                  - url: >-
-                      https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure
-                    valueCodeableConcept:
-                      coding:
-                        - system: 'http://snomed.info/sct'
-                          code: '1303503001'
-                          display: >-
-                            Administration of RSV (respiratory syncytial virus) vaccine
-                identifier:
-                  - use: official
-                    system: 'https://supplierABC/identifiers/vacc'
-                    value: e2154d29-1ead-4830-a513-0d59705078fa
-                status: completed
-                vaccineCode:
-                  coding:
-                    - system: 'http://snomed.info/sct'
-                      code: '42605811000001109'
-                      display: >-
-                        Abrysvo vaccine powder and solvent for solution for injection 0.5ml vials (Pfizer Ltd)
-                patient:
-                  reference: 'urn:uuid:a7a5bc28-5831-4158-8a73-0d3e6e43c1ac'
-                  type: Patient
-                  identifier:
-                    system: 'https://fhir.nhs.uk/Id/nhs-number'
-                    value: '9449306206'
-                occurrenceDateTime: '2021-02-07T13:28:17.271000+00:00'
-                recorded: '2021-02-07T13:28:17.271000+00:00'
-                primarySource: true
-                location:
-                  identifier:
-                    system: 'urn:iso:std:iso:3166'
-                    value: GB
-                manufacturer:
-                  display: AstraZeneca Ltd
-                lotNumber: 4120Z001
-                expirationDate: '2021-07-02'
-                site:
-                  coding:
-                    - system: 'http://snomed.info/sct'
-                      code: '368208006'
-                      display: Left upper arm structure (body structure)
-                route:
-                  coding:
-                    - system: 'http://snomed.info/sct'
-                      code: '78421000'
-                      display: Intramuscular route (qualifier value)
-                doseQuantity:
-                  value: 0.5
-                  unit: milliliter
-                  system: 'http://unitsofmeasure.org'
-                  code: ml
-                performer:
-                  - actor:
-                      type: Organization
-                      identifier:
-                        system: 'https://fhir.nhs.uk/Id/ods-organization-code'
-                        value: B0C4P
-                      display: UNIVERSITY HOSPITAL OF WALES
-                reasonCode:
-                  - coding:
+      example:        
+        resourceType: Bundle
+        type: searchset
+        link:
+          - relation: self
+            url: >-
+              https://sandbox.api.service.nhs.uk/immunisation-fhir-api/Immunization?immunization.target=RSV&_include=Immunization%3Apatient&patient.identifier=https%3A%2F%2Ffhir.nhs.uk%2FId%2Fnhs-number%7C9000000009
+        entry:
+          - fullUrl: >-
+              https://sandbox.api.service.nhs.uk/immunisation-fhir-api/Immunization/191f288a-17f3-4cd5-a33c-a52aade6473c
+            resource:
+              resourceType: Immunization
+              id: 191f288a-17f3-4cd5-a33c-a52aade6473c
+              extension:
+                - url: >-
+                    https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure
+                  valueCodeableConcept:
+                    coding:
                       - system: 'http://snomed.info/sct'
-                        code: '443684005'
-                        display: Disease outbreak (event)
-                protocolApplied:
-                  - targetDisease:
-                      - coding:
-                          - system: 'http://snomed.info/sct'
-                            code: '55735004'
-                            display: >-
-                              Respiratory syncytial virus infection (disorder)
-                    doseNumberPositiveInt: 1
-              search:
-                mode: match
-            - fullUrl: 'urn:uuid:a7a5bc28-5831-4158-8a73-0d3e6e43c1ac'
-              resource:
-                resourceType: Patient
-                id: '9449306206'
+                        code: '1303503001'
+                        display: >-
+                          Administration of RSV (respiratory syncytial virus) vaccine
+              identifier:
+                - use: official
+                  system: 'https://supplierABC/identifiers/vacc'
+                  value: e2154d29-1ead-4830-a513-0d59705078fa
+              status: completed
+              vaccineCode:
+                coding:
+                  - system: 'http://snomed.info/sct'
+                    code: '42605811000001109'
+                    display: >-
+                      Abrysvo vaccine powder and solvent for solution for injection 0.5ml vials (Pfizer Ltd)
+              patient:
+                reference: 'urn:uuid:a7a5bc28-5831-4158-8a73-0d3e6e43c1ac'
+                type: Patient
                 identifier:
-                  - system: 'https://fhir.nhs.uk/Id/nhs-number'
-                    value: '9449306206'
-                birthDate: '2014-03-25'
-              search:
-                mode: include
-          total: 1
-        9000000033:
-          resourceType: Bundle
-          type: searchset
-          link:
-            - relation: self
-              url: >-
-                https://sandbox.api.service.nhs.uk/immunisation-fhir-api/Immunization?-date.from=2020-03-01&-date.to=2024-04-02&immunization.target=RSV&_include=Immunization%3Apatient&patient.identifier=https%3A%2F%2Ffhir.nhs.uk%2FId%2Fnhs-number%7C9000000033
-          entry: []
-          total: 0
+                  system: 'https://fhir.nhs.uk/Id/nhs-number'
+                  value: '9449306206'
+              occurrenceDateTime: '2021-02-07T13:28:17.271000+00:00'
+              recorded: '2021-02-07T13:28:17.271000+00:00'
+              primarySource: true
+              location:
+                identifier:
+                  system: 'urn:iso:std:iso:3166'
+                  value: GB
+              manufacturer:
+                display: AstraZeneca Ltd
+              lotNumber: 4120Z001
+              expirationDate: '2021-07-02'
+              site:
+                coding:
+                  - system: 'http://snomed.info/sct'
+                    code: '368208006'
+                    display: Left upper arm structure (body structure)
+              route:
+                coding:
+                  - system: 'http://snomed.info/sct'
+                    code: '78421000'
+                    display: Intramuscular route (qualifier value)
+              doseQuantity:
+                value: 0.5
+                unit: milliliter
+                system: 'http://unitsofmeasure.org'
+                code: ml
+              performer:
+                - actor:
+                    type: Organization
+                    identifier:
+                      system: 'https://fhir.nhs.uk/Id/ods-organization-code'
+                      value: B0C4P
+                    display: UNIVERSITY HOSPITAL OF WALES
+              reasonCode:
+                - coding:
+                    - system: 'http://snomed.info/sct'
+                      code: '443684005'
+                      display: Disease outbreak (event)
+              protocolApplied:
+                - targetDisease:
+                    - coding:
+                        - system: 'http://snomed.info/sct'
+                          code: '55735004'
+                          display: >-
+                            Respiratory syncytial virus infection (disorder)
+                  doseNumberPositiveInt: 1
+            search:
+              mode: match
+          - fullUrl: 'urn:uuid:a7a5bc28-5831-4158-8a73-0d3e6e43c1ac'
+            resource:
+              resourceType: Patient
+              id: '9449306206'
+              identifier:
+                - system: 'https://fhir.nhs.uk/Id/nhs-number'
+                  value: '9449306206'
+              birthDate: '2014-03-25'
+            search:
+              mode: include
+        total: 1
     OperationOutcome:
       type: object
       properties:
