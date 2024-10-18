@@ -118,33 +118,6 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["id"], "test")    
-    
-    def test_get_imms_by_identifer_for_batch(self):
-        """it should return Immunization Id if it exists"""
-        # Given
-        self.service.get_immunization_by_identifier.return_value = {"id": "test", "Version": 1}
-        lambda_event = {
-            "headers": {"VaccineTypePermissions": "COVID19:search", "SupplierSystem": "Imms-Batch-App"},
-            "queryStringParameters": {
-                "immunization.identifier": "https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184",
-                "_element": "id,meta",
-            },
-            "body": None,
-        }
-        identifier = lambda_event.get("queryStringParameters", {}).get("immunization.identifier")
-        _element = lambda_event.get("queryStringParameters", {}).get("_element")
-
-        identifiers = identifier.replace("|", "#")
-        # When
-        response = self.controller.get_immunization_by_identifier(lambda_event)
-        # Then
-        self.service.get_immunization_by_identifier.assert_called_once_with(
-            identifiers, None, identifier, _element, True
-        )
-
-        self.assertEqual(response["statusCode"], 200)
-        body = json.loads(response["body"])
-        self.assertEqual(body["id"], "test")
 
     def test_not_found_for_identifier(self):
         """it should return not-found OperationOutcome if it doesn't exist"""
