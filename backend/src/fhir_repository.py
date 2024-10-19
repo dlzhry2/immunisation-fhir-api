@@ -45,6 +45,11 @@ def _query_identifier(table, index, pk, identifier):
     )
     if queryResponse.get("Count", 0) > 0:
         return queryResponse
+      
+def get_nhs_number(imms):
+        return [
+            x for x in imms["contained"] if x.get("resourceType") == "Patient"
+        ][0]["identifier"][0]["value"]    
 
 
 @dataclass
@@ -63,13 +68,9 @@ class RecordAttributes:
         imms_id = imms["id"]
         self.pk = _make_immunization_pk(imms_id)
         if patient:
-            nhs_number = [
-                x for x in imms["contained"] if x.get("resourceType") == "Patient"
-            ][0]["identifier"][0]["value"]
+            nhs_number = get_nhs_number(imms)
         elif imms:
-            nhs_number = [
-                x for x in imms["contained"] if x.get("resourceType") == "Patient"
-            ][0]["identifier"][0]["value"]
+            nhs_number = get_nhs_number(imms)
         else:
             nhs_number = "TBC" 
         self.patient_pk = _make_patient_pk(nhs_number)
@@ -81,7 +82,6 @@ class RecordAttributes:
         self.system_value = imms["identifier"][0]["value"]
         self.patient_sk = f"{self.vaccine_type}#{imms_id}"
         self.identifier = f"{self.system_id}#{self.system_value}"
-
 
 class ImmunizationRepository:
     def __init__(self, table: Table):
