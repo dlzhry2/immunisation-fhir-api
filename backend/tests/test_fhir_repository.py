@@ -408,8 +408,7 @@ class TestUpdateImmunization(unittest.TestCase):
                 ":imms_resource_val": json.dumps(imms),
                 ":operation": "UPDATE",
                 ":version": 2,
-                ":supplier_system" : "Test",
-                ":respawn": None,
+                ":supplier_system" : "Test"
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,
@@ -777,8 +776,7 @@ class TestImmunizationDecimals(unittest.TestCase):
                 ":imms_resource_val": json.dumps(imms, use_decimal=True),
                 ":operation": "UPDATE",
                 ":version": 2,
-                ":supplier_system": "Test",
-                ":respawn": None,
+                ":supplier_system": "Test"
             },
             ReturnValues=ANY,
             ConditionExpression=ANY,

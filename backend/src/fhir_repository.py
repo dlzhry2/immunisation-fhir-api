@@ -309,7 +309,7 @@ class ImmunizationRepository:
                     ":version": existing_resource_version + 1,
                     ":supplier_system" : supplier_system,
                     ":respawn": "reinstated",
-                }, 
+                }
             else:
                 ExpressionAttributeValues={
                     ":timestamp": attr.timestamp,
@@ -318,8 +318,8 @@ class ImmunizationRepository:
                     ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
-                    ":supplier_system" : supplier_system,
-                }, 
+                    ":supplier_system" : supplier_system
+                }
             
             response = self.table.update_item(
                 Key={"PK": _make_immunization_pk(imms_id)},
