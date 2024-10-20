@@ -299,13 +299,18 @@ class ImmunizationRepository:
             condition_expression = (
                 Attr("PK").eq(attr.pk) & (Attr("DeletedAt").exists() if deleted_at_required else Attr("DeletedAt").not_exists())
             )
-            
-            response = self.table.update_item(
-                Key={"PK": _make_immunization_pk(imms_id)},
-                UpdateExpression=update_exp,
-                ExpressionAttributeNames={
-                    "#imms_resource": "Resource",
-                },
+            if deleted_at_required:
+               ExpressionAttributeValues={
+                    ":timestamp": attr.timestamp,
+                    ":patient_pk": attr.patient_pk,
+                    ":patient_sk": attr.patient_sk,
+                    ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
+                    ":operation": "UPDATE",
+                    ":version": existing_resource_version + 1,
+                    ":supplier_system" : supplier_system,
+                    ":respawn": "reinstated",
+                }, 
+            else:
                 ExpressionAttributeValues={
                     ":timestamp": attr.timestamp,
                     ":patient_pk": attr.patient_pk,
@@ -314,8 +319,15 @@ class ImmunizationRepository:
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
                     ":supplier_system" : supplier_system,
-                    ":respawn": "reinstated" if deleted_at_required else None,
+                }, 
+            
+            response = self.table.update_item(
+                Key={"PK": _make_immunization_pk(imms_id)},
+                UpdateExpression=update_exp,
+                ExpressionAttributeNames={
+                    "#imms_resource": "Resource",
                 },
+                ExpressionAttributeValues=ExpressionAttributeValues,
                 ReturnValues="ALL_NEW",
                 ConditionExpression=condition_expression,
             )
