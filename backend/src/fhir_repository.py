@@ -207,64 +207,18 @@ class ImmunizationRepository:
         patient: any,
         existing_resource_version: int,
         imms_vax_type_perms: str,
-        supplier_system : str,
-        is_imms_batch_app
+        supplier_system: str,
+        is_imms_batch_app: bool
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
-        if not is_imms_batch_app:
-            vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-            vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
-            self._check_permission(vax_type_perm,vax_type_perms)
-        # "Resource" is a dynamodb reserved word
-        update_exp = (
-            "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
+        self._handle_permissions(is_imms_batch_app, imms_vax_type_perms, attr)
+        update_exp = self._build_update_expression(is_reinstate=False)
+        
+        self._check_duplicate_identifier(attr)
+        
+        return self._perform_dynamo_update(
+            imms_id, update_exp, attr, existing_resource_version, supplier_system, deleted_at_required=False
         )
-
-        queryResponse = _query_identifier(
-            self.table, "IdentifierGSI", "IdentifierPK", attr.identifier
-        )
-
-        if queryResponse != None:
-            items = queryResponse.get("Items", [])
-            resource_dict = json.loads(items[0]["Resource"])
-            if resource_dict["id"] != attr.resource["id"]:
-                raise IdentifierDuplicationError(identifier=attr.identifier)
-
-        try:
-            response = self.table.update_item(
-                Key={"PK": _make_immunization_pk(imms_id)},
-                UpdateExpression=update_exp,
-                ExpressionAttributeNames={
-                    "#imms_resource": "Resource",
-                },
-                ExpressionAttributeValues={
-                    ":timestamp": attr.timestamp,
-                    ":patient_pk": attr.patient_pk,
-                    ":patient_sk": attr.patient_sk,
-                    ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
-                    ":operation": "UPDATE",
-                    ":version": existing_resource_version + 1,
-                    ":supplier_system" : supplier_system,
-                },
-                ReturnValues="ALL_NEW",
-                ConditionExpression=Attr("PK").eq(attr.pk)
-                & Attr("DeletedAt").not_exists(),
-            )
-            return self._handle_dynamo_response(response)
-
-        except botocore.exceptions.ClientError as error:
-            # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
-            if error.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                raise ResourceNotFoundError(
-                    resource_type="Immunization", resource_id=imms_id
-                )
-            else:
-                raise UnhandledResponseError(
-                    message=f"Unhandled error from dynamodb: {error.response['Error']['Code']}",
-                    response=error.response,
-                )
 
     def reinstate_immunization(
         self,
@@ -273,64 +227,18 @@ class ImmunizationRepository:
         patient: any,
         existing_resource_version: int,
         imms_vax_type_perms: str,
-        supplier_system : str,
-        is_imms_batch_app
+        supplier_system: str,
+        is_imms_batch_app: bool
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
-        if not is_imms_batch_app:
-            vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-            vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
-            self._check_permission(vax_type_perm,vax_type_perms)
-        # "Resource" is a dynamodb reserved word
-        update_exp = (
-            "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version, DeletedAt = :respawn, SupplierSystem = :supplier_system "
+        self._handle_permissions(is_imms_batch_app, imms_vax_type_perms, attr)
+        update_exp = self._build_update_expression(is_reinstate=True)
+        
+        self._check_duplicate_identifier(attr)
+        
+        return self._perform_dynamo_update(
+            imms_id, update_exp, attr, existing_resource_version, supplier_system, deleted_at_required=True
         )
-
-        queryResponse = _query_identifier(
-            self.table, "IdentifierGSI", "IdentifierPK", attr.identifier
-        )
-
-        if queryResponse != None:
-            items = queryResponse.get("Items", [])
-            resource_dict = json.loads(items[0]["Resource"])
-            if resource_dict["id"] != attr.resource["id"]:
-                raise IdentifierDuplicationError(identifier=attr.identifier)
-
-        try:
-            response = self.table.update_item(
-                Key={"PK": _make_immunization_pk(imms_id)},
-                UpdateExpression=update_exp,
-                ExpressionAttributeNames={
-                    "#imms_resource": "Resource",
-                },
-                ExpressionAttributeValues={
-                    ":timestamp": attr.timestamp,
-                    ":patient_pk": attr.patient_pk,
-                    ":patient_sk": attr.patient_sk,
-                    ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
-                    ":operation": "UPDATE",
-                    ":version": existing_resource_version + 1,
-                    ":respawn": "reinstated",
-                    ":supplier_system" : supplier_system,
-                },
-                ReturnValues="ALL_NEW",
-                ConditionExpression=Attr("PK").eq(attr.pk) & Attr("DeletedAt").exists(),
-            )
-            return self._handle_dynamo_response(response)
-
-        except botocore.exceptions.ClientError as error:
-            # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
-            if error.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                raise ResourceNotFoundError(
-                    resource_type="Immunization", resource_id=imms_id
-                )
-            else:
-                raise UnhandledResponseError(
-                    message=f"Unhandled error from dynamodb: {error.response['Error']['Code']}",
-                    response=error.response,
-                )
 
     def update_reinstated_immunization(
         self,
@@ -339,32 +247,59 @@ class ImmunizationRepository:
         patient: any,
         existing_resource_version: int,
         imms_vax_type_perms: str,
-        supplier_system : str,
-        is_imms_batch_app
+        supplier_system: str,
+        is_imms_batch_app: bool
     ) -> dict:
         attr = RecordAttributes(immunization, patient)
+        self._handle_permissions(is_imms_batch_app, imms_vax_type_perms, attr)
+        update_exp = self._build_update_expression(is_reinstate=False)
+        
+        self._check_duplicate_identifier(attr)
+        
+        return self._perform_dynamo_update(
+        imms_id, update_exp, attr, existing_resource_version, supplier_system, deleted_at_required=True
+        )
+
+    def _handle_permissions(self, is_imms_batch_app: bool, imms_vax_type_perms: str, attr: RecordAttributes):
         if not is_imms_batch_app:
             vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
-            vax_type_perm= self._vaccine_permission(attr.vaccine_type, "update")
-            self._check_permission(vax_type_perm,vax_type_perms)
-        # "Resource" is a dynamodb reserved word
-        update_exp = (
-            "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
-        )
+            vax_type_perm = self._vaccine_permission(attr.vaccine_type, "update")
+            self._check_permission(vax_type_perm, vax_type_perms)
 
-        queryResponse = _query_identifier(
+    def _build_update_expression(self, is_reinstate: bool) -> str:
+        if is_reinstate:
+            return (
+                "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
+                "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
+                "Operation = :operation, Version = :version, DeletedAt = :respawn, SupplierSystem = :supplier_system "
+            )
+        else:
+            return (
+                "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
+                "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
+                "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
+            )
+
+    def _check_duplicate_identifier(self, attr: RecordAttributes) -> dict:
+        queryresponse = _query_identifier(
             self.table, "IdentifierGSI", "IdentifierPK", attr.identifier
         )
-
-        if queryResponse != None:
-            items = queryResponse.get("Items", [])
+        if queryresponse is not None:
+            items = queryresponse.get("Items", [])
             resource_dict = json.loads(items[0]["Resource"])
             if resource_dict["id"] != attr.resource["id"]:
                 raise IdentifierDuplicationError(identifier=attr.identifier)
+        return queryresponse
 
+    def _perform_dynamo_update(
+        self, imms_id: str, update_exp: str, attr: RecordAttributes, 
+        existing_resource_version: int, supplier_system: str, deleted_at_required: bool
+    ) -> dict:
         try:
+            condition_expression = (
+                Attr("PK").eq(attr.pk) & (Attr("DeletedAt").exists() if deleted_at_required else Attr("DeletedAt").not_exists())
+            )
+            
             response = self.table.update_item(
                 Key={"PK": _make_immunization_pk(imms_id)},
                 UpdateExpression=update_exp,
@@ -379,12 +314,12 @@ class ImmunizationRepository:
                     ":operation": "UPDATE",
                     ":version": existing_resource_version + 1,
                     ":supplier_system" : supplier_system,
+                    ":respawn": "reinstated" if deleted_at_required else None,
                 },
                 ReturnValues="ALL_NEW",
-                ConditionExpression=Attr("PK").eq(attr.pk) & Attr("DeletedAt").exists(),
+                ConditionExpression=condition_expression,
             )
             return self._handle_dynamo_response(response)
-
         except botocore.exceptions.ClientError as error:
             # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
             if error.response["Error"]["Code"] == "ConditionalCheckFailedException":
