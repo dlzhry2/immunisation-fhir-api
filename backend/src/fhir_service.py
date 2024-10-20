@@ -177,7 +177,7 @@ class FhirService:
             if "diagnostics" in patient:
                 return (None, patient)
         imms = self.immunization_repo.reinstate_immunization(
-            imms_id, immunization, patient, existing_resource_version, imms_vax_type_perms, supplier_system
+            imms_id, immunization, patient, existing_resource_version, imms_vax_type_perms, supplier_system, is_imms_batch_app
         )
 
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
@@ -201,7 +201,7 @@ class FhirService:
             if "diagnostics" in patient:
                 return (None, patient)
         imms = self.immunization_repo.update_reinstated_immunization(
-            imms_id, immunization, patient, existing_resource_version, imms_vax_type_perms, supplier_system
+            imms_id, immunization, patient, existing_resource_version, imms_vax_type_perms, supplier_system, is_imms_batch_app
         )
 
         return UpdateOutcome.UPDATE, Immunization.parse_obj(imms)
