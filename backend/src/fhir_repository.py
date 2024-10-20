@@ -40,16 +40,18 @@ def _make_patient_pk(_id: str):
 
 
 def _query_identifier(table, index, pk, identifier):
-    queryResponse = table.query(
+    queryresponse = table.query(
         IndexName=index, KeyConditionExpression=Key(pk).eq(identifier), Limit=1
     )
-    if queryResponse.get("Count", 0) > 0:
-        return queryResponse
+    if queryresponse.get("Count", 0) > 0:
+        return queryresponse
       
 def get_nhs_number(imms):
-        return [
-            x for x in imms["contained"] if x.get("resourceType") == "Patient"
-        ][0]["identifier"][0]["value"]    
+        try:
+            nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][0]["identifier"][0]["value"]
+        except (KeyError, IndexError):
+            nhs_number = "TBC"    
+        return nhs_number    
 
 
 @dataclass
@@ -67,12 +69,8 @@ class RecordAttributes:
         """Create attributes that may be used in dynamodb table"""
         imms_id = imms["id"]
         self.pk = _make_immunization_pk(imms_id)
-        if patient:
+        if patient or imms:
             nhs_number = get_nhs_number(imms)
-        elif imms:
-            nhs_number = get_nhs_number(imms)
-        else:
-            nhs_number = "TBC" 
         self.patient_pk = _make_patient_pk(nhs_number)
         self.patient = patient
         self.resource = imms
