@@ -392,7 +392,6 @@ class TestUpdateImmunization(unittest.TestCase):
             "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
             "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
         )
-        patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][1]["identifier"][0]["value"]
         vaccine_type = get_vaccine_type(imms)
 
@@ -740,35 +739,21 @@ class TestImmunizationDecimals(unittest.TestCase):
 
         self.table.put_item.assert_called_once()
 
-    def test_decimal_on_update(self):
-        """it should update record when replacing doseQuantity and keep decimal precision"""
-
-        imms_id = "an-imms-id"
-        imms = create_covid_19_immunization_dict(imms_id)
-        imms["doseQuantity"] = 1.5556
-
-        updated_dose_quantity = 0.7566
-        imms["doseQuantity"] = updated_dose_quantity
-        imms["patient"] = self.patient
-
-        resource = imms
+    def run_update_immunization_test(
+        self, imms_id, imms, resource, updated_dose_quantity=None
+    ):
         dynamo_response = {
             "ResponseMetadata": {"HTTPStatusCode": 200},
             "Attributes": {"Resource": json.dumps(resource)},
         }
-
         self.table.update_item = MagicMock(return_value=dynamo_response)
         self.table.query = MagicMock(return_value={})
-
         now_epoch = 123456
-
         with patch("time.time") as mock_time:
             mock_time.return_value = now_epoch
-
             act_resource = self.repository.update_immunization(
                 imms_id, imms, self.patient, 1, "COVID19:update", "Test", False
             )
-
         self.assertDictEqual(act_resource, resource)
 
         update_exp = (
@@ -779,7 +764,6 @@ class TestImmunizationDecimals(unittest.TestCase):
         patient_id = self.patient["identifier"]["value"]
         patient_id = imms["contained"][1]["identifier"][0]["value"]
         vaccine_type = get_vaccine_type(imms)
-
         patient_sk = f"{vaccine_type}#{imms_id}"
 
         self.table.update_item.assert_called_once_with(
@@ -800,72 +784,31 @@ class TestImmunizationDecimals(unittest.TestCase):
             ConditionExpression=ANY,
         )
 
-        imms_resource_val = json.loads(
-            self.table.update_item.call_args.kwargs["ExpressionAttributeValues"][
-                ":imms_resource_val"
-            ]
-        )
+        if updated_dose_quantity is not None:
+            imms_resource_val = json.loads(
+                self.table.update_item.call_args.kwargs["ExpressionAttributeValues"][
+                    ":imms_resource_val"
+                ]
+            )
+            self.assertEqual(imms_resource_val["doseQuantity"], updated_dose_quantity)
 
-        self.assertEqual(imms_resource_val["doseQuantity"], updated_dose_quantity)
-        self.table.update_item.assert_called_once()
+    def test_decimal_on_update(self):
+        """it should update record when replacing doseQuantity and keep decimal precision"""
+        imms_id = "an-imms-id"
+        imms = create_covid_19_immunization_dict(imms_id)
+        imms["doseQuantity"] = 1.5556
+        updated_dose_quantity = 0.7566
+        imms["doseQuantity"] = updated_dose_quantity
+        imms["patient"] = self.patient
+        resource = imms
+        self.run_update_immunization_test(imms_id, imms, resource, updated_dose_quantity)
 
     def test_decimal_on_update_patient(self):
         """it should update record by replacing both Immunization and Patient and dosequantity"""
-
         imms_id = "an-imms-id"
         imms = create_covid_19_immunization_dict(imms_id)
         imms["doseQuantity"] = 1.590
         imms["patient"] = self.patient
-
         resource = {"doseQuantity": 1.590, "foo": "bar"}
-        dynamo_response = {
-            "ResponseMetadata": {"HTTPStatusCode": 200},
-            "Attributes": {"Resource": json.dumps(resource)},
-        }
+        self.run_update_immunization_test(imms_id, imms, resource)
 
-        self.table.update_item = MagicMock(return_value=dynamo_response)
-        self.table.query = MagicMock(return_value={})
-
-        now_epoch = 123456
-
-        with patch("time.time") as mock_time:
-            mock_time.return_value = now_epoch
-
-            act_resource = self.repository.update_immunization(
-                imms_id, imms, self.patient, 1, "COVID19:update", "Test", False
-            )
-
-        self.assertDictEqual(act_resource, resource)
-
-        update_exp = (
-            "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
-            "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
-            "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
-        )
-        patient_id = self.patient["identifier"]["value"]
-        patient_id = imms["contained"][1]["identifier"][0]["value"]
-        vaccine_type = get_vaccine_type(imms)
-        patient_sk = f"{vaccine_type}#{imms_id}"
-
-        self.table.update_item.assert_called_once_with(
-            Key={"PK": _make_immunization_pk(imms_id)},
-            UpdateExpression=update_exp,
-            ExpressionAttributeNames={"#imms_resource": "Resource"},
-            ExpressionAttributeValues={
-                ":timestamp": now_epoch,
-                ":patient_pk": _make_patient_pk(patient_id),
-                ":patient_sk": patient_sk,
-                ":imms_resource_val": json.dumps(imms, use_decimal=True),
-                ":operation": "UPDATE",
-                ":version": 2,
-                ":supplier_system": "Test",
-                ":respawn": None,
-            },
-            ReturnValues=ANY,
-            ConditionExpression=ANY,
-        )
-
-        resource_from_item = json.loads(dynamo_response["Attributes"]["Resource"])
-
-        self.assertIn("doseQuantity", resource_from_item)
-        self.assertEqual(resource_from_item["doseQuantity"], 1.590)
