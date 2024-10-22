@@ -165,6 +165,8 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 is_imms_batch_app = aws_event["headers"]["SupplierSystem"] == "Imms-Batch-App"
+                if is_imms_batch_app:
+                    aws_event["body"] = json.dumps(aws_event["body"])
                 if not is_imms_batch_app:
                     if response := self.authorize_request(EndpointOperation.CREATE, aws_event):
                         return response
@@ -208,6 +210,8 @@ class FhirController:
         try:
             if aws_event.get("headers"): 
                 is_imms_batch_app = aws_event["headers"]["SupplierSystem"] == "Imms-Batch-App"
+                if is_imms_batch_app:
+                    aws_event["body"] = json.dumps(aws_event["body"])
                 if not is_imms_batch_app:
                     if response := self.authorize_request(EndpointOperation.UPDATE, aws_event):
                         return response
