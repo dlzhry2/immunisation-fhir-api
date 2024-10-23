@@ -215,7 +215,7 @@ class ImmunizationRepository:
         self._check_duplicate_identifier(attr)
         
         return self._perform_dynamo_update(
-            imms_id, update_exp, attr, existing_resource_version, supplier_system, deleted_at_required=False
+            imms_id, update_exp, attr, existing_resource_version, supplier_system, deleted_at_required=False, update_reinstated=False
         )
 
     def reinstate_immunization(
@@ -235,8 +235,8 @@ class ImmunizationRepository:
         self._check_duplicate_identifier(attr)
         
         return self._perform_dynamo_update(
-            imms_id, update_exp, attr, existing_resource_version, supplier_system, deleted_at_required=True
-        )
+            imms_id, update_exp, attr, existing_resource_version, supplier_system, deleted_at_required=True, update_reinstated=False
+            )
 
     def update_reinstated_immunization(
         self,
@@ -255,7 +255,7 @@ class ImmunizationRepository:
         self._check_duplicate_identifier(attr)
         
         return self._perform_dynamo_update(
-        imms_id, update_exp, attr, existing_resource_version, supplier_system, deleted_at_required=True
+        imms_id, update_exp, attr, existing_resource_version, supplier_system, deleted_at_required=True, update_reinstated=True
         )
 
     def _handle_permissions(self, is_imms_batch_app: bool, imms_vax_type_perms: str, attr: RecordAttributes):
@@ -291,13 +291,13 @@ class ImmunizationRepository:
 
     def _perform_dynamo_update(
         self, imms_id: str, update_exp: str, attr: RecordAttributes, 
-        existing_resource_version: int, supplier_system: str, deleted_at_required: bool
+        existing_resource_version: int, supplier_system: str, deleted_at_required: bool, update_reinstated: bool
     ) -> dict:
         try:
             condition_expression = (
-                Attr("PK").eq(attr.pk) & (Attr("DeletedAt").exists() if deleted_at_required else Attr("DeletedAt").not_exists())
+                Attr("PK").eq(attr.pk) & (Attr("DeletedAt").exists() if deleted_at_required else Attr("PK").eq(attr.pk) & Attr("DeletedAt").not_exists())
             )
-            if deleted_at_required:
+            if deleted_at_required and update_reinstated == False:
                ExpressionAttributeValues={
                     ":timestamp": attr.timestamp,
                     ":patient_pk": attr.patient_pk,
