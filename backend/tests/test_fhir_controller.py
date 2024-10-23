@@ -952,7 +952,7 @@ class TestUpdateImmunization(unittest.TestCase):
     def test_update_immunization_for_batch(self):
         """it should update Immunization"""
         imms_id = "valid-id"
-        imms = '{"id": "valid-id"}'
+        imms = {"id": "valid-id"}
         aws_event = {
             "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:update", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test"},
             "body": imms,
@@ -968,7 +968,7 @@ class TestUpdateImmunization(unittest.TestCase):
         }
         response = self.controller.update_immunization(aws_event)
 
-        self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms), 1, None, "Test", True)
+        self.service.update_immunization.assert_called_once_with(imms_id, imms, 1, None, "Test", True)
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)    
 
