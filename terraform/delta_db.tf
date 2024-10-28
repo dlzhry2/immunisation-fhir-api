@@ -36,6 +36,7 @@ resource "aws_dynamodb_table" "delta-dynamodb-table" {
         range_key          = "DateTimeStamp"
         projection_type    = "ALL"
     }
+
     global_secondary_index {
         name               = "SecondarySearchIndex"
         hash_key           = "SupplierSystem"
