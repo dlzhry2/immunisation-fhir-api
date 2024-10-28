@@ -1,4 +1,3 @@
-import uuid
 from utils.base_test import ImmunizationBaseTest
 from utils.resource import generate_imms_resource, get_full_row_from_identifier
 
@@ -11,7 +10,7 @@ class TestCreateImmunization(ImmunizationBaseTest):
                 # Given
                 immunizations = [
                     generate_imms_resource(),
-                    generate_imms_resource(sample_data_file_name="completed_rsv_immunization_event")
+                    generate_imms_resource(sample_data_file_name="completed_rsv_immunization_event"),
                 ]
 
                 for immunization in immunizations:
@@ -24,17 +23,36 @@ class TestCreateImmunization(ImmunizationBaseTest):
                     self.assertIn("Location", response.headers)
 
     def test_non_unique_identifier(self):
-        """it should give 422 if the identifier is not unique"""
+        """
+        it should give 422 if the identifier is not unique, even if the original imms event has been deleted and/ or
+        reinstated
+        """
+        # Set up
         imms = generate_imms_resource()
-        _ = self.create_immunization_resource(self.default_imms_api, imms)
-        new_id = str(uuid.uuid4())
-        imms["id"] = new_id
-        del imms["id"]
+        imms_id = self.create_immunization_resource(self.default_imms_api, imms)
+        self.assertEqual(self.default_imms_api.get_immunization_by_id(imms_id).status_code, 200)
 
-        # When update the same object (it has the same identifier)
-        response = self.default_imms_api.create_immunization(imms)
-        # Then
-        self.assert_operation_outcome(response, 422)
+        # Check that duplicate CREATE request is rejected
+        self.assert_operation_outcome(self.default_imms_api.create_immunization(imms), 422)
+
+        # Check that duplice CREATE request is rejected after the event is updated
+        imms["id"] = imms_id  # Imms fhir resource should include the id for update
+        self.default_imms_api.update_immunization(imms_id, imms)
+        self.assertEqual(self.default_imms_api.get_immunization_by_id(imms_id).status_code, 200)
+        del imms["id"]  # Imms fhir resource should not include an id for create
+        self.assert_operation_outcome(self.default_imms_api.create_immunization(imms), 422)
+
+        # Check that duplice CREATE request is rejected after the event is updated then deleted
+        self.default_imms_api.delete_immunization(imms_id)
+        self.assertEqual(self.default_imms_api.get_immunization_by_id(imms_id).status_code, 404)
+        self.assert_operation_outcome(self.default_imms_api.create_immunization(imms), 422)
+
+        # Check that duplice CREATE request is rejected after the event is updated then deleted then reinstated
+        imms["id"] = imms_id  # Imms fhir resource should include the id for update
+        self.default_imms_api.update_immunization(imms_id, imms)
+        self.assertEqual(self.default_imms_api.get_immunization_by_id(imms_id).status_code, 200)
+        del imms["id"]  # Imms fhir resource should not include an id for create
+        self.assert_operation_outcome(self.default_imms_api.create_immunization(imms), 422)
 
     def test_bad_nhs_number(self):
         """it should reject the request if nhs-number does not exist"""
