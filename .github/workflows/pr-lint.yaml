@@ -1,7 +1,5 @@
 name: PR Quality Check
-on:
-  pull_request:
-    types: [opened]
+on: pull_request
 jobs:
   link-ticket:
     runs-on: ubuntu-latest
