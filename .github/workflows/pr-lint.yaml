@@ -48,6 +48,7 @@ jobs:
         run: |
           pip install poetry
           pip install coverage
+          poetry update
           mkdir -p /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/backend/coverage_html_report
           coverage run -m unittest discover
           coverage report
