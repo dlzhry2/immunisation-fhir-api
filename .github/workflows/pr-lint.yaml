@@ -46,7 +46,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install poetry moto==4.2.11 coverage redis botocore==1.35.49 simplejson responses structlog fhir.resources jsonpath_ng pydantic requests aws-lambda-typing cffi pyjwt 
+          pip install poetry moto==4.2.11 coverage redis botocore==1.35.49 simplejson responses structlog fhir.resources jsonpath_ng pydantic requests aws-lambda-typing cffi pyjwt boto3-stubs-lite[dynamodb]~=1.26.90
 
       - name: Run unit tests and generate coverage report for filenameprocessor
         run: |        
