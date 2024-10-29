@@ -68,4 +68,8 @@
     <TargetEndpoint>immunisation-fhir-api-target</TargetEndpoint>
     <Condition>version == "1"</Condition>
   </RouteRule>
+  <RouteRule name="immunisation-fhir-api-target">
+    <TargetEndpoint>immunisation-fhir-api-target-v2</TargetEndpoint>
+    <Condition>version == "2"</Condition>
+  </RouteRule>
 </ProxyEndpoint>
