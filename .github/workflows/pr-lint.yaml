@@ -43,12 +43,12 @@ jobs:
         run: |
           aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
           aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY  
-
-      - name: Run unit tests and generate coverage report for filenameprocessor
+      
+      - name: Install dependencies
         run: |
-          pip install poetry
-          pip install coverage
-          poetry update
+          pip install poetry moto==4.2.11 coverage redis botocore==1.35.49 simplejson responses structlog fhir jsonpath_ng pydantic
+      - name: Run unit tests and generate coverage report for filenameprocessor
+        run: |        
           mkdir -p /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/backend/coverage_html_report
           coverage run -m unittest discover
           coverage report
