@@ -4,8 +4,8 @@ variables:
     value: immunisation-fhir-api
   - name: short_service_name
     value: ifa
-  - name: service_base_path/FHIR/R4
-    value: immunisation-fhir-api
+  - name: service_base_path
+    value: immunisation-fhir-api/FHIR/R4
   - name: pr_number
     value: ${{ split(variables['Build.SourceBranch'], '/')[2] }}
     
