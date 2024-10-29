@@ -76,5 +76,5 @@ jobs:
           git checkout ${{ github.head_ref }}
           git pull origin ${{ github.head_ref }}
           git add /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/coverage_html_report/*.xml
-          git commit -m "Add coverage index as XML"
+          git commit -m "Add coverage index as XML format"
           git push origin ${{ github.head_ref }}
