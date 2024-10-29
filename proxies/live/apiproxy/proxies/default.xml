@@ -66,5 +66,6 @@
   </RouteRule>
   <RouteRule name="immunisation-fhir-api-target">
     <TargetEndpoint>immunisation-fhir-api-target</TargetEndpoint>
+    <Condition>version == "1"</Condition>
   </RouteRule>
 </ProxyEndpoint>
