@@ -60,15 +60,7 @@ resource "aws_ecr_repository_policy" "operation_lambda_ECRImageRetreival_policy"
         "Sid": "LambdaECRImageRetrievalPolicy",
         "Effect": "Allow",
         "Principal": {
-          AWS = [
-            "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.prefix}_get_status",
-            "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.prefix}_not_found",
-            "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.prefix}_search_imms",
-            "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.prefix}_get_imms",
-            "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.prefix}_delete_imms",
-            "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.prefix}_create_imms,",
-            "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.prefix}_update_imms,"            
-          ]
+          "Service": "lambda.amazonaws.com"
         },
         "Action": [
           "ecr:BatchGetImage",
@@ -76,7 +68,20 @@ resource "aws_ecr_repository_policy" "operation_lambda_ECRImageRetreival_policy"
           "ecr:GetDownloadUrlForLayer",
           "ecr:GetRepositoryPolicy",
           "ecr:SetRepositoryPolicy"
-        ]
+        ],
+        "Condition": {
+          "StringLike": {
+            "aws:sourceArn": [
+                  "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.short_prefix}_get_status",
+                  "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.short_prefix}_not_found",
+                  "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.short_prefix}_search_imms",
+                  "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.short_prefix}_get_imms",
+                  "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.short_prefix}_delete_imms",
+                  "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.short_prefix}_create_imms",
+                  "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.short_prefix}_update_imms"
+            ]
+          }
+        }
       }
   ]
   })
