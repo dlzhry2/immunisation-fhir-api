@@ -4,6 +4,9 @@
       <Step>
         <Name>FlowCallout.GetEnvironmentKeyValueMapData</Name>
       </Step>
+      <Step>
+        <Name>JavaScriptVersion</Name>
+      </Step>
     </Request>
   </PreFlow>
   <Flows>
