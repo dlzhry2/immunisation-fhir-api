@@ -50,7 +50,7 @@ module "docker_image" {
 }
 
 # Define the lambdaECRImageRetreival policy
-resource "aws_ecr_repository_policy" "docker_lambda_ECRImageRetreival_policy" {
+resource "aws_ecr_repository_policy" "operation_lambda_ECRImageRetreival_policy" {
   repository = aws_ecr_repository.operation_lambda_repository.name
 
   policy = jsonencode({

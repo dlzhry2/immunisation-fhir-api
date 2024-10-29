@@ -45,7 +45,7 @@ module "delta_docker_image" {
 }
 
 # Define the lambdaECRImageRetreival policy
-resource "aws_ecr_repository_policy" "docker_lambda_ECRImageRetreival_policy" {
+resource "aws_ecr_repository_policy" "delta_lambda_ECRImageRetreival_policy" {
   repository = aws_ecr_repository.delta_lambda_repository.name
 
   policy = jsonencode({
