@@ -65,4 +65,4 @@ jobs:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    
           with:
             args: >
-              -Dsonar.python.coverage.reportPaths=/test_coverage.xml
+              -Dsonar.python.coverage.reportPaths=test_coverage.xml
