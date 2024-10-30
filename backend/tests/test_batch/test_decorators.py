@@ -11,8 +11,6 @@ import copy
 import unittest
 from unittest.mock import MagicMock, patch
 
-
-
 from batch.decorators import (
     _decorate_patient,
     _decorate_vaccination,
