@@ -65,4 +65,4 @@ jobs:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    
           with:
             args: >
-              -Dsonar.python.coverage.reportPaths=test_coverage.xml
+              -Dsonar.python.coverage.reportPaths=/home/runner/work/immunisation-fhir-api/immunisation-fhir-api/test_coverage.xml -X
