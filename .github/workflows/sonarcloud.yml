@@ -25,8 +25,6 @@ jobs:
 
       - name: Aggregate coverage report
         run: |
-            ls -R /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/backend
-            mv /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/backend/sonarcloud-coverage.xml /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/sonarcloud-coverage.xml
             ls -R /home/runner/work/immunisation-fhir-api/immunisation-fhir-api
 
       - name: SonarCloud Scan
