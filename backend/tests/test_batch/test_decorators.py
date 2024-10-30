@@ -27,7 +27,7 @@ from batch.decorators import (
     _decorate_immunization,
 )
 from batch.errors import DecoratorError, TransformerFieldError, TransformerRowError, TransformerUnhandledError
-from tests.test_batch.decorators_constants import AllHeaders, AllHeadersExpectedOutput, ExtensionItems
+from test_batch.decorators_constants import AllHeaders, AllHeadersExpectedOutput, ExtensionItems
 from constants import VALID_NHS_NUMBER
 
 raw_imms: dict = {"resourceType": "Immunization", "contained": []}
