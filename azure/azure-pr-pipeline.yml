@@ -38,10 +38,14 @@ extends:
           DOMAIN_ENDPOINT: https://pr-${{ variables.pr_number }}.imms.dev.vds.platform.nhs.uk
         post_deploy:
           - template: ./templates/post-deploy.yml
+            parameters:
+              aws_account_type: 'dev'
       - environment: internal-dev-sandbox
         proxy_path: sandbox
         jinja_templates:
           DOMAIN_ENDPOINT: just-dummy-value-for-successful-build
         post_deploy:
           - template: ./templates/post-deploy.yml
+            parameters:
+              aws_account_type: 'dev'
 
