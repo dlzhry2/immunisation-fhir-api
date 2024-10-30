@@ -19,13 +19,15 @@ jobs:
           pwd
           pip install poetry moto==4.2.11 coverage redis botocore==1.35.49 simplejson responses structlog fhir.resources jsonpath_ng pydantic==1.10.13 requests aws-lambda-typing cffi pyjwt boto3-stubs-lite[dynamodb]~=1.26.90
           poetry run coverage run --source=backend -m unittest discover
+          poetry run coverage xml -o sonarcloud-coverage.xml
 
         working-directory: "/home/runner/work/immunisation-fhir-api/immunisation-fhir-api/backend"  
 
-      - name: Coverage
-        run:  poetry run coverage xml -o sonarcloud-coverage.xml
-        working-directory: "/home/runner/work/immunisation-fhir-api/immunisation-fhir-api"  
-         
+      - name: Aggregate coverage report
+        run: |
+            ls -R /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/backend
+            mv /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/backend/sonarcloud-coverage.xml /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/sonarcloud-coverage.xml
+            
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
