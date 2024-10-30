@@ -1,4 +1,4 @@
-"""Immunization utils"""
+"""Immunization utils."""
 
 from fhir.resources.R4B.immunization import Immunization
 

@@ -12,7 +12,7 @@ from authorization import (
     AuthType)
 from models.errors import UnauthorizedError
 
-
+"test"
 def _make_aws_event(auth_type: AuthType, permissions: Set[str]):
     header = ",".join(permissions)
     return {
