@@ -7,6 +7,10 @@
       <Step>
         <Name>JavaScriptVersion</Name>
       </Step>
+      <Step>
+        <Name>RaiseFault400InvalidAcceptHeader</Name>
+        <Condition>invalidAcceptHeader == true</Condition>
+      </Step>
     </Request>
   </PreFlow>
   <Flows>
@@ -73,6 +77,6 @@
   </RouteRule>
   <RouteRule name="immunisation-fhir-api-target">
     <TargetEndpoint>immunisation-fhir-api-target-v2</TargetEndpoint>
-    <Condition>version == "2"</Condition>
+    <Condition>version >= "2"</Condition>
   </RouteRule>
 </ProxyEndpoint>
