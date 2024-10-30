@@ -40,7 +40,7 @@ jobs:
           run: |
             ls -R /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/backend/coverage_html_report
 
-        - name: Aggregate coverage reports
+        - name: Aggregate coverage report
           run: |
             mkdir -p /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/coverage_html_report
             rm -rf /home/runner/work/immunisation-fhir-api/immunisation-fhir-api/coverage_html_report/*
