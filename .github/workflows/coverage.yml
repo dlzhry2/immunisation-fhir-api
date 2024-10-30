@@ -67,3 +67,4 @@ jobs:
               -Dsonar.projectKey=NHSDigital_immunisation-fhir-api
               -Dsonar.organization=nhsdigital
               -Dsonar.python.coverage.reportPaths=test_coverage.xml
+              -Dsonar.sources=immunisation-fhir-api/backend
