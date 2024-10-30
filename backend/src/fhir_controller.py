@@ -72,6 +72,7 @@ class FhirController:
         self.authorizer = authorizer
 
     def get_immunization_by_identifier(self, aws_event) -> dict:
+        # get the imms id by passing the identifier.
         if aws_event.get("headers"):
             is_imms_batch_app = aws_event["headers"]["SupplierSystem"] == "Imms-Batch-App"
             if not is_imms_batch_app: 

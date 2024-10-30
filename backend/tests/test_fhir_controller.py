@@ -93,6 +93,7 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
         self.assertEqual(body["id"], "test")
         
     def test_get_imms_by_identifer_for_batch(self):
+        # testcases for the batch
         """it should return Immunization Id if it exists"""
         # Given
         self.service.get_immunization_by_identifier.return_value = {"id": "test", "Version": 1}

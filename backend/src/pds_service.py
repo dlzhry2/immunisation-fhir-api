@@ -13,6 +13,7 @@ class PdsService:
             if environment != "prod" else "https://api.service.nhs.uk/personal-demographics/FHIR/R4/Patient"
 
     def get_patient_details(self, patient_id) -> dict | None:
+        # made the pds call
         access_token = self.authenticator.get_access_token()
         request_headers = {
             'Authorization': f'Bearer {access_token}',

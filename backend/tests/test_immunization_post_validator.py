@@ -70,6 +70,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             self.assertIsNone(self.validator.validate(json_data))
 
     def test_post_validate_and_set_vaccine_type(self):
+        # prevalidation
         """
         Test validate_and_set_validate_and_set_vaccine_type accepts valid values, rejects invalid
         values and rejects missing data
