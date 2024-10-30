@@ -145,9 +145,9 @@ info:
     ## Environments and Testing
     | Environment       | Base URL                                                              |
     | ----------------- | --------------------------------------------------------------------- |
-    |  Sandbox          | `https://sandbox.api.service.nhs.uk/immunisation-fhir-api`            |
-    |  Integration      | `https://int.api.service.nhs.uk/immunisation-fhir-api`                |          
-    |  Production       | `https://api.service.nhs.uk/immunisation-fhir-api`                    |
+    |  Sandbox          | `https://sandbox.api.service.nhs.uk/immunisation-fhir-api/FHIR/R4`            |
+    |  Integration      | `https://int.api.service.nhs.uk/immunisation-fhir-api/FHIR/R4`                |          
+    |  Production       | `https://api.service.nhs.uk/immunisation-fhir-api/FHIR/R4`                    |
 
     ### Sandbox testing
     Our [sandbox environment](https://digital.nhs.uk/developer/guides-and-documentation/testing#sandbox-testing):
