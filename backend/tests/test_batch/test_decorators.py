@@ -11,11 +11,7 @@ import copy
 import unittest
 from unittest.mock import MagicMock, patch
 
-import os
-import sys
-maindir=os.path.dirname(__file__)
-srcdir='../src'
-sys.path.insert(0,os.path.abspath(os.path.join(maindir,srcdir)))
+
 
 from batch.decorators import (
     _decorate_patient,
@@ -27,7 +23,7 @@ from batch.decorators import (
     _decorate_immunization,
 )
 from batch.errors import DecoratorError, TransformerFieldError, TransformerRowError, TransformerUnhandledError
-from decorators_constants import AllHeaders, AllHeadersExpectedOutput, ExtensionItems
+from tests.test_batch.decorators_constants import AllHeaders, AllHeadersExpectedOutput, ExtensionItems
 from constants import VALID_NHS_NUMBER
 
 raw_imms: dict = {"resourceType": "Immunization", "contained": []}
