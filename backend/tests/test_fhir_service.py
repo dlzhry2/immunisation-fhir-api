@@ -25,7 +25,7 @@ from tests.immunization_utils import (
 from .utils.generic_utils import load_json_data
 from src.constants import NHS_NUMBER_USED_IN_SAMPLE_DATA
 
-
+"test"
 class TestServiceUrl(unittest.TestCase):
     def test_get_service_url(self):
         """it should create service url"""
