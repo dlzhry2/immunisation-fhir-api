@@ -11,6 +11,12 @@ import copy
 import unittest
 from unittest.mock import MagicMock, patch
 
+import os
+import sys
+maindir=os.path.dirname(__file__)
+srcdir='../src'
+sys.path.insert(0,os.path.abspath(os.path.join(maindir,srcdir)))
+
 from batch.decorators import (
     _decorate_patient,
     _decorate_vaccination,
