@@ -68,6 +68,7 @@ extends:
       - environment: int
         depends_on:
           - internal_dev
+          - manual_approval
         jinja_templates:
           DOMAIN_ENDPOINT: https://int.imms.dev.vds.platform.nhs.uk
         post_deploy:
