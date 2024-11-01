@@ -20,7 +20,7 @@ data "aws_subnets" "default" {
 }
 
 locals {
-    root_domain = "dev.vds.platform.nhs.uk"
+    root_domain = "${local.config_env}.vds.platform.nhs.uk"
 }
 
 locals {
@@ -32,6 +32,7 @@ locals {
     prefix              = "${var.project_name}-${var.service}-${local.environment}"
     short_prefix        = "${var.project_short_name}-${local.environment}"
     service_domain_name = "${local.environment}.${local.project_domain_name}"
+    config_env = local.environment == "prod" ? "prod" : "dev"
 
     tags = {
         Project     = var.project_name
@@ -45,5 +46,5 @@ variable "region" {
 }
 
 variable "root_domain_name" {
-    default = "dev.vds.platform.nhs.uk"
+    default = "${local.config_env}.vds.platform.nhs.uk"
 }

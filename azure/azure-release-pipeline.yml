@@ -74,4 +74,15 @@ extends:
             - template: ./templates/post-deploy.yml
               parameters:
                 aws_account_type: 'dev'
+      - environment: prod
+        depends_on:
+          - int
+          - sandbox
+          - manual_approval
+        jinja_templates:
+          DOMAIN_ENDPOINT: https://imms.prod.vds.platform.nhs.uk
+        post_deploy:
+            - template: ./templates/post-deploy.yml
+              parameters:
+                aws_account_type: 'prod'
            
