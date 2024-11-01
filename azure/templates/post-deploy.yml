@@ -3,6 +3,8 @@ parameters:
     default: aws --profile=apim-dev
   - name: is_ptl
     default: true
+  - name: 'aws_account_type'
+    type: string
 
 steps:
   - ${{ if parameters.is_ptl }}:
@@ -33,7 +35,7 @@ steps:
     parameters:
       role: "auto-ops"
       profile: "apim-dev"
-      aws_account: "dev"
+      aws_account: ${{ parameters.aws_account_type }}
 
   - bash: |
       set -e

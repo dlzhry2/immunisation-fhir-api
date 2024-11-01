@@ -83,29 +83,25 @@ APIGEE_ENVIRONMENTS:
           enabled: false
         spikeArrest:
           enabled: false
-  # - name: prod
-  #   has_mock_auth: false
-  #   approval_type: manual
-  #   display_name_suffix: Production
-  #   ratelimiting:
-  #     immunisation-fhir-api-prod:
-  #       quota:
-  #         enabled: true
-  #         limit: 300 
-  #         interval: 1
-  #         timeunit: minute
-  #       spikeArrest:
-  #         enabled: true
-  #         ratelimit: 600pm # 10 requests per second
-  #     app:
-  #       quota:
-  #         enabled: false
-  #       #   limit: 300    # 5TPS
-  #       #   interval: 1
-  #       #   timeunit: minute
-  #       spikeArrest:
-  #         enabled: false
-  #       #   ratelimit: 600pm # 10 requests per second
+  - name: prod
+    has_mock_auth: false
+    approval_type: manual
+    display_name_suffix: production
+    ratelimiting:
+      immunisation-fhir-api-prod:
+        quota:
+          enabled: true
+          limit: 300 
+          interval: 1
+          timeunit: minute
+        spikeArrest:
+          enabled: true
+          ratelimit: 600pm # 10 requests per second
+      app:
+        quota:
+          enabled: false
+        spikeArrest:
+          enabled: false
 
 ACCESS_MODES:
   - name: user-restricted

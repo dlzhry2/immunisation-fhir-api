@@ -3,7 +3,7 @@ locals {
 }
 
 data "aws_route53_zone" "root_zone" {
-  name = var.root_domain_name
+  name = local.root_domain
 }
 
 locals {
