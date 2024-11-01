@@ -57,8 +57,7 @@ extends:
       - environment: ref
         depends_on:
             - internal_dev
-            - internal_dev_sandbox
-            - manual_approval
+            - internal_dev_sandbox            
         jinja_templates:
             DOMAIN_ENDPOINT: https://ref.imms.dev.vds.platform.nhs.uk
         post_deploy:
@@ -68,7 +67,6 @@ extends:
       - environment: int
         depends_on:
           - internal_dev
-          - manual_approval
         jinja_templates:
           DOMAIN_ENDPOINT: https://int.imms.dev.vds.platform.nhs.uk
         post_deploy:
