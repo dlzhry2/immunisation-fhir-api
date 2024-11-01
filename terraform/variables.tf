@@ -46,5 +46,5 @@ variable "region" {
 }
 
 variable "root_domain_name" {
-    default = "${local.config_env}.vds.platform.nhs.uk"
+    default = local.environment == "prod" ? "prod.vds.platform.nhs.uk" : "dev.vds.platform.nhs.uk"
 }
