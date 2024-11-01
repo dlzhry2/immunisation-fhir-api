@@ -6,7 +6,7 @@ from copy import deepcopy
 from src.s_flag_handler import handle_s_flag
 from tests.utils.generic_utils import load_json_data
 
-
+"test"
 class TestSFlagHandler(unittest.TestCase):
     """Test that s_flag_handler removes the required fields for patients marked as Restricted"""
 

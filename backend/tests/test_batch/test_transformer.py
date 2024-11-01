@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 from batch.transformer import DataRecordTransformer
 
-
+"test"
 class TestDatRecordTransformer(unittest.TestCase):
     def setUp(self):
         self.transformer = DataRecordTransformer()
