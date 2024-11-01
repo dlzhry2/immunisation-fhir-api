@@ -36,34 +36,48 @@ extends:
           DOMAIN_ENDPOINT: https://internal-dev.imms.dev.vds.platform.nhs.uk
         post_deploy:
           - template: ./templates/post-deploy.yml
+            parameters:
+              aws_account_type: 'dev'
       - environment: internal-dev-sandbox
         proxy_path: sandbox
         jinja_templates:
           DOMAIN_ENDPOINT: just-dummy-value-for-successful-build
         post_deploy:
           - template: ./templates/post-deploy.yml
+            parameters:
+              aws_account_type: 'dev'
       - environment: sandbox
         proxy_path: sandbox
         jinja_templates:
           DOMAIN_ENDPOINT: just-dummy-value-for-successful-build
         depends_on:
           - internal_dev_sandbox
-      - environment: manual-approval
-        manual_approval_prod: true
       - environment: ref
         depends_on:
             - internal_dev
             - internal_dev_sandbox
-            - manual_approval
         jinja_templates:
             DOMAIN_ENDPOINT: https://ref.imms.dev.vds.platform.nhs.uk
         post_deploy:
             - template: ./templates/post-deploy.yml
+              parameters:
+                aws_account_type: 'dev'
       - environment: int
         depends_on:
           - internal_dev
         jinja_templates:
           DOMAIN_ENDPOINT: https://int.imms.dev.vds.platform.nhs.uk
         post_deploy:
-           - template: ./templates/post-deploy.yml
-           
+            - template: ./templates/post-deploy.yml
+              parameters:
+                aws_account_type: 'dev'
+      - environment: prod
+        depends_on:
+          - int
+          - ref
+        jinja_templates:
+          DOMAIN_ENDPOINT: https://imms.prod.vds.platform.nhs.uk
+        post_deploy:
+            - template: ./templates/post-deploy.yml
+              parameters:
+                aws_account_type: 'prod'
