@@ -100,12 +100,8 @@ APIGEE_ENVIRONMENTS:
       app:
         quota:
           enabled: false
-        #   limit: 300    # 5tps
-        #   interval: 1
-        #   timeunit: minute
         spikearrest:
           enabled: false
-        #   ratelimit: 600pm # 10 requests per second
 
 ACCESS_MODES:
   - name: user-restricted
