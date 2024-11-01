@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 from batch.report import S3FixedBufferStream
 
-
+"test"
 class TestS3FixedBufferStream(unittest.TestCase):
     def setUp(self):
         self.s3_client = MagicMock()

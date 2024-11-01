@@ -3,7 +3,7 @@ import json
 from unittest.mock import patch, MagicMock, ANY
 from src.log_structure import function_info
 
-
+"test"
 class TestFunctionInfoWrapper(unittest.TestCase):
 
     @staticmethod

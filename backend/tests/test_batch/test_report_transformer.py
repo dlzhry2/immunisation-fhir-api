@@ -2,7 +2,7 @@ import unittest
 
 from batch.report import ReportEntry, ReportEntryTransformer
 
-
+"test"
 class TestReportEntryTransformer(unittest.TestCase):
     def test_entry_transformer(self):
         """it should transform ReportEntry to string"""

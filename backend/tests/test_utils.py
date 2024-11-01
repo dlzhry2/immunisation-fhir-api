@@ -6,7 +6,7 @@ from copy import deepcopy
 from src.models.utils.validation_utils import convert_disease_codes_to_vaccine_type, get_vaccine_type
 from src.mappings import VaccineTypes, DiseaseCodes
 from .utils.generic_utils import load_json_data, update_target_disease_code
-
+"test"
 
 class TestGenericUtils(unittest.TestCase):
     """Tests for generic utils functions"""
