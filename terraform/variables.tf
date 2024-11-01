@@ -44,7 +44,3 @@ locals {
 variable "region" {
     default = "eu-west-2"
 }
-
-variable "root_domain_name" {
-    default = local.environment == "prod" ? "prod.vds.platform.nhs.uk" : "dev.vds.platform.nhs.uk"
-}
