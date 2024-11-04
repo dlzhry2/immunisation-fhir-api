@@ -76,7 +76,7 @@ extends:
           - int
           - ref
         jinja_templates:
-          DOMAIN_ENDPOINT: https://imms.prod.vds.platform.nhs.uk
+          DOMAIN_ENDPOINT: https://prod.imms.prod.vds.platform.nhs.uk
         post_deploy:
             - template: ./templates/post-deploy.yml
               parameters:
