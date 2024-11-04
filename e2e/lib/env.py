@@ -92,6 +92,9 @@ def get_service_base_path(apigee_env: ApigeeEnv = None) -> str:
     apigee_env = apigee_env if apigee_env else get_apigee_env()
 
     base_path = os.getenv("SERVICE_BASE_PATH")
+    if apigee_env.value == 'prod':
+        return f"https://api.service.nhs.uk/{base_path}"
+
     return f"https://{apigee_env.value}.api.service.nhs.uk/{base_path}"
 
 
