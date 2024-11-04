@@ -19,7 +19,7 @@ jobs:
 
       - name: Run unittest with coverage
         run: |
-          pip install poetry moto==4.2.11 coverage redis botocore==1.35.49 simplejson responses structlog fhir.resources jsonpath_ng pydantic==1.10.13 requests aws-lambda-typing cffi pyjwt boto3-stubs-lite[dynamodb]~=1.26.90 python-stdnum=1.20
+          pip install poetry moto==4.2.11 coverage redis botocore==1.35.49 simplejson responses structlog fhir.resources jsonpath_ng pydantic==1.10.13 requests aws-lambda-typing cffi pyjwt boto3-stubs-lite[dynamodb]~=1.26.90 python-stdnum==1.20
           poetry run coverage run --source=backend -m unittest discover -s backend
           poetry run coverage xml -o sonarcloud-coverage.xml
 
