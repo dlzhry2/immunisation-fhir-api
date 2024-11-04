@@ -351,7 +351,11 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
     
     def test_pre_validate_extension_url(self):
-        """Test test_pre_validate_extension_url accepts valid values and rejects invalid values for extension[0].url"""
+        """
+        Test pre_validate_extension_url accepts valid values and rejects 
+        if the snomed code are unable to fetch if the url is invalid
+        and get passed only with the snomed url.
+        """
         # Test case: missing "extension"
         invalid_json_data = deepcopy(self.completed_json_data[VaccineTypes.covid_19])
         invalid_json_data["extension"][0]["valueCodeableConcept"]["coding"][0]["system"]='https://xyz/Extension-UKCore-VaccinationProcedure'

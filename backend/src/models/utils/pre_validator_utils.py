@@ -150,12 +150,7 @@ class PreValidation:
     @staticmethod
     def for_snomed_code(field_value: str, field_location: str):
         """
-        Apply pre-validation to a datetime field to ensure that it is a string (JSON dates must be written as strings)
-        containing a valid datetime. Note that partial dates are valid for FHIR, but are not allowed for this API.
-        Valid formats are any of the following:
-        * 'YYYY-MM-DD' - Full date only
-        * 'YYYY-MM-DDT00:00:00+00:00' - Full date, time without milliseconds, timezone
-        * 'YYYY-MM-DDT00:00:00.000+00:00' - Full date, time with milliseconds (any level of precision), timezone
+        Apply prevalidation to snomed code to ensure that its a valid one.
         """
 
         error_message = (

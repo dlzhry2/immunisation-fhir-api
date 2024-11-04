@@ -526,7 +526,7 @@ class PreValidators:
 
 
     def pre_validate_value_codeable_concept(self, values: dict) -> dict:
-        """Pre-validate that valueCodeableConcept with coding exists within each extension"""
+        """Pre-validate that valueCodeableConcept with coding exists within extension"""
         if "extension" not in values:
             raise MandatoryError("extension is a mandatory field")
         
@@ -540,7 +540,7 @@ class PreValidators:
                 raise MandatoryError("extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding is a mandatory field")    
     
     def pre_validate_extension(self, values: dict) -> dict:
-            """Pre-validate that, if extension exists, then it is a list of length 1"""
+            """Pre-validate that, if extension exists, then the length of the list should be 1"""
             try:
                 field_value = values["extension"]
                 PreValidation.for_list(field_value, "extension", defined_length=1)
@@ -550,7 +550,7 @@ class PreValidators:
                 pass 
 
     def pre_validate_extension_url(self, values: dict) -> dict:
-            """Pre-validate that, if extension exists, then it is url should be valid"""
+            """Pre-validate that, if extension exists, then its url should be a valid one"""
             try:
                 field_value = values["extension"][0]["url"]
                 PreValidation.for_string(field_value, "extension[0].url", predefined_values=Constants.EXTENSION_URL)

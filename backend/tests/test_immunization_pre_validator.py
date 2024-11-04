@@ -711,14 +711,16 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         """Test test_pre_validate_extension_url accepts valid values and rejects invalid values for extension[0].url"""
         # Test case: missing "extension"
         invalid_json_data = deepcopy(self.json_data)
-        invalid_json_data["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "961031"
+        test_values = ["12345abc", "12345", "1234567890123456789", "12345671", "1324681000000111"]
+        for values in test_values:
+            invalid_json_data["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = values
 
-        with self.assertRaises(Exception) as error:
-            self.validator.validate(invalid_json_data)
+            with self.assertRaises(Exception) as error:
+                self.validator.validate(invalid_json_data)
 
-        full_error_message = str(error.exception)
-        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
-        self.assertIn("extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code is not a valid snomed code", actual_error_messages)    
+            full_error_message = str(error.exception)
+            actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+            self.assertIn("extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code is not a valid snomed code", actual_error_messages)    
     
     def test_pre_validate_extension_to_extract_the_coding_code_value(self):
         "Test the array length for extension and it should be length 1"

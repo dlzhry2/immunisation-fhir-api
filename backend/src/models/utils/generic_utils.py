@@ -68,6 +68,7 @@ def check_for_unknown_elements(resource, resource_type) -> Union[None, list]:
     return errors
 
 def is_valid_simple_snomed(simple_snomed: str) -> bool:
+    "check the snomed code valid or not."
     min_snomed_length = 6
     max_snomed_length = 18
     return (simple_snomed is not None
