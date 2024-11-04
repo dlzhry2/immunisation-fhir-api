@@ -205,14 +205,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """Test that the JSON data is rejected if it does not contain primary_source"""
         MandationTests.test_missing_mandatory_field_rejected(self, "primarySource")
 
-    def test_post_vaccination_procedure_display(self):
-        """Test that the JSON data is accepted if it does not contain vaccination_procedure_display"""
-        field_location = (
-            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')]"
-            + ".valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].display"
-        )
-        MandationTests.test_missing_field_accepted(self, field_location)
-
     # TODO: To confirm with imms if dose number string validation is correct (current working assumption is yes)
     def test_post_dose_number_positive_int(self):
         """
@@ -357,6 +349,19 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         MandationTests.test_missing_mandatory_field_rejected(
             self, "performer[?(@.actor.type=='Organization')].actor.identifier.system"
         )
+    
+    def test_pre_validate_extension_url(self):
+        """Test test_pre_validate_extension_url accepts valid values and rejects invalid values for extension[0].url"""
+        # Test case: missing "extension"
+        invalid_json_data = deepcopy(self.completed_json_data[VaccineTypes.covid_19])
+        invalid_json_data["extension"][0]["valueCodeableConcept"]["coding"][0]["system"]='https://xyz/Extension-UKCore-VaccinationProcedure'
+
+        with self.assertRaises(Exception) as error:
+            self.validator.validate(invalid_json_data)
+
+        full_error_message = str(error.exception)
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+        self.assertIn("extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code is a mandatory field", actual_error_messages)
 
     def test_post_location_identifier_value(self):
         """

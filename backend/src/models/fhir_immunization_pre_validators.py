@@ -63,10 +63,7 @@ class PreValidators:
             self.pre_validate_recorded,
             self.pre_validate_primary_source,
             self.pre_validate_extension,
-            self.pre_validate_extension_urls,
-            self.pre_validate_extension_value_codeable_concept_codings,
             self.pre_validate_vaccination_procedure_code,
-            self.pre_validate_vaccination_procedure_display,
             self.pre_validate_vaccination_situation_code,
             self.pre_validate_vaccination_situation_display,
             self.pre_validate_protocol_applied,
@@ -92,6 +89,8 @@ class PreValidators:
             self.pre_validate_organization_identifier_system,
             self.pre_validate_location_identifier_value,
             self.pre_validate_location_identifier_system,
+            self.pre_validate_valueCodeableConcept,
+            self.pre_validate_extension,
         ]
 
         for method in validation_methods:
@@ -525,35 +524,40 @@ class PreValidators:
             PreValidation.for_boolean(primary_source, "primarySource")
         except KeyError:
             pass
+    
 
-    def pre_validate_extension(self, values: dict) -> dict:
-        """Pre-validate that extension exists"""
-        if not "extension" in values:
+
+    def pre_validate_valueCodeableConcept(self, values: dict) -> dict:
+        """Pre-validate that valueCodeableConcept with coding exists within each extension"""
+        if "extension" not in values:
             raise MandatoryError("extension is a mandatory field")
+        
+        # Iterate over each extension and check for valueCodeableConcept and coding
+        for extension in values["extension"]:
+            if "valueCodeableConcept" not in extension:
+                raise MandatoryError("extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept is a mandatory field")
+            
+            # Check that coding exists within valueCodeableConcept
+            if "coding" not in extension["valueCodeableConcept"]:
+                raise MandatoryError("extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding is a mandatory field")    
+    
+    def pre_validate_extension(self, values: dict) -> dict:
+            """Pre-validate that, if extension exists, then it is a list of length 1"""
+            try:
+                field_value = values["extension"]
+                PreValidation.for_list(field_value, "extension", defined_length=1)
+                # Call the second validation method if the first validation passes
+                self.pre_validate_extension_url(values)
+            except KeyError:
+                pass 
 
-    def pre_validate_extension_urls(self, values: dict) -> dict:
-        """Pre-validate that, if extension exists, then each url is unique"""
-        try:
-            PreValidation.for_unique_list(values["extension"], "url", "extension[?(@.url=='FIELD_TO_REPLACE')]")
-        except (KeyError, IndexError):
-            pass
-
-    def pre_validate_extension_value_codeable_concept_codings(self, values: dict) -> dict:
-        """Pre-validate that, if they exist, each extension[{index}].valueCodeableConcept.coding.system is unique"""
-        try:
-            for i in range(len(values["extension"])):
-                try:
-                    extension_value_codeable_concept_coding = values["extension"][i]["valueCodeableConcept"]["coding"]
-                    PreValidation.for_unique_list(
-                        extension_value_codeable_concept_coding,
-                        "system",
-                        f"extension[?(@.URL=='{values['extension'][i]['url']}']"
-                        + ".valueCodeableConcept.coding[?(@.system=='FIELD_TO_REPLACE')]",
-                    )
-                except KeyError:
-                    pass
-        except KeyError:
-            pass
+    def pre_validate_extension_url(self, values: dict) -> dict:
+            """Pre-validate that, if extension exists, then it is url should be valid"""
+            try:
+                field_value = values["extension"][0]["url"]
+                PreValidation.for_string(field_value, "extension[0].url", predefined_values=Constants.extension_url)
+            except KeyError:
+                pass
 
     def pre_validate_vaccination_procedure_code(self, values: dict) -> dict:
         """
@@ -564,22 +568,6 @@ class PreValidators:
         url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-" + "VaccinationProcedure"
         system = "http://snomed.info/sct"
         field_type = "code"
-        field_location = generate_field_location_for_extension(url, system, field_type)
-        try:
-            field_value = get_generic_extension_value(values, url, system, field_type)
-            PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError):
-            pass
-
-    def pre_validate_vaccination_procedure_display(self, values: dict) -> dict:
-        """
-        Pre-validate that, if extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-
-        VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].display
-        (legacy CSV field name: VACCINATION_PROCEDURE_TERM) exists, then it is a non-empty string
-        """
-        url = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-" + "VaccinationProcedure"
-        system = "http://snomed.info/sct"
-        field_type = "display"
         field_location = generate_field_location_for_extension(url, system, field_type)
         try:
             field_value = get_generic_extension_value(values, url, system, field_type)
