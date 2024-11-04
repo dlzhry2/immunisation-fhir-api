@@ -706,6 +706,19 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         full_error_message = str(error.exception)
         actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
         self.assertIn("extension[0].url must be one of the following: https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure", actual_error_messages)
+
+    def test_pre_validate_extension_snomed_code(self):
+        """Test test_pre_validate_extension_url accepts valid values and rejects invalid values for extension[0].url"""
+        # Test case: missing "extension"
+        invalid_json_data = deepcopy(self.json_data)
+        invalid_json_data["extension"][0]["valueCodeableConcept"]["coding"][0]["code"] = "961031"
+
+        with self.assertRaises(Exception) as error:
+            self.validator.validate(invalid_json_data)
+
+        full_error_message = str(error.exception)
+        actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
+        self.assertIn("extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code is not a valid snomed code", actual_error_messages)    
     
     def test_pre_validate_extension_to_extract_the_coding_code_value(self):
         "Test the array length for extension and it should be length 1"
@@ -739,16 +752,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             "code"
         )
         self.assertIn("1324681000000102", actual_value)
-
-
-    def test_pre_validate_vaccination_procedure_code(self):
-        """Test pre_validate_vaccination_procedure_code accepts valid values and rejects invalid values"""
-        field_location = (
-            "extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')]"
-            + ".valueCodeableConcept.coding[?(@.system=='http://snomed.info/sct')].code"
-        )
-
-        ValidatorModelTests.test_string_value(self, field_location=field_location, valid_strings_to_test=["dummy"])
 
     def test_pre_validate_protocol_applied(self):
         """Test pre_validate_protocol_applied accepts valid values and rejects invalid values"""

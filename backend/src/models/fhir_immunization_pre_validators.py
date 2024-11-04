@@ -9,7 +9,6 @@ from models.utils.generic_utils import (
 from models.utils.pre_validator_utils import PreValidation
 from models.errors import MandatoryError
 from constants import Urls
-import re
 
 
 class PreValidators:
@@ -62,7 +61,6 @@ class PreValidators:
             self.pre_validate_practitioner_name_family,
             self.pre_validate_recorded,
             self.pre_validate_primary_source,
-            self.pre_validate_extension,
             self.pre_validate_vaccination_procedure_code,
             self.pre_validate_vaccination_situation_code,
             self.pre_validate_vaccination_situation_display,
@@ -89,8 +87,8 @@ class PreValidators:
             self.pre_validate_organization_identifier_system,
             self.pre_validate_location_identifier_value,
             self.pre_validate_location_identifier_system,
-            self.pre_validate_valueCodeableConcept,
-            self.pre_validate_extension,
+            self.pre_validate_value_codeable_concept,
+            self.pre_validate_extension
         ]
 
         for method in validation_methods:
@@ -527,7 +525,7 @@ class PreValidators:
     
 
 
-    def pre_validate_valueCodeableConcept(self, values: dict) -> dict:
+    def pre_validate_value_codeable_concept(self, values: dict) -> dict:
         """Pre-validate that valueCodeableConcept with coding exists within each extension"""
         if "extension" not in values:
             raise MandatoryError("extension is a mandatory field")
@@ -555,7 +553,7 @@ class PreValidators:
             """Pre-validate that, if extension exists, then it is url should be valid"""
             try:
                 field_value = values["extension"][0]["url"]
-                PreValidation.for_string(field_value, "extension[0].url", predefined_values=Constants.extension_url)
+                PreValidation.for_string(field_value, "extension[0].url", predefined_values=Constants.EXTENSION_URL)
             except KeyError:
                 pass
 
@@ -572,6 +570,7 @@ class PreValidators:
         try:
             field_value = get_generic_extension_value(values, url, system, field_type)
             PreValidation.for_string(field_value, field_location)
+            PreValidation.for_snomed_code(field_value, field_location)
         except (KeyError, IndexError):
             pass
 
