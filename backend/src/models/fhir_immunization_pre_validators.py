@@ -61,7 +61,6 @@ class PreValidators:
             self.pre_validate_practitioner_name_family,
             self.pre_validate_recorded,
             self.pre_validate_primary_source,
-            self.pre_validate_vaccination_procedure_code,
             self.pre_validate_vaccination_situation_code,
             self.pre_validate_vaccination_situation_display,
             self.pre_validate_protocol_applied,
@@ -88,7 +87,8 @@ class PreValidators:
             self.pre_validate_location_identifier_value,
             self.pre_validate_location_identifier_system,
             self.pre_validate_value_codeable_concept,
-            self.pre_validate_extension
+            self.pre_validate_extension_length,
+            self.pre_validate_vaccination_procedure_code,
         ]
 
         for method in validation_methods:
@@ -539,7 +539,7 @@ class PreValidators:
             if "coding" not in extension["valueCodeableConcept"]:
                 raise MandatoryError("extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding is a mandatory field")    
     
-    def pre_validate_extension(self, values: dict) -> dict:
+    def pre_validate_extension_length(self, values: dict) -> dict:
             """Pre-validate that, if extension exists, then the length of the list should be 1"""
             try:
                 field_value = values["extension"]
