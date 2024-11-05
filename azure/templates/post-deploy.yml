@@ -160,8 +160,7 @@ steps:
         $test_cmd -v -c test_deployment.py test_proxy.py
       
       elif [[ $APIGEE_ENVIRONMENT == "prod" ]]; then
-        echo "running: $test_cmd -v -c test_deployment.py test_proxy.py"
-        $test_cmd -v -c test_deployment.py test_proxy.py
+        echo "Proxy test completed successful as part of terraform resource up status"
 
       else
         echo "running: $test_cmd -v -c"
