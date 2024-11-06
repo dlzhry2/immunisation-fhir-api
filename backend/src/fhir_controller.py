@@ -12,6 +12,7 @@ import boto3
 from aws_lambda_typing.events import APIGatewayProxyEventV1
 from botocore.config import Config
 from fhir.resources.R4B.immunization import Immunization
+from boto3 import client as boto3_client
 
 from authorization import Authorization, EndpointOperation, UnknownPermission
 from cache import Cache
@@ -37,6 +38,8 @@ from pds_service import PdsService
 from parameter_parser import process_params, process_search_params, create_query_string
 import urllib.parse
 
+sqs_client = boto3_client("sqs", region_name="eu-west-2")
+queue_url = os.environ["SQS_QUEUE_URL"]
 
 def make_controller(
     pds_env: str = os.getenv("PDS_ENV", "int"),
@@ -196,7 +199,13 @@ class FhirController:
                 )
                 return self.create_response(400, json.dumps(exp_error))
             location = f"{get_service_url()}/Immunization/{resource.id}"
-            return self.create_response(201, None, {"Location": location})
+            final_resp = self.create_response(201, None, {"Location": location})
+            if is_imms_batch_app:
+                final_resp = self.create_response(201, None, {"Location": location, "Filename":aws_event["headers"]["Filename"], "MessageId": aws_event["headers"]["MessageId"]  })
+                response = sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp))
+                
+                   
+            return final_resp           
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
         except IdentifierDuplicationError as duplicate:

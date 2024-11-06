@@ -1,6 +1,6 @@
 # Define the directory containing the Docker image and calculate its SHA-256 hash for triggering redeployments
 locals {
-  lambda_dir = abspath("${path.root}/../ackessor")
+  lambda_dir = abspath("${path.root}/../ack_backend")
   lambda_files         = fileset(local.lambda_dir, "**")
   lambda_dir_sha       = sha1(join("", [for f in local.lambda_files : filesha1("${local.lambda_dir}/${f}")]))
 }
@@ -14,7 +14,7 @@ resource "aws_ecr_repository" "ack_lambda_repository" {
 }
 
 # Module for building and pushing Docker image to ECR
-module "file_processor_docker_image" {
+module "ack_processor_docker_image" {
   source = "terraform-aws-modules/lambda/aws//modules/docker-build"
 
   create_ecr_repo = false
@@ -116,26 +116,16 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
           "arn:aws:s3:::immunisation-batch-pr-96-data-destinations",           
           "arn:aws:s3:::immunisation-batch-pr-96-data-destinations/*"        
         ]
-      }
+      },
+      { 
+        Effect = "Allow", 
+        Action = [ 
+                  "sqs:ReceiveMessage", 
+                  "sqs:DeleteMessage", 
+                  "sqs:GetQueueAttributes" 
+                  ], 
+        Resource = "arn:aws:sqs:eu-west-2:345594581768:immunisation-ack-metadata-queue.fifo" }
     ]
-  })
-}
-
-# Policy for Lambda to interact with SQS
-resource "aws_iam_policy" "ack_lambda_sqs_policy" {
-  name = "imms-ack-lambda-sqs-policy"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Action = [
-        "sqs:SendMessage"
-      ],
-      Resource = [
-        aws_sqs_queue.fifo_queue.arn
-      ]
-    }]
   })
 }
 
@@ -165,30 +155,32 @@ resource "aws_iam_role_policy_attachment" "lambda_exec_policy_attachment" {
   policy_arn = aws_iam_policy.ack_lambda_exec_policy.arn
 }
 
-# Attach the SQS policy to the Lambda role
-resource "aws_iam_role_policy_attachment" "lambda_sqs_policy_attachment" {
-  role       = aws_iam_role.ack_lambda_exec_role.name
-  policy_arn = aws_iam_policy.ack_lambda_sqs_policy.arn
-}
-
 # Attach the kms policy to the Lambda role
 resource "aws_iam_role_policy_attachment" "lambda_kms_policy_attachment" {
   role       = aws_iam_role.ack_lambda_exec_role.name
   policy_arn = aws_iam_policy.ack_s3_kms_access_policy.arn
 }
 # Lambda Function with Security Group and VPC.
-resource "aws_lambda_function" "file_processor_lambda" {
+resource "aws_lambda_function" "ack_processor_lambda" {
   function_name   = "imms-ack-lambda"
   role            = aws_iam_role.ack_lambda_exec_role.arn
   package_type    = "Image"
-  image_uri       = module.file_processor_docker_image.image_uri
+  image_uri       = module.ack_processor_docker_image.image_uri
   architectures   = ["x86_64"]
   timeout         = 60
 
-  vpc_config {
-    subnet_ids         = data.aws_subnets.default.ids
-    security_group_ids = [data.aws_security_group.existing_sg.id]
+  environment { 
+    variables = { 
+      SQS_QUEUE_URL = aws_sqs_queue.fifo_queue.id 
+      } 
   }
 
   reserved_concurrent_executions = 20
+}
+
+resource "aws_lambda_event_source_mapping" "sqs_to_lambda"{ 
+  event_source_arn = "arn:aws:sqs:eu-west-2:345594581768:immunisation-ack-metadata-queue.fifo" 
+  function_name = aws_lambda_function.ack_processor_lambda.arn 
+  batch_size = 10
+  enabled = true 
 }
