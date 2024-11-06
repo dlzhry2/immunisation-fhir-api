@@ -360,7 +360,8 @@ class PreValidators:
         Pre-validate that, if contained[?(@.resourceType=='Patient')].address[0].postalCode (legacy CSV field name:
         PERSON_POSTCODE) exists, then it is a non-empty string
         """
-        field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"               
+        field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
+        contained_patient_postalCode = ""               
         try:
             patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]
             try:
