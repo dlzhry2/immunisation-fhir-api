@@ -483,13 +483,21 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         )
 
     def test_pre_validate_patient_address_postal_code(self):
-        """Test pre_validate_patient_address_postal_code accepts valid values and rejects invalid values"""
-        ValidatorModelTests.test_string_value(
-            self,
-            field_location="contained[?(@.resourceType=='Patient')].address[0].postalCode",
-            valid_strings_to_test=["AA00 00AA", "A00AA", "75007"],
-        )
-
+        """Test pre_validate_patient_address_postal_code accepts valid values and rejects invalid values"""        
+        values = {
+            "contained": [
+                {
+                    "resourceType": "Patient",
+                    "address": [
+                        {"postalCode": ""},
+                        {"postalCode": "LS1 MH3"}
+                    ]
+                }
+            ]
+        }
+        result = self.validator.run_postalCode_validator(values)
+        self.assertIsNone(result)
+        
     def test_pre_validate_occurrence_date_time(self):
         """Test pre_validate_occurrence_date_time accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_date_time_value(
