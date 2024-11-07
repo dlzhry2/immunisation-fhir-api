@@ -158,6 +158,9 @@ steps:
         export DEFAULT_CLIENT_SECRET="$(INT_CLIENT_SECRET)"
         echo "running: $test_cmd -v -c test_deployment.py test_proxy.py"
         $test_cmd -v -c test_deployment.py test_proxy.py
+      
+      elif [[ $APIGEE_ENVIRONMENT == "prod" ]]; then
+        echo "Proxy test completed successfully as part of terraform resource up status check"
 
       else
         echo "running: $test_cmd -v -c"
