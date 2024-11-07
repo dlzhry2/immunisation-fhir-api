@@ -26,9 +26,9 @@ def send_message(record):
     try:
         # Send the record to the queue
         sqs_client.send_message(QueueUrl=failure_queue_url, MessageBody=json.dumps(message_body))
-        print("Record saved successfully to the DLQ")
+        logger.info("Record saved successfully to the DLQ")
     except ClientError as e:
-        print(f"Error sending record to DLQ: {e}")
+        logger.info(f"Error sending record to DLQ: {e}")
 
 
 def get_vaccine_type(patientsk) -> str:
@@ -62,7 +62,6 @@ def handler(event, context):
             operation = str()
             if record["eventName"] != "REMOVE":
                 new_image = record["dynamodb"]["NewImage"]
-                print(f"new_image:{new_image}")
                 imms_id = new_image["PK"]["S"].split("#")[1]
                 vaccine_type = get_vaccine_type(new_image["PatientSK"]["S"])
                 supplier_system = new_image["SupplierSystem"]["S"]
@@ -92,11 +91,11 @@ def handler(event, context):
                     firehose_log["event"] = log_data
                     firehose_logger.send_log(firehose_log)
                     logger.info(f"Record from DPS skipped for {imms_id}")
-                    continue
+                    return {"statusCode": 200, "body": f"Record from DPS skipped for {imms_id}"}
             else:
                 operation = "REMOVE"
                 new_image = record["dynamodb"]["Keys"]
-                print(f"Record to delta:{new_image}")
+                logger.info(f"Record to delta:{new_image}")
                 imms_id = new_image["PK"]["S"].split("#")[1]
                 response = delta_table.put_item(
                     Item={
@@ -121,6 +120,8 @@ def handler(event, context):
                 log_data["operation_outcome"] = operation_outcome
                 firehose_log["event"] = log_data
                 firehose_logger.send_log(firehose_log)
+                logger.info(log)
+                return {"statusCode": 200, "body": "Records processed successfully"}
             else:
                 log = f"Record NOT created for {imms_id}"
                 operation_outcome["statusCode"] = "500"
@@ -128,9 +129,9 @@ def handler(event, context):
                 log_data["operation_outcome"] = operation_outcome
                 firehose_log["event"] = log_data
                 firehose_logger.send_log(firehose_log)
-            logger.info(log)
-        return {"statusCode": 200, "body": "Records processed successfully"}
-
+                logger.info(log)
+                return {"statusCode": 500, "body": "Records not processed successfully"}
+        
     except Exception as e:
         operation_outcome["statusCode"] = "500"
         operation_outcome["statusDesc"] = "Exception"
