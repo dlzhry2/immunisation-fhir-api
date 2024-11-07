@@ -1,13 +1,11 @@
 """Functions for adding a row of data to the ack file"""
 
 import logging
-import os
 from io import StringIO, BytesIO
 from typing import Union
 from botocore.exceptions import ClientError
 from boto3 import client as boto3_client
 from constants import Constants
-from utils_for_record_forwarder import get_environment
 
 s3_client = boto3_client("s3", region_name="eu-west-2")
 
@@ -40,7 +38,7 @@ def create_ack_data(
         "RESPONSE_DISPLAY": (
             "Success" if successful_api_response else "Business Level Response Value - Processing Error"
         ),
-        "RECEIVED_TIME": "created_at_formatted_string",
+        "RECEIVED_TIME": created_at_formatted_string,
         "MAILBOX_FROM": "",  # TODO: Leave blank for DPS, use mailbox name if picked up from MESH mail box
         "LOCAL_ID": "",  # TODO: Leave blank for DPS, obtain from ctl file if picked up from MESH mail box
         "IMMS_ID": imms_id or "",
@@ -85,7 +83,7 @@ def update_ack_file(
     """Updates the ack file with the new data row based on the given arguments"""
     ack_bucket_name = "immunisation-batch-pr-96-data-destinations"
     ack_file_key = f"forwardedFile/{file_key.replace('.csv', '_BusAck.csv')}"
-    
+
     ack_data_row = create_ack_data("random_time", row_id, successful_api_response, diagnostics, imms_id)
     accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_key)
     upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_row)
