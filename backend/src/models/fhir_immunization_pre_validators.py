@@ -361,19 +361,19 @@ class PreValidators:
         PERSON_POSTCODE) exists, then it is a non-empty string
         """
         field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
-        contained_patient_postalCode = ""               
         try:
-            patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]
-            try:
-                contained_patient_postalCode = [
-                    x for x in patient.get("address") if len(x.get("postalCode", "")) >= 1
-                ][0]["postalCode"]
-                
-                PreValidation.for_string(contained_patient_postalCode, field_location)
-            except:
-                pass
-        except (KeyError, IndexError):
-            pass
+            patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]                         
+            postal_codes = []
+            for address in patient["address"]:
+                if "postalCode" in address:
+                    postal_codes.append(address["postalCode"])
+            if len(postal_codes) == 1:
+                PreValidation.for_string(postal_codes[0], field_location)
+            elif len(postal_codes) > 1:
+                non_empty_value = next((code for code in postal_codes if code), "")
+                PreValidation.for_string(non_empty_value, field_location)                
+        except (KeyError, IndexError):            
+            pass       
 
     def pre_validate_occurrence_date_time(self, values: dict) -> dict:
         """

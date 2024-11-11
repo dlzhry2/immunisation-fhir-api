@@ -24,7 +24,7 @@ class FieldLocations:
     patient_name_given = "contained[?(@.resourceType=='Patient')].name[0].given"
     patient_name_family = "contained[?(@.resourceType=='Patient')].name[0].family"
     patient_birth_date = "contained[?(@.resourceType=='Patient')].birthDate"
-    patient_gender = "contained[?(@.resourceType=='Patient')].gender"
+    patient_gender = "contained[?(@.resourceType=='Patient')].gender"    
     patient_address_postal_code = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
     occurrence_date_time = "occurrenceDateTime"
     organization_identifier_value = "performer[?(@.actor.type=='Organization')].actor.identifier.value"

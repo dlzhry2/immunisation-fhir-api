@@ -489,6 +489,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
                 {
                     "resourceType": "Patient",
                     "address": [
+                        {"city": ""},
                         {"postalCode": ""},
                         {"postalCode": "LS1 MH3"}
                     ]
