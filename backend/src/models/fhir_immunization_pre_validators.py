@@ -5,11 +5,17 @@ from models.utils.generic_utils import (
     get_generic_extension_value,
     generate_field_location_for_extension,
     check_for_unknown_elements,
+    patient_name_given_field_location,
+    patient_name_family_field_location,
+    practitioner_name_given_field_location,
+    practitioner_name_family_field_location,
+    patient_and_practitioner_value_and_location,
 )
 from models.utils.pre_validator_utils import PreValidation
 from models.errors import MandatoryError
 from constants import Urls
 import re
+from models.obtain_field_value import ObtainFieldValue
 
 
 class PreValidators:
@@ -292,7 +298,7 @@ class PreValidators:
         field_location = "contained[?(@.resourceType=='Patient')].name"
         try:
             field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["name"]
-            PreValidation.for_list(field_value, field_location, defined_length=1)
+            PreValidation.for_list(field_value, field_location, elements_are_dicts=True)
         except (KeyError, IndexError):
             pass
 
@@ -301,10 +307,13 @@ class PreValidators:
         Pre-validate that, if contained[?(@.resourceType=='Patient')].name[0].given (legacy CSV field name:
         PERSON_FORENAME) exists, then it is a an array containing a single non-empty string
         """
-        field_location = "contained[?(@.resourceType=='Patient')].name[0].given"
+        field_location = patient_name_given_field_location(values)
+
         try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["name"][0]["given"]
-            PreValidation.for_list(field_value, field_location, defined_length=1, elements_are_strings=True)
+            given_name, _ = patient_and_practitioner_value_and_location(values, "given", "Patient")
+            field_value = given_name
+
+            PreValidation.for_list(field_value, field_location, elements_are_strings=True)
         except (KeyError, IndexError):
             pass
 
@@ -313,9 +322,10 @@ class PreValidators:
         Pre-validate that, if contained[?(@.resourceType=='Patient')].name[0].family (legacy CSV field name:
         PERSON_SURNAME) exists, then it is a an array containing a single non-empty string
         """
-        field_location = "contained[?(@.resourceType=='Patient')].name[0].family"
+        field_location = patient_name_family_field_location(values)
         try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["name"][0]["family"]
+            family_name, _ = patient_and_practitioner_value_and_location(values, "family", "Patient")
+            field_value = family_name
             PreValidation.for_string(field_value, field_location)
         except (KeyError, IndexError):
             pass
@@ -471,7 +481,7 @@ class PreValidators:
         field_location = "contained[?(@.resourceType=='Practitioner')].name"
         try:
             field_values = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["name"]
-            PreValidation.for_list(field_values, field_location, defined_length=1)
+            PreValidation.for_list(field_values, field_location, elements_are_dicts=True)
         except (KeyError, IndexError):
             pass
 
@@ -480,12 +490,11 @@ class PreValidators:
         Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[0].given (legacy CSV field name:
         PERSON_FORENAME) exists, then it is a an array containing a single non-empty string
         """
-        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].given"
+        field_location = practitioner_name_given_field_location(values)
         try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["name"][0][
-                "given"
-            ]
-            PreValidation.for_list(field_value, field_location, defined_length=1, elements_are_strings=True)
+            given_name, _ = patient_and_practitioner_value_and_location(values, "given", "Practitioner")
+            field_value = given_name
+            PreValidation.for_list(field_value, field_location, elements_are_strings=True)
         except (KeyError, IndexError):
             pass
 
@@ -494,11 +503,10 @@ class PreValidators:
         Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[0].family (legacy CSV field name:
         PERSON_SURNAME) exists, then it is a an array containing a single non-empty string
         """
-        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].family"
+        field_location = practitioner_name_family_field_location(values)
         try:
-            field_name = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["name"][0][
-                "family"
-            ]
+            family_name, _ = patient_and_practitioner_value_and_location(values, "family", "Practitioner")
+            field_name = family_name
             PreValidation.for_string(field_name, field_location)
         except (KeyError, IndexError):
             pass

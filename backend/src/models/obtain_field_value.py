@@ -1,10 +1,16 @@
 """Functions for obtaining a field value from the FHIR immunization resource json data"""
 
+from datetime import datetime
 from models.utils.generic_utils import (
     get_contained_patient,
     get_contained_practitioner,
     is_organization,
     get_generic_extension_value,
+    generate_field_location_for_name,
+    get_occurrence_datetime,
+    obtain_current_name_period,
+    get_current_name_instance,
+    patient_and_practitioner_value_and_location,
 )
 from constants import Urls
 
@@ -35,13 +41,17 @@ class ObtainFieldValue:
 
     @staticmethod
     def patient_name_given(imms: dict):
-        """Obtains patient_name_given value"""
-        return get_contained_patient(imms)["name"][0]["given"]
+        """Obtains patient_name field location based on logic"""
+        given_name, _ = patient_and_practitioner_value_and_location(imms, "given", "Patient")
+        print({given_name})
+        return given_name
 
     @staticmethod
     def patient_name_family(imms: dict):
         """Obtains patient_name_family value"""
-        return get_contained_patient(imms)["name"][0]["family"]
+        family_name, _ = patient_and_practitioner_value_and_location(imms, "family", "Patient")
+        # print(family_name)
+        return family_name
 
     @staticmethod
     def patient_birth_date(imms: dict):
@@ -81,12 +91,15 @@ class ObtainFieldValue:
     @staticmethod
     def practitioner_name_given(imms: dict):
         """Obtains practitioner_name_given value"""
-        return get_contained_practitioner(imms)["name"][0]["given"]
+        given_name, _ = patient_and_practitioner_value_and_location(imms, "given", "Practitioner")
+        # print(f"GIVEN_NAME: {given_name}")
+        return given_name
 
     @staticmethod
     def practitioner_name_family(imms: dict):
         """Obtains practitioner_name_family value"""
-        return get_contained_practitioner(imms)["name"][0]["family"]
+        family_name, _ = patient_and_practitioner_value_and_location(imms, "family", "Practitioner")
+        return family_name
 
     @staticmethod
     def practitioner_identifier_value(imms: dict):

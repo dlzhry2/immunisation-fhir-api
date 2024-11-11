@@ -188,3 +188,138 @@ def check_keys_in_sources(event, not_required_keys):
         list_keys = list(keys)
         body_check = [k for k in list_keys if k in not_required_keys]
         return body_check
+
+
+def generate_field_location_for_name(index: str, name_value: str, resourceType: str) -> str:
+    """Generate the field location string for name items"""
+    return f"contained[?(@.resourceType=='{resourceType}')].name[{index}].{name_value}"
+
+
+def obtain_current_name_period(period: dict, occurrence_date: datetime) -> bool:
+    """Determines if the period is considered current at the date of vaccination (occurrence_date).
+    If no period then current. If vaccination date is before period starts, it is not current. If vaccination date
+    is after period ends, it is not current"""
+    if not period:
+        return True
+
+    start_date = period.get("start")
+    end_date = period.get("end")
+
+    start_date = start_date if start_date else None
+    end_date = end_date if end_date else None
+
+    # Check if occurrence_date is within the period range -if vaccination date before period start
+    if start_date and occurrence_date and occurrence_date < start_date:
+        return False
+    # Check if occurrence_date is within the period range -if vaccination date after period end
+    if end_date and occurrence_date and occurrence_date > end_date:
+        return False
+
+    return True
+
+
+def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
+    """Selects the correct name instance based on the 'period' and 'use' criteria."""
+
+    # Check if the names list is empty
+    if not isinstance(names, list) or not names:
+        return None, -1
+
+    # If there's only one name, return it with index 0
+    if len(names) == 1:
+        return names[0], 0
+
+    # Filtering names that are current at the vaccination date
+    current_names = []
+    for index, name in enumerate(names):
+        try:
+            # Check for 'period' and occurrence date
+            if isinstance(name, dict):
+                if "period" not in name or obtain_current_name_period(name.get("period", {}), occurrence_date):
+                    current_names.append((name, index))
+        except (KeyError, ValueError):
+            continue
+
+    # Select the first current name with 'use'="official"
+    official_names = [(name, index) for name, index in current_names if name.get("use") == "official"]
+    if official_names:
+        return official_names[0]
+
+    # Select the first current name with 'use' not equal to "old"
+    non_old_names = [(name, index) for name, index in current_names if name.get("use") != "old"]
+    if non_old_names:
+        return non_old_names[0]
+
+    # Otherwise, return the first available name instance
+    if current_names:
+        return current_names[0]
+
+    # If no names match criteria, default to the first name in the list
+    return names[0], 0
+
+
+def patient_and_practitioner_value_and_location(imms: dict, name_value: str, resourceType: str):
+    """Obtains patient_name_given value"""
+    resource = get_contained_patient(imms)
+    default_location = f"contained[?(@.resourceType=='{resourceType}')].name[0].{name_value}"
+    default_name_field = resource["name"][0][name_value]
+    # print(f"DEFAULT NAME FIELD: {default_name_field}")
+    if not resource or "name" not in resource or not resource["name"]:
+        return (
+            default_name_field,
+            default_location,
+        )
+
+    # Get occurrenceDateTime as datetime
+    occurrence_date = None
+    try:
+        occurrence_date = resource.get("occurrenceDateTime", None)
+    except KeyError:
+        occurrence_date = None
+    # 2021-02-07T13:28:17+00:00 - EXAMPLE DATE TIME
+    # Select the appropriate name instance
+    selected_name, index = get_current_name_instance(resource.get("name", ""), occurrence_date)
+    # print(f"selectedname: {selected_name} index: {index}")
+
+    # Access the given name and its location in JSON
+    name_field = (
+        selected_name.get(name_value, "")
+        if selected_name and name_value in selected_name and selected_name[name_value]
+        else default_name_field
+    )
+    # print(f"NAMEFIELD3: {name_field}")
+    # Construct JSON location based on
+
+    field_location = (
+        generate_field_location_for_name(index, name_value, resourceType) if name_field else default_location
+    )
+    # print(f"fieldlocation: {field_location}") # debugging statement
+    # print(f"INDEX: {index}") # debugging statement
+    # print(f"NAME FIELDDDDD: {name_field}, FIELDD Location: {field_location}")
+    return name_field, field_location
+
+
+def patient_name_given_field_location(imms: dict):
+    """Obtains patient_name field location based on logic"""
+    _, field_location = patient_and_practitioner_value_and_location(imms, "given", "Patient")
+    # print(field_location)
+    return field_location
+
+
+def patient_name_family_field_location(imms: dict):
+    """Obtains patient_name_family field location based on logic"""
+    _, field_location = patient_and_practitioner_value_and_location(imms, "family", "Patient")
+    # print(field_location)
+    return field_location
+
+
+def practitioner_name_given_field_location(imms: dict):
+    """Obtains practitioner_name_given value"""
+    _, field_location = patient_and_practitioner_value_and_location(imms, "given", "Practitioner")
+    return field_location
+
+
+def practitioner_name_family_field_location(imms: dict):
+    """Obtains practitioner_name_family value"""
+    _, field_location = patient_and_practitioner_value_and_location(imms, "family", "Practitioner")
+    return field_location

@@ -136,6 +136,15 @@ class ValidValues:
         "valueCodeableConcept": {"coding": [nhs_number_coding_item]},
     }
 
+    patient_name_given_family = {
+        "name": [
+            {"family": "Taylor", "given": ["Sarah"], "period": {"start": "2024-02-07T13:28:17+00:00"}},
+            {"use": "official", "family": "Tay", "given": ["Sarah"], "period": {"end": "2024-02-07T13:28:17+00:00"}},
+            {"use": "official", "family": "Taylor", "given": ["Sarah"]},
+            {"family": "Taylor", "given": ["Sarah"]},
+        ]
+    }
+
 
 @dataclass
 class InvalidValues:
@@ -244,4 +253,13 @@ class InvalidValues:
     vaccination_situation_with_two_snomed_codes = {
         "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
         "valueCodeableConcept": {"coding": dummy_coding_with_two_snomed_codes},
+    }
+
+    patient_name_with_no_given_family = {
+        "name": [
+            {"family": "Taylor", "period": {"start": "2024-02-07T13:28:17+00:00"}},
+            {"given": ["Sarah"]},
+            {"use": "official", "family": "Taylor", "given": ["Sarah"]},
+            {"family": "Taylor", "given": ""},
+        ]
     }

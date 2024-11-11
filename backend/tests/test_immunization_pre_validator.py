@@ -12,9 +12,11 @@ from .utils.generic_utils import (
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
     load_json_data,
+    patient_name_given_field_location,
 )
 from .utils.pre_validation_test_utils import ValidatorModelTests
 from .utils.values_for_tests import ValidValues, InvalidValues
+from models.obtain_field_value import ObtainFieldValue
 
 
 class TestImmunizationModelPreValidationRules(unittest.TestCase):
@@ -435,18 +437,25 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         ValidatorModelTests.test_list_value(
             self,
             field_location="contained[?(@.resourceType=='Patient')].name",
-            valid_lists_to_test=[[{"family": "Test"}]],
-            predefined_list_length=1,
-            valid_list_element={"family": "Test"},
+            valid_lists_to_test=[
+                [
+                    {"family": "Test1", "given": ["TestA"]},
+                    {"use": "official", "family": "Test2", "given": ["TestB"]},
+                    {"family": "ATest3", "given": ["TestA"], "period": {"start": "2021-02-07T13:28:17+00:00"}},
+                ]
+            ],
+            valid_list_element=[{"family": "Test", "given": ["TestA"]}],
         )
 
     def test_pre_validate_patient_name_given(self):
         """Test pre_validate_patient_name_given accepts valid values and rejects invalid values"""
+        valid_json_data = deepcopy(self.json_data)
+        # invalid_json
+
         ValidatorModelTests.test_list_value(
             self,
-            field_location="contained[?(@.resourceType=='Patient')].name[0].given",
+            field_location=patient_name_given_field_location(valid_json_data),
             valid_lists_to_test=[["Test"], ["Test test"]],
-            predefined_list_length=1,
             valid_list_element="Test",
             is_list_of_strings=True,
         )
@@ -455,7 +464,7 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
         """Test pre_validate_patient_name_family accepts valid values and rejects invalid values"""
         ValidatorModelTests.test_string_value(
             self,
-            field_location="contained[?(@.resourceType=='Patient')].name[0].family",
+            field_location=ObtainFieldValue.patient_name_family(self),
             valid_strings_to_test=["test"],
         )
 
@@ -598,7 +607,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="contained[?(@.resourceType=='Practitioner')].name",
             valid_lists_to_test=[[{"family": "Test"}]],
-            predefined_list_length=1,
             valid_list_element={"family": "Test"},
         )
 
@@ -608,7 +616,6 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
             self,
             field_location="contained[?(@.resourceType=='Practitioner')].name[0].given",
             valid_lists_to_test=[["Test"], ["Test test"]],
-            predefined_list_length=1,
             valid_list_element="Test",
             is_list_of_strings=True,
         )
