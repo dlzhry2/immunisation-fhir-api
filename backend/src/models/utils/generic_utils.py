@@ -223,7 +223,7 @@ def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
 
     # Check if the names list is empty
     if not isinstance(names, list) or not names:
-        return None, -1
+        return {}, -1
 
     # If there's only one name, return it with index 0
     if len(names) == 1:
@@ -260,33 +260,21 @@ def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
 
 def patient_and_practitioner_value_and_location(imms: dict, name_value: str, resourceType: str):
     """Obtains patient_name_given value"""
-    resource = get_contained_patient(imms)
+    resource = get_contained_resource(imms, resourceType)
     default_location = f"contained[?(@.resourceType=='{resourceType}')].name[0].{name_value}"
     default_name_field = resource["name"][0][name_value]
     # print(f"DEFAULT NAME FIELD: {default_name_field}")
-    if not resource or "name" not in resource or not resource["name"]:
-        return (
-            default_name_field,
-            default_location,
-        )
 
     # Get occurrenceDateTime as datetime
-    occurrence_date = None
-    try:
-        occurrence_date = resource.get("occurrenceDateTime", None)
-    except KeyError:
-        occurrence_date = None
+    occurrence_date = resource.get("occurrenceDateTime")
+
     # 2021-02-07T13:28:17+00:00 - EXAMPLE DATE TIME
     # Select the appropriate name instance
-    selected_name, index = get_current_name_instance(resource.get("name", ""), occurrence_date)
+    selected_name, index = get_current_name_instance(resource.get("name"), occurrence_date)
     # print(f"selectedname: {selected_name} index: {index}")
 
     # Access the given name and its location in JSON
-    name_field = (
-        selected_name.get(name_value, "")
-        if selected_name and name_value in selected_name and selected_name[name_value]
-        else default_name_field
-    )
+    name_field = selected_name.get(name_value) if selected_name and name_value in selected_name else default_name_field
     # print(f"NAMEFIELD3: {name_field}")
     # Construct JSON location based on
 
@@ -301,25 +289,35 @@ def patient_and_practitioner_value_and_location(imms: dict, name_value: str, res
 
 def patient_name_given_field_location(imms: dict):
     """Obtains patient_name field location based on logic"""
-    _, field_location = patient_and_practitioner_value_and_location(imms, "given", "Patient")
-    # print(field_location)
+    try:
+        _, field_location = patient_and_practitioner_value_and_location(imms, "given", "Patient")
+    except (KeyError, IndexError, AttributeError):
+        field_location = "contained[?(@.resourceType=='Patient')].name[0].given"
     return field_location
 
 
 def patient_name_family_field_location(imms: dict):
     """Obtains patient_name_family field location based on logic"""
-    _, field_location = patient_and_practitioner_value_and_location(imms, "family", "Patient")
-    # print(field_location)
+    try:
+        _, field_location = patient_and_practitioner_value_and_location(imms, "family", "Patient")
+    except (KeyError, IndexError, AttributeError):
+        field_location = "contained[?(@.resourceType=='Patient')].name[0].family"
     return field_location
 
 
 def practitioner_name_given_field_location(imms: dict):
     """Obtains practitioner_name_given value"""
-    _, field_location = patient_and_practitioner_value_and_location(imms, "given", "Practitioner")
+    try:
+        _, field_location = patient_and_practitioner_value_and_location(imms, "given", "Practitioner")
+    except (KeyError, IndexError, AttributeError):
+        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].given"
     return field_location
 
 
 def practitioner_name_family_field_location(imms: dict):
     """Obtains practitioner_name_family value"""
-    _, field_location = patient_and_practitioner_value_and_location(imms, "family", "Practitioner")
+    try:
+        _, field_location = patient_and_practitioner_value_and_location(imms, "family", "Practitioner")
+    except (KeyError, IndexError, AttributeError):
+        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].given"
     return field_location

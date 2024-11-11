@@ -43,14 +43,12 @@ class ObtainFieldValue:
     def patient_name_given(imms: dict):
         """Obtains patient_name field location based on logic"""
         given_name, _ = patient_and_practitioner_value_and_location(imms, "given", "Patient")
-        print({given_name})
         return given_name
 
     @staticmethod
     def patient_name_family(imms: dict):
         """Obtains patient_name_family value"""
         family_name, _ = patient_and_practitioner_value_and_location(imms, "family", "Patient")
-        # print(family_name)
         return family_name
 
     @staticmethod
@@ -92,7 +90,6 @@ class ObtainFieldValue:
     def practitioner_name_given(imms: dict):
         """Obtains practitioner_name_given value"""
         given_name, _ = patient_and_practitioner_value_and_location(imms, "given", "Practitioner")
-        # print(f"GIVEN_NAME: {given_name}")
         return given_name
 
     @staticmethod
