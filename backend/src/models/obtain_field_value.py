@@ -10,7 +10,7 @@ from models.utils.generic_utils import (
     get_occurrence_datetime,
     obtain_current_name_period,
     get_current_name_instance,
-    patient_and_practitioner_value_and_location,
+    patient_and_practitioner_value_and_index,
 )
 from constants import Urls
 
@@ -42,13 +42,16 @@ class ObtainFieldValue:
     @staticmethod
     def patient_name_given(imms: dict):
         """Obtains patient_name field location based on logic"""
-        given_name, _ = patient_and_practitioner_value_and_location(imms, "given", "Patient")
+        try:
+            given_name, _ = patient_and_practitioner_value_and_index(imms, "given", "Patient")
+        except (KeyError, IndexError, AttributeError):
+            given_name = None
         return given_name
 
     @staticmethod
     def patient_name_family(imms: dict):
         """Obtains patient_name_family value"""
-        family_name, _ = patient_and_practitioner_value_and_location(imms, "family", "Patient")
+        family_name, _ = patient_and_practitioner_value_and_index(imms, "family", "Patient")
         return family_name
 
     @staticmethod
@@ -89,13 +92,13 @@ class ObtainFieldValue:
     @staticmethod
     def practitioner_name_given(imms: dict):
         """Obtains practitioner_name_given value"""
-        given_name, _ = patient_and_practitioner_value_and_location(imms, "given", "Practitioner")
+        given_name, _ = patient_and_practitioner_value_and_index(imms, "given", "Practitioner")
         return given_name
 
     @staticmethod
     def practitioner_name_family(imms: dict):
         """Obtains practitioner_name_family value"""
-        family_name, _ = patient_and_practitioner_value_and_location(imms, "family", "Practitioner")
+        family_name, _ = patient_and_practitioner_value_and_index(imms, "family", "Practitioner")
         return family_name
 
     @staticmethod

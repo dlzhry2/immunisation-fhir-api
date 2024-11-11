@@ -190,9 +190,9 @@ def check_keys_in_sources(event, not_required_keys):
         return body_check
 
 
-def generate_field_location_for_name(index: str, name_value: str, resourceType: str) -> str:
+def generate_field_location_for_name(index: str, name_value: str, resource_type: str) -> str:
     """Generate the field location string for name items"""
-    return f"contained[?(@.resourceType=='{resourceType}')].name[{index}].{name_value}"
+    return f"contained[?(@.resourceType=='{resource_type}')].name[{index}].{name_value}"
 
 
 def obtain_current_name_period(period: dict, occurrence_date: datetime) -> bool:
@@ -221,9 +221,9 @@ def obtain_current_name_period(period: dict, occurrence_date: datetime) -> bool:
 def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
     """Selects the correct name instance based on the 'period' and 'use' criteria."""
 
-    # Check if the names list is empty
-    if not isinstance(names, list) or not names:
-        return {}, -1
+    # DUE TO RUNNING PRE_VALIDATE_PATIENT_NAME AND PRE_VALIDATE_PRACTITIONER NAME BEFORE THE RESPECTIVE CHECKS
+    # FOR GIVEN AND FAMILY NAMES, AND BECAUSE WE CHECK THAT NAME FIELD EXISTS BEFORE CALLING THIS FUNCTION,
+    # WE CAN THEREFORE ASSUME THAT names IS A NON-EMPTY LIST OF NON-EMPTY DICITONARIES
 
     # If there's only one name, return it with index 0
     if len(names) == 1:
@@ -258,48 +258,43 @@ def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
     return names[0], 0
 
 
-def patient_and_practitioner_value_and_location(imms: dict, name_value: str, resourceType: str):
+def patient_and_practitioner_value_and_index(imms: dict, name_value: str, resource_type: str):
     """Obtains patient_name_given value"""
-    resource = get_contained_resource(imms, resourceType)
-    default_location = f"contained[?(@.resourceType=='{resourceType}')].name[0].{name_value}"
-    default_name_field = resource["name"][0][name_value]
-    # print(f"DEFAULT NAME FIELD: {default_name_field}")
+    resource = get_contained_resource(imms, resource_type)
+    name = resource["name"]
 
     # Get occurrenceDateTime as datetime
     occurrence_date = resource.get("occurrenceDateTime")
 
     # 2021-02-07T13:28:17+00:00 - EXAMPLE DATE TIME
     # Select the appropriate name instance
-    selected_name, index = get_current_name_instance(resource.get("name"), occurrence_date)
+    selected_name, index = get_current_name_instance(name, occurrence_date)
     # print(f"selectedname: {selected_name} index: {index}")
 
     # Access the given name and its location in JSON
-    name_field = selected_name.get(name_value) if selected_name and name_value in selected_name else default_name_field
+    name_field = selected_name[name_value]
     # print(f"NAMEFIELD3: {name_field}")
     # Construct JSON location based on
 
-    field_location = (
-        generate_field_location_for_name(index, name_value, resourceType) if name_field else default_location
-    )
-    # print(f"fieldlocation: {field_location}") # debugging statement
     # print(f"INDEX: {index}") # debugging statement
-    # print(f"NAME FIELDDDDD: {name_field}, FIELDD Location: {field_location}")
-    return name_field, field_location
+    return name_field, index
 
 
 def patient_name_given_field_location(imms: dict):
     """Obtains patient_name field location based on logic"""
+    resource_type = "Patient"
+    name_value = "given"
     try:
-        _, field_location = patient_and_practitioner_value_and_location(imms, "given", "Patient")
+        _, index = patient_and_practitioner_value_and_index(imms, name_value, resource_type)
     except (KeyError, IndexError, AttributeError):
-        field_location = "contained[?(@.resourceType=='Patient')].name[0].given"
-    return field_location
+        index = 0
+    return generate_field_location_for_name(index, name_value, resource_type)
 
 
 def patient_name_family_field_location(imms: dict):
     """Obtains patient_name_family field location based on logic"""
     try:
-        _, field_location = patient_and_practitioner_value_and_location(imms, "family", "Patient")
+        _, field_location = patient_and_practitioner_value_and_index(imms, "family", "Patient")
     except (KeyError, IndexError, AttributeError):
         field_location = "contained[?(@.resourceType=='Patient')].name[0].family"
     return field_location
@@ -308,7 +303,7 @@ def patient_name_family_field_location(imms: dict):
 def practitioner_name_given_field_location(imms: dict):
     """Obtains practitioner_name_given value"""
     try:
-        _, field_location = patient_and_practitioner_value_and_location(imms, "given", "Practitioner")
+        _, field_location = patient_and_practitioner_value_and_index(imms, "given", "Practitioner")
     except (KeyError, IndexError, AttributeError):
         field_location = "contained[?(@.resourceType=='Practitioner')].name[0].given"
     return field_location
@@ -317,7 +312,7 @@ def practitioner_name_given_field_location(imms: dict):
 def practitioner_name_family_field_location(imms: dict):
     """Obtains practitioner_name_family value"""
     try:
-        _, field_location = patient_and_practitioner_value_and_location(imms, "family", "Practitioner")
+        _, field_location = patient_and_practitioner_value_and_index(imms, "family", "Practitioner")
     except (KeyError, IndexError, AttributeError):
-        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].given"
+        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].family"
     return field_location

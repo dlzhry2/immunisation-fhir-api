@@ -9,7 +9,7 @@ from models.utils.generic_utils import (
     patient_name_family_field_location,
     practitioner_name_given_field_location,
     practitioner_name_family_field_location,
-    patient_and_practitioner_value_and_location,
+    patient_and_practitioner_value_and_index,
 )
 from models.utils.pre_validator_utils import PreValidation
 from models.errors import MandatoryError
@@ -310,11 +310,9 @@ class PreValidators:
         field_location = patient_name_given_field_location(values)
 
         try:
-            given_name, _ = patient_and_practitioner_value_and_location(values, "given", "Patient")
-            field_value = given_name
-
+            field_value, _ = patient_and_practitioner_value_and_index(values, "given", "Patient")
             PreValidation.for_list(field_value, field_location, elements_are_strings=True)
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, AttributeError):
             pass
 
     def pre_validate_patient_name_family(self, values: dict) -> dict:
@@ -324,7 +322,7 @@ class PreValidators:
         """
         field_location = patient_name_family_field_location(values)
         try:
-            family_name, _ = patient_and_practitioner_value_and_location(values, "family", "Patient")
+            family_name, _ = patient_and_practitioner_value_and_index(values, "family", "Patient")
             field_value = family_name
             PreValidation.for_string(field_value, field_location)
         except (KeyError, IndexError):
@@ -492,7 +490,7 @@ class PreValidators:
         """
         field_location = practitioner_name_given_field_location(values)
         try:
-            given_name, _ = patient_and_practitioner_value_and_location(values, "given", "Practitioner")
+            given_name, _ = patient_and_practitioner_value_and_index(values, "given", "Practitioner")
             field_value = given_name
             PreValidation.for_list(field_value, field_location, elements_are_strings=True)
         except (KeyError, IndexError):
@@ -505,7 +503,7 @@ class PreValidators:
         """
         field_location = practitioner_name_family_field_location(values)
         try:
-            family_name, _ = patient_and_practitioner_value_and_location(values, "family", "Practitioner")
+            family_name, _ = patient_and_practitioner_value_and_index(values, "family", "Practitioner")
             field_name = family_name
             PreValidation.for_string(field_name, field_location)
         except (KeyError, IndexError):
