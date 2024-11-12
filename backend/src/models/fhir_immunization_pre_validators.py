@@ -362,12 +362,18 @@ class PreValidators:
         """
         field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
         try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["address"][0][
-                "postalCode"
-            ]
-            PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError):
-            pass
+            patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]                         
+            postal_codes = []
+            for address in patient["address"]:
+                if "postalCode" in address:
+                    postal_codes.append(address["postalCode"])
+            if len(postal_codes) == 1:
+                PreValidation.for_string(postal_codes[0], field_location)
+            elif len(postal_codes) > 1:
+                non_empty_value = next((code for code in postal_codes if code), "")
+                PreValidation.for_string(non_empty_value, field_location)                
+        except (KeyError, IndexError):            
+            pass       
 
     def pre_validate_occurrence_date_time(self, values: dict) -> dict:
         """
