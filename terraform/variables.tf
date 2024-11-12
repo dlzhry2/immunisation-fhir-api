@@ -44,3 +44,7 @@ locals {
 variable "region" {
     default = "eu-west-2"
 }
+
+data "aws_kms_key" "existing_s3_encryption_key" {
+  key_id = "alias/imms-batch-s3-shared-key"
+}
