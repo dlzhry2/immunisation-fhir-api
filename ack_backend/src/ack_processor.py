@@ -12,7 +12,7 @@ def lambda_handler(event, context):
             # Check if there are any messages to process
             file_key = incoming_message_body.get("Filename")
             row_id = incoming_message_body.get("MessageId")
-            print(f"file_key:{file_key};row_id:{row_id} ")
+            # print(f"file_key:{file_key};row_id:{row_id} ")
             location_url = incoming_message_body['headers']['Location']
             imms_id = location_url.split('/')[-1]
             update_ack_file(
