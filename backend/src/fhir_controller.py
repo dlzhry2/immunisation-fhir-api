@@ -39,7 +39,7 @@ from parameter_parser import process_params, process_search_params, create_query
 import urllib.parse
 
 sqs_client = boto3_client("sqs", region_name="eu-west-2")
-queue_url = os.environ["SQS_QUEUE_URL"]
+queue_url = os.getenv("SQS_QUEUE_URL", "Queue_url")
 
 def make_controller(
     pds_env: str = os.getenv("PDS_ENV", "int"),
