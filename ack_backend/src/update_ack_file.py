@@ -1,5 +1,6 @@
 """Functions for adding a row of data to the ack file"""
 
+import os
 import logging
 from io import StringIO, BytesIO
 from typing import Union
@@ -8,7 +9,7 @@ from boto3 import client as boto3_client
 from constants import Constants
 
 s3_client = boto3_client("s3", region_name="eu-west-2")
-
+ACK_BUCKET_NAME = os.environ["ACK_BUCKET_NAME"]
 
 logger = logging.getLogger()
 
@@ -81,9 +82,8 @@ def update_ack_file(
     file_key: str, row_id: str, successful_api_response: bool, diagnostics: Union[None, str], imms_id: Union[None, str]
 ) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
-    ack_bucket_name = "immunisation-batch-pr-96-data-destinations"
     ack_file_key = f"forwardedFile/{file_key.replace('.csv', '_BusAck.csv')}"
 
     ack_data_row = create_ack_data("random_time", row_id, successful_api_response, diagnostics, imms_id)
-    accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_key)
-    upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_row)
+    accumulated_csv_content = obtain_current_ack_content(ACK_BUCKET_NAME, ack_file_key)
+    upload_ack_file(ACK_BUCKET_NAME, ack_file_key, accumulated_csv_content, ack_data_row)

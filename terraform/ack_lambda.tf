@@ -1,8 +1,8 @@
 # Define the directory containing the Docker image and calculate its SHA-256 hash for triggering redeployments
 locals {
-  lambda_dir = abspath("${path.root}/../ack_backend")
-  lambda_files         = fileset(local.lambda_dir, "**")
-  lambda_dir_sha       = sha1(join("", [for f in local.lambda_files : filesha1("${local.lambda_dir}/${f}")]))
+  ack_lambda_dir = abspath("${path.root}/../ack_backend")
+  ack_lambda_files         = fileset(local.ack_lambda_dir, "**")
+  ack_lambda_dir_sha       = sha1(join("", [for f in local.ack_lambda_files : filesha1("${local.ack_lambda_dir}/${f}")]))
 }
 
 
@@ -10,7 +10,7 @@ resource "aws_ecr_repository" "ack_lambda_repository" {
   image_scanning_configuration {
     scan_on_push = true
   }
-  name = "imms-ack-repo"
+  name = "${local.short_prefix}-ack-repo"
 }
 
 # Module for building and pushing Docker image to ECR
@@ -38,9 +38,9 @@ module "ack_processor_docker_image" {
 
   platform      = "linux/amd64"
   use_image_tag = false
-  source_path   = local.lambda_dir
+  source_path   = local.ack_lambda_dir
   triggers = {
-    dir_sha = local.lambda_dir_sha
+    dir_sha = local.ack_lambda_dir_sha
   }
 }
 
@@ -66,7 +66,7 @@ resource "aws_ecr_repository_policy" "ack_lambda_ECRImageRetreival_policy" {
         ],
         "Condition": {
           "StringLike": {
-            "aws:sourceArn": "arn:aws:lambda:eu-west-2:345594581768:function:imms-ack-lambda"
+            "aws:sourceArn": "arn:aws:lambda:eu-west-2:${local.local_account_id}:function:${local.short_prefix}-ack-lambda"
           }
         }
       }
@@ -76,7 +76,7 @@ resource "aws_ecr_repository_policy" "ack_lambda_ECRImageRetreival_policy" {
 
 # IAM Role for Lambda
 resource "aws_iam_role" "ack_lambda_exec_role" {
-  name = "imms-ack-lambda-exec-role"
+  name = "${local.short_prefix}-ack-lambda-exec-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
@@ -92,7 +92,7 @@ resource "aws_iam_role" "ack_lambda_exec_role" {
 
 # Policy for Lambda execution role
 resource "aws_iam_policy" "ack_lambda_exec_policy" {
-  name   = "imms-ack-lambda-exec-policy"
+  name   = "${local.short_prefix}-ack-lambda-exec-policy"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -103,7 +103,7 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-       Resource = "arn:aws:logs:eu-west-2:345594581768:log-group:/aws/lambda/imms-ack-lambda:*"
+       Resource = "arn:aws:logs:eu-west-2:${local.local_account_id}:log-group:/aws/lambda/${local.short_prefix}-ack-lambda:*"
       },
       {
         Effect   = "Allow"
@@ -113,8 +113,8 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::immunisation-batch-pr-96-data-destinations",           
-          "arn:aws:s3:::immunisation-batch-pr-96-data-destinations/*"        
+          "arn:aws:s3:::immunisation-batch-${local.local_config}-data-destinations",           
+          "arn:aws:s3:::immunisation-batch-${local.local_config}-data-destinations/*"        
         ]
       },
       { 
@@ -124,13 +124,13 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
                   "sqs:DeleteMessage", 
                   "sqs:GetQueueAttributes" 
                   ], 
-        Resource = "arn:aws:sqs:eu-west-2:345594581768:immunisation-ack-metadata-queue.fifo" }
+        Resource = "arn:aws:sqs:eu-west-2:${local.local_account_id}:${local.short_prefix}-ack-metadata-queue.fifo" }
     ]
   })
 }
 
 resource "aws_iam_policy" "ack_s3_kms_access_policy" {
-  name        = "imms-ack-s3-kms-policy"
+  name        = "${local.short_prefix}-ack-s3-kms-policy"
   description = "Allow Lambda to decrypt environment variables"
 
   policy = jsonencode({
@@ -143,7 +143,7 @@ resource "aws_iam_policy" "ack_s3_kms_access_policy" {
           "kms:Decrypt",
           "kms:GenerateDataKey*"
         ]
-        Resource = "arn:aws:kms:eu-west-2:345594581768:key/9bbfbfd9-1745-4325-a9b7-33d1f6be89c1"
+        Resource = data.aws_kms_key.existing_s3_encryption_key.arn
       }
     ]
   })
@@ -162,7 +162,7 @@ resource "aws_iam_role_policy_attachment" "lambda_kms_policy_attachment" {
 }
 # Lambda Function with Security Group and VPC.
 resource "aws_lambda_function" "ack_processor_lambda" {
-  function_name   = "imms-ack-lambda"
+  function_name   = "${local.short_prefix}-ack-lambda"
   role            = aws_iam_role.ack_lambda_exec_role.arn
   package_type    = "Image"
   image_uri       = module.ack_processor_docker_image.image_uri
@@ -171,7 +171,7 @@ resource "aws_lambda_function" "ack_processor_lambda" {
 
   environment { 
     variables = { 
-      SQS_QUEUE_URL = aws_sqs_queue.fifo_queue.id 
+        ACK_BUCKET_NAME    = "immunisation-batch-${local.local_config}-data-destinations"
       } 
   }
 
@@ -179,7 +179,7 @@ resource "aws_lambda_function" "ack_processor_lambda" {
 }
 
 resource "aws_lambda_event_source_mapping" "sqs_to_lambda"{ 
-  event_source_arn = "arn:aws:sqs:eu-west-2:345594581768:immunisation-ack-metadata-queue.fifo" 
+  event_source_arn = aws_sqs_queue.fifo_queue.arn 
   function_name = aws_lambda_function.ack_processor_lambda.arn 
   batch_size = 10
   enabled = true 

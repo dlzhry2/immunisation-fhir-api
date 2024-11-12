@@ -6,7 +6,7 @@
       "Action" : [
         "sqs:SendMessage"
       ],
-      "Resource" : "arn:aws:sqs:eu-west-2:345594581768:immunisation-ack-metadata-queue.fifo"
+      "Resource" : "arn:aws:sqs:eu-west-2:${local_account}:${queue_prefix}-ack-metadata-queue.fifo"
     }
     ]
 }
