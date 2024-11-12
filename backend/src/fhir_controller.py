@@ -191,9 +191,10 @@ class FhirController:
         except json.decoder.JSONDecodeError as e:
             final_resp = self._create_bad_request(f"Request's body contains malformed JSON: {e}")
             if is_imms_batch_app:
-                final_resp["Filename"] = aws_event["headers"]["Filename"]
+                file_name = aws_event["headers"]["Filename"]
+                final_resp["Filename"] = file_name
                 final_resp["MessageId"] = aws_event["headers"]["MessageId"]
-                sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp))
+                sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp), MessageGroupId=file_name)
             return final_resp
 
         try:
@@ -207,16 +208,18 @@ class FhirController:
                 )
                 final_resp = self.create_response(400, json.dumps(exp_error))
                 if is_imms_batch_app:
-                    final_resp["Filename"] = aws_event["headers"]["Filename"]
+                    file_name = aws_event["headers"]["Filename"]
+                    final_resp["Filename"] = file_name
                     final_resp["MessageId"] = aws_event["headers"]["MessageId"]
-                    sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp))
+                    sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp), MessageGroupId=file_name)
             else:
                 location = f"{get_service_url()}/Immunization/{resource.id}"
                 final_resp = self.create_response(201, None, {"Location": location})
                 if is_imms_batch_app:
-                    final_resp["Filename"] = aws_event["headers"]["Filename"]
+                    file_name = aws_event["headers"]["Filename"]
+                    final_resp["Filename"] = file_name
                     final_resp["MessageId"] = aws_event["headers"]["MessageId"]
-                    sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp))
+                    sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp), MessageGroupId=file_name)
                    
             return final_resp
         except ValidationError as error:
@@ -252,9 +255,10 @@ class FhirController:
         if id_error := self._validate_id(imms_id):
             final_resp = FhirController.create_response(400, json.dumps(id_error))
             if is_imms_batch_app:
-                final_resp["Filename"] = aws_event["headers"]["Filename"]
+                file_name = aws_event["headers"]["Filename"]
+                final_resp["Filename"] = file_name
                 final_resp["MessageId"] = aws_event["headers"]["MessageId"]
-                sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp))
+                sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp), MessageGroupId=file_name)
             
             return final_resp
         # Validate the imms id - end
