@@ -834,7 +834,8 @@ class TestCreateImmunization(unittest.TestCase):
         imms_id = str(uuid.uuid4())
         imms = create_covid_19_immunization(imms_id)
         aws_event = {
-            "headers": {"VaccineTypePermissions": "COVID19:create", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem": "test"},
+            "headers": {"VaccineTypePermissions": "COVID19:create", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem": "test", 
+                        "Filename": "test", "MessageId": "123"},
             "body": imms.json(),
         }
         self.service.create_immunization.return_value = imms
