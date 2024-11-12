@@ -74,6 +74,7 @@ class FhirController:
         self.fhir_service = fhir_service
         self.authorizer = authorizer
 
+
     def get_immunization_by_identifier(self, aws_event) -> dict:
         if aws_event.get("headers"):
             is_imms_batch_app = aws_event["headers"]["SupplierSystem"] == "Imms-Batch-App"
@@ -122,6 +123,7 @@ class FhirController:
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
 
+
     def get_immunization_by_id(self, aws_event) -> dict:
         if response := self.authorize_request(EndpointOperation.READ, aws_event):
             return response
@@ -164,6 +166,7 @@ class FhirController:
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
 
+
     def create_immunization(self, aws_event):
         try:
             if aws_event.get("headers"):
@@ -186,7 +189,12 @@ class FhirController:
         try:
             imms = json.loads(aws_event["body"], parse_float=Decimal)
         except json.decoder.JSONDecodeError as e:
-            return self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+            final_resp = self._create_bad_request(f"Request's body contains malformed JSON: {e}")
+            if is_imms_batch_app:
+                final_resp["Filename"] = aws_event["headers"]["Filename"]
+                final_resp["MessageId"] = aws_event["headers"]["MessageId"]
+                sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp))
+            return final_resp
 
         try:
             resource = self.fhir_service.create_immunization(imms, imms_vax_type_perms, supplier_system, is_imms_batch_app)
@@ -197,15 +205,20 @@ class FhirController:
                     code=Code.invariant,
                     diagnostics=resource["diagnostics"],
                 )
-                return self.create_response(400, json.dumps(exp_error))
-            location = f"{get_service_url()}/Immunization/{resource.id}"
-            final_resp = self.create_response(201, None, {"Location": location})
-            if is_imms_batch_app:
-                final_resp = self.create_response(201, None, {"Location": location, "Filename":aws_event["headers"]["Filename"], "MessageId": aws_event["headers"]["MessageId"]  })
-                response = sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp))
-                
+                final_resp = self.create_response(400, json.dumps(exp_error))
+                if is_imms_batch_app:
+                    final_resp["Filename"] = aws_event["headers"]["Filename"]
+                    final_resp["MessageId"] = aws_event["headers"]["MessageId"]
+                    sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp))
+            else:
+                location = f"{get_service_url()}/Immunization/{resource.id}"
+                final_resp = self.create_response(201, None, {"Location": location})
+                if is_imms_batch_app:
+                    final_resp["Filename"] = aws_event["headers"]["Filename"]
+                    final_resp["MessageId"] = aws_event["headers"]["MessageId"]
+                    sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp))
                    
-            return final_resp           
+            return final_resp
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
         except IdentifierDuplicationError as duplicate:
@@ -214,6 +227,7 @@ class FhirController:
             return self.create_response(500, unhandled_error.to_operation_outcome())
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
+
 
     def update_immunization(self, aws_event):
         try:
@@ -236,7 +250,13 @@ class FhirController:
 
         # Validate the imms id - start
         if id_error := self._validate_id(imms_id):
-            return FhirController.create_response(400, json.dumps(id_error))
+            final_resp = FhirController.create_response(400, json.dumps(id_error))
+            if is_imms_batch_app:
+                final_resp["Filename"] = aws_event["headers"]["Filename"]
+                final_resp["MessageId"] = aws_event["headers"]["MessageId"]
+                sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp))
+            
+            return final_resp
         # Validate the imms id - end
 
         # Validate the body of the request - start
@@ -378,6 +398,7 @@ class FhirController:
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
 
+
     def delete_immunization(self, aws_event):
         try:
             if aws_event.get("headers"): 
@@ -410,6 +431,7 @@ class FhirController:
             return self.create_response(500, unhandled_error.to_operation_outcome())
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
+
 
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
         if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
@@ -485,6 +507,7 @@ class FhirController:
             result_json_dict["total"] = 0
         return self.create_response(200, json.dumps(result_json_dict))
 
+
     def _validate_id(self, _id: str) -> Optional[dict]:
         if not re.match(self.immunization_id_pattern, _id):
             msg = "the provided event ID is either missing or not in the expected format."
@@ -496,6 +519,7 @@ class FhirController:
             )
         else:
             return None
+
 
     def _validate_identifier_system(self, _id: str, _element: str) -> Optional[dict]:
 
@@ -539,6 +563,7 @@ class FhirController:
                 diagnostics="_element must be one or more of the following: id,meta",
             )
 
+
     def _create_bad_request(self, message):
         error = create_operation_outcome(
             resource_id=str(uuid.uuid4()),
@@ -547,6 +572,7 @@ class FhirController:
             diagnostics=message,
         )
         return self.create_response(400, error)
+
 
     def authorize_request(self, operation: EndpointOperation, aws_event: dict) -> Optional[dict]:
         try:
@@ -562,6 +588,7 @@ class FhirController:
                 diagnostics="application includes invalid authorization values",
             )
             return self.create_response(500, id_error)
+
 
     def fetch_identifier_system_and_element(self, event: dict):
         query_params = event.get("queryStringParameters", {})
@@ -606,6 +633,7 @@ class FhirController:
                 body_has_immunization_identifier,
                 body_has_immunization_element,
             )
+
 
     def create_response_for_identifier(self, not_required, has_identifier, has_element):
         if "patient.identifier" in not_required and has_identifier:
