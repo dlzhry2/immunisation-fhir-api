@@ -169,9 +169,13 @@ class FhirController:
 
     def create_immunization(self, aws_event):
         try:
+            file_name = ""
+            message_id = ""
             if aws_event.get("headers"):
                 is_imms_batch_app = aws_event["headers"]["SupplierSystem"] == "Imms-Batch-App"
                 if is_imms_batch_app:
+                    file_name = aws_event["headers"]["Filename"]
+                    message_id = aws_event["headers"]["MessageId"]
                     aws_event["body"] = json.dumps(aws_event["body"])
                 if not is_imms_batch_app:
                     if response := self.authorize_request(EndpointOperation.CREATE, aws_event):
@@ -192,9 +196,7 @@ class FhirController:
             final_resp = self._create_bad_request(f"Request's body contains malformed JSON: {e}")
             if is_imms_batch_app:
                 file_name = aws_event["headers"]["Filename"]
-                final_resp["Filename"] = file_name
-                final_resp["MessageId"] = aws_event["headers"]["MessageId"]
-                sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp), MessageGroupId=file_name)
+                
             return final_resp
 
         try:
@@ -207,19 +209,12 @@ class FhirController:
                     diagnostics=resource["diagnostics"],
                 )
                 final_resp = self.create_response(400, json.dumps(exp_error))
-                if is_imms_batch_app:
-                    file_name = aws_event["headers"]["Filename"]
-                    final_resp["Filename"] = file_name
-                    final_resp["MessageId"] = aws_event["headers"]["MessageId"]
-                    sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp), MessageGroupId=file_name)
             else:
                 location = f"{get_service_url()}/Immunization/{resource.id}"
                 final_resp = self.create_response(201, None, {"Location": location})
-                if is_imms_batch_app:
-                    file_name = aws_event["headers"]["Filename"]
-                    final_resp["Filename"] = file_name
-                    final_resp["MessageId"] = aws_event["headers"]["MessageId"]
-                    sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(final_resp), MessageGroupId=file_name)
+                
+            if is_imms_batch_app:
+                self._sendack(final_resp, file_name, message_id)
                    
             return final_resp
         except ValidationError as error:
@@ -707,6 +702,12 @@ class FhirController:
             "headers": headers if headers else {},
             **({"body": body} if body else {}),
         }
+    
+    @staticmethod
+    def _sendack(payload, file_name, message_id):
+        payload["Filename"] = file_name
+        payload["MessageId"] = message_id
+        sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(payload), MessageGroupId=file_name)
 
     @staticmethod
     def _vaccine_permission(vaccine_type, operation) -> set:
