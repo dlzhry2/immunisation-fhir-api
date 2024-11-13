@@ -972,14 +972,16 @@ class TestUpdateImmunization(unittest.TestCase):
         """it should return authorization error"""
         aws_event = {"body":()}
         response = self.controller.update_immunization(aws_event)
-        self.assertEqual(response["statusCode"], 403)       
-    
-    def test_update_immunization_for_batch(self):
+        self.assertEqual(response["statusCode"], 403)    
+           
+    @patch("fhir_controller.sqs_client.send_message")
+    def test_update_immunization_for_batch(self, mock_send_message):
         """it should update Immunization"""
         imms_id = "valid-id"
         imms = {"id": "valid-id"}
         aws_event = {
-            "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:update", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test"},
+            "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:update", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test", 
+                        "Filename": "test", "MessageId": "123"},
             "body": imms,
             "pathParameters": {"id": imms_id},
         }
@@ -992,7 +994,20 @@ class TestUpdateImmunization(unittest.TestCase):
             "VaccineType": "COVID19",
         }
         response = self.controller.update_immunization(aws_event)
-
+        
+        expected_message_body = json.dumps({
+            "statusCode": 200,
+            'headers': {},
+            "Filename": aws_event["headers"]["Filename"],
+            "MessageId": aws_event["headers"]["MessageId"],
+            
+        })
+        
+        mock_send_message.assert_called_once_with(
+            QueueUrl='Queue_url',
+            MessageBody=expected_message_body,
+            MessageGroupId=aws_event["headers"]["Filename"]
+        )
         self.service.update_immunization.assert_called_once_with(imms_id, imms, 1, None, "Test", True)
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)    
@@ -1285,12 +1300,14 @@ class TestDeleteImmunization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 204)
         self.assertTrue("body" not in response)
     
-    def test_delete_immunization_for_batch(self):
+    @patch("fhir_controller.sqs_client.send_message")
+    def test_delete_immunization_for_batch(self, mock_send_message):
         # Given
         imms_id = "an-id"
         self.service.delete_immunization.return_value = Immunization.construct()
         lambda_event = {
-            "headers": {"VaccineTypePermissions": "COVID19:delete", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test"},
+            "headers": {"VaccineTypePermissions": "COVID19:delete", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test"
+                        ,"Filename": "test","MessageId": "123"},
             "pathParameters": {"id": imms_id},
         }
 
@@ -1299,7 +1316,19 @@ class TestDeleteImmunization(unittest.TestCase):
 
         # Then
         self.service.delete_immunization.assert_called_once_with(imms_id, None, "Test", True)
-
+        expected_message_body = json.dumps({
+            "statusCode": 204,
+            'headers': {},
+            "Filename": lambda_event["headers"]["Filename"],
+            "MessageId": lambda_event["headers"]["MessageId"],
+            
+        })
+        
+        mock_send_message.assert_called_once_with(
+            QueueUrl='Queue_url',
+            MessageBody=expected_message_body,
+            MessageGroupId=lambda_event["headers"]["Filename"]
+        )
         self.assertEqual(response["statusCode"], 204)
         self.assertTrue("body" not in response)    
 

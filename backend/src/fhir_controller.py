@@ -457,7 +457,6 @@ class FhirController:
                 if is_imms_batch_app:
                     file_name = aws_event["headers"]["Filename"]
                     message_id = aws_event["headers"]["MessageId"]
-                    aws_event["body"] = json.dumps(aws_event["body"])
                 else:
                     if response := self.authorize_request(EndpointOperation.DELETE, aws_event):
                         return response
