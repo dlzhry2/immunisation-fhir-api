@@ -10,6 +10,7 @@ from fhir.resources.R4B.immunization import Immunization
 from unittest.mock import create_autospec, ANY, patch, Mock
 from urllib.parse import urlencode
 import urllib.parse
+from moto import mock_sqs
 from authorization import Authorization
 from fhir_controller import FhirController
 from fhir_repository import ImmunizationRepository
@@ -829,23 +830,47 @@ class TestCreateImmunization(unittest.TestCase):
         response = self.controller.create_immunization(aws_event)
         self.assertEqual(response["statusCode"], 403)
     
-    def test_create_immunization_for_batch(self):
-        """it should create Immunization and return resource's location"""
+    @mock_sqs
+    @patch("fhir_controller.sqs_client.send_message")
+    def test_create_immunization_for_batch(self, mock_send_message):
+        """It should create Immunization and return resource's location"""
         imms_id = str(uuid.uuid4())
         imms = create_covid_19_immunization(imms_id)
         aws_event = {
-            "headers": {"VaccineTypePermissions": "COVID19:create", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem": "test"},
+            "headers": {
+                "VaccineTypePermissions": "COVID19:create",
+                "SupplierSystem": "Imms-Batch-App",
+                "BatchSupplierSystem": "test",
+                "Filename": "test",
+                "MessageId": "123",
+            },
             "body": imms.json(),
         }
+        # Mock the create_immunization return value
         self.service.create_immunization.return_value = imms
-
+ 
+        # Execute the function under test
         response = self.controller.create_immunization(aws_event)
-
-        imms_obj = json.loads(aws_event["body"])
-        self.service.create_immunization.assert_called_once_with(imms_obj, None, "test", True)
+ 
+        # Verify the SQS send_message was called
+        expected_message_body = json.dumps({
+            "statusCode": 201,
+            'headers': {'Location': f'https://internal-dev.api.service.nhs.uk/None/Immunization/{imms_id}'},
+            "Filename": aws_event["headers"]["Filename"],
+            "MessageId": aws_event["headers"]["MessageId"],
+            
+        })
+        
+        mock_send_message.assert_called_once_with(
+            QueueUrl='Queue_url',
+            MessageBody=expected_message_body,
+            MessageGroupId=aws_event["headers"]["Filename"]
+        )
+ 
+        # Assert the response
         self.assertEqual(response["statusCode"], 201)
         self.assertTrue("body" not in response)
-        self.assertTrue(response["headers"]["Location"].endswith(f"Immunization/{imms_id}"))    
+        self.assertTrue(response["headers"]["Location"].endswith(f"Immunization/{imms_id}"))
 
     def test_malformed_resource(self):
         """it should return 400 if json is malformed"""
