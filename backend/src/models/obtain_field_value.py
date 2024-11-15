@@ -70,7 +70,11 @@ class ObtainFieldValue:
     @staticmethod
     def patient_address_postal_code(imms: dict):
         """Obtains patient_address_postal_code value"""
-        return get_contained_patient(imms)["address"][0]["postalCode"]
+        patient = get_contained_patient(imms)
+        contained_patient_postalCode = [
+                    x for x in patient.get("address") if len(x.get("postalCode", "")) >= 1
+                ][0]["postalCode"]        
+        return contained_patient_postalCode
 
     @staticmethod
     def organization_identifier_value(imms: dict):

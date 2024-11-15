@@ -172,11 +172,12 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         MandationTests.test_missing_mandatory_field_rejected(self, "contained[?(@.resourceType=='Patient')].gender")
 
     def test_post_patient_address_postal_code(self):
-        """Test that the JSON data is rejected if it does not contain patient_address_postal_code"""
-        field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
+        """Test that the JSON data is rejected if it does not contain patient_address_postal_code""" 
+        field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"    
         MandationTests.test_missing_mandatory_field_rejected(self, field_location)
 
     def test_post_occurrence_date_time(self):
+        
         """Test that the JSON data is rejected if it does not contain occurrence_date_time"""
         # This error is raised by the FHIR validator (occurrenceDateTime is a mandatory FHIR field)
         MandationTests.test_missing_mandatory_field_rejected(
