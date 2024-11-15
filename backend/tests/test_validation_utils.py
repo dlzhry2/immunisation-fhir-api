@@ -36,57 +36,68 @@ class TestValidatorUtils(unittest.TestCase):
             deepcopy(self.updated_json_data), ValidValues.valid_name_4_instances_practitioner
         )
 
-    def test_get_current_name_instance_single_name(self):
-        """Tests a single name occurrence"""
-        names = [ValidValues.valid_name_4_instances[2]]
-        occurrence_date = ValidValues.for_occurrenceDateTime
-        result = get_current_name_instance(names, occurrence_date)
-        self.assertEqual(result, (0, {"family": "Taylor", "given": ["Sar"]}))
-
     def test_get_current_name_instance_multiple_names(self):
         """Tests a multiple name occurrences"""
-        names = ValidValues.valid_name_4_instances
-        occurrence_date = ValidValues.for_occurrenceDateTime
-        result = get_current_name_instance(names, occurrence_date)
-        self.assertEqual(result, (1, ValidValues.valid_name_4_instances[1]))
 
-    def test_no_official_names_or_period(self):
-        """Tests obtaining current name if no official name or period exists"""
-        names = [ValidValues.valid_name_4_instances[2], ValidValues.valid_name_4_instances[3]]
-        occurrence_date = ValidValues.for_occurrenceDateTime
-        result = get_current_name_instance(names, occurrence_date)
-        self.assertEqual(result, (0, {"family": "Taylor", "given": ["Sar"]}))
+        # Removes use from valid_name_4_instances
+        updated_instances = [
+            {key: value for key, value in entry.items() if key != "use"} for entry in ValidValues.valid_name_4_instances
+        ]
+
+        test_cases = [
+            # Test single name instance
+            (
+                [ValidValues.valid_name_4_instances[2]],
+                ValidValues.for_occurrenceDateTime,
+                0,
+                ValidValues.valid_name_4_instances[2],
+            ),
+            # Test multiple name instances
+            (
+                ValidValues.valid_name_4_instances,
+                ValidValues.for_occurrenceDateTime,
+                1,
+                ValidValues.valid_name_4_instances[1],
+            ),
+            # Tests when no "use" or period exists
+            (
+                [ValidValues.valid_name_4_instances[2], ValidValues.valid_name_4_instances[3]],
+                ValidValues.for_occurrenceDateTime,
+                0,
+                ValidValues.valid_name_4_instances[2],
+            ),
+            # Tests where "use" is not given, but has period
+            (updated_instances, ValidValues.for_occurrenceDateTime, 1, updated_instances[1]),
+            # Test 2 invalid names instances
+            (
+                [InvalidValues.name_with_missing_values[0], InvalidValues.name_with_missing_values[1]],
+                ValidValues.for_occurrenceDateTime,
+                0,
+                InvalidValues.name_with_missing_values[0],
+            ),
+        ]
+        for name_value, occurrence_date, expected_index, expected_name in test_cases:
+            result = get_current_name_instance(name_value, occurrence_date)
+            self.assertEqual(result, (expected_index, expected_name))
 
     def test_obtain_current_name_period(self):
-        """Test obtaining current name based on period."""
-        # name with vaccine date between current period (start and end)
-        valid_name = ValidValues.valid_name_4_instances[1]
-        current_name = obtain_current_name_period(valid_name["period"], ValidValues.for_occurrenceDateTime)
-        self.assertTrue(current_name)
-
-        # name with expired period - end date before vaccine date
-        invalid_name = ValidValues.valid_name_4_instances[0]
-        name_period = obtain_current_name_period(invalid_name["period"], ValidValues.for_occurrenceDateTime)
-        self.assertFalse(name_period)
-
-    def test_obtain_current_name_period_(self):
         """Test obtaining current name based on period for both Patient and Practitioner."""
 
-        def run_test_with_name_instances(name_instances):
+        def test_name_period_instances(name_instances):
             """
             Helper function to test name periods for given name instances.
             """
-            # Name with vaccine date between current period (start and end)
+            # Tests instance with vaccine date between current period (start and end)
             valid_name = name_instances[1]
-            current_name = obtain_current_name_period(valid_name["period"], ValidValues.for_occurrenceDateTime)
-            self.assertTrue(current_name)
+            current_period = obtain_current_name_period(valid_name["period"], ValidValues.for_occurrenceDateTime)
+            self.assertTrue(current_period)
 
-            # Name with expired period - end date before vaccine date
+            # Tests instance with expired period - end date before vaccine date
             invalid_name = name_instances[0]
-            name_period = obtain_current_name_period(invalid_name["period"], ValidValues.for_occurrenceDateTime)
-            self.assertFalse(name_period)
+            current_period = obtain_current_name_period(invalid_name["period"], ValidValues.for_occurrenceDateTime)
+            self.assertFalse(current_period)
 
-            # Two names before and after vaccinedate
+            # Two names one before and one after vaccinedate
             test_names = [
                 {
                     **name_instances[1],
@@ -110,50 +121,90 @@ class TestValidatorUtils(unittest.TestCase):
                 ),
             )
 
-        run_test_with_name_instances(ValidValues.valid_name_4_instances)
-        run_test_with_name_instances(ValidValues.valid_name_4_instances_practitioner)
+        test_name_period_instances(ValidValues.valid_name_4_instances)
+        test_name_period_instances(ValidValues.valid_name_4_instances_practitioner)
 
     def test_patient_and_practitioner_value_and_index(self):
         """Test retrieving name value and index from Patient/Practitioner resources."""
 
+        # Json data to input
         valid_json_data = deepcopy(self.json_data)
-
-        # single name exists in json
-        test_single_name = [
-            (valid_json_data, "given", "Patient", ["Sarah"], 0),
-            (valid_json_data, "given", "Practitioner", ["Florence"], 0),
-            (valid_json_data, "family", "Patient", "Taylor", 0),
-            (valid_json_data, "family", "Practitioner", "Nightingale", 0),
-        ]
-
-        for imms, name_value, resource_type, expected_name, expected_index in test_single_name:
-            name_field, index = patient_and_practitioner_value_and_index(imms, name_value, resource_type)
-            self.assertEqual(name_field, expected_name)
-            self.assertEqual(index, expected_index)
-
         updated_valid_json_data = self.updated_PatientandPractitioner_json
+        invalid_json_data = deepcopy(self.json_data)
 
+        # Amend test data to move valid data in another index position for test purposes
         updated_practitioner_names = deepcopy(ValidValues.valid_name_4_instances_practitioner)
+        updated_patient_names = deepcopy(ValidValues.valid_name_4_instances)
 
         updated_practitioner_names[0], updated_practitioner_names[2] = (
             updated_practitioner_names[2],
             updated_practitioner_names[0],
         )
+        updated_patient_names[1], updated_patient_names[3] = (
+            updated_patient_names[3],
+            updated_patient_names[1],
+        )
 
         updated_valid_json_data["contained"][0]["name"] = updated_practitioner_names
+        updated_valid_json_data["contained"][1]["name"] = updated_patient_names
+
+        # Set up invalid data
+        invalid_json_data["contained"][0]["name"] = InvalidValues.name_with_missing_values_practitioner
+        invalid_json_data["contained"][1]["name"] = InvalidValues.name_with_missing_values
 
         test_cases = [
-            (updated_valid_json_data, "given", "Patient", ["Sarah"], 1),
+            # Test for when single patient and practitioner names
+            (valid_json_data, "given", "Patient", ["Sarah"], 0),
+            (valid_json_data, "family", "Patient", "Taylor", 0),
+            (valid_json_data, "given", "Practitioner", ["Florence"], 0),
+            (valid_json_data, "family", "Practitioner", "Nightingale", 0),
+            # Tests for when there are multiple patient and practitioner names
+            (updated_valid_json_data, "given", "Patient", ["Sarah"], 3),
+            (updated_valid_json_data, "family", "Patient", "Taylor", 3),
             (updated_valid_json_data, "given", "Practitioner", ["Florence"], 1),
-            (updated_valid_json_data, "family", "Patient", "Taylor", 1),
             (updated_valid_json_data, "family", "Practitioner", "Night", 1),
+            # Testing invalid values returns the name value with family and given from list (3rd index)
+            (invalid_json_data, "given", "Patient", "", 3),
+            (invalid_json_data, "family", "Patient", "Taylor", 3),
+            (invalid_json_data, "given", "Practitioner", "", 3),
+            (invalid_json_data, "family", "Practitioner", "Nightingale", 3),
         ]
 
-        #  Check correct name and index is returned
         for imms, name_value, resource_type, expected_name, expected_index in test_cases:
             name_field, index = patient_and_practitioner_value_and_index(imms, name_value, resource_type)
             self.assertEqual(name_field, expected_name)
             self.assertEqual(index, expected_index)
+
+    def test_obtain_name_field_location(self):
+        valid_json_data = self.updated_PatientandPractitioner_json
+        valid_json_data_single = self.json_data
+
+        test_cases = [
+            # Test for the location returned when multiple patient and practitioner names
+            (valid_json_data, "given", "Patient", "contained[?(@.resourceType=='Patient')].name[1].given"),
+            (valid_json_data, "family", "Patient", "contained[?(@.resourceType=='Patient')].name[1].family"),
+            (valid_json_data, "given", "Practitioner", "contained[?(@.resourceType=='Practitioner')].name[1].given"),
+            (valid_json_data, "family", "Practitioner", "contained[?(@.resourceType=='Practitioner')].name[1].family"),
+            # Test when only one name
+            (valid_json_data_single, "given", "Patient", "contained[?(@.resourceType=='Patient')].name[0].given"),
+            (valid_json_data_single, "family", "Patient", "contained[?(@.resourceType=='Patient')].name[0].family"),
+            (
+                valid_json_data_single,
+                "given",
+                "Practitioner",
+                "contained[?(@.resourceType=='Practitioner')].name[0].given",
+            ),
+            (
+                valid_json_data_single,
+                "family",
+                "Practitioner",
+                "contained[?(@.resourceType=='Practitioner')].name[0].family",
+            ),
+        ]
+
+        for imms, name_value, resource_type, expected_location in test_cases:
+            result = obtain_name_field_location(imms, resource_type, name_value)
+            self.assertEqual(result, expected_location)
 
 
 if __name__ == "__main__":
