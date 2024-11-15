@@ -12,7 +12,12 @@ from .utils.generic_utils import (
     test_valid_values_accepted as _test_valid_values_accepted,
     test_invalid_values_rejected as _test_invalid_values_rejected,
     load_json_data,
+)
+from src.models.utils.generic_utils import (
     patient_name_given_field_location,
+    patient_name_family_field_location,
+    practitioner_name_given_field_location,
+    practitioner_name_family_field_location,
 )
 from .utils.pre_validation_test_utils import ValidatorModelTests
 from .utils.values_for_tests import ValidValues, InvalidValues
@@ -462,9 +467,10 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_pre_validate_patient_name_family(self):
         """Test pre_validate_patient_name_family accepts valid values and rejects invalid values"""
+        valid_json_data = deepcopy(self.json_data)
         ValidatorModelTests.test_string_value(
             self,
-            field_location=ObtainFieldValue.patient_name_family(self),
+            field_location=patient_name_family_field_location(valid_json_data),
             valid_strings_to_test=["test"],
         )
 
@@ -612,9 +618,10 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_pre_validate_practitioner_name_given(self):
         """Test pre_validate_practitioner_name_given accepts valid values and rejects invalid values"""
+        valid_json_data = deepcopy(self.json_data)
         ValidatorModelTests.test_list_value(
             self,
-            field_location="contained[?(@.resourceType=='Practitioner')].name[0].given",
+            field_location=practitioner_name_given_field_location(valid_json_data),
             valid_lists_to_test=[["Test"], ["Test test"]],
             valid_list_element="Test",
             is_list_of_strings=True,
@@ -622,7 +629,8 @@ class TestImmunizationModelPreValidationRules(unittest.TestCase):
 
     def test_pre_validate_practitioner_name_family(self):
         """Test pre_validate_practitioner_name_family accepts valid values and rejects invalid values"""
-        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].family"
+        valid_json_data = deepcopy(self.json_data)
+        field_location = practitioner_name_family_field_location(valid_json_data)
         ValidatorModelTests.test_string_value(self, field_location, valid_strings_to_test=["test"])
 
     def test_pre_validate_recorded(self):

@@ -136,14 +136,45 @@ class ValidValues:
         "valueCodeableConcept": {"coding": [nhs_number_coding_item]},
     }
 
-    patient_name_given_family = {
-        "name": [
-            {"family": "Taylor", "given": ["Sarah"], "period": {"start": "2024-02-07T13:28:17+00:00"}},
-            {"use": "official", "family": "Tay", "given": ["Sarah"], "period": {"end": "2024-02-07T13:28:17+00:00"}},
-            {"use": "official", "family": "Taylor", "given": ["Sarah"]},
-            {"family": "Taylor", "given": ["Sarah"]},
-        ]
-    }
+    for_occurrenceDateTime = "2023-02-07T13:28:17+00:00"
+
+    for_date_after_vaccinedatetime = "2023-02-10T13:28:17+00:00"
+
+    for_date_before_vaccinedatetime = "2023-02-05T13:28:17+00:00"
+
+    valid_name_4_instances = [
+        {
+            "use": "official",
+            "family": "Tay",
+            "given": ["Sarah"],
+            "period": {"end": for_date_before_vaccinedatetime},
+        },
+        {
+            "use": "official",
+            "family": "Taylor",
+            "given": ["Sarah"],
+            "period": {"start": for_date_before_vaccinedatetime, "end": for_date_after_vaccinedatetime},
+        },
+        {"family": "Taylor", "given": ["Sar"]},
+        {"use": "old", "family": "Tray", "given": ["Sarah"]},
+    ]
+
+    valid_name_4_instances_practitioner = [
+        {
+            "use": "official",
+            "family": "Nightingale",
+            "given": ["Florence"],
+            "period": {"end": for_date_before_vaccinedatetime},
+        },
+        {
+            "use": "official",
+            "family": "Night",
+            "given": ["Florence"],
+            "period": {"start": for_date_before_vaccinedatetime, "end": for_date_after_vaccinedatetime},
+        },
+        {"family": "Night", "given": ["Florence"]},
+        {"use": "old", "family": "Tray", "given": ["Florence"]},
+    ]
 
 
 @dataclass
@@ -255,11 +286,16 @@ class InvalidValues:
         "valueCodeableConcept": {"coding": dummy_coding_with_two_snomed_codes},
     }
 
-    patient_name_with_no_given_family = {
-        "name": [
-            {"family": "Taylor", "period": {"start": "2024-02-07T13:28:17+00:00"}},
-            {"given": ["Sarah"]},
-            {"use": "official", "family": "Taylor", "given": ["Sarah"]},
-            {"family": "Taylor", "given": ""},
-        ]
-    }
+    name_with_missing_values = [
+        {"family": "Taylor", "period": {"start": "2024-02-07T13:28:17+00:00"}},
+        {"given": ["Sarah"]},
+        {"use": "official", "given": ["Sarah"]},
+        {"family": "Taylor", "given": ""},
+    ]
+
+    name_with_missing_values_practitioner = [
+        {"family": "Nightingale", "period": {"start": "2024-02-07T13:28:17+00:00"}},
+        {"given": ["Florence"]},
+        {"use": "official", "given": ["Florence"]},
+        {"family": "Nightingale", "given": ""},
+    ]

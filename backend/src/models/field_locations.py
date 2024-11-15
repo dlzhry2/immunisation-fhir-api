@@ -13,7 +13,6 @@ from models.utils.generic_utils import (
     practitioner_name_family_field_location,
 )
 
-# Import patient_name_given_field_location
 from constants import Urls
 
 

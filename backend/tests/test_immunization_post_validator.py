@@ -161,7 +161,6 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
     def test_post_patient_name_family(self):
         """Test that the JSON data is rejected if it does not contain patient_name_family"""
         field_location = "contained[?(@.resourceType=='Patient')].name[0].family"
-        print(field_location)
         MandationTests.test_missing_mandatory_field_rejected(self, field_location)
 
     def test_post_patient_birth_date(self):

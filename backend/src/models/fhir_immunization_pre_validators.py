@@ -322,10 +322,9 @@ class PreValidators:
         """
         field_location = patient_name_family_field_location(values)
         try:
-            family_name, _ = patient_and_practitioner_value_and_index(values, "family", "Patient")
-            field_value = family_name
+            field_value, _ = patient_and_practitioner_value_and_index(values, "family", "Patient")
             PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, AttributeError):
             pass
 
     def pre_validate_patient_birth_date(self, values: dict) -> dict:
@@ -480,7 +479,7 @@ class PreValidators:
         try:
             field_values = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["name"]
             PreValidation.for_list(field_values, field_location, elements_are_dicts=True)
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, AttributeError):
             pass
 
     def pre_validate_practitioner_name_given(self, values: dict) -> dict:
@@ -490,10 +489,9 @@ class PreValidators:
         """
         field_location = practitioner_name_given_field_location(values)
         try:
-            given_name, _ = patient_and_practitioner_value_and_index(values, "given", "Practitioner")
-            field_value = given_name
+            field_value, _ = patient_and_practitioner_value_and_index(values, "given", "Practitioner")
             PreValidation.for_list(field_value, field_location, elements_are_strings=True)
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, AttributeError):
             pass
 
     def pre_validate_practitioner_name_family(self, values: dict) -> dict:
@@ -503,8 +501,7 @@ class PreValidators:
         """
         field_location = practitioner_name_family_field_location(values)
         try:
-            family_name, _ = patient_and_practitioner_value_and_index(values, "family", "Practitioner")
-            field_name = family_name
+            field_name, _ = patient_and_practitioner_value_and_index(values, "family", "Practitioner")
             PreValidation.for_string(field_name, field_location)
         except (KeyError, IndexError):
             pass

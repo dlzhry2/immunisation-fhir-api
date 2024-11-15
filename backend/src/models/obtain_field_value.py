@@ -51,7 +51,10 @@ class ObtainFieldValue:
     @staticmethod
     def patient_name_family(imms: dict):
         """Obtains patient_name_family value"""
-        family_name, _ = patient_and_practitioner_value_and_index(imms, "family", "Patient")
+        try:
+            family_name, _ = patient_and_practitioner_value_and_index(imms, "family", "Patient")
+        except (KeyError, IndexError, AttributeError):
+            family_name = None
         return family_name
 
     @staticmethod
@@ -92,13 +95,19 @@ class ObtainFieldValue:
     @staticmethod
     def practitioner_name_given(imms: dict):
         """Obtains practitioner_name_given value"""
-        given_name, _ = patient_and_practitioner_value_and_index(imms, "given", "Practitioner")
+        try:
+            given_name, _ = patient_and_practitioner_value_and_index(imms, "given", "Practitioner")
+        except (KeyError, IndexError, AttributeError):
+            given_name = None
         return given_name
 
     @staticmethod
     def practitioner_name_family(imms: dict):
         """Obtains practitioner_name_family value"""
-        family_name, _ = patient_and_practitioner_value_and_index(imms, "family", "Practitioner")
+        try:
+            family_name, _ = patient_and_practitioner_value_and_index(imms, "family", "Practitioner")
+        except (KeyError, IndexError, AttributeError):
+            family_name = None
         return family_name
 
     @staticmethod

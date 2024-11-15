@@ -223,18 +223,17 @@ def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
 
     # DUE TO RUNNING PRE_VALIDATE_PATIENT_NAME AND PRE_VALIDATE_PRACTITIONER NAME BEFORE THE RESPECTIVE CHECKS
     # FOR GIVEN AND FAMILY NAMES, AND BECAUSE WE CHECK THAT NAME FIELD EXISTS BEFORE CALLING THIS FUNCTION,
-    # WE CAN THEREFORE ASSUME THAT names IS A NON-EMPTY LIST OF NON-EMPTY DICITONARIES
+    # WE CAN THEREFORE ASSUME THAT names IS A NON-EMPTY LIST OF NON-EMPTY DICTONARIES
 
     # If there's only one name, return it with index 0
     if len(names) == 1:
-        return names[0], 0
+        return 0, names[0]
 
     # Extract only name instances with given and family fields
     valid_name_instances = []
     for index, name in enumerate(names):
         if "given" in name and "family" in name:
-            valid_name_instances.append((name, index))
-    print(valid_name_instances)
+            valid_name_instances.append((index, name))
 
     # Filtering names that are current at the vaccination date
     current_names = []
@@ -243,17 +242,18 @@ def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
             # Check for 'period' and occurrence date
             if isinstance(name, dict):
                 if "period" not in name or obtain_current_name_period(name.get("period", {}), occurrence_date):
-                    current_names.append((name, index))
+                    current_names.append((index, name))
+                    print(f"current names vaccination date: {current_names}")
         except (KeyError, ValueError):
             continue
 
     # Select the first current name with 'use'="official"
-    official_names = [(name, index) for name, index in current_names if name.get("use") == "official"]
+    official_names = [(index, name) for index, name in current_names if name.get("use") == "official"]
     if official_names:
         return official_names[0]
 
     # Select the first current name with 'use' not equal to "old"
-    non_old_names = [(name, index) for name, index in current_names if name.get("use") != "old"]
+    non_old_names = [(index, name) for index, name in current_names if name.get("use") != "old"]
     if non_old_names:
         return non_old_names[0]
 
@@ -262,7 +262,7 @@ def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
         return current_names[0]
 
     # If no names match criteria, default to the first name in the list
-    return names[0], 0
+    return 0, names[0]
 
 
 def patient_and_practitioner_value_and_index(imms: dict, name_value: str, resource_type: str):
@@ -275,12 +275,12 @@ def patient_and_practitioner_value_and_index(imms: dict, name_value: str, resour
 
     # 2021-02-07T13:28:17+00:00 - EXAMPLE DATE TIME
     # Select the appropriate name instance
-    selected_name, index = get_current_name_instance(name, occurrence_date)
-    # print(f"selectedname: {selected_name} index: {index}")
+    index, selected_name = get_current_name_instance(name, occurrence_date)
+    print(f"selectedname: {selected_name} index: {index}")
 
     # Access the given name and its location in JSON
     name_field = selected_name[name_value]
-    # print(f"NAMEFIELD3: {name_field}")
+    print(f"NAMEFIELD3: {name_field}")
     # Construct JSON location based on
 
     # print(f"INDEX: {index}") # debugging statement
@@ -291,6 +291,7 @@ def obtain_name_field_location(imms, resource_type, name_value):
     """Obtains the field location of the name value for the given resource type based on the relevant logic."""
     try:
         _, index = patient_and_practitioner_value_and_index(imms, name_value, resource_type)
+        # print(f"INDEXXX {index}")
     except (KeyError, IndexError, AttributeError):
         index = 0
     return generate_field_location_for_name(index, name_value, resource_type)
