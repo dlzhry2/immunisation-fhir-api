@@ -39,21 +39,21 @@ class TestValidatorUtils(unittest.TestCase):
     def test_get_current_name_instance_single_name(self):
         """Tests a single name occurrence"""
         names = [ValidValues.valid_name_4_instances[2]]
-        occurrence_date = ValidValues.for_occurrenceDateTime
+        occurrence_date = ValidValues.occurrenceDateTime
         result = get_current_name_instance(names, occurrence_date)
         self.assertEqual(result, (0, {"family": "Taylor", "given": ["Sar"]}))
 
     def test_get_current_name_instance_multiple_names(self):
         """Tests a multiple name occurrences"""
         names = ValidValues.valid_name_4_instances
-        occurrence_date = ValidValues.for_occurrenceDateTime
+        occurrence_date = ValidValues.occurrenceDateTime
         result = get_current_name_instance(names, occurrence_date)
         self.assertEqual(result, (1, ValidValues.valid_name_4_instances[1]))
 
     def test_no_official_names_or_period(self):
         """Tests obtaining current name if no official name or period exists"""
         names = [ValidValues.valid_name_4_instances[2], ValidValues.valid_name_4_instances[3]]
-        occurrence_date = ValidValues.for_occurrenceDateTime
+        occurrence_date = ValidValues.occurrenceDateTime
         result = get_current_name_instance(names, occurrence_date)
         self.assertEqual(result, (0, {"family": "Taylor", "given": ["Sar"]}))
 
@@ -61,12 +61,12 @@ class TestValidatorUtils(unittest.TestCase):
         """Test obtaining current name based on period."""
         # name with vaccine date between current period (start and end)
         valid_name = ValidValues.valid_name_4_instances[1]
-        current_name = obtain_current_name_period(valid_name["period"], ValidValues.for_occurrenceDateTime)
+        current_name = obtain_current_name_period(valid_name["period"], ValidValues.occurrenceDateTime)
         self.assertTrue(current_name)
 
         # name with expired period - end date before vaccine date
         invalid_name = ValidValues.valid_name_4_instances[0]
-        name_period = obtain_current_name_period(invalid_name["period"], ValidValues.for_occurrenceDateTime)
+        name_period = obtain_current_name_period(invalid_name["period"], ValidValues.occurrenceDateTime)
         self.assertFalse(name_period)
 
     def test_obtain_current_name_period_(self):
@@ -78,26 +78,26 @@ class TestValidatorUtils(unittest.TestCase):
             """
             # Name with vaccine date between current period (start and end)
             valid_name = name_instances[1]
-            current_name = obtain_current_name_period(valid_name["period"], ValidValues.for_occurrenceDateTime)
+            current_name = obtain_current_name_period(valid_name["period"], ValidValues.occurrenceDateTime)
             self.assertTrue(current_name)
 
             # Name with expired period - end date before vaccine date
             invalid_name = name_instances[0]
-            name_period = obtain_current_name_period(invalid_name["period"], ValidValues.for_occurrenceDateTime)
+            name_period = obtain_current_name_period(invalid_name["period"], ValidValues.occurrenceDateTime)
             self.assertFalse(name_period)
 
             # Two names before and after vaccinedate
             test_names = [
                 {
                     **name_instances[1],
-                    "period": {"start": ValidValues.for_date_before_vaccinedatetime},
+                    "period": {"start": ValidValues.date_before_occurenceDateTime},
                 },
                 {
                     **name_instances[0],
-                    "period": {"start": ValidValues.for_date_after_vaccinedatetime},
+                    "period": {"start": ValidValues.date_after_occurenceDateatetime},
                 },
             ]
-            occurrence_date = ValidValues.for_occurrenceDateTime
+            occurrence_date = ValidValues.occurrenceDateTime
             result = get_current_name_instance(test_names, occurrence_date)
             self.assertEqual(
                 result,
@@ -105,7 +105,7 @@ class TestValidatorUtils(unittest.TestCase):
                     0,
                     {
                         **name_instances[1],
-                        "period": {"start": ValidValues.for_date_before_vaccinedatetime},
+                        "period": {"start": ValidValues.date_before_occurenceDateTime},
                     },
                 ),
             )

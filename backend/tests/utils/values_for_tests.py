@@ -136,24 +136,24 @@ class ValidValues:
         "valueCodeableConcept": {"coding": [nhs_number_coding_item]},
     }
 
-    for_occurrenceDateTime = "2021-02-07T13:28:17+00:00"
+    occurrenceDateTime = "2021-02-07T13:28:17+00:00"
 
-    for_date_after_vaccinedatetime = "2021-02-10T13:28:17+00:00"
+    date_before_occurenceDateTime = "1900-01-01T00:00:00+00:00"
 
-    for_date_before_vaccinedatetime = "2021-01-05T13:28:17+00:00"
+    date_after_occurenceDateatetime = "2100-01-01T00:00:00+00:00"
 
     valid_name_4_instances = [
         {
             "use": "official",
             "family": "Tay",
             "given": ["Sa"],
-            "period": {"end": for_date_before_vaccinedatetime},
+            "period": {"end": date_before_occurenceDateTime},
         },
         {
             "use": "official",
             "family": "Taylor",
             "given": ["Sarah"],
-            "period": {"start": for_date_before_vaccinedatetime, "end": for_date_after_vaccinedatetime},
+            "period": {"start": date_before_occurenceDateTime, "end": date_after_occurenceDateatetime},
         },
         {"family": "Taylor", "given": ["Sar"]},
         {"use": "old", "family": "Tray", "given": ["Sarah"]},
@@ -164,17 +164,78 @@ class ValidValues:
             "use": "official",
             "family": "Nightingale",
             "given": ["Florence"],
-            "period": {"end": for_date_before_vaccinedatetime},
+            "period": {"end": date_before_occurenceDateTime},
         },
         {
             "use": "official",
             "family": "Night",
             "given": ["Florence"],
-            "period": {"start": for_date_before_vaccinedatetime, "end": for_date_after_vaccinedatetime},
+            "period": {"start": date_before_occurenceDateTime, "end": date_after_occurenceDateatetime},
         },
         {"family": "Night", "given": ["Florence"]},
         {"use": "old", "family": "Tray", "given": ["Florence"]},
     ]
+
+
+class NameInstances:
+    """Class containing example name instances."""
+
+    class ValidCurrent:
+        """Name instances which are both valid and current"""
+
+        given_and_family_only = {"given": ["a_given_name"], "family": "a_family_name"}
+
+        with_use_official = {"given": ["a_given_name"], "family": "a_family_name", "use": "official"}
+
+        with_period_start = {
+            "given": ["a_given_name"],
+            "family": "a_family_name",
+            "period": {"start": ValidValues.date_before_occurenceDateTime},
+        }
+
+        with_period_end = {
+            "given": ["a_given_name"],
+            "family": "a_family_name",
+            "period": {"end": ValidValues.date_after_occurenceDateatetime},
+        }
+
+        with_use_official_and_period_start_and_end = {
+            "given": ["a_given_name"],
+            "family": "a_family_name",
+            "period": {
+                "start": ValidValues.date_before_occurenceDateTime,
+                "end": ValidValues.date_after_occurenceDateatetime,
+            },
+            "use": "official",
+        }
+
+        use_old = {"given": ["a_given_name"], "family": "a_family_name", "use": "old"}
+
+    class ValidNonCurrent:
+        """Name instances which are valid but not current"""
+
+        before_period_start = {"given": ["a_given_name"], "family": "a_family_name", "period": {"start": "2100-01-01"}}
+
+        after_period_end = {
+            "given": ["a_given_name"],
+            "family": "a_family_name",
+            "period": {"end": ValidValues.date_before_occurenceDateTime},
+        }
+
+    class Invalid:
+        """Name instances which are invalid"""
+
+        family_name_only = {"family": "a_family_name"}
+
+        given_name_only = {"given": ["a_given_name"]}
+
+        family_name_only_with_use_official = {"family": "a_family_name", "use": "official"}
+
+        family_name_only_with_use_official_and_period_start_and_end = {
+            "family": "a_family_name",
+            "period": {"start": "1900-01-01", "end": "2100-01-01"},
+            "use": "official",
+        }
 
 
 @dataclass
