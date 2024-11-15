@@ -203,6 +203,7 @@ def obtain_current_name_period(period: dict, occurrence_date: datetime) -> bool:
         return True
 
     start_date = period.get("start")
+
     end_date = period.get("end")
 
     start_date = start_date if start_date else None
@@ -271,7 +272,7 @@ def patient_and_practitioner_value_and_index(imms: dict, name_value: str, resour
     name = resource["name"]
 
     # Get occurrenceDateTime as datetime
-    occurrence_date = resource.get("occurrenceDateTime")
+    occurrence_date = get_occurrence_datetime_for_name(imms)
 
     # 2021-02-07T13:28:17+00:00 - EXAMPLE DATE TIME
     # Select the appropriate name instance
@@ -315,3 +316,7 @@ def practitioner_name_given_field_location(imms: dict):
 def practitioner_name_family_field_location(imms: dict):
     """Obtains practitioner_name_family value"""
     return obtain_name_field_location(imms, "Practitioner", "family")
+
+
+def get_occurrence_datetime_for_name(immunization: dict) -> Optional[datetime.datetime]:
+    return immunization.get("occurrenceDateTime", None)

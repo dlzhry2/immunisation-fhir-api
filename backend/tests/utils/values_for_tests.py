@@ -136,17 +136,17 @@ class ValidValues:
         "valueCodeableConcept": {"coding": [nhs_number_coding_item]},
     }
 
-    for_occurrenceDateTime = "2023-02-07T13:28:17+00:00"
+    for_occurrenceDateTime = "2021-02-07T13:28:17+00:00"
 
-    for_date_after_vaccinedatetime = "2023-02-10T13:28:17+00:00"
+    for_date_after_vaccinedatetime = "2021-02-10T13:28:17+00:00"
 
-    for_date_before_vaccinedatetime = "2023-02-05T13:28:17+00:00"
+    for_date_before_vaccinedatetime = "2021-01-05T13:28:17+00:00"
 
     valid_name_4_instances = [
         {
             "use": "official",
             "family": "Tay",
-            "given": ["Sarah"],
+            "given": ["Sa"],
             "period": {"end": for_date_before_vaccinedatetime},
         },
         {

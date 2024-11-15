@@ -69,28 +69,91 @@ class TestValidatorUtils(unittest.TestCase):
         name_period = obtain_current_name_period(invalid_name["period"], ValidValues.for_occurrenceDateTime)
         self.assertFalse(name_period)
 
+    def test_obtain_current_name_period_(self):
+        """Test obtaining current name based on period for both Patient and Practitioner."""
+
+        def run_test_with_name_instances(name_instances):
+            """
+            Helper function to test name periods for given name instances.
+            """
+            # Name with vaccine date between current period (start and end)
+            valid_name = name_instances[1]
+            current_name = obtain_current_name_period(valid_name["period"], ValidValues.for_occurrenceDateTime)
+            self.assertTrue(current_name)
+
+            # Name with expired period - end date before vaccine date
+            invalid_name = name_instances[0]
+            name_period = obtain_current_name_period(invalid_name["period"], ValidValues.for_occurrenceDateTime)
+            self.assertFalse(name_period)
+
+            # Two names before and after vaccinedate
+            test_names = [
+                {
+                    **name_instances[1],
+                    "period": {"start": ValidValues.for_date_before_vaccinedatetime},
+                },
+                {
+                    **name_instances[0],
+                    "period": {"start": ValidValues.for_date_after_vaccinedatetime},
+                },
+            ]
+            occurrence_date = ValidValues.for_occurrenceDateTime
+            result = get_current_name_instance(test_names, occurrence_date)
+            self.assertEqual(
+                result,
+                (
+                    0,
+                    {
+                        **name_instances[1],
+                        "period": {"start": ValidValues.for_date_before_vaccinedatetime},
+                    },
+                ),
+            )
+
+        run_test_with_name_instances(ValidValues.valid_name_4_instances)
+        run_test_with_name_instances(ValidValues.valid_name_4_instances_practitioner)
+
     def test_patient_and_practitioner_value_and_index(self):
         """Test retrieving name value and index from Patient/Practitioner resources."""
 
-        imms = deepcopy(self.json_data)
-        # Test patient name (given field)
-        name_field, index = patient_and_practitioner_value_and_index(imms, "given", "Patient")
-        self.assertEqual(name_field, ["Sarah"])
-        self.assertEqual(index, 0)
+        valid_json_data = deepcopy(self.json_data)
 
-        # Test practitioner name (given field)
-        name_field, index = patient_and_practitioner_value_and_index(imms, "given", "Practitioner")
-        self.assertEqual(name_field, ["Florence"])
-        self.assertEqual(index, 0)
+        # single name exists in json
+        test_single_name = [
+            (valid_json_data, "given", "Patient", ["Sarah"], 0),
+            (valid_json_data, "given", "Practitioner", ["Florence"], 0),
+            (valid_json_data, "family", "Patient", "Taylor", 0),
+            (valid_json_data, "family", "Practitioner", "Nightingale", 0),
+        ]
 
-        # TODO  Update to loop for patient, practitioner, given and family
-        print(self.updated_PatientandPractitioner_json)
+        for imms, name_value, resource_type, expected_name, expected_index in test_single_name:
+            name_field, index = patient_and_practitioner_value_and_index(imms, name_value, resource_type)
+            self.assertEqual(name_field, expected_name)
+            self.assertEqual(index, expected_index)
 
-        name_field, index = patient_and_practitioner_value_and_index(
-            self.updated_PatientandPractitioner_json, "given", "Patient"
+        updated_valid_json_data = self.updated_PatientandPractitioner_json
+
+        updated_practitioner_names = deepcopy(ValidValues.valid_name_4_instances_practitioner)
+
+        updated_practitioner_names[0], updated_practitioner_names[2] = (
+            updated_practitioner_names[2],
+            updated_practitioner_names[0],
         )
-        self.assertEqual(name_field, ["Sarah"])
-        self.assertEqual(index, 0)
+
+        updated_valid_json_data["contained"][0]["name"] = updated_practitioner_names
+
+        test_cases = [
+            (updated_valid_json_data, "given", "Patient", ["Sarah"], 1),
+            (updated_valid_json_data, "given", "Practitioner", ["Florence"], 1),
+            (updated_valid_json_data, "family", "Patient", "Taylor", 1),
+            (updated_valid_json_data, "family", "Practitioner", "Night", 1),
+        ]
+
+        #  Check correct name and index is returned
+        for imms, name_value, resource_type, expected_name, expected_index in test_cases:
+            name_field, index = patient_and_practitioner_value_and_index(imms, name_value, resource_type)
+            self.assertEqual(name_field, expected_name)
+            self.assertEqual(index, expected_index)
 
 
 if __name__ == "__main__":
