@@ -19,21 +19,6 @@ def obtain_field_value(imms: dict, field_name: str) -> any:
     return field_value
 
 
-def obtain_field_location(field_name: str, imms: dict = None) -> str:
+def obtain_field_location(field_name: str, field_locations=FieldLocations()) -> str:
+    return getattr(field_locations, field_name)
 
-    field_locations = FieldLocations()
-
-    # Ensure dynamic fields are set using `imms` data
-    field_locations.set_dynamic_fields(imms)
-
-    # print(field_locations.patient_name_given)
-
-    # Check for static fields
-    try:
-        return getattr(FieldLocations, field_name)  # Static fields are accessed directly via the class
-    except AttributeError:
-        pass
-
-    # Then check for dynamic fields in the instance
-    if field_name in field_locations.__dict__:
-        return getattr(field_locations, field_name)

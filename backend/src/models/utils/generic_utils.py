@@ -243,7 +243,7 @@ def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
             if isinstance(name, dict):
                 if "period" not in name or obtain_current_name_period(name.get("period", {}), occurrence_date):
                     current_names.append((index, name))
-                    print(f"current names vaccination date: {current_names}")
+                    # print(f"current names vaccination date: {current_names}")
         except (KeyError, ValueError):
             continue
 
@@ -276,11 +276,11 @@ def patient_and_practitioner_value_and_index(imms: dict, name_value: str, resour
     # 2021-02-07T13:28:17+00:00 - EXAMPLE DATE TIME
     # Select the appropriate name instance
     index, selected_name = get_current_name_instance(name, occurrence_date)
-    print(f"selectedname: {selected_name} index: {index}")
+    # print(f"selectedname: {selected_name} index: {index}")
 
     # Access the given name and its location in JSON
     name_field = selected_name[name_value]
-    print(f"NAMEFIELD3: {name_field}")
+    # print(f"NAMEFIELD3: {name_field}")
     # Construct JSON location based on
 
     # print(f"INDEX: {index}") # debugging statement

@@ -81,10 +81,16 @@ class PostValidators:
         except MandatoryError as e:
             self.errors.append(str(e))
 
-    def validate_field(self, mandation_functions: MandationFunctions, validation_set: dict, field_name: str) -> None:
+    def validate_field(
+        self,
+        mandation_functions: MandationFunctions,
+        validation_set: dict,
+        field_name: str,
+        field_locations: FieldLocations,
+    ) -> None:
         """Runs standard validation for the field"""
 
-        field_location = obtain_field_location(field_name, self.imms)
+        field_location = obtain_field_location(field_name, field_locations)
         field_value = obtain_field_value(self.imms, field_name)
         self.run_field_validation(mandation_functions, validation_set, field_name, field_location, field_value)
 
@@ -136,7 +142,7 @@ class PostValidators:
 
         # Validate all fields which have standard validation
         for field_name in self.fields_with_standard_validation:
-            self.validate_field(mandation_functions, validation_set, field_name)
+            self.validate_field(mandation_functions, validation_set, field_name, field_locations)
 
         # Validate reason_code_coding_code fields. Note that there may be multiple of each of these
         # - all instances of the field will be validated by the validate_reason_code_coding_field validator
