@@ -10,6 +10,7 @@ from constants import Constants
 
 s3_client = boto3_client("s3", region_name="eu-west-2")
 ACK_BUCKET_NAME = os.environ["ACK_BUCKET_NAME"]
+SOURCE_BUCKET_NAME = os.environ["SOURCE_BUCKET_NAME"]
 
 logger = logging.getLogger()
 
@@ -23,6 +24,7 @@ def create_ack_data(
 ) -> dict:
     """Returns a dictionary containing the ack headers as keys, along with the relevant values."""
     # Pack multi-line diagnostics down to single line (because Imms API diagnostics may be multi-line)
+    print(f"diag_error:{diagnostics}")
     diagnostics = (
         " ".join(diagnostics.replace("\r", " ").replace("\n", " ").replace("\t", " ").replace("\xa0", " ").split())
         if diagnostics is not None
@@ -83,7 +85,11 @@ def update_ack_file(
 ) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
     ack_file_key = f"forwardedFile/{file_key.replace('.csv', '_BusAck.csv')}"
-
-    ack_data_row = create_ack_data("random_time", row_id, successful_api_response, diagnostics, imms_id)
+    response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
+    print("entered")
+    if response:
+        created_at_formatted_string = response["LastModified"].strftime("%Y%m%dT%H%M%S00")
+        print(f"time:{created_at_formatted_string}")
+    ack_data_row = create_ack_data(created_at_formatted_string or "random_time", row_id, successful_api_response, diagnostics, imms_id)
     accumulated_csv_content = obtain_current_ack_content(ACK_BUCKET_NAME, ack_file_key)
     upload_ack_file(ACK_BUCKET_NAME, ack_file_key, accumulated_csv_content, ack_data_row)

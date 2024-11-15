@@ -172,6 +172,7 @@ resource "aws_lambda_function" "ack_processor_lambda" {
   environment { 
     variables = { 
         ACK_BUCKET_NAME    = "immunisation-batch-${local.local_config}-data-destinations"
+        SOURCE_BUCKET_NAME = "immunisation-batch-${local.local_config}-data-sources"
       } 
   }
 
