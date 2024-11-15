@@ -12,12 +12,18 @@ def lambda_handler(event, context):
             body_json = record['body']
             incoming_message_body = json.loads(body_json) 
             # Check if there are any messages to process
-            file_key = incoming_message_body.get("Filename")
-            row_id = incoming_message_body.get("MessageId")
+            file_key = incoming_message_body.get("file_key")
+            row_id = incoming_message_body.get("row_id")
             diagnostics = incoming_message_body.get("diagnostics")
-            print(f"diag:{diagnostics}")
+            if diagnostics is None:
+                status_code = incoming_message_body.get('statusCode', 0)
+                if status_code not in {200, 201, 204}:
+                    # Parse the nested body and extract diagnostics
+                    inner_body = json.loads(incoming_message_body.get('body', '{}'))
+                    diagnostics = inner_body.get('issue', [{}])[0].get('diagnostics')
             if diagnostics:
-                successful_api_response =False
+                    successful_api_response= False
+
             # print(f"file_key:{file_key};row_id:{row_id} ")
             # Check the status code and extract the location URL and imms_id if statusCode is 201
             if "statusCode" in incoming_message_body:

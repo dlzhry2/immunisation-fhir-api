@@ -113,6 +113,8 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
           "s3:ListBucket"
         ]
         Resource = [
+          "arn:aws:s3:::immunisation-batch-${local.local_config}-data-sources",           
+          "arn:aws:s3:::immunisation-batch-${local.local_config}-data-sources/*" ,
           "arn:aws:s3:::immunisation-batch-${local.local_config}-data-destinations",           
           "arn:aws:s3:::immunisation-batch-${local.local_config}-data-destinations/*"        
         ]
@@ -168,13 +170,6 @@ resource "aws_lambda_function" "ack_processor_lambda" {
   image_uri       = module.ack_processor_docker_image.image_uri
   architectures   = ["x86_64"]
   timeout         = 60
-
-  environment { 
-    variables = { 
-        ACK_BUCKET_NAME    = "immunisation-batch-${local.local_config}-data-destinations"
-        SOURCE_BUCKET_NAME = "immunisation-batch-${local.local_config}-data-sources"
-      } 
-  }
 
   reserved_concurrent_executions = 20
 }
