@@ -304,8 +304,8 @@ class PreValidators:
 
     def pre_validate_patient_name_given(self, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='Patient')].name[0].given (legacy CSV field name:
-        PERSON_FORENAME) exists, then it is a an array containing a single non-empty string
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].name[{index}].given index dynamically determined
+        (legacy CSV field name:PERSON_FORENAME) exists, then it is a an array containing a single non-empty string
         """
         field_location = patient_name_given_field_location(values)
 
@@ -317,8 +317,8 @@ class PreValidators:
 
     def pre_validate_patient_name_family(self, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='Patient')].name[0].family (legacy CSV field name:
-        PERSON_SURNAME) exists, then it is a an array containing a single non-empty string
+        Pre-validate that, if a contained[?(@.resourceType=='Patient')].name[{index}].family (legacy CSV field name:
+        PERSON_SURNAME) exists, index dynamically determined then it is a an array containing a single non-empty string
         """
         field_location = patient_name_family_field_location(values)
         try:
@@ -369,7 +369,7 @@ class PreValidators:
         """
         field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
         try:
-            patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]                         
+            patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]
             postal_codes = []
             for address in patient["address"]:
                 if "postalCode" in address:
@@ -378,9 +378,9 @@ class PreValidators:
                 PreValidation.for_string(postal_codes[0], field_location)
             elif len(postal_codes) > 1:
                 non_empty_value = next((code for code in postal_codes if code), "")
-                PreValidation.for_string(non_empty_value, field_location)                
-        except (KeyError, IndexError):            
-            pass       
+                PreValidation.for_string(non_empty_value, field_location)
+        except (KeyError, IndexError):
+            pass
 
     def pre_validate_occurrence_date_time(self, values: dict) -> dict:
         """
@@ -490,8 +490,9 @@ class PreValidators:
 
     def pre_validate_practitioner_name_given(self, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[0].given (legacy CSV field name:
-        PERSON_FORENAME) exists, then it is a an array containing a single non-empty string
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[{index}].given index dynamically
+        determined (legacy CSV field name:PERSON_FORENAME) exists,
+        then it is a an array containing a single non-empty string
         """
         field_location = practitioner_name_given_field_location(values)
         try:
@@ -502,8 +503,9 @@ class PreValidators:
 
     def pre_validate_practitioner_name_family(self, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[0].family (legacy CSV field name:
-        PERSON_SURNAME) exists, then it is a an array containing a single non-empty string
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[{index}].family
+        index dynamically determined (legacy CSV field name:PERSON_SURNAME) exists,
+        then it is a an array containing a single non-empty string
         """
         field_location = practitioner_name_family_field_location(values)
         try:

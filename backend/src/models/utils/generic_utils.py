@@ -196,7 +196,7 @@ def generate_field_location_for_name(index: str, name_value: str, resource_type:
 
 
 def obtain_current_name_period(period: dict, occurrence_date: datetime) -> bool:
-    """Determines if the period is considered current at the date of vaccination (occurrence_date).
+    """Determines if the period is considered current at the date of vaccination date (occurrence_date).
     If no period then current. If vaccination date is before period starts, it is not current. If vaccination date
     is after period ends, it is not current"""
     if not period:
@@ -220,7 +220,7 @@ def obtain_current_name_period(period: dict, occurrence_date: datetime) -> bool:
 
 
 def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
-    """Selects the correct name instance based on the 'period' and 'use' criteria."""
+    """Selects the correct "current" name instance based on the 'period' and 'use' criteria."""
 
     # DUE TO RUNNING PRE_VALIDATE_PATIENT_NAME AND PRE_VALIDATE_PRACTITIONER NAME BEFORE THE RESPECTIVE CHECKS
     # FOR GIVEN AND FAMILY NAMES, AND BECAUSE WE CHECK THAT NAME FIELD EXISTS BEFORE CALLING THIS FUNCTION,
@@ -266,11 +266,12 @@ def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
 
 
 def patient_and_practitioner_value_and_index(imms: dict, name_value: str, resource_type: str):
-    """Obtains patient_name_given value"""
+    """Obtains patient_name_given, patient_name_family, practitioner_name_given or practitioner_name_family
+    value and index, dependent on the resource_type and name_value"""
     resource = get_contained_resource(imms, resource_type)
     name = resource["name"]
 
-    # Get occurrenceDateTime as datetime
+    # Get occurrenceDateTime
     occurrence_date = get_occurrence_datetime_for_name(imms)
 
     # Select the appropriate name instance
@@ -302,14 +303,15 @@ def patient_name_family_field_location(imms: dict):
 
 
 def practitioner_name_given_field_location(imms: dict):
-    """Obtains practitioner_name_given value"""
+    """Obtains practitioner_name_given field location based on logic"""
     return obtain_name_field_location(imms, "Practitioner", "given")
 
 
 def practitioner_name_family_field_location(imms: dict):
-    """Obtains practitioner_name_family value"""
+    """Obtains practitioner_name_family field location based on logic"""
     return obtain_name_field_location(imms, "Practitioner", "family")
 
 
 def get_occurrence_datetime_for_name(immunization: dict) -> Optional[datetime.datetime]:
+    """Returns occurencedatetime for use in get_current_name_instance"""
     return immunization.get("occurrenceDateTime", None)
