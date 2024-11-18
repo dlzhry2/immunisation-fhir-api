@@ -74,7 +74,7 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
                 **details_from_processing,
             }
 
-            send_to_kinesis(supplier, outgoing_message_body)
+            # send_to_kinesis(supplier, outgoing_message_body)
 
         logger.info("Total rows processed: %s", row_count)
 
