@@ -4,13 +4,16 @@ import json
 import os
 import time
 import logging
+import uuid
 from constants import Constants
 from utils_for_recordprocessor import get_csv_content_dict_reader
 from unique_permission import get_unique_action_flags_from_s3
 from make_and_upload_ack_file import make_and_upload_ack_file
 from get_operation_permissions import get_operation_permissions
+from models.errors import Severity, Code, create_operation_outcome
 from process_row import process_row
 from mappings import Vaccine
+from fhir_controller import FhirController, make_controller
 
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
@@ -65,18 +68,18 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
             # Process the row to obtain the details needed for the message_body and ack file
             details_from_processing = process_row(vaccine, allowed_operations, row)
 
-            # Create the message body for sending
-            outgoing_message_body = {
-                "row_id": row_id,
-                "file_key": file_key,
-                "supplier": supplier,
-                "created_at_formatted_string": created_at_formatted_string,
-                **details_from_processing,
-            }
-
-            # send_to_kinesis(supplier, outgoing_message_body)
-
+            create_immunization(details_from_processing, supplier, make_controller())
         logger.info("Total rows processed: %s", row_count)
+
+
+def create_immunization(immunisation: any, supplier: str, controller: FhirController):
+    try:
+        return controller.create_immunization(immunisation, supplier)
+    except Exception as e:
+        exp_error = create_operation_outcome(
+            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=str(e)
+        )
+        return FhirController.create_response(500, exp_error)
 
 
 def validate_content_headers(csv_content_reader):

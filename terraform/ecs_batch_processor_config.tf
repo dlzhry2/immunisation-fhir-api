@@ -193,7 +193,11 @@ resource "aws_ecs_task_definition" "ecs_task" {
       { 
         name  = "DYNAMODB_TABLE_NAME"
         value = aws_dynamodb_table.events-dynamodb-table.name
-      }      
+      },
+      { 
+        name  = "IMMUNIZATION_ENV"
+        value = local.environment
+      } 
     ]
     logConfiguration = {
       logDriver = "awslogs"
