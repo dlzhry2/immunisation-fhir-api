@@ -1,9 +1,8 @@
-import simplejson as json
 import os
 import uuid
 import boto3
 from dataclasses import dataclass
-from boto3.dynamodb.conditions import Attr, Key
+from boto3.dynamodb.conditions import Key
 from botocore.config import Config
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
 from models.errors import UnhandledResponseError, IdentifierDuplicationError

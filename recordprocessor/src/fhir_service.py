@@ -1,4 +1,3 @@
-from pydantic import ValidationError
 from fhir_repository import ImmunizationRepository
 from fhir.resources.R4B.immunization import Immunization
 
