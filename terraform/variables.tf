@@ -33,6 +33,7 @@ locals {
     short_prefix        = "${var.project_short_name}-${local.environment}"
     service_domain_name = "${local.environment}.${local.project_domain_name}"
     config_env = local.environment == "prod" ? "prod" : "dev"
+    config_bucket_env = local.environment == "prod" ? "prod" : "internal-dev"
 
     tags = {
         Project     = var.project_name
@@ -65,7 +66,7 @@ data "aws_security_group" "existing_sg" {
 }
 
 data "aws_s3_bucket" "existing_config_bucket" {
-  bucket = "imms-${local.config_env}-supplier-config"
+  bucket = "imms-${local.config_bucket_env}-supplier-config"
 }
 data "aws_kms_key" "existing_lambda_encryption_key" {
   key_id = "alias/imms-batch-lambda-env-encryption"
