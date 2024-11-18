@@ -18,9 +18,7 @@ def send_to_supplier_queue(message_body: dict) -> bool:
         return False
 
     # Find the URL of the relevant queue
-    imms_env = os.getenv("SHORT_QUEUE_PREFIX", "imms-batch-internal-dev")
-    account_id = os.getenv("LOCAL_ACCOUNT_ID")
-    queue_url = f"https://sqs.eu-west-2.amazonaws.com/{account_id}/{imms_env}-metadata-queue.fifo"
+    queue_url = os.getenv("QUEUE_URL")
 
     # Send to queue
     try:
