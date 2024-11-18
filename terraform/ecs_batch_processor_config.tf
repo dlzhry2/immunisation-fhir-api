@@ -131,6 +131,16 @@ resource "aws_iam_policy" "ecs_task_exec_policy" {
           "kms:Decrypt"
         ],
         Resource= aws_sqs_queue.supplier_fifo_queue.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query"
+        ]
+        Resource = aws_dynamodb_table.events-dynamodb-table.arn
       }
     ]
   })
@@ -173,22 +183,17 @@ resource "aws_ecs_task_definition" "ecs_task" {
         value = "${local.short_prefix}-data-destinations"
       },
       {
-        name  = "ENVIRONMENT"
-        value = "${local.environment}"
-      },
-      {
         name  = "CONFIG_BUCKET_NAME"
         value = "${local.short_prefix}-configs"
       },
       { 
         name  = "SPLUNK_FIREHOSE_NAME"
         value = module.splunk.firehose_stream_name
-      },      
-      {
-        name="LOCAL_ACCOUNT_ID"   
-        value ="${tostring(local.local_account_id)}"
-      }
-
+      },
+      { 
+        name  = "DYNAMODB_TABLE_NAME"
+        value = aws_dynamodb_table.events-dynamodb-table.name
+      }      
     ]
     logConfiguration = {
       logDriver = "awslogs"
