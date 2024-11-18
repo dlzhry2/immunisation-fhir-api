@@ -75,7 +75,7 @@ resource "aws_ecr_repository_policy" "filenameprocessor_lambda_ECRImageRetreival
 }
 
 # IAM Role for Lambda
-resource "aws_iam_role" "lambda_exec_role" {
+resource "aws_iam_role" "filenameprocessor_lambda_exec_role" {
   name = "${local.short_prefix}-filenameproc-lambda-exec-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -91,7 +91,7 @@ resource "aws_iam_role" "lambda_exec_role" {
 }
 
 # Policy for Lambda execution role
-resource "aws_iam_policy" "lambda_exec_policy" {
+resource "aws_iam_policy" "filenameprocessor_lambda_exec_policy" {
   name   = "${local.short_prefix}-filenameproc-lambda-exec-policy"
   policy = jsonencode({
     Version = "2012-10-17",
@@ -162,7 +162,7 @@ resource "aws_iam_policy" "lambda_exec_policy" {
 }
 
 # Policy for Lambda to interact with SQS
-resource "aws_iam_policy" "lambda_sqs_policy" {
+resource "aws_iam_policy" "filenameprocessor_lambda_sqs_policy" {
   name = "${local.short_prefix}-filenameproc-lambda-sqs-policy"
 
   policy = jsonencode({
@@ -177,7 +177,7 @@ resource "aws_iam_policy" "lambda_sqs_policy" {
   })
 }
 
-resource "aws_iam_policy" "lambda_kms_access_policy" {
+resource "aws_iam_policy" "filenameprocessor_lambda_kms_access_policy" {
   name        = "${local.short_prefix}-filenameproc-lambda-kms-policy"
   description = "Allow Lambda to decrypt environment variables"
 
@@ -205,26 +205,26 @@ resource "aws_iam_policy" "lambda_kms_access_policy" {
 }
 
 # Attach the execution policy to the Lambda role
-resource "aws_iam_role_policy_attachment" "lambda_exec_policy_attachment" {
-  role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = aws_iam_policy.lambda_exec_policy.arn
+resource "aws_iam_role_policy_attachment" "filenameprocessor_lambda_exec_policy_attachment" {
+  role       = aws_iam_role.filenameprocessor_lambda_exec_role.name
+  policy_arn = aws_iam_policy.filenameprocessor_lambda_exec_policy.arn
 }
 
 # Attach the SQS policy to the Lambda role
 resource "aws_iam_role_policy_attachment" "lambda_sqs_policy_attachment" {
-  role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = aws_iam_policy.lambda_sqs_policy.arn
+  role       = aws_iam_role.filenameprocessor_lambda_exec_role.name
+  policy_arn = aws_iam_policy.filenameprocessor_lambda_sqs_policy.arn
 }
 
 # Attach the kms policy to the Lambda role
 resource "aws_iam_role_policy_attachment" "lambda_kms_policy_attachment" {
-  role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = aws_iam_policy.lambda_kms_access_policy.arn
+  role       = aws_iam_role.filenameprocessor_lambda_exec_role.name
+  policy_arn = aws_iam_policy.filenameprocessor_lambda_kms_access_policy.arn
 }
 # Lambda Function with Security Group and VPC.
 resource "aws_lambda_function" "file_processor_lambda" {
   function_name   = "${local.short_prefix}-filenameproc_lambda"
-  role            = aws_iam_role.lambda_exec_role.arn
+  role            = aws_iam_role.filenameprocessor_lambda_exec_role.arn
   package_type    = "Image"
   image_uri       = module.file_processor_docker_image.image_uri
   architectures   = ["x86_64"]
@@ -239,9 +239,7 @@ resource "aws_lambda_function" "file_processor_lambda" {
     variables = {
       SOURCE_BUCKET_NAME   = "${local.short_prefix}-data-sources"
       ACK_BUCKET_NAME      = "${local.short_prefix}-data-destinations"
-      ENVIRONMENT          = local.environment
-      LOCAL_ACCOUNT_ID     = local.local_account_id
-      QUEUE_NAME           = aws_sqs_queue.supplier_fifo_queue.name
+      QUEUE_NAME           = aws_sqs_queue.supplier_fifo_queue.url
       CONFIG_BUCKET_NAME   = data.aws_s3_bucket.existing_config_bucket.bucket
       REDIS_HOST           = data.aws_elasticache_cluster.existing_redis.cache_nodes[0].address
       REDIS_PORT           = data.aws_elasticache_cluster.existing_redis.cache_nodes[0].port
@@ -263,7 +261,7 @@ resource "aws_lambda_permission" "s3_invoke_permission" {
 }
 
 # S3 Bucket notification to trigger Lambda function
-resource "aws_s3_bucket_notification" "lambda_notification" {
+resource "aws_s3_bucket_notification" "datasources_lambda_notification" {
   bucket = aws_s3_bucket.batch_data_source_bucket.bucket
 
   lambda_function {
@@ -273,7 +271,7 @@ resource "aws_s3_bucket_notification" "lambda_notification" {
 }
 
 # S3 Bucket notification to trigger Lambda function for config bucket
-resource "aws_s3_bucket_notification" "new_lambda_notification" {
+resource "aws_s3_bucket_notification" "config_lambda_notification" {
   bucket = data.aws_s3_bucket.existing_config_bucket.bucket
 
   lambda_function {
