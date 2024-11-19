@@ -140,7 +140,8 @@ resource "aws_iam_policy" "ecs_task_exec_policy" {
           "dynamodb:UpdateItem",
           "dynamodb:Query"
         ]
-        Resource = aws_dynamodb_table.events-dynamodb-table.arn
+        Resource = ["arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.events-dynamodb-table.name}",
+                    "arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.events-dynamodb-table.name}/index/*"]
       }
     ]
   })
