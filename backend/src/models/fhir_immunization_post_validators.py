@@ -38,7 +38,7 @@ class PostValidators:
             FieldNames.recorded,
             FieldNames.primary_source,
             FieldNames.vaccination_procedure_code,
-            FieldNames.vaccination_procedure_display,
+            # FieldNames.vaccination_procedure_display,
             FieldNames.dose_number_positive_int,
             # FieldNames.vaccine_code_coding_code,
             # FieldNames.vaccine_code_coding_display,
