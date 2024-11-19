@@ -79,24 +79,13 @@ def upload_ack_file(
 
 
 def update_ack_file(
-    file_key: str, row_id: str, successful_api_response: bool, diagnostics: Union[None, str], imms_id: Union[None, str]
+    file_key: str, row_id: str, successful_api_response: bool, diagnostics: Union[None, str], imms_id: Union[None, str],
+    created_at_formatted_string: str
 ) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
     ack_file_key = f"forwardedFile/{file_key.replace('.csv', '_BusAck.csv')}"
     imms_env = get_environment()
-    source_bucket_name = os.getenv("SOURCE_BUCKET_NAME", f"immunisation-batch-{imms_env}-data-sources")
     ack_bucket_name = os.getenv("ACK_BUCKET_NAME", f"immunisation-batch-{imms_env}-data-destinations")
-    try:
-        response = s3_client.get_object(Bucket=source_bucket_name, Key=file_key)
-        if response:
-            created_at_formatted_string = response["LastModified"].strftime("%Y%m%dT%H%M%S00")
-            print(f"time:{created_at_formatted_string}")
-    except ClientError as error:
-        logger.error("error:%s", error)
-        if error.response["Error"]["Code"] in ("404", "NoSuchKey"):
-            # If ack file does not exist in S3 create a new file
-            created_at_formatted_string = "random_time"
-    
     ack_data_row = create_ack_data(created_at_formatted_string, row_id, successful_api_response, diagnostics, imms_id)
     accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_key)
     upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_row)

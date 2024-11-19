@@ -15,6 +15,7 @@ def lambda_handler(event, context):
             file_key = incoming_message_body.get("file_key")
             row_id = incoming_message_body.get("row_id")
             diagnostics = incoming_message_body.get("diagnostics")
+            created_at_formatted_string = incoming_message_body.get("created_at_formatted_string")
             if diagnostics is None:
                 status_code = incoming_message_body.get('statusCode', 0)
                 if status_code not in {200, 201, 204}:
@@ -37,6 +38,7 @@ def lambda_handler(event, context):
                 successful_api_response=successful_api_response,
                 diagnostics=diagnostics,
                 imms_id=imms_id,
+                created_at_formatted_string=created_at_formatted_string
             )
             # Delete the message from the queue
 

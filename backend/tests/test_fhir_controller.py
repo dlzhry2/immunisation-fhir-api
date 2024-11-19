@@ -841,8 +841,8 @@ class TestCreateImmunization(unittest.TestCase):
                 "VaccineTypePermissions": "COVID19:create",
                 "SupplierSystem": "Imms-Batch-App",
                 "BatchSupplierSystem": "test",
-                "Filename": "test",
-                "MessageId": "123",
+                "File_key": "test",
+                "row_id": "123",
             },
             "body": imms.json(),
         }
@@ -856,15 +856,15 @@ class TestCreateImmunization(unittest.TestCase):
         expected_message_body = json.dumps({
             "statusCode": 201,
             'headers': {'Location': f'https://internal-dev.api.service.nhs.uk/None/Immunization/{imms_id}'},
-            "Filename": aws_event["headers"]["Filename"],
-            "MessageId": aws_event["headers"]["MessageId"],
+            "file_key": aws_event["headers"]["file_key"],
+            "row_id": aws_event["headers"]["row_id"],
             
         })
         
         mock_send_message.assert_called_once_with(
             QueueUrl='Queue_url',
             MessageBody=expected_message_body,
-            MessageGroupId=aws_event["headers"]["Filename"]
+            MessageGroupId=aws_event["headers"]["file_key"]
         )
  
         # Assert the response
@@ -981,7 +981,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms = {"id": "valid-id"}
         aws_event = {
             "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:update", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test", 
-                        "Filename": "test", "MessageId": "123"},
+                        "file_key": "test", "row_id": "123"},
             "body": imms,
             "pathParameters": {"id": imms_id},
         }
@@ -998,15 +998,15 @@ class TestUpdateImmunization(unittest.TestCase):
         expected_message_body = json.dumps({
             "statusCode": 200,
             'headers': {},
-            "Filename": aws_event["headers"]["Filename"],
-            "MessageId": aws_event["headers"]["MessageId"],
+            "file_key": aws_event["headers"]["file_key"],
+            "row_id": aws_event["headers"]["row_id"],
             
         })
         
         mock_send_message.assert_called_once_with(
             QueueUrl='Queue_url',
             MessageBody=expected_message_body,
-            MessageGroupId=aws_event["headers"]["Filename"]
+            MessageGroupId=aws_event["headers"]["file_key"]
         )
         self.service.update_immunization.assert_called_once_with(imms_id, imms, 1, None, "Test", True)
         self.assertEqual(response["statusCode"], 200)
@@ -1307,7 +1307,7 @@ class TestDeleteImmunization(unittest.TestCase):
         self.service.delete_immunization.return_value = Immunization.construct()
         lambda_event = {
             "headers": {"VaccineTypePermissions": "COVID19:delete", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test"
-                        ,"Filename": "test","MessageId": "123"},
+                        ,"file_key": "test","row_id": "123"},
             "pathParameters": {"id": imms_id},
         }
 
@@ -1319,15 +1319,15 @@ class TestDeleteImmunization(unittest.TestCase):
         expected_message_body = json.dumps({
             "statusCode": 204,
             'headers': {},
-            "Filename": lambda_event["headers"]["Filename"],
-            "MessageId": lambda_event["headers"]["MessageId"],
+            "file_key": lambda_event["headers"]["file_key"],
+            "row_id": lambda_event["headers"]["row_id"],
             
         })
         
         mock_send_message.assert_called_once_with(
             QueueUrl='Queue_url',
             MessageBody=expected_message_body,
-            MessageGroupId=lambda_event["headers"]["Filename"]
+            MessageGroupId=lambda_event["headers"]["file_key"]
         )
         self.assertEqual(response["statusCode"], 204)
         self.assertTrue("body" not in response)    
