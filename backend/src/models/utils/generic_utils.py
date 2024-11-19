@@ -6,6 +6,7 @@ from typing import Literal, Union, Optional
 from models.constants import Constants
 import urllib.parse
 import base64
+from stdnum.verhoeff import validate
 
 
 def get_contained_resource(imms: dict, resource: Literal["Patient", "Practitioner", "QuestionnaireResponse"]):
@@ -66,6 +67,15 @@ def check_for_unknown_elements(resource, resource_type) -> Union[None, list]:
             errors.append(f"{key} is not an allowed element of the {resource_type} resource for this service")
     return errors
 
+def is_valid_simple_snomed(simple_snomed: str) -> bool:
+    "check the snomed code valid or not."
+    min_snomed_length = 6
+    max_snomed_length = 18
+    return (simple_snomed is not None
+    and simple_snomed.isdigit()
+    and min_snomed_length <= len(simple_snomed) <= max_snomed_length
+    and validate(simple_snomed)
+    and (simple_snomed[-3:-1] in ("00", "10")))
 
 def nhs_number_mod11_check(nhs_number: str) -> bool:
     """

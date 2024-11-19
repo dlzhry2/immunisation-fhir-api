@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Union
 
-from .generic_utils import nhs_number_mod11_check
+from .generic_utils import nhs_number_mod11_check, is_valid_simple_snomed
 
 
 class PreValidation:
@@ -146,6 +146,24 @@ class PreValidation:
                     datetime.strptime(field_value, "%Y-%m-%dT%H:%M:%S.%f%z")
                 except ValueError as error:
                     raise ValueError(error_message) from error
+                    
+    @staticmethod
+    def for_snomed_code(field_value: str, field_location: str):
+        """
+        Apply prevalidation to snomed code to ensure that its a valid one.
+        """
+
+        error_message = (
+            f"{field_location} is not a valid snomed code"
+        )
+        
+        try:
+            is_valid = is_valid_simple_snomed(field_value)  
+        except Exception:
+            raise ValueError(error_message)
+        if not is_valid:
+            raise ValueError(error_message)
+
 
     @staticmethod
     def for_boolean(field_value: str, field_location: str):
