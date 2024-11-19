@@ -21,9 +21,9 @@ class FhirController:
     ):
         self.fhir_service = fhir_service
 
-    def create_immunization(self, immunisation: any, supplier_system: str):
+    def create_immunization(self, immunisation: any, supplier_system: str, vaccine: str):
         try:
-            self.fhir_service.create_immunization(immunisation, supplier_system, immunisation["vax_type"])
+            self.fhir_service.create_immunization(immunisation, supplier_system, vaccine)
         except UnhandledResponseError as unhandled_error:
             return self.create_response(500, unhandled_error.to_operation_outcome())
 

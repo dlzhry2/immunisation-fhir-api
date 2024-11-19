@@ -61,23 +61,34 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
         )
 
         row_count = 0  # Initialize a counter for rows
-        for row in csv_reader:
+        for immunisation in csv_reader:
             row_count += 1
             row_id = f"{file_id}#{row_count}"
             logger.info("MESSAGE ID : %s", row_id)
             # Process the row to obtain the details needed for the message_body and ack file
-            details_from_processing = process_row(vaccine, allowed_operations, row)
+            outcome = process_row(allowed_operations, immunisation)
 
-            create_immunization(details_from_processing, supplier, make_controller())
+            if 'diagnostics' not in outcome:
+                if "CREATE" in outcome["operation_requested"]:
+                    create_immunization(
+                        immunisation, supplier, vaccine.value, make_controller()
+                    )
+            else:
+                logger.info("row validation failed: %s", row_id)
         logger.info("Total rows processed: %s", row_count)
 
 
-def create_immunization(immunisation: any, supplier: str, controller: FhirController):
+def create_immunization(
+    immunisation: any, supplier: str, vaccine: str, controller: FhirController
+):
     try:
-        return controller.create_immunization(immunisation, supplier)
+        return controller.create_immunization(immunisation, supplier, vaccine)
     except Exception as e:
         exp_error = create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=str(e)
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.server_error,
+            diagnostics=str(e),
         )
         return FhirController.create_response(500, exp_error)
 

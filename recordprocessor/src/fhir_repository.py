@@ -34,16 +34,6 @@ def _query_identifier(table, index, pk, identifier):
         return queryresponse
 
 
-def get_nhs_number(imms):
-    try:
-        nhs_number = [x for x in imms["contained"] if x["resourceType"] == "Patient"][
-            0
-        ]["identifier"][0]["value"]
-    except (KeyError, IndexError):
-        nhs_number = "TBC"
-    return nhs_number
-
-
 @dataclass
 class RecordAttributes:
     pk: str
@@ -58,12 +48,12 @@ class RecordAttributes:
         """Create attributes that may be used in dynamodb table"""
         imms_id = immunization["id"]
         self.pk = _make_immunization_pk(imms_id)
-        nhs_number = get_nhs_number(immunization)
+        nhs_number = immunization["NHS_NUMBER"]
         self.patient_pk = _make_patient_pk(nhs_number)
         self.resource = immunization
         self.vaccine_type = vax_type
-        self.system_id = immunization["identifier"][0]["system"]
-        self.system_value = immunization["identifier"][0]["value"]
+        self.system_id = immunization["UNIQUE_ID_URI"]
+        self.system_value = immunization["UNIQUE_ID"]
         self.patient_sk = f"{self.vaccine_type}#{imms_id}"
         self.identifier = f"{self.system_id}#{self.system_value}"
 
