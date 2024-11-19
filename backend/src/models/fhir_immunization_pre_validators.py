@@ -5,6 +5,11 @@ from models.utils.generic_utils import (
     get_generic_extension_value,
     generate_field_location_for_extension,
     check_for_unknown_elements,
+    patient_name_given_field_location,
+    patient_name_family_field_location,
+    practitioner_name_given_field_location,
+    practitioner_name_family_field_location,
+    patient_and_practitioner_value_and_index,
 )
 from models.utils.pre_validator_utils import PreValidation
 from models.errors import MandatoryError
@@ -289,32 +294,33 @@ class PreValidators:
         field_location = "contained[?(@.resourceType=='Patient')].name"
         try:
             field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["name"]
-            PreValidation.for_list(field_value, field_location, defined_length=1)
+            PreValidation.for_list(field_value, field_location, elements_are_dicts=True)
         except (KeyError, IndexError):
             pass
 
     def pre_validate_patient_name_given(self, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='Patient')].name[0].given (legacy CSV field name:
-        PERSON_FORENAME) exists, then it is a an array containing a single non-empty string
+        Pre-validate that, if contained[?(@.resourceType=='Patient')].name[{index}].given index dynamically determined
+        (legacy CSV field name:PERSON_FORENAME) exists, then it is a an array containing a single non-empty string
         """
-        field_location = "contained[?(@.resourceType=='Patient')].name[0].given"
+        field_location = patient_name_given_field_location(values)
+
         try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["name"][0]["given"]
-            PreValidation.for_list(field_value, field_location, defined_length=1, elements_are_strings=True)
-        except (KeyError, IndexError):
+            field_value, _ = patient_and_practitioner_value_and_index(values, "given", "Patient")
+            PreValidation.for_list(field_value, field_location, elements_are_strings=True)
+        except (KeyError, IndexError, AttributeError):
             pass
 
     def pre_validate_patient_name_family(self, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='Patient')].name[0].family (legacy CSV field name:
-        PERSON_SURNAME) exists, then it is a an array containing a single non-empty string
+        Pre-validate that, if a contained[?(@.resourceType=='Patient')].name[{index}].family (legacy CSV field name:
+        PERSON_SURNAME) exists, index dynamically determined then it is a an array containing a single non-empty string
         """
-        field_location = "contained[?(@.resourceType=='Patient')].name[0].family"
+        field_location = patient_name_family_field_location(values)
         try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]["name"][0]["family"]
+            field_value, _ = patient_and_practitioner_value_and_index(values, "family", "Patient")
             PreValidation.for_string(field_value, field_location)
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, AttributeError):
             pass
 
     def pre_validate_patient_birth_date(self, values: dict) -> dict:
@@ -359,7 +365,7 @@ class PreValidators:
         """
         field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
         try:
-            patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]                         
+            patient = [x for x in values["contained"] if x.get("resourceType") == "Patient"][0]
             postal_codes = []
             for address in patient["address"]:
                 if "postalCode" in address:
@@ -368,9 +374,9 @@ class PreValidators:
                 PreValidation.for_string(postal_codes[0], field_location)
             elif len(postal_codes) > 1:
                 non_empty_value = next((code for code in postal_codes if code), "")
-                PreValidation.for_string(non_empty_value, field_location)                
-        except (KeyError, IndexError):            
-            pass       
+                PreValidation.for_string(non_empty_value, field_location)
+        except (KeyError, IndexError):
+            pass
 
     def pre_validate_occurrence_date_time(self, values: dict) -> dict:
         """
@@ -474,34 +480,32 @@ class PreValidators:
         field_location = "contained[?(@.resourceType=='Practitioner')].name"
         try:
             field_values = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["name"]
-            PreValidation.for_list(field_values, field_location, defined_length=1)
-        except (KeyError, IndexError):
+            PreValidation.for_list(field_values, field_location, elements_are_dicts=True)
+        except (KeyError, IndexError, AttributeError):
             pass
 
     def pre_validate_practitioner_name_given(self, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[0].given (legacy CSV field name:
-        PERSON_FORENAME) exists, then it is a an array containing a single non-empty string
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[{index}].given index dynamically
+        determined (legacy CSV field name:PERSON_FORENAME) exists,
+        then it is a an array containing a single non-empty string
         """
-        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].given"
+        field_location = practitioner_name_given_field_location(values)
         try:
-            field_value = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["name"][0][
-                "given"
-            ]
-            PreValidation.for_list(field_value, field_location, defined_length=1, elements_are_strings=True)
-        except (KeyError, IndexError):
+            field_value, _ = patient_and_practitioner_value_and_index(values, "given", "Practitioner")
+            PreValidation.for_list(field_value, field_location, elements_are_strings=True)
+        except (KeyError, IndexError, AttributeError):
             pass
 
     def pre_validate_practitioner_name_family(self, values: dict) -> dict:
         """
-        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[0].family (legacy CSV field name:
-        PERSON_SURNAME) exists, then it is a an array containing a single non-empty string
+        Pre-validate that, if contained[?(@.resourceType=='Practitioner')].name[{index}].family
+        index dynamically determined (legacy CSV field name:PERSON_SURNAME) exists,
+        then it is a an array containing a single non-empty string
         """
-        field_location = "contained[?(@.resourceType=='Practitioner')].name[0].family"
+        field_location = practitioner_name_family_field_location(values)
         try:
-            field_name = [x for x in values["contained"] if x.get("resourceType") == "Practitioner"][0]["name"][0][
-                "family"
-            ]
+            field_name, _ = patient_and_practitioner_value_and_index(values, "family", "Practitioner")
             PreValidation.for_string(field_name, field_location)
         except (KeyError, IndexError):
             pass

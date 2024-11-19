@@ -3,6 +3,7 @@
 import unittest
 from copy import deepcopy
 from pydantic import ValidationError
+from jsonpath_ng.ext import parse
 
 
 from src.mappings import VaccineTypes
@@ -13,6 +14,8 @@ from tests.utils.generic_utils import (
     load_json_data,
 )
 from tests.utils.mandation_test_utils import MandationTests
+from tests.utils.values_for_tests import NameInstances
+from tests.utils.generic_utils import update_contained_resource_field
 
 
 class TestImmunizationModelPostValidationRules(unittest.TestCase):
@@ -28,7 +31,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             VaccineTypes.mmr: load_json_data("completed_mmr_immunization_event.json"),
             VaccineTypes.rsv: load_json_data("completed_rsv_immunization_event.json"),
         }
-        self.all_vaccine_types = [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr, VaccineTypes.rsv]
+        self.all_vaccine_types = [
+            VaccineTypes.covid_19,
+            VaccineTypes.flu,
+            VaccineTypes.hpv,
+            VaccineTypes.mmr,
+            VaccineTypes.rsv,
+        ]
 
     def test_collected_errors(self):
         """Test that when passed multiple validation errors, it returns a list of all expected errors"""
@@ -82,7 +91,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         )
 
         # Test that a valid combination of disease codes is accepted
-        for vaccine_type in [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr, VaccineTypes.rsv]:
+        for vaccine_type in [
+            VaccineTypes.covid_19,
+            VaccineTypes.flu,
+            VaccineTypes.hpv,
+            VaccineTypes.mmr,
+            VaccineTypes.rsv,
+        ]:
             self.assertIsNone(self.validator.validate(self.completed_json_data[vaccine_type]))
 
         # Test that an invalid single disease code is rejected
@@ -143,13 +158,73 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
     def test_post_patient_name_given(self):
         """Test that the JSON data is rejected if it does not contain patient_name_given"""
-        field_location = "contained[?(@.resourceType=='Patient')].name[0].given"
-        MandationTests.test_missing_mandatory_field_rejected(self, field_location)
+        valid_json_data = deepcopy(self.completed_json_data[VaccineTypes.rsv])
+        patient_name_given_field_location = "contained[?(@.resourceType=='Patient')].name[0].given"
+        expected_error_message = f"{patient_name_given_field_location} is a mandatory field"
+
+        # Case 1: No name field fails validation
+        patient_name_field_location = "contained[?(@.resourceType=='Patient')].name"
+        invalid_json_data = parse(patient_name_field_location).filter(lambda d: True, deepcopy(valid_json_data))
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(invalid_json_data)
+        self.assertIn(expected_error_message, str(error.exception))
+
+        # Case 2: One name instance with no given field fails validation
+        MandationTests.test_missing_mandatory_field_rejected(self, patient_name_given_field_location)
+
+        # Case 3: Multiple name instances, only one of which is valid and has a given field, passes validation
+        valid_name_array = [
+            NameInstances.Invalid.given_name_only,
+            NameInstances.Invalid.family_name_only,
+            NameInstances.Invalid.family_name_only_with_use_official_and_period_start_and_end,
+            NameInstances.ValidCurrent.with_use_official_and_period_start_and_end,
+        ]
+
+        json_data = deepcopy(valid_json_data)
+        json_data = update_contained_resource_field(json_data, "Patient", "name", valid_name_array)
+        MandationTests.test_present_field_accepted(self, json_data)
+
+        # Case 4: Multiple name instances, none of which is valid and has a given field, fails validation
+        invalid_name_array = [
+            NameInstances.Invalid.family_name_only_with_use_official_and_period_start_and_end,
+            NameInstances.Invalid.given_name_only,
+            NameInstances.Invalid.family_name_only_with_use_official,
+        ]
+
+        json_data = deepcopy(valid_json_data)
+        json_data = update_contained_resource_field(json_data, "Patient", "name", invalid_name_array)
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(json_data)
+        self.assertEqual(expected_error_message, str(error.exception))
 
     def test_post_patient_name_family(self):
         """Test that the JSON data is rejected if it does not contain patient_name_family"""
-        field_location = "contained[?(@.resourceType=='Patient')].name[0].family"
-        MandationTests.test_missing_mandatory_field_rejected(self, field_location)
+        valid_json_data = deepcopy(self.completed_json_data[VaccineTypes.rsv])
+        patient_name_family_field_location = "contained[?(@.resourceType=='Patient')].name[0].family"
+        expected_error_message = f"{patient_name_family_field_location} is a mandatory field"
+
+        # Case 1: No name field fails validation
+        patient_name_field_location = "contained[?(@.resourceType=='Patient')].name"
+        invalid_json_data = parse(patient_name_field_location).filter(lambda d: True, deepcopy(valid_json_data))
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(invalid_json_data)
+        self.assertIn(expected_error_message, str(error.exception))
+
+        # Case 2: One name instance with no given field fails validation
+        MandationTests.test_missing_mandatory_field_rejected(self, patient_name_family_field_location)
+
+        # Case 3: Multiple name instances, none of which is valid and has a given field, fails validation
+        invalid_name_array = [
+            NameInstances.Invalid.given_name_only,
+            NameInstances.Invalid.family_name_only_with_use_official_and_period_start_and_end,
+            NameInstances.Invalid.family_name_only_with_use_official,
+        ]
+
+        json_data = deepcopy(valid_json_data)
+        json_data = update_contained_resource_field(json_data, "Patient", "name", invalid_name_array)
+        with self.assertRaises(ValueError) as error:
+            self.validator.validate(json_data)
+        self.assertEqual(expected_error_message, str(error.exception))
 
     def test_post_patient_birth_date(self):
         """Test that the JSON data is rejected if it does not contain patient_birth_date"""
@@ -160,12 +235,11 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         MandationTests.test_missing_mandatory_field_rejected(self, "contained[?(@.resourceType=='Patient')].gender")
 
     def test_post_patient_address_postal_code(self):
-        """Test that the JSON data is rejected if it does not contain patient_address_postal_code""" 
-        field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"    
+        """Test that the JSON data is rejected if it does not contain patient_address_postal_code"""
+        field_location = "contained[?(@.resourceType=='Patient')].address[0].postalCode"
         MandationTests.test_missing_mandatory_field_rejected(self, field_location)
 
     def test_post_occurrence_date_time(self):
-        
         """Test that the JSON data is rejected if it does not contain occurrence_date_time"""
         # This error is raised by the FHIR validator (occurrenceDateTime is a mandatory FHIR field)
         MandationTests.test_missing_mandatory_field_rejected(
@@ -191,12 +265,50 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         MandationTests.test_missing_mandatory_field_rejected(self, "identifier[0].system")
 
     def test_post_practitioner_name_given(self):
-        """Test that the JSON data is accepted if it does not contain practitioner_name_given"""
-        MandationTests.test_missing_field_accepted(self, "contained[?(@.resourceType=='Practitioner')].name[0].given")
+        """Test that the JSON data is rejected if it does not contain practitioner_name_given"""
+        valid_json_data = deepcopy(self.completed_json_data[VaccineTypes.rsv])
+        practitioner_name_given_field_location = "contained[?(@.resourceType=='Practitioner')].name[0].given"
+
+        # Case 1: No name field passes validation
+        practitioner_name_field_location = "contained[?(@.resourceType=='Practitioner')].name"
+        MandationTests.test_missing_field_accepted(self, field_location=practitioner_name_field_location)
+
+        # Case 2: One name instance with no given field passes validation
+        MandationTests.test_missing_field_accepted(self, field_location=practitioner_name_given_field_location)
+
+        # Case 3: Multiple name instances, none of which is valid and has a given field, passes validation
+        invalid_name_array = [
+            NameInstances.Invalid.family_name_only_with_use_official_and_period_start_and_end,
+            NameInstances.Invalid.given_name_only,
+            NameInstances.Invalid.family_name_only_with_use_official,
+        ]
+
+        json_data = deepcopy(valid_json_data)
+        json_data = update_contained_resource_field(json_data, "Practitioner", "name", invalid_name_array)
+        MandationTests.test_present_field_accepted(self, json_data)
 
     def test_post_practitioner_name_family(self):
-        """Test that the JSON data is accepted if it does not contain practitioner_name_family"""
-        MandationTests.test_missing_field_accepted(self, "contained[?(@.resourceType=='Practitioner')].name[0].family")
+        """Test that the JSON data is rejected if it does not contain practitioner_name_family"""
+        valid_json_data = deepcopy(self.completed_json_data[VaccineTypes.rsv])
+        practitioner_name_family_field_location = "contained[?(@.resourceType=='Practitioner')].name[0].family"
+
+        # Case 1: No name field passes validation
+        practitioner_name_field_location = "contained[?(@.resourceType=='Practitioner')].name"
+        MandationTests.test_missing_field_accepted(self, field_location=practitioner_name_field_location)
+
+        # Case 2: One name instance with no family field passes validation
+        MandationTests.test_missing_field_accepted(self, field_location=practitioner_name_family_field_location)
+
+        # Case 3: Multiple name instances, none of which is valid and has a family field, passes validation
+        invalid_name_array = [
+            NameInstances.Invalid.family_name_only_with_use_official_and_period_start_and_end,
+            NameInstances.Invalid.given_name_only,
+            NameInstances.Invalid.family_name_only_with_use_official,
+        ]
+
+        json_data = deepcopy(valid_json_data)
+        json_data = update_contained_resource_field(json_data, "Practitioner", "name", invalid_name_array)
+        MandationTests.test_present_field_accepted(self, json_data)
 
     def test_post_recorded(self):
         """Test that the JSON data is rejected if it does not contain recorded"""
@@ -375,7 +487,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """
         field_location = "location.identifier.value"
         # Test cases for COVID-19, FLU, HPV and MMR where it is mandatory
-        for vaccine_type in (VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr, VaccineTypes.rsv):
+        for vaccine_type in (
+            VaccineTypes.covid_19,
+            VaccineTypes.flu,
+            VaccineTypes.hpv,
+            VaccineTypes.mmr,
+            VaccineTypes.rsv,
+        ):
             valid_json_data = deepcopy(self.completed_json_data[vaccine_type])
             MandationTests.test_missing_mandatory_field_rejected(self, field_location, valid_json_data)
 
@@ -385,7 +503,13 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """
         field_location = "location.identifier.system"
         # Test cases for COVID-19, FLU, HPV and MMR where it is mandatory
-        for vaccine_type in (VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr, VaccineTypes.rsv):
+        for vaccine_type in (
+            VaccineTypes.covid_19,
+            VaccineTypes.flu,
+            VaccineTypes.hpv,
+            VaccineTypes.mmr,
+            VaccineTypes.rsv,
+        ):
             valid_json_data = deepcopy(self.completed_json_data[vaccine_type])
             MandationTests.test_missing_mandatory_field_rejected(self, field_location, valid_json_data)
 

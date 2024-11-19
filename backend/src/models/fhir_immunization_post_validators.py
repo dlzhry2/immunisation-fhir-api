@@ -5,6 +5,7 @@ from models.obtain_field_value import ObtainFieldValue
 from models.validation_sets import ValidationSets
 from models.mandation_functions import MandationFunctions
 from models.field_names import FieldNames
+from models.field_locations import FieldLocations
 from base_utils.base_utils import obtain_field_value, obtain_field_location
 
 
@@ -80,10 +81,16 @@ class PostValidators:
         except MandatoryError as e:
             self.errors.append(str(e))
 
-    def validate_field(self, mandation_functions: MandationFunctions, validation_set: dict, field_name: str) -> None:
+    def validate_field(
+        self,
+        mandation_functions: MandationFunctions,
+        validation_set: dict,
+        field_name: str,
+        field_locations: FieldLocations,
+    ) -> None:
         """Runs standard validation for the field"""
 
-        field_location = obtain_field_location(field_name)
+        field_location = obtain_field_location(field_name, field_locations)
         field_value = obtain_field_value(self.imms, field_name)
         self.run_field_validation(mandation_functions, validation_set, field_name, field_location, field_value)
 
@@ -129,9 +136,13 @@ class PostValidators:
         # Obtain the relevant validation set
         validation_set = getattr(ValidationSets, validation_set_to_use)
 
+        # Create an instance of FieldLocations and set dynamic fields
+        field_locations = FieldLocations()
+        field_locations.set_dynamic_fields(self.imms)
+
         # Validate all fields which have standard validation
         for field_name in self.fields_with_standard_validation:
-            self.validate_field(mandation_functions, validation_set, field_name)
+            self.validate_field(mandation_functions, validation_set, field_name, field_locations)
 
         # Validate reason_code_coding_code fields. Note that there may be multiple of each of these
         # - all instances of the field will be validated by the validate_reason_code_coding_field validator

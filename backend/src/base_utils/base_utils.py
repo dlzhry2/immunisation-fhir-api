@@ -19,6 +19,10 @@ def obtain_field_value(imms: dict, field_name: str) -> any:
     return field_value
 
 
-def obtain_field_location(field_name: str) -> str:
-    """Returns the field location string"""
-    return getattr(FieldLocations, field_name)
+def obtain_field_location(field_name: str, field_locations: FieldLocations = FieldLocations()) -> str:
+    """
+    Obtains the field location of the given field from an instance of the FieldLocations class.
+    NOTE: Some field locations need to be dynamically set. If this is required then
+    these fields should be set on an instance of FieldLocations, and the instance passed to this funciton as an arg.
+    """
+    return getattr(field_locations, field_name)

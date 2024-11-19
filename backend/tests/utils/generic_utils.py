@@ -79,3 +79,15 @@ def test_invalid_values_rejected(
 
     actual_error_messages = full_error_message.replace("Validation errors: ", "").split("; ")
     test_instance.assertIn(expected_error_message, actual_error_messages)
+
+
+def update_contained_resource_field(
+    json_data: dict, resource_to_update: Literal["Patient", "Practitioner"], field_to_update: str, update_value: Any
+) -> dict:
+    """
+    Updates the field of the given resource within the contained resources of the json data
+    to be the given update value."""
+    next(resource for resource in json_data["contained"] if resource.get("resourceType") == resource_to_update).update(
+        {field_to_update: update_value}
+    )
+    return json_data
