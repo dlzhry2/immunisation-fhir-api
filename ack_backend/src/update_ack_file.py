@@ -7,7 +7,7 @@ from typing import Union
 from botocore.exceptions import ClientError
 from boto3 import client as boto3_client
 from constants import Constants
-from utils_for_record_forwarder import get_environment
+from utils_for_ack_processor import get_environment
 
 s3_client = boto3_client("s3", region_name="eu-west-2")
 

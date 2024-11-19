@@ -841,8 +841,9 @@ class TestCreateImmunization(unittest.TestCase):
                 "VaccineTypePermissions": "COVID19:create",
                 "SupplierSystem": "Imms-Batch-App",
                 "BatchSupplierSystem": "test",
-                "File_key": "test",
+                "file_key": "test",
                 "row_id": "123",
+                "created_at_formatted_string": "2020-01-01"
             },
             "body": imms.json(),
         }
@@ -858,6 +859,7 @@ class TestCreateImmunization(unittest.TestCase):
             'headers': {'Location': f'https://internal-dev.api.service.nhs.uk/None/Immunization/{imms_id}'},
             "file_key": aws_event["headers"]["file_key"],
             "row_id": aws_event["headers"]["row_id"],
+            "created_at_formatted_string": aws_event["headers"]["created_at_formatted_string"],
             
         })
         
@@ -981,7 +983,7 @@ class TestUpdateImmunization(unittest.TestCase):
         imms = {"id": "valid-id"}
         aws_event = {
             "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:update", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test", 
-                        "file_key": "test", "row_id": "123"},
+                        "file_key": "test", "row_id": "123", "created_at_formatted_string": "2020-01-01"},
             "body": imms,
             "pathParameters": {"id": imms_id},
         }
@@ -1000,6 +1002,7 @@ class TestUpdateImmunization(unittest.TestCase):
             'headers': {},
             "file_key": aws_event["headers"]["file_key"],
             "row_id": aws_event["headers"]["row_id"],
+            "created_at_formatted_string": aws_event["headers"]["created_at_formatted_string"],
             
         })
         
@@ -1307,7 +1310,7 @@ class TestDeleteImmunization(unittest.TestCase):
         self.service.delete_immunization.return_value = Immunization.construct()
         lambda_event = {
             "headers": {"VaccineTypePermissions": "COVID19:delete", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test"
-                        ,"file_key": "test","row_id": "123"},
+                        ,"file_key": "test","row_id": "123","created_at_formatted_string": "2020-01-01"},
             "pathParameters": {"id": imms_id},
         }
 
@@ -1321,6 +1324,7 @@ class TestDeleteImmunization(unittest.TestCase):
             'headers': {},
             "file_key": lambda_event["headers"]["file_key"],
             "row_id": lambda_event["headers"]["row_id"],
+            "created_at_formatted_string": lambda_event["headers"]["created_at_formatted_string"],
             
         })
         
