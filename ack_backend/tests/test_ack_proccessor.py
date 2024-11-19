@@ -197,6 +197,3 @@ class TestAckProcessorE2E(unittest.TestCase):
         # Clean up mock resources
         os.environ.pop("ACK_BUCKET_NAME", None)
 
-
-if __name__ == "__main__":
-    unittest.main()
