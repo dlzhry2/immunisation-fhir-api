@@ -8,6 +8,8 @@ from botocore.exceptions import ClientError
 from boto3 import client as boto3_client
 from constants import Constants
 from utils_for_ack_processor import get_environment
+from datetime import datetime
+
 
 s3_client = boto3_client("s3", region_name="eu-west-2")
 
@@ -16,6 +18,7 @@ logger = logging.getLogger()
 
 def create_ack_data(
     created_at_formatted_string: str,
+    local_id: str,
     row_id: str,
     successful_api_response: bool,
     diagnostics: Union[None, str] = None,
@@ -41,7 +44,7 @@ def create_ack_data(
         ),
         "RECEIVED_TIME": created_at_formatted_string,
         "MAILBOX_FROM": "",  # TODO: Leave blank for DPS, use mailbox name if picked up from MESH mail box
-        "LOCAL_ID": "",  # TODO: Leave blank for DPS, obtain from ctl file if picked up from MESH mail box
+        "LOCAL_ID": local_id,
         "IMMS_ID": imms_id or "",
         "OPERATION_OUTCOME": diagnostics or "",
         "MESSAGE_DELIVERY": successful_api_response,
@@ -79,13 +82,21 @@ def upload_ack_file(
 
 
 def update_ack_file(
-    file_key: str, row_id: str, successful_api_response: bool, diagnostics: Union[None, str], imms_id: Union[None, str],
-    created_at_formatted_string: str
+    file_key: str,
+    local_id: str,
+    row_id: str,
+    successful_api_response: bool,
+    diagnostics: Union[None, str],
+    imms_id: Union[None, str],
+    created_at_formatted_string: str,
 ) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
+    # ack_file_timestamp = datetime.now().isoformat()
     ack_file_key = f"forwardedFile/{file_key.replace('.csv', '_BusAck.csv')}"
     imms_env = get_environment()
     ack_bucket_name = os.getenv("ACK_BUCKET_NAME", f"immunisation-batch-{imms_env}-data-destinations")
-    ack_data_row = create_ack_data(created_at_formatted_string, row_id, successful_api_response, diagnostics, imms_id)
+    ack_data_row = create_ack_data(
+        created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
+    )
     accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_key)
     upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_row)
