@@ -24,6 +24,7 @@ from models.errors import (
     InconsistentIdError,
     UnauthorizedVaxError,
     UnauthorizedError,
+    IdentifierDuplicationError
 )
 from tests.immunization_utils import create_covid_19_immunization
 from mappings import VaccineTypes
@@ -924,6 +925,59 @@ class TestCreateImmunization(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
         self.assertTrue(invalid_nhs_num in body["issue"][0]["diagnostics"])
+    
+    @mock_sqs
+    @patch("fhir_controller.sqs_client.send_message")
+    def test_invalid_nhs_number_batch(self, mock_send_message):
+        """it should handle ValidationError when patient doesn't exist"""
+        imms = Immunization.construct()
+        aws_event = {
+            "headers":{
+                "VaccineTypePermissions": "COVID19:create",
+                "SupplierSystem": "Imms-Batch-App",
+                "BatchSupplierSystem": "test",
+                "file_key": "test",
+                "row_id": "123",
+                "created_at_formatted_string": "2020-01-01"
+            },
+            "body": imms.json(),
+        }
+        invalid_nhs_num = "a-bad-id"
+        self.service.create_immunization.side_effect = InvalidPatientId(patient_identifier=invalid_nhs_num)
+
+        response = self.controller.create_immunization(aws_event)
+        mock_send_message.assert_called_once()
+
+        self.assertEqual(response["statusCode"], 400)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertTrue(invalid_nhs_num in body["issue"][0]["diagnostics"])   
+
+    @mock_sqs
+    @patch("fhir_controller.sqs_client.send_message")
+    def test_duplicate_record_batch(self, mock_send_message):
+        """it should handle ValidationError when patient doesn't exist"""
+        imms = Immunization.construct()
+        aws_event = {
+            "headers":{
+                "VaccineTypePermissions": "COVID19:create",
+                "SupplierSystem": "Imms-Batch-App",
+                "BatchSupplierSystem": "test",
+                "file_key": "test",
+                "row_id": "123",
+                "created_at_formatted_string": "2020-01-01"
+            },
+            "body": imms.json(),
+        }
+        self.service.create_immunization.side_effect = IdentifierDuplicationError(identifier="test")
+
+        response = self.controller.create_immunization(aws_event)
+        mock_send_message.assert_called_once()
+
+        self.assertEqual(response["statusCode"], 422)
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+        self.assertTrue("test" in body["issue"][0]["diagnostics"])              
 
     def test_pds_unhandled_error(self):
         """it should respond with 500 if PDS returns error"""
@@ -939,6 +993,31 @@ class TestCreateImmunization(unittest.TestCase):
         self.assertEqual(500, response["statusCode"])
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
+    
+    @mock_sqs
+    @patch("fhir_controller.sqs_client.send_message")
+    def test_pds_unhandled_error_batch(self, mock_send_message):
+        """it should respond with 500 if PDS returns error"""
+        imms = Immunization.construct()
+        aws_event = {
+            "headers":{
+                "VaccineTypePermissions": "COVID19:create",
+                "SupplierSystem": "Imms-Batch-App",
+                "BatchSupplierSystem": "test",
+                "file_key": "test",
+                "row_id": "123",
+                "created_at_formatted_string": "2020-01-01"
+            },
+            "body": imms.json(),
+        }
+        self.service.create_immunization.side_effect = UnhandledResponseError(response={}, message="a message")
+
+        response = self.controller.create_immunization(aws_event)
+        mock_send_message.assert_called_once()
+        self.assertEqual(500, response["statusCode"])
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")
+
 
 
 class TestUpdateImmunization(unittest.TestCase):
@@ -1127,6 +1206,30 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertEqual(400, response["statusCode"])
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
+    
+    @patch("fhir_controller.sqs_client.send_message")
+    def test_validation_error_for_batch(self, mock_send_message):
+        """it should return 400 if Immunization is invalid"""
+        imms = '{"id": 123}'
+        aws_event = {
+            "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:update", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test", 
+                        "file_key": "test", "row_id": "123", "created_at_formatted_string": "2020-01-01"},
+            "body": imms,
+            "pathParameters": {"id": "valid-id"},
+        }
+        self.service.update_immunization.side_effect = CustomValidationError(message="invalid")
+        self.service.get_immunization_by_id_all.return_value = {
+            "resource": "new_value",
+            "Version": 1,
+            "DeletedAt": False,
+            "Reinstated": False,
+            "VaccineType": "COVID19",
+        }
+        response = self.controller.update_immunization(aws_event)
+        mock_send_message.assert_called_once()
+        self.assertEqual(400, response["statusCode"])
+        body = json.loads(response["body"])
+        self.assertEqual(body["resourceType"], "OperationOutcome")    
 
     def test_validation_superseded_number_to_give_bad_request_for_update_immunization(self):
         """it should return 400 if Immunization has superseded nhs number."""
