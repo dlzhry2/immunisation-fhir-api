@@ -7,7 +7,6 @@ def lambda_handler(event, context):
     try:
         imms_id = None
         successful_api_response = True
-        print(f"event: {event}")
         for record in event["Records"]:
             body_json = record["body"]
             incoming_message_body = json.loads(body_json)
@@ -17,7 +16,6 @@ def lambda_handler(event, context):
             diagnostics = incoming_message_body.get("diagnostics")
             created_at_formatted_string = incoming_message_body.get("created_at_formatted_string")
             local_id = incoming_message_body.get("local_id")
-            print(f"local_id:{local_id}")
             if diagnostics is None:
                 status_code = incoming_message_body.get("statusCode", 0)
                 if status_code not in {200, 201, 204}:

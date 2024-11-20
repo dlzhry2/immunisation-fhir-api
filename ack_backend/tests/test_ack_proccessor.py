@@ -1,15 +1,16 @@
 import unittest
 from moto import mock_s3, mock_sqs
+from freezegun import freeze_time
 import boto3
 import os
 import json
 from boto3 import client as boto3_client
 from ack_processor import lambda_handler
-from tests.utils_ack_processor import DESTINATION_BUCKET_NAME, AWS_REGION
+from tests.utils_ack_processor import DESTINATION_BUCKET_NAME, AWS_REGION, STATIC_ISO_DATETIME
 
 s3_client = boto3_client("s3", region_name=AWS_REGION)
 file_name = "COVID19_Vaccinations_v5_YGM41_20240909T13005901.csv"
-ack_file_key = "forwardedFile/COVID19_Vaccinations_v5_YGM41_20240909T13005901_BusAck_2024-11-20T13:45:30.123456.csv"
+ack_file_key = f"forwardedFile/COVID19_Vaccinations_v5_YGM41_20240909T13005901_BusAck_{STATIC_ISO_DATETIME}.csv"
 local_id = "111^222"
 
 
@@ -23,6 +24,7 @@ class TestAckProcessorE2E(unittest.TestCase):
             Bucket=DESTINATION_BUCKET_NAME, CreateBucketConfiguration={"LocationConstraint": AWS_REGION}
         )
 
+    @freeze_time("2021-11-20, 12:00:00")
     def invoke_lambda_and_verify_ack(self, event, expected_status, expected_messages):
         """
         Helper method to invoke Lambda and verify acknowledgment file content.
@@ -41,11 +43,10 @@ class TestAckProcessorE2E(unittest.TestCase):
         ack_file_content = (
             s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)["Body"].read().decode("utf-8")
         )
-        print(f"ACK FILE KEY {ack_file_key}")
+        print(f"ACK FILE CONTENT: {ack_file_content}")
         # Assert acknowledgment file content
         for message in expected_messages:
             self.assertIn(message, ack_file_content)
-            print(f"MESSAGE: {message} ack_file content: {ack_file_content} expected mesage: {expected_messages}")
 
     def test_ack_processor_invalid_action_flag(self):
         self.setup_s3()
@@ -126,6 +127,7 @@ class TestAckProcessorE2E(unittest.TestCase):
                             "file_key": file_name,
                             "row_id": "6cd75847-e378-451f-984e-b55fa5444b50#1",
                             "created_at_formatted_string": "20241119T11182100",
+                            "local_id": "111^222",
                         }
                     )
                 }
