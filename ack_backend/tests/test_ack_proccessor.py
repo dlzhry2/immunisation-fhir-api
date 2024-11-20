@@ -9,7 +9,7 @@ from tests.utils_ack_processor import DESTINATION_BUCKET_NAME, AWS_REGION
 
 s3_client = boto3_client("s3", region_name=AWS_REGION)
 file_name = "COVID19_Vaccinations_v5_YGM41_20240909T13005901.csv"
-ack_file_key = "forwardedFile/COVID19_Vaccinations_v5_YGM41_20240909T13005901_BusAck.csv"
+ack_file_key = "forwardedFile/COVID19_Vaccinations_v5_YGM41_20240909T13005901_BusAck_2024-11-20T13:45:30.123456.csv"
 local_id = "111^222"
 
 
@@ -41,10 +41,11 @@ class TestAckProcessorE2E(unittest.TestCase):
         ack_file_content = (
             s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)["Body"].read().decode("utf-8")
         )
-
+        print(f"ACK FILE KEY {ack_file_key}")
         # Assert acknowledgment file content
         for message in expected_messages:
             self.assertIn(message, ack_file_content)
+            print(f"MESSAGE: {message} ack_file content: {ack_file_content} expected mesage: {expected_messages}")
 
     def test_ack_processor_invalid_action_flag(self):
         self.setup_s3()
