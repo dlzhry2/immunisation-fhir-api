@@ -51,14 +51,25 @@ def create_ack_data(
     }
 
 
-def obtain_current_ack_content(ack_bucket_name: str, ack_file_key: str) -> StringIO:
+def obtain_current_ack_content(ack_bucket_name: str, ack_file_key_prefix: str) -> StringIO:
     """Returns the current ack file content if the file exists, or else initialises the content with the ack headers."""
     accumulated_csv_content = StringIO()
+    matching_file_key = None
     try:
-        # If ack file exists in S3 download the contents
-        existing_ack_file = s3_client.get_object(Bucket=ack_bucket_name, Key=ack_file_key)
-        existing_content = existing_ack_file["Body"].read().decode("utf-8")
-        accumulated_csv_content.write(existing_content)
+        response = s3_client.list_objects_v2(Bucket=ack_bucket_name, Prefix=ack_file_key_prefix)
+        if "Contents" in response:
+            # Identify the first file that matches the filename up to _busack
+            matching_files = [obj["Key"] for obj in response["Contents"] if obj["Key"].startswith(ack_file_key_prefix)]
+            if matching_files:
+                matching_file_key = matching_files[0]
+
+        if matching_file_key:
+            # If ack file exists in S3 download the contents
+            existing_ack_file = s3_client.get_object(Bucket=ack_bucket_name, Key=matching_file_key)
+            existing_content = existing_ack_file["Body"].read().decode("utf-8")
+            accumulated_csv_content.write(existing_content)
+        else:
+            accumulated_csv_content.write("|".join(Constants.ack_headers) + "\n")
     except ClientError as error:
         logger.error("error:%s", error)
         if error.response["Error"]["Code"] in ("404", "NoSuchKey"):
@@ -91,12 +102,13 @@ def update_ack_file(
     created_at_formatted_string: str,
 ) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
-    # ack_file_timestamp = datetime.now().isoformat()
-    ack_file_key = f"forwardedFile/{file_key.replace('.csv', '_BusAck.csv')}"
+    ack_file_prefix = f"forwardedFile/{file_key.replace('.csv', '_BusAck_')}"
+    ack_file_timestamp = datetime.now().isoformat()
+    ack_file_key = f"forwardedFile/{file_key.replace('.csv', f'_BusAck_{ack_file_timestamp}.csv')}"
     imms_env = get_environment()
     ack_bucket_name = os.getenv("ACK_BUCKET_NAME", f"immunisation-batch-{imms_env}-data-destinations")
     ack_data_row = create_ack_data(
         created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
     )
-    accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_key)
+    accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_prefix)
     upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_row)
