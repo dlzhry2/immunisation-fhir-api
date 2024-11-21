@@ -6,7 +6,12 @@ import os
 import json
 from boto3 import client as boto3_client
 from ack_processor import lambda_handler
+from update_ack_file import obtain_current_ack_content
 from tests.utils_ack_processor import DESTINATION_BUCKET_NAME, AWS_REGION, STATIC_ISO_DATETIME
+from constants import Constants
+from io import BytesIO
+from unittest.mock import patch
+
 
 s3_client = boto3_client("s3", region_name=AWS_REGION)
 file_name = "COVID19_Vaccinations_v5_YGM41_20240909T13005901.csv"
@@ -43,7 +48,7 @@ class TestAckProcessorE2E(unittest.TestCase):
         ack_file_content = (
             s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)["Body"].read().decode("utf-8")
         )
-        print(f"ACK FILE CONTENT: {ack_file_content}")
+
         # Assert acknowledgment file content
         for message in expected_messages:
             self.assertIn(message, ack_file_content)
@@ -208,6 +213,57 @@ class TestAckProcessorE2E(unittest.TestCase):
             ]
         }
         self.invoke_lambda_and_verify_ack(event, 200, ["OK"])
+
+    def test_obtain_current_ack_content(self):
+        """Test obtaining ack content when ack file does not already exist."""
+        self.setup_s3()
+
+        file_key = "test_file.csv"
+        ack_file_prefix = f"forwardedFile/{file_key.replace('.csv', '_BusAck_')}"
+        ack_bucket_name = DESTINATION_BUCKET_NAME
+
+        result = obtain_current_ack_content(ack_bucket_name, ack_file_prefix)
+
+        # Get the file content
+        file_content = result.getvalue().strip()
+
+        expected_headers = "|".join(Constants.ack_headers)
+
+        # Assert the headers are correctly generated
+        self.assertEqual(file_content, expected_headers)
+
+    @patch("update_ack_file.s3_client")
+    @freeze_time("2021-11-20, 12:00:00")
+    def test_obtain_current_ack_content_existing_file(self, mock_s3_client):
+        """Test obtaining ack content when an existing file is present in S3."""
+        self.setup_s3()
+        # Mock inputs
+        ack_bucket_name = DESTINATION_BUCKET_NAME
+        ack_file_key_prefix = f"forwardedFile/{file_name}_BusAck_"
+        existing_file_content = (
+            "MESSAGE_HEADER_ID|HEADER_RESPONSE_CODE|ISSUE_SEVERITY|ISSUE_CODE|ISSUE_DETAILS_CODE|RESPONSE_TYPE|"
+            "RESPONSE_CODE|RESPONSE_DISPLAY|RECEIVED_TIME|MAILBOX_FROM|LOCAL_ID|"
+            "IMMS_ID|OPERATION_OUTCOME|MESSAGE_DELIVERY|"
+            "12345|OK|Information|OK|30001|Business|30001|Success|2024-11-21T12:00:00"
+            "|mock_mailbox|local_123|imms_456||True"
+        )
+
+        existing_file_content_bytes = existing_file_content.encode("utf-8")
+        mock_s3_client.list_objects_v2.return_value = {
+            "Contents": [{"Key": f"{ack_file_key_prefix}{STATIC_ISO_DATETIME}.csv"}]
+        }
+        mock_s3_client.get_object.return_value = {"Body": BytesIO(existing_file_content_bytes)}
+
+        result = obtain_current_ack_content(ack_bucket_name, ack_file_key_prefix)
+
+        file_content = result.getvalue().strip()
+        existing_file_content_str = existing_file_content_bytes.decode("utf-8").strip()
+
+        self.assertEqual(file_content, existing_file_content_str)
+        mock_s3_client.list_objects_v2.assert_called_once_with(Bucket=ack_bucket_name, Prefix=ack_file_key_prefix)
+        mock_s3_client.get_object.assert_called_once_with(
+            Bucket=ack_bucket_name, Key=f"forwardedFile/{file_name}_BusAck_{STATIC_ISO_DATETIME}.csv"
+        )
 
     def tearDown(self):
         # Clean up mock resources
