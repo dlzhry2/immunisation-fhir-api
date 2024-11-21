@@ -1,10 +1,16 @@
 """Functions for obtaining a field value from the FHIR immunization resource json data"""
 
+from datetime import datetime
 from models.utils.generic_utils import (
     get_contained_patient,
     get_contained_practitioner,
     is_organization,
     get_generic_extension_value,
+    generate_field_location_for_name,
+    get_occurrence_datetime,
+    obtain_current_name_period,
+    get_current_name_instance,
+    patient_and_practitioner_value_and_index,
 )
 from constants import Urls
 
@@ -35,13 +41,21 @@ class ObtainFieldValue:
 
     @staticmethod
     def patient_name_given(imms: dict):
-        """Obtains patient_name_given value"""
-        return get_contained_patient(imms)["name"][0]["given"]
+        """Obtains patient_name field location based on logic"""
+        try:
+            given_name, _ = patient_and_practitioner_value_and_index(imms, "given", "Patient")
+        except (KeyError, IndexError, AttributeError):
+            given_name = None
+        return given_name
 
     @staticmethod
     def patient_name_family(imms: dict):
         """Obtains patient_name_family value"""
-        return get_contained_patient(imms)["name"][0]["family"]
+        try:
+            family_name, _ = patient_and_practitioner_value_and_index(imms, "family", "Patient")
+        except (KeyError, IndexError, AttributeError):
+            family_name = None
+        return family_name
 
     @staticmethod
     def patient_birth_date(imms: dict):
@@ -85,12 +99,20 @@ class ObtainFieldValue:
     @staticmethod
     def practitioner_name_given(imms: dict):
         """Obtains practitioner_name_given value"""
-        return get_contained_practitioner(imms)["name"][0]["given"]
+        try:
+            given_name, _ = patient_and_practitioner_value_and_index(imms, "given", "Practitioner")
+        except (KeyError, IndexError, AttributeError):
+            given_name = None
+        return given_name
 
     @staticmethod
     def practitioner_name_family(imms: dict):
         """Obtains practitioner_name_family value"""
-        return get_contained_practitioner(imms)["name"][0]["family"]
+        try:
+            family_name, _ = patient_and_practitioner_value_and_index(imms, "family", "Practitioner")
+        except (KeyError, IndexError, AttributeError):
+            family_name = None
+        return family_name
 
     @staticmethod
     def practitioner_identifier_value(imms: dict):
@@ -122,10 +144,10 @@ class ObtainFieldValue:
         """Obtains vaccination_procedure_code value"""
         return get_generic_extension_value(imms, Urls.vaccination_procedure, Urls.snomed, "code")
 
-    @staticmethod
-    def vaccination_procedure_display(imms: dict):
-        """Obtains vaccination_procedure_display value"""
-        return get_generic_extension_value(imms, Urls.vaccination_procedure, Urls.snomed, "display")
+    # @staticmethod
+    # def vaccination_procedure_display(imms: dict):
+    #     """Obtains vaccination_procedure_display value"""
+    #     return get_generic_extension_value(imms, Urls.vaccination_procedure, Urls.snomed, "display")
 
     @staticmethod
     def dose_number_positive_int(imms: dict):

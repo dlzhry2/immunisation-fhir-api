@@ -6,6 +6,7 @@ from typing import Literal, Union, Optional
 from models.constants import Constants
 import urllib.parse
 import base64
+from stdnum.verhoeff import validate
 
 
 def get_contained_resource(imms: dict, resource: Literal["Patient", "Practitioner", "QuestionnaireResponse"]):
@@ -66,6 +67,15 @@ def check_for_unknown_elements(resource, resource_type) -> Union[None, list]:
             errors.append(f"{key} is not an allowed element of the {resource_type} resource for this service")
     return errors
 
+def is_valid_simple_snomed(simple_snomed: str) -> bool:
+    "check the snomed code valid or not."
+    min_snomed_length = 6
+    max_snomed_length = 18
+    return (simple_snomed is not None
+    and simple_snomed.isdigit()
+    and min_snomed_length <= len(simple_snomed) <= max_snomed_length
+    and validate(simple_snomed)
+    and (simple_snomed[-3:-1] in ("00", "10")))
 
 def nhs_number_mod11_check(nhs_number: str) -> bool:
     """
@@ -188,3 +198,130 @@ def check_keys_in_sources(event, not_required_keys):
         list_keys = list(keys)
         body_check = [k for k in list_keys if k in not_required_keys]
         return body_check
+
+
+def generate_field_location_for_name(index: str, name_value: str, resource_type: str) -> str:
+    """Generate the field location string for name items"""
+    return f"contained[?(@.resourceType=='{resource_type}')].name[{index}].{name_value}"
+
+
+def obtain_current_name_period(period: dict, occurrence_date: datetime) -> bool:
+    """Determines if the period is considered current at the date of vaccination date (occurrence_date).
+    If no period then current. If vaccination date is before period starts, it is not current. If vaccination date
+    is after period ends, it is not current"""
+    if not period:
+        return True
+
+    start_date = period.get("start")
+
+    end_date = period.get("end")
+
+    start_date = start_date if start_date else None
+    end_date = end_date if end_date else None
+
+    # Check if occurrence_date is within the period range -if vaccination date before period start
+    if start_date and occurrence_date and occurrence_date < start_date:
+        return False
+    # Check if occurrence_date is within the period range -if vaccination date after period end
+    if end_date and occurrence_date and occurrence_date > end_date:
+        return False
+
+    return True
+
+
+def get_current_name_instance(names: list, occurrence_date: datetime) -> dict:
+    """Selects the correct "current" name instance based on the 'period' and 'use' criteria."""
+
+    # DUE TO RUNNING PRE_VALIDATE_PATIENT_NAME AND PRE_VALIDATE_PRACTITIONER NAME BEFORE THE RESPECTIVE CHECKS
+    # FOR GIVEN AND FAMILY NAMES, AND BECAUSE WE CHECK THAT NAME FIELD EXISTS BEFORE CALLING THIS FUNCTION,
+    # WE CAN THEREFORE ASSUME THAT names IS A NON-EMPTY LIST OF NON-EMPTY DICTIONARIES
+
+    # If there's only one name, return it with index 0
+    if len(names) == 1:
+        return 0, names[0]
+
+    # Extract only name instances with given and family fields
+    valid_name_instances = []
+    for index, name in enumerate(names):
+        if "given" in name and "family" in name:
+            valid_name_instances.append((index, name))
+
+    # Filtering names that are current at the vaccination date
+    current_names = []
+    for index, name in valid_name_instances:
+        try:
+            # Check for 'period' and occurrence date
+            if isinstance(name, dict):
+                if "period" not in name or obtain_current_name_period(name.get("period", {}), occurrence_date):
+                    current_names.append((index, name))
+        except (KeyError, ValueError):
+            continue
+
+    # Select the first current name with 'use'="official"
+    official_names = [(index, name) for index, name in current_names if name.get("use") == "official"]
+    if official_names:
+        return official_names[0]
+
+    # Select the first current name with 'use' not equal to "old"
+    non_old_names = [(index, name) for index, name in current_names if name.get("use") != "old"]
+    if non_old_names:
+        return non_old_names[0]
+
+    # Otherwise, return the first available name instance
+    if current_names:
+        return current_names[0]
+
+    # If no names match criteria, default to the first name in the list
+    return 0, names[0]
+
+
+def patient_and_practitioner_value_and_index(imms: dict, name_value: str, resource_type: str):
+    """Obtains patient_name_given, patient_name_family, practitioner_name_given or practitioner_name_family
+    value and index, dependent on the resource_type and name_value"""
+    resource = get_contained_resource(imms, resource_type)
+    name = resource["name"]
+
+    # Get occurrenceDateTime
+    occurrence_date = get_occurrence_datetime_for_name(imms)
+
+    # Select the appropriate name instance
+    index, selected_name = get_current_name_instance(name, occurrence_date)
+
+    # Access the given name and its location in JSON
+    name_field = selected_name[name_value]
+
+    return name_field, index
+
+
+def obtain_name_field_location(imms, resource_type, name_value):
+    """Obtains the field location of the name value for the given resource type based on the relevant logic."""
+    try:
+        _, index = patient_and_practitioner_value_and_index(imms, name_value, resource_type)
+    except (KeyError, IndexError, AttributeError):
+        index = 0
+    return generate_field_location_for_name(index, name_value, resource_type)
+
+
+def patient_name_given_field_location(imms: dict):
+    """Obtains patient_name field location based on logic"""
+    return obtain_name_field_location(imms, "Patient", "given")
+
+
+def patient_name_family_field_location(imms: dict):
+    """Obtains patient_name_family field location based on logic"""
+    return obtain_name_field_location(imms, "Patient", "family")
+
+
+def practitioner_name_given_field_location(imms: dict):
+    """Obtains practitioner_name_given field location based on logic"""
+    return obtain_name_field_location(imms, "Practitioner", "given")
+
+
+def practitioner_name_family_field_location(imms: dict):
+    """Obtains practitioner_name_family field location based on logic"""
+    return obtain_name_field_location(imms, "Practitioner", "family")
+
+
+def get_occurrence_datetime_for_name(immunization: dict) -> Optional[datetime.datetime]:
+    """Returns occurencedatetime for use in get_current_name_instance"""
+    return immunization.get("occurrenceDateTime", None)

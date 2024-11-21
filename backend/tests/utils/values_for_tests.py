@@ -136,6 +136,107 @@ class ValidValues:
         "valueCodeableConcept": {"coding": [nhs_number_coding_item]},
     }
 
+    occurrenceDateTime = "2021-02-07T13:28:17+00:00"
+
+    date_before_occurenceDateTime = "1900-01-01T00:00:00+00:00"
+
+    date_after_occurenceDateatetime = "2100-01-01T00:00:00+00:00"
+
+    valid_name_4_instances = [
+        {
+            "use": "official",
+            "family": "Tay",
+            "given": ["Sa"],
+            "period": {"end": date_before_occurenceDateTime},
+        },
+        {
+            "use": "official",
+            "family": "Taylor",
+            "given": ["Sarah"],
+            "period": {"start": date_before_occurenceDateTime, "end": date_after_occurenceDateatetime},
+        },
+        {"family": "Taylor", "given": ["Sar"]},
+        {"use": "old", "family": "Tray", "given": ["Sarah"]},
+    ]
+
+    valid_name_4_instances_practitioner = [
+        {
+            "use": "official",
+            "family": "Nightingale",
+            "given": ["Florence"],
+            "period": {"end": date_before_occurenceDateTime},
+        },
+        {
+            "use": "official",
+            "family": "Night",
+            "given": ["Florence"],
+            "period": {"start": date_before_occurenceDateTime, "end": date_after_occurenceDateatetime},
+        },
+        {"family": "Night", "given": ["Florence"]},
+        {"use": "old", "family": "Tray", "given": ["Florence"]},
+    ]
+
+
+class NameInstances:
+    """Class containing example name instances."""
+
+    class ValidCurrent:
+        """Name instances which are both valid and current"""
+
+        given_and_family_only = {"given": ["a_given_name"], "family": "a_family_name"}
+
+        with_use_official = {"given": ["a_given_name"], "family": "a_family_name", "use": "official"}
+
+        with_period_start = {
+            "given": ["a_given_name"],
+            "family": "a_family_name",
+            "period": {"start": ValidValues.date_before_occurenceDateTime},
+        }
+
+        with_period_end = {
+            "given": ["a_given_name"],
+            "family": "a_family_name",
+            "period": {"end": ValidValues.date_after_occurenceDateatetime},
+        }
+
+        with_use_official_and_period_start_and_end = {
+            "given": ["a_given_name"],
+            "family": "a_family_name",
+            "period": {
+                "start": ValidValues.date_before_occurenceDateTime,
+                "end": ValidValues.date_after_occurenceDateatetime,
+            },
+            "use": "official",
+        }
+
+        use_old = {"given": ["a_given_name"], "family": "a_family_name", "use": "old"}
+
+    class ValidNonCurrent:
+        """Name instances which are valid but not current"""
+
+        before_period_start = {"given": ["a_given_name"], "family": "a_family_name", "period": {"start": "2100-01-01"}}
+
+        after_period_end = {
+            "given": ["a_given_name"],
+            "family": "a_family_name",
+            "period": {"end": ValidValues.date_before_occurenceDateTime},
+        }
+
+    class Invalid:
+        """Name instances which are invalid"""
+
+        family_name_only = {"family": "a_family_name"}
+
+        given_name_only = {"given": ["a_given_name"]}
+
+        family_name_only_with_use_official = {"family": "a_family_name", "use": "official"}
+
+        family_name_only_with_use_official_and_period_start_and_end = {
+            "family": "a_family_name",
+            "period": {"start": "1900-01-01", "end": "2100-01-01"},
+            "use": "official",
+        }
+
 
 @dataclass
 class InvalidValues:
@@ -245,3 +346,17 @@ class InvalidValues:
         "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationSituation",
         "valueCodeableConcept": {"coding": dummy_coding_with_two_snomed_codes},
     }
+
+    name_with_missing_values = [
+        {"family": "Taylor", "period": {"start": "2024-02-07T13:28:17+00:00"}},
+        {"given": ["Sarah"]},
+        {"use": "official", "given": ["Sarah"]},
+        {"family": "Taylor", "given": ""},
+    ]
+
+    name_with_missing_values_practitioner = [
+        {"family": "Nightingale", "period": {"start": "2024-02-07T13:28:17+00:00"}},
+        {"given": ["Florence"]},
+        {"use": "official", "given": ["Florence"]},
+        {"family": "Nightingale", "given": ""},
+    ]

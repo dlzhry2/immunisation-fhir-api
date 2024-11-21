@@ -6,6 +6,7 @@ class Constants:
 
     STATUSES = ["completed"]
     GENDERS = ["male", "female", "other", "unknown"]
+    EXTENSION_URL = ["https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"]
     NOT_DONE_VACCINE_CODES = ["NAVU", "UNC", "UNK", "NA"]
     ALLOWED_KEYS = {
         "Immunization": {

@@ -36,7 +36,7 @@
         "coding": [
           {
             "system": "http://snomed.info/sct",
-            "code": "mockHPVcode1",
+            "code": "822851000000102",
             "display": "Seasonal influenza vaccination (procedure)"
           }
         ]
