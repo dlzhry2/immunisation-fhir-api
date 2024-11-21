@@ -137,9 +137,7 @@ class FhirController:
                     raise UnauthorizedVaxError()
             else:
                 raise UnauthorizedError()
-        except UnauthorizedError as unauthorized:
-            return self.create_response(403, unauthorized.to_operation_outcome())
-        except UnauthorizedVaxError as unauthorized:
+        except (UnauthorizedError, UnauthorizedVaxError) as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
 
         try:
@@ -760,9 +758,7 @@ class FhirController:
             # Return the values needed for later use
             return None, imms_vax_type_perms, supplier_system
 
-        except UnauthorizedVaxError as unauthorized:
-            return self.create_response(403, unauthorized.to_operation_outcome()), None, None
-        except UnauthorizedSystemError as unauthorized:
+        except (UnauthorizedVaxError, UnauthorizedSystemError) as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome()), None, None
         except UnauthorizedError as e:
             return self._create_bad_request(str(e)), None, None
