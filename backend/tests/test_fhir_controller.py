@@ -882,6 +882,17 @@ class TestCreateImmunization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 201)
         self.assertTrue("body" not in response)
         self.assertTrue(response["headers"]["Location"].endswith(f"Immunization/{imms_id}"))
+    
+    def test_create_immunization_UnauthorizedVaxError_check_for_non_batch(self):
+        """it should not create the Immunization record """
+        imms_id = str(uuid.uuid4())
+        imms = create_covid_19_immunization(imms_id)
+        aws_event = {
+            "headers": {"VaccineTypePermissions": "", "SupplierSystem": "Test"},
+            "body": imms.json(),
+        }
+        response = self.controller.create_immunization(aws_event)
+        self.assertEqual(response["statusCode"], 403)
 
     def test_unauthorised_create_immunization(self):
         """it should return authorization error"""
@@ -1175,8 +1186,7 @@ class TestUpdateImmunization(unittest.TestCase):
         mock_sqs_message.assert_called_once()
         self.assertEqual(response["statusCode"], 422)  
 
-    @patch("fhir_controller.sqs_client.send_message")
-    def test_update_immunization_UnauthorizedVaxError(self, mock_sqs_message):
+    def test_update_immunization_UnauthorizedVaxError(self):
         """it should not update the Immunization record """
         imms_id = "valid-id"
         imms = {"id": "valid-id"}
@@ -1195,7 +1205,32 @@ class TestUpdateImmunization(unittest.TestCase):
             "VaccineType": "COVID19",
         }
         response = self.controller.update_immunization(aws_event)
-        self.assertEqual(response["statusCode"], 403)      
+        self.assertEqual(response["statusCode"], 403)  
+
+    def test_update_immunization_UnauthorizedVaxError_check_for_non_batch(self):
+        """it should not update the Immunization record """
+        imms_id = "valid-id"
+        imms = {"id": "valid-id"}
+        aws_event = {
+             "headers": {"E-Tag": 1, "VaccineTypePermissions": "", "SupplierSystem": "Test"},
+            "body": imms,
+            "pathParameters": {"id": imms_id},
+        }
+        response = self.controller.update_immunization(aws_event)
+        self.assertEqual(response["statusCode"], 403)
+
+    def test_update_immunization_Unauthorizedsystem_check_for_non_batch(self):
+        """it should not update the Immunization record """
+        imms_id = "valid-id"
+        imms = {"id": "valid-id"}
+        aws_event = {
+             "headers": {"E-Tag": 1, "VaccineTypePermissions": "COVID19:UPDATE", "SupplierSystem": ""},
+            "body": imms,
+            "pathParameters": {"id": imms_id},
+        }
+
+        response = self.controller.update_immunization(aws_event)
+        self.assertEqual(response["statusCode"], 403)              
 
     @patch("fhir_controller.sqs_client.send_message")
     def test_update_immunization_for_batch_existing_record_is_none(self, mock_sqs_message):
@@ -1602,7 +1637,17 @@ class TestDeleteImmunization(unittest.TestCase):
         mock_sqs_message.assert_called_once()
         self.assertEqual(response["statusCode"], 400)
         outcome = json.loads(response["body"])
-        self.assertEqual(outcome["resourceType"], "OperationOutcome")    
+        self.assertEqual(outcome["resourceType"], "OperationOutcome")  
+
+    def test_delete_immunization_UnauthorizedVaxError_check_for_non_batch(self):
+        """it should not delete the Immunization record """
+        imms_id = "an-id"
+        aws_event = {
+            "headers": {"E-Tag": 1, "VaccineTypePermissions": "", "SupplierSystem": "Test"},
+            "pathParameters": {"id": imms_id},
+        }
+        response = self.controller.delete_immunization(aws_event)
+        self.assertEqual(response["statusCode"], 403)      
         
     def test_unauthorised_delete_immunization(self):
         """it should return authorization error"""
@@ -1803,6 +1848,25 @@ class TestSearchImmunizations(unittest.TestCase):
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Bundle")
+
+    def test_get_search_immunizations_vax_permission_check(self):
+        """it should search based on patient_identifier and immunization_target"""
+        search_result = Bundle.construct()
+        self.service.search_immunizations.return_value = search_result
+
+        vaccine_type = VaccineTypes().all[0]
+        lambda_event = {
+            "multiValueQueryStringParameters": {
+                self.immunization_target_key: [vaccine_type],
+                self.patient_identifier_key: [self.patient_identifier_valid_value],
+            },
+        }
+
+        # When
+        response = self.controller.search_immunizations(lambda_event)
+
+        # Then
+        self.assertEqual(response["statusCode"], 403) 
 
     def test_get_search_immunizations_for_unauthorized_vaccine_type_search(self):
         """it should return 200 and contains warning operation outcome as the user is not having authorization for one of the vaccine type"""
