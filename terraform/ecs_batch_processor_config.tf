@@ -108,13 +108,24 @@ resource "aws_iam_policy" "ecs_task_exec_policy" {
         ]
       },
       {
-        Effect = "Allow"
+        Effect = "Allow" 
         Action = [
           "kms:Encrypt",
           "kms:Decrypt",
           "kms:GenerateDataKey*"
         ]
-        Resource = data.aws_kms_key.existing_s3_encryption_key.arn
+        Resource = [
+                   data.aws_kms_key.existing_s3_encryption_key.arn,
+                   data.aws_kms_key.existing_kinesis_encryption_key.arn
+        ]
+      },
+      {
+        Effect   = "Allow",
+        Action   = [
+          "kinesis:PutRecord",
+          "kinesis:PutRecords"
+        ],
+        Resource = local.kinesis_arn
       },
       {
         Effect   = "Allow",
@@ -122,27 +133,7 @@ resource "aws_iam_policy" "ecs_task_exec_policy" {
           "ecr:GetAuthorizationToken"
         ],
         Resource = "arn:aws:ecr:${var.aws_region}:${local.local_account_id}:repository/${local.short_prefix}-processing-repo"
-      },
-      {
-        Effect= "Allow",
-        Action= [
-          "sqs:SendMessage",
-          "sqs:ReceiveMessage",
-          "kms:Decrypt"
-        ],
-        Resource= aws_sqs_queue.supplier_fifo_queue.arn
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:Query"
-        ]
-        Resource = ["arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.events-dynamodb-table.name}",
-                    "arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.events-dynamodb-table.name}/index/*"]
-      }
+      }      
     ]
   })
 }
@@ -184,21 +175,13 @@ resource "aws_ecs_task_definition" "ecs_task" {
         value = "${local.short_prefix}-data-destinations"
       },
       {
-        name  = "CONFIG_BUCKET_NAME"
-        value = "${local.short_prefix}-configs"
+        name  = "KINESIS_STREAM_ARN"
+        value = "${local.kinesis_arn}"
       },
-      { 
-        name  = "SPLUNK_FIREHOSE_NAME"
-        value = module.splunk.firehose_stream_name
-      },
-      { 
-        name  = "DYNAMODB_TABLE_NAME"
-        value = aws_dynamodb_table.events-dynamodb-table.name
-      },
-      { 
-        name  = "IMMUNIZATION_ENV"
-        value = local.environment
-      } 
+      {
+        name  = "KINESIS_STREAM_NAME"
+        value = "${local.short_prefix}-processingdata-stream"
+      }      
     ]
     logConfiguration = {
       logDriver = "awslogs"

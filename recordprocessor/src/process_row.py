@@ -1,14 +1,14 @@
 """Function to process a single row of a csv file"""
 
 import logging
-# from convert_to_fhir_imms_resource import convert_to_fhir_imms_resource
+from convert_to_fhir_imms_resource import convert_to_fhir_imms_resource
 from constants import Diagnostics
-# from mappings import Vaccine
+from mappings import Vaccine
 
 logger = logging.getLogger()
 
 
-def process_row(allowed_operations: set, row: dict) -> dict:
+def process_row(vaccine: Vaccine, allowed_operations: set, row: dict) -> dict:
     """
     Processes a row of the file and returns a dictionary containing the fhir_json, action_flag, imms_id
     (where applicable), version(where applicable) and any diagnostics.
@@ -40,5 +40,4 @@ def process_row(allowed_operations: set, row: dict) -> dict:
         }
 
     # Handle success
-    # return {"fhir_json": convert_to_fhir_imms_resource(row, vaccine), "operation_requested": operation_requested}
-    return {"operation_requested": operation_requested}
+    return {"fhir_json": convert_to_fhir_imms_resource(row, vaccine), "operation_requested": operation_requested}
