@@ -76,14 +76,17 @@ class FhirController:
 
 
     def get_immunization_by_identifier(self, aws_event) -> dict:
-        if aws_event.get("headers"):
-            is_imms_batch_app = aws_event["headers"]["SupplierSystem"] == "Imms-Batch-App"
-            if not is_imms_batch_app: 
-                if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
-                    return response
-            query_params = aws_event.get("queryStringParameters", {})
-        else:
-            raise UnauthorizedError()    
+        try:
+            if aws_event.get("headers"):
+                is_imms_batch_app = aws_event["headers"]["SupplierSystem"] == "Imms-Batch-App"
+                if not is_imms_batch_app: 
+                    if response := self.authorize_request(EndpointOperation.SEARCH, aws_event):
+                        return response
+                query_params = aws_event.get("queryStringParameters", {})
+            else:
+                raise UnauthorizedError()  
+        except UnauthorizedError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())  
         body = aws_event["body"]
         if query_params and body:
             error = create_operation_outcome(
@@ -103,15 +106,11 @@ class FhirController:
             return self.create_response(400, id_error)
         identifiers = identifier.replace("|", "#")
         try:
-                try:
-                    imms_vax_type_perms = None
-                    if not is_imms_batch_app:
-                        imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
-                        if len(imms_vax_type_perms) == 0:
-                            raise UnauthorizedVaxError()
-
-                except UnauthorizedVaxError as unauthorized:
-                    return self.create_response(403, unauthorized.to_operation_outcome())
+            imms_vax_type_perms = None
+            if not is_imms_batch_app:
+                imms_vax_type_perms = aws_event["headers"]["VaccineTypePermissions"]
+                if len(imms_vax_type_perms) == 0:
+                    raise UnauthorizedVaxError()
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
 

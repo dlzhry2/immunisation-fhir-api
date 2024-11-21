@@ -93,6 +93,37 @@ class TestFhirControllerGetImmunizationByIdentifier(unittest.TestCase):
         self.assertEqual(response["statusCode"], 200)
         body = json.loads(response["body"])
         self.assertEqual(body["id"], "test")
+
+
+    def test_get_imms_by_identifer_no_vax_permission(self):
+        """it should return Immunization Id if it exists"""
+        # Given
+        lambda_event = {
+            "headers": {"VaccineTypePermissions": "", "SupplierSystem": "test"},
+            "queryStringParameters": {
+                "immunization.identifier": "https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184",
+                "_element": "id,meta",
+            },
+            "body": None,
+        }
+        # When
+        response = self.controller.get_immunization_by_identifier(lambda_event)
+        # Then
+        self.assertEqual(response["statusCode"], 403)
+
+    def test_get_imms_by_identifer_header_missing(self):
+        """it should return Immunization Id if it exists"""
+        # Given
+        lambda_event = {
+            "queryStringParameters": {
+                "immunization.identifier": "https://supplierABC/identifiers/vacc|f10b59b3-fc73-4616-99c9-9e882ab31184",
+                "_element": "id,meta",
+            },
+            "body": None,
+        }
+        response = self.controller.get_immunization_by_identifier(lambda_event)
+    
+        self.assertEqual(response["statusCode"], 403)
         
     def test_get_imms_by_identifer_for_batch(self):
         """it should return Immunization Id if it exists"""
@@ -766,6 +797,35 @@ class TestFhirControllerGetImmunizationById(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "Immunization")
 
+    def test_get_imms_by_id_unauthorised_vax_error(self):
+        """it should return Immunization resource if it exists"""
+        # Given
+        imms_id = "a-id"
+        self.service.get_immunization_by_id.side_effect = UnauthorizedVaxError
+        lambda_event = {
+            "headers": {"VaccineTypePermissions": "COVID19:read"},
+            "pathParameters": {"id": imms_id},
+        }
+
+        # When
+        response = self.controller.get_immunization_by_id(lambda_event)
+        # Then
+        self.assertEqual(response["statusCode"], 403)  
+
+    def test_get_imms_by_id_no_vax_permission(self):
+        """it should return Immunization Id if it exists"""
+        # Given
+        imms_id = "a-id"
+        lambda_event = {
+            "headers": {"VaccineTypePermissions": "", "SupplierSystem": "test"},
+            "pathParameters": {"id": imms_id},
+            "body": None,
+        }
+        # When
+        response = self.controller.get_immunization_by_id(lambda_event)
+        # Then
+        self.assertEqual(response["statusCode"], 403)    
+
     def test_not_found(self):
         """it should return not-found OperationOutcome if it doesn't exist"""
         # Given
@@ -1072,6 +1132,25 @@ class TestUpdateImmunization(unittest.TestCase):
         self.service.update_immunization.assert_called_once_with(imms_id, json.loads(imms), 1, "COVID19:update", "Test", False)
         self.assertEqual(response["statusCode"], 200)
         self.assertTrue("body" not in response)
+    
+    @patch("fhir_controller.sqs_client.send_message")
+    def test_update_immunization_etag_missing(self, mock_sqs_message):
+        """it should update Immunization"""
+        imms_id = "valid-id"
+        imms = {"id": "valid-id"}
+        aws_event = {
+           "headers": {"VaccineTypePermissions": "COVID19:update", "SupplierSystem": "Imms-Batch-App", "BatchSupplierSystem":"Test", 
+                        "file_key": "test", "row_id": "123", "created_at_formatted_string": "2020-01-01"},
+            "body": imms,
+            "pathParameters": {"id": imms_id},
+        }
+        response = self.controller.update_immunization(aws_event)
+        mock_sqs_message.assert_called_once()
+        self.assertEqual(response["statusCode"], 400)
+        self.assertIn(
+            "Validation errors: Immunization resource version not specified in the request headers",
+            json.loads(response["body"])["issue"][0]["diagnostics"],
+        )      
     
     @patch("fhir_controller.sqs_client.send_message")
     def test_update_immunization_duplicate(self, mock_sqs_message):
