@@ -5,7 +5,7 @@ import time
 import simplejson as json
 from dataclasses import dataclass
 from boto3.dynamodb.conditions import Key
-from models.errors import UnhandledResponseError, IdentifierDuplicationError
+from models.errors import UnhandledResponseError, IdentifierDuplicationError, ResourceNotFoundError
 
 
 def create_table(region_name="eu-west-2"):
@@ -115,8 +115,8 @@ class ImmunizationBatchRepository:
             table, "IdentifierGSI", "IdentifierPK", attr["identifier"]
         )
 
-        if query_response is not None:
-            raise IdentifierDuplicationError(identifier=attr["identifier"])
+        if query_response is None:
+            raise ResourceNotFoundError(resource_type="Immunization", resource_id=attr["identifier"])
 
         response = table.put_item(
             Item={
@@ -149,8 +149,8 @@ class ImmunizationBatchRepository:
             table, "IdentifierGSI", "IdentifierPK", attr["identifier"]
         )
 
-        if query_response is not None:
-            raise IdentifierDuplicationError(identifier=attr["identifier"])
+        if query_response is None:
+            raise ResourceNotFoundError(resource_type="Immunization", resource_id=attr["identifier"])
 
         response = table.put_item(
             Item={

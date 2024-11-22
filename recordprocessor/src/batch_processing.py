@@ -17,6 +17,9 @@ from send_to_kinesis import send_to_kinesis
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
 
+STREAM_NAME = os.getenv("KINESIS_STREAM_NAME")
+STREAM_ARN = os.getenv("KINESIS_STREAM_ARN")
+
 
 def process_csv_to_fhir(incoming_message_body: dict) -> None:
     """
@@ -80,7 +83,7 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
                 **details_from_processing,
             }
 
-            send_to_kinesis(supplier, outgoing_message_body)
+            send_to_kinesis(supplier, outgoing_message_body, STREAM_NAME, STREAM_ARN)
 
         logger.info("Total rows processed: %s", row_count)
 
