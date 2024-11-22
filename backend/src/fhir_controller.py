@@ -219,21 +219,16 @@ class FhirController:
             return final_resp
         except ValidationError as error:
             final_resp = self.create_response(400, error.to_operation_outcome())
-            if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
-            return final_resp
         except IdentifierDuplicationError as duplicate:
             final_resp = self.create_response(422, duplicate.to_operation_outcome())
-            if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
-            return final_resp
         except UnhandledResponseError as unhandled_error:
             final_resp = self.create_response(500, unhandled_error.to_operation_outcome())
-            if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
-            return final_resp
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
+
+        if is_imms_batch_app:
+            self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+        return final_resp
 
     def update_immunization(self, aws_event):
         try:
@@ -292,7 +287,7 @@ class FhirController:
                 self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
             return final_resp
         except Exception as e:
-            final_resp = self._create_bad_request(f"Request's body contains string")
+            final_resp = self._create_bad_request(f"Request's body contains string: {e}")
             if is_imms_batch_app:
                 self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
             return final_resp
@@ -334,7 +329,7 @@ class FhirController:
         # Check vaccine type permissions on the existing record - start
         try:
             if not is_imms_batch_app:
-                vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+                vax_type_perms = self._parse_vaccine_permissions_controller(imms_vax_type_perms)
                 vax_type_perm = self._vaccine_permission(existing_record["VaccineType"], "update")
                 self._check_permission(vax_type_perm, vax_type_perms)
         except UnauthorizedVaxOnRecordError as unauthorized:
@@ -544,7 +539,7 @@ class FhirController:
             return self.create_response(403, unauthorized.to_operation_outcome())
         # Check vaxx type permissions on the existing record - start
         try:
-            vax_type_perms = self._parse_vaccine_permissions(imms_vax_type_perms)
+            vax_type_perms = self._parse_vaccine_permissions_controller(imms_vax_type_perms)
             vax_type_perm = self._new_vaccine_request(search_params.immunization_targets, "search", vax_type_perms)
             if not vax_type_perm:
                 raise UnauthorizedVaxError
@@ -799,7 +794,7 @@ class FhirController:
             return vaccine_permission
 
     @staticmethod
-    def _parse_vaccine_permissions(imms_vax_type_perms) -> set:
+    def _parse_vaccine_permissions_controller(imms_vax_type_perms) -> set:
         parsed = [str.strip(str.lower(s)) for s in imms_vax_type_perms.split(",")]
         vaccine_permissions = set()
         for s in parsed:

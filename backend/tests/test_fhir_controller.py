@@ -1073,7 +1073,6 @@ class TestCreateImmunization(unittest.TestCase):
 
         response = self.controller.create_immunization(aws_event)
         mock_send_message.assert_called_once()
-
         self.assertEqual(response["statusCode"], 422)
         body = json.loads(response["body"])
         self.assertEqual(body["resourceType"], "OperationOutcome")
