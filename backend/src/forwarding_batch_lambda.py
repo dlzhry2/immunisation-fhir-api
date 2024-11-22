@@ -7,13 +7,12 @@ import logging
 from models.errors import MessageNotSuccessfulError
 from fhir_batch_repository import create_table
 from fhir_batch_controller import ImmunizationBatchController, make_batch_controller
-from boto3 import client as boto3_client
+from clients import sqs_client
 
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
 
-queue_url = os.getenv("SQS_QUEUE_URL")
-sqs_client = boto3_client("sqs", region_name="eu-west-2")
+QUEUE_URL = os.getenv("SQS_QUEUE_URL")
 
 
 def forward_request_to_dynamo(message_body: any, table: any, batchcontroller: ImmunizationBatchController):
@@ -41,7 +40,7 @@ def forward_lambda_handler(event, _):
             response = forward_request_to_dynamo(message_body, table, controller)
             response["file_key"] = file_key
             response["row_id"] = row_id           
-            sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(response), MessageGroupId=file_key)
+            sqs_client.send_message(QueueUrl=QUEUE_URL, MessageBody=json.dumps(response), MessageGroupId=file_key)
         except Exception as error:  # pylint:disable=broad-exception-caught
             logger.error("Error processing message: %s", error)
     logger.info("Processing ended")
