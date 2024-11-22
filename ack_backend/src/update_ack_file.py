@@ -103,7 +103,7 @@ def update_ack_file(
 ) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
     ack_file_prefix = f"forwardedFile/{file_key.replace('.csv', '_BusAck_')}"
-    ack_file_timestamp = datetime.now().replace(second=0, microsecond=0).isoformat(timespec="milliseconds")
+    ack_file_timestamp = datetime.now().isoformat(timespec="milliseconds")
     ack_file_key = f"forwardedFile/{file_key.replace('.csv', f'_BusAck_{ack_file_timestamp}.csv')}"
     imms_env = get_environment()
     ack_bucket_name = os.getenv("ACK_BUCKET_NAME", f"immunisation-batch-{imms_env}-data-destinations")
