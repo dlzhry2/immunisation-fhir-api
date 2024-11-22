@@ -126,11 +126,11 @@ class ImmunizationBatchRepository:
                 resource_type="Immunization", resource_id=identifier
             )
         old_id, version = self._get_id_version(query_response)
-        deleted_at_required, update_reinstated = self._get_record_status(query_response)
+        deleted_at_required, update_reinstated, is_reinstate  = self._get_record_status(query_response)
         immunization["id"] = old_id
         attr = RecordAttributes(immunization, vax_type, supplier_system, version)
 
-        update_exp = self._build_update_expression(is_reinstate=update_reinstated)
+        update_exp = self._build_update_expression(is_reinstate = is_reinstate)
 
         return self._perform_dynamo_update(
             update_exp,
@@ -193,7 +193,6 @@ class ImmunizationBatchRepository:
     def _identifier_response(immunization: any):
         system_id = immunization["identifier"][0]["system"]
         system_value = immunization["identifier"][0]["value"]
-
         return f"{system_id}#{system_value}"
 
     @staticmethod
@@ -210,7 +209,18 @@ class ImmunizationBatchRepository:
 
     @staticmethod
     def _get_record_status(query_response: any):
-        return True, True
+        deleted_at_required = False
+        update_reinstated = False
+        is_reinstate = False
+        if query_response.get("Count") == 1:
+            if query_response["Items"][0]["DeletedAt"]:
+                deleted_at_required = True
+                is_reinstate = True
+                if query_response["Items"][0]["DeletedAt"] == "reinstated":
+                    update_reinstated = True
+                    is_reinstate = False
+
+        return deleted_at_required, update_reinstated, is_reinstate
 
     def _build_update_expression(self, is_reinstate: bool) -> str:
         if is_reinstate:
