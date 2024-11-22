@@ -51,12 +51,13 @@ class RecordAttributes:
     patient_pk: str
     patient_sk: str
     resource: dict
-    patient: dict
     vaccine_type: str
     timestamp: int
     identifier: str
+    supplier: str
+    version: int
 
-    def __init__(self, imms: dict, vax_type: str):
+    def __init__(self, imms: dict, vax_type: str, supplier: str, version: int):
         """Create attributes that may be used in dynamodb table"""
         imms_id = imms["id"]
         self.pk = _make_immunization_pk(imms_id)
@@ -65,6 +66,8 @@ class RecordAttributes:
         self.resource = imms
         self.timestamp = int(time.time())
         self.vaccine_type = vax_type
+        self.supplier = supplier
+        self.version = version + 1
         self.system_id = imms["identifier"][0]["system"]
         self.system_value = imms["identifier"][0]["value"]
         self.patient_sk = f"{self.vaccine_type}#{imms_id}"
@@ -80,7 +83,7 @@ class ImmunizationBatchRepository:
     ) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
-        attr = RecordAttributes(immunization, vax_type)
+        attr = RecordAttributes(immunization, vax_type, supplier_system, 0)
 
         query_response = _query_identifier(
             table, "IdentifierGSI", "IdentifierPK", attr.identifier
@@ -89,33 +92,53 @@ class ImmunizationBatchRepository:
         if query_response is not None:
             raise IdentifierDuplicationError(identifier=attr.identifier)
 
-        response = table.put_item(
-            Item={
-                "PK": attr.pk,
-                "PatientPK": attr.patient_pk,
-                "PatientSK": attr.patient_sk,
-                "Resource": json.dumps(attr.resource, use_decimal=True),
-                "IdentifierPK": attr.identifier,
-                "Operation": "CREATE",
-                "Version": 1,
-                "SupplierSystem": supplier_system,
-            }
-        )
+        try:
+            response = table.put_item(
+                Item={
+                    "PK": attr.pk,
+                    "PatientPK": attr.patient_pk,
+                    "PatientSK": attr.patient_sk,
+                    "Resource": json.dumps(attr.resource, use_decimal=True),
+                    "IdentifierPK": attr.identifier,
+                    "Operation": "CREATE",
+                    "Version": attr.version,
+                    "SupplierSystem": attr.supplier,
+                }
+            )
 
-        if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-            return immunization
-        else:
+            return self._handle_dynamo_response(response)
+
+        except botocore.exceptions.ClientError as error:
             raise UnhandledResponseError(
-                message="Non-200 response from dynamodb", response=response
+                message=f"Unhandled error from dynamodb: {error.response['Error']['Code']}",
+                response=error.response,
             )
 
     def update_immunization(
         self, immunization: any, supplier_system: str, vax_type: str, table: any
     ) -> dict:
+        identifier = self._identifier_response(immunization)
         query_response = _query_identifier(
-            table, "IdentifierGSI", "IdentifierPK", self._identifier_response(immunization)
+            table, "IdentifierGSI", "IdentifierPK", identifier
         )
-        print(f"query_response: {query_response}")
+        if query_response is None:
+            raise ResourceNotFoundError(
+                resource_type="Immunization", resource_id=identifier
+            )
+        old_id, version = self._get_id_version(query_response)
+        deleted_at_required, update_reinstated = self._get_record_status(query_response)
+        immunization["id"] = old_id
+        attr = RecordAttributes(immunization, vax_type, supplier_system, version)
+
+        update_exp = self._build_update_expression(is_reinstate=update_reinstated)
+
+        return self._perform_dynamo_update(
+            update_exp,
+            attr,
+            deleted_at_required=deleted_at_required,
+            update_reinstated=update_reinstated,
+            table=table,
+        )
 
     def delete_immunization(
         self, immunization: any, supplier_system: str, vax_type: str, table: any
@@ -126,13 +149,13 @@ class ImmunizationBatchRepository:
         )
         if query_response is None:
             raise ResourceNotFoundError(
-                    resource_type="Immunization", resource_id=identifier
-                )
+                resource_type="Immunization", resource_id=identifier
+            )
         try:
             now_timestamp = int(time.time())
             imms_id = self._get_pk(query_response)
             response = table.update_item(
-                Key={"PK": imms_id },
+                Key={"PK": imms_id},
                 UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation, SupplierSystem = :supplier_system",
                 ExpressionAttributeValues={
                     ":timestamp": now_timestamp,
@@ -165,15 +188,99 @@ class ImmunizationBatchRepository:
             raise UnhandledResponseError(
                 message="Non-200 response from dynamodb", response=response
             )
-            
+
     @staticmethod
     def _identifier_response(immunization: any):
         system_id = immunization["identifier"][0]["system"]
         system_value = immunization["identifier"][0]["value"]
 
         return f"{system_id}#{system_value}"
-    
+
     @staticmethod
-    def _get_pk(immunization: any):
-        if immunization.get("Count") == 1:
-            return immunization["Items"][0]["PK"]
+    def _get_pk(query_response: any):
+        if query_response.get("Count") == 1:
+            return query_response["Items"][0]["PK"]
+
+    @staticmethod
+    def _get_id_version(query_response: any):
+        if query_response.get("Count") == 1:
+            old_id = query_response["Items"][0]["PK"]
+            version = query_response["Items"][0]["Version"]
+            return old_id, version
+
+    @staticmethod
+    def _get_record_status(query_response: any):
+        return True, True
+
+    def _build_update_expression(self, is_reinstate: bool) -> str:
+        if is_reinstate:
+            return (
+                "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
+                "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
+                "Operation = :operation, Version = :version, DeletedAt = :respawn, SupplierSystem = :supplier_system "
+            )
+        else:
+            return (
+                "SET UpdatedAt = :timestamp, PatientPK = :patient_pk, "
+                "PatientSK = :patient_sk, #imms_resource = :imms_resource_val, "
+                "Operation = :operation, Version = :version, SupplierSystem = :supplier_system "
+            )
+
+    def _perform_dynamo_update(
+        self,
+        update_exp: str,
+        attr: RecordAttributes,
+        deleted_at_required: bool,
+        update_reinstated: bool,
+        table: any,
+    ) -> dict:
+        try:
+            condition_expression = Attr("PK").eq(attr.pk) & (
+                Attr("DeletedAt").exists()
+                if deleted_at_required
+                else Attr("PK").eq(attr.pk) & Attr("DeletedAt").not_exists()
+            )
+            if deleted_at_required and update_reinstated == False:
+                ExpressionAttributeValues = {
+                    ":timestamp": attr.timestamp,
+                    ":patient_pk": attr.patient_pk,
+                    ":patient_sk": attr.patient_sk,
+                    ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
+                    ":operation": "UPDATE",
+                    ":version": attr.version + 1,
+                    ":supplier_system": attr.supplier,
+                    ":respawn": "reinstated",
+                }
+            else:
+                ExpressionAttributeValues = {
+                    ":timestamp": attr.timestamp,
+                    ":patient_pk": attr.patient_pk,
+                    ":patient_sk": attr.patient_sk,
+                    ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
+                    ":operation": "UPDATE",
+                    ":version": attr.version + 1,
+                    ":supplier_system": attr.supplier,
+                }
+
+            response = table.update_item(
+                Key={"PK": attr.pk},
+                UpdateExpression=update_exp,
+                ExpressionAttributeNames={
+                    "#imms_resource": "Resource",
+                },
+                ExpressionAttributeValues=ExpressionAttributeValues,
+                ReturnValues="ALL_NEW",
+                ConditionExpression=condition_expression,
+            )
+            return self._handle_dynamo_response(response)
+        except botocore.exceptions.ClientError as error:
+            # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
+            if error.response["Error"]["Code"] == "ConditionalCheckFailedException":
+                raise ResourceNotFoundError(
+                    resource_type="Immunization", resource_id=attr.pk
+                )
+            else:
+                raise UnhandledResponseError(
+                    message=f"Unhandled error from dynamodb: {error.response['Error']['Code']}",
+                    response=error.response,
+                )
