@@ -1,10 +1,3 @@
-from fhir.resources.R4B.bundle import (
-    Bundle as FhirBundle,
-    BundleEntry,
-    BundleLink,
-    BundleEntrySearch,
-)
-from fhir.resources.R4B.immunization import Immunization
 from pydantic import ValidationError
 from fhir_batch_repository import ImmunizationBatchRepository
 from models.errors import CustomValidationError

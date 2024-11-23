@@ -106,7 +106,12 @@ class ImmunizationBatchRepository:
                 }
             )
 
-            return self._handle_dynamo_response(response)
+            if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+                return immunization
+            else:
+                raise UnhandledResponseError(
+                    message="Non-200 response from dynamodb", response=response
+                )
 
         except botocore.exceptions.ClientError as error:
             raise UnhandledResponseError(
@@ -126,11 +131,14 @@ class ImmunizationBatchRepository:
                 resource_type="Immunization", resource_id=identifier
             )
         old_id, version = self._get_id_version(query_response)
-        deleted_at_required, update_reinstated, is_reinstate  = self._get_record_status(query_response)
-        immunization["id"] = old_id
+        deleted_at_required, update_reinstated, is_reinstate = self._get_record_status(
+            query_response
+        )
+
+        immunization["id"] = old_id.split("#")[1]
         attr = RecordAttributes(immunization, vax_type, supplier_system, version)
 
-        update_exp = self._build_update_expression(is_reinstate = is_reinstate)
+        update_exp = self._build_update_expression(is_reinstate=is_reinstate)
 
         return self._perform_dynamo_update(
             update_exp,
@@ -213,7 +221,7 @@ class ImmunizationBatchRepository:
         update_reinstated = False
         is_reinstate = False
         if query_response.get("Count") == 1:
-            if query_response["Items"][0]["DeletedAt"]:
+            if "DeletedAt" in query_response["Items"][0]:
                 deleted_at_required = True
                 is_reinstate = True
                 if query_response["Items"][0]["DeletedAt"] == "reinstated":
@@ -257,7 +265,7 @@ class ImmunizationBatchRepository:
                     ":patient_sk": attr.patient_sk,
                     ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
                     ":operation": "UPDATE",
-                    ":version": attr.version + 1,
+                    ":version": attr.version,
                     ":supplier_system": attr.supplier,
                     ":respawn": "reinstated",
                 }
@@ -268,7 +276,7 @@ class ImmunizationBatchRepository:
                     ":patient_sk": attr.patient_sk,
                     ":imms_resource_val": json.dumps(attr.resource, use_decimal=True),
                     ":operation": "UPDATE",
-                    ":version": attr.version + 1,
+                    ":version": attr.version,
                     ":supplier_system": attr.supplier,
                 }
 
