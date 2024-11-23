@@ -7,7 +7,6 @@ from typing import Union
 from botocore.exceptions import ClientError
 from boto3 import client as boto3_client
 from constants import Constants
-from utils_for_ack_processor import get_environment
 
 s3_client = boto3_client("s3", region_name="eu-west-2")
 
@@ -84,8 +83,7 @@ def update_ack_file(
 ) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
     ack_file_key = f"forwardedFile/{file_key.replace('.csv', '_BusAck.csv')}"
-    imms_env = get_environment()
-    ack_bucket_name = os.getenv("ACK_BUCKET_NAME", f"immunisation-batch-{imms_env}-data-destinations")
+    ack_bucket_name = os.getenv("ACK_BUCKET_NAME")
     ack_data_row = create_ack_data(created_at_formatted_string, row_id, successful_api_response, diagnostics, imms_id)
     accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_key)
     upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_row)

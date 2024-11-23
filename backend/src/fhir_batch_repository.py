@@ -107,7 +107,7 @@ class ImmunizationBatchRepository:
             )
 
             if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                return immunization
+                return attr.pk
             else:
                 raise UnhandledResponseError(
                     message="Non-200 response from dynamodb", response=response
@@ -174,7 +174,7 @@ class ImmunizationBatchRepository:
                 ConditionExpression=Attr("PK").eq(imms_id)
                 & (Attr("DeletedAt").not_exists() | Attr("DeletedAt").eq("reinstated")),
             )
-            return self._handle_dynamo_response(response)
+            return self._handle_dynamo_response(response, imms_id)
 
         except botocore.exceptions.ClientError as error:
             # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
@@ -189,9 +189,9 @@ class ImmunizationBatchRepository:
                 )
 
     @staticmethod
-    def _handle_dynamo_response(response):
+    def _handle_dynamo_response(response, imms_id):
         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-            return json.loads(response["Attributes"]["Resource"])
+            return imms_id
         else:
             raise UnhandledResponseError(
                 message="Non-200 response from dynamodb", response=response
@@ -290,7 +290,7 @@ class ImmunizationBatchRepository:
                 ReturnValues="ALL_NEW",
                 ConditionExpression=condition_expression,
             )
-            return self._handle_dynamo_response(response)
+            return self._handle_dynamo_response(response, attr.pk)
         except botocore.exceptions.ClientError as error:
             # Either resource didn't exist or it has already been deleted. See ConditionExpression in the request
             if error.response["Error"]["Code"] == "ConditionalCheckFailedException":
