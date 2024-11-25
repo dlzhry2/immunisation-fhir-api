@@ -136,6 +136,9 @@ class ValidValues:
         "valueCodeableConcept": {"coding": [nhs_number_coding_item]},
     }
 
+    test_unique_id_uri = "https://www.ravs.england.nhs.uk/"
+    test_local_id = f"0002_COVID19_v1_DOSE_1^{test_unique_id_uri}"
+
     occurrenceDateTime = "2021-02-07T13:28:17+00:00"
 
     date_before_occurenceDateTime = "1900-01-01T00:00:00+00:00"
