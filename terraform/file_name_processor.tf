@@ -204,6 +204,30 @@ resource "aws_iam_policy" "filenameprocessor_lambda_kms_access_policy" {
   })
 }
 
+resource "aws_iam_policy" "filenameprocessor_dynamo_access_policy" {
+  name        = "${local.short_prefix}-filenameproc-auditdb-policy"
+  description = "Policy to allow access to DynamoDB audit table"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action    = [
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:UpdateItem"
+        ]
+        Effect    = "Allow"
+        Resource  = [
+          "arn:aws:dynamodb:${var.aws_region}:${local.local_account_id}:table/${local.batch_prefix}-audit-table",
+          "arn:aws:dynamodb:${var.aws_region}:${local.local_account_id}:table/${local.batch_prefix}-audit-table/index/*",
+        ]
+      }
+    ]
+  })
+}
+
+
 # Attach the execution policy to the Lambda role
 resource "aws_iam_role_policy_attachment" "filenameprocessor_lambda_exec_policy_attachment" {
   role       = aws_iam_role.filenameprocessor_lambda_exec_role.name
@@ -220,6 +244,12 @@ resource "aws_iam_role_policy_attachment" "filenameprocessor_lambda_sqs_policy_a
 resource "aws_iam_role_policy_attachment" "filenameprocessor_lambda_kms_policy_attachment" {
   role       = aws_iam_role.filenameprocessor_lambda_exec_role.name
   policy_arn = aws_iam_policy.filenameprocessor_lambda_kms_access_policy.arn
+}
+
+# Attach the dynamo db policy to the Lambda role
+resource "aws_iam_role_policy_attachment" "filenameprocessor_lambda_dynamo_access_attachment" {
+  role       = aws_iam_role.filenameprocessor_lambda_exec_role.name
+  policy_arn = aws_iam_policy.filenameprocessor_dynamo_access_policy.arn
 }
 # Lambda Function with Security Group and VPC.
 resource "aws_lambda_function" "file_processor_lambda" {
@@ -244,6 +274,7 @@ resource "aws_lambda_function" "file_processor_lambda" {
       REDIS_HOST           = data.aws_elasticache_cluster.existing_redis.cache_nodes[0].address
       REDIS_PORT           = data.aws_elasticache_cluster.existing_redis.cache_nodes[0].port
       SPLUNK_FIREHOSE_NAME = module.splunk.firehose_stream_name
+      AUDIT_TABLE_NAME     = "${local.batch_prefix}-audit-table"
     }
   }
   kms_key_arn = data.aws_kms_key.existing_lambda_encryption_key.arn

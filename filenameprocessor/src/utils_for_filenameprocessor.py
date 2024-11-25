@@ -4,7 +4,7 @@ from csv import DictReader
 from typing import Union
 from io import StringIO
 from constants import Constants
-from s3_clients import s3_client
+from clients import s3_client
 
 
 def get_csv_content_dict_reader(bucket_name: str, file_key: str):

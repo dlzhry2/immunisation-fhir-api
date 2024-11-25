@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock
 from unittest import TestCase
 from json import loads as json_loads
 from typing import Optional
-from freezegun import freeze_time
 from boto3 import client as boto3_client
 from moto import mock_s3, mock_sqs
 import json
@@ -24,7 +23,6 @@ from tests.utils_for_tests.values_for_tests import (  # noqa: E402
     VALID_RSV_EMIS_FILE_KEY,
     CONFIGS_BUCKET_NAME,
     PERMISSION_JSON,
-    STATIC_ISO_DATETIME,
 )
 
 
@@ -83,7 +81,6 @@ class TestLambdaHandler(TestCase):
             ]
         }
 
-    @freeze_time("2021-11-20, 12:00:00")
     def assert_ack_file_in_destination_s3_bucket(self, s3_client, ack_file_key: Optional[str] = None):
         """Assert that the ack file if given, else the VALID_FLU_EMIS_ACK_FILE_KEY, is in the destination S3 bucket"""
         ack_file_key = ack_file_key or VALID_FLU_EMIS_ACK_FILE_KEY
@@ -110,8 +107,8 @@ class TestLambdaHandler(TestCase):
         queue_url = sqs_client.create_queue(QueueName=queue_name, Attributes=attributes)["QueueUrl"]
 
         # Mock get_supplier_permissions with full FLU permissions
-
-        response = lambda_handler(self.make_event(), None)
+        with patch("file_name_processor.add_to_audit_table", return_value=True):
+            response = lambda_handler(self.make_event(), None)
 
         # Assertions
         self.assertEqual(response["statusCode"], 200)
@@ -126,6 +123,24 @@ class TestLambdaHandler(TestCase):
         self.assertEqual(received_message["supplier"], "EMIS")
         self.assertEqual(received_message["timestamp"], "20240708T12130100")
         self.assertEqual(received_message["filename"], "Flu_Vaccinations_v5_YGM41_20240708T12130100.csv")
+
+    @mock_s3
+    @mock_sqs
+    @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
+    @patch("file_name_processor.s3_client.get_object")
+    @patch("file_name_processor.add_to_audit_table", return_value=True)
+    @patch("fetch_permissions.redis_client")
+    def test_add_to_audit_table_called(self, mock_redis_client, mock_add_to_audit_table, mock_s3_get_object):
+        """Tests that add_to_audit_table is called with the correct input args"""
+        # Mock full permissions
+        mock_redis_client.get.return_value = json.dumps(PERMISSION_JSON)
+        self.set_up_s3_buckets_and_upload_file()
+        mock_s3_get_object.return_value = {"LastModified": MagicMock(strftime=lambda fmt: "20240101T000000")}
+
+        with patch("file_name_processor.uuid4", return_value="test_id"):
+            lambda_handler(self.make_event(), None)
+
+        mock_add_to_audit_table.assert_called_with("test_id", VALID_FLU_EMIS_FILE_KEY, "20240101T000000")
 
     @patch("elasticcache.s3_client.get_object")
     @patch("elasticcache.redis_client.set")
@@ -171,87 +186,83 @@ class TestLambdaHandler(TestCase):
         assert response["body"] == '"Failed to upload file content to cache from S3 bucket"'
 
     @mock_s3
-    @freeze_time("2021-11-20, 12:00:00")
     def test_lambda_invalid_vaccine_type(self):
         """tests SQS queue is not called when file key includes invalid vaccine type"""
         test_file_key = "InvalidVaccineType_Vaccinations_v5_YGM41_20240708T12130100.csv"
-        ack_file_key = (
-            f"ack/InvalidVaccineType_Vaccinations_v5_YGM41_20240708T12130100_InfAck_{STATIC_ISO_DATETIME}.csv"
-        )
+        ack_file_key = "ack/InvalidVaccineType_Vaccinations_v5_YGM41_20240708T12130100_InfAck.csv"
         s3_client = self.set_up_s3_buckets_and_upload_file(file_key=test_file_key)
 
-        # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
-        with patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]), patch(
-            "send_sqs_message.send_to_supplier_queue"
-        ) as mock_send_to_supplier_queue:
+        with (  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
         self.assert_ack_file_in_destination_s3_bucket(s3_client, ack_file_key)
 
     @mock_s3
-    @freeze_time("2021-11-20, 12:00:00")
     def test_lambda_invalid_vaccination(self):
         """tests SQS queue is not called when file key does not include 'Vaccinations'"""
         test_file_key = "Flu_Vaccination_v5_YGM41_20240708T12130100.csv"
-        ack_file_key = f"ack/Flu_Vaccination_v5_YGM41_20240708T12130100_InfAck_{STATIC_ISO_DATETIME}.csv"
+        ack_file_key = "ack/Flu_Vaccination_v5_YGM41_20240708T12130100_InfAck.csv"
         s3_client = self.set_up_s3_buckets_and_upload_file(file_key=test_file_key)
 
-        # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
-        with patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]), patch(
-            "send_sqs_message.send_to_supplier_queue"
-        ) as mock_send_to_supplier_queue:
+        with (  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
         self.assert_ack_file_in_destination_s3_bucket(s3_client, ack_file_key)
 
     @mock_s3
-    @freeze_time("2021-11-20, 12:00:00")
     def test_lambda_invalid_version(self):
         """tests SQS queue is not called when file key includes invalid version"""
         test_file_key = "Flu_Vaccinations_v4_YGM41_20240708T12130100.csv"
-        ack_file_key = f"ack/Flu_Vaccinations_v4_YGM41_20240708T12130100_InfAck_{STATIC_ISO_DATETIME}.csv"
+        ack_file_key = "ack/Flu_Vaccinations_v4_YGM41_20240708T12130100_InfAck.csv"
         s3_client = self.set_up_s3_buckets_and_upload_file(file_key=test_file_key)
 
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
-        with patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]), patch(
-            "send_sqs_message.send_to_supplier_queue"
-        ) as mock_send_to_supplier_queue:
+        with (  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
         self.assert_ack_file_in_destination_s3_bucket(s3_client, ack_file_key)
 
     @mock_s3
-    @freeze_time("2021-11-20, 12:00:00")
     def test_lambda_invalid_odscode(self):
         """tests SQS queue is not called when file key includes invalid ods code"""
         test_file_key = "Flu_Vaccinations_v5_InvalidOdsCode_20240708T12130100.csv"
-        ack_file_key = f"ack/Flu_Vaccinations_v5_InvalidOdsCode_20240708T12130100_InfAck_{STATIC_ISO_DATETIME}.csv"
+        ack_file_key = "ack/Flu_Vaccinations_v5_InvalidOdsCode_20240708T12130100_InfAck.csv"
         s3_client = self.set_up_s3_buckets_and_upload_file(file_key=test_file_key)
 
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
-        with patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]), patch(
-            "send_sqs_message.send_to_supplier_queue"
-        ) as mock_send_to_supplier_queue:
+        with (  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
         self.assert_ack_file_in_destination_s3_bucket(s3_client, ack_file_key)
 
     @mock_s3
-    @freeze_time("2021-11-20, 12:00:00")
     def test_lambda_invalid_datetime(self):
         """tests SQS queue is not called when file key includes invalid dateTime"""
         test_file_key = "Flu_Vaccinations_v5_YGM41_20240732T12130100.csv"
-        ack_file_key = f"ack/Flu_Vaccinations_v5_YGM41_20240732T12130100_InfAck_{STATIC_ISO_DATETIME}.csv"
+        ack_file_key = "ack/Flu_Vaccinations_v5_YGM41_20240732T12130100_InfAck.csv"
         s3_client = self.set_up_s3_buckets_and_upload_file(file_key=test_file_key)
 
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
-        with patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]), patch(
-            "send_sqs_message.send_to_supplier_queue"
-        ) as mock_send_to_supplier_queue:
+        with (  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
@@ -267,25 +278,29 @@ class TestLambdaHandler(TestCase):
         self.set_up_s3_buckets_and_upload_file(file_content=VALID_FILE_CONTENT)
         # Mock the get_supplier_permissions (with return value which includes the requested Flu permissions)
         # and send_to_supplier_queue functions
-        with patch(
-            "initial_file_validation.get_supplier_permissions",
-            return_value=["FLU_CREATE", "FLU_UPDATE", "COVID19_FULL"],
-        ), patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue:
+        with (  # noqa: E999
+            patch(
+                "initial_file_validation.get_supplier_permissions",  # noqa: E999
+                return_value=["FLU_CREATE", "FLU_UPDATE", "COVID19_FULL"],  # noqa: E999
+            ),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(event=self.make_event(), context=None)
 
         mock_send_to_supplier_queue.assert_called_once()
 
     @mock_s3
-    @freeze_time("2021-11-20, 12:00:00")
     def test_lambda_invalid_action_flag_permissions(self):
         """tests SQS queue is called when has action flag permissions"""
         s3_client = self.set_up_s3_buckets_and_upload_file(file_content=VALID_FILE_CONTENT)
 
         # Mock the get_supplier_permissions (with return value which doesn't include the requested Flu permissions)
         # and send_to_supplier_queue functions
-        with patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_DELETE"]), patch(
-            "send_sqs_message.send_to_supplier_queue"
-        ) as mock_send_to_supplier_queue:
+        with (  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_DELETE"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(event=self.make_event(), context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
@@ -310,8 +325,8 @@ class TestLambdaHandler(TestCase):
         queue_url = sqs_client.create_queue(QueueName=queue_name, Attributes=attributes)["QueueUrl"]
 
         # Mock get_supplier_permissions with full RSV permissions
-
-        response = lambda_handler(self.make_event(VALID_RSV_EMIS_FILE_KEY), None)
+        with patch("file_name_processor.add_to_audit_table", return_value=True):
+            response = lambda_handler(self.make_event(VALID_RSV_EMIS_FILE_KEY), None)
 
         # Assertions
         self.assertEqual(response["statusCode"], 200)
