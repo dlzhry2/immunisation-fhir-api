@@ -40,21 +40,25 @@ def forward_lambda_handler(event, _):
             response["created_at_formatted_string"] = message_body.get(
                 "created_at_formatted_string"
             )
+            response["local_id"] = message_body.get("local_id")
             response["imms_id"] = forward_request_to_dynamo(
                 message_body, table, controller
             )
             sqs_client.send_message(
-            QueueUrl=QUEUE_URL,
-            MessageBody=json.dumps(response),
-            MessageGroupId=file_key,
+                QueueUrl=QUEUE_URL,
+                MessageBody=json.dumps(response),
+                MessageGroupId=file_key,
             )
         except Exception as error:
             error_message_body = {
-            "diagnostics": str(error),
-            "supplier": message_body.get("supplier"),
-            "file_key": message_body.get("file_key"),
-            "row_id": message_body.get("row_id"),
-            "created_at_formatted_string":  message_body.get("created_at_formatted_string"),
+                "diagnostics": str(error),
+                "supplier": message_body.get("supplier"),
+                "file_key": message_body.get("file_key"),
+                "row_id": message_body.get("row_id"),
+                "created_at_formatted_string": message_body.get(
+                    "created_at_formatted_string"
+                ),
+                "local_id": message_body.get("local_id"),
             }
             sqs_client.send_message(
                 QueueUrl=QUEUE_URL,

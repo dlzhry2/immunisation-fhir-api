@@ -3,18 +3,19 @@
 from csv import writer
 import os
 from io import StringIO, BytesIO
+from datetime import datetime
 from s3_clients import s3_client
 
 
 def make_the_ack_data(
-    message_id: str,  message_delivered: bool, created_at_formatted_string: str
+    message_id: str, message_delivered: bool, created_at_formatted_string: str
 ) -> dict:
     """Returns a dictionary of ack data based on the input values. Dictionary keys are the ack file headers,
     dictionary values are the values for the ack file row"""
     failure_display = "Infrastructure Level Response Value - Processing Error"
     return {
         "MESSAGE_HEADER_ID": message_id,
-        "HEADER_RESPONSE_CODE":  "Failure",
+        "HEADER_RESPONSE_CODE": "Failure",
         "ISSUE_SEVERITY": "Fatal",
         "ISSUE_CODE": "Fatal Error",
         "ISSUE_DETAILS_CODE": "10001",
@@ -30,8 +31,13 @@ def make_the_ack_data(
 
 def upload_ack_file(file_key: str, ack_data: dict) -> None:
     """Formats the ack data into a csv file and uploads it to the ack bucket"""
-    ack_filename = "ack/" + file_key.replace(".csv", "_InfAck.csv")
-
+    ack_file_timestamp = ack_file_timestamp = datetime.now().isoformat(
+        timespec="milliseconds"
+    )
+    print(ack_file_timestamp)
+    ack_filename = "ack/" + file_key.replace(
+        ".csv", f"_InfAck_{ack_file_timestamp}.csv"
+    )
     # Create CSV file with | delimiter, filetype .csv
     csv_buffer = StringIO()
     csv_writer = writer(csv_buffer, delimiter="|")
@@ -46,8 +52,13 @@ def upload_ack_file(file_key: str, ack_data: dict) -> None:
 
 
 def make_and_upload_the_ack_file(
-    message_id: str, file_key: str, message_delivered: bool, created_at_formatted_string: str
+    message_id: str,
+    file_key: str,
+    message_delivered: bool,
+    created_at_formatted_string: str,
 ) -> None:
     """Creates the ack file and uploads it to the S3 ack bucket"""
-    ack_data = make_the_ack_data(message_id, message_delivered, created_at_formatted_string)
+    ack_data = make_the_ack_data(
+        message_id, message_delivered, created_at_formatted_string
+    )
     upload_ack_file(file_key=file_key, ack_data=ack_data)

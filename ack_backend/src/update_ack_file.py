@@ -7,6 +7,8 @@ from typing import Union
 from botocore.exceptions import ClientError
 from boto3 import client as boto3_client
 from constants import Constants
+from datetime import datetime
+
 
 s3_client = boto3_client("s3", region_name="eu-west-2")
 
@@ -15,6 +17,7 @@ logger = logging.getLogger()
 
 def create_ack_data(
     created_at_formatted_string: str,
+    local_id: str,
     row_id: str,
     successful_api_response: bool,
     diagnostics: Union[None, str] = None,
@@ -40,21 +43,32 @@ def create_ack_data(
         ),
         "RECEIVED_TIME": created_at_formatted_string,
         "MAILBOX_FROM": "",  # TODO: Leave blank for DPS, use mailbox name if picked up from MESH mail box
-        "LOCAL_ID": "",  # TODO: Leave blank for DPS, obtain from ctl file if picked up from MESH mail box
+        "LOCAL_ID": local_id,
         "IMMS_ID": imms_id or "",
         "OPERATION_OUTCOME": diagnostics or "",
         "MESSAGE_DELIVERY": successful_api_response,
     }
 
 
-def obtain_current_ack_content(ack_bucket_name: str, ack_file_key: str) -> StringIO:
+def obtain_current_ack_content(ack_bucket_name: str, ack_file_key_prefix: str) -> StringIO:
     """Returns the current ack file content if the file exists, or else initialises the content with the ack headers."""
     accumulated_csv_content = StringIO()
+    matching_file_key = None
     try:
-        # If ack file exists in S3 download the contents
-        existing_ack_file = s3_client.get_object(Bucket=ack_bucket_name, Key=ack_file_key)
-        existing_content = existing_ack_file["Body"].read().decode("utf-8")
-        accumulated_csv_content.write(existing_content)
+        response = s3_client.list_objects_v2(Bucket=ack_bucket_name, Prefix=ack_file_key_prefix)
+        if "Contents" in response:
+            # Identify the first file that matches the filename up to _busack
+            matching_files = [obj["Key"] for obj in response["Contents"] if obj["Key"].startswith(ack_file_key_prefix)]
+            if matching_files:
+                matching_file_key = matching_files[0]
+
+        if matching_file_key:
+            # If ack file exists in S3 download the contents
+            existing_ack_file = s3_client.get_object(Bucket=ack_bucket_name, Key=matching_file_key)
+            existing_content = existing_ack_file["Body"].read().decode("utf-8")
+            accumulated_csv_content.write(existing_content)
+        else:
+            accumulated_csv_content.write("|".join(Constants.ack_headers) + "\n")
     except ClientError as error:
         logger.error("error:%s", error)
         if error.response["Error"]["Code"] in ("404", "NoSuchKey"):
@@ -78,12 +92,21 @@ def upload_ack_file(
 
 
 def update_ack_file(
-    file_key: str, row_id: str, successful_api_response: bool, diagnostics: Union[None, str], imms_id: Union[None, str],
-    created_at_formatted_string: str
+    file_key: str,
+    local_id: str,
+    row_id: str,
+    successful_api_response: bool,
+    diagnostics: Union[None, str],
+    imms_id: Union[None, str],
+    created_at_formatted_string: str,
 ) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
-    ack_file_key = f"forwardedFile/{file_key.replace('.csv', '_BusAck.csv')}"
+    ack_file_prefix = f"forwardedFile/{file_key.replace('.csv', '_BusAck_')}"
+    ack_file_timestamp = datetime.now().isoformat(timespec="milliseconds")
+    ack_file_key = f"forwardedFile/{file_key.replace('.csv', f'_BusAck_{ack_file_timestamp}.csv')}"
     ack_bucket_name = os.getenv("ACK_BUCKET_NAME")
-    ack_data_row = create_ack_data(created_at_formatted_string, row_id, successful_api_response, diagnostics, imms_id)
-    accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_key)
+    ack_data_row = create_ack_data(
+        created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
+    )
+    accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_prefix)
     upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_row)

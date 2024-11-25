@@ -14,6 +14,7 @@ def lambda_handler(event, context):
             # Check if there are any messages to process
             file_key = incoming_message_body.get("file_key")
             row_id = incoming_message_body.get("row_id")
+            local_id = incoming_message_body.get("local_id")
             imms_id = incoming_message_body.get("imms_id")
             diagnostics = incoming_message_body.get("diagnostics")
             created_at_formatted_string = incoming_message_body.get(
@@ -26,6 +27,7 @@ def lambda_handler(event, context):
 
             update_ack_file(
                 file_key,
+                local_id,
                 row_id,
                 successful_api_response=successful_api_response,
                 diagnostics=diagnostics,
