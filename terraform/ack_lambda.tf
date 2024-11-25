@@ -168,6 +168,11 @@ resource "aws_lambda_function" "ack_processor_lambda" {
   image_uri       = module.ack_processor_docker_image.image_uri
   architectures   = ["x86_64"]
   timeout         = 60
+  environment {
+    variables = {
+      ENVIRONMENT        = local.environment
+    }
+  }
 
   environment {
     variables = {
