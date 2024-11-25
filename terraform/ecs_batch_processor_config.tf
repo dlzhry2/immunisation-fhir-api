@@ -101,10 +101,10 @@ resource "aws_iam_policy" "ecs_task_exec_policy" {
           "s3:PutObject"
         ],
         Resource = [
-          "arn:aws:s3:::${local.short_prefix}-data-sources",
-          "arn:aws:s3:::${local.short_prefix}-data-sources/*",
-          "arn:aws:s3:::${local.short_prefix}-data-destinations",
-          "arn:aws:s3:::${local.short_prefix}-data-destinations/*"
+          "arn:aws:s3:::${local.batch_prefix}-data-sources",
+          "arn:aws:s3:::${local.batch_prefix}-data-sources/*",
+          "arn:aws:s3:::${local.batch_prefix}-data-destinations",
+          "arn:aws:s3:::${local.batch_prefix}-data-destinations/*"
         ]
       },
       {
@@ -168,11 +168,11 @@ resource "aws_ecs_task_definition" "ecs_task" {
     environment = [
       {
         name  = "SOURCE_BUCKET_NAME"
-        value = "${local.short_prefix}-data-sources"
+        value = "${local.batch_prefix}-data-sources"
       },
       {
         name  = "ACK_BUCKET_NAME"
-        value = "${local.short_prefix}-data-destinations"
+        value = "${local.batch_prefix}-data-destinations"
       },
       {
         name  = "KINESIS_STREAM_ARN"

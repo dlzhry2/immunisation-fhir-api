@@ -113,8 +113,8 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::${local.short_prefix}-data-destinations",
-          "arn:aws:s3:::${local.short_prefix}-data-destinations/*"        
+          "arn:aws:s3:::${local.batch_prefix}-data-destinations",
+          "arn:aws:s3:::${local.batch_prefix}-data-destinations/*"        
         ]
       },
       { 
@@ -171,7 +171,7 @@ resource "aws_lambda_function" "ack_processor_lambda" {
   
   environment {
     variables = {
-      ACK_BUCKET_NAME     = "${local.short_prefix}-data-destinations"
+      ACK_BUCKET_NAME     = "${local.batch_prefix}-data-destinations"
     }
   }
 

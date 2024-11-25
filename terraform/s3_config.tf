@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "batch_data_source_bucket" {
-    bucket        = "${local.short_prefix}-data-sources"
+    bucket        = "${local.batch_prefix}-data-sources"
     force_destroy = local.is_temp
 }
 
@@ -31,7 +31,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3_batch_source_e
 }
 
 resource "aws_s3_bucket" "batch_data_destination_bucket" {
-    bucket        = "${local.short_prefix}-data-destinations"
+    bucket        = "${local.batch_prefix}-data-destinations"
     force_destroy = local.is_temp
 }
 
