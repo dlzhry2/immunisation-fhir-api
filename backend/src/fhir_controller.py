@@ -137,7 +137,9 @@ class FhirController:
                     raise UnauthorizedVaxError()
             else:
                 raise UnauthorizedError()
-        except (UnauthorizedError, UnauthorizedVaxError) as unauthorized:
+        except UnauthorizedError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome())
+        except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
 
         try:
@@ -780,6 +782,10 @@ class FhirController:
         payload["row_id"] = message_id
         payload["created_at_formatted_string"] = created_at_formatted_string
         payload["local_id"] = local_id
+        print(file_name)
+        print(message_id)
+        print(created_at_formatted_string)
+        print(local_id)
         sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(payload), MessageGroupId=file_name)
 
     @staticmethod
