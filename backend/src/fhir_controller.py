@@ -217,20 +217,24 @@ class FhirController:
 
             if is_imms_batch_app:
                 self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
-
             return final_resp
         except ValidationError as error:
             final_resp = self.create_response(400, error.to_operation_outcome())
+            if is_imms_batch_app:
+                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+            return final_resp
         except IdentifierDuplicationError as duplicate:
             final_resp = self.create_response(422, duplicate.to_operation_outcome())
+            if is_imms_batch_app:
+                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+            return final_resp
         except UnhandledResponseError as unhandled_error:
             final_resp = self.create_response(500, unhandled_error.to_operation_outcome())
+            if is_imms_batch_app:
+                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+            return final_resp
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
-
-        if is_imms_batch_app:
-            self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
-        return final_resp
 
     def update_immunization(self, aws_event):
         try:
