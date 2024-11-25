@@ -43,15 +43,25 @@ def forward_lambda_handler(event, _):
             response["imms_id"] = forward_request_to_dynamo(
                 message_body, table, controller
             )
-        except Exception as error:  # pylint:disable=broad-exception-caught
-            response["diagnostics"] = error
-            logger.error("Error processing message: %s", error)
-
-        sqs_client.send_message(
+            sqs_client.send_message(
             QueueUrl=QUEUE_URL,
             MessageBody=json.dumps(response),
             MessageGroupId=file_key,
-        )
+            )
+        except Exception as error:
+            error_message_body = {
+            "diagnostics": str(error),
+            "supplier": message_body.get("supplier"),
+            "file_key": message_body.get("file_key"),
+            "row_id": message_body.get("row_id"),
+            "created_at_formatted_string":  message_body.get("created_at_formatted_string"),
+            }
+            sqs_client.send_message(
+                QueueUrl=QUEUE_URL,
+                MessageBody=json.dumps(error_message_body),
+                MessageGroupId=error_message_body["file_key"],
+            )
+            logger.error("Error processing message: %s", error)
 
     logger.info("Processing ended")
 
