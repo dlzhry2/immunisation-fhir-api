@@ -34,12 +34,14 @@ def forward_lambda_handler(event, _):
             decoded_payload = base64.b64decode(kinesis_payload).decode("utf-8")
             message_body = json.loads(decoded_payload, use_decimal=True)
             file_key = message_body.get("file_key")
+            created_at_formatted_string = message_body.get(
+                "created_at_formatted_string"
+            )
+            message_group_id = f"{file_key}_{created_at_formatted_string}"
             response = {}
             response["file_key"] = file_key
             response["row_id"] = message_body.get("row_id")
-            response["created_at_formatted_string"] = message_body.get(
-                "created_at_formatted_string"
-            )
+            response["created_at_formatted_string"] = created_at_formatted_string
             response["local_id"] = message_body.get("local_id")
             response["imms_id"] = forward_request_to_dynamo(
                 message_body, table, controller
@@ -47,7 +49,7 @@ def forward_lambda_handler(event, _):
             sqs_client.send_message(
                 QueueUrl=QUEUE_URL,
                 MessageBody=json.dumps(response),
-                MessageGroupId=file_key,
+                MessageGroupId=message_group_id,
             )
         except Exception as error:
             error_message_body = {
@@ -63,7 +65,7 @@ def forward_lambda_handler(event, _):
             sqs_client.send_message(
                 QueueUrl=QUEUE_URL,
                 MessageBody=json.dumps(error_message_body),
-                MessageGroupId=error_message_body["file_key"],
+                MessageGroupId=f"{error_message_body['file_key']}_{error_message_body['created_at_formatted_string']}",
             )
             logger.error("Error processing message: %s", error)
 

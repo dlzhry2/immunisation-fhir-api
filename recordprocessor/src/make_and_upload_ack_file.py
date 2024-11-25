@@ -3,7 +3,6 @@
 from csv import writer
 import os
 from io import StringIO, BytesIO
-from datetime import datetime
 from s3_clients import s3_client
 
 
@@ -30,10 +29,9 @@ def make_ack_data(
     }
 
 
-def upload_ack_file(file_key: str, ack_data: dict) -> None:
+def upload_ack_file(file_key: str, ack_data: dict, created_at_formatted_string: str) -> None:
     """Formats the ack data into a csv file and uploads it to the ack bucket"""
-    ack_file_timestamp = datetime.now().isoformat(timespec="milliseconds")
-    ack_filename = "ack/" + file_key.replace(".csv", f"_InfAck_{ack_file_timestamp}.csv")
+    ack_filename = "ack/" + file_key.replace(".csv", f"_InfAck_{created_at_formatted_string}.csv")
     # Create CSV file with | delimiter, filetype .csv
     csv_buffer = StringIO()
     csv_writer = writer(csv_buffer, delimiter="|")
@@ -52,4 +50,4 @@ def make_and_upload_ack_file(
 ) -> None:
     """Creates the ack file and uploads it to the S3 ack bucket"""
     ack_data = make_ack_data(message_id, validation_passed, message_delivered, created_at_formatted_string)
-    upload_ack_file(file_key=file_key, ack_data=ack_data)
+    upload_ack_file(file_key=file_key, ack_data=ack_data, created_at_formatted_string=created_at_formatted_string )
