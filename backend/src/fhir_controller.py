@@ -755,7 +755,9 @@ class FhirController:
             # Return the values needed for later use
             return None, imms_vax_type_perms, supplier_system
 
-        except (UnauthorizedVaxError, UnauthorizedSystemError) as unauthorized:
+        except UnauthorizedVaxError as unauthorized:
+            return self.create_response(403, unauthorized.to_operation_outcome()), None, None
+        except UnauthorizedSystemError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome()), None, None
         except UnauthorizedError as e:
             return self._create_bad_request(str(e)), None, None
@@ -782,10 +784,6 @@ class FhirController:
         payload["row_id"] = message_id
         payload["created_at_formatted_string"] = created_at_formatted_string
         payload["local_id"] = local_id
-        print(file_name)
-        print(message_id)
-        print(created_at_formatted_string)
-        print(local_id)
         sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(payload), MessageGroupId=file_name)
 
     @staticmethod
