@@ -113,10 +113,8 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::immunisation-batch-${local.local_config}-data-sources",           
-          "arn:aws:s3:::immunisation-batch-${local.local_config}-data-sources/*" ,
-          "arn:aws:s3:::immunisation-batch-${local.local_config}-data-destinations",           
-          "arn:aws:s3:::immunisation-batch-${local.local_config}-data-destinations/*"        
+          "arn:aws:s3:::${local.batch_prefix}-data-destinations",
+          "arn:aws:s3:::${local.batch_prefix}-data-destinations/*"        
         ]
       },
       { 
@@ -169,10 +167,15 @@ resource "aws_lambda_function" "ack_processor_lambda" {
   package_type    = "Image"
   image_uri       = module.ack_processor_docker_image.image_uri
   architectures   = ["x86_64"]
-  timeout         = 60
+  timeout         = 900
+  memory_size    = 2048
+  ephemeral_storage { 
+      size = 2048  
+  }
+  
   environment {
     variables = {
-      ENVIRONMENT        = local.environment
+      ACK_BUCKET_NAME     = "${local.batch_prefix}-data-destinations"
     }
   }
 
