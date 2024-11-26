@@ -167,7 +167,11 @@ resource "aws_lambda_function" "ack_processor_lambda" {
   package_type    = "Image"
   image_uri       = module.ack_processor_docker_image.image_uri
   architectures   = ["x86_64"]
-  timeout         = 60
+  timeout         = 900
+  memory_size    = 2048
+  ephemeral_storage { 
+      size = 2048  
+  }
   
   environment {
     variables = {

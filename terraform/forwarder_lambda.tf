@@ -196,7 +196,7 @@ resource "aws_lambda_function" "forwarding_lambda" {
   architectures  = ["x86_64"]
   image_uri      = module.forwarding_docker_image.image_uri
   timeout        = 900
-  memory_size    = 1024
+  memory_size    = 2048
   ephemeral_storage { 
       size = 1024  
   }
