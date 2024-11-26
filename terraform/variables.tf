@@ -59,7 +59,7 @@ data "aws_elasticache_cluster" "existing_redis" {
   cluster_id = "immunisation-redis-cluster"
 }
 
-data "aws_security_group" "existing_sg" {
+data "aws_security_group" "existing_securitygroup" {
   filter {
     name   = "group-name"
     values = ["immunisation-security-group"]
