@@ -45,13 +45,12 @@ class TestInitialFileValidation(TestCase):
             with self.subTest():
                 self.assertEqual(is_valid_datetime(date_time_string), expected_result)
 
-    @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
-    @patch("fetch_permissions.redis_client")
+    # @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
+    @patch("src.fetch_permissions.redis_client")
     def test_get_permissions_for_all_suppliers(self, mock_redis_client):
         """
         Test fetching permissions for all suppliers from Redis cache.
         """
-
         # Define the expected permissions JSON for all suppliers
         # Setup mock Redis response
         permissions_json = {
@@ -115,13 +114,13 @@ class TestInitialFileValidation(TestCase):
         # Test case tuples are structured as (file_key, file_content, expected_result)
         test_cases_for_full_permissions = [
             # Valid flu file key (mixed case)
-            (valid_file_key, valid_file_content, (True, ["COVID19_FULL", "FLU_FULL"])),
+            (valid_file_key, valid_file_content, True),
             # Valid covid19 file key (mixed case)
-            (valid_file_key.replace("Flu", "Covid19"), valid_file_content, (True, ["COVID19_FULL", "FLU_FULL"])),
+            (valid_file_key.replace("Flu", "Covid19"), valid_file_content, True),
             # Valid file key (all lowercase)
-            (valid_file_key.lower(), valid_file_content, (True, ["COVID19_FULL", "FLU_FULL"])),
+            (valid_file_key.lower(), valid_file_content, True),
             # Valid file key (all uppercase)
-            (valid_file_key.upper(), valid_file_content, (True, ["COVID19_FULL", "FLU_FULL"])),
+            (valid_file_key.upper(), valid_file_content, True),
             # File key with no '.'
             (valid_file_key.replace(".", ""), valid_file_content, False),
             # File key with additional '.'
@@ -171,7 +170,7 @@ class TestInitialFileValidation(TestCase):
         # Test case tuples are structured as (file_key, file_content, expected_result)
         test_cases_for_partial_permissions = [
             # Has vaccine type and action flag permission
-            (valid_file_key, valid_file_content, (True, ["FLU_CREATE"])),
+            (valid_file_key, valid_file_content, True),
             # Does not have vaccine type permission
             (valid_file_key.replace("Flu", "Covid19"), valid_file_content, False),
         ]

@@ -20,7 +20,6 @@ from tests.utils_for_tests.values_for_tests import (  # noqa: E402
     MOCK_ENVIRONMENT_DICT,
     DESTINATION_BUCKET_NAME,
     VALID_FLU_EMIS_FILE_KEY,
-    VALID_FLU_EMIS_ACK_FILE_KEY,
 )
 
 
@@ -65,7 +64,6 @@ class TestMakeAndUploadAckFile(TestCase):
                 )
 
     @mock_s3
-    @freeze_time("2021-11-20, 12:00:00")
     def test_upload_ack_file(self):
         """Test that upload_ack_file successfully uploads the ack file"""
         # Set up up the ack bucket
@@ -109,20 +107,22 @@ class TestMakeAndUploadAckFile(TestCase):
         # Call the upload_ack_file function
         for ack_data in test_cases:
             with self.subTest():
-                upload_ack_file(VALID_FLU_EMIS_FILE_KEY, ack_data)
+                upload_ack_file(VALID_FLU_EMIS_FILE_KEY, ack_data, self.created_at_formatted_string)
 
             # Note that the data downloaded from the CSV will contain the bool as a string
             expected_result = deepcopy(ack_data)
             expected_result["MESSAGE_DELIVERY"] = str(expected_result["MESSAGE_DELIVERY"])
 
             # Check that the uploaded data is as expected
-            ack_file_csv_obj = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=VALID_FLU_EMIS_ACK_FILE_KEY)
+            ack_file_key = "ack/" + VALID_FLU_EMIS_FILE_KEY.replace(
+                ".csv", f"_InfAck_{self.created_at_formatted_string}.csv"
+            )
+            ack_file_csv_obj = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)
             csv_content_string = ack_file_csv_obj["Body"].read().decode("utf-8")
             csv_data = list(DictReader(StringIO(csv_content_string), delimiter="|"))
             self.assertEqual(list(csv_data)[0], expected_result)
 
     @mock_s3
-    @freeze_time("2021-11-20, 12:00:00")
     def test_make_and_upload_ack_file(self):
         """Test that make_and_upload_ack_file uploads an ack file containing the correct values"""
         # Set up up the ack bucket
@@ -166,7 +166,10 @@ class TestMakeAndUploadAckFile(TestCase):
             expected_result["MESSAGE_DELIVERY"] = str(expected_result["MESSAGE_DELIVERY"])
 
             # Check that the uploaded data is as expected
-            ack_file_csv_obj = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=VALID_FLU_EMIS_ACK_FILE_KEY)
+            ack_file_key = "ack/" + VALID_FLU_EMIS_FILE_KEY.replace(
+                ".csv", f"_InfAck_{self.created_at_formatted_string}.csv"
+            )
+            ack_file_csv_obj = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)
             csv_content_string = ack_file_csv_obj["Body"].read().decode("utf-8")
             csv_data = list(DictReader(StringIO(csv_content_string), delimiter="|"))
             self.assertEqual(list(csv_data)[0], expected_result)

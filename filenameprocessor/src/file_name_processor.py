@@ -7,13 +7,14 @@ e.g. 'Flu_Vaccinations_v5_YYY78_20240708T12130100.csv' (ODS code has multiple le
 from json import dumps as json_dumps
 import logging
 from uuid import uuid4
-from initial_file_validation import initial_file_validation
+from initial_file_validation import initial_file_validation, get_supplier_permissions
 from send_sqs_message import make_and_send_sqs_message
 from make_and_upload_ack_file import make_and_upload_the_ack_file
 from audit_table import add_to_audit_table
 from clients import s3_client
 from elasticcache import upload_to_elasticache
 from log_structure import function_info
+from utils_for_filenameprocessor import extract_file_key_elements
 
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
@@ -46,9 +47,16 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
                 added_to_audit_table = add_to_audit_table(message_id, file_key, created_at_formatted_string)
 
                 if added_to_audit_table:
-                    validation_passed, permission = initial_file_validation(file_key)
+                    validation_passed = initial_file_validation(file_key)
                 else:
                     validation_passed = False
+                    permission = None
+
+                if validation_passed:
+                    file_key_elements = extract_file_key_elements(file_key)
+                    supplier = file_key_elements["supplier"]
+                    permission = get_supplier_permissions(supplier=supplier)
+                else:
                     permission = None
 
                 message_delivered = (
@@ -59,6 +67,7 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
 
                 if not validation_passed:
                     make_and_upload_the_ack_file(message_id, file_key, message_delivered, created_at_formatted_string)
+
                 return {
                     "statusCode": 200,
                     "body": json_dumps("Successfully sent to SQS queue"),

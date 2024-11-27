@@ -2,6 +2,13 @@
 
 from datetime import datetime
 
+CONFIGS_BUCKET_NAME = "immunisation-batch-internal-dev-data-configs"
+SOURCE_BUCKET_NAME = "immunisation-batch-internal-dev-data-sources"
+DESTINATION_BUCKET_NAME = "immunisation-batch-internal-dev-data-destinations"
+STATIC_DATETIME = datetime(2021, 11, 20, 12, 0, 0)
+STATIC_ISO_DATETIME = STATIC_DATETIME.replace(second=0, microsecond=0).isoformat(timespec="milliseconds")
+
+
 # Dictionary for mocking the os.environ dict
 MOCK_ENVIRONMENT_DICT = {
     "ENVIRONMENT": "internal-dev",
@@ -9,12 +16,9 @@ MOCK_ENVIRONMENT_DICT = {
     "LOCAL_ACCOUNT_ID": "123456789012",
     "PROD_ACCOUNT_ID": "3456789109",
     "CONFIG_BUCKET_NAME": "immunisation-batch-internal-dev-configs",
+    "ACK_BUCKET_NAME": DESTINATION_BUCKET_NAME,
+    "QUEUE_URL": "https://sqs.eu-west-2.amazonaws.com/123456789012/imms-batch-internal-dev-metadata-queue.fifo",
 }
-CONFIGS_BUCKET_NAME = "immunisation-batch-internal-dev-data-configs"
-SOURCE_BUCKET_NAME = "immunisation-batch-internal-dev-data-sources"
-DESTINATION_BUCKET_NAME = "immunisation-batch-internal-dev-data-destinations"
-STATIC_DATETIME = datetime(2021, 11, 20, 12, 0, 0)
-STATIC_ISO_DATETIME = STATIC_DATETIME.replace(second=0, microsecond=0).isoformat(timespec="milliseconds")
 
 VALID_FLU_EMIS_FILE_KEY = "Flu_Vaccinations_v5_YGM41_20240708T12130100.csv"
 VALID_FLU_EMIS_ACK_FILE_KEY = f"ack/Flu_Vaccinations_v5_YGM41_20240708T12130100_InfAck_{STATIC_ISO_DATETIME}.csv"

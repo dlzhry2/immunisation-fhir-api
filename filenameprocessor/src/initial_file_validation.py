@@ -43,7 +43,7 @@ def validate_vaccine_type_permissions(supplier: str, vaccine_type: str):
     return vaccine_type in " ".join(allowed_permissions)
 
 
-def initial_file_validation(file_key: str):
+def initial_file_validation(file_key: str) -> bool:
     """
     Returns True if all elements of file key are valid, content headers are valid and the supplier has the
     appropriate permissions. Else returns False.
@@ -75,4 +75,4 @@ def initial_file_validation(file_key: str):
         logger.error("Initial file validation failed: %s does not have permissions for %s", supplier, vaccine_type)
         return False
 
-    return True, get_permissions_config_json_from_cache().get("all_permissions", {}).get(supplier, [])
+    return True

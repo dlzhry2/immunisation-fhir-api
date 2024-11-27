@@ -8,8 +8,9 @@ from moto import mock_sqs
 from boto3 import client as boto3_client
 import os
 import sys
+
 maindir = os.path.dirname(__file__)
-srcdir = '../src'
+srcdir = "../src"
 sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
 from send_sqs_message import send_to_supplier_queue, make_message_body_for_sqs, make_and_send_sqs_message  # noqa: E402
 from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, SQS_ATTRIBUTES  # noqa: E402
@@ -76,11 +77,12 @@ class TestSendSQSMessage(TestCase):
             "timestamp": "20200101T12345600",
             "filename": file_key,
             "permission": permission,
-            "created_at_formatted_string": "test"
+            "created_at_formatted_string": "test",
         }
 
-        self.assertEqual(make_message_body_for_sqs(file_key, message_id, permission, created_at_formatted_string),
-                         expected_output)
+        self.assertEqual(
+            make_message_body_for_sqs(file_key, message_id, permission, created_at_formatted_string), expected_output
+        )
 
     @mock_sqs
     def test_make_and_send_sqs_message_success(self):
@@ -100,15 +102,18 @@ class TestSendSQSMessage(TestCase):
             "timestamp": "20200101T12345600",
             "filename": file_key,
             "permission": permission,
-            "created_at_formatted_string": "test"
+            "created_at_formatted_string": "test",
         }
 
         # Create a mock SQS queue
         queue_url = mock_sqs_client.create_queue(QueueName=queue_name, Attributes=SQS_ATTRIBUTES)["QueueUrl"]
 
         # Call the send_to_supplier_queue function
-        self.assertTrue(make_and_send_sqs_message(file_key=file_key, message_id=message_id, permission=permission,
-                                                  created_at_formatted_string="test"))
+        self.assertTrue(
+            make_and_send_sqs_message(
+                file_key=file_key, message_id=message_id, permission=permission, created_at_formatted_string="test"
+            )
+        )
 
         # Assert that correct message has reached the queue
         messages = mock_sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1)
@@ -121,5 +126,11 @@ class TestSendSQSMessage(TestCase):
         message_id = str(uuid4())
         permission = "FLU_FULL"
         created_at_formatted_string = "test"
-        self.assertFalse(make_and_send_sqs_message(file_key=file_key, message_id=message_id, permission=permission,
-                                                   created_at_formatted_string=created_at_formatted_string))
+        self.assertFalse(
+            make_and_send_sqs_message(
+                file_key=file_key,
+                message_id=message_id,
+                permission=permission,
+                created_at_formatted_string=created_at_formatted_string,
+            )
+        )

@@ -5,11 +5,11 @@ from unittest.mock import patch
 from moto import mock_s3
 import os
 import sys
-maindir = os.path.dirname(__file__)
-srcdir = '../src'
-sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
-from utils_for_filenameprocessor import (  # noqa: E402
-    get_environment,
+
+# maindir = os.path.dirname(__file__)
+# srcdir = '../src'
+# sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
+from src.utils_for_filenameprocessor import (  # noqa: E402
     get_csv_content_dict_reader,
     identify_supplier,
     extract_file_key_elements,
@@ -19,23 +19,6 @@ from tests.utils_for_tests.utils_for_filenameprocessor_tests import setup_s3_buc
 
 class TestUtilsForFilenameprocessor(TestCase):
     """Tests for utils_for_filenameprocessor functions"""
-
-    def test_get_environment(self):
-        "Tests that get_environment returns the correct environment"
-        # Each test case tuple has the structure (environment, expected_result)
-        test_cases = (
-            ("internal-dev", "internal-dev"),
-            ("int", "int"),
-            ("ref", "ref"),
-            ("sandbox", "sandbox"),
-            ("prod", "prod"),
-            ("pr-22", "internal-dev"),
-        )
-
-        for environment, expected_result in test_cases:
-            with self.subTest(f"SubTest for environment: {environment}"):
-                with patch.dict("os.environ", {"ENVIRONMENT": environment}):
-                    self.assertEqual(get_environment(), expected_result)
 
     @mock_s3
     def test_get_csv_content_dict_reader(self):

@@ -2,12 +2,13 @@ import redis
 import os
 import logging
 import json
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 
 # Initialize Redis connection
-redis_client = redis.StrictRedis(host=os.getenv('REDIS_HOST'), port=os.getenv('REDIS_PORT'), decode_responses=True)
+redis_client = redis.StrictRedis(host=os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"), decode_responses=True)
 
 file_key = "permissions_config.json"
 
