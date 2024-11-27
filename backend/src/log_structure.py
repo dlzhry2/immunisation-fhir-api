@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 from functools import wraps
 from log_firehose import FirehoseLogger
+from models.utils.generic_utils import extract_file_key_elements
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -25,9 +26,7 @@ def function_info(func):
         request_id = headers.get("X-Request-ID", "X-Request-ID not passed")
         actual_path = event.get("path", "Unknown")
         resource_path = event.get("requestContext", {}).get("resourcePath", "Unknown")
-        logger.info(
-            f"Starting {func.__name__} with X-Correlation-ID: {correlation_id} and X-Request-ID: {request_id}"
-        )
+        logger.info(f"Starting {func.__name__} with X-Correlation-ID: {correlation_id} and X-Request-ID: {request_id}")
         log_data = {
             "function_name": func.__name__,
             "date_time": str(datetime.now()),
@@ -83,5 +82,70 @@ def function_info(func):
             firehose_log["event"] = log_data
             firehose_logger.send_log(firehose_log)
             raise
+
+    return wrapper
+
+
+def forwarder_function_info(func):
+    """This decorator prints the execution information for the decorated function. Logs data from forwarder lambda
+    handler and sends to splunk"""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        event = args[0] if args else {}
+        print(f"Event: {event}")
+        row_id = event.get("row_id")
+        file_key = event.get("file_key")
+        supplier = event.get("supplier")
+        operation = event.get("operation")
+        local_id = event.get("local_id")
+        vaccine_type = extract_file_key_elements(file_key).get("vaccine_type")
+        print(f"supplier: {supplier}, operation:{operation}")
+        log_data = {
+            "function_name": func.__name__,
+            "date_time": str(datetime.now()),
+            "message_id": row_id,
+            "status": "success",
+            "supplier": supplier,
+            "file_key": file_key,
+            "vaccine_type": vaccine_type,
+            "operation": operation,
+            "local_id": local_id,
+            "time_taken": None,
+            "diagnostics": "Operation completed successfully",
+        }
+
+        start_time = time.time()
+        firehose_log = dict()
+
+        try:
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            log_data["time_taken"] = round(end_time - start_time, 5)
+
+            logger.info(json.dumps(log_data))
+            firehose_log["event"] = log_data
+            firehose_logger.send_log(firehose_log)
+
+            return result
+
+        except Exception as e:
+            log_data["status"] = "fail"
+            log_data["status_code"] = 500
+            log_data["error"] = str(e)
+            log_data["diagnostics"] = f"Error: {str(e)}"
+
+            if isinstance(e, KeyError) or isinstance(e, ValueError):
+                log_data["status_code"] = 400
+            else:
+                log_data["status_code"] = 500
+
+            end_time = time.time()
+            log_data["time_taken"] = round(end_time - start_time, 5)
+            logger.exception(json.dumps(log_data))
+            firehose_log["event"] = log_data
+            firehose_logger.send_log(firehose_log)
+
+            raise e
 
     return wrapper
