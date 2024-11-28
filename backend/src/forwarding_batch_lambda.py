@@ -27,6 +27,7 @@ def forward_lambda_handler(event, _):
     """Forward each row to the Imms API"""
     logger.info("Processing started")
     table = create_table()
+    array_of_messages = []
     controller = make_batch_controller()
     for record in event["Records"]:
         try:
@@ -39,22 +40,17 @@ def forward_lambda_handler(event, _):
             )
             message_group_id = f"{file_key}_{created_at_formatted_string}"
             response = {}
+            response["imms_id"] = forward_request_to_dynamo(
+                message_body, table, controller
+            )
             response["file_key"] = file_key
             response["row_id"] = message_body.get("row_id")
             response["created_at_formatted_string"] = created_at_formatted_string
             response["local_id"] = message_body.get("local_id")
-            response["imms_id"] = forward_request_to_dynamo(
-                message_body, table, controller
-            )
-            sqs_client.send_message(
-                QueueUrl=QUEUE_URL,
-                MessageBody=json.dumps(response),
-                MessageGroupId=message_group_id,
-            )
+            array_of_messages.append(response)            
         except Exception as error:
             error_message_body = {
                 "diagnostics": str(error),
-                "supplier": message_body.get("supplier"),
                 "file_key": message_body.get("file_key"),
                 "row_id": message_body.get("row_id"),
                 "created_at_formatted_string": message_body.get(
@@ -62,14 +58,19 @@ def forward_lambda_handler(event, _):
                 ),
                 "local_id": message_body.get("local_id"),
             }
-            sqs_client.send_message(
-                QueueUrl=QUEUE_URL,
-                MessageBody=json.dumps(error_message_body),
-                MessageGroupId=f"{error_message_body['file_key']}_{error_message_body['created_at_formatted_string']}",
-            )
+            array_of_messages.append(error_message_body)
             logger.error("Error processing message: %s", error)
-
-    logger.info("Processing ended")
+    sqs_message_body = json.dumps(array_of_messages)
+    message_len = len(sqs_message_body)
+    if message_len < 256 * 1024 :
+        sqs_client.send_message(
+            QueueUrl=QUEUE_URL,
+            MessageBody=sqs_message_body,
+            MessageGroupId=message_group_id,
+        )
+        # array_of_messages = []
+    else:
+        logger.info("Message size exceeds 256 KB limit.Sending to sqs failed")
 
 
 if __name__ == "__main__":

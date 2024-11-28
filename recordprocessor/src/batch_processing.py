@@ -70,6 +70,7 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
                 "row_id": row_id,
                 "file_key": file_key,
                 "supplier": supplier,
+                "vax_type": vaccine.value,
                 "created_at_formatted_string": created_at_formatted_string,
                 **details_from_processing,
             }
