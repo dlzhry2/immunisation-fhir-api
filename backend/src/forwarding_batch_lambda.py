@@ -3,6 +3,7 @@
 import os
 import simplejson as json
 import base64
+import time
 import logging
 from fhir_batch_repository import create_table
 from fhir_batch_controller import ImmunizationBatchController, make_batch_controller
@@ -28,12 +29,23 @@ def forward_lambda_handler(event, _):
     logger.info("Processing started")
     table = create_table()
     array_of_messages = []
+    array_of_identifiers = []
     controller = make_batch_controller()
     for record in event["Records"]:
         try:
             kinesis_payload = record["kinesis"]["data"]
             decoded_payload = base64.b64decode(kinesis_payload).decode("utf-8")
             message_body = json.loads(decoded_payload, use_decimal=True)
+            if fhir_json := message_body.get("fhir_json"):
+                system_id = fhir_json["identifier"][0]["system"]
+                system_value = fhir_json["identifier"][0]["value"]
+                identifier = f"{system_id}#{system_value}"
+                if identifier in array_of_identifiers:
+                    delay_milliseconds = 100 # Delay time in milliseconds 
+                    time.sleep(delay_milliseconds / 1000)
+                else:
+                    array_of_identifiers.append(identifier)
+                
             file_key = message_body.get("file_key")
             created_at_formatted_string = message_body.get(
                 "created_at_formatted_string"
@@ -62,6 +74,7 @@ def forward_lambda_handler(event, _):
             logger.error("Error processing message: %s", error)
     sqs_message_body = json.dumps(array_of_messages)
     message_len = len(sqs_message_body)
+    logger.info(f"total message length:{message_len}")
     if message_len < 256 * 1024 :
         sqs_client.send_message(
             QueueUrl=QUEUE_URL,
