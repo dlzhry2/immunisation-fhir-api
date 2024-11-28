@@ -7,7 +7,7 @@ import logging
 from fhir_batch_repository import create_table
 from fhir_batch_controller import ImmunizationBatchController, make_batch_controller
 from clients import sqs_client
-from log_structure import forwarder_function_info
+
 
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
@@ -22,7 +22,6 @@ def forward_request_to_dynamo(message_body: any, table: any, batchcontroller: Im
     return batchcontroller.send_request_to_dynamo(message_body, table)
 
 
-@forwarder_function_info
 def forward_lambda_handler(event, _):
     """Forward each row to the Imms API"""
     logger.info("Processing started")
@@ -41,6 +40,7 @@ def forward_lambda_handler(event, _):
             response["row_id"] = message_body.get("row_id")
             response["created_at_formatted_string"] = created_at_formatted_string
             response["local_id"] = message_body.get("local_id")
+            response["action_flag"] = message_body.get("operation_requested")
             response["imms_id"] = forward_request_to_dynamo(message_body, table, controller)
             sqs_client.send_message(
                 QueueUrl=QUEUE_URL,
@@ -55,6 +55,7 @@ def forward_lambda_handler(event, _):
                 "row_id": message_body.get("row_id"),
                 "created_at_formatted_string": message_body.get("created_at_formatted_string"),
                 "local_id": message_body.get("local_id"),
+                "action_flag": message_body.get("operation_requested"),
             }
             sqs_client.send_message(
                 QueueUrl=QUEUE_URL,

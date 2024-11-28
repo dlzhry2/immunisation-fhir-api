@@ -175,6 +175,7 @@ class FhirController:
                     message_id = aws_event["headers"]["row_id"]
                     created_at_formatted_string = aws_event["headers"]["created_at_formatted_string"]
                     local_id = aws_event["headers"]["local_id"]
+                    operation_requested = aws_event["headers"]["operation_requested"]
                     aws_event["body"] = json.dumps(aws_event["body"])
                 else:
                     if response := self.authorize_request(EndpointOperation.CREATE, aws_event):
@@ -196,7 +197,14 @@ class FhirController:
         except json.decoder.JSONDecodeError as e:
             final_resp = self._create_bad_request(f"Request's body contains malformed JSON: {e}")
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp,
+                    file_name,
+                    message_id,
+                    created_at_formatted_string,
+                    local_id,
+                    operation_requested,
+                )
             return final_resp
 
         try:
@@ -216,22 +224,30 @@ class FhirController:
                 final_resp = self.create_response(201, None, {"Location": location})
 
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         except ValidationError as error:
             final_resp = self.create_response(400, error.to_operation_outcome())
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         except IdentifierDuplicationError as duplicate:
             final_resp = self.create_response(422, duplicate.to_operation_outcome())
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         except UnhandledResponseError as unhandled_error:
             final_resp = self.create_response(500, unhandled_error.to_operation_outcome())
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
@@ -247,6 +263,7 @@ class FhirController:
                     message_id = aws_event["headers"]["row_id"]
                     created_at_formatted_string = aws_event["headers"]["created_at_formatted_string"]
                     local_id = aws_event["headers"]["local_id"]
+                    operation_requested = aws_event["headers"]["operation_requested"]
                     aws_event["body"] = json.dumps(aws_event["body"])
                 else:
                     if response := self.authorize_request(EndpointOperation.UPDATE, aws_event):
@@ -267,7 +284,9 @@ class FhirController:
         if id_error := self._validate_id(imms_id):
             final_resp = FhirController.create_response(400, json.dumps(id_error))
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         # Validate the imms id - end
 
@@ -284,18 +303,24 @@ class FhirController:
                 )
                 final_resp = self.create_response(400, json.dumps(exp_error))
                 if is_imms_batch_app:
-                    self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                    self._sendack(
+                        final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                    )
                 return final_resp
             # Validate the imms id in the path params and body of request - end
         except json.decoder.JSONDecodeError as e:
             final_resp = self._create_bad_request(f"Request's body contains malformed JSON: {e}")
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         except Exception as e:
             final_resp = self._create_bad_request(f"Request's body contains string: {e}")
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         # Validate the body of the request - end
 
@@ -311,7 +336,9 @@ class FhirController:
                 )
                 final_resp = self.create_response(404, json.dumps(exp_error))
                 if is_imms_batch_app:
-                    self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                    self._sendack(
+                        final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                    )
                 return final_resp
 
             if "diagnostics" in existing_record and existing_record is not None:
@@ -323,12 +350,16 @@ class FhirController:
                 )
                 final_resp = self.create_response(400, json.dumps(exp_error))
                 if is_imms_batch_app:
-                    self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                    self._sendack(
+                        final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                    )
                 return final_resp
         except ValidationError as error:
             final_resp = self.create_response(400, error.to_operation_outcome())
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         # Validate if the imms resource does not exist - end
 
@@ -363,7 +394,14 @@ class FhirController:
                     )
                     final_resp = self.create_response(400, json.dumps(exp_error))
                     if is_imms_batch_app:
-                        self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                        self._sendack(
+                            final_resp,
+                            file_name,
+                            message_id,
+                            created_at_formatted_string,
+                            local_id,
+                            operation_requested,
+                        )
                     return final_resp
                 # Validate if imms resource version is part of the request - end
 
@@ -380,7 +418,14 @@ class FhirController:
                     )
                     final_resp = self.create_response(400, json.dumps(exp_error))
                     if is_imms_batch_app:
-                        self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                        self._sendack(
+                            final_resp,
+                            file_name,
+                            message_id,
+                            created_at_formatted_string,
+                            local_id,
+                            operation_requested,
+                        )
                     return final_resp
                 # Validate the imms resource version provided in the request headers - end
 
@@ -394,7 +439,14 @@ class FhirController:
                     )
                     final_resp = self.create_response(400, json.dumps(exp_error))
                     if is_imms_batch_app:
-                        self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                        self._sendack(
+                            final_resp,
+                            file_name,
+                            message_id,
+                            created_at_formatted_string,
+                            local_id,
+                            operation_requested,
+                        )
                     return final_resp
 
                 if existing_resource_version < resource_version_header:
@@ -406,7 +458,14 @@ class FhirController:
                     )
                     final_resp = self.create_response(400, json.dumps(exp_error))
                     if is_imms_batch_app:
-                        self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                        self._sendack(
+                            final_resp,
+                            file_name,
+                            message_id,
+                            created_at_formatted_string,
+                            local_id,
+                            operation_requested,
+                        )
                     return final_resp
                 # Validate if resource version has changed since the last retrieve - end
 
@@ -442,22 +501,30 @@ class FhirController:
                 )
                 final_resp = self.create_response(400, json.dumps(exp_error))
                 if is_imms_batch_app:
-                    self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                    self._sendack(
+                        final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                    )
                 return final_resp
             if outcome == UpdateOutcome.UPDATE:
                 final_resp = self.create_response(200)
                 if is_imms_batch_app:
-                    self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                    self._sendack(
+                        final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                    )
                 return final_resp
         except ValidationError as error:
             final_resp = self.create_response(400, error.to_operation_outcome())
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         except IdentifierDuplicationError as duplicate:
             final_resp = self.create_response(422, duplicate.to_operation_outcome())
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         except UnauthorizedVaxError as unauthorized:
             return self.create_response(403, unauthorized.to_operation_outcome())
@@ -473,6 +540,7 @@ class FhirController:
                     message_id = aws_event["headers"]["row_id"]
                     created_at_formatted_string = aws_event["headers"]["created_at_formatted_string"]
                     local_id = aws_event["headers"]["local_id"]
+                    operation_requested = aws_event["headers"]["operation_requested"]
                 else:
                     if response := self.authorize_request(EndpointOperation.DELETE, aws_event):
                         return response
@@ -486,7 +554,9 @@ class FhirController:
         if id_error := self._validate_id(imms_id):
             final_resp = FhirController.create_response(400, json.dumps(id_error))
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         # Validate the imms id - end
 
@@ -501,23 +571,31 @@ class FhirController:
             self.fhir_service.delete_immunization(imms_id, imms_vax_type_perms, supplier_system, is_imms_batch_app)
             final_resp = self.create_response(204)
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
 
         except ResourceNotFoundError as not_found:
             final_resp = self.create_response(404, not_found.to_operation_outcome())
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         except UnhandledResponseError as unhandled_error:
             final_resp = self.create_response(500, unhandled_error.to_operation_outcome())
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
         except UnauthorizedVaxError as unauthorized:
             final_resp = self.create_response(403, unauthorized.to_operation_outcome())
             if is_imms_batch_app:
-                self._sendack(final_resp, file_name, message_id, created_at_formatted_string, local_id)
+                self._sendack(
+                    final_resp, file_name, message_id, created_at_formatted_string, local_id, operation_requested
+                )
             return final_resp
 
     def search_immunizations(self, aws_event: APIGatewayProxyEventV1) -> dict:
@@ -783,11 +861,12 @@ class FhirController:
         }
 
     @staticmethod
-    def _sendack(payload, file_name, message_id, created_at_formatted_string, local_id):
+    def _sendack(payload, file_name, message_id, created_at_formatted_string, local_id, operation_requested):
         payload["file_key"] = file_name
         payload["row_id"] = message_id
         payload["created_at_formatted_string"] = created_at_formatted_string
         payload["local_id"] = local_id
+        payload["operation_requested"] = local_id
         sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(payload), MessageGroupId=file_name)
 
     @staticmethod
