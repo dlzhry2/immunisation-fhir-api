@@ -1,7 +1,7 @@
 """
 Lambda function for the filenameprocessor lambda. Files received may be from the data sources bucket (for row-by-row
 processing) or the config bucket (for uploading to cache).
-NOTE: The expected file format for incoming files from the data sources bucket is 
+NOTE: The expected file format for incoming files from the data sources bucket is
 'VACCINETYPE_Vaccinations_version_ODSCODE_DATETIME.csv'. e.g. 'Flu_Vaccinations_v5_YYY78_20240708T12130100.csv'
 (ODS code has multiple lengths)
 """

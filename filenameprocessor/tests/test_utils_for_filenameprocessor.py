@@ -1,10 +1,10 @@
 """Tests for utils_for_filenameprocessor functions"""
 
 from unittest import TestCase
-from unittest.mock import patch
 from moto import mock_s3
-import os
-import sys
+
+# import os
+# import sys
 
 # maindir = os.path.dirname(__file__)
 # srcdir = '../src'
