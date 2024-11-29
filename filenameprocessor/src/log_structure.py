@@ -1,65 +1,57 @@
 import logging
 import json
+import os
 import time
 from datetime import datetime
 from functools import wraps
-from log_firehose import FirehoseLogger
-from utils_for_filenameprocessor import extract_file_key_elements
+from clients import firehose_client
 
-logging.basicConfig()
 logger = logging.getLogger()
-logger.setLevel("INFO")
 
-firehose_logger = FirehoseLogger()
+STREAM_NAME = os.getenv("SPLUNK_FIREHOSE_NAME", "immunisation-fhir-api-internal-dev-splunk-firehose")
 
 
-def function_info(func):
+def send_log_to_firehose(log_data: dict) -> None:
+    """Sends the log_message to Firehose"""
+    try:
+        record = {"Data": json.dumps({"event": log_data}).encode("utf-8")}
+        response = firehose_client.put_record(DeliveryStreamName=STREAM_NAME, Record=record)
+        logger.info("Log sent to Firehose: %s", response) # TODO: Should we be logging full response?
+    except Exception as error:  # pylint:disable = broad-exception-caught
+        logger.exception("Error sending log to Firehose: %s", error)
+
+
+def generate_and_send_logs(
+    start_time, base_log_data: dict, additional_log_data: dict, is_error_log: bool = False
+) -> None:
+    """Generates log data which includes the base_log_data, additional_log_data, and time taken (calculated using the
+    current time and given start_time) and sends them to Cloudwatch and Firehose."""
+    log_data = {**base_log_data, "time_taken": f"{round(time.time() - start_time, 5)}s", **additional_log_data}
+    log_function = logger.exception if is_error_log else logger.info
+    log_function(json.dumps(log_data))
+    send_log_to_firehose({"event": log_data})
+
+
+def logging_decorator(func):
+    """Sends the appropriate logs to Cloudwatch and Firehose based on the function result.
+    NOTE: The function must return a dictionary as it's only return value. The dictionary is expected to contain
+    all of the required additional details for logging.
+    NOTE: Logs will included the result of the function call or, in the case of an Exception being raised,
+    a status code of 500 and the error message."""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
-        log_data = {
-            "function_name": func.__name__,
-            "date_time": str(datetime.now()),
-            "status": "success",
-            "supplier": "supplier",
-            "file_key": "file_key",
-            "vaccine_type": "vaccine_type",
-            "message_id": "message_id",
-            "time_taken": None,
-        }
-
+        base_log_data = {"function_name": func.__name__, "date_time": str(datetime.now())}
         start_time = time.time()
-        firehose_log = dict()
+
         try:
             result = func(*args, **kwargs)
-            end_time = time.time()  # End the timer
-            log_data["time_taken"] = round(end_time - start_time, 5)
-
-            log_data["status"] = result.get("statusCode")
-            log_data["message"] = json.loads(result["body"])
-            if isinstance(result, dict):
-                file_info = result.get("file_info")
-
-                if isinstance(file_info, list) and file_info:
-                    first_file_info = file_info[0]
-                    file_key = first_file_info.get("filename")
-                    log_data["file_key"] = file_key
-                    log_data["message_id"] = first_file_info.get("message_id")
-                    file_key_elements = extract_file_key_elements(file_key)
-                    log_data["supplier"] = file_key_elements["supplier"]
-                    log_data["vaccine_type"] = file_key_elements["vaccine_type"]
-
-            logger.info(json.dumps(log_data))
-            firehose_log["event"] = log_data
-            firehose_logger.send_log(firehose_log)
+            generate_and_send_logs(start_time, base_log_data, result)
             return result
 
         except Exception as e:
-            log_data["error"] = str(e)
-            end = time.time()
-            log_data["time_taken"] = f"{round(end - start_time, 5)}s"
-            logger.exception(json.dumps(log_data))
-            firehose_log["event"] = log_data
-            firehose_logger.send_log(firehose_log)
+            additional_log_data = {"statusCode": 500, "error": str(e)}
+            generate_and_send_logs(start_time, base_log_data, additional_log_data, is_error_log=True)
             raise
 
     return wrapper

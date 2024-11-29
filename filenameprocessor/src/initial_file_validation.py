@@ -37,10 +37,9 @@ def get_supplier_permissions(supplier: str) -> list:
     return get_permissions_config_json_from_cache().get("all_permissions", {}).get(supplier, [])
 
 
-def validate_vaccine_type_permissions(supplier: str, vaccine_type: str):
+def validate_vaccine_type_permissions(supplier: str, vaccine_type: str) -> bool:
     """Returns True if the given supplier has any permissions for the given vaccine type, else False"""
-    allowed_permissions = get_supplier_permissions(supplier)
-    return vaccine_type in " ".join(allowed_permissions)
+    return any(vaccine_type in permission for permission in get_supplier_permissions(supplier))
 
 
 def initial_file_validation(file_key: str) -> bool:

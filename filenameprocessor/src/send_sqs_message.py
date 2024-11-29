@@ -12,20 +12,13 @@ logger = logging.getLogger()
 
 def send_to_supplier_queue(message_body: dict) -> bool:
     """Sends a message to the supplier queue and returns a bool indicating if the message has been successfully sent"""
-    # Check the supplier has been identified (this should already have been validated by initial file validation)
-    if not (supplier := message_body["supplier"]):
-        logger.error("Message not sent to supplier queue as unable to identify supplier")
-        return False
-
-    # Find the URL of the relevant queue
-    queue_url = os.getenv("QUEUE_URL")
-
-    # Send to queue
     try:
+        supplier = message_body["supplier"]
+        queue_url = os.getenv("QUEUE_URL")
         sqs_client.send_message(QueueUrl=queue_url, MessageBody=json_dumps(message_body), MessageGroupId=supplier)
-        logger.info("Message sent to SQS queue for supplier:%s", supplier)
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("An unexpected error occurred: %s", e)
+        logger.info("Message sent to SQS queue for supplier: %s", supplier)
+    except Exception as error:  # pylint: disable=broad-exception-caught
+        logger.error("An unexpected error occurred whilst sending to SQS: %s", error)
         return False
     return True
 
