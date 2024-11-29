@@ -16,7 +16,7 @@ def send_log_to_firehose(log_data: dict) -> None:
     try:
         record = {"Data": json.dumps({"event": log_data}).encode("utf-8")}
         response = firehose_client.put_record(DeliveryStreamName=STREAM_NAME, Record=record)
-        logger.info("Log sent to Firehose: %s", response) # TODO: Should we be logging full response?
+        logger.info("Log sent to Firehose: %s", response)  # TODO: Should we be logging full response?
     except Exception as error:  # pylint:disable = broad-exception-caught
         logger.exception("Error sending log to Firehose: %s", error)
 
@@ -29,7 +29,7 @@ def generate_and_send_logs(
     log_data = {**base_log_data, "time_taken": f"{round(time.time() - start_time, 5)}s", **additional_log_data}
     log_function = logger.exception if is_error_log else logger.info
     log_function(json.dumps(log_data))
-    send_log_to_firehose({"event": log_data})
+    send_log_to_firehose(log_data)
 
 
 def logging_decorator(func):

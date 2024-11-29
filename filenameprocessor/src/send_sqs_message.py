@@ -12,6 +12,11 @@ logger = logging.getLogger()
 
 def send_to_supplier_queue(message_body: dict) -> bool:
     """Sends a message to the supplier queue and returns a bool indicating if the message has been successfully sent"""
+    # Check the supplier has been identified (this should already have been validated by initial file validation)
+    if not (supplier := message_body["supplier"]):
+        logger.error("Message not sent to supplier queue as unable to identify supplier")
+        return False
+
     try:
         supplier = message_body["supplier"]
         queue_url = os.getenv("QUEUE_URL")

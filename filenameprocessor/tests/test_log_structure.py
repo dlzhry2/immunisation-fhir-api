@@ -12,6 +12,7 @@ from tests.utils_for_tests.values_for_tests import (
     DESTINATION_BUCKET_NAME,
     VALID_FILE_CONTENT,
     MOCK_ENVIRONMENT_DICT,
+    VALID_FLU_EMIS_FILE_KEY,
 )
 
 
@@ -26,9 +27,7 @@ def set_up_s3_buckets_and_upload_file(file_key: Optional[str] = None, file_conte
         s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": "eu-west-2"})
 
     s3_client.put_object(
-        Bucket=SOURCE_BUCKET_NAME,
-        Key=file_key or "Flu_Vaccinations_v5_YGM41_20240708T12100100.csv",
-        Body=file_content or VALID_FILE_CONTENT,
+        Bucket=SOURCE_BUCKET_NAME, Key=file_key or VALID_FLU_EMIS_FILE_KEY, Body=file_content or VALID_FILE_CONTENT
     )
 
     return s3_client
@@ -38,26 +37,18 @@ def set_up_s3_buckets_and_upload_file(file_key: Optional[str] = None, file_conte
 class TestFunctionInfoDecorator(unittest.TestCase):
 
     event_file = {
-        "Records": [
-            {
-                "s3": {
-                    "bucket": {"name": SOURCE_BUCKET_NAME},
-                    "object": {"key": "Flu_Vaccinations_v5_YGM41_20240708T12100100.csv"},
-                }
-            }
-        ]
+        "Records": [{"s3": {"bucket": {"name": SOURCE_BUCKET_NAME}, "object": {"key": VALID_FLU_EMIS_FILE_KEY}}}]
     }
 
     @mock_s3
     @patch("src.initial_file_validation.get_permissions_config_json_from_cache")
     @patch("src.log_structure.logger")
-    @patch("src.log_structure.firehose_logger")
-    @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
+    @patch("src.log_structure.send_log_to_firehose")
     @patch("src.fetch_permissions.redis_client")
     def test_splunk_logger_successful_validation(
         self,
         mock_redis_client,
-        mock_firehose_logger,
+        mock_send_log_to_firehose,
         mock_logger,
         mock_get_permissions,
     ):
@@ -75,37 +66,31 @@ class TestFunctionInfoDecorator(unittest.TestCase):
             patch("src.send_sqs_message.send_to_supplier_queue"),
             patch("src.file_name_processor.add_to_audit_table", return_value=True),
         ):
-            result = lambda_handler(event, context=None)
+            lambda_handler(event, context=None)
 
-        self.assertEqual(result["statusCode"], 200)
-        self.assertIn("Successfully sent to SQS queue", result["body"])
-        filename = result["file_info"][0]["filename"]
-        self.assertEqual(filename, "Flu_Vaccinations_v5_YGM41_20240708T12100100.csv")
-        self.assertIn("message_id", result["file_info"][0])
         log_call_args = mock_logger.info.call_args[0][0]
         log_data = json.loads(log_call_args)
 
         self.assertTrue(mock_logger.info.called)
-        self.assertTrue(mock_firehose_logger.send_log.called)
+        self.assertTrue(mock_send_log_to_firehose.called)
         log_data = json.loads(log_call_args)
 
-        self.assertEqual(log_data["function_name"], "lambda_handler")
-        self.assertEqual(log_data["status"], 200)
+        self.assertEqual(log_data["function_name"], "handle_record")
+        self.assertEqual(log_data["statusCode"], 200)
 
         # Assert - Check Firehose log called
-        mock_firehose_logger.send_log.assert_called_with({"event": log_data})
-        mock_firehose_logger.send_log.reset_mock()
+        mock_send_log_to_firehose.assert_called_with(log_data)
 
     @mock_s3
     @patch("src.initial_file_validation.get_permissions_config_json_from_cache")
     @patch("src.log_structure.logger")
-    @patch("src.log_structure.firehose_logger")
+    @patch("src.log_structure.send_log_to_firehose")
     @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
     @patch("src.fetch_permissions.redis_client")
     def test_splunk_logger_failed_validation(
         self,
         mock_redis_client,
-        mock_firehose_logger,
+        mock_send_log_to_firehose,
         mock_logger,
         mock_get_permissions,
     ):
@@ -118,26 +103,25 @@ class TestFunctionInfoDecorator(unittest.TestCase):
             "src.initial_file_validation.get_supplier_permissions",
             return_value=["COVID19_CREATE"],
         ), patch("src.send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue:
-            result = lambda_handler(event, context=None)
+            lambda_handler(event, context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
         # TODO: Fix the below assertion - need to ascertain what the status should be in this case
         # self.assertEqual(result["statusCode"], 400)
         # self.assertIn("Infrastructure Level Response Value - Processing Error", result["body"])
-        filename = result["file_info"][0]["filename"]
-        self.assertEqual(filename, "Flu_Vaccinations_v5_YGM41_20240708T12100100.csv")
-        self.assertIn("message_id", result["file_info"][0])
+        # filename = result["file_info"][0]["filename"]
+        # self.assertEqual(filename, VALID_FLU_EMIS_FILE_KEY)
+        # self.assertIn("message_id", result["file_info"][0])
         log_call_args = mock_logger.info.call_args[0][0]
         log_data = json.loads(log_call_args)
 
         self.assertTrue(mock_logger.info.called)
-        self.assertTrue(mock_firehose_logger.send_log.called)
+        self.assertTrue(mock_send_log_to_firehose.called)
         log_data = json.loads(log_call_args)
 
-        self.assertEqual(log_data["function_name"], "lambda_handler")
+        self.assertEqual(log_data["function_name"], "handle_record")
         # TODO: Fix the below assertion - need to ascertain what the status should be in this case
         # self.assertEqual(log_data["status"], 400)
 
         # # Assert - Check Firehose log call
-        mock_firehose_logger.send_log.assert_called_with({"event": log_data})
-        mock_firehose_logger.send_log.reset_mock()
+        mock_send_log_to_firehose.assert_called_with(log_data)

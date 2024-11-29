@@ -18,6 +18,8 @@ MOCK_ENVIRONMENT_DICT = {
     "CONFIG_BUCKET_NAME": "immunisation-batch-internal-dev-configs",
     "ACK_BUCKET_NAME": DESTINATION_BUCKET_NAME,
     "QUEUE_URL": "https://sqs.eu-west-2.amazonaws.com/123456789012/imms-batch-internal-dev-metadata-queue.fifo",
+    "REDIS_HOST": "localhost",
+    "REDIS_PORT": "6379",
 }
 
 VALID_FLU_EMIS_FILE_KEY = "Flu_Vaccinations_v5_YGM41_20240708T12130100.csv"

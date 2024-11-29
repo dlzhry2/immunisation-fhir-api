@@ -46,9 +46,7 @@ def handle_record(record) -> dict:
             added_to_audit_table = add_to_audit_table(message_id, file_key, created_at_formatted_string)
 
             validation_passed = initial_file_validation(file_key) if added_to_audit_table else False
-
             message_delivered = False
-
             if validation_passed:
                 # Try to send to sqs
                 file_key_elements = extract_file_key_elements(file_key)
@@ -69,7 +67,6 @@ def handle_record(record) -> dict:
                     "vaccine_type": vaccine_type,  # pylint: disable = possibly-used-before-assignment
                 }
             else:
-                message_delivered = False
                 make_and_upload_the_ack_file(message_id, file_key, message_delivered, created_at_formatted_string)
                 return {
                     "statusCode": 400,
@@ -81,13 +78,11 @@ def handle_record(record) -> dict:
         except Exception as error:  # pylint: disable=broad-except
             # If an unexpected error occured, upload an ack file
             logging.error("Error processing file'%s': %s", file_key, str(error))
-            if message_id not in locals():
+            if "message_id" not in locals():
                 message_id = "Message id was not created"
-            if file_key not in locals():
-                file_key = "Unable to identify file key"
             message_delivered = False
-            if created_at_formatted_string not in locals():
-                created_at_formatted_string = "Unable to identify or format created at time"
+            if "created_at_formatted_string" not in locals():
+                created_at_formatted_string = "created_at_time_not_identified"
             make_and_upload_the_ack_file(message_id, file_key, message_delivered, created_at_formatted_string)
             return {
                 "statusCode": 500,
