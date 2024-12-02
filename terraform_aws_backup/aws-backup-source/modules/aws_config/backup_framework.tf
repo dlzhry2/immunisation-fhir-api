@@ -1,9 +1,3 @@
-locals {  
-  environment_name = "internal-dev"  
-  terraform_role_arn = data.aws_caller_identity.current.arn
-  project_name     = "dev-backups-poc"
-}
-
 resource "aws_backup_framework" "main" {
   # must be underscores instead of dashes
   name        = replace("${local.resource_name_prefix}-framework", "-", "_")
@@ -15,26 +9,26 @@ resource "aws_backup_framework" "main" {
 
     scope {
       tags = {
-        "environment_name" = local.environment_name
+        "environment_name" = var.environment_name
       }
     }
   }
 
   # Evaluates if backup vaults do not allow manual deletion of recovery points with the exception of certain IAM roles.
-  #control {
-  #  name = "BACKUP_RECOVERY_POINT_MANUAL_DELETION_DISABLED"
+  control {
+    name = "BACKUP_RECOVERY_POINT_MANUAL_DELETION_DISABLED"
 
-  #  scope {
-  #   tags = {
-  #      "environment_name" = local.environment_name
-  #    }
-  #  }
+    scope {
+      tags = {
+        "environment_name" = var.environment_name
+      }
+    }
 
-  #  input_parameter {
-  #    name  = "principalArnList"
-  #    value = var.terraform_role_arn
-  #  }
-  #}
+    input_parameter {
+      name  = "principalArnList"
+      value = var.terraform_role_arn
+    }
+  }
 
   # Evaluates if recovery point retention period is at least 1 month.
   control {
@@ -42,7 +36,7 @@ resource "aws_backup_framework" "main" {
 
     scope {
       tags = {
-        "environment_name" = local.environment_name
+        "environment_name" = var.environment_name
       }
     }
 
@@ -58,7 +52,7 @@ resource "aws_backup_framework" "main" {
 
     scope {
       tags = {
-        "environment_name" = local.environment_name
+        "environment_name" = var.environment_name
       }
     }
 

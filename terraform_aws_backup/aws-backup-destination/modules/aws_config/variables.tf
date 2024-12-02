@@ -3,6 +3,7 @@ variable "source_account_name" {
   # It doesn't have to match anything in the source AWS account.
   description = "The name of the account that backups will come from"
   type        = string
+  # default = "imms-dev"
 }
 
 variable "source_account_id" {
@@ -10,6 +11,7 @@ variable "source_account_id" {
   # to copy backups into the vault.
   description = "The id of the account that backups will come from"
   type        = string
+  default = "345594581768"
 }
 
 variable "account_id" {
@@ -18,6 +20,7 @@ variable "account_id" {
   # be removed if the original source account is lost.
   description = "The id of the account that the vault will be in"
   type        = string
+  # default = "084828561157"
 }
 
 variable "region" {
@@ -26,9 +29,8 @@ variable "region" {
   default     = "eu-west-2"
 }
 
-variable "kms_key" {
-  description = "The KMS key used to secure the vault"
-  type        = string
+locals {
+    environment         = terraform.workspace
 }
 
 variable "enable_vault_protection" {

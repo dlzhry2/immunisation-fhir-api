@@ -7,7 +7,7 @@ resource "aws_backup_report_plan" "backup_jobs" {
     formats = [
       "JSON"
     ]
-    s3_bucket_name = var.reports_bucket
+    s3_bucket_name = aws_s3_bucket.backup_reports.bucket
     s3_key_prefix  = "backup_jobs"
   }
 
@@ -25,7 +25,7 @@ resource "aws_backup_report_plan" "backup_restore_testing_jobs" {
     formats = [
       "JSON"
     ]
-    s3_bucket_name = var.reports_bucket
+    s3_bucket_name = aws_s3_bucket.backup_reports.bucket
     s3_key_prefix  = "backup_restore_testing_jobs"
   }
 
@@ -42,7 +42,7 @@ resource "aws_backup_report_plan" "resource_compliance" {
     formats = [
       "JSON"
     ]
-    s3_bucket_name = var.reports_bucket
+    s3_bucket_name = aws_s3_bucket.backup_reports.bucket
     s3_key_prefix  = "resource_compliance"
   }
 
@@ -62,7 +62,7 @@ resource "aws_backup_report_plan" "copy_jobs" {
     formats = [
       "JSON"
     ]
-    s3_bucket_name = var.reports_bucket
+    s3_bucket_name = aws_s3_bucket.backup_reports.bucket
     s3_key_prefix  = "copy_jobs"
   }
 

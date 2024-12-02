@@ -1,27 +1,18 @@
 variable "project_name" {
   description = "The name of the project this relates to."
   type        = string
+  # default = "imms-fhir-api"
 }
 
 variable "environment_name" {
   description = "The name of the environment where AWS Backup is configured."
-  type        = string
+  type        = string  
 }
 
 variable "notifications_target_email_address" {
   description = "The email address to which backup notifications will be sent via SNS."
   type        = string
-  default     = ""
-}
-
-variable "bootstrap_kms_key_arn" {
-  description = "The ARN of the bootstrap KMS key used for encryption at rest of the SNS topic."
-  type        = string
-}
-
-variable "reports_bucket" {
-  description = "Bucket to drop backup reports into"
-  type        = string
+  default     = "england.apimconnect@nhs.net"
 }
 
 variable "terraform_role_arn" {
