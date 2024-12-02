@@ -144,7 +144,7 @@ class TestLambdaHandler(TestCase):
             patch("file_name_processor.uuid4", return_value="test_id"),
             patch("log_structure.send_log_to_firehose"),
             patch("file_name_processor.s3_client.get_object", return_value=MOCK_S3_GET_OBJECT_RETURN_VALUE),
-            patch("file_name_processor.add_to_audit_table", return_value=True) as mock_add_to_audit_table,
+            patch("file_name_processor.add_to_audit_table", return_value=True) as mock_add_to_audit_table,  # noqa:E999
         ):
             lambda_handler(self.make_event(), None)
 
@@ -157,7 +157,9 @@ class TestLambdaHandler(TestCase):
             patch("log_structure.send_log_to_firehose"),
             patch("elasticcache.redis_client.set") as mock_redis_set,
             patch("clients.s3_client.get_object", return_value=MOCK_S3_GET_OBJECT_RETURN_VALUE),
-            patch("elasticcache.s3_client.get_object", return_value=mock_config_body) as mock_s3_get_object,
+            patch(
+                "elasticcache.s3_client.get_object", return_value=mock_config_body
+            ) as mock_s3_get_object,  # noqa:E999
         ):
             lambda_handler(self.make_event_configs(), None)
 
@@ -176,7 +178,9 @@ class TestLambdaHandler(TestCase):
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("elasticcache.upload_to_elasticache", side_effect=elasticcache_exception),
             patch("clients.s3_client.get_object", return_value=MOCK_S3_GET_OBJECT_RETURN_VALUE),
-            patch("elasticcache.s3_client.get_object", return_value=mock_config_body) as mock_s3_get_object,
+            patch(
+                "elasticcache.s3_client.get_object", return_value=mock_config_body
+            ) as mock_s3_get_object,  # noqa:E999
         ):
             lambda_handler(self.make_event_configs(), None)
 
@@ -196,7 +200,7 @@ class TestLambdaHandler(TestCase):
         with (
             patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),
             patch("file_name_processor.add_to_audit_table", return_value=True),
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa:E999
             patch("log_structure.send_log_to_firehose"),
         ):
             lambda_handler(event=self.make_event(test_file_key), context=None)
@@ -214,7 +218,7 @@ class TestLambdaHandler(TestCase):
 
         with (
             patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa:E999
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("log_structure.send_log_to_firehose"),
         ):
@@ -234,7 +238,7 @@ class TestLambdaHandler(TestCase):
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
         with (
             patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa:E999
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("log_structure.send_log_to_firehose"),
         ):
@@ -256,7 +260,7 @@ class TestLambdaHandler(TestCase):
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
         with (
             patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa:E999
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("log_structure.send_log_to_firehose"),
         ):
@@ -276,7 +280,7 @@ class TestLambdaHandler(TestCase):
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
         with (
             patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa:E999
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("log_structure.send_log_to_firehose"),
         ):
@@ -296,7 +300,7 @@ class TestLambdaHandler(TestCase):
         with (
             patch("initial_file_validation.get_supplier_permissions", return_value=permissions_list),
             patch("file_name_processor.get_supplier_permissions", return_value=permissions_list),
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa:E999
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("log_structure.send_log_to_firehose"),
             patch("initial_file_validation.get_permissions_config_json_from_cache", return_value=config_content),
@@ -314,7 +318,7 @@ class TestLambdaHandler(TestCase):
         with (
             patch("initial_file_validation.get_supplier_permissions", return_value=["RSV_DELETE"]),
             patch("file_name_processor.get_supplier_permissions", return_value=["RSV_DELETE"]),
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa:E999
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("log_structure.send_log_to_firehose"),
         ):

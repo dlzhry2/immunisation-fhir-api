@@ -51,8 +51,8 @@ class TestFunctionInfoDecorator(unittest.TestCase):
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
             patch("initial_file_validation.get_permissions_config_json_from_cache", return_value=config_content),
-            patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,
-            patch("log_structure.logger") as mock_logger,
+            patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa:E999
+            patch("log_structure.logger") as mock_logger,  # noqa:E999
         ):
             lambda_handler(self.event_file, context=None)
 
@@ -76,9 +76,9 @@ class TestFunctionInfoDecorator(unittest.TestCase):
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("initial_file_validation.get_supplier_permissions", return_value=["COVID19_CREATE"]),
             patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,
-            patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,
-            patch("log_structure.logger") as mock_logger,
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa:E999
+            patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa:E999
+            patch("log_structure.logger") as mock_logger,  # noqa:E999
             patch("initial_file_validation.get_permissions_config_json_from_cache"),
         ):
             lambda_handler(self.event_file, context=None)
