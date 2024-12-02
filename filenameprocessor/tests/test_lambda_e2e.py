@@ -95,12 +95,8 @@ class TestLambdaHandler(TestCase):
         ack_file_keys = [obj["Key"] for obj in ack_files.get("Contents", [])]
         self.assertIn(ack_file_key, ack_file_keys)
 
-    @patch("fetch_permissions.redis_client")
-    def test_lambda_handler_full_permissions(self, mock_redis_client):
+    def test_lambda_handler_full_permissions(self):
         """Tests lambda function end to end"""
-        # set up mock for the permission
-        # mock_redis_client.get.return_value = json.dumps(PERMISSION_JSON)
-
         # Set up S3
         self.set_up_s3_buckets_and_upload_file()
 
@@ -129,22 +125,21 @@ class TestLambdaHandler(TestCase):
         self.assertEqual(received_message["timestamp"], "20240708T12130100")
         self.assertEqual(received_message["filename"], "Flu_Vaccinations_v5_YGM41_20240708T12130100.csv")
 
-    @mock_s3
-    @mock_sqs
-    @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
-    @patch("file_name_processor.s3_client.get_object")
-    @patch("file_name_processor.add_to_audit_table", return_value=True)
-    @patch("fetch_permissions.redis_client")
-    def test_add_to_audit_table_called(self, mock_redis_client, mock_add_to_audit_table, mock_s3_get_object):
+    def test_add_to_audit_table_called(self):
         """Tests that add_to_audit_table is called with the correct input args"""
         # Mock full permissions
-        mock_redis_client.get.return_value = json.dumps(PERMISSION_JSON)
         self.set_up_s3_buckets_and_upload_file()
-        mock_s3_get_object.return_value = {"LastModified": MagicMock(strftime=lambda fmt: "20240101T000000")}
+        # mock_s3_get_object.return_value = {"LastModified": MagicMock(strftime=lambda fmt: "20240101T000000")}
 
         with (
             patch("file_name_processor.uuid4", return_value="test_id"),
             patch("log_structure.send_log_to_firehose"),
+            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
+            patch(
+                "file_name_processor.s3_client.get_object",
+                return_value={"LastModified": MagicMock(strftime=lambda fmt: "20240101T000000")},
+            ),
+            patch("file_name_processor.add_to_audit_table", return_value=True) as mock_add_to_audit_table,
         ):
             lambda_handler(self.make_event(), None)
 
