@@ -866,7 +866,7 @@ class FhirController:
         payload["row_id"] = message_id
         payload["created_at_formatted_string"] = created_at_formatted_string
         payload["local_id"] = local_id
-        payload["operation_requested"] = local_id
+        payload["operation_requested"] = operation_requested
         sqs_client.send_message(QueueUrl=queue_url, MessageBody=json.dumps(payload), MessageGroupId=file_name)
 
     @staticmethod

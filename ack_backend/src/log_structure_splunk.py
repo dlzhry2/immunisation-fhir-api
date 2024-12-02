@@ -6,11 +6,9 @@ from functools import wraps
 from log_firehose_splunk import FirehoseLogger
 from constants import extract_file_key_elements
 
-
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel("INFO")
-
 
 firehose_logger = FirehoseLogger()
 
@@ -24,61 +22,88 @@ def ack_function_info(func):
             "function_name": func.__name__,
             "date_time": str(datetime.now()),
             "time_taken": None,
+            "status": None,
+            "statusCode": None,
+            "diagnostics": None,
         }
-
-        # if event and "Records" in event:
-        #     for record in event["Records"]:
-        #         body_json = record["body"]
-        #         incoming_message_body = json.loads(body_json)
-        #         print(type(incoming_message_body))
-        #         print(f"INCOMING4444: {incoming_message_body}")
-        #         file_key = incoming_message_body.get("file_key")
-        #         log_data["file_key"] = file_key
-        #         file_key_elements = extract_file_key_elements(file_key)
-        #         log_data["supplier"] = file_key_elements["supplier"]
-        #         log_data["supplier_1"] = incoming_message_body.get("supplier")
-        #         log_data["message_id"] = incoming_message_body.get("row_id")
-        #         log_data["Vaccine_type"] = file_key_elements["vaccine_type"]
-        #         log_data["local_id"] = incoming_message_body.get("local_id")
-        #         log_data["operation_requested"] = incoming_message_body.get("action_flag")
-        #         diagnostics = incoming_message_body.get("diagnostics")
-        #         if diagnostics is None:
-        #             log_data["statusCode"] = 200
-        #             log_data["diagnostics"] = "Operation completed successfully"
-        #             log_data["status"] = "success"
-        #         else:
-        #             log_data["statusCode"] = get_status_code_for_diagnostics(diagnostics)
-        #             log_data["diagnostics"] = diagnostics
-        #             log_data["status"] = "fail"
 
         start_time = time.time()
         firehose_log = dict()
+
         try:
+            if event and "Records" in event:
+                for record in event["Records"]:
+                    try:
+                        body_json = record["body"]
+                        incoming_message_body = json.loads(body_json)
+                        if not isinstance(incoming_message_body, list):
+                            incoming_message_body = [incoming_message_body]
+
+                        for item in incoming_message_body:
+                            file_key = item.get("file_key", "file_key_missing")
+                            log_data["file_key"] = file_key
+
+                            if file_key != "file_key_missing":
+                                try:
+                                    file_key_elements = extract_file_key_elements(file_key)
+                                    log_data["vaccine_type"] = file_key_elements.get("vaccine_type", "unknown")
+                                except Exception as e:
+                                    logger.warning(f"Error parsing file key: {file_key}. Error: {e}")
+
+                            log_data["supplier"] = item.get("supplier", "unknown")
+                            log_data["message_id"] = item.get("row_id", "unknown")
+                            log_data["local_id"] = item.get("local_id", "unknown")
+                            log_data["operation_requested"] = item.get("action_flag", "unknown")
+
+                            diagnostics = item.get("diagnostics")
+                            diagnostics_result = process_diagnostics(diagnostics)
+                            log_data.update(diagnostics_result)
+
+                    except Exception as record_error:
+                        logger.error(f"Error processing record: {record}. Error: {record_error}")
+
             result = func(event, context, *args, **kwargs)
             end_time = time.time()
             log_data["time_taken"] = f"{round(end_time - start_time, 5)}s"
 
-            print(f"logging44444: {json.dumps(log_data)}")
-            logger.info(json.dumps(log_data))
-            firehose_log["event"] = log_data
-            firehose_logger.ack_send_log(firehose_log)
+            try:
+                logger.info(
+                    f"Function executed successfully: {json.dumps(log_data)}"
+                )  # for debugging -REMOVE THE DATA from logs
+                firehose_log["event"] = log_data
+                firehose_logger.ack_send_log(firehose_log)
+            except Exception:
+                logger.warning("Issue with logging")
 
             return result
 
         except Exception as e:
+            end_time = time.time()
+            log_data["time_taken"] = f"{round(end_time - start_time, 5)}s"
             log_data["status"] = "fail"
             log_data["statusCode"] = 500
             log_data["diagnostics"] = f"Error in {func.__name__}: {str(e)}"
-            end_time = time.time()
-            log_data["time_taken"] = f"{round(end_time - start_time, 5)}s"
-
-            logger.exception(json.dumps(log_data))
-            firehose_log["event"] = log_data
-            firehose_logger.ack_send_log(firehose_log)
+            try:
+                logger.exception(f"Critical error in function: {json.dumps(log_data)}")
+                firehose_log["event"] = log_data
+                firehose_logger.ack_send_log(firehose_log)
+            except Exception:
+                logger.warning("Issue with logging")
 
             raise
 
     return wrapper
+
+
+def process_diagnostics(diagnostics):
+    if diagnostics is None:
+        return {"status": "success", "statusCode": 200, "diagnostics": "Operation completed successfully"}
+    else:
+        return {
+            "status": "fail",
+            "statusCode": get_status_code_for_diagnostics(diagnostics),
+            "diagnostics": diagnostics,
+        }
 
 
 def get_status_code_for_diagnostics(diagnostics):
@@ -88,3 +113,4 @@ def get_status_code_for_diagnostics(diagnostics):
         return 400
     else:
         return 400
+    # FINISH DIAGNOSTIC ERRORS
