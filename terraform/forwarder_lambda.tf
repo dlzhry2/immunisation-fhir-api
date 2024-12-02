@@ -220,7 +220,7 @@ resource "aws_lambda_function" "forwarding_lambda" {
     event_source_arn  = local.kinesis_arn
     function_name     = aws_lambda_function.forwarding_lambda.function_name
     starting_position = "LATEST"
-    batch_size        = 10000
+    batch_size        = 100
     enabled           = true
 
    depends_on = [aws_lambda_function.forwarding_lambda]
