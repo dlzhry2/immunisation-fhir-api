@@ -131,7 +131,7 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
           "firehose:PutRecord",
           "firehose:PutRecordBatch"
         ],
-        "Resource": data.aws_kinesis_firehose_delivery_stream.splunk_stream.arn
+        "Resource": "arn:aws:firehose:*:*:deliverystream/${module.splunk.firehose_stream_name}"
       }
     ]
   })
