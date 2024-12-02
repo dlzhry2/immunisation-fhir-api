@@ -45,15 +45,21 @@ class TestFunctionInfoDecorator(unittest.TestCase):
         set_up_s3_buckets_and_upload_file()
         config_content = {"all_permissions": {"EMIS": ["FLU_FULL"]}}
 
-        with (
-            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_CREATE", "FLU_UPDATE"]),
-            patch("send_sqs_message.send_to_supplier_queue"),
-            patch("file_name_processor.add_to_audit_table", return_value=True),
-            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
-            patch("initial_file_validation.get_permissions_config_json_from_cache", return_value=config_content),
-            patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa:E999
-            patch("log_structure.logger") as mock_logger,  # noqa:E999
-        ):
+        with (  # noqa: E999
+            patch(  # noqa: E999
+                "initial_file_validation.get_supplier_permissions",  # noqa: E999
+                return_value=["FLU_CREATE", "FLU_UPDATE"],  # noqa: E999
+            ),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue"),  # noqa: E999
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),  # noqa: E999
+            patch(  # noqa: E999
+                "initial_file_validation.get_permissions_config_json_from_cache",  # noqa: E999
+                return_value=config_content,  # noqa: E999
+            ),  # noqa: E999
+            patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
+            patch("log_structure.logger") as mock_logger,  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(self.event_file, context=None)
 
         log_call_args = mock_logger.info.call_args[0][0]
@@ -72,14 +78,14 @@ class TestFunctionInfoDecorator(unittest.TestCase):
         """Tests the splunk logger is called when file validation is unsuccessful"""
         set_up_s3_buckets_and_upload_file(file_content=VALID_FILE_CONTENT)
 
-        with (
-            patch("file_name_processor.add_to_audit_table", return_value=True),
-            patch("initial_file_validation.get_supplier_permissions", return_value=["COVID19_CREATE"]),
-            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa:E999
-            patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa:E999
-            patch("log_structure.logger") as mock_logger,  # noqa:E999
-            patch("initial_file_validation.get_permissions_config_json_from_cache"),
+        with (  # noqa: E999
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["COVID19_CREATE"]),  # noqa: E999
+            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
+            patch("log_structure.logger") as mock_logger,  # noqa: E999
+            patch("initial_file_validation.get_permissions_config_json_from_cache"),  # noqa: E999
         ):
             lambda_handler(self.event_file, context=None)
 
