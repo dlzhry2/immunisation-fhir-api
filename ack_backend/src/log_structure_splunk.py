@@ -35,7 +35,7 @@ def ack_function_info(func):
                 file_key_elements = extract_file_key_elements(file_key)
                 log_data["supplier"] = file_key_elements["supplier"]
                 log_data["supplier_1"] = incoming_message_body.get("supplier")
-                log_data["row_id"] = incoming_message_body.get("row_id")
+                log_data["message_id"] = incoming_message_body.get("row_id")
                 log_data["Vaccine_type"] = file_key_elements["vaccine_type"]
                 log_data["local_id"] = incoming_message_body.get("local_id")
                 log_data["operation_requested"] = incoming_message_body.get("action_flag")
