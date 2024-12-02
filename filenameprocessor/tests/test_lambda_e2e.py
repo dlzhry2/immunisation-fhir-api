@@ -13,7 +13,7 @@ import sys
 # maindir = os.path.dirname(__file__)
 # srcdir = "../src"
 # sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
-from src.file_name_processor import lambda_handler  # noqa: E402
+from file_name_processor import lambda_handler  # noqa: E402
 from tests.utils_for_tests.values_for_tests import (  # noqa: E402
     VALID_FILE_CONTENT,
     SOURCE_BUCKET_NAME,
@@ -100,7 +100,7 @@ class TestLambdaHandler(TestCase):
     @mock_s3
     @mock_sqs
     @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
-    @patch("src.fetch_permissions.redis_client")
+    @patch("fetch_permissions.redis_client")
     def test_lambda_handler_full_permissions(self, mock_redis_client):
         """Tests lambda function end to end"""
         # set up mock for the permission
@@ -117,8 +117,8 @@ class TestLambdaHandler(TestCase):
 
         # Mock get_supplier_permissions with full FLU permissions
         with (
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),
-            patch("src.log_structure.send_log_to_firehose"),
+            patch("file_name_processor.add_to_audit_table", return_value=True),
+            patch("log_structure.send_log_to_firehose"),
         ):
             lambda_handler(self.make_event(), None)
 
@@ -136,9 +136,9 @@ class TestLambdaHandler(TestCase):
     @mock_s3
     @mock_sqs
     @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
-    @patch("src.file_name_processor.s3_client.get_object")
-    @patch("src.file_name_processor.add_to_audit_table", return_value=True)
-    @patch("src.fetch_permissions.redis_client")
+    @patch("file_name_processor.s3_client.get_object")
+    @patch("file_name_processor.add_to_audit_table", return_value=True)
+    @patch("fetch_permissions.redis_client")
     def test_add_to_audit_table_called(self, mock_redis_client, mock_add_to_audit_table, mock_s3_get_object):
         """Tests that add_to_audit_table is called with the correct input args"""
         # Mock full permissions
@@ -147,16 +147,16 @@ class TestLambdaHandler(TestCase):
         mock_s3_get_object.return_value = {"LastModified": MagicMock(strftime=lambda fmt: "20240101T000000")}
 
         with (
-            patch("src.file_name_processor.uuid4", return_value="test_id"),
-            patch("src.log_structure.send_log_to_firehose"),
+            patch("file_name_processor.uuid4", return_value="test_id"),
+            patch("log_structure.send_log_to_firehose"),
         ):
             lambda_handler(self.make_event(), None)
 
         mock_add_to_audit_table.assert_called_with("test_id", VALID_FLU_EMIS_FILE_KEY, "20240101T000000")
 
-    @patch("src.elasticcache.s3_client.get_object")
-    @patch("src.elasticcache.redis_client.set")
-    @patch("src.clients.s3_client.get_object")
+    @patch("elasticcache.s3_client.get_object")
+    @patch("elasticcache.redis_client.set")
+    @patch("clients.s3_client.get_object")
     def test_successful_processing_from_configs(self, mock_head_object, mock_redis_set, mock_s3_get_object):
         # Mock S3 head_object response
         mock_head_object.return_value = {"LastModified": MagicMock(strftime=lambda fmt: "20240708T12130100")}
@@ -164,7 +164,7 @@ class TestLambdaHandler(TestCase):
         # Mock S3 get_object response for retrieving file content
         mock_s3_get_object.return_value = {"Body": MagicMock(read=lambda: "mock_file_content".encode("utf-8"))}
         # Invoke the Lambda function with the mocked event
-        with patch("src.log_structure.send_log_to_firehose"):
+        with patch("log_structure.send_log_to_firehose"):
             lambda_handler(self.make_event_configs(), None)
 
         # Assert that S3 get_object was called with the correct parameters
@@ -173,9 +173,9 @@ class TestLambdaHandler(TestCase):
         # Assert that Redis set was called with the correct key and content
         mock_redis_set.assert_called_once_with(VALID_FLU_EMIS_FILE_KEY, "mock_file_content")
 
-    @patch("src.elasticcache.s3_client.get_object")
-    @patch("src.elasticcache.upload_to_elasticache")
-    @patch("src.clients.s3_client.get_object")
+    @patch("elasticcache.s3_client.get_object")
+    @patch("elasticcache.upload_to_elasticache")
+    @patch("clients.s3_client.get_object")
     def test_processing_from_configs_failed(self, mock_head_object, mock_upload_to_elasticache, mock_s3_get_object):
         # Mock S3 head_object response
         mock_head_object.return_value = {"LastModified": MagicMock(strftime=lambda fmt: "20240708T12130100")}
@@ -187,8 +187,8 @@ class TestLambdaHandler(TestCase):
         # Invoke the Lambda function with the mocked event
         # noqa: E999
         with (
-            patch("src.log_structure.send_log_to_firehose"),
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),
+            patch("log_structure.send_log_to_firehose"),
+            patch("file_name_processor.add_to_audit_table", return_value=True),
         ):
             lambda_handler(self.make_event_configs(), None)
 
@@ -207,10 +207,10 @@ class TestLambdaHandler(TestCase):
         )
 
         with (  # noqa: E999
-            patch("src.initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("src.send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-            patch("src.log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("log_structure.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
@@ -227,10 +227,10 @@ class TestLambdaHandler(TestCase):
         ack_file_key = f"ack/Flu_Vaccination_v5_YGM41_20240708T12130100_InfAck_{created_at_formatted_string}.csv"
 
         with (  # noqa: E999
-            patch("src.initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
-            patch("src.send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("src.log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+            patch("log_structure.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
@@ -248,10 +248,10 @@ class TestLambdaHandler(TestCase):
 
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
         with (  # noqa: E999
-            patch("src.initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
-            patch("src.send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("src.log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+            patch("log_structure.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
@@ -271,10 +271,10 @@ class TestLambdaHandler(TestCase):
 
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
         with (  # noqa: E999
-            patch("src.initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
-            patch("src.send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("src.log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+            patch("log_structure.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
@@ -292,10 +292,10 @@ class TestLambdaHandler(TestCase):
 
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
         with (  # noqa: E999
-            patch("src.initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
-            patch("src.send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("src.log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+            patch("log_structure.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
@@ -303,7 +303,7 @@ class TestLambdaHandler(TestCase):
         self.assert_ack_file_in_destination_s3_bucket(s3_client, ack_file_key)
 
     @mock_s3
-    @patch("src.initial_file_validation.get_permissions_config_json_from_cache")
+    @patch("initial_file_validation.get_permissions_config_json_from_cache")
     def test_lambda_valid_action_flag_permissions(self, mock_get_permissions):
         """tests SQS queue is called when has action flag permissions"""
         # set up mock for the permission when the validation passed
@@ -314,16 +314,16 @@ class TestLambdaHandler(TestCase):
         # and send_to_supplier_queue functions
         with (  # noqa: E999
             patch(
-                "src.initial_file_validation.get_supplier_permissions",  # noqa: E999
+                "initial_file_validation.get_supplier_permissions",  # noqa: E999
                 return_value=["FLU_CREATE", "FLU_UPDATE", "COVID19_FULL"],  # noqa: E999
             ),  # noqa: E999
             patch(
-                "src.file_name_processor.get_supplier_permissions",  # noqa: E999
+                "file_name_processor.get_supplier_permissions",  # noqa: E999
                 return_value=["FLU_CREATE", "FLU_UPDATE", "COVID19_FULL"],  # noqa: E999
             ),  # noqa: E999
-            patch("src.send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("src.log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+            patch("log_structure.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(), context=None)
 
@@ -337,11 +337,11 @@ class TestLambdaHandler(TestCase):
         # Mock the get_supplier_permissions (with return value which doesn't include the requested Flu permissions)
         # and send_to_supplier_queue functions
         with (  # noqa: E999
-            patch("src.initial_file_validation.get_supplier_permissions", return_value=["RSV_DELETE"]),  # noqa: E999
-            patch("src.file_name_processor.get_supplier_permissions", return_value=["RSV_DELETE"]),  # noqa: E999
-            patch("src.send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("src.log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("initial_file_validation.get_supplier_permissions", return_value=["RSV_DELETE"]),  # noqa: E999
+            patch("file_name_processor.get_supplier_permissions", return_value=["RSV_DELETE"]),  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+            patch("log_structure.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(), context=None)
 
@@ -351,7 +351,7 @@ class TestLambdaHandler(TestCase):
     @mock_s3
     @mock_sqs
     @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
-    @patch("src.fetch_permissions.redis_client")
+    @patch("fetch_permissions.redis_client")
     def test_lambda_handler_full_permissions_rsv(self, mock_redis_client):
         """Tests lambda function end to end for RSV"""
         # set up mock for the permission
@@ -368,9 +368,9 @@ class TestLambdaHandler(TestCase):
 
         # Mock get_supplier_permissions with full RSV permissions
         with (
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("src.log_structure.send_log_to_firehose"),
+            patch("file_name_processor.add_to_audit_table", return_value=True),
+            patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
+            patch("log_structure.send_log_to_firehose"),
         ):
             lambda_handler(self.make_event(VALID_RSV_EMIS_FILE_KEY), None)
 

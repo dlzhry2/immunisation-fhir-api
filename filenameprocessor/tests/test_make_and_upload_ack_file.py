@@ -11,9 +11,9 @@ from moto import mock_s3
 import os
 import sys
 
-maindir = os.path.dirname(__file__)
-srcdir = "../src"
-sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
+# maindir = os.path.dirname(__file__)
+# srcdir = "../src"
+# sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
 from make_and_upload_ack_file import make_the_ack_data, upload_ack_file, make_and_upload_the_ack_file  # noqa: E402
 from tests.utils_for_tests.values_for_tests import (  # noqa: E402
     MOCK_ENVIRONMENT_DICT,

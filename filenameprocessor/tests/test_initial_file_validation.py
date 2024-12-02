@@ -8,9 +8,9 @@ import sys
 from boto3 import client as boto3_client
 from moto import mock_s3
 
-maindir = os.path.dirname(__file__)
-srcdir = "../src"
-sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
+# maindir = os.path.dirname(__file__)
+# srcdir = "../src"
+# sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
 from initial_file_validation import (  # noqa: E402
     is_valid_datetime,
     get_supplier_permissions,
@@ -46,7 +46,7 @@ class TestInitialFileValidation(TestCase):
                 self.assertEqual(is_valid_datetime(date_time_string), expected_result)
 
     # @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
-    @patch("src.fetch_permissions.redis_client")
+    @patch("fetch_permissions.redis_client")
     def test_get_permissions_for_all_suppliers(self, mock_redis_client):
         """
         Test fetching permissions for all suppliers from Redis cache.

@@ -5,7 +5,7 @@ from moto import mock_s3
 import json
 import os
 from typing import Optional
-from src.file_name_processor import lambda_handler
+from file_name_processor import lambda_handler
 from tests.utils_for_tests.values_for_tests import (
     SOURCE_BUCKET_NAME,
     PERMISSION_JSON,
@@ -41,10 +41,10 @@ class TestFunctionInfoDecorator(unittest.TestCase):
     }
 
     @mock_s3
-    @patch("src.initial_file_validation.get_permissions_config_json_from_cache")
-    @patch("src.log_structure.logger")
-    @patch("src.log_structure.send_log_to_firehose")
-    @patch("src.fetch_permissions.redis_client")
+    @patch("initial_file_validation.get_permissions_config_json_from_cache")
+    @patch("log_structure.logger")
+    @patch("log_structure.send_log_to_firehose")
+    @patch("fetch_permissions.redis_client")
     def test_splunk_logger_successful_validation(
         self,
         mock_redis_client,
@@ -60,11 +60,11 @@ class TestFunctionInfoDecorator(unittest.TestCase):
         set_up_s3_buckets_and_upload_file()
         with (
             patch(
-                "src.initial_file_validation.get_supplier_permissions",
+                "initial_file_validation.get_supplier_permissions",
                 return_value=["FLU_CREATE", "FLU_UPDATE"],
             ),
-            patch("src.send_sqs_message.send_to_supplier_queue"),
-            patch("src.file_name_processor.add_to_audit_table", return_value=True),
+            patch("send_sqs_message.send_to_supplier_queue"),
+            patch("file_name_processor.add_to_audit_table", return_value=True),
         ):
             lambda_handler(event, context=None)
 
@@ -82,11 +82,11 @@ class TestFunctionInfoDecorator(unittest.TestCase):
         mock_send_log_to_firehose.assert_called_with(log_data)
 
     @mock_s3
-    @patch("src.initial_file_validation.get_permissions_config_json_from_cache")
-    @patch("src.log_structure.logger")
-    @patch("src.log_structure.send_log_to_firehose")
+    @patch("initial_file_validation.get_permissions_config_json_from_cache")
+    @patch("log_structure.logger")
+    @patch("log_structure.send_log_to_firehose")
     @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
-    @patch("src.fetch_permissions.redis_client")
+    @patch("fetch_permissions.redis_client")
     def test_splunk_logger_failed_validation(
         self,
         mock_redis_client,
@@ -99,10 +99,10 @@ class TestFunctionInfoDecorator(unittest.TestCase):
         event = self.event_file
 
         set_up_s3_buckets_and_upload_file(file_content=VALID_FILE_CONTENT)
-        with patch("src.file_name_processor.add_to_audit_table", return_value=True), patch(
-            "src.initial_file_validation.get_supplier_permissions",
+        with patch("file_name_processor.add_to_audit_table", return_value=True), patch(
+            "initial_file_validation.get_supplier_permissions",
             return_value=["COVID19_CREATE"],
-        ), patch("src.send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue:
+        ), patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue:
             lambda_handler(event, context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
