@@ -151,13 +151,13 @@ class TestLambdaHandler(TestCase):
         mock_add_to_audit_table.assert_called_with("test_id", VALID_FLU_EMIS_FILE_KEY, STATIC_DATETIME_FORMATTED)
 
     def test_successful_processing_from_configs(self):
+        mock_config_body = self.mock_elasticcache_get_object_return_value
+
         with (
             patch("log_structure.send_log_to_firehose"),
             patch("elasticcache.redis_client.set") as mock_redis_set,
             patch("clients.s3_client.get_object", return_value=MOCK_S3_GET_OBJECT_RETURN_VALUE),
-            patch(
-                "elasticcache.s3_client.get_object", return_value=self.mock_elasticcache_get_object_return_value
-            ) as mock_s3_get_object,
+            patch("elasticcache.s3_client.get_object", return_value=mock_config_body) as mock_s3_get_object,
         ):
             lambda_handler(self.make_event_configs(), None)
 
@@ -168,14 +168,15 @@ class TestLambdaHandler(TestCase):
         mock_redis_set.assert_called_once_with(VALID_FLU_EMIS_FILE_KEY, "mock_file_content")
 
     def test_processing_from_configs_failed(self):
+        elasticcache_exception = Exception("Simulated ElastiCache upload failure")
+        mock_config_body = self.mock_elasticcache_get_object_return_value
+
         with (
             patch("log_structure.send_log_to_firehose"),
             patch("file_name_processor.add_to_audit_table", return_value=True),
-            patch("elasticcache.upload_to_elasticache", side_effect=Exception("Simulated ElastiCache upload failure")),
+            patch("elasticcache.upload_to_elasticache", side_effect=elasticcache_exception),
             patch("clients.s3_client.get_object", return_value=MOCK_S3_GET_OBJECT_RETURN_VALUE),
-            patch(
-                "elasticcache.s3_client.get_object", return_value=self.mock_elasticcache_get_object_return_value
-            ) as mock_s3_get_object,
+            patch("elasticcache.s3_client.get_object", return_value=mock_config_body) as mock_s3_get_object,
         ):
             lambda_handler(self.make_event_configs(), None)
 
@@ -287,24 +288,18 @@ class TestLambdaHandler(TestCase):
     def test_lambda_valid_action_flag_permissions(self):
         """tests SQS queue is called when has action flag permissions"""
         self.set_up_s3_buckets_and_upload_file(file_content=VALID_FILE_CONTENT)
+        permissions_list = ["FLU_CREATE", "FLU_UPDATE", "COVID19_FULL"]
+        config_content = {"all_permissions": {"EMIS": ["FLU_FULL"]}}
+
         # Mock the get_supplier_permissions (with return value which includes the requested Flu permissions)
         # and send_to_supplier_queue functions
         with (
-            patch(
-                "initial_file_validation.get_supplier_permissions",
-                return_value=["FLU_CREATE", "FLU_UPDATE", "COVID19_FULL"],
-            ),
-            patch(
-                "file_name_processor.get_supplier_permissions",
-                return_value=["FLU_CREATE", "FLU_UPDATE", "COVID19_FULL"],
-            ),
+            patch("initial_file_validation.get_supplier_permissions", return_value=permissions_list),
+            patch("file_name_processor.get_supplier_permissions", return_value=permissions_list),
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("log_structure.send_log_to_firehose"),
-            patch(
-                "initial_file_validation.get_permissions_config_json_from_cache",
-                return_value={"all_permissions": {"EMIS": ["FLU_FULL"]}},
-            ),
+            patch("initial_file_validation.get_permissions_config_json_from_cache", return_value=config_content),
         ):
             lambda_handler(event=self.make_event(), context=None)
 

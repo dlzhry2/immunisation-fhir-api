@@ -43,16 +43,14 @@ class TestFunctionInfoDecorator(unittest.TestCase):
     def test_splunk_logger_successful_validation(self):
         """Tests the splunk logger is called when file validation is successful"""
         set_up_s3_buckets_and_upload_file()
+        config_content = {"all_permissions": {"EMIS": ["FLU_FULL"]}}
 
         with (
             patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_CREATE", "FLU_UPDATE"]),
             patch("send_sqs_message.send_to_supplier_queue"),
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
-            patch(
-                "initial_file_validation.get_permissions_config_json_from_cache",
-                return_value={"all_permissions": {"EMIS": ["FLU_FULL"]}},
-            ),
+            patch("initial_file_validation.get_permissions_config_json_from_cache", return_value=config_content),
             patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,
             patch("log_structure.logger") as mock_logger,
         ):
