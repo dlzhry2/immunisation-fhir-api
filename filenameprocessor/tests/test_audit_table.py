@@ -6,7 +6,7 @@ from boto3 import resource as boto3_resource
 from moto import mock_dynamodb
 
 from audit_table import add_to_audit_table
-from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, STATIC_DATETIME_FORMATTED
+from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT
 
 
 @mock_dynamodb
@@ -36,9 +36,6 @@ class TestAuditTable(TestCase):
                 }
             ],
         )
-
-        # # Wait for the table to be active
-        # self.table.wait_until_exists()
 
         assert self.table.table_status == "ACTIVE"
         assert len(self.table.global_secondary_indexes) == 1
