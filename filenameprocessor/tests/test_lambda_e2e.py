@@ -1,6 +1,6 @@
 """e2e tests for lambda_handler, including specific tests for action flag permissions"""
 
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock
 from unittest import TestCase
 from json import loads as json_loads
 from typing import Optional
@@ -8,13 +8,10 @@ from boto3 import client as boto3_client
 from moto import mock_s3, mock_sqs, mock_firehose
 import json
 import os
-import sys
 
-# maindir = os.path.dirname(__file__)
-# srcdir = "../src"
-# sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
-from file_name_processor import lambda_handler  # noqa: E402
-from tests.utils_for_tests.values_for_tests import (  # noqa: E402
+
+from file_name_processor import lambda_handler
+from tests.utils_for_tests.values_for_tests import (
     VALID_FILE_CONTENT,
     SOURCE_BUCKET_NAME,
     DESTINATION_BUCKET_NAME,

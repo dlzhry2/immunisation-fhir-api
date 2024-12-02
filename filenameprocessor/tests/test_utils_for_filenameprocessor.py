@@ -3,18 +3,12 @@
 from unittest import TestCase
 from moto import mock_s3
 
-# import os
-# import sys
-
-# maindir = os.path.dirname(__file__)
-# srcdir = '../src'
-# sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
-from src.utils_for_filenameprocessor import (  # noqa: E402
+from src.utils_for_filenameprocessor import (
     get_csv_content_dict_reader,
     identify_supplier,
     extract_file_key_elements,
 )
-from tests.utils_for_tests.utils_for_filenameprocessor_tests import setup_s3_bucket_and_file  # noqa: E402
+from tests.utils_for_tests.utils_for_filenameprocessor_tests import setup_s3_bucket_and_file
 
 
 class TestUtilsForFilenameprocessor(TestCase):

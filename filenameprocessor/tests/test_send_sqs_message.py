@@ -6,14 +6,9 @@ from json import loads as json_loads
 from uuid import uuid4
 from moto import mock_sqs
 from boto3 import client as boto3_client
-import os
-import sys
 
-# maindir = os.path.dirname(__file__)
-# srcdir = "../src"
-# sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
-from send_sqs_message import send_to_supplier_queue, make_message_body_for_sqs, make_and_send_sqs_message  # noqa: E402
-from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, SQS_ATTRIBUTES  # noqa: E402
+from send_sqs_message import send_to_supplier_queue, make_message_body_for_sqs, make_and_send_sqs_message 
+from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, SQS_ATTRIBUTES 
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
