@@ -3,7 +3,7 @@
 from unittest import TestCase
 from moto import mock_s3
 
-from src.utils_for_filenameprocessor import (
+from utils_for_filenameprocessor import (
     get_csv_content_dict_reader,
     identify_supplier,
     extract_file_key_elements,

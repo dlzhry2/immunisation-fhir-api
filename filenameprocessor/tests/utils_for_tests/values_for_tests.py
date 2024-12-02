@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-CONFIGS_BUCKET_NAME = "immunisation-batch-internal-dev-data-configs"
+CONFIG_BUCKET_NAME = "immunisation-batch-internal-dev-data-configs"
 SOURCE_BUCKET_NAME = "immunisation-batch-internal-dev-data-sources"
 DESTINATION_BUCKET_NAME = "immunisation-batch-internal-dev-data-destinations"
 STATIC_DATETIME = datetime(2021, 11, 20, 12, 0, 0)
@@ -16,11 +16,13 @@ MOCK_ENVIRONMENT_DICT = {
     "SHORT_QUEUE_PREFIX": "imms-batch-internal-dev",
     "LOCAL_ACCOUNT_ID": "123456789012",
     "PROD_ACCOUNT_ID": "3456789109",
-    "CONFIG_BUCKET_NAME": "immunisation-batch-internal-dev-configs",
+    "CONFIG_BUCKET_NAME": CONFIG_BUCKET_NAME,
     "ACK_BUCKET_NAME": DESTINATION_BUCKET_NAME,
     "QUEUE_URL": "https://sqs.eu-west-2.amazonaws.com/123456789012/imms-batch-internal-dev-metadata-queue.fifo",
     "REDIS_HOST": "localhost",
     "REDIS_PORT": "6379",
+    "AUDIT_TABLE_NAME": "immunisation-batch-internal-dev-audit-table",
+    "FILE_NAME_GSI": "filename_index",
 }
 
 VALID_FLU_EMIS_FILE_KEY = "Flu_Vaccinations_v5_YGM41_20240708T12130100.csv"
@@ -31,6 +33,7 @@ VALID_RSV_EMIS_ACK_FILE_KEY = f"ack/RSV_Vaccinations_v5_YGM41_20240708T12130100_
 
 
 SQS_ATTRIBUTES = {"FifoQueue": "true", "ContentBasedDeduplication": "true"}
+
 PERMISSION_JSON = {
     "all_permissions": {
         "EMIS": ["COVID19_FULL", "FLU_FULL", "RSV_FULL"],
@@ -96,38 +99,3 @@ FILE_CONTENT_WITH_NEW_AND_DELETE_ACTION_FLAGS = (
     '"2622896019"|"Inhalation - unit of product usage"|"1037351000000105"|'
     '"RJC02"|"https://fhir.nhs.uk/Id/ods-organization-code"\n'
 )
-
-
-# DON'T DELETE THIS EVENT - IT MAY BE USED FOR FUTURE TESTING
-EVENT = {
-    "Records": [
-        {
-            "eventVersion": "2.1",
-            "eventSource": "aws:s3",
-            "awsRegion": "eu-west-2",
-            "eventTime": "2024-07-09T12:00:00Z",
-            "eventName": "ObjectCreated:Put",
-            "userIdentity": {"principalId": "AWS:123456789012:user/Admin"},
-            "requestParameters": {"sourceIPAddress": "127.0.0.1"},
-            "responseElements": {
-                "x-amz-request-id": "EXAMPLE123456789",
-                "x-amz-id-2": "EXAMPLE123/5678abcdefghijklambdaisawesome/mnopqrstuvwxyzABCDEFGH",
-            },
-            "s3": {
-                "s3SchemaVersion": "1.0",
-                "configurationId": "testConfigRule",
-                "bucket": {
-                    "name": "test-bucket",
-                    "ownerIdentity": {"principalId": "EXAMPLE"},
-                    "arn": "arn:aws:s3:::example-bucket",
-                },
-                "object": {
-                    "key": "FLU_Vaccinations_v5_YGM41_20240708T12130100.csv",
-                    "size": 1024,
-                    "eTag": "5",
-                    "sequencer": "0A1B2C3D4E5F678901",
-                },
-            },
-        }
-    ]
-}

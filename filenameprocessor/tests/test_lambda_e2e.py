@@ -7,7 +7,7 @@ from io import BytesIO
 from json import loads as json_loads
 from typing import Optional
 from boto3 import client as boto3_client
-from moto import mock_s3, mock_sqs, mock_firehose
+from moto import mock_s3, mock_sqs, mock_firehose, mock_dynamodb
 
 
 from file_name_processor import lambda_handler
@@ -17,7 +17,7 @@ from tests.utils_for_tests.values_for_tests import (
     DESTINATION_BUCKET_NAME,
     VALID_FLU_EMIS_FILE_KEY,
     VALID_RSV_EMIS_FILE_KEY,
-    CONFIGS_BUCKET_NAME,
+    CONFIG_BUCKET_NAME,
     PERMISSION_JSON,
     MOCK_ENVIRONMENT_DICT,
     STATIC_DATETIME,
@@ -31,6 +31,7 @@ MOCK_S3_GET_OBJECT_RETURN_VALUE = {"LastModified": STATIC_DATETIME}
 @mock_s3
 @mock_sqs
 @mock_firehose
+@mock_dynamodb
 class TestLambdaHandler(TestCase):
     """
     Tests for lambda_handler.
@@ -86,7 +87,7 @@ class TestLambdaHandler(TestCase):
             "Records": [
                 {
                     "s3": {
-                        "bucket": {"name": CONFIGS_BUCKET_NAME},
+                        "bucket": {"name": CONFIG_BUCKET_NAME},
                         "object": {"key": (file_key or VALID_FLU_EMIS_FILE_KEY)},
                     }
                 }
@@ -166,7 +167,7 @@ class TestLambdaHandler(TestCase):
             lambda_handler(self.make_event_configs(), None)
 
         # Assert that S3 get_object was called with the correct parameters
-        mock_s3_get_object.assert_called_once_with(Bucket=CONFIGS_BUCKET_NAME, Key=VALID_FLU_EMIS_FILE_KEY)
+        mock_s3_get_object.assert_called_once_with(Bucket=CONFIG_BUCKET_NAME, Key=VALID_FLU_EMIS_FILE_KEY)
 
         # Assert that Redis set was called with the correct key and content
         mock_redis_set.assert_called_once_with(VALID_FLU_EMIS_FILE_KEY, "mock_file_content")
@@ -187,7 +188,7 @@ class TestLambdaHandler(TestCase):
             lambda_handler(self.make_event_configs(), None)
 
         # Assert that S3 get_object was called with the correct parameters
-        mock_s3_get_object.assert_called_once_with(Bucket=CONFIGS_BUCKET_NAME, Key=VALID_FLU_EMIS_FILE_KEY)
+        mock_s3_get_object.assert_called_once_with(Bucket=CONFIG_BUCKET_NAME, Key=VALID_FLU_EMIS_FILE_KEY)
 
     def test_lambda_invalid_vaccine_type(self):
         """tests SQS queue is not called when file key includes invalid vaccine type"""
