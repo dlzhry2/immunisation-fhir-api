@@ -7,6 +7,7 @@ SOURCE_BUCKET_NAME = "immunisation-batch-internal-dev-data-sources"
 DESTINATION_BUCKET_NAME = "immunisation-batch-internal-dev-data-destinations"
 STATIC_DATETIME = datetime(2021, 11, 20, 12, 0, 0)
 STATIC_ISO_DATETIME = STATIC_DATETIME.replace(second=0, microsecond=0).isoformat(timespec="milliseconds")
+STATIC_DATETIME_FORMATTED = "20211120T12000000"
 
 
 # Dictionary for mocking the os.environ dict

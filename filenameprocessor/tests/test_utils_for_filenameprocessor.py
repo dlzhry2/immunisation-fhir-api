@@ -11,10 +11,10 @@ from src.utils_for_filenameprocessor import (
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import setup_s3_bucket_and_file
 
 
+@mock_s3
 class TestUtilsForFilenameprocessor(TestCase):
     """Tests for utils_for_filenameprocessor functions"""
 
-    @mock_s3
     def test_get_csv_content_dict_reader(self):
         """Test that get_csv_content_dict_reader can download and correctly read the data file"""
         bucket_name = "test_bucket"

@@ -3,7 +3,6 @@ from unittest.mock import patch
 from boto3 import client as boto3_client
 from moto import mock_s3
 import json
-import os
 from typing import Optional
 from file_name_processor import lambda_handler
 from tests.utils_for_tests.values_for_tests import (
@@ -33,6 +32,7 @@ def set_up_s3_buckets_and_upload_file(file_key: Optional[str] = None, file_conte
     return s3_client
 
 
+@mock_s3
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 class TestFunctionInfoDecorator(unittest.TestCase):
 
@@ -40,33 +40,23 @@ class TestFunctionInfoDecorator(unittest.TestCase):
         "Records": [{"s3": {"bucket": {"name": SOURCE_BUCKET_NAME}, "object": {"key": VALID_FLU_EMIS_FILE_KEY}}}]
     }
 
-    @mock_s3
-    @patch("initial_file_validation.get_permissions_config_json_from_cache")
-    @patch("log_structure.logger")
-    @patch("log_structure.send_log_to_firehose")
-    @patch("fetch_permissions.redis_client")
-    def test_splunk_logger_successful_validation(
-        self,
-        mock_redis_client,
-        mock_send_log_to_firehose,
-        mock_logger,
-        mock_get_permissions,
-    ):
+    def test_splunk_logger_successful_validation(self):
         """Tests the splunk logger is called when file validation is successful"""
-        mock_redis_client.get.return_value = json.dumps(PERMISSION_JSON)
-        mock_get_permissions.return_value = {"all_permissions": {"EMIS": ["FLU_FULL"]}}
-        event = self.event_file
-
         set_up_s3_buckets_and_upload_file()
+
         with (
-            patch(
-                "initial_file_validation.get_supplier_permissions",
-                return_value=["FLU_CREATE", "FLU_UPDATE"],
-            ),
+            patch("initial_file_validation.get_supplier_permissions", return_value=["FLU_CREATE", "FLU_UPDATE"]),
             patch("send_sqs_message.send_to_supplier_queue"),
             patch("file_name_processor.add_to_audit_table", return_value=True),
+            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
+            patch(
+                "initial_file_validation.get_permissions_config_json_from_cache",
+                return_value={"all_permissions": {"EMIS": ["FLU_FULL"]}},
+            ),
+            patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,
+            patch("log_structure.logger") as mock_logger,
         ):
-            lambda_handler(event, context=None)
+            lambda_handler(self.event_file, context=None)
 
         log_call_args = mock_logger.info.call_args[0][0]
         log_data = json.loads(log_call_args)
@@ -78,32 +68,22 @@ class TestFunctionInfoDecorator(unittest.TestCase):
         self.assertEqual(log_data["function_name"], "handle_record")
         self.assertEqual(log_data["statusCode"], 200)
 
-        # Assert - Check Firehose log called
         mock_send_log_to_firehose.assert_called_with(log_data)
 
-    @mock_s3
-    @patch("initial_file_validation.get_permissions_config_json_from_cache")
-    @patch("log_structure.logger")
-    @patch("log_structure.send_log_to_firehose")
-    @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
-    @patch("fetch_permissions.redis_client")
-    def test_splunk_logger_failed_validation(
-        self,
-        mock_redis_client,
-        mock_send_log_to_firehose,
-        mock_logger,
-        mock_get_permissions,
-    ):
+    def test_splunk_logger_failed_validation(self):
         """Tests the splunk logger is called when file validation is unsuccessful"""
-        mock_redis_client.get.return_value = json.dumps(PERMISSION_JSON)
-        event = self.event_file
-
         set_up_s3_buckets_and_upload_file(file_content=VALID_FILE_CONTENT)
-        with patch("file_name_processor.add_to_audit_table", return_value=True), patch(
-            "initial_file_validation.get_supplier_permissions",
-            return_value=["COVID19_CREATE"],
-        ), patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue:
-            lambda_handler(event, context=None)
+
+        with (
+            patch("file_name_processor.add_to_audit_table", return_value=True),
+            patch("initial_file_validation.get_supplier_permissions", return_value=["COVID19_CREATE"]),
+            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,
+            patch("log_structure.send_log_to_firehose") as mock_send_log_to_firehose,
+            patch("log_structure.logger") as mock_logger,
+            patch("initial_file_validation.get_permissions_config_json_from_cache"),
+        ):
+            lambda_handler(self.event_file, context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
         # TODO: Fix the below assertion - need to ascertain what the status should be in this case

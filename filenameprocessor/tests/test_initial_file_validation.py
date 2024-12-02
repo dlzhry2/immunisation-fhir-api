@@ -15,6 +15,7 @@ from initial_file_validation import (
 from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, VALID_FILE_CONTENT
 
 
+@mock_s3
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 class TestInitialFileValidation(TestCase):
     """Tests for initial_file_validation functions"""
@@ -40,11 +41,8 @@ class TestInitialFileValidation(TestCase):
             with self.subTest():
                 self.assertEqual(is_valid_datetime(date_time_string), expected_result)
 
-    @patch("fetch_permissions.redis_client")
-    def test_get_permissions_for_all_suppliers(self, mock_redis_client):
-        """
-        Test fetching permissions for all suppliers from Redis cache.
-        """
+    def test_get_permissions_for_all_suppliers(self):
+        """Test fetching permissions for all suppliers from Redis cache."""
         # Define the expected permissions JSON for all suppliers
         # Setup mock Redis response
         permissions_json = {
@@ -54,7 +52,6 @@ class TestInitialFileValidation(TestCase):
                 "TEST_SUPPLIER_3": ["COVID19_CREATE", "COVID19_DELETE", "FLU_FULL"],
             }
         }
-        mock_redis_client.get.return_value = json.dumps(permissions_json)
 
         # Test case tuples structured as (supplier, expected_result)
         test_cases = [
@@ -66,8 +63,9 @@ class TestInitialFileValidation(TestCase):
         # Run the subtests
         for supplier, expected_result in test_cases:
             with self.subTest(supplier=supplier):
-                actual_permissions = get_supplier_permissions(supplier)
-                self.assertEqual(actual_permissions, expected_result)
+                with patch("fetch_permissions.redis_client.get", return_value=json.dumps(permissions_json)):
+                    actual_permissions = get_supplier_permissions(supplier)
+                    self.assertEqual(actual_permissions, expected_result)
 
     def test_validate_vaccine_type_permissions(self):
         """
@@ -96,7 +94,6 @@ class TestInitialFileValidation(TestCase):
                 with patch("initial_file_validation.get_supplier_permissions", return_value=vaccine_permissions):
                     self.assertEqual(validate_vaccine_type_permissions("TEST_SUPPLIER", vaccine_type), expected_result)
 
-    @mock_s3
     def test_initial_file_validation(self):
         """Tests that initial_file_validation returns True if all elements pass validation, and False otherwise"""
         bucket_name = "test_bucket"

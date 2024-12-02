@@ -11,11 +11,11 @@ from send_sqs_message import send_to_supplier_queue, make_message_body_for_sqs, 
 from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, SQS_ATTRIBUTES
 
 
+@mock_sqs
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 class TestSendSQSMessage(TestCase):
     """Tests for send_sqs_message functions"""
 
-    @mock_sqs
     def test_send_to_supplier_queue_success(self):
         """Test send_to_supplier_queue function for a successful message send"""
         mock_sqs_client = boto3_client("sqs", region_name="eu-west-2")
@@ -34,14 +34,12 @@ class TestSendSQSMessage(TestCase):
         messages = mock_sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1)
         self.assertEqual(json_loads(messages["Messages"][0]["Body"]), {"supplier": "PINNACLE"})
 
-    @mock_sqs
     def test_send_to_supplier_queue_failure_due_to_queue_does_not_exist(self):
         """Test send_to_supplier_queue function for a failed message send due to queue not existing"""
         supplier = "PINNACLE"
         message_body = {"supplier": supplier}
         self.assertFalse(send_to_supplier_queue(message_body))
 
-    @mock_sqs
     def test_send_to_supplier_queue_failure_due_to_absent_supplier(self):
         """Test send_to_supplier_queue function for a failed message send"""
         mock_sqs_client = boto3_client("sqs", region_name="eu-west-2")
@@ -79,7 +77,6 @@ class TestSendSQSMessage(TestCase):
             make_message_body_for_sqs(file_key, message_id, permission, created_at_formatted_string), expected_output
         )
 
-    @mock_sqs
     def test_make_and_send_sqs_message_success(self):
         """Test make_and_send_sqs_message function for a successful message send"""
         mock_sqs_client = boto3_client("sqs", region_name="eu-west-2")
@@ -114,7 +111,6 @@ class TestSendSQSMessage(TestCase):
         messages = mock_sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1)
         self.assertEqual(json_loads(messages["Messages"][0]["Body"]), expected_message_body)
 
-    @mock_sqs
     def test_make_and_send_sqs_message_failure(self):
         """Test make_and_send_sqs_message function for a failure due to queue not existing"""
         file_key = "Covid19_Vaccinations_v5_YGMYH_20200101T12345600.csv"

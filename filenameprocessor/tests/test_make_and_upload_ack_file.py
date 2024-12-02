@@ -17,6 +17,7 @@ from tests.utils_for_tests.values_for_tests import (
 )
 
 
+@mock_s3
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 class TestMakeAndUploadAckFile(TestCase):
     """Tests for make_and_upload_ack_file functions"""
@@ -57,7 +58,6 @@ class TestMakeAndUploadAckFile(TestCase):
                     expected_result,
                 )
 
-    @mock_s3
     def test_upload_ack_file(self):
         """Test that upload_ack_file successfully uploads the ack file"""
         # Set up up the ack bucket
@@ -116,7 +116,6 @@ class TestMakeAndUploadAckFile(TestCase):
             csv_data = list(DictReader(StringIO(csv_content_string), delimiter="|"))
             self.assertEqual(list(csv_data)[0], expected_result)
 
-    @mock_s3
     def test_make_and_upload_ack_file(self):
         """Test that make_and_upload_ack_file uploads an ack file containing the correct values"""
         # Set up up the ack bucket
