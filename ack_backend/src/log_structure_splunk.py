@@ -34,9 +34,11 @@ def ack_function_info(func):
                 log_data["file_key"] = file_key
                 file_key_elements = extract_file_key_elements(file_key)
                 log_data["supplier"] = file_key_elements["supplier"]
+                log_data["supplier_1"] = incoming_message_body.get("supplier")
                 log_data["row_id"] = incoming_message_body.get("row_id")
+                log_data["Vaccine_type"] = file_key_elements["vaccine_type"]
                 log_data["local_id"] = incoming_message_body.get("local_id")
-                log_data["operation_requested"] = incoming_message_body.get("operation_requested")
+                log_data["operation_requested"] = incoming_message_body.get("action_flag")
                 diagnostics = incoming_message_body.get("diagnostics")
                 if diagnostics is None:
                     log_data["statusCode"] = 200
@@ -52,7 +54,7 @@ def ack_function_info(func):
         try:
             result = func(event, context, *args, **kwargs)
             end_time = time.time()
-            log_data["time_taken"] = round(end_time - start_time, 5)
+            log_data["time_taken"] = f"{round(end_time - start_time, 5)}s"
 
             print(f"logging44444: {json.dumps(log_data)}")
             logger.info(json.dumps(log_data))
@@ -66,7 +68,7 @@ def ack_function_info(func):
             log_data["statusCode"] = 500
             log_data["diagnostics"] = f"Error in {func.__name__}: {str(e)}"
             end_time = time.time()
-            log_data["time_taken"] = round(end_time - start_time, 5)
+            log_data["time_taken"] = f"{round(end_time - start_time, 5)}s"
 
             logger.exception(json.dumps(log_data))
             firehose_log["event"] = log_data

@@ -18,7 +18,7 @@ def lambda_handler(event, context):
     try:
         imms_id = None
         successful_api_response = True
-        print(f"event: {event}")
+        print(f"event1: {event}")
         for record in event["Records"]:
             body_json = record["body"]
             incoming_message_body = json.loads(body_json)
