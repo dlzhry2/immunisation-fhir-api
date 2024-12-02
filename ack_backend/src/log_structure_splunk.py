@@ -26,28 +26,30 @@ def ack_function_info(func):
             "time_taken": None,
         }
 
-        if event and "Records" in event:
-            for record in event["Records"]:
-                body_json = record["body"]
-                incoming_message_body = json.loads(body_json)
-                file_key = incoming_message_body.get("file_key")
-                log_data["file_key"] = file_key
-                file_key_elements = extract_file_key_elements(file_key)
-                log_data["supplier"] = file_key_elements["supplier"]
-                log_data["supplier_1"] = incoming_message_body.get("supplier")
-                log_data["message_id"] = incoming_message_body.get("row_id")
-                log_data["Vaccine_type"] = file_key_elements["vaccine_type"]
-                log_data["local_id"] = incoming_message_body.get("local_id")
-                log_data["operation_requested"] = incoming_message_body.get("action_flag")
-                diagnostics = incoming_message_body.get("diagnostics")
-                if diagnostics is None:
-                    log_data["statusCode"] = 200
-                    log_data["diagnostics"] = "Operation completed successfully"
-                    log_data["status"] = "success"
-                else:
-                    log_data["statusCode"] = get_status_code_for_diagnostics(diagnostics)
-                    log_data["diagnostics"] = diagnostics
-                    log_data["status"] = "fail"
+        # if event and "Records" in event:
+        #     for record in event["Records"]:
+        #         body_json = record["body"]
+        #         incoming_message_body = json.loads(body_json)
+        #         print(type(incoming_message_body))
+        #         print(f"INCOMING4444: {incoming_message_body}")
+        #         file_key = incoming_message_body.get("file_key")
+        #         log_data["file_key"] = file_key
+        #         file_key_elements = extract_file_key_elements(file_key)
+        #         log_data["supplier"] = file_key_elements["supplier"]
+        #         log_data["supplier_1"] = incoming_message_body.get("supplier")
+        #         log_data["message_id"] = incoming_message_body.get("row_id")
+        #         log_data["Vaccine_type"] = file_key_elements["vaccine_type"]
+        #         log_data["local_id"] = incoming_message_body.get("local_id")
+        #         log_data["operation_requested"] = incoming_message_body.get("action_flag")
+        #         diagnostics = incoming_message_body.get("diagnostics")
+        #         if diagnostics is None:
+        #             log_data["statusCode"] = 200
+        #             log_data["diagnostics"] = "Operation completed successfully"
+        #             log_data["status"] = "success"
+        #         else:
+        #             log_data["statusCode"] = get_status_code_for_diagnostics(diagnostics)
+        #             log_data["diagnostics"] = diagnostics
+        #             log_data["status"] = "fail"
 
         start_time = time.time()
         firehose_log = dict()
