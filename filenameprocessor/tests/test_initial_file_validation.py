@@ -40,7 +40,6 @@ class TestInitialFileValidation(TestCase):
             with self.subTest():
                 self.assertEqual(is_valid_datetime(date_time_string), expected_result)
 
-    # @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
     @patch("fetch_permissions.redis_client")
     def test_get_permissions_for_all_suppliers(self, mock_redis_client):
         """

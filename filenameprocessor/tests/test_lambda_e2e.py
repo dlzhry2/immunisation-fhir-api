@@ -16,7 +16,6 @@ from tests.utils_for_tests.values_for_tests import (
     SOURCE_BUCKET_NAME,
     DESTINATION_BUCKET_NAME,
     VALID_FLU_EMIS_FILE_KEY,
-    VALID_FLU_EMIS_ACK_FILE_KEY,
     VALID_RSV_EMIS_FILE_KEY,
     CONFIGS_BUCKET_NAME,
     PERMISSION_JSON,
@@ -25,6 +24,8 @@ from tests.utils_for_tests.values_for_tests import (
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
+@mock_s3
+@mock_sqs
 @mock_firehose
 class TestLambdaHandler(TestCase):
     """
@@ -94,14 +95,11 @@ class TestLambdaHandler(TestCase):
         ack_file_keys = [obj["Key"] for obj in ack_files.get("Contents", [])]
         self.assertIn(ack_file_key, ack_file_keys)
 
-    @mock_s3
-    @mock_sqs
-    @patch.dict(os.environ, {"REDIS_HOST": "localhost", "REDIS_PORT": "6379"})
     @patch("fetch_permissions.redis_client")
     def test_lambda_handler_full_permissions(self, mock_redis_client):
         """Tests lambda function end to end"""
         # set up mock for the permission
-        mock_redis_client.get.return_value = json.dumps(PERMISSION_JSON)
+        # mock_redis_client.get.return_value = json.dumps(PERMISSION_JSON)
 
         # Set up S3
         self.set_up_s3_buckets_and_upload_file()
@@ -116,6 +114,7 @@ class TestLambdaHandler(TestCase):
         with (
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("log_structure.send_log_to_firehose"),
+            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
         ):
             lambda_handler(self.make_event(), None)
 
