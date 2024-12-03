@@ -121,7 +121,7 @@ class TestLambdaHandler(TestCase):
         # Mock get_supplier_permissions with full FLU permissions
         with (
             patch("file_name_processor.add_to_audit_table", return_value=True),
-            patch("log_structure.send_log_to_firehose"),
+            patch("logging_decorator.send_log_to_firehose"),
             patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
         ):
             lambda_handler(self.make_event(), None)
@@ -142,7 +142,7 @@ class TestLambdaHandler(TestCase):
 
         with (  # noqa: E999
             patch("file_name_processor.uuid4", return_value="test_id"),  # noqa: E999
-            patch("log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
             patch(  # noqa: E999
                 "file_name_processor.s3_client.get_object", return_value=MOCK_S3_GET_OBJECT_RETURN_VALUE  # noqa: E999
             ),  # noqa: E999
@@ -156,7 +156,7 @@ class TestLambdaHandler(TestCase):
         mock_config_body = self.mock_elasticcache_get_object_return_value
 
         with (  # noqa: E999
-            patch("log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
             patch("elasticcache.redis_client.set") as mock_redis_set,  # noqa: E999
             patch("clients.s3_client.get_object", return_value=MOCK_S3_GET_OBJECT_RETURN_VALUE),  # noqa: E999
             patch(  # noqa: E999
@@ -176,7 +176,7 @@ class TestLambdaHandler(TestCase):
         mock_config_body = self.mock_elasticcache_get_object_return_value
 
         with (
-            patch("log_structure.send_log_to_firehose"),
+            patch("logging_decorator.send_log_to_firehose"),
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("elasticcache.upload_to_elasticache", side_effect=elasticcache_exception),
             patch("clients.s3_client.get_object", return_value=MOCK_S3_GET_OBJECT_RETURN_VALUE),
@@ -203,7 +203,7 @@ class TestLambdaHandler(TestCase):
             patch("fetch_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-            patch("log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
@@ -222,7 +222,7 @@ class TestLambdaHandler(TestCase):
             patch("fetch_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
@@ -242,7 +242,7 @@ class TestLambdaHandler(TestCase):
             patch("fetch_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
@@ -264,7 +264,7 @@ class TestLambdaHandler(TestCase):
             patch("fetch_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
@@ -284,7 +284,7 @@ class TestLambdaHandler(TestCase):
             patch("fetch_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
@@ -303,7 +303,7 @@ class TestLambdaHandler(TestCase):
             patch("fetch_permissions.get_supplier_permissions", return_value=permissions_list),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
             patch(  # noqa: E999
                 "fetch_permissions.get_permissions_config_json_from_cache",  # noqa: E999
                 return_value=config_content,  # noqa: E999
@@ -323,7 +323,7 @@ class TestLambdaHandler(TestCase):
             patch("fetch_permissions.get_supplier_permissions", return_value=["RSV_DELETE"]),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(), context=None)
 
@@ -345,7 +345,7 @@ class TestLambdaHandler(TestCase):
         with (  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("log_structure.send_log_to_firehose"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
             patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(self.make_event(VALID_RSV_EMIS_FILE_KEY), None)

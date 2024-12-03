@@ -39,7 +39,7 @@ def add_to_audit_table(message_id: str, file_key: str, created_at_formatted_str:
             logger.error("%s file duplicate added to s3 at the following time: %s", file_key, created_at_formatted_str)
             raise Exception(f"Duplicate file: {file_key}")
 
-        return not duplicate_exists
-
-    except Exception:  # pylint: disable = broad-exception-caught
-        return False
+    except Exception as error:  # pylint: disable = broad-exception-caught
+        error_message = f"Error adding {file_key} to the audit table"
+        logger.error(error_message)
+        raise Exception(error_message) from error

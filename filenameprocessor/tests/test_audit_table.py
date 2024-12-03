@@ -94,20 +94,21 @@ class TestAuditTable(TestCase):
         }
 
         # Add a file to the audit table
-        assert add_to_audit_table(message_id_1, file_key_1, created_at_formatted_string_1) is True
+        self.assertIsNone(add_to_audit_table(message_id_1, file_key_1, created_at_formatted_string_1))
         table_items = self.table.scan()["Items"]
         assert len(table_items) == 1
         assert expected_table_item_1 in table_items
 
         # Add another file to the audit table
-        assert add_to_audit_table(message_id_2, file_key_2, created_at_formatted_string_2) is True
+        self.assertIsNone(add_to_audit_table(message_id_2, file_key_2, created_at_formatted_string_2))
         table_items = self.table.scan()["Items"]
         assert len(table_items) == 2
         assert expected_table_item_1 in table_items
         assert expected_table_item_2 in table_items
 
         # Attempt to add the file 1 again - should return FALSE due to the file already being in the table
-        assert add_to_audit_table(message_id_3, file_key_1, created_at_formatted_string_3) is False
+        with self.assertRaises(Exception):
+            add_to_audit_table(message_id_3, file_key_1, created_at_formatted_string_3)
 
         # Check that the file has been added to the audit table again,
         # with the different message_id and created_at_formatted_string
@@ -118,7 +119,8 @@ class TestAuditTable(TestCase):
         assert expected_table_item_3 in table_items
 
         # Attempt to add a file that is already in the table with the same message_id
-        assert add_to_audit_table(message_id_3, file_key_4, created_at_formatted_string_4) is False
+        with self.assertRaises(Exception):
+            add_to_audit_table(message_id_3, file_key_4, created_at_formatted_string_4)
 
         # Check that the file has not been added to the audit table
         table_items = self.table.scan()["Items"]

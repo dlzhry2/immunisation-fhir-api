@@ -13,7 +13,7 @@ from make_and_upload_ack_file import make_and_upload_the_ack_file
 from audit_table import add_to_audit_table
 from clients import s3_client, logger
 from elasticcache import upload_to_elasticache
-from log_structure import logging_decorator
+from logging_decorator import logging_decorator
 from fetch_permissions import validate_vaccine_type_permissions
 
 
