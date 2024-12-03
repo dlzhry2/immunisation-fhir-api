@@ -9,6 +9,11 @@ variable "environment_name" {
   type        = string  
 }
 
+variable "source_account_id" {
+  description = "The name of the account where AWS Backup is configured."
+  type        = string  
+}
+
 variable "notifications_target_email_address" {
   description = "The email address to which backup notifications will be sent via SNS."
   type        = string
