@@ -6,20 +6,15 @@ NOTE: The expected file format for incoming files from the data sources bucket i
 (ODS code has multiple lengths)
 """
 
-import logging
 from uuid import uuid4
-from initial_file_validation import initial_file_validation
+from file_key_validation import file_key_validation
 from send_sqs_message import make_and_send_sqs_message
 from make_and_upload_ack_file import make_and_upload_the_ack_file
 from audit_table import add_to_audit_table
-from clients import s3_client
+from clients import s3_client, logger
 from elasticcache import upload_to_elasticache
 from log_structure import logging_decorator
 from fetch_permissions import validate_vaccine_type_permissions
-
-logging.basicConfig(level="INFO")
-logger = logging.getLogger()
-logger.setLevel("INFO")
 
 
 # NOTE: logging_decorator is applied to handle_record function, rather than lambda_handler, because
@@ -38,19 +33,20 @@ def handle_record(record) -> dict:
 
     if "data-sources" in bucket_name:
         try:
+            # Get message details
             message_id = str(uuid4())  # Assign a unique message_id for the file
-
             response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
             created_at_formatted_string = response["LastModified"].strftime("%Y%m%dT%H%M%S00")
 
+            # Process the file
             add_to_audit_table(message_id, file_key, created_at_formatted_string)
+            vaccine_type, supplier = file_key_validation(file_key)
+            permissions = validate_vaccine_type_permissions(supplier=supplier, vaccine_type=vaccine_type)
+            make_and_send_sqs_message(
+                file_key, message_id, permissions, vaccine_type, supplier, created_at_formatted_string
+            )
 
-            vaccine_type, supplier = initial_file_validation(file_key)
-
-            permission = validate_vaccine_type_permissions(supplier=supplier, vaccine_type=vaccine_type)
-
-            make_and_send_sqs_message(file_key, message_id, permission, created_at_formatted_string)
-
+            # Return details for logs
             return {
                 "statusCode": 200,
                 "message": "Successfully sent to SQS queue",
@@ -61,14 +57,18 @@ def handle_record(record) -> dict:
             }
 
         except Exception as error:  # pylint: disable=broad-except
-            # If an unexpected error occured, upload an ack file
-            logging.error("Error processing file'%s': %s", file_key, str(error))
+            logger.error("Error processing file'%s': %s", file_key, str(error))
+
+            # Create ack file
+            # (note that error may have occurred before message_id and created_at_formatted_string were generated)
+            message_delivered = False
             if "message_id" not in locals():
                 message_id = "Message id was not created"
-            message_delivered = False
             if "created_at_formatted_string" not in locals():
                 created_at_formatted_string = "created_at_time_not_identified"
             make_and_upload_the_ack_file(message_id, file_key, message_delivered, created_at_formatted_string)
+
+            # Return details for logs
             return {
                 "statusCode": 500,
                 "message": "Infrastructure Level Response Value - Processing Error",

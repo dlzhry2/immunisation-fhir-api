@@ -134,7 +134,6 @@ class TestLambdaHandler(TestCase):
         # Validate message content
         self.assertEqual(received_message["vaccine_type"], "FLU")
         self.assertEqual(received_message["supplier"], "EMIS")
-        self.assertEqual(received_message["timestamp"], "20240708T12130100")
         self.assertEqual(received_message["filename"], "Flu_Vaccinations_v5_YGM41_20240708T12130100.csv")
 
     def test_add_to_audit_table_called(self):
@@ -359,5 +358,4 @@ class TestLambdaHandler(TestCase):
         # Validate message content
         self.assertEqual(received_message["vaccine_type"], "RSV")
         self.assertEqual(received_message["supplier"], "EMIS")
-        self.assertEqual(received_message["timestamp"], "20240708T12130100")
         self.assertEqual(received_message["filename"], "RSV_Vaccinations_v5_YGM41_20240708T12130100.csv")

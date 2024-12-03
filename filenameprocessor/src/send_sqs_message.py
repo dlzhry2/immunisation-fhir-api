@@ -1,58 +1,39 @@
 """Functions to send a message to SQS"""
 
-import logging
 import os
 from json import dumps as json_dumps
-from utils_for_filenameprocessor import extract_file_key_elements
-from clients import sqs_client
-
-
-logger = logging.getLogger()
+from clients import sqs_client, logger
 
 
 def send_to_supplier_queue(message_body: dict) -> bool:
     """Sends a message to the supplier queue and returns a bool indicating if the message has been successfully sent"""
     # Check the supplier has been identified (this should already have been validated by initial file validation)
     if not (supplier := message_body["supplier"]):
-        logger.error("Message not sent to supplier queue as unable to identify supplier")
-        raise Exception("Message not sent to supplier queue as unable to identify supplier")
+        error_message = "Message not sent to supplier queue as unable to identify supplier"
+        logger.error(error_message)
+        raise Exception(error_message)
 
     try:
         queue_url = os.getenv("QUEUE_URL")
         sqs_client.send_message(QueueUrl=queue_url, MessageBody=json_dumps(message_body), MessageGroupId=supplier)
         logger.info("Message sent to SQS queue for supplier: %s", supplier)
     except Exception as error:  # pylint: disable=broad-exception-caught
-        logger.error("An unexpected error occurred whilst sending to SQS: %s", error)
-        raise Exception("An unexpected error occurred whilst sending to SQS") from error
+        error_message = f"An unexpected error occurred whilst sending to SQS: {error}"
+        logger.error(error_message)
+        raise Exception(error_message) from error
 
 
-def make_message_body_for_sqs(
-    file_key: str, message_id: str, permission: str, created_at_formatted_string: str
-) -> dict:
-    """Returns the message body for the message which will be sent to SQS"""
-    file_key_elements = extract_file_key_elements(file_key)
-    return {
+def make_and_send_sqs_message(
+    file_key: str, message_id: str, permission: str, vaccine_type: str, supplier: str, created_at_formatted_string: str
+) -> bool:
+    """Attempts to send a message to the SQS queue. Raises an exception if the message is not successfully sent."""
+    message_body = {
         "message_id": message_id,
-        "vaccine_type": file_key_elements["vaccine_type"],
-        "supplier": file_key_elements["supplier"],
-        "timestamp": file_key_elements["timestamp"],
+        "vaccine_type": vaccine_type,
+        "supplier": supplier,
         "filename": file_key,
         "permission": permission,
         "created_at_formatted_string": created_at_formatted_string,
     }
 
-
-def make_and_send_sqs_message(
-    file_key: str, message_id: str, permission: str, created_at_formatted_string: str
-) -> bool:
-    """
-    Attempts to send a message to the SQS queue.
-    Returns a bool to indication if the message has been sent successfully.
-    """
-    message_body = make_message_body_for_sqs(
-        file_key=file_key,
-        message_id=message_id,
-        permission=permission,
-        created_at_formatted_string=created_at_formatted_string,
-    )
-    return send_to_supplier_queue(message_body)
+    send_to_supplier_queue(message_body)

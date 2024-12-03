@@ -1,12 +1,8 @@
 """Add the filename to the audit table and check for duplicates."""
 
 import os
-import logging
 from boto3.dynamodb.conditions import Key
-from clients import dynamodb_client, dynamodb_resource
-
-
-logger = logging.getLogger()
+from clients import dynamodb_client, dynamodb_resource, logger
 
 
 def add_to_audit_table(message_id: str, file_key: str, created_at_formatted_str: str) -> bool:
@@ -25,7 +21,7 @@ def add_to_audit_table(message_id: str, file_key: str, created_at_formatted_str:
 
         duplicate_exists = bool(file_name_response.get("Items"))
 
-        # Add to the audit table (regardless of where it is a duplicate)
+        # Add to the audit table (regardless of whether it is a duplicate)
         dynamodb_client.put_item(
             TableName=table_name,
             Item={
