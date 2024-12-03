@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from functools import wraps
 from log_firehose_splunk import FirehoseLogger
-from constants import extract_file_key_elements
+from constants import extract_file_key_elements, get_status_code_for_diagnostics
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -61,7 +61,6 @@ def ack_function_info(func):
                             log_data.update(diagnostics_result)
                             log_data["time_taken"] = f"{round(time.time() - start_time, 5)}s"
                             firehose_log["event"] = log_data
-                            print(f"DEBUGGING_LOGDATA: {log_data}")
                             try:
                                 logger.info(
                                     f"Function executed successfully: {json.dumps(log_data)}"
@@ -103,13 +102,3 @@ def process_diagnostics(diagnostics):
             "statusCode": get_status_code_for_diagnostics(diagnostics),
             "diagnostics": diagnostics,
         }
-
-
-def get_status_code_for_diagnostics(diagnostics):
-    if any(keyword in diagnostics.lower() for keyword in ["unexpected", "unhandled", "internal server"]):
-        return 500
-    elif diagnostics:
-        return 400
-    else:
-        return 400
-    # FINISH DIAGNOSTIC ERRORS

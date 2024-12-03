@@ -20,7 +20,6 @@ class FirehoseLogger:
 
     def ack_send_log(self, log_message):
         log_to_splunk = log_message
-        print(log_message)
         encoded_log_data = json.dumps(log_to_splunk).encode("utf-8")
         try:
             response = self.firehose_client.put_record(

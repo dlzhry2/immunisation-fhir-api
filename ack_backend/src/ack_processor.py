@@ -19,14 +19,11 @@ def lambda_handler(event, context):
     try:
         imms_id = None
         successful_api_response = True
-        print(f"event1_DEBUGGING: {event}")
         array_of_rows = []
         for record in event["Records"]:
             body_json = record["body"]
             incoming_message_body = json.loads(body_json)
-            print(f"INCOMING MESSAGE BODY_DEBUGGING {incoming_message_body}")
             for item in incoming_message_body:
-                print(f"DEBUGGING_ITEM: {item}")
                 # Check if there are any messages to process
                 file_key = item.get("file_key")
                 row_id = item.get("row_id")

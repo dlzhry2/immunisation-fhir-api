@@ -43,6 +43,14 @@ class Constants:
         "DPSFULL": "DPSFULL",
     }
 
+    error_code_mapping = {
+        500: ["application includes invalid authorization values", "unhandled", "server error"],
+        422: ["duplicate", "duplicated"],
+        403: ["unauthorized"],
+        404: ["not found", "does not exist"],
+        204: ["deleted", "No content"],
+    }
+
 
 def identify_supplier(ods_code: str) -> Union[str, None]:
     """
@@ -74,3 +82,16 @@ def extract_file_key_elements(file_key: str) -> dict:
     file_key_elements["supplier"] = identify_supplier(file_key_elements["ods_code"])
 
     return file_key_elements
+
+
+def get_status_code_for_diagnostics(diagnostics_message: str) -> int:
+    """Returns the status_code for diagnostics"""
+    diagnostics_message = diagnostics_message.lower()
+
+    default_error_code = 400
+
+    for error_code, keywords in Constants.error_code_mapping.items():
+        for keyword in keywords:
+            if keyword in diagnostics_message:
+                return error_code
+    return default_error_code
