@@ -40,6 +40,7 @@ def ack_function_info(func):
                             incoming_message_body = [incoming_message_body]
 
                         for item in incoming_message_body:
+                            # print(f"DEBUGGING_ITEMU: {item}")
                             file_key = item.get("file_key", "file_key_missing")
                             log_data["file_key"] = file_key
 
@@ -47,10 +48,10 @@ def ack_function_info(func):
                                 try:
                                     file_key_elements = extract_file_key_elements(file_key)
                                     log_data["vaccine_type"] = file_key_elements.get("vaccine_type", "unknown")
+                                    log_data["supplier"] = file_key_elements.get("supplier", "unknown")
                                 except Exception as e:
                                     logger.warning(f"Error parsing file key: {file_key}. Error: {e}")
 
-                            log_data["supplier"] = item.get("supplier", "unknown")
                             log_data["message_id"] = item.get("row_id", "unknown")
                             log_data["local_id"] = item.get("local_id", "unknown")
                             log_data["operation_requested"] = item.get("action_flag", "unknown")
@@ -58,23 +59,21 @@ def ack_function_info(func):
                             diagnostics = item.get("diagnostics")
                             diagnostics_result = process_diagnostics(diagnostics)
                             log_data.update(diagnostics_result)
+                            log_data["time_taken"] = f"{round(time.time() - start_time, 5)}s"
+                            firehose_log["event"] = log_data
+                            print(f"DEBUGGING_LOGDATA: {log_data}")
+                            try:
+                                logger.info(
+                                    f"Function executed successfully: {json.dumps(log_data)}"
+                                )  # for debugging -REMOVE THE DATA from logs
+                                firehose_logger.ack_send_log(firehose_log)
+                            except Exception:
+                                logger.warning("Issue with logging")
 
                     except Exception as record_error:
                         logger.error(f"Error processing record: {record}. Error: {record_error}")
 
             result = func(event, context, *args, **kwargs)
-            end_time = time.time()
-            log_data["time_taken"] = f"{round(end_time - start_time, 5)}s"
-
-            try:
-                logger.info(
-                    f"Function executed successfully: {json.dumps(log_data)}"
-                )  # for debugging -REMOVE THE DATA from logs
-                firehose_log["event"] = log_data
-                firehose_logger.ack_send_log(firehose_log)
-            except Exception:
-                logger.warning("Issue with logging")
-
             return result
 
         except Exception as e:

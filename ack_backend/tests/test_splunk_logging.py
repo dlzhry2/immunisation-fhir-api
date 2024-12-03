@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 import json
 from datetime import datetime
 from src.ack_processor import lambda_handler
-from update_ack_file import update_ack_file
+from update_ack_file import update_ack_file, obtain_current_ack_content, upload_ack_file
 from log_firehose_splunk import FirehoseLogger
 from log_structure_splunk import logger
 
@@ -92,13 +92,22 @@ class TestSplunkFunctionInfo(unittest.TestCase):
         json_str = log_entry[json_start:]
         return json.loads(json_str)
 
+    @patch("update_ack_file.upload_ack_file")
+    @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
     @patch("log_structure_splunk.firehose_logger")
     @patch("time.time")
     @patch("log_structure_splunk.datetime")
     def test_splunk_logging_successful_rows(
-        self, mock_datetime, mock_time, mock_firehose_logger, mock_create_ack_data, mock_update_ack_file
+        self,
+        mock_datetime,
+        mock_time,
+        mock_firehose_logger,
+        mock_update_ack_file,
+        mock_create_ack_data,
+        mock_obtain_current_ack_content,
+        mock_upload_ack_file,
     ):
 
         # mocking datetime and time_taken as fixed values
@@ -145,13 +154,22 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                 mock_firehose_logger.ack_send_log.assert_called_once_with({"event": log_json})
                 mock_firehose_logger.ack_send_log.reset_mock()
 
+    @patch("update_ack_file.upload_ack_file")
+    @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
     @patch("log_structure_splunk.firehose_logger")
     @patch("time.time")
     @patch("log_structure_splunk.datetime")
     def test_splunk_logging_multiple_rows(
-        self, mock_datetime, mock_time, mock_firehose_logger, mock_create_ack_data, mock_update_ack_file
+        self,
+        mock_datetime,
+        mock_time,
+        mock_firehose_logger,
+        mock_update_ack_file,
+        mock_create_ack_data,
+        mock_obtain_current_ack_content,
+        mock_upload_ack_file,
     ):
 
         # mocking datetime and time_taken as fixed values
@@ -176,7 +194,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                     for item in body_data:
                         item["action_flag"] = op["operation_request"]
                     record["body"] = json.dumps(body_data)
-
+                print(f"DEBUGGING_MESSAGEbody_MULTIPLE: {message_body}")
                 context = {}
 
                 result = lambda_handler(message_body, context)
@@ -198,13 +216,22 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                 mock_firehose_logger.ack_send_log.assert_called_once_with({"event": log_json})
                 mock_firehose_logger.ack_send_log.reset_mock()
 
+    @patch("update_ack_file.upload_ack_file")
+    @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
     @patch("log_structure_splunk.firehose_logger")
     @patch("time.time")
     @patch("log_structure_splunk.datetime")
     def test_splunk_logging_multiple_with_diagnostics(
-        self, mock_datetime, mock_time, mock_firehose_logger, mock_create_ack_data, mock_update_ack_file
+        self,
+        mock_datetime,
+        mock_time,
+        mock_firehose_logger,
+        mock_update_ack_file,
+        mock_create_ack_data,
+        mock_obtain_current_ack_content,
+        mock_upload_ack_file,
     ):
 
         # mocking datetime and time_taken as fixed values
@@ -232,17 +259,17 @@ class TestSplunkFunctionInfo(unittest.TestCase):
 
                 context = {}
 
-                # print(f"MESSAGEEETTT: {message_body}")
+                print(f"DEBUGGING_MESSAGEbody_diagnostics: {message_body}")
 
                 context = {}
 
                 result = lambda_handler(message_body, context)
                 self.assertIn("200", str(result["statusCode"]))
-                # print(f"RESLT: {result}")
+                print(f"DEBUGGING_RESLT_diagnostics: {result}")
                 self.assertGreater(len(log.output), 0)
 
                 log_json = self.extract_log_json(log.output[0])
-                # print(log_json)
+                print(log_json)
 
                 expected_values = self.expected_values.copy()
                 expected_values["operation_requested"] = op["operation_request"]

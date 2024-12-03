@@ -57,7 +57,7 @@ def lambda_handler(event, context):
         }
         firehose_log = dict()
         firehose_log["event"] = log_data
-        # firehose_logger.ack_send_log(firehose_log)
+        firehose_logger.ack_send_log(firehose_log)
 
     return {
         "statusCode": 200,
