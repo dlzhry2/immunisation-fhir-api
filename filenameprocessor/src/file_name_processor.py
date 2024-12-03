@@ -8,14 +8,14 @@ NOTE: The expected file format for incoming files from the data sources bucket i
 
 import logging
 from uuid import uuid4
-from initial_file_validation import initial_file_validation, get_supplier_permissions
+from initial_file_validation import initial_file_validation
 from send_sqs_message import make_and_send_sqs_message
 from make_and_upload_ack_file import make_and_upload_the_ack_file
 from audit_table import add_to_audit_table
 from clients import s3_client
 from elasticcache import upload_to_elasticache
 from log_structure import logging_decorator
-from utils_for_filenameprocessor import extract_file_key_elements
+from fetch_permissions import validate_vaccine_type_permissions
 
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
@@ -43,37 +43,22 @@ def handle_record(record) -> dict:
             response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
             created_at_formatted_string = response["LastModified"].strftime("%Y%m%dT%H%M%S00")
 
-            added_to_audit_table = add_to_audit_table(message_id, file_key, created_at_formatted_string)
+            add_to_audit_table(message_id, file_key, created_at_formatted_string)
 
-            validation_passed = initial_file_validation(file_key) if added_to_audit_table else False
-            message_delivered = False
-            if validation_passed:
-                # Try to send to sqs
-                file_key_elements = extract_file_key_elements(file_key)
-                vaccine_type = file_key_elements["vaccine_type"]
-                supplier = file_key_elements["supplier"]
-                permission = get_supplier_permissions(supplier=supplier)
-                message_delivered = make_and_send_sqs_message(
-                    file_key, message_id, permission, created_at_formatted_string
-                )
+            vaccine_type, supplier = initial_file_validation(file_key)
 
-            if message_delivered:
-                return {
-                    "statusCode": 200,
-                    "message": "Successfully sent to SQS queue",
-                    "file_key": file_key,
-                    "message_id": message_id,
-                    "supplier": supplier,
-                    "vaccine_type": vaccine_type,  # pylint: disable = possibly-used-before-assignment
-                }
-            else:
-                make_and_upload_the_ack_file(message_id, file_key, message_delivered, created_at_formatted_string)
-                return {
-                    "statusCode": 400,
-                    "message": "Infrastructure Level Response Value - Processing Error",
-                    "file_key": file_key,
-                    "message_id": message_id,
-                }
+            permission = validate_vaccine_type_permissions(supplier=supplier, vaccine_type=vaccine_type)
+
+            make_and_send_sqs_message(file_key, message_id, permission, created_at_formatted_string)
+
+            return {
+                "statusCode": 200,
+                "message": "Successfully sent to SQS queue",
+                "file_key": file_key,
+                "message_id": message_id,
+                "supplier": supplier,
+                "vaccine_type": vaccine_type,  # pylint: disable = possibly-used-before-assignment
+            }
 
         except Exception as error:  # pylint: disable=broad-except
             # If an unexpected error occured, upload an ack file

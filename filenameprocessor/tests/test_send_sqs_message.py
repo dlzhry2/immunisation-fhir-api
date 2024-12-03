@@ -28,7 +28,7 @@ class TestSendSQSMessage(TestCase):
         queue_url = mock_sqs_client.create_queue(QueueName=queue_name, Attributes=SQS_ATTRIBUTES)["QueueUrl"]
 
         # Call the send_to_supplier_queue function
-        self.assertTrue(send_to_supplier_queue(message_body))
+        self.assertIsNone(send_to_supplier_queue(message_body))
 
         # Assert that correct message has reached the queue
         messages = mock_sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1)
@@ -38,7 +38,9 @@ class TestSendSQSMessage(TestCase):
         """Test send_to_supplier_queue function for a failed message send due to queue not existing"""
         supplier = "PINNACLE"
         message_body = {"supplier": supplier}
-        self.assertFalse(send_to_supplier_queue(message_body))
+        with self.assertRaises(Exception) as context:
+            send_to_supplier_queue(message_body)
+        self.assertEqual(str(context.exception), "An unexpected error occurred whilst sending to SQS")
 
     def test_send_to_supplier_queue_failure_due_to_absent_supplier(self):
         """Test send_to_supplier_queue function for a failed message send"""
@@ -54,8 +56,11 @@ class TestSendSQSMessage(TestCase):
 
         # Call the send_to_supplier_queue function
         with patch("send_sqs_message.sqs_client", mock_sqs_client):
-            self.assertFalse(send_to_supplier_queue(message_body))
-            mock_sqs_client.send_message.assert_not_called()
+            with self.assertRaises(Exception) as context:
+                send_to_supplier_queue(message_body)
+
+        self.assertEqual(str(context.exception), "Message not sent to supplier queue as unable to identify supplier")
+        mock_sqs_client.send_message.assert_not_called()
 
     def test_make_message_body_for_sqs(self):
         """Test that make_message_body_for_sqs returns a correctly formatted message body"""
@@ -101,7 +106,7 @@ class TestSendSQSMessage(TestCase):
         queue_url = mock_sqs_client.create_queue(QueueName=queue_name, Attributes=SQS_ATTRIBUTES)["QueueUrl"]
 
         # Call the send_to_supplier_queue function
-        self.assertTrue(
+        self.assertIsNone(
             make_and_send_sqs_message(
                 file_key=file_key, message_id=message_id, permission=permission, created_at_formatted_string="test"
             )
@@ -117,11 +122,7 @@ class TestSendSQSMessage(TestCase):
         message_id = str(uuid4())
         permission = "FLU_FULL"
         created_at_formatted_string = "test"
-        self.assertFalse(
-            make_and_send_sqs_message(
-                file_key=file_key,
-                message_id=message_id,
-                permission=permission,
-                created_at_formatted_string=created_at_formatted_string,
-            )
-        )
+        with self.assertRaises(Exception) as context:
+            make_and_send_sqs_message(file_key, message_id, permission, created_at_formatted_string)
+
+        self.assertEqual(str(context.exception), "An unexpected error occurred whilst sending to SQS")

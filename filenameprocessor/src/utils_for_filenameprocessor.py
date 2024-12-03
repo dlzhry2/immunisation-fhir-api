@@ -1,10 +1,14 @@
 """Utils for filenameprocessor lambda"""
 
+import logging
 from csv import DictReader
+from re import match
 from typing import Union
 from io import StringIO
 from constants import Constants
 from clients import s3_client
+
+logger = logging.getLogger()
 
 
 def get_csv_content_dict_reader(bucket_name: str, file_key: str):
@@ -30,6 +34,10 @@ def extract_file_key_elements(file_key: str) -> dict:
     NOTE: This function works on the assumption that the file_key has already
     been validated as having four underscores and a single '.' which occurs after the four of the underscores.
     """
+    if not match(r"^[^_.]*_[^_.]*_[^_.]*_[^_.]*_[^_.]*\.[^_.]*$", file_key):
+        logger.error("Initial file validation failed: invalid file key format")
+        raise Exception("Initial file validation failed: invalid file key format")
+
     file_key = file_key.upper()
     file_key_parts_without_extension = file_key.split(".")[0].split("_")
     file_key_elements = {

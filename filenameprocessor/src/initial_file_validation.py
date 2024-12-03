@@ -1,10 +1,8 @@
 """Functions for initial file validation"""
 
 import logging
-from re import match
 from datetime import datetime
 from constants import Constants
-from fetch_permissions import get_permissions_config_json_from_cache
 from utils_for_filenameprocessor import extract_file_key_elements
 
 logger = logging.getLogger()
@@ -29,28 +27,12 @@ def is_valid_datetime(timestamp: str) -> bool:
     return True
 
 
-def get_supplier_permissions(supplier: str) -> list:
-    """
-    Returns the permissions for the given supplier. Returns an empty list if the permissions config json could not
-    be downloaded, or the supplier has no permissions.
-    """
-    return get_permissions_config_json_from_cache().get("all_permissions", {}).get(supplier, [])
-
-
-def validate_vaccine_type_permissions(supplier: str, vaccine_type: str) -> bool:
-    """Returns True if the given supplier has any permissions for the given vaccine type, else False"""
-    return any(vaccine_type in permission for permission in get_supplier_permissions(supplier))
-
-
 def initial_file_validation(file_key: str) -> bool:
     """
     Returns True if all elements of file key are valid, content headers are valid and the supplier has the
     appropriate permissions. Else returns False.
     """
     # Validate file name format (must contain four '_' a single '.' which occurs after the four '_'
-    if not match(r"^[^_.]*_[^_.]*_[^_.]*_[^_.]*_[^_.]*\.[^_.]*$", file_key):
-        logger.error("Initial file validation failed: invalid file key format")
-        return False
 
     # Extract elements from the file key
     file_key_elements = extract_file_key_elements(file_key)
@@ -67,11 +49,6 @@ def initial_file_validation(file_key: str) -> bool:
         and file_key_elements["extension"] == "CSV"
     ):
         logger.error("Initial file validation failed: invalid file key")
-        return False
+        raise Exception("Initial file validation failed: invalid file key")
 
-    # Validate has permissions for the vaccine type
-    if not validate_vaccine_type_permissions(supplier, vaccine_type):
-        logger.error("Initial file validation failed: %s does not have permissions for %s", supplier, vaccine_type)
-        return False
-
-    return True
+    return vaccine_type, supplier

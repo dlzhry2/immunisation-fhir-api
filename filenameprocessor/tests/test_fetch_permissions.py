@@ -1,0 +1,79 @@
+"""Tests for fetch_permissions functions"""
+
+import json
+from unittest import TestCase
+from unittest.mock import patch
+
+from fetch_permissions import validate_vaccine_type_permissions, get_supplier_permissions
+
+
+class TestFetchPermissions(TestCase):
+    """Tests for fetch_permissions functions"""
+
+    def test_get_permissions_for_all_suppliers(self):
+        """Test fetching permissions for all suppliers from Redis cache."""
+        # Define the expected permissions JSON for all suppliers
+        # Setup mock Redis response
+        permissions_json = {
+            "all_permissions": {
+                "TEST_SUPPLIER_1": ["COVID19_FULL", "FLU_FULL", "RSV_FULL"],
+                "TEST_SUPPLIER_2": ["FLU_CREATE", "FLU_DELETE", "RSV_CREATE"],
+                "TEST_SUPPLIER_3": ["COVID19_CREATE", "COVID19_DELETE", "FLU_FULL"],
+            }
+        }
+
+        # Test case tuples structured as (supplier, expected_result)
+        test_cases = [
+            ("TEST_SUPPLIER_1", ["COVID19_FULL", "FLU_FULL", "RSV_FULL"]),
+            ("TEST_SUPPLIER_2", ["FLU_CREATE", "FLU_DELETE", "RSV_CREATE"]),
+            ("TEST_SUPPLIER_3", ["COVID19_CREATE", "COVID19_DELETE", "FLU_FULL"]),
+        ]
+
+        # Run the subtests
+        for supplier, expected_result in test_cases:
+            with self.subTest(supplier=supplier):
+                with patch("fetch_permissions.redis_client.get", return_value=json.dumps(permissions_json)):
+                    actual_permissions = get_supplier_permissions(supplier)
+                    self.assertEqual(actual_permissions, expected_result)
+
+    def test_validate_vaccine_type_permissions(self):
+        """
+        Tests that validate_vaccine_type_permissions returns True if supplier has permissions
+        for the requested vaccine type and False otherwise
+        """
+        # Test case tuples are stuctured as (vaccine_type, vaccine_permissions)
+        test_cases = [
+            ("FLU", ["COVID19_CREATE", "FLU_FULL"]),  # Full permissions for flu
+            ("FLU", ["FLU_CREATE"]),  # Create permissions for flu
+            ("FLU", ["FLU_UPDATE"]),  # Update permissions for flu
+            ("FLU", ["FLU_DELETE"]),  # Delete permissions for flu
+            ("COVID19", ["COVID19_FULL", "FLU_FULL"]),  # Full permissions for COVID19
+            ("COVID19", ["COVID19_CREATE", "FLU_FULL"]),  # Create permissions for COVID19
+            ("RSV", ["FLU_CREATE", "RSV_FULL"]),  # Full permissions for rsv
+            ("RSV", ["RSV_CREATE"]),  # Create permissions for rsv
+            ("RSV", ["RSV_UPDATE"]),  # Update permissions for rsv
+            ("RSV", ["RSV_DELETE"]),  # Delete permissions for rsv
+        ]
+
+        for vaccine_type, vaccine_permissions in test_cases:
+            with self.subTest():
+                with patch("fetch_permissions.get_supplier_permissions", return_value=vaccine_permissions):
+                    self.assertEqual(
+                        validate_vaccine_type_permissions("TEST_SUPPLIER", vaccine_type), vaccine_permissions
+                    )
+
+        test_cases = [
+            ("FLU", ["COVID19_FULL"]),  # No permissions for flu
+            ("COVID19", ["FLU_CREATE"]),  # No permissions for COVID19
+            ("RSV", ["COVID19_FULL"]),  # No permissions for rsv
+        ]
+
+        for vaccine_type, vaccine_permissions in test_cases:
+            with self.subTest():
+                with patch("fetch_permissions.get_supplier_permissions", return_value=vaccine_permissions):
+                    with self.assertRaises(Exception) as context:
+                        validate_vaccine_type_permissions("TEST_SUPPLIER", vaccine_type)
+                self.assertEqual(
+                    str(context.exception),
+                    f"Initial file validation failed: TEST_SUPPLIER does not have permissions for {vaccine_type}",
+                )
