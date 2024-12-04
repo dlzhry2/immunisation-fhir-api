@@ -10,6 +10,7 @@ from models.errors import (
     UnhandledResponseError,
     IdentifierDuplicationError,
     ResourceNotFoundError,
+    ResourceFoundError
 )
 
 
@@ -103,7 +104,8 @@ class ImmunizationBatchRepository:
                     "Operation": "CREATE",
                     "Version": attr.version,
                     "SupplierSystem": attr.supplier,
-                }
+                },
+                ConditionExpression=Attr("PK").ne(attr.pk)
             )
 
             if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
@@ -114,6 +116,10 @@ class ImmunizationBatchRepository:
                 )
 
         except botocore.exceptions.ClientError as error:
+            if error.response["Error"]["Code"] == "ConditionalCheckFailedException":
+                raise ResourceFoundError(
+                    resource_type="Immunization", resource_id=attr.pk
+                )
             raise UnhandledResponseError(
                 message=f"Unhandled error from dynamodb: {error.response['Error']['Code']}",
                 response=error.response,
