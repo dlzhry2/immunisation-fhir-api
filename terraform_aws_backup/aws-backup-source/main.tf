@@ -50,7 +50,7 @@ module "source" {
   backup_copy_vault_account_id = local.destination_account_id
   backup_copy_vault_arn        = data.aws_arn.destination_vault_arn.arn
   environment_name      = terraform.workspace
-  project_name          = "imms-fhir-api"
+  project_name          = "imms-fhir-api-"
   terraform_role_arn    = "arn:aws:iam::${local.source_account_id}:role/${local.assume_role}"
   source_account_id     = data.aws_caller_identity.current.account_id
   
