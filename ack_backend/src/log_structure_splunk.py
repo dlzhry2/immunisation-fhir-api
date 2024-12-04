@@ -19,7 +19,7 @@ def ack_function_info(func):
     @wraps(func)
     def wrapper(event, context, *args, **kwargs):
         log_data = {
-            "function_name": func.__name__,
+            "function_name": f"ack_processor_{func.__name__}",
             "date_time": str(datetime.now()),
             "time_taken": None,
             "status": None,
@@ -40,7 +40,6 @@ def ack_function_info(func):
                             incoming_message_body = [incoming_message_body]
 
                         for item in incoming_message_body:
-                            # print(f"DEBUGGING_ITEMU: {item}")
                             file_key = item.get("file_key", "file_key_missing")
                             log_data["file_key"] = file_key
 
@@ -53,18 +52,17 @@ def ack_function_info(func):
                                     logger.warning(f"Error parsing file key: {file_key}. Error: {e}")
 
                             log_data["message_id"] = item.get("row_id", "unknown")
+                            message_id = log_data["message_id"]
                             log_data["local_id"] = item.get("local_id", "unknown")
                             log_data["operation_requested"] = item.get("action_flag", "unknown")
 
                             diagnostics = item.get("diagnostics")
-                            diagnostics_result = process_diagnostics(diagnostics)
+                            diagnostics_result = process_diagnostics(diagnostics, file_key, message_id)
                             log_data.update(diagnostics_result)
                             log_data["time_taken"] = f"{round(time.time() - start_time, 5)}s"
                             firehose_log["event"] = log_data
                             try:
-                                logger.info(
-                                    f"Function executed successfully: {json.dumps(log_data)}"
-                                )  # for debugging -REMOVE THE DATA from logs
+                                logger.info(f"Function executed successfully: {json.dumps(log_data)}")
                                 firehose_logger.ack_send_log(firehose_log)
                             except Exception:
                                 logger.warning("Issue with logging")
@@ -80,25 +78,28 @@ def ack_function_info(func):
             log_data["time_taken"] = f"{round(end_time - start_time, 5)}s"
             log_data["status"] = "fail"
             log_data["statusCode"] = 500
-            log_data["diagnostics"] = f"Error in {func.__name__}: {str(e)}"
+            log_data["diagnostics"] = f"Error in ack_processor_{func.__name__}: {str(e)}"
             try:
-                logger.exception(f"Critical error in function: {json.dumps(log_data)}")
+                logger.exception(f"Critical error in function: logging for {func.__name__}")
                 firehose_log["event"] = log_data
                 firehose_logger.ack_send_log(firehose_log)
             except Exception:
-                logger.warning("Issue with logging")
+                logger.warning("Issue with logging ")
 
             raise
 
     return wrapper
 
 
-def process_diagnostics(diagnostics):
-    if diagnostics is None:
-        return {"status": "success", "statusCode": 200, "diagnostics": "Operation completed successfully"}
-    else:
+def process_diagnostics(diagnostics, file_key, message_id):
+    """selects the status code and diagnostics for incoming messages"""
+    if diagnostics is not None:
         return {
             "status": "fail",
             "statusCode": get_status_code_for_diagnostics(diagnostics),
             "diagnostics": diagnostics,
         }
+    if diagnostics is None and file_key != "file_key_missing" and message_id != "unknown":
+        return {"status": "success", "statusCode": 200, "diagnostics": "Operation completed successfully"}
+
+    return {"status": "fail", "statusCode": 500, "diagnostics": "An unhandled error happened during batch processing"}

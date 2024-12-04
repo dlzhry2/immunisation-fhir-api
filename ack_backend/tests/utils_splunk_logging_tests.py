@@ -23,7 +23,7 @@ class ValidLogging:
         "created_at_formatted_string": "1223-12-232",
     }
     EMIS_expected_log_value = {
-        "function_name": "lambda_handler",
+        "function_name": "ack_processor_lambda_handler",
         "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
         "status": "success",
         "supplier": "EMIS",
@@ -38,7 +38,7 @@ class ValidLogging:
     }
 
     DPSFULL_expected_log_value = {
-        "function_name": "lambda_handler",
+        "function_name": "ack_processor_lambda_handler",
         "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
         "status": "success",
         "supplier": "DPSFULL",
@@ -50,4 +50,19 @@ class ValidLogging:
         "local_id": "local_123",
         "statusCode": 200,
         "diagnostics": "Operation completed successfully",
+    }
+
+    Logging_with_no_values = {
+        "function_name": "ack_processor_lambda_handler",
+        "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "fail",
+        "supplier": "unknown",
+        "file_key": "file_key_missing",
+        "vaccine_type": "unknown",
+        "message_id": "unknown",
+        "operation_requested": "unknown",
+        "time_taken": "1.0s",
+        "local_id": "unknown",
+        "statusCode": 500,
+        "diagnostics": "An unhandled error happened during batch processing",
     }

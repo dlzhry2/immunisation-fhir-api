@@ -97,6 +97,49 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     @patch("log_structure_splunk.firehose_logger")
     @patch("time.time")
     @patch("log_structure_splunk.datetime")
+    def test_splunk_logging_missing_data(
+        self,
+        mock_datetime,
+        mock_time,
+        mock_firehose_logger,
+        mock_update_ack_file,
+        mock_create_ack_data,
+        mock_obtain_current_ack_content,
+        mock_upload_ack_file,
+    ):
+        """Tests missing key values in the body of the event"""
+        mock_datetime.now.return_value = ValidLogging.fixed_datetime
+        mock_time.side_effect = [100000.0 + i for i in range(0, 9, 1)]
+
+        mock_create_ack_data.return_value = None
+        mock_update_ack_file.return_value = {}
+
+        with self.assertLogs(level="INFO") as log:
+            message_body = {"Records": [{"body": json.dumps([{"": "456"}])}]}
+
+            context = {}
+
+            result = lambda_handler(message_body, context)
+            self.assertIn("200", str(result["statusCode"]))
+            self.assertGreater(len(log.output), 0)
+
+            log_json = self.extract_log_json(log.output[0])
+            expected_values = copy.deepcopy(ValidLogging.Logging_with_no_values)
+            expected_values["time_taken"] = "1.0s"
+
+            for key, expected in expected_values.items():
+                self.assertEqual(log_json.get(key, "unknown"), expected)
+
+            mock_firehose_logger.ack_send_log.assert_called_once_with({"event": log_json})
+            mock_firehose_logger.ack_send_log.reset_mock()
+
+    @patch("update_ack_file.upload_ack_file")
+    @patch("update_ack_file.obtain_current_ack_content")
+    @patch("ack_processor.create_ack_data")
+    @patch("ack_processor.update_ack_file")
+    @patch("log_structure_splunk.firehose_logger")
+    @patch("time.time")
+    @patch("log_structure_splunk.datetime")
     def test_splunk_logging_statuscode_diagnostics(
         self,
         mock_datetime,
