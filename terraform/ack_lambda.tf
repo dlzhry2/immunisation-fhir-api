@@ -124,7 +124,15 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
                   "sqs:DeleteMessage", 
                   "sqs:GetQueueAttributes" 
                   ], 
-        Resource = "arn:aws:sqs:eu-west-2:${local.local_account_id}:${local.short_prefix}-ack-metadata-queue.fifo" }
+        Resource = "arn:aws:sqs:eu-west-2:${local.local_account_id}:${local.short_prefix}-ack-metadata-queue.fifo" },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "firehose:PutRecord",
+          "firehose:PutRecordBatch"
+        ],
+        "Resource": "arn:aws:firehose:*:*:deliverystream/${module.splunk.firehose_stream_name}"
+      }
     ]
   })
 }
@@ -176,6 +184,7 @@ resource "aws_lambda_function" "ack_processor_lambda" {
   environment {
     variables = {
       ACK_BUCKET_NAME     = "${local.batch_prefix}-data-destinations"
+      SPLUNK_FIREHOSE_NAME   = module.splunk.firehose_stream_name
     }
   }
 

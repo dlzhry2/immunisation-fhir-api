@@ -9,15 +9,14 @@ from fhir_batch_repository import create_table
 from fhir_batch_controller import ImmunizationBatchController, make_batch_controller
 from clients import sqs_client
 
+
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
 
 QUEUE_URL = os.getenv("SQS_QUEUE_URL")
 
 
-def forward_request_to_dynamo(
-    message_body: any, table: any, batchcontroller: ImmunizationBatchController
-):
+def forward_request_to_dynamo(message_body: any, table: any, batchcontroller: ImmunizationBatchController):
     """Forwards the request to the Imms API (where possible) and updates the ack file with the outcome"""
     row_id = message_body.get("row_id")
     logger.info("FORWARDED MESSAGE: ID %s", row_id)
@@ -47,9 +46,7 @@ def forward_lambda_handler(event, _):
                     array_of_identifiers.append(identifier)
                 
             file_key = message_body.get("file_key")
-            created_at_formatted_string = message_body.get(
-                "created_at_formatted_string"
-            )
+            created_at_formatted_string = message_body.get("created_at_formatted_string")
             message_group_id = f"{file_key}_{created_at_formatted_string}"
             response = {}
             response["imms_id"] = forward_request_to_dynamo(
@@ -59,16 +56,16 @@ def forward_lambda_handler(event, _):
             response["row_id"] = message_body.get("row_id")
             response["created_at_formatted_string"] = created_at_formatted_string
             response["local_id"] = message_body.get("local_id")
-            array_of_messages.append(response)            
+            response["action_flag"] = message_body.get("operation_requested")
+            array_of_messages.append(response)
         except Exception as error:
             error_message_body = {
                 "diagnostics": str(error),
                 "file_key": message_body.get("file_key"),
                 "row_id": message_body.get("row_id"),
-                "created_at_formatted_string": message_body.get(
-                    "created_at_formatted_string"
-                ),
+                "created_at_formatted_string": message_body.get("created_at_formatted_string"),
                 "local_id": message_body.get("local_id"),
+                "action_flag": message_body.get("operation_requested"),
             }
             array_of_messages.append(error_message_body)
             logger.error("Error processing message: %s", error)
