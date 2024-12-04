@@ -51,7 +51,7 @@ class TestLoggingDecorator(unittest.TestCase):
             patch("file_name_processor.uuid4", return_value="test_id"),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue"),  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),  # noqa: E999
+            patch("supplier_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
             patch("logging_decorator.logger") as mock_logger,  # noqa: E999
         ):  # noqa: E999
@@ -86,7 +86,7 @@ class TestLoggingDecorator(unittest.TestCase):
         with (  # noqa: E999
             patch("file_name_processor.uuid4", return_value="test_id"),  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("fetch_permissions.redis_client.get", return_value=json.dumps(permissions_json)),  # noqa: E999
+            patch("supplier_permissions.redis_client.get", return_value=json.dumps(permissions_json)),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
             patch("logging_decorator.logger") as mock_logger,  # noqa: E999

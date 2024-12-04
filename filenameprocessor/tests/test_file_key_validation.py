@@ -6,12 +6,13 @@ from boto3 import client as boto3_client
 from moto import mock_s3
 
 from file_key_validation import is_valid_datetime, file_key_validation
+from errors import InvalidFileKeyError
 from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT
 
 
 @mock_s3
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
-class TestInitialFileValidation(TestCase):
+class TestFileKeyValidation(TestCase):
     """Tests for file_key_validation functions"""
 
     def test_is_valid_datetime(self):
@@ -103,6 +104,6 @@ class TestInitialFileValidation(TestCase):
         for file_key, expected_result in test_cases_for_failure_scenarios:
             with self.subTest(f"SubTest for file key: {file_key}"):
                 s3_client.put_object(Bucket=bucket_name, Key=file_key, Body=test_file_content)
-                with self.assertRaises(Exception) as context:
+                with self.assertRaises(InvalidFileKeyError) as context:
                     file_key_validation(file_key)
                 self.assertEqual(str(context.exception), expected_result)

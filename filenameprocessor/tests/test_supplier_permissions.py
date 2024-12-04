@@ -1,14 +1,15 @@
-"""Tests for fetch_permissions functions"""
+"""Tests for supplier_permissions functions"""
 
 import json
 from unittest import TestCase
 from unittest.mock import patch
 
-from fetch_permissions import validate_vaccine_type_permissions, get_supplier_permissions
+from supplier_permissions import validate_vaccine_type_permissions, get_supplier_permissions
+from errors import VaccineTypePermissionsError
 
 
-class TestFetchPermissions(TestCase):
-    """Tests for fetch_permissions functions"""
+class TestSupplierPermissions(TestCase):
+    """Tests for validate_vaccine_type_permissions function and its helper functions"""
 
     def test_get_permissions_for_all_suppliers(self):
         """Test fetching permissions for all suppliers from Redis cache."""
@@ -32,7 +33,7 @@ class TestFetchPermissions(TestCase):
         # Run the subtests
         for supplier, expected_result in test_cases:
             with self.subTest(supplier=supplier):
-                with patch("fetch_permissions.redis_client.get", return_value=json.dumps(permissions_json)):
+                with patch("supplier_permissions.redis_client.get", return_value=json.dumps(permissions_json)):
                     actual_permissions = get_supplier_permissions(supplier)
                     self.assertEqual(actual_permissions, expected_result)
 
@@ -57,7 +58,7 @@ class TestFetchPermissions(TestCase):
 
         for vaccine_type, vaccine_permissions in test_cases:
             with self.subTest():
-                with patch("fetch_permissions.get_supplier_permissions", return_value=vaccine_permissions):
+                with patch("supplier_permissions.get_supplier_permissions", return_value=vaccine_permissions):
                     self.assertEqual(
                         validate_vaccine_type_permissions("TEST_SUPPLIER", vaccine_type), vaccine_permissions
                     )
@@ -70,8 +71,8 @@ class TestFetchPermissions(TestCase):
 
         for vaccine_type, vaccine_permissions in test_cases:
             with self.subTest():
-                with patch("fetch_permissions.get_supplier_permissions", return_value=vaccine_permissions):
-                    with self.assertRaises(Exception) as context:
+                with patch("supplier_permissions.get_supplier_permissions", return_value=vaccine_permissions):
+                    with self.assertRaises(VaccineTypePermissionsError) as context:
                         validate_vaccine_type_permissions("TEST_SUPPLIER", vaccine_type)
                 self.assertEqual(
                     str(context.exception),

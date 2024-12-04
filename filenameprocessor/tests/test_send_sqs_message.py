@@ -7,6 +7,7 @@ from uuid import uuid4
 from moto import mock_sqs
 from boto3 import client as boto3_client
 from send_sqs_message import send_to_supplier_queue, make_and_send_sqs_message
+from errors import UnhandledSqsError, InvalidSupplierError
 from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, SQS_ATTRIBUTES
 
 
@@ -37,7 +38,7 @@ class TestSendSQSMessage(TestCase):
         """Test send_to_supplier_queue function for a failed message send due to queue not existing"""
         supplier = "PINNACLE"
         message_body = {"supplier": supplier}
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(UnhandledSqsError) as context:
             send_to_supplier_queue(message_body)
         self.assertIn("An unexpected error occurred whilst sending to SQS", str(context.exception))
 
@@ -55,7 +56,7 @@ class TestSendSQSMessage(TestCase):
 
         # Call the send_to_supplier_queue function
         with patch("send_sqs_message.sqs_client", mock_sqs_client):
-            with self.assertRaises(Exception) as context:
+            with self.assertRaises(InvalidSupplierError) as context:
                 send_to_supplier_queue(message_body)
 
         self.assertEqual(str(context.exception), "Message not sent to supplier queue as unable to identify supplier")
@@ -109,7 +110,7 @@ class TestSendSQSMessage(TestCase):
         message_id = str(uuid4())
         permission = "FLU_FULL"
         created_at_formatted_string = "test"
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(UnhandledSqsError) as context:
             make_and_send_sqs_message(
                 file_key, message_id, permission, vaccine_type, supplier, created_at_formatted_string
             )

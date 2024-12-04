@@ -1,5 +1,5 @@
-"""Initialise clients. Note that all clients for the filenameprocessor lambda should be initialised ONCE ONLY in this
-file and then imported into the files where they are needed."""
+"""Initialise clients, resources and logger. Note that all clients, resources and logger for the filenameprocessor
+lambda should be initialised ONCE ONLY (in this file) and then imported into the files where they are needed."""
 
 import os
 import logging

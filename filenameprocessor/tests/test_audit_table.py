@@ -6,6 +6,7 @@ from boto3 import resource as boto3_resource
 from moto import mock_dynamodb
 
 from audit_table import add_to_audit_table
+from errors import DuplicateFileError, UnhandledAuditTableError
 from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT
 
 
@@ -107,7 +108,7 @@ class TestAuditTable(TestCase):
         assert expected_table_item_2 in table_items
 
         # Attempt to add the file 1 again - should return FALSE due to the file already being in the table
-        with self.assertRaises(Exception):
+        with self.assertRaises(DuplicateFileError):
             add_to_audit_table(message_id_3, file_key_1, created_at_formatted_string_3)
 
         # Check that the file has been added to the audit table again,
@@ -119,7 +120,7 @@ class TestAuditTable(TestCase):
         assert expected_table_item_3 in table_items
 
         # Attempt to add a file that is already in the table with the same message_id
-        with self.assertRaises(Exception):
+        with self.assertRaises(UnhandledAuditTableError):
             add_to_audit_table(message_id_3, file_key_4, created_at_formatted_string_4)
 
         # Check that the file has not been added to the audit table

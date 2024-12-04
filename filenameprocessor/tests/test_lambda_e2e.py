@@ -122,7 +122,7 @@ class TestLambdaHandler(TestCase):
         with (
             patch("file_name_processor.add_to_audit_table", return_value=True),
             patch("logging_decorator.send_log_to_firehose"),
-            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
+            patch("supplier_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),
         ):
             lambda_handler(self.make_event(), None)
 
@@ -200,7 +200,7 @@ class TestLambdaHandler(TestCase):
         )
 
         with (  # noqa: E999
-            patch("fetch_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("supplier_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
@@ -219,7 +219,7 @@ class TestLambdaHandler(TestCase):
         ack_file_key = f"ack/Flu_Vaccination_v5_YGM41_20240708T12130100_InfAck_{created_at_formatted_string}.csv"
 
         with (  # noqa: E999
-            patch("fetch_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("supplier_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
@@ -239,7 +239,7 @@ class TestLambdaHandler(TestCase):
 
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
         with (  # noqa: E999
-            patch("fetch_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("supplier_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
@@ -261,7 +261,7 @@ class TestLambdaHandler(TestCase):
 
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
         with (  # noqa: E999
-            patch("fetch_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("supplier_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
@@ -281,7 +281,7 @@ class TestLambdaHandler(TestCase):
 
         # Mock the get_supplier_permissions with full FLU permissions. Mock send_to_supplier_queue function.
         with (  # noqa: E999
-            patch("fetch_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
+            patch("supplier_permissions.get_supplier_permissions", return_value=["FLU_FULL"]),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
@@ -300,12 +300,12 @@ class TestLambdaHandler(TestCase):
         # Mock the get_supplier_permissions (with return value which includes the requested Flu permissions)
         # and send_to_supplier_queue functions
         with (  # noqa: E999
-            patch("fetch_permissions.get_supplier_permissions", return_value=permissions_list),  # noqa: E999
+            patch("supplier_permissions.get_supplier_permissions", return_value=permissions_list),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
             patch(  # noqa: E999
-                "fetch_permissions.get_permissions_config_json_from_cache",  # noqa: E999
+                "supplier_permissions.get_permissions_config_json_from_cache",  # noqa: E999
                 return_value=config_content,  # noqa: E999
             ),  # noqa: E999
         ):  # noqa: E999
@@ -320,7 +320,7 @@ class TestLambdaHandler(TestCase):
         # Mock the get_supplier_permissions (with return value which doesn't include the requested Flu permissions)
         # and send_to_supplier_queue functions
         with (  # noqa: E999
-            patch("fetch_permissions.get_supplier_permissions", return_value=["RSV_DELETE"]),  # noqa: E999
+            patch("supplier_permissions.get_supplier_permissions", return_value=["RSV_DELETE"]),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
@@ -346,7 +346,7 @@ class TestLambdaHandler(TestCase):
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
-            patch("fetch_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),  # noqa: E999
+            patch("supplier_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(self.make_event(VALID_RSV_EMIS_FILE_KEY), None)
 

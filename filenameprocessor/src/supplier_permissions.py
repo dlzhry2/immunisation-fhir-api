@@ -2,6 +2,7 @@
 
 import json
 from clients import redis_client, logger
+from errors import VaccineTypePermissionsError
 
 PERMISSIONS_CONFIG_FILE_KEY = "permissions_config.json"
 
@@ -31,6 +32,6 @@ def validate_vaccine_type_permissions(supplier: str, vaccine_type: str) -> bool:
     if not any(vaccine_type in permission for permission in supplier_permissions):
         error_message = f"Initial file validation failed: {supplier} does not have permissions for {vaccine_type}"
         logger.error(error_message)
-        raise Exception(error_message)
+        raise VaccineTypePermissionsError(error_message)
 
     return supplier_permissions

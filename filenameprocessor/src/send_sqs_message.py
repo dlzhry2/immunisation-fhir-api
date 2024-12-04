@@ -3,6 +3,7 @@
 import os
 from json import dumps as json_dumps
 from clients import sqs_client, logger
+from errors import InvalidSupplierError, UnhandledSqsError
 
 
 def send_to_supplier_queue(message_body: dict) -> bool:
@@ -11,7 +12,7 @@ def send_to_supplier_queue(message_body: dict) -> bool:
     if not (supplier := message_body["supplier"]):
         error_message = "Message not sent to supplier queue as unable to identify supplier"
         logger.error(error_message)
-        raise Exception(error_message)
+        raise InvalidSupplierError(error_message)
 
     try:
         queue_url = os.getenv("QUEUE_URL")
@@ -20,7 +21,7 @@ def send_to_supplier_queue(message_body: dict) -> bool:
     except Exception as error:  # pylint: disable=broad-exception-caught
         error_message = f"An unexpected error occurred whilst sending to SQS: {error}"
         logger.error(error_message)
-        raise Exception(error_message) from error
+        raise UnhandledSqsError(error_message) from error
 
 
 def make_and_send_sqs_message(

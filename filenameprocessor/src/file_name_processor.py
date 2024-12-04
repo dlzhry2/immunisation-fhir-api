@@ -14,7 +14,15 @@ from audit_table import add_to_audit_table
 from clients import s3_client, logger
 from elasticcache import upload_to_elasticache
 from logging_decorator import logging_decorator
-from fetch_permissions import validate_vaccine_type_permissions
+from supplier_permissions import validate_vaccine_type_permissions
+from errors import (
+    VaccineTypePermissionsError,
+    InvalidFileKeyError,
+    InvalidSupplierError,
+    UnhandledAuditTableError,
+    DuplicateFileError,
+    UnhandledSqsError,
+)
 
 
 # NOTE: logging_decorator is applied to handle_record function, rather than lambda_handler, because
@@ -56,7 +64,15 @@ def handle_record(record) -> dict:
                 "vaccine_type": vaccine_type,  # pylint: disable = possibly-used-before-assignment
             }
 
-        except Exception as error:  # pylint: disable=broad-except
+        except (  # pylint: disable=broad-exception-caught
+            VaccineTypePermissionsError,
+            InvalidFileKeyError,
+            InvalidSupplierError,
+            UnhandledAuditTableError,
+            DuplicateFileError,
+            UnhandledSqsError,
+            Exception,
+        ) as error:
             logger.error("Error processing file'%s': %s", file_key, str(error))
 
             # Create ack file

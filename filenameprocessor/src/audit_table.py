@@ -3,11 +3,12 @@
 import os
 from boto3.dynamodb.conditions import Key
 from clients import dynamodb_client, dynamodb_resource, logger
+from errors import DuplicateFileError, UnhandledAuditTableError
 
 
 def add_to_audit_table(message_id: str, file_key: str, created_at_formatted_str: str) -> bool:
     """
-    Add the filename to the audit table.
+    Adds the filename to the audit table.
     Raises an error if the file is a duplicate (after adding it to the audit table).
     """
     try:
@@ -34,12 +35,12 @@ def add_to_audit_table(message_id: str, file_key: str, created_at_formatted_str:
         )
         logger.info("%s file, with message id %s, successfully added to audit table", file_key, message_id)
 
-        # If a duplicte exists, raise an exception
-        if duplicate_exists:
-            logger.error("%s file duplicate added to s3 at the following time: %s", file_key, created_at_formatted_str)
-            raise Exception(f"Duplicate file: {file_key}")
-
     except Exception as error:  # pylint: disable = broad-exception-caught
         error_message = f"Error adding {file_key} to the audit table"
         logger.error(error_message)
-        raise Exception(error_message) from error
+        raise UnhandledAuditTableError(error_message) from error
+
+    # If a duplicte exists, raise an exception
+    if duplicate_exists:
+        logger.error("%s file duplicate added to s3 at the following time: %s", file_key, created_at_formatted_str)
+        raise DuplicateFileError(f"Duplicate file: {file_key}")
