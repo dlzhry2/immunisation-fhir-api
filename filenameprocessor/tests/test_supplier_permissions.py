@@ -60,7 +60,7 @@ class TestSupplierPermissions(TestCase):
             with self.subTest():
                 with patch("supplier_permissions.get_supplier_permissions", return_value=vaccine_permissions):
                     self.assertEqual(
-                        validate_vaccine_type_permissions("TEST_SUPPLIER", vaccine_type), vaccine_permissions
+                        validate_vaccine_type_permissions(vaccine_type, "TEST_SUPPLIER"), vaccine_permissions
                     )
 
         test_cases = [
@@ -73,7 +73,7 @@ class TestSupplierPermissions(TestCase):
             with self.subTest():
                 with patch("supplier_permissions.get_supplier_permissions", return_value=vaccine_permissions):
                     with self.assertRaises(VaccineTypePermissionsError) as context:
-                        validate_vaccine_type_permissions("TEST_SUPPLIER", vaccine_type)
+                        validate_vaccine_type_permissions(vaccine_type, "TEST_SUPPLIER")
                 self.assertEqual(
                     str(context.exception),
                     f"Initial file validation failed: TEST_SUPPLIER does not have permissions for {vaccine_type}",
