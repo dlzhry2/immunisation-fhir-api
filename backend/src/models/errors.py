@@ -77,6 +77,25 @@ class ResourceNotFoundError(RuntimeError):
             code=Code.not_found,
             diagnostics=self.__str__(),
         )
+        
+        
+@dataclass
+class ResourceFoundError(RuntimeError):
+    """Return this error when the requested FHIR resource does exist"""
+
+    resource_type: str
+    resource_id: str
+
+    def __str__(self):
+        return f"{self.resource_type} resource does exist. ID: {self.resource_id}"
+
+    def to_operation_outcome(self) -> dict:
+        return create_operation_outcome(
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.not_found,
+            diagnostics=self.__str__(),
+        )
 
 
 @dataclass

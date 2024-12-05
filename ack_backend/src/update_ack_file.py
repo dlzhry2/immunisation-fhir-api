@@ -68,12 +68,13 @@ def obtain_current_ack_content(ack_bucket_name: str, ack_file_key: str) -> Strin
 
 
 def upload_ack_file(
-    ack_bucket_name: str, ack_file_key: str, accumulated_csv_content: StringIO, ack_data_row: dict
+    ack_bucket_name: str, ack_file_key: str, accumulated_csv_content: StringIO, ack_data_row: any
 ) -> None:
     """Adds the data row to the uploaded ack file"""
-    data_row_str = [str(item) for item in ack_data_row.values()]
-    cleaned_row = "|".join(data_row_str).replace(" |", "|").replace("| ", "|").strip()
-    accumulated_csv_content.write(cleaned_row + "\n")
+    for row in ack_data_row:
+        data_row_str = [str(item) for item in row.values()]
+        cleaned_row = "|".join(data_row_str).replace(" |", "|").replace("| ", "|").strip()
+        accumulated_csv_content.write(cleaned_row + "\n")
     csv_file_like_object = BytesIO(accumulated_csv_content.getvalue().encode("utf-8"))
     s3_client.upload_fileobj(csv_file_like_object, ack_bucket_name, ack_file_key)
     logger.info("Ack file updated to %s: %s", ack_bucket_name, ack_file_key)
@@ -81,18 +82,14 @@ def upload_ack_file(
 
 def update_ack_file(
     file_key: str,
-    local_id: str,
-    row_id: str,
-    successful_api_response: bool,
-    diagnostics: Union[None, str],
-    imms_id: Union[None, str],
     created_at_formatted_string: str,
+    ack_data_rows: any
 ) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
     ack_file_key = f"forwardedFile/{file_key.replace('.csv', f'_BusAck_{created_at_formatted_string}.csv')}"
     ack_bucket_name = os.getenv("ACK_BUCKET_NAME")
-    ack_data_row = create_ack_data(
-        created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
-    )
+    # ack_data_row = create_ack_data(
+    #     created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
+    # )
     accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_key)
-    upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_row)
+    upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_rows)

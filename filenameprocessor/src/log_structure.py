@@ -17,7 +17,7 @@ def function_info(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         log_data = {
-            "function_name": func.__name__,
+            "function_name": f"filename_processor_{func.__name__}",
             "date_time": str(datetime.now()),
             "status": "success",
             "supplier": "supplier",
