@@ -67,15 +67,19 @@ def check_for_unknown_elements(resource, resource_type) -> Union[None, list]:
             errors.append(f"{key} is not an allowed element of the {resource_type} resource for this service")
     return errors
 
+
 def is_valid_simple_snomed(simple_snomed: str) -> bool:
     "check the snomed code valid or not."
     min_snomed_length = 6
     max_snomed_length = 18
-    return (simple_snomed is not None
-    and simple_snomed.isdigit()
-    and min_snomed_length <= len(simple_snomed) <= max_snomed_length
-    and validate(simple_snomed)
-    and (simple_snomed[-3:-1] in ("00", "10")))
+    return (
+        simple_snomed is not None
+        and simple_snomed.isdigit()
+        and min_snomed_length <= len(simple_snomed) <= max_snomed_length
+        and validate(simple_snomed)
+        and (simple_snomed[-3:-1] in ("00", "10"))
+    )
+
 
 def nhs_number_mod11_check(nhs_number: str) -> bool:
     """
@@ -325,3 +329,19 @@ def practitioner_name_family_field_location(imms: dict):
 def get_occurrence_datetime_for_name(immunization: dict) -> Optional[datetime.datetime]:
     """Returns occurencedatetime for use in get_current_name_instance"""
     return immunization.get("occurrenceDateTime", None)
+
+
+def extract_file_key_elements(file_key: str) -> dict:
+    """
+    Returns a dictionary containing each of the elements which can be extracted from the file key.
+    All elements are converted to upper case.\n
+    This function works on the assumption that the file_key has already
+    been validated as having four underscores and a single '.' which occurs after the four of the underscores.
+    """
+    file_key = file_key.upper()
+    file_key_parts_without_extension = file_key.split(".")[0].split("_")
+    file_key_element = {
+        "vaccine_type": file_key_parts_without_extension[0],
+    }
+
+    return file_key_element
