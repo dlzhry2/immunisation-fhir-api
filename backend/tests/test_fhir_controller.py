@@ -1038,6 +1038,7 @@ class TestCreateImmunization(unittest.TestCase):
                 "row_id": "123",
                 "created_at_formatted_string": "2020-01-01",
                 "local_id": ValidValues.test_local_id,
+                "operation_requested": "create",
             },
             "body": imms.json(),
         }
