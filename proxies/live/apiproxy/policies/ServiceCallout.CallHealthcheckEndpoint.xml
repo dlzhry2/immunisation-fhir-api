@@ -20,8 +20,8 @@
         <SSLInfo>
             <Enabled>true</Enabled>
             <ClientAuthEnabled>true</ClientAuthEnabled>
-            <KeyStore>ref://imms-client</KeyStore>
-            <KeyAlias>cert</KeyAlias>
+            <KeyStore>ref://imms-client-r</KeyStore>
+            <KeyAlias>imms_cert_renewal_alias</KeyAlias>
         </SSLInfo>
         <Properties>
             <Property name="supports.http10">true</Property>
