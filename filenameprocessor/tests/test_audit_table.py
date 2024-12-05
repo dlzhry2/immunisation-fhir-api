@@ -44,9 +44,9 @@ class TestAuditTable(TestCase):
 
     def test_add_to_audit_table(self):
         """Test that the add_to_audit_table function works as expected for the following:
-        * Unique files: file is added to the audit table, return value is True
-        * Duplicate files (duplicated file name): file is added to the audit table, return value is False
-        * Overwrites (duplicated message_id): file is not added to the audit table, return value is False
+        * Unique files: file is added to the audit table, no error is raised
+        * Duplicate files (duplicated file name): file is added to the audit table, DuplicateFileError is raised
+        * Overwrites (duplicated message_id): file is not added to the audit table, UnhandledAuditTableError is raised
         """
         message_id_1 = "test_id_1"
         message_id_2 = "test_id_2"
@@ -107,7 +107,7 @@ class TestAuditTable(TestCase):
         assert expected_table_item_1 in table_items
         assert expected_table_item_2 in table_items
 
-        # Attempt to add the file 1 again - should return FALSE due to the file already being in the table
+        # Attempt to add the file 1 again - should raise a DuplicateFileError due to the file already being in the table
         with self.assertRaises(DuplicateFileError):
             add_to_audit_table(message_id_3, file_key_1, created_at_formatted_string_3)
 

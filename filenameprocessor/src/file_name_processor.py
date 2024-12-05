@@ -60,8 +60,8 @@ def handle_record(record) -> dict:
                 "message": "Successfully sent to SQS queue",
                 "file_key": file_key,
                 "message_id": message_id,
-                "supplier": supplier,
                 "vaccine_type": vaccine_type,  # pylint: disable = possibly-used-before-assignment
+                "supplier": supplier,
             }
 
         except (  # pylint: disable=broad-exception-caught
