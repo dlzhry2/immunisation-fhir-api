@@ -2,7 +2,7 @@
 from clients import s3_client, redis_client
 
 
-def upload_to_elasticache(file_key, bucket_name):
+def upload_to_elasticache(file_key: str, bucket_name: str) -> None:
     """Uploads the config file content from S3 to ElastiCache (Redis)."""
     config_file = s3_client.get_object(Bucket=bucket_name, Key=file_key)
     config_file_content = config_file["Body"].read().decode("utf-8")

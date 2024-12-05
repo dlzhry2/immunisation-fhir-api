@@ -7,8 +7,10 @@ from clients import s3_client
 
 
 def make_the_ack_data(message_id: str, message_delivered: bool, created_at_formatted_string: str) -> dict:
-    """Returns a dictionary of ack data based on the input values. Dictionary keys are the ack file headers,
-    dictionary values are the values for the ack file row"""
+    """
+    Returns a dictionary of ack data based on the input values.
+    Dictionary keys are the ack file headers, dictionary values are the values for the ack file row
+    """
     failure_display = "Infrastructure Level Response Value - Processing Error"
     return {
         "MESSAGE_HEADER_ID": message_id,

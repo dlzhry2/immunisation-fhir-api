@@ -40,7 +40,7 @@ def logging_decorator(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        base_log_data = {"function_name": func.__name__, "date_time": str(datetime.now())}
+        base_log_data = {"function_name": f"filename_processor_{func.__name__}", "date_time": str(datetime.now())}
         start_time = time.time()
 
         try:

@@ -1,8 +1,8 @@
 """Utils functions for filenameprocessor tests"""
 
-from os import path
 from io import StringIO
-from csv import reader, DictReader
+import json
+from csv import DictReader
 from boto3 import client as boto3_client
 from tests.utils_for_tests.values_for_tests import VALID_FILE_CONTENT
 
@@ -18,21 +18,13 @@ def setup_s3_bucket_and_file(
     s3_client.put_object(Bucket=test_bucket_name, Key=test_file_key, Body=test_file_content)
 
 
-def convert_csv_to_string(filename):
-    """Open a csv file and return the file content as a string"""
-    file_path = f"{path.dirname(path.abspath(__file__))}/{filename}"
-    with open(file_path, mode="r", encoding="utf-8") as file:
-        return "".join(file.readlines())
+def download_csv_file_as_dict_reader(s3_client, bucket_name: str, file_key: str) -> DictReader:
+    """Download the file from the S3 bucket and return it as a DictReader"""
+    ack_file_csv_obj = s3_client.get_object(Bucket=bucket_name, Key=file_key)
+    csv_content_string = ack_file_csv_obj["Body"].read().decode("utf-8")
+    return DictReader(StringIO(csv_content_string), delimiter="|")
 
 
-def convert_csv_to_reader(filename):
-    """Open a csv file and return the file content as a csv reader"""
-    file_path = f"{path.dirname(path.abspath(__file__))}/{filename}"
-    with open(file_path, mode="r", encoding="utf-8") as file:
-        data = file.read()
-    return reader(StringIO(data), delimiter="|")
-
-
-def convert_string_to_dict_reader(data_string: str):
-    """Take a data string and convert it to a csv DictReader"""
-    return DictReader(StringIO(data_string), delimiter="|")
+def generate_permissions_config_content(permissions_dict: dict) -> str:
+    """Converts the permissions dictionary to a JSON string"""
+    return json.dumps({"all_permissions": permissions_dict})

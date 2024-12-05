@@ -16,6 +16,6 @@ def get_csv_content_dict_reader(bucket_name: str, file_key: str) -> DictReader:
 def identify_supplier(ods_code: str) -> str:
     """
     Identifies the supplier from the ods code using the mapping.
-    Defaults to empty string if ODS code isn't found in the mappings
+    Defaults to empty string if ODS code isn't found in the mappings.
     """
     return Constants.ODS_TO_SUPPLIER_MAPPINGS.get(ods_code, "")

@@ -1,17 +1,10 @@
 """Tests for file_key_validation functions"""
 
 from unittest import TestCase
-from unittest.mock import patch
-from boto3 import client as boto3_client
-from moto import mock_s3
-
 from file_key_validation import is_valid_datetime, file_key_validation
 from errors import InvalidFileKeyError
-from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT
 
 
-@mock_s3
-@patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 class TestFileKeyValidation(TestCase):
     """Tests for file_key_validation functions"""
 
@@ -38,11 +31,7 @@ class TestFileKeyValidation(TestCase):
 
     def test_file_key_validation(self):
         """Tests that file_key_validation returns True if all elements pass validation, and False otherwise"""
-        bucket_name = "test_bucket"
-        s3_client = boto3_client("s3", region_name="eu-west-2")
-        s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": "eu-west-2"})
-        valid_file_key = "Flu_Vaccinations_v5_YGA_20200101T12345600.csv"
-        test_file_content = "Test file content"
+        valid_file_key = "Flu_Vaccinations_v5_YGA_20200101T12345600.csv"  # Note that ODS code YGA maps to supplier TPP
 
         # Test case tuples are structured as (file_key, expected_result)
         test_cases_for_success_scenarios = [
@@ -58,8 +47,6 @@ class TestFileKeyValidation(TestCase):
 
         for file_key, expected_result in test_cases_for_success_scenarios:
             with self.subTest(f"SubTest for file key: {file_key}"):
-                # Mock full permissions for the supplier (Note that YGA ODS code maps to the supplier 'TPP')
-                s3_client.put_object(Bucket=bucket_name, Key=file_key, Body=test_file_content)
                 self.assertEqual(file_key_validation(file_key), expected_result)
 
         key_format_error_message = "Initial file validation failed: invalid file key format"
@@ -103,7 +90,6 @@ class TestFileKeyValidation(TestCase):
 
         for file_key, expected_result in test_cases_for_failure_scenarios:
             with self.subTest(f"SubTest for file key: {file_key}"):
-                s3_client.put_object(Bucket=bucket_name, Key=file_key, Body=test_file_content)
                 with self.assertRaises(InvalidFileKeyError) as context:
                     file_key_validation(file_key)
                 self.assertEqual(str(context.exception), expected_result)

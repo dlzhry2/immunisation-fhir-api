@@ -7,6 +7,7 @@ from moto import mock_dynamodb
 
 from audit_table import add_to_audit_table
 from errors import DuplicateFileError, UnhandledAuditTableError
+from clients import REGION_NAME
 from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT
 
 
@@ -17,7 +18,7 @@ class TestAuditTable(TestCase):
 
     def setUp(self):
         """Set up test values to be used for the tests"""
-        self.dynamodb_resource = boto3_resource("dynamodb", region_name="eu-west-2")
+        self.dynamodb_resource = boto3_resource("dynamodb", region_name=REGION_NAME)
         self.audit_table_name = MOCK_ENVIRONMENT_DICT["AUDIT_TABLE_NAME"]
 
         self.table = self.dynamodb_resource.create_table(

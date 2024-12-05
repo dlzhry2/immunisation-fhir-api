@@ -6,8 +6,8 @@ from clients import sqs_client, logger
 from errors import InvalidSupplierError, UnhandledSqsError
 
 
-def send_to_supplier_queue(message_body: dict) -> bool:
-    """Sends a message to the supplier queue and returns a bool indicating if the message has been successfully sent"""
+def send_to_supplier_queue(message_body: dict) -> None:
+    """Sends a message to the supplier queue. Raises an exception if the message is not successfully sent."""
     # Check the supplier has been identified (this should already have been validated by initial file validation)
     if not (supplier := message_body["supplier"]):
         error_message = "Message not sent to supplier queue as unable to identify supplier"
@@ -26,7 +26,7 @@ def send_to_supplier_queue(message_body: dict) -> bool:
 
 def make_and_send_sqs_message(
     file_key: str, message_id: str, permission: str, vaccine_type: str, supplier: str, created_at_formatted_string: str
-) -> bool:
+) -> None:
     """Attempts to send a message to the SQS queue. Raises an exception if the message is not successfully sent."""
     message_body = {
         "message_id": message_id,

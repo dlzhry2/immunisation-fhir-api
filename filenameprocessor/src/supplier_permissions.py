@@ -21,7 +21,7 @@ def get_supplier_permissions(supplier: str) -> list:
     return permissions_config.get("all_permissions", {}).get(supplier, [])
 
 
-def validate_vaccine_type_permissions(vaccine_type: str, supplier: str) -> bool:
+def validate_vaccine_type_permissions(vaccine_type: str, supplier: str) -> list:
     """
     Returns the list of permissions for the given supplier.
     Raises an exception if the supplier does not have at least one permission for the vaccine type.

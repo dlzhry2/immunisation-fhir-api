@@ -25,14 +25,37 @@ MOCK_ENVIRONMENT_DICT = {
     "FILE_NAME_GSI": "filename_index",
 }
 
+
+class MockFluEmisFile:
+    """Class to hold values for a mock FLU/EMIS file"""
+
+    CREATED_AT_FORMATTED_STRING = STATIC_DATETIME_FORMATTED
+    FILE_KEY = "Flu_Vaccinations_v5_YGM41_20240708T12130100.csv"
+    ACK_FILE_KEY = f"ack/Flu_Vaccinations_v5_YGM41_20240708T12130100_InfAck_{STATIC_DATETIME_FORMATTED}.csv"
+    VACCINE_TYPE = "FLU"
+    SUPPLIER = "EMIS"
+    MESSAGE_ID = "flu_emis_test_id"
+    PERMISSIONS = ["FLU_FULL"]
+    SQS_MESSAGE_BODY = {
+        "message_id": MESSAGE_ID,
+        "vaccine_type": VACCINE_TYPE,
+        "supplier": SUPPLIER,
+        "filename": FILE_KEY,
+        "permission": PERMISSIONS,
+        "created_at_formatted_string": CREATED_AT_FORMATTED_STRING,
+    }
+
+
 VALID_FLU_EMIS_FILE_KEY = "Flu_Vaccinations_v5_YGM41_20240708T12130100.csv"
-VALID_FLU_EMIS_ACK_FILE_KEY = f"ack/Flu_Vaccinations_v5_YGM41_20240708T12130100_InfAck_{STATIC_ISO_DATETIME}.csv"
+VALID_FLU_EMIS_ACK_FILE_KEY = f"ack/Flu_Vaccinations_v5_YGM41_20240708T12130100_InfAck_{STATIC_DATETIME_FORMATTED}.csv"
 
 VALID_RSV_EMIS_FILE_KEY = "RSV_Vaccinations_v5_YGM41_20240708T12130100.csv"
-VALID_RSV_EMIS_ACK_FILE_KEY = f"ack/RSV_Vaccinations_v5_YGM41_20240708T12130100_InfAck_{STATIC_ISO_DATETIME}.csv"
+VALID_RSV_EMIS_ACK_FILE_KEY = f"ack/RSV_Vaccinations_v5_YGM41_20240708T12130100_InfAck_{STATIC_DATETIME_FORMATTED}.csv"
 
 
 SQS_ATTRIBUTES = {"FifoQueue": "true", "ContentBasedDeduplication": "true"}
+SQS_QUEUE_NAME = "imms-batch-internal-dev-metadata-queue.fifo"
+
 
 PERMISSION_JSON = {
     "all_permissions": {

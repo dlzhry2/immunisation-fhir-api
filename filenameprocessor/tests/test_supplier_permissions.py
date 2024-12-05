@@ -1,11 +1,10 @@
 """Tests for supplier_permissions functions"""
 
-import json
 from unittest import TestCase
 from unittest.mock import patch
-
 from supplier_permissions import validate_vaccine_type_permissions, get_supplier_permissions
 from errors import VaccineTypePermissionsError
+from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
 
 
 class TestSupplierPermissions(TestCase):
@@ -13,15 +12,14 @@ class TestSupplierPermissions(TestCase):
 
     def test_get_permissions_for_all_suppliers(self):
         """Test fetching permissions for all suppliers from Redis cache."""
-        # Define the expected permissions JSON for all suppliers
-        # Setup mock Redis response
-        permissions_json = {
-            "all_permissions": {
+        # Setup mock Redis response with the following permissions
+        permissions_config_content = generate_permissions_config_content(
+            {
                 "TEST_SUPPLIER_1": ["COVID19_FULL", "FLU_FULL", "RSV_FULL"],
                 "TEST_SUPPLIER_2": ["FLU_CREATE", "FLU_DELETE", "RSV_CREATE"],
                 "TEST_SUPPLIER_3": ["COVID19_CREATE", "COVID19_DELETE", "FLU_FULL"],
             }
-        }
+        )
 
         # Test case tuples structured as (supplier, expected_result)
         test_cases = [
@@ -33,7 +31,7 @@ class TestSupplierPermissions(TestCase):
         # Run the subtests
         for supplier, expected_result in test_cases:
             with self.subTest(supplier=supplier):
-                with patch("supplier_permissions.redis_client.get", return_value=json.dumps(permissions_json)):
+                with patch("supplier_permissions.redis_client.get", return_value=permissions_config_content):
                     actual_permissions = get_supplier_permissions(supplier)
                     self.assertEqual(actual_permissions, expected_result)
 

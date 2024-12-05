@@ -2,9 +2,9 @@
 
 from unittest import TestCase
 from moto import mock_s3
-
+from boto3 import client as boto3_client
+from clients import REGION_NAME
 from utils_for_filenameprocessor import get_csv_content_dict_reader, identify_supplier
-from tests.utils_for_tests.utils_for_filenameprocessor_tests import setup_s3_bucket_and_file
 
 
 @mock_s3
@@ -16,7 +16,10 @@ class TestUtilsForFilenameprocessor(TestCase):
         bucket_name = "test_bucket"
         file_key = "test_file_key"
         file_content = "HEADER1|HEADER2\nvalue1|value2"
-        setup_s3_bucket_and_file(bucket_name, file_key, file_content)
+
+        s3_client = boto3_client("s3", region_name="eu-west-2")
+        s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME})
+        s3_client.put_object(Bucket=bucket_name, Key=file_key, Body=file_content)
 
         csv_content_dict_reader = get_csv_content_dict_reader(bucket_name, file_key)
 

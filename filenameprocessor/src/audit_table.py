@@ -6,7 +6,7 @@ from clients import dynamodb_client, dynamodb_resource, logger
 from errors import DuplicateFileError, UnhandledAuditTableError
 
 
-def add_to_audit_table(message_id: str, file_key: str, created_at_formatted_str: str) -> bool:
+def add_to_audit_table(message_id: str, file_key: str, created_at_formatted_str: str) -> None:
     """
     Adds the filename to the audit table.
     Raises an error if the file is a duplicate (after adding it to the audit table).

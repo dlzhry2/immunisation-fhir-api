@@ -3,12 +3,20 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from json import loads as json_loads
-from uuid import uuid4
+from copy import deepcopy
 from moto import mock_sqs
 from boto3 import client as boto3_client
 from send_sqs_message import send_to_supplier_queue, make_and_send_sqs_message
 from errors import UnhandledSqsError, InvalidSupplierError
-from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, SQS_ATTRIBUTES
+from clients import REGION_NAME
+from tests.utils_for_tests.values_for_tests import (
+    MOCK_ENVIRONMENT_DICT,
+    SQS_ATTRIBUTES,
+    SQS_QUEUE_NAME,
+    MockFluEmisFile,
+)
+
+sqs_client = boto3_client("sqs", region_name=REGION_NAME)
 
 
 @mock_sqs
@@ -18,45 +26,31 @@ class TestSendSQSMessage(TestCase):
 
     def test_send_to_supplier_queue_success(self):
         """Test send_to_supplier_queue function for a successful message send"""
-        mock_sqs_client = boto3_client("sqs", region_name="eu-west-2")
+        # Set up the sqs_queue
+        queue_url = sqs_client.create_queue(QueueName=SQS_QUEUE_NAME, Attributes=SQS_ATTRIBUTES)["QueueUrl"]
 
-        # Set up the queue
-        supplier = "PINNACLE"
-        message_body = {"supplier": supplier}
-        # The short form of the supplier name is used for the queue name
-        queue_name = "imms-batch-internal-dev-metadata-queue.fifo"
-        queue_url = mock_sqs_client.create_queue(QueueName=queue_name, Attributes=SQS_ATTRIBUTES)["QueueUrl"]
-
-        # Call the send_to_supplier_queue function
-        self.assertIsNone(send_to_supplier_queue(message_body))
+        self.assertIsNone(send_to_supplier_queue(deepcopy(MockFluEmisFile.SQS_MESSAGE_BODY)))
 
         # Assert that correct message has reached the queue
-        messages = mock_sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1)
-        self.assertEqual(json_loads(messages["Messages"][0]["Body"]), {"supplier": "PINNACLE"})
+        messages = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1)
+        self.assertEqual(json_loads(messages["Messages"][0]["Body"]), MockFluEmisFile.SQS_MESSAGE_BODY)
 
     def test_send_to_supplier_queue_failure_due_to_queue_does_not_exist(self):
         """Test send_to_supplier_queue function for a failed message send due to queue not existing"""
-        supplier = "PINNACLE"
-        message_body = {"supplier": supplier}
         with self.assertRaises(UnhandledSqsError) as context:
-            send_to_supplier_queue(message_body)
+            send_to_supplier_queue(deepcopy(MockFluEmisFile.SQS_MESSAGE_BODY))
         self.assertIn("An unexpected error occurred whilst sending to SQS", str(context.exception))
 
     def test_send_to_supplier_queue_failure_due_to_absent_supplier(self):
         """Test send_to_supplier_queue function for a failed message send"""
-        mock_sqs_client = boto3_client("sqs", region_name="eu-west-2")
+        mock_sqs_client = boto3_client("sqs", region_name=REGION_NAME)
         mock_sqs_client.send_message = MagicMock()
+        mock_sqs_client.create_queue(QueueName=SQS_QUEUE_NAME, Attributes=SQS_ATTRIBUTES)
 
-        # Set up the queue
-        supplier = ""
-        message_body = {"supplier": supplier}
-        # If attempt is made to send message then the queue name would be missing the supplier
-        queue_name = "imms-batch-internal-dev--metadata-queue.fifo"
-        _ = mock_sqs_client.create_queue(QueueName=queue_name, Attributes=SQS_ATTRIBUTES)["QueueUrl"]
-
-        # Call the send_to_supplier_queue function
         with patch("send_sqs_message.sqs_client", mock_sqs_client):
             with self.assertRaises(InvalidSupplierError) as context:
+                message_body = deepcopy(MockFluEmisFile.SQS_MESSAGE_BODY)
+                message_body["supplier"] = ""
                 send_to_supplier_queue(message_body)
 
         self.assertEqual(str(context.exception), "Message not sent to supplier queue as unable to identify supplier")
@@ -64,55 +58,34 @@ class TestSendSQSMessage(TestCase):
 
     def test_make_and_send_sqs_message_success(self):
         """Test make_and_send_sqs_message function for a successful message send"""
-        mock_sqs_client = boto3_client("sqs", region_name="eu-west-2")
-
-        # Set up message details, using the ODS code for MEDICAL_DIRECTOR in the file_key
-        # The short form of the supplier name is used for the queue name
-        queue_name = "imms-batch-internal-dev-metadata-queue.fifo"
-        file_key = "Covid19_Vaccinations_v5_YGMYH_20200101T12345600.csv"
-        vaccine_type = "COVID19"
-        supplier = "MEDICAL_DIRECTOR"
-        message_id = str(uuid4())
-        permission = "FLU_FULL"
-        expected_message_body = {
-            "message_id": message_id,
-            "vaccine_type": vaccine_type,
-            "supplier": supplier,
-            "filename": file_key,
-            "permission": permission,
-            "created_at_formatted_string": "test",
-        }
-
         # Create a mock SQS queue
-        queue_url = mock_sqs_client.create_queue(QueueName=queue_name, Attributes=SQS_ATTRIBUTES)["QueueUrl"]
+        queue_url = sqs_client.create_queue(QueueName=SQS_QUEUE_NAME, Attributes=SQS_ATTRIBUTES)["QueueUrl"]
 
         # Call the send_to_supplier_queue function
         self.assertIsNone(
             make_and_send_sqs_message(
-                file_key=file_key,
-                message_id=message_id,
-                permission=permission,
-                vaccine_type=vaccine_type,
-                supplier=supplier,
-                created_at_formatted_string="test",
+                file_key=MockFluEmisFile.FILE_KEY,
+                message_id=MockFluEmisFile.MESSAGE_ID,
+                permission=MockFluEmisFile.PERMISSIONS,
+                vaccine_type=MockFluEmisFile.VACCINE_TYPE,
+                supplier=MockFluEmisFile.SUPPLIER,
+                created_at_formatted_string=MockFluEmisFile.CREATED_AT_FORMATTED_STRING,
             )
         )
 
         # Assert that correct message has reached the queue
-        messages = mock_sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1)
-        self.assertEqual(json_loads(messages["Messages"][0]["Body"]), expected_message_body)
+        messages = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1)
+        self.assertEqual(json_loads(messages["Messages"][0]["Body"]), deepcopy(MockFluEmisFile.SQS_MESSAGE_BODY))
 
     def test_make_and_send_sqs_message_failure(self):
         """Test make_and_send_sqs_message function for a failure due to queue not existing"""
-        file_key = "Covid19_Vaccinations_v5_YGMYH_20200101T12345600.csv"
-        vaccine_type = "COVID19"
-        supplier = "MEDICAL_DIRECTOR"
-        message_id = str(uuid4())
-        permission = "FLU_FULL"
-        created_at_formatted_string = "test"
         with self.assertRaises(UnhandledSqsError) as context:
             make_and_send_sqs_message(
-                file_key, message_id, permission, vaccine_type, supplier, created_at_formatted_string
+                file_key=MockFluEmisFile.FILE_KEY,
+                message_id=MockFluEmisFile.MESSAGE_ID,
+                permission=MockFluEmisFile.PERMISSIONS,
+                vaccine_type=MockFluEmisFile.VACCINE_TYPE,
+                supplier=MockFluEmisFile.SUPPLIER,
+                created_at_formatted_string=MockFluEmisFile.CREATED_AT_FORMATTED_STRING,
             )
-
         self.assertIn("An unexpected error occurred whilst sending to SQS", str(context.exception))

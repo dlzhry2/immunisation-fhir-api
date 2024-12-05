@@ -3,35 +3,21 @@
 import unittest
 from unittest.mock import patch
 import json
-from typing import Optional
 from boto3 import client as boto3_client
 from moto import mock_s3
 from file_name_processor import lambda_handler
+from clients import REGION_NAME
 from tests.utils_for_tests.values_for_tests import (
     SOURCE_BUCKET_NAME,
-    PERMISSION_JSON,
     DESTINATION_BUCKET_NAME,
-    VALID_FILE_CONTENT,
     MOCK_ENVIRONMENT_DICT,
     VALID_FLU_EMIS_FILE_KEY,
 )
+from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
 
 
-def set_up_s3_buckets_and_upload_file(file_key: Optional[str] = None, file_content: str = None):
-    """
-    Sets up the source and destination buckets and uploads the test file to the source bucket.
-    Returns the S3 client.
-    """
-    s3_client = boto3_client("s3", region_name="eu-west-2")
-
-    for bucket_name in [SOURCE_BUCKET_NAME, DESTINATION_BUCKET_NAME]:
-        s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": "eu-west-2"})
-
-    s3_client.put_object(
-        Bucket=SOURCE_BUCKET_NAME, Key=file_key or VALID_FLU_EMIS_FILE_KEY, Body=file_content or VALID_FILE_CONTENT
-    )
-
-    return s3_client
+s3_client = boto3_client("s3", region_name=REGION_NAME)
+MOCK_EVENT = {"Records": [{"s3": {"bucket": {"name": SOURCE_BUCKET_NAME}, "object": {"key": VALID_FLU_EMIS_FILE_KEY}}}]}
 
 
 @mock_s3
@@ -39,26 +25,30 @@ def set_up_s3_buckets_and_upload_file(file_key: Optional[str] = None, file_conte
 class TestLoggingDecorator(unittest.TestCase):
     """Tests for the logging_decorator and its helper functions"""
 
-    event_file = {
-        "Records": [{"s3": {"bucket": {"name": SOURCE_BUCKET_NAME}, "object": {"key": VALID_FLU_EMIS_FILE_KEY}}}]
-    }
+    def setUp(self):
+        """Set up the S3 buckets and upload the valid FLU/EMIS file example"""
+        for bucket_name in [SOURCE_BUCKET_NAME, DESTINATION_BUCKET_NAME]:
+            s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME})
+
+        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=VALID_FLU_EMIS_FILE_KEY, Body="Test content")
 
     def test_splunk_logger_successful_validation(self):
         """Tests the splunk logger is called when file validation is successful"""
-        set_up_s3_buckets_and_upload_file()
+        # Set up permissions for FLU (file is for FLU), so that validation will pass
+        permissions_config_content = generate_permissions_config_content({"EMIS": ["FLU_FULL"]})
 
         with (  # noqa: E999
             patch("file_name_processor.uuid4", return_value="test_id"),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue"),  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("supplier_permissions.redis_client.get", return_value=json.dumps(PERMISSION_JSON)),  # noqa: E999
+            patch("supplier_permissions.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
             patch("logging_decorator.logger") as mock_logger,  # noqa: E999
         ):  # noqa: E999
-            lambda_handler(self.event_file, context=None)
+            lambda_handler(MOCK_EVENT, context=None)
 
         expected_log_data = {
-            "function_name": "handle_record",
+            "function_name": "filename_processor_handle_record",
             "date_time": "REPLACE THIS VALUE",
             "time_taken": "REPLACE THIS VALUE",
             "statusCode": 200,
@@ -79,28 +69,26 @@ class TestLoggingDecorator(unittest.TestCase):
 
     def test_splunk_logger_failed_validation(self):
         """Tests the splunk logger is called when file validation is unsuccessful"""
-        set_up_s3_buckets_and_upload_file(file_content=VALID_FILE_CONTENT)
         # Set up permissions for COVID19 only (file is for FLU), so that validation will fail
-        permissions_json = {"all_permissions": {"EMIS": ["COVID19_FULL"]}}
+        permissions_config_content = generate_permissions_config_content({"EMIS": ["COVID19_FULL"]})
 
         with (  # noqa: E999
             patch("file_name_processor.uuid4", return_value="test_id"),  # noqa: E999
             patch("file_name_processor.add_to_audit_table", return_value=True),  # noqa: E999
-            patch("supplier_permissions.redis_client.get", return_value=json.dumps(permissions_json)),  # noqa: E999
+            patch("supplier_permissions.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
             patch("logging_decorator.logger") as mock_logger,  # noqa: E999
         ):  # noqa: E999
-            lambda_handler(self.event_file, context=None)
+            lambda_handler(MOCK_EVENT, context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
 
-        # TODO: Fix the below assertion - need to ascertain what the status code should be in this case
         expected_log_data = {
-            "function_name": "handle_record",
+            "function_name": "filename_processor_handle_record",
             "date_time": "REPLACE THIS VALUE",
             "time_taken": "REPLACE THIS VALUE",
-            "statusCode": 500,
+            "statusCode": 403,
             "message": "Infrastructure Level Response Value - Processing Error",
             "file_key": VALID_FLU_EMIS_FILE_KEY,
             "message_id": "test_id",

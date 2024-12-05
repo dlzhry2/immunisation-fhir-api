@@ -4,7 +4,6 @@ from re import match
 from datetime import datetime
 from constants import Constants
 from utils_for_filenameprocessor import identify_supplier
-from clients import logger
 from errors import InvalidFileKeyError
 
 
@@ -30,12 +29,11 @@ def is_valid_datetime(timestamp: str) -> bool:
 def file_key_validation(file_key: str) -> tuple[str, str]:
     """
     Checks that all elements of the file key are valid, raises an exception otherwise.
-    Returns the vaccine_type and supplier (both converted to upper case).
+    Returns a tuple containing the vaccine_type and supplier (both converted to upper case).
     """
 
     if not match(r"^[^_.]*_[^_.]*_[^_.]*_[^_.]*_[^_.]*\.[^_.]*$", file_key):
         error_message = "Initial file validation failed: invalid file key format"
-        logger.error(error_message)
         raise InvalidFileKeyError(error_message)
 
     file_key = file_key.upper()
@@ -58,7 +56,6 @@ def file_key_validation(file_key: str) -> tuple[str, str]:
         and is_valid_datetime(timestamp)
         and extension == "CSV"
     ):
-        logger.error("Initial file validation failed: invalid file key")
         raise InvalidFileKeyError("Initial file validation failed: invalid file key")
 
     return vaccine_type, supplier

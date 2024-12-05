@@ -30,8 +30,10 @@ from errors import (
 # multiple records.
 @logging_decorator
 def handle_record(record) -> dict:
-    """Processes a single record based on whether it came from the 'data-sources' or 'config' bucket.
-    Returns a dictionary containing information to be included in the logs."""
+    """
+    Processes a single record based on whether it came from the 'data-sources' or 'config' bucket.
+    Returns a dictionary containing information to be included in the logs.
+    """
     try:
         bucket_name = record["s3"]["bucket"]["name"]
         file_key = record["s3"]["object"]["key"]
@@ -53,6 +55,8 @@ def handle_record(record) -> dict:
             make_and_send_sqs_message(
                 file_key, message_id, permissions, vaccine_type, supplier, created_at_formatted_string
             )
+
+            logger.info("File '%s' successfully processed", file_key)
 
             # Return details for logs
             return {
@@ -84,9 +88,19 @@ def handle_record(record) -> dict:
                 created_at_formatted_string = "created_at_time_not_identified"
             make_and_upload_the_ack_file(message_id, file_key, message_delivered, created_at_formatted_string)
 
+            status_code_map = {
+                VaccineTypePermissionsError: 403,
+                InvalidFileKeyError: 400,  # Includes invalid ODS code, therefore unable to identify supplier
+                InvalidSupplierError: 500,  # Only raised if supplier variable is not correctly set
+                UnhandledAuditTableError: 500,
+                DuplicateFileError: 422,
+                UnhandledSqsError: 500,
+                Exception: 500,
+            }
+
             # Return details for logs
             return {
-                "statusCode": 500,
+                "statusCode": status_code_map.get(type(error), 500),
                 "message": "Infrastructure Level Response Value - Processing Error",
                 "file_key": file_key,
                 "message_id": message_id,
@@ -108,7 +122,7 @@ def handle_record(record) -> dict:
             }
 
     else:
-        logger.error("Unable to proecess file %s due to unexpected bucket name %s", file_key, bucket_name)
+        logger.error("Unable to process file %s due to unexpected bucket name %s", file_key, bucket_name)
         return {
             "statusCode": 500,
             "message": f"Failed to process file due to unexpected bucket name {bucket_name}",
@@ -119,5 +133,9 @@ def handle_record(record) -> dict:
 def lambda_handler(event: dict, context) -> None:  # pylint: disable=unused-argument
     """Lambda handler for filenameprocessor lambda. Processes each record in event records."""
 
+    logger.info("Filename processor lambda task started")
+
     for record in event["Records"]:
         handle_record(record)
+
+    logger.info("Filename processor lambda task completed")
