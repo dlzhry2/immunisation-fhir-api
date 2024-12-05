@@ -1,7 +1,6 @@
 variable "project_name" {
   description = "The name of the project this relates to."
   type        = string
-  # default = "imms-fhir-api"
 }
 
 variable "environment_name" {

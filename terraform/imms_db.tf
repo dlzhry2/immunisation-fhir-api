@@ -23,7 +23,7 @@ resource "aws_dynamodb_table" "events-dynamodb-table" {
     }
 
     tags = {
-    NHSE-Enable-Backup = "True"
+    NHSE-Enable-Dynamo-Backup = "True"
     }
 
     global_secondary_index {

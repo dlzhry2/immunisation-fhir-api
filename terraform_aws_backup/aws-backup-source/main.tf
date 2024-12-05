@@ -28,14 +28,12 @@ variable "region" {
     default = "eu-west-2"
 }
 
-variable "destination_vault_arn" {
-  description = "ARN of the backup vault in the destination account"
-  type        = string
-  default     = "arn:aws:backup:eu-west-2:084828561157:backup-vault:imms-dev-backup-vault"
+data "aws_ssm_parameter" "dest_vault_arn" { 
+  name = "/imms/awsbackup/destvaultarn" 
 }
 
 data "aws_arn" "destination_vault_arn" {
-  arn = var.destination_vault_arn
+  arn = data.aws_ssm_parameter.dest_vault_arn.value
 }
 
 locals {
@@ -67,10 +65,10 @@ module "source" {
           "delete_after" : 2
         },
         "name" : "daily_kept_for_2_days",
-        "schedule" : "cron(20 12 * * ? *)"
+        "schedule" : "cron(40 15 * * ? *)"
       }
     ],
-    "selection_tag" : "NHSE-Enable-Backup"
+    "selection_tag" : "NHSE-Enable-S3-Backup"
   }
 
   backup_plan_config_dynamodb = {
@@ -87,9 +85,9 @@ module "source" {
           "delete_after" : 2
         },
         "name" : "daily_kept_for_2_days",
-        "schedule" : "cron(20 12 * * ? *)"
+        "schedule" : "cron(40 15 * * ? *)"
       }
     ],
-    "selection_tag" : "NHSE-Enable-Backup"
+    "selection_tag" : "NHSE-Enable-Dynamo-Backup"
   }
 }
