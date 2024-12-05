@@ -11,7 +11,6 @@ variable "source_account_id" {
   # to copy backups into the vault.
   description = "The id of the account that backups will come from"
   type        = string
-  default = "345594581768"
 }
 
 variable "account_id" {
@@ -20,7 +19,6 @@ variable "account_id" {
   # be removed if the original source account is lost.
   description = "The id of the account that the vault will be in"
   type        = string
-  # default = "084828561157"
 }
 
 variable "region" {
