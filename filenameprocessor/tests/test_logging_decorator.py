@@ -7,17 +7,13 @@ from boto3 import client as boto3_client
 from moto import mock_s3
 from file_name_processor import lambda_handler
 from clients import REGION_NAME
-from tests.utils_for_tests.values_for_tests import (
-    SOURCE_BUCKET_NAME,
-    DESTINATION_BUCKET_NAME,
-    MOCK_ENVIRONMENT_DICT,
-    VALID_FLU_EMIS_FILE_KEY,
-)
+from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, MockFileDetails, BucketNames
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
 
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
-MOCK_EVENT = {"Records": [{"s3": {"bucket": {"name": SOURCE_BUCKET_NAME}, "object": {"key": VALID_FLU_EMIS_FILE_KEY}}}]}
+MOCK_FILE_KEY = MockFileDetails.flu_emis.file_key
+MOCK_EVENT = {"Records": [{"s3": {"bucket": {"name": BucketNames.SOURCE}, "object": {"key": MOCK_FILE_KEY}}}]}
 
 
 @mock_s3
@@ -27,10 +23,10 @@ class TestLoggingDecorator(unittest.TestCase):
 
     def setUp(self):
         """Set up the S3 buckets and upload the valid FLU/EMIS file example"""
-        for bucket_name in [SOURCE_BUCKET_NAME, DESTINATION_BUCKET_NAME]:
+        for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
             s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME})
 
-        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=VALID_FLU_EMIS_FILE_KEY, Body="Test content")
+        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=MOCK_FILE_KEY, Body="Test content")
 
     def test_splunk_logger_successful_validation(self):
         """Tests the splunk logger is called when file validation is successful"""
@@ -53,7 +49,7 @@ class TestLoggingDecorator(unittest.TestCase):
             "time_taken": "REPLACE THIS VALUE",
             "statusCode": 200,
             "message": "Successfully sent to SQS queue",
-            "file_key": VALID_FLU_EMIS_FILE_KEY,
+            "file_key": MOCK_FILE_KEY,
             "message_id": "test_id",
             "vaccine_type": "FLU",
             "supplier": "EMIS",
@@ -90,7 +86,7 @@ class TestLoggingDecorator(unittest.TestCase):
             "time_taken": "REPLACE THIS VALUE",
             "statusCode": 403,
             "message": "Infrastructure Level Response Value - Processing Error",
-            "file_key": VALID_FLU_EMIS_FILE_KEY,
+            "file_key": MOCK_FILE_KEY,
             "message_id": "test_id",
             "error": "Initial file validation failed: EMIS does not have permissions for FLU",
         }
