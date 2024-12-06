@@ -32,6 +32,10 @@ data "aws_ssm_parameter" "dest_vault_arn" {
   name = "/imms/awsbackup/destvaultarn" 
 }
 
+data "aws_ssm_parameter" "notified_email" { 
+  name = "/imms/awsbackup/email" 
+}
+
 data "aws_arn" "destination_vault_arn" {
   arn = data.aws_ssm_parameter.dest_vault_arn.value
 }
@@ -47,6 +51,7 @@ module "source" {
 
   backup_copy_vault_account_id = local.destination_account_id
   backup_copy_vault_arn        = data.aws_arn.destination_vault_arn.arn
+  notifications_target_email_address = data.aws_ssm_parameter.notified_email.value
   environment_name      = terraform.workspace
   project_name          = "imms-fhir-api-"
   terraform_role_arn    = "arn:aws:iam::${local.source_account_id}:role/${local.assume_role}"

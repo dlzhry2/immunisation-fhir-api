@@ -16,7 +16,6 @@ variable "source_account_id" {
 variable "notifications_target_email_address" {
   description = "The email address to which backup notifications will be sent via SNS."
   type        = string
-  default     = "england.apimconnect@nhs.net"
 }
 
 variable "terraform_role_arn" {
