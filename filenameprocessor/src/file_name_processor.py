@@ -12,7 +12,7 @@ from file_key_validation import file_key_validation
 from send_sqs_message import make_and_send_sqs_message
 from make_and_upload_ack_file import make_and_upload_the_ack_file
 from audit_table import add_to_audit_table
-from clients import s3_client, logger
+from clients import logger
 from elasticcache import upload_to_elasticache
 from logging_decorator import logging_decorator
 from supplier_permissions import validate_vaccine_type_permissions
