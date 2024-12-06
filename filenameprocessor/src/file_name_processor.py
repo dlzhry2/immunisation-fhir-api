@@ -8,7 +8,7 @@ NOTE: The expected file format for incoming files from the data sources bucket i
 
 from uuid import uuid4
 from utils_for_filenameprocessor import get_created_at_formatted_string
-from file_key_validation import file_key_validation
+from file_key_validation import validate_file_key
 from send_sqs_message import make_and_send_sqs_message
 from make_and_upload_ack_file import make_and_upload_the_ack_file
 from audit_table import add_to_audit_table
@@ -50,7 +50,7 @@ def handle_record(record) -> dict:
 
             # Process the file
             add_to_audit_table(message_id, file_key, created_at_formatted_string)
-            vaccine_type, supplier = file_key_validation(file_key)
+            vaccine_type, supplier = validate_file_key(file_key)
             permissions = validate_vaccine_type_permissions(vaccine_type=vaccine_type, supplier=supplier)
             make_and_send_sqs_message(
                 file_key, message_id, permissions, vaccine_type, supplier, created_at_formatted_string
@@ -64,7 +64,7 @@ def handle_record(record) -> dict:
                 "message": "Successfully sent to SQS queue",
                 "file_key": file_key,
                 "message_id": message_id,
-                "vaccine_type": vaccine_type,  # pylint: disable = possibly-used-before-assignment
+                "vaccine_type": vaccine_type,
                 "supplier": supplier,
             }
 
@@ -85,7 +85,7 @@ def handle_record(record) -> dict:
             if "message_id" not in locals():
                 message_id = "Message id was not created"
             if "created_at_formatted_string" not in locals():
-                created_at_formatted_string = "created_at_time_not_identified"
+                created_at_formatted_string = "created_at_time not identified"
             make_and_upload_the_ack_file(message_id, file_key, message_delivered, created_at_formatted_string)
 
             status_code_map = {

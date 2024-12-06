@@ -1,15 +1,35 @@
 """Tests for utils_for_filenameprocessor functions"""
 
 from unittest import TestCase
+from unittest.mock import patch
+from datetime import datetime, timezone
 from moto import mock_s3
 from boto3 import client as boto3_client
 from clients import REGION_NAME
-from utils_for_filenameprocessor import get_csv_content_dict_reader, identify_supplier
+from utils_for_filenameprocessor import get_created_at_formatted_string, get_csv_content_dict_reader, identify_supplier
+
+s3_client = boto3_client("s3", region_name=REGION_NAME)
 
 
 @mock_s3
 class TestUtilsForFilenameprocessor(TestCase):
     """Tests for utils_for_filenameprocessor functions"""
+
+    def test_get_created_at_formatted_string(self):
+        """Test that get_created_at_formatted_string can correctly get the created_at_formatted_string"""
+        bucket_name = "test_bucket"
+        file_key = "test_file_key"
+
+        s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME})
+        s3_client.put_object(Bucket=bucket_name, Key=file_key)
+
+        mock_last_modified = {"LastModified": datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)}
+        expected_result = "20240101T12000000"
+
+        with patch("utils_for_filenameprocessor.s3_client.get_object", return_value=mock_last_modified):
+            created_at_formatted_string = get_created_at_formatted_string(bucket_name, file_key)
+
+        self.assertEqual(created_at_formatted_string, expected_result)
 
     def test_get_csv_content_dict_reader(self):
         """Test that get_csv_content_dict_reader can download and correctly read the data file"""
@@ -17,7 +37,6 @@ class TestUtilsForFilenameprocessor(TestCase):
         file_key = "test_file_key"
         file_content = "HEADER1|HEADER2\nvalue1|value2"
 
-        s3_client = boto3_client("s3", region_name="eu-west-2")
         s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME})
         s3_client.put_object(Bucket=bucket_name, Key=file_key, Body=file_content)
 

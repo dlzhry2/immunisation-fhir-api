@@ -58,6 +58,8 @@ class FileDetails:
         self.message_id = f"{vaccine_type.lower()}_{supplier.lower()}_test_id"
         self.permissions_list = [f"{vaccine_type}_FULL"]
         self.permissions_config = {self.supplier: self.permissions_list}
+        # DO NOT CHANGE THE SQS MESSAGE BODY UNLESS THE IMPLEMENTATION OF THE MESSAGE BODY IS CHANGED - IT IS USED
+        # FOR TEST ASSERTIONS TO ENSURE TEH SQS MESSAGE BODY IS AS EXPECTED
         self.sqs_message_body = {
             "message_id": self.message_id,
             "vaccine_type": self.vaccine_type,

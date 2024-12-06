@@ -41,7 +41,7 @@ class TestSupplierPermissions(TestCase):
         for the requested vaccine type and False otherwise
         """
         # Test case tuples are stuctured as (vaccine_type, vaccine_permissions)
-        test_cases = [
+        success_test_cases = [
             ("FLU", ["COVID19_CREATE", "FLU_FULL"]),  # Full permissions for flu
             ("FLU", ["FLU_CREATE"]),  # Create permissions for flu
             ("FLU", ["FLU_UPDATE"]),  # Update permissions for flu
@@ -54,20 +54,21 @@ class TestSupplierPermissions(TestCase):
             ("RSV", ["RSV_DELETE"]),  # Delete permissions for rsv
         ]
 
-        for vaccine_type, vaccine_permissions in test_cases:
+        for vaccine_type, vaccine_permissions in success_test_cases:
             with self.subTest():
                 with patch("supplier_permissions.get_supplier_permissions", return_value=vaccine_permissions):
                     self.assertEqual(
                         validate_vaccine_type_permissions(vaccine_type, "TEST_SUPPLIER"), vaccine_permissions
                     )
 
-        test_cases = [
+        # Test case tuples are stuctured as (vaccine_type, vaccine_permissions)
+        failure_test_cases = [
             ("FLU", ["COVID19_FULL"]),  # No permissions for flu
             ("COVID19", ["FLU_CREATE"]),  # No permissions for COVID19
             ("RSV", ["COVID19_FULL"]),  # No permissions for rsv
         ]
 
-        for vaccine_type, vaccine_permissions in test_cases:
+        for vaccine_type, vaccine_permissions in failure_test_cases:
             with self.subTest():
                 with patch("supplier_permissions.get_supplier_permissions", return_value=vaccine_permissions):
                     with self.assertRaises(VaccineTypePermissionsError) as context:

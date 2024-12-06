@@ -26,7 +26,7 @@ def is_valid_datetime(timestamp: str) -> bool:
     return True
 
 
-def file_key_validation(file_key: str) -> tuple[str, str]:
+def validate_file_key(file_key: str) -> tuple[str, str]:
     """
     Checks that all elements of the file key are valid, raises an exception otherwise.
     Returns a tuple containing the vaccine_type and supplier (both converted to upper case).

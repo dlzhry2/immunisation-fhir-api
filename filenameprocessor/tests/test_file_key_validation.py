@@ -1,8 +1,12 @@
 """Tests for file_key_validation functions"""
 
 from unittest import TestCase
-from file_key_validation import is_valid_datetime, file_key_validation
+from file_key_validation import is_valid_datetime, validate_file_key
 from errors import InvalidFileKeyError
+from tests.utils_for_tests.values_for_tests import MockFileDetails
+
+VALID_FLU_EMIS_FILE_KEY = MockFileDetails.flu_emis.file_key
+VALID_RSV_RAVS_FILE_KEY = MockFileDetails.rsv_ravs.file_key
 
 
 class TestFileKeyValidation(TestCase):
@@ -31,65 +35,63 @@ class TestFileKeyValidation(TestCase):
 
     def test_file_key_validation(self):
         """Tests that file_key_validation returns True if all elements pass validation, and False otherwise"""
-        valid_file_key = "Flu_Vaccinations_v5_YGA_20200101T12345600.csv"  # Note that ODS code YGA maps to supplier TPP
-
         # Test case tuples are structured as (file_key, expected_result)
         test_cases_for_success_scenarios = [
-            # Valid flu file key (mixed case)
-            (valid_file_key, ("FLU", "TPP")),
-            # Valid covid19 file key (mixed case)
-            (valid_file_key.replace("Flu", "Covid19"), ("COVID19", "TPP")),
-            # Valid file key (all lowercase)
-            (valid_file_key.lower(), ("FLU", "TPP")),
-            # Valid file key (all uppercase)
-            (valid_file_key.upper(), ("FLU", "TPP")),
+            # Valid FLU/ EMIS file key (mixed case)
+            (VALID_FLU_EMIS_FILE_KEY, ("FLU", "EMIS")),
+            # Valid FLU/ EMIS (all lowercase)
+            (VALID_FLU_EMIS_FILE_KEY.lower(), ("FLU", "EMIS")),
+            # Valid FLU/ EMIS (all uppercase)
+            (VALID_FLU_EMIS_FILE_KEY.upper(), ("FLU", "EMIS")),
+            # Valid RSV/ RAVS file key
+            (VALID_RSV_RAVS_FILE_KEY, ("RSV", "RAVS")),
         ]
 
         for file_key, expected_result in test_cases_for_success_scenarios:
             with self.subTest(f"SubTest for file key: {file_key}"):
-                self.assertEqual(file_key_validation(file_key), expected_result)
+                self.assertEqual(validate_file_key(file_key), expected_result)
 
         key_format_error_message = "Initial file validation failed: invalid file key format"
         invalid_file_key_error_message = "Initial file validation failed: invalid file key"
         test_cases_for_failure_scenarios = [
             # File key with no '.'
-            (valid_file_key.replace(".", ""), key_format_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace(".", ""), key_format_error_message),
             # File key with additional '.'
-            (valid_file_key[:2] + "." + valid_file_key[2:], key_format_error_message),
+            (VALID_FLU_EMIS_FILE_KEY[:2] + "." + VALID_FLU_EMIS_FILE_KEY[2:], key_format_error_message),
             # File key with additional '_'
-            (valid_file_key[:2] + "_" + valid_file_key[2:], key_format_error_message),
+            (VALID_FLU_EMIS_FILE_KEY[:2] + "_" + VALID_FLU_EMIS_FILE_KEY[2:], key_format_error_message),
             # File key with missing '_'
-            (valid_file_key.replace("_", "", 1), key_format_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("_", "", 1), key_format_error_message),
             # File key with missing '_'
-            (valid_file_key.replace("_", ""), key_format_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("_", ""), key_format_error_message),
             # File key with missing extension
-            (valid_file_key.replace(".csv", ""), key_format_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace(".csv", ""), key_format_error_message),
             # File key with invalid vaccine type
-            (valid_file_key.replace("Flu", "Flue"), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("FLU", "Flue"), invalid_file_key_error_message),
             # File key with missing vaccine type
-            (valid_file_key.replace("Flu", ""), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("FLU", ""), invalid_file_key_error_message),
             # File key with invalid vaccinations element
-            (valid_file_key.replace("Vaccinations", "Vaccination"), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("Vaccinations", "Vaccination"), invalid_file_key_error_message),
             # File key with missing vaccinations element
-            (valid_file_key.replace("Vaccinations", ""), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("Vaccinations", ""), invalid_file_key_error_message),
             # File key with invalid version
-            (valid_file_key.replace("v5", "v4"), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("v5", "v4"), invalid_file_key_error_message),
             # File key with missing version
-            (valid_file_key.replace("v5", ""), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("v5", ""), invalid_file_key_error_message),
             # File key with invalid ODS code
-            (valid_file_key.replace("YGA", "YGAM"), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("YGM41", "YGAM"), invalid_file_key_error_message),
             # File key with missing ODS code
-            (valid_file_key.replace("YGA", "YGAM"), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("YGM41", "YGAM"), invalid_file_key_error_message),
             # File key with invalid timestamp
-            (valid_file_key.replace("20200101T12345600", "20200132T12345600"), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("20240708T12130100", "20200132T12345600"), invalid_file_key_error_message),
             # File key with missing timestamp
-            (valid_file_key.replace("20200101T12345600", ""), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("20240708T12130100", ""), invalid_file_key_error_message),
             # File key with incorrect extension
-            (valid_file_key.replace(".csv", ".dat"), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace(".csv", ".dat"), invalid_file_key_error_message),
         ]
 
         for file_key, expected_result in test_cases_for_failure_scenarios:
             with self.subTest(f"SubTest for file key: {file_key}"):
                 with self.assertRaises(InvalidFileKeyError) as context:
-                    file_key_validation(file_key)
+                    validate_file_key(file_key)
                 self.assertEqual(str(context.exception), expected_result)

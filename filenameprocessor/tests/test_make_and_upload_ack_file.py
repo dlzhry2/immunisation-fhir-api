@@ -14,10 +14,12 @@ from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, Bucket
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
 
+FILE_DETAILS = MockFileDetails.flu_emis
+
 # NOTE: The expected ack data is the same for all scenarios as the ack file is only created if an error occurs
 # or validation fails
 EXPECTED_ACK_DATA = {
-    "MESSAGE_HEADER_ID": MockFileDetails.flu_emis.message_id,
+    "MESSAGE_HEADER_ID": FILE_DETAILS.message_id,
     "HEADER_RESPONSE_CODE": "Failure",
     "ISSUE_SEVERITY": "Fatal",
     "ISSUE_CODE": "Fatal Error",
@@ -25,7 +27,7 @@ EXPECTED_ACK_DATA = {
     "RESPONSE_TYPE": "Technical",
     "RESPONSE_CODE": "10002",
     "RESPONSE_DISPLAY": "Infrastructure Level Response Value - Processing Error",
-    "RECEIVED_TIME": MockFileDetails.flu_emis.created_at_formatted_string,
+    "RECEIVED_TIME": FILE_DETAILS.created_at_formatted_string,
     "MAILBOX_FROM": "",
     "LOCAL_ID": "",
     "MESSAGE_DELIVERY": False,
@@ -48,9 +50,9 @@ class TestMakeAndUploadAckFile(TestCase):
         # CASE: message not delivered (this is the only case which creates an ack file for filenameprocessor)
         self.assertEqual(
             make_the_ack_data(
-                message_id=MockFileDetails.flu_emis.message_id,
+                message_id=FILE_DETAILS.message_id,
                 message_delivered=False,
-                created_at_formatted_string=MockFileDetails.flu_emis.created_at_formatted_string,
+                created_at_formatted_string=FILE_DETAILS.created_at_formatted_string,
             ),
             EXPECTED_ACK_DATA,
         )
@@ -58,31 +60,31 @@ class TestMakeAndUploadAckFile(TestCase):
     def test_upload_ack_file(self):
         """Test that upload_ack_file successfully uploads the ack file"""
         upload_ack_file(
-            file_key=MockFileDetails.flu_emis.file_key,
+            file_key=FILE_DETAILS.file_key,
             ack_data=deepcopy(EXPECTED_ACK_DATA),
-            created_at_formatted_string=MockFileDetails.flu_emis.created_at_formatted_string,
+            created_at_formatted_string=FILE_DETAILS.created_at_formatted_string,
         )
 
         expected_result = [deepcopy(EXPECTED_ACK_DATA)]
         # Note that the data downloaded from the CSV will contain the bool as a string
         expected_result[0]["MESSAGE_DELIVERY"] = "False"
         csv_dict_reader = download_csv_file_as_dict_reader(
-            s3_client, BucketNames.DESTINATION, MockFileDetails.flu_emis.ack_file_key
+            s3_client, BucketNames.DESTINATION, FILE_DETAILS.ack_file_key
         )
         self.assertEqual(list(csv_dict_reader), expected_result)
 
     def test_make_and_upload_ack_file(self):
         """Test that make_and_upload_ack_file uploads an ack file containing the correct values"""
         make_and_upload_the_ack_file(
-            message_id=MockFileDetails.flu_emis.message_id,
-            file_key=MockFileDetails.flu_emis.file_key,
+            message_id=FILE_DETAILS.message_id,
+            file_key=FILE_DETAILS.file_key,
             message_delivered=False,
-            created_at_formatted_string=MockFileDetails.flu_emis.created_at_formatted_string,
+            created_at_formatted_string=FILE_DETAILS.created_at_formatted_string,
         )
 
         expected_result = [deepcopy(EXPECTED_ACK_DATA)]
         expected_result[0]["MESSAGE_DELIVERY"] = "False"
         csv_dict_reader = download_csv_file_as_dict_reader(
-            s3_client, BucketNames.DESTINATION, MockFileDetails.flu_emis.ack_file_key
+            s3_client, BucketNames.DESTINATION, FILE_DETAILS.ack_file_key
         )
         self.assertEqual(list(csv_dict_reader), expected_result)

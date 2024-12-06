@@ -7,7 +7,7 @@ from json import loads as json_loads
 from contextlib import ExitStack
 from copy import deepcopy
 from boto3 import client as boto3_client
-from moto import mock_s3, mock_sqs, mock_firehose
+from moto import mock_s3, mock_sqs
 from clients import REGION_NAME
 from file_name_processor import lambda_handler
 from supplier_permissions import PERMISSIONS_CONFIG_FILE_KEY
@@ -41,8 +41,9 @@ class TestLambdaHandlerDataSource(TestCase):
         # These patches can be overridden in individual tests.
         common_patches = [
             # Patch the created_at_formatted_string, so that the ack file key can be deduced
+            # (it is already unittested separately).
             patch("file_name_processor.get_created_at_formatted_string", return_value=MOCK_CREATED_AT_FORMATTED_STRING),
-            # Patch add_to_audit_table to prevent it from being called (it is already unittested in a separately).
+            # Patch add_to_audit_table to prevent it from being called (it is already unittested separately).
             patch("file_name_processor.add_to_audit_table"),
             # Patch the firehose client to prevent it from being called.
             patch("logging_decorator.firehose_client.put_record"),
@@ -105,8 +106,6 @@ class TestLambdaHandlerDataSource(TestCase):
                 messages = sqs_client.receive_message(QueueUrl=queue_url, WaitTimeSeconds=1, MaxNumberOfMessages=1)
                 self.assertIn("Messages", messages)
                 received_message = json_loads(messages["Messages"][0]["Body"])
-
-                # Validate message content
                 self.assertEqual(received_message, file_details.sqs_message_body)
 
     def test_lambda_invalid_file_key(self):
@@ -114,14 +113,7 @@ class TestLambdaHandlerDataSource(TestCase):
         test_file_key = "InvalidVaccineType_Vaccinations_v5_YGM41_20240708T12130100.csv"
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=test_file_key)
 
-        # Mock full permissions
-        permissions_config_content = generate_permissions_config_content(
-            deepcopy(MockFileDetails.flu_emis.permissions_config)
-        )
-        with (  # noqa: E999
-            patch("supplier_permissions.redis_client.get", return_value=permissions_config_content),  # noqa: E999
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-        ):  # noqa: E999
+        with patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue:  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
@@ -129,7 +121,8 @@ class TestLambdaHandlerDataSource(TestCase):
 
     def test_lambda_invalid_permissions(self):
         """Tests that SQS queue is not called when supplier has no permissions for the vaccine type"""
-        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=MockFileDetails.flu_emis.file_key)
+        file_details = MockFileDetails.flu_emis
+        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=file_details.file_key)
 
         # Mock the supplier permissions with a value which doesn't include the requested Flu permissions
         permissions_config_content = generate_permissions_config_content({"EMIS": ["RSV_DELETE"]})
@@ -137,16 +130,14 @@ class TestLambdaHandlerDataSource(TestCase):
             patch("supplier_permissions.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
         ):  # noqa: E999
-            lambda_handler(event=self.make_event(MockFileDetails.flu_emis.file_key), context=None)
+            lambda_handler(event=self.make_event(file_details.file_key), context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
-        self.assert_ack_file_in_destination_s3_bucket(ack_file_key=MockFileDetails.flu_emis.ack_file_key)
+        self.assert_ack_file_in_destination_s3_bucket(ack_file_key=file_details.ack_file_key)
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
-@patch("logging_decorator.STREAM_NAME", "immunisation-fhir-api-internal-dev-splunk-firehose")
 @mock_s3
-@mock_firehose
 class TestLambdaHandlerConfig(TestCase):
     """Tests for lambda_handler when a config file is uploaded."""
 
