@@ -37,7 +37,7 @@
       <Enabled>true</Enabled>
       <ClientAuthEnabled>true</ClientAuthEnabled>
       <KeyStore>ref://imms-client</KeyStore>
-      <KeyAlias>imms_cert_renewal_alias</KeyAlias>
+      <KeyAlias>cert</KeyAlias>
     </SSLInfo>
     <Properties>
       <Property name="supports.http10">true</Property>
