@@ -1,9 +1,8 @@
 """File of values which can be used for testing"""
 
-from datetime import datetime
-
-STATIC_DATETIME = datetime(2021, 11, 20, 12, 0, 0)
-STATIC_DATETIME_FORMATTED = "20211120T12000000"
+# Mock_created_at_formatted string is used throughout the test suite, so that the ack file name
+# (which includes the created_at_formatted_string) can be predicted.
+MOCK_CREATED_AT_FORMATTED_STRING = "20211120T12000000"
 
 
 class BucketNames:
@@ -41,14 +40,17 @@ class FileDetails:
     """
     Class to create and hold values for a mock file, based on the vaccine type, supplier and ods code.
     NOTE: Supplier and ODS code are hardcoded rather than mapped, for testing purposes.
+    NOTE: The permissions_list and permissions_config are examples of full permissions for the suppler for the
+    vaccine type.
     """
 
     def __init__(self, vaccine_type: str, supplier: str, ods_code: str):
         self.name = f"{vaccine_type.upper()}/ {supplier.upper()} file"
-        self.created_at_formatted_string = STATIC_DATETIME_FORMATTED
+        self.created_at_formatted_string = MOCK_CREATED_AT_FORMATTED_STRING
         self.file_key = f"{vaccine_type}_Vaccinations_v5_{ods_code}_20240708T12130100.csv"
         self.ack_file_key = (
-            f"ack/{vaccine_type}_Vaccinations_v5_{ods_code}_20240708T12130100_InfAck_{STATIC_DATETIME_FORMATTED}.csv"
+            f"ack/{vaccine_type}_Vaccinations_v5_{ods_code}_20240708T12130100"
+            + f"_InfAck_{MOCK_CREATED_AT_FORMATTED_STRING}.csv"
         )
         self.vaccine_type = vaccine_type
         self.ods_code = ods_code

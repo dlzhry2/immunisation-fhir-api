@@ -7,6 +7,7 @@ NOTE: The expected file format for incoming files from the data sources bucket i
 """
 
 from uuid import uuid4
+from utils_for_filenameprocessor import get_created_at_formatted_string
 from file_key_validation import file_key_validation
 from send_sqs_message import make_and_send_sqs_message
 from make_and_upload_ack_file import make_and_upload_the_ack_file
@@ -45,8 +46,7 @@ def handle_record(record) -> dict:
         try:
             # Get message details
             message_id = str(uuid4())  # Assign a unique message_id for the file
-            response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
-            created_at_formatted_string = response["LastModified"].strftime("%Y%m%dT%H%M%S00")
+            created_at_formatted_string = get_created_at_formatted_string(bucket_name, file_key)
 
             # Process the file
             add_to_audit_table(message_id, file_key, created_at_formatted_string)
