@@ -28,7 +28,7 @@ data "aws_iam_policy_document" "allow_backup_to_sns" {
 
 resource "aws_sns_topic_subscription" "aws_backup_notifications_email_target" {
   count         = var.notifications_target_email_address != "" ? 1 : 0
-  topic_arn     = aws_sns_topic.backup[0].arn
+  topic_arn     = aws_sns_topic.backup.arn
   protocol      = "email"
   endpoint      = var.notifications_target_email_address
   filter_policy = jsonencode({ "State" : [{ "anything-but" : "COMPLETED" }] })
