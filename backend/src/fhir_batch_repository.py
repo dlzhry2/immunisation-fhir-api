@@ -29,16 +29,28 @@ def _make_patient_pk(_id: str):
 
 
 def _query_identifier(table, index, pk, identifier, is_present):
-    queryresponse = table.query(
-        IndexName=index, KeyConditionExpression=Key(pk).eq(identifier), Limit=1
-    )
-    if queryresponse.get("Count", 0) > 0:
-        return queryresponse
-    else:
-        if is_present:
-            delay_milliseconds = 200 # Delay time in milliseconds 
+    retries = 0
+    delay_milliseconds = 60
+    if is_present:
+        while retries < 5: 
+            queryresponse = table.query(
+                IndexName=index, KeyConditionExpression=Key(pk).eq(identifier), Limit=1
+            )
+            
+            if queryresponse.get("Count", 0) > 0:
+                return queryresponse
+            
+            retries += 1 
+            # Delay time in milliseconds 
             time.sleep(delay_milliseconds / 1000)
-            queryresponse["Count"] = 1
+        
+        return None
+    else:
+        queryresponse = table.query(
+                IndexName=index, KeyConditionExpression=Key(pk).eq(identifier), Limit=1
+            )
+            
+        if queryresponse.get("Count", 0) > 0:
             return queryresponse
 
 
