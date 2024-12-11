@@ -36,7 +36,7 @@ def _query_identifier(table, index, pk, identifier, is_present):
         return queryresponse
     else:
         if is_present:
-            delay_milliseconds = 150 # Delay time in milliseconds 
+            delay_milliseconds = 200 # Delay time in milliseconds 
             time.sleep(delay_milliseconds / 1000)
             queryresponse["Count"] = 1
             return queryresponse
