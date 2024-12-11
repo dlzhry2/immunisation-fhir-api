@@ -28,12 +28,17 @@ def _make_patient_pk(_id: str):
     return f"Patient#{_id}"
 
 
-def _query_identifier(table, index, pk, identifier):
+def _query_identifier(table, index, pk, identifier, is_present):
     queryresponse = table.query(
         IndexName=index, KeyConditionExpression=Key(pk).eq(identifier), Limit=1
     )
     if queryresponse.get("Count", 0) > 0:
         return queryresponse
+    else:
+        if is_present:
+            delay_milliseconds = 150 # Delay time in milliseconds 
+            time.sleep(delay_milliseconds / 1000)
+            return 1
 
 
 def get_nhs_number(imms):
@@ -80,16 +85,16 @@ class ImmunizationBatchRepository:
         pass
 
     def create_immunization(
-        self, immunization: any, supplier_system: str, vax_type: str, table: any
+        self, immunization: any, supplier_system: str, vax_type: str, table: any, is_present: bool
     ) -> dict:
         new_id = str(uuid.uuid4())
         immunization["id"] = new_id
         attr = RecordAttributes(immunization, vax_type, supplier_system, 0)
 
         query_response = _query_identifier(
-            table, "IdentifierGSI", "IdentifierPK", attr.identifier
+            table, "IdentifierGSI", "IdentifierPK", attr.identifier, is_present
         )
-
+        
         if query_response is not None:
             raise IdentifierDuplicationError(identifier=attr.identifier)
 
@@ -126,11 +131,11 @@ class ImmunizationBatchRepository:
             )
 
     def update_immunization(
-        self, immunization: any, supplier_system: str, vax_type: str, table: any
+        self, immunization: any, supplier_system: str, vax_type: str, table: any, is_present: bool
     ) -> dict:
         identifier = self._identifier_response(immunization)
         query_response = _query_identifier(
-            table, "IdentifierGSI", "IdentifierPK", identifier
+            table, "IdentifierGSI", "IdentifierPK", identifier, is_present
         )
         if query_response is None:
             raise ResourceNotFoundError(
@@ -155,11 +160,11 @@ class ImmunizationBatchRepository:
         )
 
     def delete_immunization(
-        self, immunization: any, supplier_system: str, vax_type: str, table: any
+        self, immunization: any, supplier_system: str, vax_type: str, table: any, is_present: bool
     ) -> dict:
         identifier = self._identifier_response(immunization)
         query_response = _query_identifier(
-            table, "IdentifierGSI", "IdentifierPK", identifier
+            table, "IdentifierGSI", "IdentifierPK", identifier, is_present
         )
         if query_response is None:
             raise ResourceNotFoundError(
