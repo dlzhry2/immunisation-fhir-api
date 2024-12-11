@@ -38,7 +38,8 @@ def _query_identifier(table, index, pk, identifier, is_present):
         if is_present:
             delay_milliseconds = 150 # Delay time in milliseconds 
             time.sleep(delay_milliseconds / 1000)
-            return 1
+            queryresponse["Count"] = 1
+            return queryresponse
 
 
 def get_nhs_number(imms):
