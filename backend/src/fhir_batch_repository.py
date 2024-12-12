@@ -32,13 +32,16 @@ def _query_identifier(table, index, pk, identifier, is_present):
     retries = 0
     delay_milliseconds = 60
     if is_present:
-        while retries < 5: 
+        while retries < 30: 
             queryresponse = table.query(
                 IndexName=index, KeyConditionExpression=Key(pk).eq(identifier), Limit=1
             )
             
             if queryresponse.get("Count", 0) > 0:
                 return queryresponse
+            
+            if retries > 6:
+                print(f"{identifier}: Crossed {retries} retries")
             
             retries += 1 
             # Delay time in milliseconds 
