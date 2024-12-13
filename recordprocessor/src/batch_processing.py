@@ -117,7 +117,7 @@ def main(event: str) -> None:
     except Exception as error:  # pylint: disable=broad-exception-caught
         logger.error("Error processing message: %s", error)
     end = time.time()
-    print(f"Total time for completion:{round(end - start, 5)}s")
+    logger.info(f"Total time for completion:{round(end - start, 5)}s")
 
 
 if __name__ == "__main__":

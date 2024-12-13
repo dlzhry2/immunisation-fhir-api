@@ -16,25 +16,19 @@ from batch_processing import (
 from make_and_upload_ack_file import make_ack_data
 from utils_for_recordprocessor import get_environment, get_csv_content_dict_reader, convert_string_to_dict_reader
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
-    SOURCE_BUCKET_NAME,
-    DESTINATION_BUCKET_NAME,
-    AWS_REGION,
-    STREAM_NAME,
+    Kinesis,
     MOCK_ENVIRONMENT_DICT,
-    TEST_FILE_KEY,
-    TEST_ACK_FILE_KEY,
-    TEST_INF_ACK_FILE_KEY,
-    TEST_EVENT,
-    VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE,
-    VALID_FILE_CONTENT_WITH_UPDATE,
-    TEST_EVENT_PERMISSION,
-    VALID_FILE_CONTENT_WITH_DELETE,
-    VALID_FILE_CONTENT,
-    TestValues,
+    MockFileDetails,
+    ValidMockFileContent,
+    BucketNames,
+    MockFieldDictionaries,
+    REGION_NAME,
 )
 
-s3_client = boto3.client("s3", region_name=AWS_REGION)
-kinesis_client = boto3.client("kinesis", region_name=AWS_REGION)
+s3_client = boto3.client("s3", region_name=REGION_NAME)
+kinesis_client = boto3.client("kinesis", region_name=REGION_NAME)
+
+test_file = MockFileDetails.rsv_emis
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
@@ -43,8 +37,8 @@ kinesis_client = boto3.client("kinesis", region_name=AWS_REGION)
 class TestProcessLambdaFunction(unittest.TestCase):
 
     def setUp(self) -> None:
-        for bucket_name in [SOURCE_BUCKET_NAME, DESTINATION_BUCKET_NAME]:
-            s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": AWS_REGION})
+        for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
+            s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME})
 
         self.results = {
             "resourceType": "Bundle",
@@ -118,7 +112,7 @@ class TestProcessLambdaFunction(unittest.TestCase):
         }
 
     def tearDown(self) -> None:
-        for bucket_name in [SOURCE_BUCKET_NAME, DESTINATION_BUCKET_NAME]:
+        for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
             for obj in s3_client.list_objects_v2(Bucket=bucket_name).get("Contents", []):
                 s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
             s3_client.delete_bucket(Bucket=bucket_name)
@@ -126,12 +120,12 @@ class TestProcessLambdaFunction(unittest.TestCase):
     @staticmethod
     def upload_source_file(file_key, file_content):
         """
-        Uploads a test file with the TEST_FILE_KEY (Flu EMIS file) the given file content to the source bucket
+        Uploads a test file with the test_file.file_key (Flu EMIS file) the given file content to the source bucket
         """
-        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=file_key, Body=file_content)
+        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=file_key, Body=file_content)
 
     @staticmethod
-    def setup_kinesis(stream_name=STREAM_NAME):
+    def setup_kinesis(stream_name=Kinesis.STREAM_NAME):
         """Sets up the kinesis stream. Obtains a shard iterator. Returns the kinesis client and shard iterator"""
         kinesis_client.create_stream(StreamName=stream_name, ShardCount=1)
 
@@ -149,14 +143,14 @@ class TestProcessLambdaFunction(unittest.TestCase):
 
     def assert_value_in_ack_file(self, value):
         """Downloads the ack file, decodes its content and returns the content"""
-        response = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=TEST_ACK_FILE_KEY)
+        response = s3_client.get_object(Bucket=BucketNames.DESTINATION, Key=test_file.ack_file_key)
         content = response["Body"].read().decode("utf-8")
         self.assertIn(value, content)
 
     @freeze_time("2021-11-20, 12:00:00")
     def assert_value_in_inf_ack_file(self, value):
         """Downloads the ack file, decodes its content and returns the content"""
-        response = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=TEST_INF_ACK_FILE_KEY)
+        response = s3_client.get_object(Bucket=BucketNames.DESTINATION, Key=test_file.inf_ack_file_key)
         content = response["Body"].read().decode("utf-8")
         self.assertIn(value, content)
 
@@ -171,56 +165,62 @@ class TestProcessLambdaFunction(unittest.TestCase):
         mock_process_csv_to_fhir.assert_called_once_with(incoming_message_body=message_body)
 
     def test_fetch_file_from_s3(self):
-        self.upload_source_file(TEST_FILE_KEY, VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE)
-        expected_output = csv.DictReader(StringIO(VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE), delimiter="|")
-        result, csv_data = get_csv_content_dict_reader(SOURCE_BUCKET_NAME, TEST_FILE_KEY)
+        self.upload_source_file(test_file.file_key, ValidMockFileContent.with_new_and_update)
+        expected_output = csv.DictReader(StringIO(ValidMockFileContent.with_new_and_update), delimiter="|")
+        result, csv_data = get_csv_content_dict_reader(BucketNames.SOURCE, test_file.file_key)
         self.assertEqual(list(result), list(expected_output))
-        self.assertEqual(csv_data, VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE)
+        self.assertEqual(csv_data, ValidMockFileContent.with_new_and_update)
 
     @patch("batch_processing.send_to_kinesis")
     def test_process_csv_to_fhir(self, mock_send_to_kinesis):
-        self.upload_source_file(file_key=TEST_FILE_KEY, file_content=VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE)
+        self.upload_source_file(file_key=test_file.file_key, file_content=ValidMockFileContent.with_new_and_update)
 
         with patch("batch_processing.get_operation_permissions", return_value={"CREATE", "UPDATE", "DELETE"}):
-            process_csv_to_fhir(TEST_EVENT)
+            process_csv_to_fhir(test_file.event_full_permissions)
 
         mock_send_to_kinesis.assert_called()
 
     @patch("batch_processing.send_to_kinesis")
     def test_process_csv_to_fhir_(self, mock_send_to_kinesis):
-        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=TEST_FILE_KEY, Body=VALID_FILE_CONTENT_WITH_DELETE)
+        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=test_file.file_key, Body=ValidMockFileContent.with_delete)
 
-        process_csv_to_fhir(TEST_EVENT_PERMISSION)
+        process_csv_to_fhir(test_file.event_delete_permissions_only)
 
         # self.assert_value_in_ack_file("Success")
         mock_send_to_kinesis.assert_called()
 
     @patch("batch_processing.send_to_kinesis")
     def test_process_csv_to_fhir_positive_string_provided(self, mock_send_to_kinesis):
-        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=TEST_FILE_KEY, Body=VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE)
+        s3_client.put_object(
+            Bucket=BucketNames.SOURCE, Key=test_file.file_key, Body=ValidMockFileContent.with_new_and_update
+        )
 
         with patch("batch_processing.get_operation_permissions", return_value={"CREATE", "UPDATE", "DELETE"}):
-            process_csv_to_fhir(TEST_EVENT)
+            process_csv_to_fhir(test_file.event_full_permissions)
 
         # self.assert_value_in_ack_file("Success")
         mock_send_to_kinesis.assert_called()
 
     @patch("batch_processing.send_to_kinesis")
     def test_process_csv_to_fhir_only_mandatory(self, mock_send_to_kinesis):
-        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=TEST_FILE_KEY, Body=VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE)
+        s3_client.put_object(
+            Bucket=BucketNames.SOURCE, Key=test_file.file_key, Body=ValidMockFileContent.with_new_and_update
+        )
 
         with patch("batch_processing.get_operation_permissions", return_value={"CREATE", "UPDATE", "DELETE"}):
-            process_csv_to_fhir(TEST_EVENT)
+            process_csv_to_fhir(test_file.event_full_permissions)
 
         # self.assert_value_in_ack_file("Success")
         mock_send_to_kinesis.assert_called()
 
     @patch("batch_processing.send_to_kinesis")
     def test_process_csv_to_fhir_positive_string_not_provided(self, mock_send_to_kinesis):
-        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=TEST_FILE_KEY, Body=VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE)
+        s3_client.put_object(
+            Bucket=BucketNames.SOURCE, Key=test_file.file_key, Body=ValidMockFileContent.with_new_and_update
+        )
 
         with patch("batch_processing.get_operation_permissions", return_value={"CREATE", "UPDATE", "DELETE"}):
-            process_csv_to_fhir(TEST_EVENT)
+            process_csv_to_fhir(test_file.event_full_permissions)
 
         # self.assert_value_in_ack_file("Success")
         mock_send_to_kinesis.assert_called()
@@ -228,13 +228,15 @@ class TestProcessLambdaFunction(unittest.TestCase):
     @patch("batch_processing.send_to_kinesis")
     def test_process_csv_to_fhir_paramter_missing(self, mock_send_to_kinesis):
         s3_client.put_object(
-            Bucket=SOURCE_BUCKET_NAME, Key=TEST_FILE_KEY, Body=VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE.replace("new", "")
+            Bucket=BucketNames.SOURCE,
+            Key=test_file.file_key,
+            Body=ValidMockFileContent.with_new_and_update.replace("new", ""),
         )
 
         with patch("process_row.convert_to_fhir_imms_resource", return_value=({}, True)), patch(
             "batch_processing.get_operation_permissions", return_value={"CREATE", "UPDATE", "DELETE"}
         ):
-            process_csv_to_fhir(TEST_EVENT)
+            process_csv_to_fhir(test_file.event_full_permissions)
 
         # self.assert_value_in_ack_file("Fatal")
         mock_send_to_kinesis.assert_called()
@@ -243,21 +245,24 @@ class TestProcessLambdaFunction(unittest.TestCase):
     @freeze_time("2021-11-20, 12:00:00")
     def test_process_csv_to_fhir_invalid_headers(self, mock_send_to_kinesis):
         self.upload_source_file(
-            file_key=TEST_FILE_KEY,
-            file_content=VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE.replace("NHS_NUMBER", "NHS_NUMBERS"),
+            file_key=test_file.file_key,
+            file_content=ValidMockFileContent.with_new_and_update.replace("NHS_NUMBER", "NHS_NUMBERS"),
         )
 
-        process_csv_to_fhir(TEST_EVENT)
+        process_csv_to_fhir(test_file.event_full_permissions)
         mock_send_to_kinesis.assert_not_called()
 
     def test_validate_content_headers(self):
         "Tests that validate_content_headers returns True for an exact header match and False otherwise"
         # Test case tuples are stuctured as (file_content, expected_result)
         test_cases = [
-            (VALID_FILE_CONTENT, True),  # Valid file content
-            (VALID_FILE_CONTENT.replace("SITE_CODE", "SITE_COVE"), False),  # Misspelled header
-            (VALID_FILE_CONTENT.replace("SITE_CODE|", ""), False),  # Missing header
-            (VALID_FILE_CONTENT.replace("PERSON_DOB|", "PERSON_DOB|EXTRA_HEADER|"), False),  # Extra header
+            (ValidMockFileContent.with_new_and_update, True),  # Valid file content
+            (ValidMockFileContent.with_new_and_update.replace("SITE_CODE", "SITE_COVE"), False),  # Misspelled header
+            (ValidMockFileContent.with_new_and_update.replace("SITE_CODE|", ""), False),  # Missing header
+            (
+                ValidMockFileContent.with_new_and_update.replace("PERSON_DOB|", "PERSON_DOB|EXTRA_HEADER|"),
+                False,
+            ),  # Extra header
         ]
 
         for file_content, expected_result in test_cases:
@@ -271,8 +276,8 @@ class TestProcessLambdaFunction(unittest.TestCase):
         Tests that validate_action_flag_permissions returns True if supplier has permissions to perform at least one
         of the requested CRUD operations for the given vaccine type, and False otherwise
         """
-        # Set up test file content. Note that VALID_FILE_CONTENT contains one "new" and one "update" ACTION_FLAG.
-        valid_file_content = VALID_FILE_CONTENT
+        # Set up test file content. Note that ValidFileContent has action flags in lower case
+        valid_file_content = ValidMockFileContent.with_new_and_update
         valid_content_new_and_update_lowercase = valid_file_content
         valid_content_new_and_update_uppercase = valid_file_content.replace("new", "NEW").replace("update", "UPDATE")
         valid_content_new_and_update_mixedcase = valid_file_content.replace("new", "New").replace("update", "uPdAte")
@@ -324,32 +329,34 @@ class TestProcessLambdaFunction(unittest.TestCase):
     @freeze_time("2021-11-20, 12:00:00")
     @patch("batch_processing.send_to_kinesis")
     def test_process_csv_to_fhir_wrong_file_invalid_action_flag_permissions(self, mock_send_to_kinesis):
-        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=TEST_FILE_KEY, Body=VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE)
+        s3_client.put_object(
+            Bucket=BucketNames.SOURCE, Key=test_file.file_key, Body=ValidMockFileContent.with_new_and_update
+        )
 
-        process_csv_to_fhir(TEST_EVENT_PERMISSION)
+        process_csv_to_fhir(test_file.event_delete_permissions_only)
 
         mock_send_to_kinesis.assert_not_called()
 
     @patch("batch_processing.send_to_kinesis")
     def test_process_csv_to_fhir_successful(self, mock_send_to_kinesis):
-        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=TEST_FILE_KEY, Body=VALID_FILE_CONTENT_WITH_UPDATE)
+        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=test_file.file_key, Body=ValidMockFileContent.with_update)
 
         with patch("batch_processing.get_operation_permissions", return_value={"CREATE", "UPDATE", "DELETE"}):
             mock_csv_reader_instance = MagicMock()
-            mock_csv_reader_instance.__iter__.return_value = iter(TestValues.mock_update_request)
-            process_csv_to_fhir(TEST_EVENT)
+            mock_csv_reader_instance.__iter__.return_value = iter(MockFieldDictionaries.all_fields)
+            process_csv_to_fhir(test_file.event_full_permissions)
 
         # self.assert_value_in_ack_file("Success")
         mock_send_to_kinesis.assert_called()
 
     @patch("batch_processing.send_to_kinesis")
     def test_process_csv_to_fhir_incorrect_permissions(self, mock_send_to_kinesis):
-        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=TEST_FILE_KEY, Body=VALID_FILE_CONTENT_WITH_UPDATE)
+        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=test_file.file_key, Body=ValidMockFileContent.with_update)
 
         with patch("batch_processing.get_operation_permissions", return_value={"DELETE"}):
             mock_csv_reader_instance = MagicMock()
-            mock_csv_reader_instance.__iter__.return_value = iter(TestValues.mock_update_request)
-            process_csv_to_fhir(TEST_EVENT)
+            mock_csv_reader_instance.__iter__.return_value = iter(MockFieldDictionaries.all_fields)
+            process_csv_to_fhir(test_file.event_full_permissions)
 
         # self.assert_value_in_ack_file("No permissions for requested operation")
         mock_send_to_kinesis.assert_called()
