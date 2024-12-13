@@ -47,7 +47,7 @@ TEST_DATE = "20240609"
 TEST_UNIQUE_ID_URI = "https://www.ravs.england.nhs.uk/"
 TEST_LOCAL_ID_002COVID = f"0002_COVID19_v1_DOSE_1^{TEST_UNIQUE_ID_URI}"
 TEST_LOCAL_ID_001RSV = f"0001_RSV_v5_RUN_2_CDFDPS-742_valid_dose_1^{TEST_UNIQUE_ID_URI}"
-TEST_LOCAL_ID_mandatory = f"0001_RSV_v5_Run3_valid_dose_1_new_upd_del_20240905130057^{TEST_UNIQUE_ID_URI}"
+TEST_LOCAL_ID_MANDATORY = f"0001_RSV_v5_Run3_valid_dose_1_new_upd_del_20240905130057^{TEST_UNIQUE_ID_URI}"
 
 
 FILE_HEADERS = (
@@ -216,7 +216,6 @@ SOURCE_BUCKET_NAME = "immunisation-batch-internal-dev-data-sources"
 DESTINATION_BUCKET_NAME = "immunisation-batch-internal-dev-data-destinations"
 CONFIG_BUCKET_NAME = "immunisation-batch-internal-dev-configs"
 STREAM_NAME = "imms-batch-internal-dev-processingdata-stream"
-
 AWS_REGION = "eu-west-2"
 
 TEST_VACCINE_TYPE = "rsv"
@@ -269,8 +268,10 @@ TEST_EVENT_PERMISSION = {
 MOCK_ENVIRONMENT_DICT = {
     "ENVIRONMENT": "internal-dev",
     "LOCAL_ACCOUNT_ID": "123456789012",
+    "SOURCE_BUCKET_NAME": SOURCE_BUCKET_NAME,
     "ACK_BUCKET_NAME": DESTINATION_BUCKET_NAME,
     "SHORT_QUEUE_PREFIX": "imms-batch-internal-dev",
+    "KINESIS_STREAM_NAME": STREAM_NAME,
     "KINESIS_STREAM_ARN": f"arn:aws:kinesis:{AWS_REGION}:123456789012:stream/{STREAM_NAME}",
 }
 

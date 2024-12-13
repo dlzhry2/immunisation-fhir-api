@@ -8,15 +8,9 @@ from datetime import datetime, timedelta, timezone
 from copy import deepcopy
 from moto import mock_s3, mock_kinesis
 from boto3 import client as boto3_client
-import os
-import sys
-
-maindir = os.path.dirname(__file__)
-srcdir = "../src"
-sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
-from batch_processing import main  # noqa: E402
-from constants import Diagnostics  # noqa: E402
-from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (  # noqa: E402
+from batch_processing import main
+from constants import Diagnostics
+from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
     SOURCE_BUCKET_NAME,
     DESTINATION_BUCKET_NAME,
     CONFIG_BUCKET_NAME,
@@ -41,7 +35,7 @@ from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests impo
     critical_fields_only_fhir_imms_resource,
     TEST_LOCAL_ID_001RSV,
     TEST_LOCAL_ID_002COVID,
-    TEST_LOCAL_ID_mandatory,
+    TEST_LOCAL_ID_MANDATORY,
 )
 
 s3_client = boto3_client("s3", region_name=AWS_REGION)
@@ -120,10 +114,8 @@ class TestRecordProcessor(unittest.TestCase):
         * Where expected_success is True:
             - "fhir_json" key is found in the Kinesis data
             - Kinesis Data is equal to the expected_kinesis_data when ignoring the "fhir_json"
-            - "{TEST_FILE_ID}^{index+1}|ok" is found in the ack file
         * Where expected_success is False:
             - Kinesis Data is equal to the expected_kinesis_data
-            - "{TEST_FILE_ID}^{index+1}|fatal-error" is found in the ack file
         """
 
         # ack_file_content = self.get_ack_file_content()
@@ -157,10 +149,8 @@ class TestRecordProcessor(unittest.TestCase):
                         self.assertIn(key_to_ignore, kinesis_data)
                         kinesis_data.pop(key_to_ignore)
                     self.assertEqual(kinesis_data, expected_kinesis_data)
-                    # self.assertIn(f"{TEST_FILE_ID}^{index+1}|OK", ack_file_content)
                 else:
                     self.assertEqual(kinesis_data, expected_kinesis_data)
-                    # self.assertIn(f"{TEST_FILE_ID}^{index+1}|Fatal", ack_file_content)
 
     def test_e2e_success(self):
         """
@@ -307,13 +297,13 @@ class TestRecordProcessor(unittest.TestCase):
         all_fields_row_expected_kinesis_data = {
             "operation_requested": "UPDATE",
             "fhir_json": all_fields_fhir_imms_resource,
-            "local_id": TEST_LOCAL_ID_mandatory,
+            "local_id": TEST_LOCAL_ID_MANDATORY,
         }
 
         mandatory_fields_only_row_expected_kinesis_data = {
             "operation_requested": "UPDATE",
             "fhir_json": mandatory_fields_only_fhir_imms_resource,
-            "local_id": TEST_LOCAL_ID_mandatory,
+            "local_id": TEST_LOCAL_ID_MANDATORY,
         }
 
         critical_fields_only_row_expected_kinesis_data = {

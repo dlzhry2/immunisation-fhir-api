@@ -1,16 +1,11 @@
 """Tests for convert_to_fhir_imms_resource"""
 
 import unittest
-import os
-import sys
-maindir = os.path.dirname(__file__)
-srcdir = '../src'
-sys.path.insert(0, os.path.abspath(os.path.join(maindir, srcdir)))
-from convert_to_fhir_imms_resource import convert_to_fhir_imms_resource  # noqa: E402
+from convert_to_fhir_imms_resource import convert_to_fhir_imms_resource
 
 # Do not try from src.mappings import Vaccine as this imports a different instance of Vaccine and tests will break
-from mappings import Vaccine  # noqa: E402
-from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (  # noqa: E402
+from mappings import Vaccine
+from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
     all_fields,
     mandatory_fields_only,
     all_fields_fhir_imms_resource,

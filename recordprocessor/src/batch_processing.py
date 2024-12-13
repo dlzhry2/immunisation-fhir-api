@@ -1,8 +1,6 @@
 """Functions for processing the file on a row-by-row basis"""
 
 import json
-
-# from io import StringIO
 import os
 import time
 import logging
@@ -13,9 +11,8 @@ from make_and_upload_ack_file import make_and_upload_ack_file
 from get_operation_permissions import get_operation_permissions
 from process_row import process_row
 from mappings import Vaccine
-
-# from update_ack_file import update_ack_file
 from send_to_kinesis import send_to_kinesis
+
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
 
@@ -29,7 +26,6 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
     and documents the outcome for each row in the ack file.
     """
     logger.info("Event: %s", incoming_message_body)
-
     # Get details needed to process file
     file_id = incoming_message_body.get("message_id")
     vaccine: Vaccine = next(  # Convert vaccine_type to Vaccine enum
@@ -44,8 +40,8 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
     # Fetch the data
     bucket_name = os.getenv("SOURCE_BUCKET_NAME")
     csv_reader, csv_data = get_csv_content_dict_reader(bucket_name, file_key)
-
     is_valid_headers = validate_content_headers(csv_reader)
+
     # Validate has permission to perform at least one of the requested actions
     action_flag_check = validate_action_flag_permissions(supplier, vaccine.value, permission, csv_data)
 
@@ -54,8 +50,6 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
     else:
         # Initialise the accumulated_ack_file_content with the headers
         make_and_upload_ack_file(file_id, file_key, True, True, created_at_formatted_string)
-        # accumulated_ack_file_content = StringIO()
-        # accumulated_ack_file_content.write("|".join(Constants.ack_headers) + "\n")
 
         row_count = 0  # Initialize a counter for rows
         for row in csv_reader:
@@ -74,6 +68,7 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
                 "created_at_formatted_string": created_at_formatted_string,
                 **details_from_processing,
             }
+            print(">>>>>>>>>>>>>>>>>>>HERE1")
 
             send_to_kinesis(supplier, outgoing_message_body, STREAM_NAME, STREAM_ARN)
 
