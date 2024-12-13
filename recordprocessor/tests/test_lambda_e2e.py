@@ -20,10 +20,9 @@ from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests impo
     VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE,
     VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE_AND_DELETE,
     STREAM_NAME,
-    TEST_ACK_FILE_KEY,
     TEST_EVENT_DUMPED,
+    TEST_EVENT,
     TEST_FILE_KEY,
-    TEST_SUPPLIER,
     TEST_FILE_ID,
     MOCK_ENVIRONMENT_DICT,
     MOCK_PERMISSIONS,
@@ -36,12 +35,16 @@ from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests impo
     TEST_LOCAL_ID_001RSV,
     TEST_LOCAL_ID_002COVID,
     TEST_LOCAL_ID_MANDATORY,
+    MOCK_CREATED_AT_FORMATTED_STRING,
+    MockFileDetails,
 )
 
 s3_client = boto3_client("s3", region_name=AWS_REGION)
 kinesis_client = boto3_client("kinesis", region_name=AWS_REGION)
 
 yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+
+test_file = MockFileDetails.rsv_emis
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
@@ -77,7 +80,7 @@ class TestRecordProcessor(unittest.TestCase):
         """
         Uploads a test file with the TEST_FILE_KEY (Flu EMIS file) the given file content to the source bucket
         """
-        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=TEST_FILE_KEY, Body=sourc_file_content)
+        s3_client.put_object(Bucket=SOURCE_BUCKET_NAME, Key=test_file.file_key, Body=sourc_file_content)
         s3_client.put_object(Bucket=CONFIG_BUCKET_NAME, Key=PERMISSIONS_FILE_KEY, Body=json.dumps(mock_permissions))
 
     @staticmethod
@@ -96,7 +99,7 @@ class TestRecordProcessor(unittest.TestCase):
     @staticmethod
     def get_ack_file_content():
         """Downloads the ack file, decodes its content and returns the decoded content"""
-        response = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=TEST_ACK_FILE_KEY)
+        response = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=test_file.ack_file_key)
         return response["Body"].read().decode("utf-8")
 
     def make_assertions(self, test_cases):
@@ -126,7 +129,7 @@ class TestRecordProcessor(unittest.TestCase):
             with self.subTest(test_name):
 
                 kinesis_record = kinesis_records[index]
-                self.assertEqual(kinesis_record["PartitionKey"], TEST_SUPPLIER)
+                self.assertEqual(kinesis_record["PartitionKey"], test_file.supplier)
                 self.assertEqual(kinesis_record["SequenceNumber"], f"{index+1}")
 
                 # Ensure that arrival times are sequential
@@ -137,9 +140,10 @@ class TestRecordProcessor(unittest.TestCase):
                 kinesis_data = json.loads(kinesis_record["Data"].decode("utf-8"), parse_float=Decimal)
                 expected_kinesis_data = {
                     "row_id": f"{TEST_FILE_ID}^{index+1}",
-                    "file_key": TEST_FILE_KEY,
-                    "supplier": TEST_SUPPLIER,
-                    "created_at_formatted_string": "2020-01-01",
+                    "file_key": test_file.file_key,
+                    "supplier": test_file.supplier,
+                    "vax_type": test_file.vaccine_type,
+                    "created_at_formatted_string": MOCK_CREATED_AT_FORMATTED_STRING,
                     **expected_kinesis_data,
                 }
                 if expect_success:
@@ -175,13 +179,11 @@ class TestRecordProcessor(unittest.TestCase):
         any permissions.
         """
         self.upload_files(VALID_FILE_CONTENT_WITH_NEW_AND_UPDATE_AND_DELETE)
-        event = deepcopy(TEST_EVENT_DUMPED)
-        test_event = json.loads(event)
+        test_event = deepcopy(TEST_EVENT)
         test_event["permission"] = ["RSV_CREATE"]
         test_event = json.dumps(test_event)
 
         main(test_event)
-        # expected_kinesis_data = {"diagnostics": Diagnostics.NO_PERMISSIONS}
 
         # Test case tuples are stuctured as (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
         test_cases = [
@@ -331,7 +333,7 @@ class TestRecordProcessor(unittest.TestCase):
 
         main(TEST_EVENT_DUMPED)
 
-        # self.assertIn("Fatal", self.get_ack_file_content())
+        # TODO: Add assertions
 
 
 if __name__ == "__main__":

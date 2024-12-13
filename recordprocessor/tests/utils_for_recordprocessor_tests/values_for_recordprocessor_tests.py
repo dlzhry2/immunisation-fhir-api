@@ -218,13 +218,14 @@ CONFIG_BUCKET_NAME = "immunisation-batch-internal-dev-configs"
 STREAM_NAME = "imms-batch-internal-dev-processingdata-stream"
 AWS_REGION = "eu-west-2"
 
-TEST_VACCINE_TYPE = "rsv"
+TEST_VACCINE_TYPE = "RSV"
 TEST_SUPPLIER = "EMIS"
 TEST_ODS_CODE = "8HK48"
 TEST_FILE_ID = "123456"
 TEST_PERMISSION = ["COVID19_FULL", "FLU_FULL", "MMR_FULL", "RSV_FULL"]
 STATIC_DATETIME = datetime(2021, 11, 20, 12, 0, 0)
 # For test purposes static time with no seconds
+MOCK_CREATED_AT_FORMATTED_STRING = "20211120T12000000"
 STATIC_ISO_DATETIME = STATIC_DATETIME.replace(second=0, microsecond=0).isoformat(timespec="milliseconds")
 
 TEST_FILE_KEY = f"{TEST_VACCINE_TYPE}_Vaccinations_v5_{TEST_ODS_CODE}_20210730T12000000.csv"
@@ -236,17 +237,49 @@ TEST_UNIQUE_ID_URI = "https://www.ravs.england.nhs.uk/"
 TEST_LOCAL_ID = f"0002_COVID19_v1_DOSE_1^{TEST_UNIQUE_ID_URI}"
 
 
-TEST_EVENT_DUMPED = json.dumps(
-    {
-        "message_id": TEST_FILE_ID,
-        "vaccine_type": TEST_VACCINE_TYPE,
-        "supplier": TEST_SUPPLIER,
-        "filename": TEST_FILE_KEY,
-        "permission": TEST_PERMISSION,
-        "created_at_formatted_string": "2020-01-01",
-        "local_id": TEST_LOCAL_ID,
-    }
-)
+class FileDetails:
+    """
+    Class to create and hold values for a mock file, based on the vaccine type, supplier and ods code.
+    NOTE: Supplier and ODS code are hardcoded rather than mapped, for testing purposes.
+    NOTE: The permissions_list and permissions_config are examples of full permissions for the suppler for the
+    vaccine type.
+    """
+
+    def __init__(self, vaccine_type: str, supplier: str, ods_code: str):
+        self.name = f"{vaccine_type.upper()}/ {supplier.upper()} file"
+        self.created_at_formatted_string = MOCK_CREATED_AT_FORMATTED_STRING
+        self.file_key = f"{vaccine_type}_Vaccinations_v5_{ods_code}_20210730T12000000.csv"
+        self.inf_ack_file_key = (
+            f"ack/{vaccine_type}_Vaccinations_v5_{ods_code}_20210730T12000000"
+            + f"_InfAck_{MOCK_CREATED_AT_FORMATTED_STRING}.csv"
+        )
+        self.ack_file_key = f"processedFile/{vaccine_type}_Vaccinations_v5_{ods_code}_20210730T12000000_response.csv"
+        self.vaccine_type = vaccine_type
+        self.ods_code = ods_code
+        self.supplier = supplier
+        self.message_id = f"{vaccine_type.lower()}_{supplier.lower()}_test_id"
+        self.permissions_list = [f"{vaccine_type}_FULL"]
+
+        # Mock the event details which would be receeived from SQS message
+        self.event = {
+            "message_id": self.message_id,
+            "vaccine_type": vaccine_type,
+            "supplier": supplier,
+            "filename": self.file_key,
+            "permission": self.permissions_list,
+            "created_at_formatted_string": self.created_at_formatted_string,
+            "local_id": TEST_LOCAL_ID,
+        }
+        self.event_dumped = json.dumps(self.event)
+
+
+class MockFileDetails:
+    """Class containing mock file details for use in tests"""
+
+    rsv_ravs = FileDetails("RSV", "RAVS", "X26")
+    rsv_emis = FileDetails("RSV", "EMIS", "8HK48")
+    flu_emis = FileDetails("FLU", "EMIS", "YGM41")
+
 
 TEST_EVENT = {
     "message_id": TEST_FILE_ID,
@@ -254,8 +287,11 @@ TEST_EVENT = {
     "supplier": TEST_SUPPLIER,
     "filename": TEST_FILE_KEY,
     "permission": TEST_PERMISSION,
+    "created_at_formatted_string": MOCK_CREATED_AT_FORMATTED_STRING,
     "local_id": TEST_LOCAL_ID,
 }
+
+TEST_EVENT_DUMPED = json.dumps(TEST_EVENT)
 
 TEST_EVENT_PERMISSION = {
     "message_id": TEST_FILE_ID,
