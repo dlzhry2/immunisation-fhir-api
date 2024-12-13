@@ -8,22 +8,31 @@ from mappings import Vaccine
 REGION_NAME = "eu-west-2"
 
 
-class Kinesis:
-    """Class containing Kinesis values for use in tests"""
+class MockUniqueIdUris:
+    """Class containing mock unique ID URIs for use in tests"""
 
-    STREAM_NAME = "imms-batch-internal-dev-processingdata-stream"
-
-
-TEST_UNIQUE_ID_URI = "https://www.ravs.england.nhs.uk/"
-TEST_LOCAL_ID = f"0002_COVID19_v1_DOSE_1^{TEST_UNIQUE_ID_URI}"
+    RAVS = "https://www.ravs.england.nhs.uk/"
 
 
-TEST_UNIQUE_ID = "0001_RSV_v5_RUN_2_CDFDPS-742_valid_dose_1"
-TEST_DATE = "20240609"
-TEST_UNIQUE_ID_URI = "https://www.ravs.england.nhs.uk/"
-TEST_LOCAL_ID_002COVID = f"0002_COVID19_v1_DOSE_1^{TEST_UNIQUE_ID_URI}"
-TEST_LOCAL_ID_001RSV = f"0001_RSV_v5_RUN_2_CDFDPS-742_valid_dose_1^{TEST_UNIQUE_ID_URI}"
-TEST_LOCAL_ID_MANDATORY = f"0001_RSV_v5_Run3_valid_dose_1_new_upd_del_20240905130057^{TEST_UNIQUE_ID_URI}"
+class MockUniqueIds:
+    """Class containing mock unique IDs for use in tests"""
+
+    COVID19_001 = "COVID_19_001"
+    RSV_001 = "RSV_001"
+    RSV_002 = "RSV_002"
+
+
+class MockLocalIds:
+    """Class containing mock local IDs for use in tests"""
+
+    @staticmethod
+    def create_local_id(unique_id: str, unique_id_uri: str) -> str:
+        """Create a mock local ID. Default is to use the test unique ID URI."""
+        return f"{unique_id}^{unique_id_uri}"
+
+    COVID19_001_RAVS = create_local_id(MockUniqueIds.COVID19_001, MockUniqueIdUris.RAVS)
+    RSV_001_RAVS = create_local_id(MockUniqueIds.RSV_001, MockUniqueIdUris.RAVS)
+    RSV_002_RAVS = create_local_id(MockUniqueIds.RSV_002, MockUniqueIdUris.RAVS)
 
 
 class BucketNames:
@@ -31,6 +40,12 @@ class BucketNames:
 
     SOURCE = "immunisation-batch-internal-dev-data-sources"
     DESTINATION = "immunisation-batch-internal-dev-data-destinations"
+
+
+class Kinesis:
+    """Class containing Kinesis values for use in tests"""
+
+    STREAM_NAME = "imms-batch-internal-dev-processingdata-stream"
 
 
 MOCK_ENVIRONMENT_DICT = {
@@ -82,8 +97,8 @@ class MockFileRows:
 
     NEW = (
         '9674963871|"SABINA"|"GREIR"|"20190131"|"2"|"GU14 6TU"|"20240610T183325"|"J82067"|'
-        f'"https://fhir.nhs.uk/Id/ods-organization-code"|"{TEST_UNIQUE_ID}"|'
-        f'"https://www.ravs.england.nhs.uk/"|"new"|"Ellena"|"O\'Reilly"|"{TEST_DATE}"|"TRUE"|'
+        f'"https://fhir.nhs.uk/Id/ods-organization-code"|"{MockUniqueIds.RSV_001}"|"{MockUniqueIdUris.RAVS}"|'
+        '"new"|"Ellena"|"O\'Reilly"|"20240101"|"TRUE"|'
         '"1303503001"|"Administration of vaccine product containing only Human orthopneumovirus antigen (procedure)"|'
         '1|"42605811000001109"|"Abrysvo vaccine powder and solvent for solution for injection 0.5ml vials (Pfizer Ltd) '
         '(product)"|"Pfizer"|"RSVTEST"|"20241231"|"368208006"|"Left upper arm structure (body structure)"|'
@@ -93,7 +108,7 @@ class MockFileRows:
 
     UPDATE = (
         '1234567890|"JOHN"|"DOE"|"19801231"|"1"|"AB12 3CD"|"20240611T120000"|"J82068"|'
-        '"https://fhir.nhs.uk/Id/ods-organization-code"|"0002_COVID19_v1_DOSE_1"|"https://www.ravs.england.nhs.uk/"|'
+        f'"https://fhir.nhs.uk/Id/ods-organization-code"|"{MockUniqueIds.COVID19_001}"|"{MockUniqueIdUris.RAVS}"|'
         '"update"|"Jane"|"Smith"|"20240610"|"FALSE"|"1324657890"|'
         '"Administration of COVID-19 vaccine product (procedure)"|'
         '1|"1234567890"|'
@@ -106,7 +121,7 @@ class MockFileRows:
 
     DELETE = (
         '1234567890|"JOHN"|"DOE"|"19801231"|"1"|"AB12 3CD"|"20240611T120000"|"J82068"|'
-        '"https://fhir.nhs.uk/Id/ods-organization-code"|"0002_COVID19_v1_DOSE_1"|"https://www.ravs.england.nhs.uk/"|'
+        f'"https://fhir.nhs.uk/Id/ods-organization-code"|"{MockUniqueIds.COVID19_001}"|"{MockUniqueIdUris.RAVS}"|'
         '"delete"|"Jane"|"Smith"|"20240610"|"FALSE"|"1324657890"|'
         '"Administration of COVID-19 vaccine product (procedure)"|'
         '1|"1234567890"|'
@@ -195,7 +210,7 @@ class UnorderedFieldDictionaries:
         "DATE_AND_TIME": "20240904T183325",
         "SITE_CODE": "RVVKC",
         "SITE_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code",
-        "UNIQUE_ID": "0001_RSV_v5_Run3_valid_dose_1_new_upd_del_20240905130057",
+        "UNIQUE_ID": MockUniqueIds.RSV_002,
         "UNIQUE_ID_URI": "https://www.ravs.england.nhs.uk/",
         "ACTION_FLAG": "update",
         "RECORDED_DATE": "20240904",
@@ -325,7 +340,7 @@ class MockFhirImmsResources:
         "identifier": [
             {
                 "system": "https://www.ravs.england.nhs.uk/",
-                "value": "0001_RSV_v5_Run3_valid_dose_1_new_upd_del_20240905130057",
+                "value": MockUniqueIds.RSV_002,
             }
         ],
         "status": "completed",
@@ -400,7 +415,7 @@ class MockFhirImmsResources:
         "identifier": [
             {
                 "system": "https://www.ravs.england.nhs.uk/",
-                "value": "0001_RSV_v5_Run3_valid_dose_1_new_upd_del_20240905130057",
+                "value": MockUniqueIds.RSV_002,
             }
         ],
         "status": "completed",

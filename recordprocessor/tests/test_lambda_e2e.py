@@ -13,14 +13,12 @@ from constants import Diagnostics
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
     Kinesis,
     MOCK_ENVIRONMENT_DICT,
-    TEST_LOCAL_ID_001RSV,
-    TEST_LOCAL_ID_002COVID,
-    TEST_LOCAL_ID_MANDATORY,
     MockFileDetails,
     ValidMockFileContent,
     BucketNames,
     MockFhirImmsResources,
     MockFieldDictionaries,
+    MockLocalIds,
     REGION_NAME,
 )
 
@@ -145,9 +143,24 @@ class TestRecordProcessor(unittest.TestCase):
 
         # Test case tuples are stuctured as (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
         test_cases = [
-            ("CREATE success", 0, {"operation_requested": "CREATE", "local_id": TEST_LOCAL_ID_001RSV}, True),
-            ("UPDATE success", 1, {"operation_requested": "UPDATE", "local_id": TEST_LOCAL_ID_002COVID}, True),
-            ("DELETE success", 2, {"operation_requested": "DELETE", "local_id": TEST_LOCAL_ID_002COVID}, True),
+            (
+                "CREATE success",
+                0,
+                {"operation_requested": "CREATE", "local_id": MockLocalIds.RSV_001_RAVS},
+                True,
+            ),
+            (
+                "UPDATE success",
+                1,
+                {"operation_requested": "UPDATE", "local_id": MockLocalIds.COVID19_001_RAVS},
+                True,
+            ),
+            (
+                "DELETE success",
+                2,
+                {"operation_requested": "DELETE", "local_id": MockLocalIds.COVID19_001_RAVS},
+                True,
+            ),
         ]
         self.make_assertions(test_cases)
 
@@ -165,14 +178,19 @@ class TestRecordProcessor(unittest.TestCase):
 
         # Test case tuples are stuctured as (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
         test_cases = [
-            ("CREATE success", 0, {"operation_requested": "CREATE", "local_id": TEST_LOCAL_ID_001RSV}, True),
+            (
+                "CREATE success",
+                0,
+                {"operation_requested": "CREATE", "local_id": MockLocalIds.RSV_001_RAVS},
+                True,
+            ),
             (
                 "UPDATE no permissions",
                 1,
                 {
                     "diagnostics": Diagnostics.NO_PERMISSIONS,
                     "operation_requested": "UPDATE",
-                    "local_id": TEST_LOCAL_ID_002COVID,
+                    "local_id": MockLocalIds.COVID19_001_RAVS,
                 },
                 False,
             ),
@@ -182,7 +200,7 @@ class TestRecordProcessor(unittest.TestCase):
                 {
                     "diagnostics": Diagnostics.NO_PERMISSIONS,
                     "operation_requested": "DELETE",
-                    "local_id": TEST_LOCAL_ID_002COVID,
+                    "local_id": MockLocalIds.COVID19_001_RAVS,
                 },
                 False,
             ),
@@ -207,7 +225,7 @@ class TestRecordProcessor(unittest.TestCase):
             (
                 "CREATE create permission only",
                 0,
-                {"operation_requested": "CREATE", "local_id": TEST_LOCAL_ID_001RSV},
+                {"operation_requested": "CREATE", "local_id": MockLocalIds.RSV_001_RAVS},
                 True,
             ),
             (
@@ -216,7 +234,7 @@ class TestRecordProcessor(unittest.TestCase):
                 {
                     "diagnostics": Diagnostics.NO_PERMISSIONS,
                     "operation_requested": "UPDATE",
-                    "local_id": TEST_LOCAL_ID_002COVID,
+                    "local_id": MockLocalIds.COVID19_001_RAVS,
                 },
                 False,
             ),
@@ -226,7 +244,7 @@ class TestRecordProcessor(unittest.TestCase):
                 {
                     "diagnostics": Diagnostics.NO_PERMISSIONS,
                     "operation_requested": "DELETE",
-                    "local_id": TEST_LOCAL_ID_002COVID,
+                    "local_id": MockLocalIds.COVID19_001_RAVS,
                 },
                 False,
             ),
@@ -243,7 +261,7 @@ class TestRecordProcessor(unittest.TestCase):
         expected_kinesis_data = {
             "diagnostics": Diagnostics.INVALID_ACTION_FLAG,
             "operation_requested": "",
-            "local_id": TEST_LOCAL_ID_001RSV,
+            "local_id": MockLocalIds.RSV_001_RAVS,
         }
         # Test case tuples are stuctured as (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
         self.make_assertions([("CREATE no action_flag", 0, expected_kinesis_data, False)])
@@ -257,7 +275,7 @@ class TestRecordProcessor(unittest.TestCase):
         expected_kinesis_data = {
             "diagnostics": Diagnostics.INVALID_ACTION_FLAG,
             "operation_requested": "INVALID",
-            "local_id": TEST_LOCAL_ID_001RSV,
+            "local_id": MockLocalIds.RSV_001_RAVS,
         }
         # Test case tuples are stuctured as (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
         self.make_assertions([("CREATE invalid action_flag", 0, expected_kinesis_data, False)])
@@ -277,13 +295,13 @@ class TestRecordProcessor(unittest.TestCase):
         all_fields_row_expected_kinesis_data = {
             "operation_requested": "UPDATE",
             "fhir_json": MockFhirImmsResources.all_fields,
-            "local_id": TEST_LOCAL_ID_MANDATORY,
+            "local_id": MockLocalIds.RSV_002_RAVS,
         }
 
         mandatory_fields_only_row_expected_kinesis_data = {
             "operation_requested": "UPDATE",
             "fhir_json": MockFhirImmsResources.mandatory_fields_only,
-            "local_id": TEST_LOCAL_ID_MANDATORY,
+            "local_id": MockLocalIds.RSV_002_RAVS,
         }
 
         critical_fields_only_row_expected_kinesis_data = {

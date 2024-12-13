@@ -3,7 +3,6 @@
 import json
 import os
 import time
-import logging
 from constants import Constants
 from utils_for_recordprocessor import get_csv_content_dict_reader
 from unique_permission import get_unique_action_flags_from_s3
@@ -12,9 +11,7 @@ from get_operation_permissions import get_operation_permissions
 from process_row import process_row
 from mappings import Vaccine
 from send_to_kinesis import send_to_kinesis
-
-logging.basicConfig(level="INFO")
-logger = logging.getLogger()
+from clients import logger
 
 
 def process_csv_to_fhir(incoming_message_body: dict) -> None:

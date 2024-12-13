@@ -1,12 +1,9 @@
 """Function to send the message to kinesis"""
 
-import logging
 import os
 import simplejson as json
 from botocore.exceptions import ClientError
-from s3_clients import kinesis_client
-
-logger = logging.getLogger()
+from clients import kinesis_client, logger
 
 
 def send_to_kinesis(supplier: str, message_body: dict) -> bool:

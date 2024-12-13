@@ -3,7 +3,7 @@
 import os
 from csv import DictReader
 from io import StringIO
-from s3_clients import s3_client
+from clients import s3_client
 
 
 def get_environment() -> str:
