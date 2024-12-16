@@ -169,6 +169,8 @@ class FileDetails:
         self.supplier = supplier
         self.message_id = f"{vaccine_type.lower()}_{supplier.lower()}_test_id"
         self.full_permissions_list = [f"{vaccine_type}_FULL"]
+        self.create_permissions_only = [f"{vaccine_type}_CREATE"]
+        self.update_permissions_only = [f"{vaccine_type}_UPDATE"]
         self.delete_permissions_only = [f"{vaccine_type}_DELETE"]
 
         self.base_event = {
@@ -180,10 +182,14 @@ class FileDetails:
         }
 
         # Mock the event details which would be receeived from SQS message
-        self.event_full_permissions = {**self.base_event, "permission": self.full_permissions_list}
-        self.event_delete_permissions_only = {**self.base_event, "permission": self.delete_permissions_only}
-        self.event_full_permissions_dumped = json.dumps(self.event_full_permissions)
-        self.event_delete_permissions_only_dumped = json.dumps(self.event_delete_permissions_only)
+        self.event_full_permissions_dict = {**self.base_event, "permission": self.full_permissions_list}
+        self.event_create_permissions_only_dict = {**self.base_event, "permission": self.create_permissions_only}
+        self.event_update_permissions_only_dict = {**self.base_event, "permission": self.update_permissions_only}
+        self.event_delete_permissions_only_dict = {**self.base_event, "permission": self.delete_permissions_only}
+        self.event_full_permissions = json.dumps(self.event_full_permissions_dict)
+        self.event_create_permissions_only = json.dumps(self.event_create_permissions_only_dict)
+        self.event_update_permissions_only = json.dumps(self.event_update_permissions_only_dict)
+        self.event_delete_permissions_only = json.dumps(self.event_delete_permissions_only_dict)
 
 
 class MockFileDetails:

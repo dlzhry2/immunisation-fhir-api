@@ -24,9 +24,7 @@ from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests impo
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
 kinesis_client = boto3_client("kinesis", region_name=REGION_NAME)
-
 yesterday = datetime.now(timezone.utc) - timedelta(days=1)
-
 mock_rsv_emis_file = MockFileDetails.rsv_emis
 
 
@@ -56,11 +54,9 @@ class TestRecordProcessor(unittest.TestCase):
             pass
 
     @staticmethod
-    def upload_files(sourc_file_content):  # pylint: disable=dangerous-default-value
-        """
-        Uploads a test file with the TEST_FILE_KEY (Flu EMIS file) the given file content to the source bucket
-        """
-        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=mock_rsv_emis_file.file_key, Body=sourc_file_content)
+    def upload_files(source_file_content):  # pylint: disable=dangerous-default-value
+        """Uploads a test file with the TEST_FILE_KEY (RSV EMIS file) the given file content to the source bucket"""
+        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=mock_rsv_emis_file.file_key, Body=source_file_content)
 
     @staticmethod
     def get_shard_iterator():
@@ -132,17 +128,18 @@ class TestRecordProcessor(unittest.TestCase):
                     kinesis_data.pop(key_to_ignore)
                 self.assertEqual(kinesis_data, expected_kinesis_data)
 
-    def test_e2e_success(self):
+    def test_e2e_full_permissions(self):
         """
         Tests that file containing CREATE, UPDATE and DELETE is successfully processed when the supplier has
         full permissions.
         """
         self.upload_files(ValidMockFileContent.with_new_and_update_and_delete)
 
-        main(mock_rsv_emis_file.event_full_permissions_dumped)
+        main(mock_rsv_emis_file.event_full_permissions)
 
-        # Test case tuples are stuctured as (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
-        test_cases = [
+        # Assertion case tuples are stuctured as
+        # (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
+        assertion_cases = [
             (
                 "CREATE success",
                 0,
@@ -162,22 +159,20 @@ class TestRecordProcessor(unittest.TestCase):
                 True,
             ),
         ]
-        self.make_assertions(test_cases)
+        self.make_assertions(assertion_cases)
 
-    def test_e2e_no_permissions(self):
+    def test_e2e_partial_permissions(self):
         """
-        Tests that file containing CREATE, UPDATE and DELETE is successfully processed when the supplier does not have
-        any permissions.
+        Tests that file containing CREATE, UPDATE and DELETE is successfully processed when the supplier only has CREATE
+        permissions.
         """
         self.upload_files(ValidMockFileContent.with_new_and_update_and_delete)
-        test_event = deepcopy(mock_rsv_emis_file.event_full_permissions)
-        test_event["permission"] = ["RSV_CREATE"]
-        test_event = json.dumps(test_event)
 
-        main(test_event)
+        main(mock_rsv_emis_file.event_create_permissions_only)
 
-        # Test case tuples are stuctured as (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
-        test_cases = [
+        # Assertion case tuples are stuctured as
+        # (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
+        assertion_cases = [
             (
                 "CREATE success",
                 0,
@@ -206,79 +201,44 @@ class TestRecordProcessor(unittest.TestCase):
             ),
         ]
 
-        self.make_assertions(test_cases)
+        self.make_assertions(assertion_cases)
 
-    def test_e2e_partial_permissions(self):
+    def test_e2e_no_permissions(self):
         """
-        Tests that file containing CREATE, UPDATE and DELETE is successfully processed when the supplier has partial
-        permissions.
+        Tests that file containing UPDATE and DELETE is successfully processed when the supplier has CREATE permissions
+        only.
         """
-        self.upload_files(ValidMockFileContent.with_new_and_update_and_delete)
-        event = deepcopy(mock_rsv_emis_file.event_full_permissions_dumped)
-        test_event = json.loads(event)
-        test_event["permission"] = ["RSV_CREATE"]
-        test_event = json.dumps(test_event)
+        self.upload_files(ValidMockFileContent.with_update_and_delete)
 
-        main(test_event)
-        # Test case tuples are stuctured as (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
-        test_cases = [
-            (
-                "CREATE create permission only",
-                0,
-                {"operation_requested": "CREATE", "local_id": MockLocalIds.RSV_001_RAVS},
-                True,
-            ),
-            (
-                "UPDATE create permission only",
-                1,
-                {
-                    "diagnostics": Diagnostics.NO_PERMISSIONS,
-                    "operation_requested": "UPDATE",
-                    "local_id": MockLocalIds.COVID19_001_RAVS,
-                },
-                False,
-            ),
-            (
-                "DELETE create permission only",
-                2,
-                {
-                    "diagnostics": Diagnostics.NO_PERMISSIONS,
-                    "operation_requested": "DELETE",
-                    "local_id": MockLocalIds.COVID19_001_RAVS,
-                },
-                False,
-            ),
+        main(mock_rsv_emis_file.event_create_permissions_only)
+
+        # TODO: add assertions
+
+    def test_e2e_invalid_action_flags(self):
+        """Tests that file is successfully processed when the ACTION_FLAG field is empty or invalid."""
+
+        self.upload_files(
+            ValidMockFileContent.with_update_and_delete.replace("update", "").replace("delete", "INVALID")
+        )
+
+        main(mock_rsv_emis_file.event_full_permissions)
+
+        expected_kinesis_data = {
+            "diagnostics": Diagnostics.INVALID_ACTION_FLAG,
+            "operation_requested": "TO DEFINE",
+            "local_id": MockLocalIds.COVID19_001_RAVS,
+        }
+
+        # Assertion case tuples are stuctured as
+        # (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
+        assertion_cases = [
+            ("Missing ACTION_FLAG", 0, {**expected_kinesis_data, "operation_requested": ""}, False),
+            ("Invalid ACTION_FLAG", 1, {**expected_kinesis_data, "operation_requested": "INVALID"}, False),
         ]
 
-        self.make_assertions(test_cases)
+        self.maxDiff = None
 
-    def test_e2e_no_action_flag(self):
-        """Tests that file containing CREATE is successfully processed when the UNIQUE_ID field is empty."""
-        self.upload_files(ValidMockFileContent.with_new.replace("new", ""))
-
-        main(mock_rsv_emis_file.event_full_permissions_dumped)
-
-        expected_kinesis_data = {
-            "diagnostics": Diagnostics.INVALID_ACTION_FLAG,
-            "operation_requested": "",
-            "local_id": MockLocalIds.RSV_001_RAVS,
-        }
-        # Test case tuples are stuctured as (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
-        self.make_assertions([("CREATE no action_flag", 0, expected_kinesis_data, False)])
-
-    def test_e2e_invalid_action_flag(self):
-        """Tests that file containing CREATE is successfully processed when the UNIQUE_ID field is empty."""
-        self.upload_files(ValidMockFileContent.with_new.replace("new", "invalid"))
-
-        main(mock_rsv_emis_file.event_full_permissions_dumped)
-
-        expected_kinesis_data = {
-            "diagnostics": Diagnostics.INVALID_ACTION_FLAG,
-            "operation_requested": "INVALID",
-            "local_id": MockLocalIds.RSV_001_RAVS,
-        }
-        # Test case tuples are stuctured as (test_name, index, expected_kinesis_data_ignoring_fhir_json,expect_success)
-        self.make_assertions([("CREATE invalid action_flag", 0, expected_kinesis_data, False)])
+        self.make_assertions(assertion_cases)
 
     def test_e2e_differing_amounts_of_data(self):
         """Tests that file containing rows with differing amounts of data present is processed as expected"""
@@ -290,7 +250,7 @@ class TestRecordProcessor(unittest.TestCase):
         file_content = f"{headers}\n{all_fields_values}\n{mandatory_fields_only_values}\n{critical_fields_only_values}"
         self.upload_files(file_content)
 
-        main(mock_rsv_emis_file.event_full_permissions_dumped)
+        main(mock_rsv_emis_file.event_full_permissions)
 
         all_fields_row_expected_kinesis_data = {
             "operation_requested": "UPDATE",
@@ -327,7 +287,7 @@ class TestRecordProcessor(unittest.TestCase):
         # Delete the kinesis stream, to cause kinesis send to fail
         kinesis_client.delete_stream(StreamName=Kinesis.STREAM_NAME, EnforceConsumerDeletion=True)
 
-        main(mock_rsv_emis_file.event_full_permissions_dumped)
+        main(mock_rsv_emis_file.event_full_permissions)
 
         # TODO: Add assertions
 
