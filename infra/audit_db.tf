@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "audit-table" {
-    name         = "${local.batch_prefix}-audit-table"
+    name         = "immunisation-batch-${env}-audit-table"
     billing_mode = "PAY_PER_REQUEST"
     hash_key     = "message_id"
 
