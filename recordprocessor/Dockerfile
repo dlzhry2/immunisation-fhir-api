@@ -5,8 +5,9 @@ COPY poetry.lock pyproject.toml README.md ./
 RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi --no-root --only main
 # -----------------------------
 
-RUN adduser --disabled-password --gecos "" appuser
-USER appuser
+# Create a non-root user and switch to it
+RUN adduser -D user
+USER user
 
 FROM base as test
 
