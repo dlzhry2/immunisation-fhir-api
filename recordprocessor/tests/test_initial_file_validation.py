@@ -1,3 +1,5 @@
+"""Tests for initial file validation functions"""
+
 import unittest
 from unittest.mock import patch
 
@@ -15,7 +17,8 @@ test_file = MockFileDetails.rsv_emis
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
-class TestProcessLambdaFunction(unittest.TestCase):
+class TestInitialFileValidation(unittest.TestCase):
+    """Tests for the initial file validation functions"""
 
     def test_validate_content_headers(self):
         "Tests that validate_content_headers returns True for an exact header match and False otherwise"

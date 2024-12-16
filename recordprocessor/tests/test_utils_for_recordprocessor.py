@@ -1,3 +1,5 @@
+"""Tests for the utils_for_recordprocessor module"""
+
 import unittest
 from unittest.mock import patch
 from io import StringIO
@@ -14,13 +16,13 @@ from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests impo
 )
 
 s3_client = boto3.client("s3", region_name=REGION_NAME)
-
 test_file = MockFileDetails.rsv_emis
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 @mock_s3
-class TestProcessLambdaFunction(unittest.TestCase):
+class TestUtilsForRecordprocessor(unittest.TestCase):
+    """Tests for utils_for_recordprocessor"""
 
     def setUp(self) -> None:
         for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
@@ -39,7 +41,8 @@ class TestProcessLambdaFunction(unittest.TestCase):
         """
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=file_key, Body=file_content)
 
-    def test_fetch_file_from_s3(self):
+    def test_get_csv_content_dict_reader(self):
+        """Tests that get_csv_content_dict_reader returns the correct csv data"""
         self.upload_source_file(test_file.file_key, ValidMockFileContent.with_new_and_update)
         expected_output = csv.DictReader(StringIO(ValidMockFileContent.with_new_and_update), delimiter="|")
         result, csv_data = get_csv_content_dict_reader(BucketNames.SOURCE, test_file.file_key)

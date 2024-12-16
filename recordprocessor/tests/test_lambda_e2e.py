@@ -13,11 +13,13 @@ from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests impo
     Kinesis,
     MOCK_ENVIRONMENT_DICT,
     MockFileDetails,
+    FileDetails,
     ValidMockFileContent,
     BucketNames,
     MockFhirImmsResources,
     MockFieldDictionaries,
     MockLocalIds,
+    InfAckFileRows,
     REGION_NAME,
 )
 
@@ -72,12 +74,24 @@ class TestRecordProcessor(unittest.TestCase):
         )["ShardIterator"]
 
     @staticmethod
-    def get_ack_file_content():
+    def get_ack_file_content(file_key: str) -> str:
         """Downloads the ack file, decodes its content and returns the decoded content"""
-        response = s3_client.get_object(Bucket=BucketNames.DESTINATION, Key=mock_rsv_emis_file.ack_file_key)
+        response = s3_client.get_object(Bucket=BucketNames.DESTINATION, Key=file_key)
         return response["Body"].read().decode("utf-8")
 
-    def make_assertions(self, test_cases):
+    def make_inf_ack_assertions(self, file_details: FileDetails, passed_validation: bool):
+        """Asserts that the InfAck file content is as expected"""
+        actual_content = self.get_ack_file_content(file_details.inf_ack_file_key)
+        actual_rows = actual_content.splitlines()
+
+        expected_row = InfAckFileRows.success_row if passed_validation else InfAckFileRows.failure_row
+        expected_row = expected_row.replace("message_id", file_details.message_id).replace(
+            "created_at_formatted_string", file_details.created_at_formatted_string
+        )
+
+        self.assertEqual(actual_rows, [InfAckFileRows.HEADERS, expected_row])
+
+    def make_kinesis_assertions(self, test_cases):
         """
         The input is a list of test_case tuples where each tuple is structured as
         (test_name, index, expected_kinesis_data_ignoring_fhir_json, expect_success).
@@ -158,7 +172,8 @@ class TestRecordProcessor(unittest.TestCase):
                 True,
             ),
         ]
-        self.make_assertions(assertion_cases)
+        self.make_inf_ack_assertions(file_details=mock_rsv_emis_file, passed_validation=True)
+        self.make_kinesis_assertions(assertion_cases)
 
     def test_e2e_partial_permissions(self):
         """
@@ -199,8 +214,8 @@ class TestRecordProcessor(unittest.TestCase):
                 False,
             ),
         ]
-
-        self.make_assertions(assertion_cases)
+        self.make_inf_ack_assertions(file_details=mock_rsv_emis_file, passed_validation=True)
+        self.make_kinesis_assertions(assertion_cases)
 
     def test_e2e_no_permissions(self):
         """
@@ -211,7 +226,9 @@ class TestRecordProcessor(unittest.TestCase):
 
         main(mock_rsv_emis_file.event_create_permissions_only)
 
-        # TODO: add assertions
+        kinesis_records = kinesis_client.get_records(ShardIterator=self.get_shard_iterator(), Limit=10)["Records"]
+        self.assertEqual(len(kinesis_records), 0)
+        self.make_inf_ack_assertions(file_details=mock_rsv_emis_file, passed_validation=False)
 
     def test_e2e_invalid_action_flags(self):
         """Tests that file is successfully processed when the ACTION_FLAG field is empty or invalid."""
@@ -234,8 +251,8 @@ class TestRecordProcessor(unittest.TestCase):
             ("Missing ACTION_FLAG", 0, {**expected_kinesis_data, "operation_requested": ""}, False),
             ("Invalid ACTION_FLAG", 1, {**expected_kinesis_data, "operation_requested": "INVALID"}, False),
         ]
-
-        self.make_assertions(assertion_cases)
+        self.make_inf_ack_assertions(file_details=mock_rsv_emis_file, passed_validation=True)
+        self.make_kinesis_assertions(assertion_cases)
 
     def test_e2e_differing_amounts_of_data(self):
         """Tests that file containing rows with differing amounts of data present is processed as expected"""
@@ -273,7 +290,8 @@ class TestRecordProcessor(unittest.TestCase):
             ("Mandatory fields only", 1, mandatory_fields_only_row_expected_kinesis_data, True),
             ("Critical fields only", 2, critical_fields_only_row_expected_kinesis_data, True),
         ]
-        self.make_assertions(test_cases)
+        self.make_inf_ack_assertions(file_details=mock_rsv_emis_file, passed_validation=True)
+        self.make_kinesis_assertions(test_cases)
 
     def test_e2e_kinesis_failed(self):
         """
@@ -286,7 +304,8 @@ class TestRecordProcessor(unittest.TestCase):
 
         main(mock_rsv_emis_file.event_full_permissions)
 
-        # TODO: Add assertions
+        self.make_inf_ack_assertions(file_details=mock_rsv_emis_file, passed_validation=True)
+        # TODO: Make assertions r.e. logs (there is no output as kinesis failed)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+"""Tests for process_csv_to_fhir function"""
+
 import unittest
 from unittest.mock import patch
 import boto3
@@ -19,6 +21,7 @@ test_file = MockFileDetails.rsv_emis
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 @mock_s3
 class TestProcessLambdaFunction(unittest.TestCase):
+    """Tests for process_csv_to_fhir function"""
 
     def setUp(self) -> None:
         for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
@@ -38,6 +41,10 @@ class TestProcessLambdaFunction(unittest.TestCase):
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=file_key, Body=file_content)
 
     def test_process_csv_to_fhir_full_permissions(self):
+        """
+        Tests that process_csv_to_fhir sends a message to kinesis for each row in the csv when the supplier has full
+        permissions
+        """
         self.upload_source_file(
             file_key=test_file.file_key, file_content=ValidMockFileContent.with_new_and_update_and_delete
         )
@@ -48,6 +55,10 @@ class TestProcessLambdaFunction(unittest.TestCase):
         self.assertEqual(mock_send_to_kinesis.call_count, 3)
 
     def test_process_csv_to_fhir_partial_permissions(self):
+        """
+        Tests that process_csv_to_fhir sends a message to kinesis for each row in the csv when the supplier has
+        partial permissions
+        """
         self.upload_source_file(
             file_key=test_file.file_key, file_content=ValidMockFileContent.with_new_and_update_and_delete
         )
@@ -58,6 +69,7 @@ class TestProcessLambdaFunction(unittest.TestCase):
         self.assertEqual(mock_send_to_kinesis.call_count, 3)
 
     def test_process_csv_to_fhir_no_permissions(self):
+        """Tests that process_csv_to_fhir does not send a message to kinesis when the supplier has no permissions"""
         self.upload_source_file(file_key=test_file.file_key, file_content=ValidMockFileContent.with_update_and_delete)
 
         with patch("batch_processing.send_to_kinesis") as mock_send_to_kinesis:
@@ -65,8 +77,8 @@ class TestProcessLambdaFunction(unittest.TestCase):
 
         self.assertEqual(mock_send_to_kinesis.call_count, 0)
 
-    @patch("batch_processing.send_to_kinesis")
-    def test_process_csv_to_fhir_invalid_headers(self, mock_send_to_kinesis):
+    def test_process_csv_to_fhir_invalid_headers(self):
+        """Tests that process_csv_to_fhir does not send a message to kinesis when the csv has invalid headers"""
         self.upload_source_file(
             file_key=test_file.file_key,
             file_content=ValidMockFileContent.with_new_and_update.replace("NHS_NUMBER", "NHS_NUMBERS"),

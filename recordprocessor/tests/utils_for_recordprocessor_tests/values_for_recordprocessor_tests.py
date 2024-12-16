@@ -459,3 +459,20 @@ class MockFhirImmsResources:
             }
         ],
     }
+
+
+class InfAckFileRows:
+    """Class containing the expected rows of the InfAck file, for use in the tests"""
+
+    HEADERS = (
+        "MESSAGE_HEADER_ID|HEADER_RESPONSE_CODE|ISSUE_SEVERITY|ISSUE_CODE|"
+        + "ISSUE_DETAILS_CODE|RESPONSE_TYPE|RESPONSE_CODE|RESPONSE_DISPLAY|RECEIVED_TIME|MAILBOX_FROM|LOCAL_ID|"
+        + "MESSAGE_DELIVERY"
+    )
+
+    success_row = "message_id|Success|Information|OK|20013|Technical|20013|Success|created_at_formatted_string|||True"
+
+    failure_row = (
+        "message_id|Failure|Fatal|Fatal Error|10001|Technical|10002|"
+        + "Infrastructure Level Response Value - Processing Error|created_at_formatted_string|||False"
+    )
