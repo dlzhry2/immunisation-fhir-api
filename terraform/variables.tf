@@ -76,3 +76,16 @@ data "aws_kms_key" "existing_lambda_encryption_key" {
 data "aws_kms_key" "existing_kinesis_encryption_key" {
   key_id = "alias/imms-batch-kinesis-stream-encryption"
 }
+
+data "aws_dynamodb_table" "events-dynamodb-table" { 
+  name = "imms-${local.local_config}-imms-events" 
+}
+
+data "aws_dynamodb_table" "audit-table" { 
+  name = "immunisation-batch-${local.local_config}-audit-table" 
+}
+
+data "aws_dynamodb_table" "delta-dynamodb-table" { 
+  name = "imms-${local.local_config}-delta" 
+}
+
