@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 import boto3
+from copy import deepcopy
 from moto import mock_s3
 from batch_processing import process_csv_to_fhir
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
@@ -42,7 +43,7 @@ class TestProcessLambdaFunction(unittest.TestCase):
         )
 
         with patch("batch_processing.send_to_kinesis") as mock_send_to_kinesis:
-            process_csv_to_fhir(test_file.event_full_permissions_dict)
+            process_csv_to_fhir(deepcopy(test_file.event_full_permissions_dict))
 
         self.assertEqual(mock_send_to_kinesis.call_count, 3)
 
@@ -52,7 +53,7 @@ class TestProcessLambdaFunction(unittest.TestCase):
         )
 
         with patch("batch_processing.send_to_kinesis") as mock_send_to_kinesis:
-            process_csv_to_fhir(test_file.event_create_permissions_only_dict)
+            process_csv_to_fhir(deepcopy(test_file.event_create_permissions_only_dict))
 
         self.assertEqual(mock_send_to_kinesis.call_count, 3)
 
@@ -60,7 +61,7 @@ class TestProcessLambdaFunction(unittest.TestCase):
         self.upload_source_file(file_key=test_file.file_key, file_content=ValidMockFileContent.with_update_and_delete)
 
         with patch("batch_processing.send_to_kinesis") as mock_send_to_kinesis:
-            process_csv_to_fhir(test_file.event_create_permissions_only_dict)
+            process_csv_to_fhir(deepcopy(test_file.event_create_permissions_only_dict))
 
         self.assertEqual(mock_send_to_kinesis.call_count, 0)
 
@@ -72,7 +73,7 @@ class TestProcessLambdaFunction(unittest.TestCase):
         )
 
         with patch("batch_processing.send_to_kinesis") as mock_send_to_kinesis:
-            process_csv_to_fhir(test_file.event_full_permissions_dict)
+            process_csv_to_fhir(deepcopy(test_file.event_full_permissions_dict))
 
         self.assertEqual(mock_send_to_kinesis.call_count, 0)
 

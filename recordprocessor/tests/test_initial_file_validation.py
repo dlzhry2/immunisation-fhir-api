@@ -1,42 +1,21 @@
 import unittest
 from unittest.mock import patch
-import boto3
-from moto import mock_s3
+
+# If mock_s3 is not imported here then tests in other files fail. It is not clear why this is.
+from moto import mock_s3  # noqa: F401
 from batch_processing import validate_content_headers, validate_action_flag_permissions
 from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import convert_string_to_dict_reader
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
     MOCK_ENVIRONMENT_DICT,
     MockFileDetails,
     ValidMockFileContent,
-    BucketNames,
-    REGION_NAME,
 )
-
-s3_client = boto3.client("s3", region_name=REGION_NAME)
 
 test_file = MockFileDetails.rsv_emis
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
-@mock_s3
 class TestProcessLambdaFunction(unittest.TestCase):
-
-    def setUp(self) -> None:
-        for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
-            s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME})
-
-    def tearDown(self) -> None:
-        for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
-            for obj in s3_client.list_objects_v2(Bucket=bucket_name).get("Contents", []):
-                s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
-            s3_client.delete_bucket(Bucket=bucket_name)
-
-    @staticmethod
-    def upload_source_file(file_key, file_content):
-        """
-        Uploads a test file with the test_file.file_key (Flu EMIS file) the given file content to the source bucket
-        """
-        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=file_key, Body=file_content)
 
     def test_validate_content_headers(self):
         "Tests that validate_content_headers returns True for an exact header match and False otherwise"
