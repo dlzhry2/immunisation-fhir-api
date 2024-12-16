@@ -12,6 +12,8 @@
   <AssignTo createNew="false" transport="http" type="request"/>
   <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
 </AssignMessage>
+
+<Remove enabled="true" continueOnError="false" name= "RemoveHeaders">
 <Remove>
      <Headers>
           <Header name="Host"/>          
