@@ -73,32 +73,32 @@ def validate_content_headers(csv_content_reader):
     return csv_content_reader.fieldnames == Constants.expected_csv_headers
 
 
-def validate_action_flag_permissions(supplier: str, vaccine_type: str, permission, csv_data) -> bool:
+def validate_action_flag_permissions(
+    supplier: str, vaccine_type: str, allowed_permissions_list: list, csv_data
+) -> bool:
     """
     Returns True if the supplier has permission to perform ANY of the requested actions for the given vaccine type,
     else False.
     """
-    # Obtain the allowed permissions for the supplier
-    allowed_permissions_set = permission
     # If the supplier has full permissions for the vaccine type, return True
-    if f"{vaccine_type}_FULL" in allowed_permissions_set:
+    if f"{vaccine_type}_FULL" in allowed_permissions_list:
         return True
 
     # Get unique ACTION_FLAG values from the S3 file
     operations_requested = get_unique_action_flags_from_s3(csv_data)
 
     # Convert action flags into the expected operation names
-    operation_requests_set = {
+    requested_permissions_set = {
         f"{vaccine_type}_{'CREATE' if action == 'NEW' else action}" for action in operations_requested
     }
 
     # Check if any of the CSV permissions match the allowed permissions
-    if operation_requests_set.intersection(allowed_permissions_set):
+    if requested_permissions_set.intersection(allowed_permissions_list):
         logger.info(
             "%s permissions %s match one of the requested permissions required to %s",
             supplier,
-            allowed_permissions_set,
-            operation_requests_set,
+            allowed_permissions_list,
+            requested_permissions_set,
         )
         return True
 

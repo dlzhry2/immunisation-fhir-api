@@ -3,7 +3,7 @@ from unittest.mock import patch
 import boto3
 from moto import mock_s3
 from batch_processing import validate_content_headers, validate_action_flag_permissions
-from utils_for_recordprocessor import convert_string_to_dict_reader
+from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import convert_string_to_dict_reader
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
     MOCK_ENVIRONMENT_DICT,
     MockFileDetails,

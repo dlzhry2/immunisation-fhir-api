@@ -5,7 +5,6 @@ import json
 from decimal import Decimal
 from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
-from copy import deepcopy
 from moto import mock_s3, mock_kinesis
 from boto3 import client as boto3_client
 from batch_processing import main
@@ -235,8 +234,6 @@ class TestRecordProcessor(unittest.TestCase):
             ("Missing ACTION_FLAG", 0, {**expected_kinesis_data, "operation_requested": ""}, False),
             ("Invalid ACTION_FLAG", 1, {**expected_kinesis_data, "operation_requested": "INVALID"}, False),
         ]
-
-        self.maxDiff = None
 
         self.make_assertions(assertion_cases)
 

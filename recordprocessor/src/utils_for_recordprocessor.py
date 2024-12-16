@@ -19,7 +19,3 @@ def get_csv_content_dict_reader(bucket_name: str, file_key: str) -> DictReader:
     csv_data = response["Body"].read().decode("utf-8")
     return DictReader(StringIO(csv_data), delimiter="|"), csv_data
 
-
-def convert_string_to_dict_reader(data_string: str):
-    """Take a data string and convert it to a csv DictReader"""
-    return DictReader(StringIO(data_string), delimiter="|")
