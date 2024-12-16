@@ -5,6 +5,10 @@ RUN pip install "poetry~=1.5.0"
 COPY poetry.lock pyproject.toml README.md ./
 RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi --no-root --only main
 
+# Create a non-root user and switch to it
+RUN adduser --disabled-password --gecos '' user
+USER user
+
 # -----------------------------
 FROM base as test
 
