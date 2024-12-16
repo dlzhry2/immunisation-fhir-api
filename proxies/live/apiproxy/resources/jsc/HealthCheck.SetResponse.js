@@ -39,4 +39,3 @@ const resp = {
 context.setVariable("status.response", JSON.stringify(resp));
 context.setVariable("response.content", JSON.stringify(resp));
 context.setVariable("response.header.Content-Type", "application/json");
-context.setVariable("response.header.X-Forwarded-For", "LiveHealthcheck.setresponse");
