@@ -9,6 +9,11 @@
     </Headers>
     <Version>1.1</Version>
   </Set>
+  
+  <Remove>
+    <Header name = "X-Forwarded-For" />
+    <Header name = "Host" />
+  </Remove>
   <AssignTo createNew="false" transport="http" type="request"/>
   <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
 </AssignMessage>
