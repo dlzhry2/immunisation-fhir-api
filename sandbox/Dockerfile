@@ -2,10 +2,7 @@
 FROM alpine:latest
 
 # Create a non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-# Installing jq
-RUN apk add --no-cache jq
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && apk add --no-cache jq
 
 # Copying OAS spec file into the container
 COPY "immunisation-fhir-api.json" ./
