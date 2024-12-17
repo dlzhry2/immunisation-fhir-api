@@ -10,7 +10,7 @@ var allowedHeaders = [
     'Strict-Transport-Security'
 ];
 
-var headers = context.getVariable('response.headers');
+var headers = context.getVariable('request.headers.names');
 
 if(headers) {
     headers.forEach(function(header) {
