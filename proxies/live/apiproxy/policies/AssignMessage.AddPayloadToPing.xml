@@ -26,6 +26,38 @@
     </Headers>
   </Remove>
 
+  <Javascript name="RemoveExtraHeaders" continueOnError="false" enabled="true">
+    <Source>
+      <![CDATA[
+      // Define allowed headers
+      var allowedHeaders = [
+          'Date', 
+          'Content-Type',
+          'Content-Length', 
+          'Connection',
+          'X-Correlation-ID',
+          'X-Request-ID',
+          'Accept',
+          'Strict-Transport-Security'
+      ];
+
+      // Get all response headers
+      var headers = context.getVariable('response.headers');
+
+      // Loop through each header and remove those that are not in the allowed list
+      for (var header in headers) {
+          if (headers.hasOwnProperty(header)) {
+              if (allowedHeaders.indexOf(header) === -1) {
+                  // Remove the header if it's not in the allowed list
+                  context.setVariable('response.headers.' + header, null);
+              }
+          }
+      }
+      ]]>
+    </Source>
+  </Javascript>
+
+
   <AssignTo createNew="false" transport="http" type="request"/>
   <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
 </AssignMessage>
