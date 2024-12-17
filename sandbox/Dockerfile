@@ -1,9 +1,11 @@
 # First Stage
-FROM alpine:latest AS builder
+FROM alpine:latest
  
 # Create a non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup && apk add --no-cache jq
-
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+ 
+# Installing jq
+RUN apk add --no-cache jq
  
 # Copying OAS spec file into the container
 COPY "immunisation-fhir-api.json" ./
@@ -25,8 +27,8 @@ USER root
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
  
 # Inheriting from the previous image and copying updated OAS spec files
-COPY --from=builder /specification /usr/src/prism/packages/cli/immunisation-fhir-api/specification
-COPY --from=builder /updated-spec.json /usr/src/prism/packages/cli/immunisation-fhir-api/specification/immunisation-fhir-api.json
+COPY --from=0  /specification  /usr/src/prism/packages/cli/immunisation-fhir-api/specification
+COPY --from=0  /updated-spec.json  /usr/src/prism/packages/cli/immunisation-fhir-api/specification/immunisation-fhir-api.json
  
 # Set permissions for the non-root user
 RUN chown -R appuser:appgroup /usr/src/prism
