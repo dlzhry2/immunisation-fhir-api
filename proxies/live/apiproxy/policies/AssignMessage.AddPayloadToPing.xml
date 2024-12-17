@@ -9,15 +9,17 @@
     </Headers>
     <Version>1.1</Version>
   </Set>
-
-  <Javascript name="RemoveExtraHeaders" continueOnError="false" enabled="true">
-    <Source>
-      <![CDATA[
+  <AssignTo createNew="false" transport="http" type="request"/>
+  <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
+</AssignMessage>
+<Javascript name="RemoveExtraHeaders" continueOnError="false" enabled="true">
+  <Source>
+    <![CDATA[
       // Define allowed headers
       var allowedHeaders = [
-          'Date', 
+          'Date',
           'Content-Type',
-          'Content-Length', 
+          'Content-Length',
           'Connection',
           'X-Correlation-ID',
           'X-Request-ID',
@@ -28,35 +30,38 @@
       // Get all response headers
       var headers = context.getVariable('response.headers');
 
-      // Loop through each header and remove those that are not in the allowed list
-      for (var header in headers) {
-          if (headers.hasOwnProperty(header)) {
-              if (allowedHeaders.indexOf(header) === -1) {
+      // Make sure headers is an object (or map)
+      if (headers && typeof headers === 'object') {
+          for (var header in headers) {
+              if (headers.hasOwnProperty(header)) {
                   // Remove the header if it's not in the allowed list
-                  context.setVariable('response.headers.' + header, null);
+                  if (allowedHeaders.indexOf(header) === -1) {
+                      // Remove the header by setting it to null
+                      context.setVariable('response.headers.' + header, null);
+                  }
               }
           }
       }
-      ]]>
-    </Source>
-  </Javascript>
+    ]]>
+  </Source>
+</Javascript>
 
-  <Remove enabled="true" continueOnError="false" name="RemoveHeaders">
-    <Headers>
-      <Header name="Host"/>          
-      <Header name="X-Forwarded-For"/>
-      <Header name="X-Forwarded-Port"/>
-      <Header name="X-Forwarded-Proto"/>
-      <Header name="Authorization"/>
-      <Header name="User-Agent"/>
-      <Header name="Cache-Control"/>
-      <Header name="Accept-Encoding"/>
-      <Header name="Postman-Token"/>
-      <Header name="NHSD-Correlation-ID"/>
-      <Header name="NHSD-Request-ID"/>
-    </Headers>
-  </Remove>
+<Remove enabled="true" continueOnError="false" name="RemoveHeaders">
+  <Headers>
+    <Header name="Host"/>          
+    <Header name="X-Forwarded-For"/>
+    <Header name="X-Forwarded-Port"/>
+    <Header name="X-Forwarded-Proto"/>
+    <Header name="Authorization"/>
+    <Header name="User-Agent"/>
+    <Header name="Cache-Control"/>
+    <Header name="Accept-Encoding"/>
+    <Header name="Postman-Token"/>
+    <Header name="NHSD-Correlation-ID"/>
+    <Header name="NHSD-Request-ID"/>
+  </Headers>
+</Remove>
 
-  <AssignTo createNew="false" transport="http" type="request"/>
-  <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
+<AssignTo createNew="false" transport="http" type="response"/>
+<IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
 </AssignMessage>
