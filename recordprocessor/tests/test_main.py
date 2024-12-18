@@ -1,14 +1,18 @@
-"E2e tests for recordprocessor"
+"Tests for main function for RecordProcessor"
 
 import unittest
 import json
 from decimal import Decimal
 from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
-from moto import mock_s3, mock_kinesis
+from moto import mock_s3, mock_kinesis, mock_firehose
 from boto3 import client as boto3_client
 from batch_processing import main
 from constants import Diagnostics
+from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import (
+    GenericSetUp,
+    GenericTearDown,
+)
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
     Kinesis,
     MOCK_ENVIRONMENT_DICT,
@@ -25,6 +29,7 @@ from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests impo
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
 kinesis_client = boto3_client("kinesis", region_name=REGION_NAME)
+firehose_client = boto3_client("firehose", region_name=REGION_NAME)
 yesterday = datetime.now(timezone.utc) - timedelta(days=1)
 mock_rsv_emis_file = MockFileDetails.rsv_emis
 
@@ -32,27 +37,15 @@ mock_rsv_emis_file = MockFileDetails.rsv_emis
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 @mock_s3
 @mock_kinesis
+@mock_firehose
 class TestRecordProcessor(unittest.TestCase):
-    """E2e tests for RecordProcessor"""
+    """Tests for main function for RecordProcessor"""
 
     def setUp(self) -> None:
-        for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
-            s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME})
-
-        kinesis_client.create_stream(StreamName=Kinesis.STREAM_NAME, ShardCount=1)
+        GenericSetUp(s3_client, firehose_client, kinesis_client)
 
     def tearDown(self) -> None:
-        # Delete all of the buckets (the contents of each bucket must be deleted first)
-        for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
-            for obj in s3_client.list_objects_v2(Bucket=bucket_name).get("Contents", []):
-                s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
-            s3_client.delete_bucket(Bucket=bucket_name)
-
-        # Delete the kinesis stream
-        try:
-            kinesis_client.delete_stream(StreamName=Kinesis.STREAM_NAME, EnforceConsumerDeletion=True)
-        except kinesis_client.exceptions.ResourceNotFoundException:
-            pass
+        GenericTearDown(s3_client, firehose_client, kinesis_client)
 
     @staticmethod
     def upload_files(source_file_content):  # pylint: disable=dangerous-default-value

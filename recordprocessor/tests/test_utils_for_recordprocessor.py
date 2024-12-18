@@ -7,6 +7,7 @@ import csv
 import boto3
 from moto import mock_s3
 from utils_for_recordprocessor import get_environment, get_csv_content_dict_reader
+from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import GenericSetUp, GenericTearDown
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
     MOCK_ENVIRONMENT_DICT,
     MockFileDetails,
@@ -25,14 +26,10 @@ class TestUtilsForRecordprocessor(unittest.TestCase):
     """Tests for utils_for_recordprocessor"""
 
     def setUp(self) -> None:
-        for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
-            s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME})
+        GenericSetUp(s3_client)
 
     def tearDown(self) -> None:
-        for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
-            for obj in s3_client.list_objects_v2(Bucket=bucket_name).get("Contents", []):
-                s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
-            s3_client.delete_bucket(Bucket=bucket_name)
+        GenericTearDown(s3_client)
 
     @staticmethod
     def upload_source_file(file_key, file_content):

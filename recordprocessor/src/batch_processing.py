@@ -6,7 +6,7 @@ import time
 from process_row import process_row
 from send_to_kinesis import send_to_kinesis
 from clients import logger
-from file_level_validation import initial_file_validation
+from file_level_validation import file_level_validation
 from errors import NoOperationPermissions, InvalidHeaders
 
 
@@ -18,7 +18,7 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
     logger.info("Event: %s", incoming_message_body)
 
     try:
-        interim_message_body = initial_file_validation(incoming_message_body)
+        interim_message_body = file_level_validation(incoming_message_body=incoming_message_body)
     except (InvalidHeaders, NoOperationPermissions):
         # If the file is invalid, processing should cease immediately
         return None

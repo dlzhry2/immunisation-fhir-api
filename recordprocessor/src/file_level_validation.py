@@ -6,6 +6,7 @@ from make_and_upload_ack_file import make_and_upload_ack_file
 from mappings import Vaccine
 from utils_for_recordprocessor import get_csv_content_dict_reader
 from errors import InvalidHeaders, NoOperationPermissions
+from logging_decorator import file_level_validation_logging_decorator
 
 
 def validate_content_headers(csv_content_reader) -> None:
@@ -44,11 +45,11 @@ def validate_action_flag_permissions(
         allowed_permissions_list,
         requested_permissions_set,
     )
-
     return {perm.split("_")[1].upper() for perm in allowed_permissions_list if perm.startswith(vaccine_type)}
 
 
-def initial_file_validation(incoming_message_body: dict) -> None:
+@file_level_validation_logging_decorator
+def file_level_validation(incoming_message_body: dict) -> None:
     """Validates that the csv headers are correct and that the supplier has permission to perform at least one of
     the requested operations. Returns an interim message body for row level processing."""
 
