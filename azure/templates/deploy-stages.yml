@@ -8,6 +8,7 @@ parameters:
 
 stages:
   - stage: Prod_Green_Deployment_Approval
+    isSkippable: false
     jobs:
       - template: deploy-manual-approval.yml
   - stage: Prod_Green_Deployment
@@ -24,6 +25,7 @@ stages:
                   aws_account_type: 'prod'
                   deployment_type: 'green'
   - stage: Prod_Blue_Deployment_Approval
+    isSkippable: false
     jobs:
       - template: deploy-manual-approval.yml
   - stage: Prod_Blue_Deployment
