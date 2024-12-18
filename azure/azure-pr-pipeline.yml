@@ -49,8 +49,8 @@ variables:
 #             parameters:
 #               aws_account_type: 'dev'
 
-jobs:
-  - template: ./templates/deploy-stages.yml
+extends:
+    template: ./templates/deploy-stages.yml
     parameters:
       service_name: ${{ variables.service_name }} 
       short_service_name: ${{ variables.short_service_name }}
