@@ -7,13 +7,10 @@ parameters:
     default: 'ifa'
 
 stages:
-  - stage: Prod_Green_Deployment_Approval
-    isSkippable: false
+  - stage: Prod_Green_Deployment
     jobs:
       - template: deploy-manual-approval.yml
-  - stage: Prod_Green_Deployment
-    dependsOn: Prod_Green_Deployment_Approval
-    jobs:
+  
       - template: deploy-stage.yml
         parameters:
           service_name: ${{ parameters.service_name }}
@@ -24,13 +21,10 @@ stages:
                 parameters:
                   aws_account_type: 'prod'
                   deployment_type: 'green'
-  - stage: Prod_Blue_Deployment_Approval
-    isSkippable: false
+  - stage: Prod_Blue_Deployment
     jobs:
       - template: deploy-manual-approval.yml
-  - stage: Prod_Blue_Deployment
-    dependsOn: Prod_Blue_Deployment_Approval
-    jobs:
+  
       - template: deploy-stage.yml
         parameters:
           service_name: ${{ parameters.service_name }}
