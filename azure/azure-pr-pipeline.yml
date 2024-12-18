@@ -27,24 +27,29 @@ variables:
   - template: project.yml
 
 extends:
-  template: azure/common/apigee-deployment.yml@common
-  parameters:
-    service_name: ${{ variables.service_name }}
-    short_service_name: ${{ variables.short_service_name }}
-    service_base_path: ${{ variables.service_base_path }}
-    apigee_deployments:
-      - environment: internal-dev
-        jinja_templates:
-          DOMAIN_ENDPOINT: https://pr-${{ variables.pr_number }}.imms.dev.vds.platform.nhs.uk
-        post_deploy:
-          - template: ./templates/post-deploy.yml
-            parameters:
-              aws_account_type: 'dev'
-      - environment: internal-dev-sandbox
-        proxy_path: sandbox
-        jinja_templates:
-          DOMAIN_ENDPOINT: just-dummy-value-for-successful-build
-        post_deploy:
-          - template: ./templates/post-deploy.yml
-            parameters:
-              aws_account_type: 'dev'
+  templates:
+      - template: azure/common/apigee-deployment.yml@common
+        parameters:
+          service_name: ${{ variables.service_name }}
+          short_service_name: ${{ variables.short_service_name }}
+          service_base_path: ${{ variables.service_base_path }}
+          apigee_deployments:
+            - environment: internal-dev
+              jinja_templates:
+                DOMAIN_ENDPOINT: https://pr-${{ variables.pr_number }}.imms.dev.vds.platform.nhs.uk
+              post_deploy:
+                - template: ./templates/post-deploy.yml
+                  parameters:
+                    aws_account_type: 'dev'
+            - environment: internal-dev-sandbox
+              proxy_path: sandbox
+              jinja_templates:
+                DOMAIN_ENDPOINT: just-dummy-value-for-successful-build
+              post_deploy:
+                - template: ./templates/post-deploy.yml
+                  parameters:
+                    aws_account_type: 'dev'
+      - template: ./templates/deploy-stages.yml
+        parameters:
+          service_name: ${{ variables.service_name }} 
+          short_service_name: ${{ variables.short_service_name }}
