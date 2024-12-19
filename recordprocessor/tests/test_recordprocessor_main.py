@@ -295,10 +295,33 @@ class TestRecordProcessor(unittest.TestCase):
         # Delete the kinesis stream, to cause kinesis send to fail
         kinesis_client.delete_stream(StreamName=Kinesis.STREAM_NAME, EnforceConsumerDeletion=True)
 
-        main(mock_rsv_emis_file.event_full_permissions)
+        with (
+            patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,
+            patch("logging_decorator.datetime") as mock_datetime,
+            patch("logging_decorator.time") as mock_time,
+        ):
+            mock_time.time.side_effect = [1672531200, 1672531200.123456]
+            mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0)
+            main(mock_rsv_emis_file.event_full_permissions)
 
+        # Since the failure occured at row level, not file level, the ack file should still be created
+        # and firehose logs should indicate a successful file level validation
         self.make_inf_ack_assertions(file_details=mock_rsv_emis_file, passed_validation=True)
-        # TODO: Make assertions r.e. logs (there is no output as kinesis failed)
+        expected_log_data = {
+            "function_name": "record_processor_file_level_validation",
+            "date_time": "2024-01-01 12:00:00",
+            "file_key": "RSV_Vaccinations_v5_8HK48_20210730T12000000.csv",
+            "message_id": "rsv_emis_test_id",
+            "vaccine_type": "RSV",
+            "supplier": "EMIS",
+            "time_taken": "0.12346s",
+            "statusCode": 200,
+            "message": (
+                "File headers validated and supplier has permission to perform at least one of the "
+                + "requested operations"
+            ),
+        }
+        mock_send_log_to_firehose.assert_called_with(expected_log_data)
 
 
 if __name__ == "__main__":
