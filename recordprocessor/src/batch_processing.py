@@ -19,7 +19,7 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
 
     try:
         interim_message_body = file_level_validation(incoming_message_body=incoming_message_body)
-    except (InvalidHeaders, NoOperationPermissions):
+    except (InvalidHeaders, NoOperationPermissions, Exception):  # pylint: disable=broad-exception-caught
         # If the file is invalid, processing should cease immediately
         return None
 
@@ -36,6 +36,7 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
         row_count += 1
         row_id = f"{file_id}^{row_count}"
         logger.info("MESSAGE ID : %s", row_id)
+
         # Process the row to obtain the details needed for the message_body and ack file
         details_from_processing = process_row(vaccine, allowed_operations, row)
 
@@ -63,7 +64,7 @@ def main(event: str) -> None:
     except Exception as error:  # pylint: disable=broad-exception-caught
         logger.error("Error processing message: %s", error)
     end = time.time()
-    logger.info(f"Total time for completion:{round(end - start, 5)}s")
+    logger.info("Total time for completion: %ss", round(end - start, 5))
 
 
 if __name__ == "__main__":

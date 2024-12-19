@@ -32,11 +32,13 @@ def generate_and_send_logs(
 
 
 def logging_decorator(func):
-    """Sends the appropriate logs to Cloudwatch and Firehose based on the function result.
+    """
+    Sends the appropriate logs to Cloudwatch and Firehose based on the function result.
     NOTE: The function must return a dictionary as its only return value. The dictionary is expected to contain
     all of the required additional details for logging.
     NOTE: Logs will include the result of the function call or, in the case of an Exception being raised,
-    a status code of 500 and the error message."""
+    a status code of 500 and the error message.
+    """
 
     @wraps(func)
     def wrapper(*args, **kwargs):

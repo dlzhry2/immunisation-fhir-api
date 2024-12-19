@@ -1,4 +1,8 @@
-import os
+"""
+Functions for completing file-level validation
+(validating headers and ensuring that the supplier has permission to perform at least one of the requested operations)
+"""
+
 from constants import Constants
 from unique_permission import get_unique_action_flags_from_s3
 from clients import logger
@@ -52,38 +56,45 @@ def validate_action_flag_permissions(
 def file_level_validation(incoming_message_body: dict) -> None:
     """Validates that the csv headers are correct and that the supplier has permission to perform at least one of
     the requested operations. Returns an interim message body for row level processing."""
-
-    file_id = incoming_message_body.get("message_id")
-    vaccine: Vaccine = next(  # Convert vaccine_type to Vaccine enum
-        vaccine for vaccine in Vaccine if vaccine.value == incoming_message_body.get("vaccine_type").upper()
-    )
-    supplier = incoming_message_body.get("supplier").upper()
-    file_key = incoming_message_body.get("filename")
-    permission = incoming_message_body.get("permission")
-    created_at_formatted_string = incoming_message_body.get("created_at_formatted_string")
-
-    # Fetch the data
-    bucket_name = os.getenv("SOURCE_BUCKET_NAME")
-    csv_reader, csv_data = get_csv_content_dict_reader(bucket_name, file_key)
-
     try:
-        validate_content_headers(csv_reader)
+        message_id = incoming_message_body.get("message_id")
+        vaccine: Vaccine = next(  # Convert vaccine_type to Vaccine enum
+            vaccine for vaccine in Vaccine if vaccine.value == incoming_message_body.get("vaccine_type").upper()
+        )
+        supplier = incoming_message_body.get("supplier").upper()
+        file_key = incoming_message_body.get("filename")
+        permission = incoming_message_body.get("permission")
+        created_at_formatted_string = incoming_message_body.get("created_at_formatted_string")
 
-        # Validate has permission to perform at least one of the requested actions
-        allowed_operations_set = validate_action_flag_permissions(supplier, vaccine.value, permission, csv_data)
-    except (InvalidHeaders, NoOperationPermissions):
-        make_and_upload_ack_file(file_id, file_key, False, False, created_at_formatted_string)
+        # Fetch the data
+        csv_reader, csv_data = get_csv_content_dict_reader(file_key)
+
+        try:
+            validate_content_headers(csv_reader)
+
+            # Validate has permission to perform at least one of the requested actions
+            allowed_operations_set = validate_action_flag_permissions(supplier, vaccine.value, permission, csv_data)
+        except (InvalidHeaders, NoOperationPermissions):
+            make_and_upload_ack_file(message_id, file_key, False, False, created_at_formatted_string)
+            raise
+
+        # Initialise the accumulated_ack_file_content with the headers
+        make_and_upload_ack_file(message_id, file_key, True, True, created_at_formatted_string)
+
+        return {
+            "message_id": message_id,
+            "vaccine": vaccine,
+            "supplier": supplier,
+            "file_key": file_key,
+            "allowed_operations": allowed_operations_set,
+            "created_at_formatted_string": created_at_formatted_string,
+            "csv_dict_reader": csv_reader,
+        }
+    except Exception as error:
+        logger.error("Error in file_level_validation: %s", error)
+        # NOTE: The Exception may occur before the file_id, file_key and created_at_formatted_string are assigned
+        message_id = message_id or "Unable to ascertain message_id"
+        file_key = file_key or "Unable to ascertain file_key"
+        created_at_formatted_string = created_at_formatted_string or "Unable to ascertain created_at_formatted_string"
+        make_and_upload_ack_file(message_id, file_key, False, False, created_at_formatted_string)
         raise
-
-    # Initialise the accumulated_ack_file_content with the headers
-    make_and_upload_ack_file(file_id, file_key, True, True, created_at_formatted_string)
-
-    return {
-        "message_id": file_id,
-        "vaccine": vaccine,
-        "supplier": supplier,
-        "file_key": file_key,
-        "allowed_operations": allowed_operations_set,
-        "created_at_formatted_string": created_at_formatted_string,
-        "csv_dict_reader": csv_reader,
-    }

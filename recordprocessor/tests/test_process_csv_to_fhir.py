@@ -26,7 +26,7 @@ test_file = MockFileDetails.rsv_emis
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 @mock_s3
 @mock_firehose
-class TestProcessLambdaFunction(unittest.TestCase):
+class TestProcessCsvToFhir(unittest.TestCase):
     """Tests for process_csv_to_fhir function"""
 
     def setUp(self) -> None:

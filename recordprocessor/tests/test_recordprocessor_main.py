@@ -48,7 +48,7 @@ class TestRecordProcessor(unittest.TestCase):
         GenericTearDown(s3_client, firehose_client, kinesis_client)
 
     @staticmethod
-    def upload_files(source_file_content):  # pylint: disable=dangerous-default-value
+    def upload_source_files(source_file_content):  # pylint: disable=dangerous-default-value
         """Uploads a test file with the TEST_FILE_KEY (RSV EMIS file) the given file content to the source bucket"""
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=mock_rsv_emis_file.file_key, Body=source_file_content)
 
@@ -139,7 +139,7 @@ class TestRecordProcessor(unittest.TestCase):
         Tests that file containing CREATE, UPDATE and DELETE is successfully processed when the supplier has
         full permissions.
         """
-        self.upload_files(ValidMockFileContent.with_new_and_update_and_delete)
+        self.upload_source_files(ValidMockFileContent.with_new_and_update_and_delete)
 
         main(mock_rsv_emis_file.event_full_permissions)
 
@@ -173,7 +173,7 @@ class TestRecordProcessor(unittest.TestCase):
         Tests that file containing CREATE, UPDATE and DELETE is successfully processed when the supplier only has CREATE
         permissions.
         """
-        self.upload_files(ValidMockFileContent.with_new_and_update_and_delete)
+        self.upload_source_files(ValidMockFileContent.with_new_and_update_and_delete)
 
         main(mock_rsv_emis_file.event_create_permissions_only)
 
@@ -215,7 +215,7 @@ class TestRecordProcessor(unittest.TestCase):
         Tests that file containing UPDATE and DELETE is successfully processed when the supplier has CREATE permissions
         only.
         """
-        self.upload_files(ValidMockFileContent.with_update_and_delete)
+        self.upload_source_files(ValidMockFileContent.with_update_and_delete)
 
         main(mock_rsv_emis_file.event_create_permissions_only)
 
@@ -226,7 +226,7 @@ class TestRecordProcessor(unittest.TestCase):
     def test_e2e_invalid_action_flags(self):
         """Tests that file is successfully processed when the ACTION_FLAG field is empty or invalid."""
 
-        self.upload_files(
+        self.upload_source_files(
             ValidMockFileContent.with_update_and_delete.replace("update", "").replace("delete", "INVALID")
         )
 
@@ -255,7 +255,7 @@ class TestRecordProcessor(unittest.TestCase):
         mandatory_fields_only_values = "|".join(f'"{v}"' for v in MockFieldDictionaries.mandatory_fields_only.values())
         critical_fields_only_values = "|".join(f'"{v}"' for v in MockFieldDictionaries.critical_fields_only.values())
         file_content = f"{headers}\n{all_fields_values}\n{mandatory_fields_only_values}\n{critical_fields_only_values}"
-        self.upload_files(file_content)
+        self.upload_source_files(file_content)
 
         main(mock_rsv_emis_file.event_full_permissions)
 
@@ -291,7 +291,7 @@ class TestRecordProcessor(unittest.TestCase):
         Tests that, for a file with valid content and supplier with full permissions, when the kinesis send fails, the
         ack file is created and documents an error.
         """
-        self.upload_files(ValidMockFileContent.with_new_and_update)
+        self.upload_source_files(ValidMockFileContent.with_new_and_update)
         # Delete the kinesis stream, to cause kinesis send to fail
         kinesis_client.delete_stream(StreamName=Kinesis.STREAM_NAME, EnforceConsumerDeletion=True)
 
