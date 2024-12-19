@@ -22,4 +22,5 @@ resource "aws_dynamodb_table" "audit-table" {
     point_in_time_recovery {
         enabled = local.environment == "prod" ? true : false
     }
+    
 }
