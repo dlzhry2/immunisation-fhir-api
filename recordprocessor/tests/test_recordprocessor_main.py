@@ -295,11 +295,11 @@ class TestRecordProcessor(unittest.TestCase):
         # Delete the kinesis stream, to cause kinesis send to fail
         kinesis_client.delete_stream(StreamName=Kinesis.STREAM_NAME, EnforceConsumerDeletion=True)
 
-        with (
-            patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,
-            patch("logging_decorator.datetime") as mock_datetime,
-            patch("logging_decorator.time") as mock_time,
-        ):
+        with (  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
+            patch("logging_decorator.datetime") as mock_datetime,  # noqa: E999
+            patch("logging_decorator.time") as mock_time,  # noqa: E999
+        ):  # noqa: E999
             mock_time.time.side_effect = [1672531200, 1672531200.123456]
             mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0)
             main(mock_rsv_emis_file.event_full_permissions)

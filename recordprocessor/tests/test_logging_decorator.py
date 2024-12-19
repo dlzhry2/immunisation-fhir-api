@@ -73,11 +73,11 @@ class TestLoggingDecorator(unittest.TestCase):
         start_time = 1672531200
 
         # CASE: Successful log - is_error_log arg set to False
-        with (
-            patch("logging_decorator.logger") as mock_logger,
-            patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,
-            patch("logging_decorator.time") as mock_time,
-        ):
+        with (  # noqa: E999
+            patch("logging_decorator.logger") as mock_logger,  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
+            patch("logging_decorator.time") as mock_time,  # noqa: E999
+        ):  # noqa: E999
             mock_time.time.return_value = 1672531200.123456  # Mocks the end time to be 0.123456s after the start time
             generate_and_send_logs(start_time, base_log_data, additional_log_data, is_error_log=False)
 
@@ -87,11 +87,11 @@ class TestLoggingDecorator(unittest.TestCase):
         mock_send_log_to_firehose.assert_called_once_with(expected_log_data)
 
         # CASE: Error log - is_error_log arg set to True
-        with (
-            patch("logging_decorator.logger") as mock_logger,
-            patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,
-            patch("logging_decorator.time") as mock_time,
-        ):
+        with (  # noqa: E999
+            patch("logging_decorator.logger") as mock_logger,  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
+            patch("logging_decorator.time") as mock_time,  # noqa: E999
+        ):  # noqa: E999
             mock_time.time.return_value = 1672531200.123456  # Mocks the end time to be 0.123456s after the start time
             generate_and_send_logs(start_time, base_log_data, additional_log_data, is_error_log=True)
 
@@ -109,12 +109,12 @@ class TestLoggingDecorator(unittest.TestCase):
             Body=ValidMockFileContent.with_new_and_update_and_delete,
         )
 
-        with (
-            patch("logging_decorator.datetime") as mock_datetime,
-            patch("logging_decorator.time") as mock_time,
-            patch("logging_decorator.logger") as mock_logger,
-            patch("logging_decorator.firehose_client") as mock_firehose_client,
-        ):
+        with (  # noqa: E999
+            patch("logging_decorator.datetime") as mock_datetime,  # noqa: E999
+            patch("logging_decorator.time") as mock_time,  # noqa: E999
+            patch("logging_decorator.logger") as mock_logger,  # noqa: E999
+            patch("logging_decorator.firehose_client") as mock_firehose_client,  # noqa: E999
+        ):  # noqa: E999
             mock_time.time.side_effect = [1672531200, 1672531200.123456]
             mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0)
             file_level_validation(deepcopy(MOCK_FILE_DETAILS.event_full_permissions_dict))
@@ -169,12 +169,12 @@ class TestLoggingDecorator(unittest.TestCase):
 
                 s3_client.put_object(Bucket=BucketNames.SOURCE, Key=MOCK_FILE_DETAILS.file_key, Body=mock_file_content)
 
-                with (
-                    patch("logging_decorator.datetime") as mock_datetime,
-                    patch("logging_decorator.time") as mock_time,
-                    patch("logging_decorator.logger") as mock_logger,
-                    patch("logging_decorator.firehose_client") as mock_firehose_client,
-                ):
+                with (  # noqa: E999
+                    patch("logging_decorator.datetime") as mock_datetime,  # noqa: E999
+                    patch("logging_decorator.time") as mock_time,  # noqa: E999
+                    patch("logging_decorator.logger") as mock_logger,  # noqa: E999
+                    patch("logging_decorator.firehose_client") as mock_firehose_client,  # noqa: E999
+                ):  # noqa: E999
                     mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0)
                     mock_time.time.side_effect = [1672531200, 1672531200.123456]
                     with self.assertRaises(expected_error_type):
@@ -204,13 +204,15 @@ class TestLoggingDecorator(unittest.TestCase):
             Body=ValidMockFileContent.with_new_and_update_and_delete,
         )
 
-        with (
-            patch("logging_decorator.datetime") as mock_datetime,
-            patch("logging_decorator.time") as mock_time,
-            patch("logging_decorator.logger") as mock_logger,
-            patch("logging_decorator.firehose_client") as mock_firehose_client,
-            patch("file_level_validation.validate_content_headers", side_effect=Exception("Test exception")),
-        ):
+        with (  # noqa: E999
+            patch("logging_decorator.datetime") as mock_datetime,  # noqa: E999
+            patch("logging_decorator.time") as mock_time,  # noqa: E999
+            patch("logging_decorator.logger") as mock_logger,  # noqa: E999
+            patch("logging_decorator.firehose_client") as mock_firehose_client,  # noqa: E999
+            patch(
+                "file_level_validation.validate_content_headers", side_effect=Exception("Test exception")
+            ),  # noqa: E999
+        ):  # noqa: E999
             mock_time.time.side_effect = [1672531200, 1672531200.123456]
             mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0)
             with self.assertRaises(Exception):
