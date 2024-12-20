@@ -119,10 +119,7 @@ class TestLoggingDecorator(unittest.TestCase):
             mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0)
             file_level_validation(deepcopy(MOCK_FILE_DETAILS.event_full_permissions_dict))
 
-        expected_message = (
-            "File headers validated and supplier has permission to perform at least one of the "
-            + "requested operations"
-        )
+        expected_message = "Successfully sent for record processing"
         expected_log_data = {**COMMON_LOG_DATA, "statusCode": 200, "message": expected_message}
 
         # Log data is the first positional argument of the first call to logger.info

@@ -53,13 +53,7 @@ def file_level_validation_logging_decorator(func):
 
         try:
             result = func(*args, **kwargs)
-            additional_log_data = {
-                "statusCode": 200,
-                "message": (
-                    "File headers validated and supplier has permission to perform at least one of the "
-                    + "requested operations"
-                ),
-            }
+            additional_log_data = {"statusCode": 200, "message": "Successfully sent for record processing"}
             generate_and_send_logs(start_time, base_log_data, additional_log_data=additional_log_data)
             return result
 

@@ -316,10 +316,7 @@ class TestRecordProcessor(unittest.TestCase):
             "supplier": "EMIS",
             "time_taken": "0.12346s",
             "statusCode": 200,
-            "message": (
-                "File headers validated and supplier has permission to perform at least one of the "
-                + "requested operations"
-            ),
+            "message": "Successfully sent for record processing",
         }
         mock_send_log_to_firehose.assert_called_with(expected_log_data)
 
