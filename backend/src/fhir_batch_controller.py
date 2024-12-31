@@ -1,6 +1,5 @@
 """Function to send the request directly to lambda (or return appropriate diagnostics if this is not possible)"""
 
-from models.errors import MessageNotSuccessfulError
 from fhir_batch_service import ImmunizationBatchService
 from fhir_batch_repository import ImmunizationBatchRepository
 
@@ -21,13 +20,7 @@ class ImmunizationBatchController:
         self.fhir_service = fhir_service
 
     def send_request_to_dynamo(self, message_body: dict, table: any, is_present: bool):
-        """
-        Sends request to the Imms API (unless there was a failure at the recordprocessor level). Returns the imms id.
-        If message is not successfully received and accepted by the Imms API raises a MessageNotSuccessful Error.
-        """
-        if incoming_diagnostics := message_body.get("diagnostics"):
-            raise MessageNotSuccessfulError(incoming_diagnostics)
-
+        """Sends request to the Imms API. Returns the imms id."""
         supplier = message_body.get("supplier")
         fhir_json = message_body.get("fhir_json")
         vax_type = message_body.get("vax_type")
