@@ -16,25 +16,24 @@ firehose_logger = FirehoseLogger()
 @ack_function_info
 def lambda_handler(event, context):
     try:
-        imms_id = None
-        successful_api_response = True
         array_of_rows = []
         for record in event["Records"]:
-            body_json = record["body"]
-            incoming_message_body = json.loads(body_json)
-            for item in incoming_message_body:
+            incoming_message_body = json.loads(record["body"])
+            for message in incoming_message_body:
                 # Check if there are any messages to process
-                file_key = item.get("file_key")
-                row_id = item.get("row_id")
-                local_id = item.get("local_id")
-                imms_id = item.get("imms_id")
-                diagnostics = item.get("diagnostics")
-                created_at_formatted_string = item.get("created_at_formatted_string")
+                file_key = message.get("file_key")
+                row_id = message.get("row_id")
+                local_id = message.get("local_id")
+                imms_id = message.get("imms_id")
+                diagnostics = message.get("diagnostics")
+                created_at_formatted_string = message.get("created_at_formatted_string")
                 successful_api_response = diagnostics is None
                 row = create_ack_data(
                     created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
                 )
                 array_of_rows.append(row)
+        # TODO: Are we confident that all messages in the event will be for the same file?
+        # Do we need a check on each row?
         update_ack_file(file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows)
         # Delete the message from the queue
 
@@ -48,9 +47,7 @@ def lambda_handler(event, context):
             "date_time": str(datetime.now()),
             "error_source": "ack_lambda_handler",
         }
-        firehose_log = dict()
-        firehose_log["event"] = log_data
-        firehose_logger.ack_send_log(firehose_log)
+        firehose_logger.ack_send_log({"event": log_data})
 
     return {
         "statusCode": 200,
