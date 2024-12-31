@@ -30,6 +30,9 @@
         <Step>
           <Name>AssignMessage.AddPayloadToPing</Name>
         </Step>
+        <Step>
+          <Name>RemoveAdditionalHeaders</Name>
+        </Step>        
       </Response>
       <Condition>(proxy.pathsuffix MatchesPath "/_ping") and ((request.verb = "GET") or (request.verb = "HEAD"))</Condition>
     </Flow>
