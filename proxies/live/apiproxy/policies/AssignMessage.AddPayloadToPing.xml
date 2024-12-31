@@ -10,10 +10,6 @@
     <Version>1.1</Version>
   </Set>
   
-  <Javascript name="RemoveAdditionalHeaders" continueOnError="false" enabled="true">
-    <ResourceURL>jsc://RemoveAdditionalHeaders.js</ResourceURL>
-  </Javascript>
-
   <Remove enabled="true" continueOnError="false" name="RemoveHeaders">
     <Headers>
       <Header name="Host"/>          
