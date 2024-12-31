@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from functools import wraps
 from log_firehose_splunk import FirehoseLogger
-from constants import extract_file_key_elements, get_status_code_for_diagnostics
+from constants import get_status_code_for_diagnostics
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -27,28 +27,23 @@ def ack_function_info(func):
                 for record in event["Records"]:
                     try:
                         incoming_message_body = json.loads(record["body"])
+                        # TODO: What is the expected structure of incoming_message_body? Is it always a list?
                         if not isinstance(incoming_message_body, list):
                             incoming_message_body = [incoming_message_body]
 
                         for item in incoming_message_body:
                             file_key = item.get("file_key", "file_key_missing")
-
-                            if file_key != "file_key_missing":
-                                try:
-                                    file_key_elements = extract_file_key_elements(file_key)
-                                    base_log_data["vaccine_type"] = file_key_elements.get("vaccine_type", "unknown")
-                                    base_log_data["supplier"] = file_key_elements.get("supplier", "unknown")
-                                except Exception as e:
-                                    logger.warning(f"Error parsing file key: {file_key}. Error: {e}")
-
                             message_id = item.get("row_id", "unknown")
                             diagnostics = item.get("diagnostics")
+
                             diagnostics_result = process_diagnostics(diagnostics, file_key, message_id)
-                            
+
                             log_data = {
                                 **base_log_data,
                                 "file_key": file_key,
                                 "message_id": message_id,
+                                "vaccine_type": item.get("vaccine_type", "unknown"),
+                                "supplier": item.get("supplier", "unknown"),
                                 "local_id": item.get("local_id", "unknown"),
                                 "operation_requested": item.get("action_flag", "unknown"),
                                 "time_taken": f"{round(time.time() - start_time, 5)}s",

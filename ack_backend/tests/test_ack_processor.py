@@ -3,22 +3,16 @@ from moto import mock_s3, mock_sqs
 import os
 import json
 from boto3 import client as boto3_client
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from ack_processor import lambda_handler
 from update_ack_file import obtain_current_ack_content, create_ack_data, update_ack_file
-import boto3
 from tests.test_utils_for_ack_backend import (
     DESTINATION_BUCKET_NAME,
     AWS_REGION,
     ValidValues,
-    InvalidValues,
     CREATED_AT_FORMATTED_STRING,
 )
-from constants import Constants
-from io import BytesIO, StringIO
 from copy import deepcopy
-from botocore.exceptions import ClientError
-from unittest import TestCase
 import uuid
 
 

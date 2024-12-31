@@ -47,8 +47,10 @@ def forward_lambda_handler(event, _):
                 "created_at_formatted_string": created_at_formatted_string,
                 "local_id": incoming_message_body.get("local_id"),
                 "action_flag": incoming_message_body.get("operation_requested"),
+                "supplier": incoming_message_body.get("supplier"),
+                "vaccine_type": incoming_message_body.get("vax_type"),
             }
-            # TODO: Remove section above here into own try-except block
+            # TODO: Move section above here into own try-except block
 
             if incoming_diagnostics := incoming_message_body.get("diagnostics"):
                 raise MessageNotSuccessfulError(incoming_diagnostics)
@@ -57,18 +59,18 @@ def forward_lambda_handler(event, _):
                 raise MessageNotSuccessfulError("Server error - FHIR JSON not correctly sent to forwarder")
 
             # Check if the identifier is already present in the array
-            is_present = False
+            identifier_already_present = False
             identifier_system = fhir_json["identifier"][0]["system"]
             identifier_value = fhir_json["identifier"][0]["value"]
             identifier = f"{identifier_system}#{identifier_value}"
             if identifier in array_of_identifiers:
-                is_present = True
+                identifier_already_present = True
                 delay_milliseconds = 30  # Delay time in milliseconds
                 time.sleep(delay_milliseconds / 1000)  # TODO: What is the purpose of this delay?
             else:
                 array_of_identifiers.append(identifier)
 
-            imms_id = forward_request_to_dynamo(incoming_message_body, table, is_present, controller)
+            imms_id = forward_request_to_dynamo(incoming_message_body, table, identifier_already_present, controller)
             array_of_messages.append({**base_outgoing_message_body, "imms_id": imms_id})
 
         except Exception as error:

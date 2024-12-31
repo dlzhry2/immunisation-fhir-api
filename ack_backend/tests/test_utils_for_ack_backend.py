@@ -28,6 +28,8 @@ class ValidValues:
         "action_flag": "create",
         "imms_id": "4567",
         "created_at_formatted_string": "1223-12-232",
+        "supplier": "EMIS",
+        "vaccine_type": "RSV",
     }
     DPSFULL_ack_processor_input = {
         "file_key": "RSV_Vaccinations_v5_DPSFULL_20240905T13005922",
@@ -36,6 +38,8 @@ class ValidValues:
         "action_flag": "create",
         "imms_id": "1232",
         "created_at_formatted_string": "1223-12-232",
+        "supplier": "DPSFULL",
+        "vaccine_type": "RSV",
     }
 
     EMIS_ack_processor_input_diagnostics = {
@@ -46,6 +50,8 @@ class ValidValues:
         "imms_id": "4567",
         "created_at_formatted_string": "1223-12-232",
         "diagnostics": "Immunization resource does not exist",
+        "supplier": "EMIS",
+        "vaccine_type": "RSV",
     }
 
     DPSFULL_ack_processor_input_diagnostics = {
@@ -56,6 +62,8 @@ class ValidValues:
         "imms_id": "1232",
         "created_at_formatted_string": "1223-12-232",
         "diagnostics": "Immunization resource does not exist",
+        "supplier": "DPSFULL",
+        "vaccine_type": "RSV",
     }
 
     EMIS_expected_log_value = {

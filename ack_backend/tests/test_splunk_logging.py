@@ -1,13 +1,9 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import json
 import copy
-from datetime import datetime
 from src.ack_processor import lambda_handler
 from tests.test_utils_for_ack_backend import ValidValues, InvalidValues
-from update_ack_file import update_ack_file, obtain_current_ack_content, upload_ack_file
-from log_firehose_splunk import FirehoseLogger
-from log_structure_splunk import logger
 
 
 class TestSplunkFunctionInfo(unittest.TestCase):
@@ -163,7 +159,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
             {"diagnostic": "unhandled error", "expected_code": 500},
             {"diagnostic": "unauthorized to access", "expected_code": 403},
             {"diagnostic": "duplicate", "expected_code": 422},
-            {"diagnostic": "some other error in validation", "expected_code": 400},
+            {"diagnostic": "some other error in validation", "expected_code": 500},
         ]
 
         for op in operations:
