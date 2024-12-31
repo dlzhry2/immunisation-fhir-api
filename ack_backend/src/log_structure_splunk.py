@@ -99,7 +99,8 @@ def process_diagnostics(diagnostics, file_key, message_id):
             "statusCode": get_status_code_for_diagnostics(diagnostics),
             "diagnostics": diagnostics,
         }
-    if diagnostics is None and file_key != "file_key_missing" and message_id != "unknown":
+    
+    if file_key != "file_key_missing" and message_id != "unknown":
         return {"status": "success", "statusCode": 200, "diagnostics": "Operation completed successfully"}
 
     return {"status": "fail", "statusCode": 500, "diagnostics": "An unhandled error happened during batch processing"}

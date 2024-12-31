@@ -1,6 +1,5 @@
 import json
 import logging
-from typing import Union
 from datetime import datetime
 from log_structure_splunk import ack_function_info
 from log_firehose_splunk import FirehoseLogger
@@ -31,10 +30,7 @@ def lambda_handler(event, context):
                 imms_id = item.get("imms_id")
                 diagnostics = item.get("diagnostics")
                 created_at_formatted_string = item.get("created_at_formatted_string")
-                if diagnostics is None:
-                    successful_api_response = True
-                else:
-                    successful_api_response = False
+                successful_api_response = diagnostics is None
                 row = create_ack_data(
                     created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
                 )

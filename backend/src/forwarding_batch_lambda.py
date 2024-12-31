@@ -16,7 +16,9 @@ logger = logging.getLogger()
 QUEUE_URL = os.getenv("SQS_QUEUE_URL")
 
 
-def forward_request_to_dynamo(message_body: any, table: any, is_present: bool, batchcontroller: ImmunizationBatchController):
+def forward_request_to_dynamo(
+    message_body: any, table: any, is_present: bool, batchcontroller: ImmunizationBatchController
+):
     """Forwards the request to the Imms API (where possible) and updates the ack file with the outcome"""
     row_id = message_body.get("row_id")
     logger.info("FORWARDED MESSAGE: ID %s", row_id)
@@ -42,18 +44,16 @@ def forward_lambda_handler(event, _):
                 identifier = f"{system_id}#{system_value}"
                 if identifier in array_of_identifiers:
                     is_present = True
-                    delay_milliseconds = 30 # Delay time in milliseconds 
+                    delay_milliseconds = 30  # Delay time in milliseconds
                     time.sleep(delay_milliseconds / 1000)
                 else:
                     array_of_identifiers.append(identifier)
-                
+
             file_key = message_body.get("file_key")
             created_at_formatted_string = message_body.get("created_at_formatted_string")
             message_group_id = f"{file_key}_{created_at_formatted_string}"
             response = {}
-            response["imms_id"] = forward_request_to_dynamo(
-                message_body, table, is_present, controller
-            )
+            response["imms_id"] = forward_request_to_dynamo(message_body, table, is_present, controller)
             response["file_key"] = file_key
             response["row_id"] = message_body.get("row_id")
             response["created_at_formatted_string"] = created_at_formatted_string
@@ -74,7 +74,7 @@ def forward_lambda_handler(event, _):
     sqs_message_body = json.dumps(array_of_messages)
     message_len = len(sqs_message_body)
     logger.info(f"total message length:{message_len}")
-    if message_len < 256 * 1024 :
+    if message_len < 256 * 1024:
         sqs_client.send_message(
             QueueUrl=QUEUE_URL,
             MessageBody=sqs_message_body,
