@@ -1,16 +1,27 @@
 import logging
+import os
 import json
 import time
 from datetime import datetime
 from functools import wraps
-from log_firehose_splunk import FirehoseLogger
 from constants import get_status_code_for_diagnostics
+from clients import firehose_client
 
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel("INFO")
 
-firehose_logger = FirehoseLogger()
+STREAM_NAME = os.getenv("SPLUNK_FIREHOSE_NAME", "immunisation-fhir-api-internal-dev-splunk-firehose")
+
+
+def send_log_to_firehose(log_data: dict) -> None:
+    """Sends the log_message to Firehose"""
+    try:
+        record = {"Data": json.dumps({"event": log_data}).encode("utf-8")}
+        response = firehose_client.put_record(DeliveryStreamName=STREAM_NAME, Record=record)
+        logger.info("Log sent to Firehose: %s", response)  # TODO: Should we be logging full response?
+    except Exception as error:  # pylint:disable = broad-exception-caught
+        logger.exception("Error sending log to Firehose: %s", error)
 
 
 def ack_function_info(func):
@@ -21,42 +32,60 @@ def ack_function_info(func):
         base_log_data = {"function_name": f"ack_processor_{func.__name__}", "date_time": str(datetime.now())}
 
         start_time = time.time()
-
         try:
-            if event and "Records" in event:
-                for record in event["Records"]:
+
+            if not event or "Records" not in event:
+                raise ValueError("No records found in the event")
+
+            for record in event["Records"]:
+                try:
+                    incoming_message_body = json.loads(record["body"])
+                    # TODO: What is the expected structure of incoming_message_body? Is it always a list?
+                    # if not isinstance(incoming_message_body, list):
+                    #     incoming_message_body = [incoming_message_body]
+
+                    for item in incoming_message_body:
+                        print(f"Item: {item}")
+
+                        if not isinstance(item, dict):
+                            raise TypeError("Incoming message body is not a dictionary")
+
+                        file_key = item.get("file_key", "file_key_missing")
+                        message_id = item.get("row_id", "unknown")
+                        diagnostics = item.get("diagnostics")
+
+                        diagnostics_result = process_diagnostics(diagnostics, file_key, message_id)
+
+                        log_data = {
+                            **base_log_data,
+                            "file_key": file_key,
+                            "message_id": message_id,
+                            "vaccine_type": item.get("vaccine_type", "unknown"),
+                            "supplier": item.get("supplier", "unknown"),
+                            "local_id": item.get("local_id", "unknown"),
+                            "operation_requested": item.get("action_flag", "unknown"),
+                            "time_taken": f"{round(time.time() - start_time, 5)}s",
+                            **diagnostics_result,
+                        }
+                        try:
+                            logger.info(f"Function executed successfully: {json.dumps(log_data)}")
+                            send_log_to_firehose(log_data)
+                        except Exception:
+                            logger.warning("Issue with logging")
+
+                except Exception as record_error:
                     try:
-                        incoming_message_body = json.loads(record["body"])
-                        # TODO: What is the expected structure of incoming_message_body? Is it always a list?
-                        if not isinstance(incoming_message_body, list):
-                            incoming_message_body = [incoming_message_body]
-
-                        for item in incoming_message_body:
-                            file_key = item.get("file_key", "file_key_missing")
-                            message_id = item.get("row_id", "unknown")
-                            diagnostics = item.get("diagnostics")
-
-                            diagnostics_result = process_diagnostics(diagnostics, file_key, message_id)
-
-                            log_data = {
-                                **base_log_data,
-                                "file_key": file_key,
-                                "message_id": message_id,
-                                "vaccine_type": item.get("vaccine_type", "unknown"),
-                                "supplier": item.get("supplier", "unknown"),
-                                "local_id": item.get("local_id", "unknown"),
-                                "operation_requested": item.get("action_flag", "unknown"),
-                                "time_taken": f"{round(time.time() - start_time, 5)}s",
-                                **diagnostics_result,
-                            }
-                            try:
-                                logger.info(f"Function executed successfully: {json.dumps(log_data)}")
-                                firehose_logger.ack_send_log({"event": log_data})
-                            except Exception:
-                                logger.warning("Issue with logging")
-
-                    except Exception as record_error:
                         logger.error(f"Error processing record: {record}. Error: {record_error}")
+                        log_data = {
+                            "status": "fail",
+                            "statusCode": 500,
+                            "diagnostics": f"Error processing SQS message: {str(record_error)}",
+                            "date_time": str(datetime.now()),
+                            "error_source": "ack_lambda_handler",
+                        }
+                        send_log_to_firehose(log_data)
+                    except Exception:
+                        logger.warning("Issue with logging")
 
             result = func(event, context, *args, **kwargs)
             return result
@@ -72,7 +101,7 @@ def ack_function_info(func):
             }
             try:
                 logger.exception(f"Critical error in function: logging for {func.__name__}")
-                firehose_logger.ack_send_log({"event": log_data})
+                send_log_to_firehose(log_data)
             except Exception:
                 logger.warning("Issue with logging")
 

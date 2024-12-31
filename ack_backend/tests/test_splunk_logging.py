@@ -34,14 +34,14 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
-    @patch("log_structure_splunk.firehose_logger")
+    @patch("log_structure_splunk.send_log_to_firehose")
     @patch("time.time")
     @patch("log_structure_splunk.datetime")
     def test_splunk_logging_successful_rows(
         self,
         mock_datetime,
         mock_time,
-        mock_firehose_logger,
+        mock_send_log_to_firehose,
         mock_update_ack_file,
         mock_create_ack_data,
         mock_obtain_current_ack_content,
@@ -83,21 +83,21 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                 for key, expected in expected_values.items():
                     self.assertEqual(log_json[key], expected)
 
-                mock_firehose_logger.ack_send_log.assert_called_once_with({"event": log_json})
-                mock_firehose_logger.ack_send_log.reset_mock()
+                mock_send_log_to_firehose.assert_called_once_with(log_json)
+                mock_send_log_to_firehose.reset_mock()
 
     @patch("update_ack_file.upload_ack_file")
     @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
-    @patch("log_structure_splunk.firehose_logger")
+    @patch("log_structure_splunk.send_log_to_firehose")
     @patch("time.time")
     @patch("log_structure_splunk.datetime")
     def test_splunk_logging_missing_data(
         self,
         mock_datetime,
         mock_time,
-        mock_firehose_logger,
+        mock_send_log_to_firehose,
         mock_update_ack_file,
         mock_create_ack_data,
         mock_obtain_current_ack_content,
@@ -126,21 +126,21 @@ class TestSplunkFunctionInfo(unittest.TestCase):
             for key, expected in expected_values.items():
                 self.assertEqual(log_json.get(key, "unknown"), expected)
 
-            mock_firehose_logger.ack_send_log.assert_called_once_with({"event": log_json})
-            mock_firehose_logger.ack_send_log.reset_mock()
+            mock_send_log_to_firehose.assert_called_once_with(log_json)
+            mock_send_log_to_firehose.reset_mock()
 
     @patch("update_ack_file.upload_ack_file")
     @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
-    @patch("log_structure_splunk.firehose_logger")
+    @patch("log_structure_splunk.send_log_to_firehose")
     @patch("time.time")
     @patch("log_structure_splunk.datetime")
     def test_splunk_logging_statuscode_diagnostics(
         self,
         mock_datetime,
         mock_time,
-        mock_firehose_logger,
+        mock_send_log_to_firehose,
         mock_update_ack_file,
         mock_create_ack_data,
         mock_obtain_current_ack_content,
@@ -187,21 +187,21 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                 for key, expected in expected_values.items():
                     self.assertEqual(log_json[key], expected)
 
-                mock_firehose_logger.ack_send_log.assert_called_once_with({"event": log_json})
-                mock_firehose_logger.ack_send_log.reset_mock()
+                mock_send_log_to_firehose.assert_called_once_with(log_json)
+                mock_send_log_to_firehose.reset_mock()
 
     @patch("update_ack_file.upload_ack_file")
     @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
-    @patch("log_structure_splunk.firehose_logger")
+    @patch("log_structure_splunk.send_log_to_firehose")
     @patch("time.time")
     @patch("log_structure_splunk.datetime")
     def test_splunk_logging_multiple_rows(
         self,
         mock_datetime,
         mock_time,
-        mock_firehose_logger,
+        mock_send_log_to_firehose,
         mock_update_ack_file,
         mock_create_ack_data,
         mock_obtain_current_ack_content,
@@ -236,21 +236,21 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                 for key, expected in expected_entries[idx].items():
                     self.assertEqual(entry[key], expected)
 
-            self.assertEqual(mock_firehose_logger.ack_send_log.call_count, 2)
-            mock_firehose_logger.ack_send_log.reset_mock()
+            self.assertEqual(mock_send_log_to_firehose.call_count, 2)
+            mock_send_log_to_firehose.reset_mock()
 
     @patch("update_ack_file.upload_ack_file")
     @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
-    @patch("log_structure_splunk.firehose_logger")
+    @patch("log_structure_splunk.send_log_to_firehose")
     @patch("time.time")
     @patch("log_structure_splunk.datetime")
     def test_splunk_logging_multiple_with_diagnostics(
         self,
         mock_datetime,
         mock_time,
-        mock_firehose_logger,
+        mock_send_log_to_firehose,
         mock_update_ack_file,
         mock_create_ack_data,
         mock_obtain_current_ack_content,
@@ -291,8 +291,8 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                     self.assertEqual(log_json["operation_requested"], op["operation_request"])
                     self.assertEqual(log_json["diagnostics"], op["diagnostics"])
 
-                self.assertEqual(mock_firehose_logger.ack_send_log.call_count, 2)
-                mock_firehose_logger.ack_send_log.reset_mock()
+                self.assertEqual(mock_send_log_to_firehose.call_count, 2)
+                mock_send_log_to_firehose.reset_mock()
 
 
 if __name__ == "__main__":

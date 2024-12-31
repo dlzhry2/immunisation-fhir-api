@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import datetime
 from log_structure_splunk import ack_function_info
-from log_firehose_splunk import FirehoseLogger
+from log_structure_splunk import send_log_to_firehose
 from update_ack_file import update_ack_file, create_ack_data
 
 logging.basicConfig()
@@ -10,7 +10,7 @@ logger = logging.getLogger()
 logger.setLevel("INFO")
 
 
-firehose_logger = FirehoseLogger()
+# firehose_logger = FirehoseLogger()
 
 
 @ack_function_info
@@ -47,7 +47,7 @@ def lambda_handler(event, context):
             "date_time": str(datetime.now()),
             "error_source": "ack_lambda_handler",
         }
-        firehose_logger.ack_send_log({"event": log_data})
+        send_log_to_firehose(log_data)
 
     return {
         "statusCode": 200,
