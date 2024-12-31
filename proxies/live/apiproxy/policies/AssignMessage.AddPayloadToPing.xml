@@ -26,7 +26,7 @@
     </Headers>
   </Remove>
 
-  <Javascript continueOnError="false" enabled="true" name="Javascript.RemoveAdditionalHeaders">
+  <Javascript continueOnError="false" enabled="true" name="RemoveAdditionalHeaders">
     <ResourceURL>jsc://RemoveAdditionalHeaders.js</ResourceURL>
   </Javascript>
 

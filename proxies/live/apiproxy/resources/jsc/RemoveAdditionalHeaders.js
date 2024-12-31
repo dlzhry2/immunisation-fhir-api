@@ -10,12 +10,12 @@ var allowedHeaders = [
     'Strict-Transport-Security'
 ];
 
-var requestHeaders = context.getVariable('request.headers.names');
+var responseHeaders = context.getVariable('response.headers.names');
 
-if(requestHeaders) {
-    requestHeaders.forEach(function(header) {
+if(responseHeaders) {
+    responseHeaders.forEach(function(header) {
         if (allowedHeaders.indexOf(header) === -1) {
-            context.removeVariable('request.header.' + header);
+            context.removeVariable('response.header.' + header);
         }
     });
 }
