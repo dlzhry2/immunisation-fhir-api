@@ -10,10 +10,10 @@ var allowedHeaders = [
     'Strict-Transport-Security'
 ];
 
-var headers = context.getVariable('request.headers.names');
+var requestHeaders = context.getVariable('request.headers.names');
 
-if(headers) {
-    headers.forEach(function(header) {
+if(requestHeaders) {
+    requestHeaders.forEach(function(header) {
         if (allowedHeaders.indexOf(header) === -1) {
             context.removeVariable('request.header.' + header);
         }
