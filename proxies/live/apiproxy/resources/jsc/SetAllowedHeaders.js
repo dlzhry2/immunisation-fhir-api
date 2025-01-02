@@ -10,7 +10,10 @@ var allowedHeaders = [
     'Strict-Transport-Security'
 ];
 
-var responseHeaders = context.getVariable('response.headers.names') || [];
+var responseHeaders = context.getVariable('response.headers.names');
+
+responseHeaders = Array.isArray(responseHeaders) ? responseHeaders :[];
+
 
 var headersToRemove = responseHeaders.filter(function(header) {
     return allowedHeaders.indexOf(header) === -1;
