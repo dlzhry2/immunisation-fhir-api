@@ -29,3 +29,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3_batch_source_e
     }
   }
 }
+
+resource "aws_s3_bucket_versioning" "source_versioning" {
+  bucket = aws_s3_bucket.batch_data_source_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
