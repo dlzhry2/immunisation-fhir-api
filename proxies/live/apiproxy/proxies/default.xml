@@ -57,7 +57,10 @@
         <Name>FlowCallout.LogToSplunk</Name>
       </Step>
       <Step>
-        <Name>javascript.RemoveAdditionalHeaders</Name>
+        <Name>AssignMessage.SetAllowedHeaders</Name>
+      </Step>
+      <Step>
+        <Name>AssignMessage.RemoveDynamicHeaders</Name>
       </Step>
     </Response>
   </PostClientFlow>

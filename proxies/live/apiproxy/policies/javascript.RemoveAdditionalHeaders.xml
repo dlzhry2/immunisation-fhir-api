@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Javascript async="false" continueOnError="false" enabled="true" name="javascript.RemoveAdditionalHeaders"> 
-    <DisplayName>Remove Additional Headers</DisplayName>
-    <ResourceURL>jsc://RemoveAdditionalHeaders.js</ResourceURL>
-</Javascript>
