@@ -19,8 +19,10 @@ var headersToRemove = responseHeaders.filter(function(header) {
     return allowedHeaders.indexOf(header) === -1;
 });
 
-context.setVariable('debug.headersToRemove', headersToRemove.join(","));
+var setCookieHeader = context.getVariable('response.header.Set-Cookie');
+
+if (setCookieHeader) {
+    context.removeVariable('response.header.Set-Cookie');
+}
 
 context.setVariable('headersToRemove', headersToRemove.join(","));
-
-
