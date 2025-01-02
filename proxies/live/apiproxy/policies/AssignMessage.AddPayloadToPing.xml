@@ -30,6 +30,6 @@
     <ResourceURL>jsc://RemoveAdditionalHeaders.js</ResourceURL>
   </Javascript>
 
-  <AssignTo createNew="false" transport="http" type="request"/>
+  <AssignTo createNew="false" transport="http" type="response"/>
   <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
 </AssignMessage>
