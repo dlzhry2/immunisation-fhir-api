@@ -29,7 +29,13 @@
       <Response>
         <Step>
           <Name>AssignMessage.AddPayloadToPing</Name>
-        </Step>    
+        </Step>
+        <Step>
+          <Name>AssignMessage.SetAllowedHeaders</Name>
+        </Step>
+        <Step>
+          <Name>AssignMessage.RemoveDynamicHeaders</Name>
+        </Step>
       </Response>
       <Condition>(proxy.pathsuffix MatchesPath "/_ping") and ((request.verb = "GET") or (request.verb = "HEAD"))</Condition>
     </Flow>
@@ -55,12 +61,6 @@
     <Response>
       <Step>
         <Name>FlowCallout.LogToSplunk</Name>
-      </Step>
-      <Step>
-        <Name>AssignMessage.SetAllowedHeaders</Name>
-      </Step>
-      <Step>
-        <Name>AssignMessage.RemoveDynamicHeaders</Name>
       </Step>
     </Response>
   </PostClientFlow>
