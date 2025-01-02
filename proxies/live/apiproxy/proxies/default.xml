@@ -56,6 +56,9 @@
       <Step>
         <Name>FlowCallout.LogToSplunk</Name>
       </Step>
+      <Step>
+        <Name>javascript.RemoveAdditionalHeaders</Name>
+      </Step>
     </Response>
   </PostClientFlow>
   <HTTPProxyConnection>
