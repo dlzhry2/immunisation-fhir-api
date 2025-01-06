@@ -1,16 +1,8 @@
 import json
-import logging
 from datetime import datetime
 from log_structure_splunk import ack_function_info
 from log_structure_splunk import send_log_to_firehose
 from update_ack_file import update_ack_file, create_ack_data
-
-logging.basicConfig()
-logger = logging.getLogger()
-logger.setLevel("INFO")
-
-
-# firehose_logger = FirehoseLogger()
 
 
 @ack_function_info
@@ -19,23 +11,25 @@ def lambda_handler(event, context):
         array_of_rows = []
         for record in event["Records"]:
             incoming_message_body = json.loads(record["body"])
+            file_key = incoming_message_body[0].get("file_key")
             for message in incoming_message_body:
-                # Check if there are any messages to process
-                file_key = message.get("file_key")
+                # Check that the file_key is the same for each message (since each message should be from the same file)
+                if message.get("file_key") != file_key:
+                    raise ValueError("File key mismatch")
                 row_id = message.get("row_id")
                 local_id = message.get("local_id")
                 imms_id = message.get("imms_id")
                 diagnostics = message.get("diagnostics")
                 created_at_formatted_string = message.get("created_at_formatted_string")
-                successful_api_response = diagnostics is None
+                successful_response = diagnostics is None  # If diagnostics is None, then the response was successful
                 row = create_ack_data(
-                    created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
+                    created_at_formatted_string, local_id, row_id, successful_response, diagnostics, imms_id
                 )
                 array_of_rows.append(row)
-        # TODO: Are we confident that all messages in the event will be for the same file?
-        # Do we need a check on each row?
-        update_ack_file(file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows)
-        # Delete the message from the queue
+
+            update_ack_file(
+                file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows
+            )
 
     except Exception as e:
 

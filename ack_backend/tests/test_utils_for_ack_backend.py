@@ -179,5 +179,5 @@ class InvalidValues:
         "time_taken": "1.0s",
         "local_id": "unknown",
         "statusCode": 500,
-        "diagnostics": "An unhandled error happened during batch processing",
+        "diagnostics": "An unhandled error occurred during batch processing",
     }

@@ -17,7 +17,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                     "body": json.dumps(
                         [
                             ValidValues.DPSFULL_ack_processor_input,
-                            ValidValues.EMIS_ack_processor_input,
+                            ValidValues.DPSFULL_ack_processor_input,
                         ]
                     )
                 }
@@ -209,8 +209,8 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     ):
         """Tests logging for multiple objects in the body of the event"""
         mock_datetime.now.return_value = ValidValues.fixed_datetime
-        mock_time.side_effect = [100000.0 + i for i in range(9)]
-
+        # Mock start time as 100000.0 and end time as 100001.0 for each iteration
+        mock_time.side_effect = [100000.0 + i for i in [0, 1, 0, 1, 0, 1]]
         mock_create_ack_data.return_value = None
         mock_update_ack_file.return_value = {}
 
@@ -229,7 +229,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
 
             expected_entries = [
                 copy.deepcopy(ValidValues.DPSFULL_expected_log_value),
-                copy.deepcopy(ValidValues.EMIS_expected_log_value),
+                copy.deepcopy(ValidValues.DPSFULL_expected_log_value),
             ]
 
             for idx, entry in enumerate(log_entries):
@@ -286,6 +286,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                 self.assertIn("200", str(result["statusCode"]))
 
                 self.assertEqual(len(log.output), 2)
+
                 for record_log in log.output:
                     log_json = self.extract_log_json(record_log)
                     self.assertEqual(log_json["operation_requested"], op["operation_request"])

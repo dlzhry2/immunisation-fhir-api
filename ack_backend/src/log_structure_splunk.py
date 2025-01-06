@@ -1,15 +1,11 @@
-import logging
 import os
 import json
 import time
 from datetime import datetime
 from functools import wraps
 from constants import get_status_code_for_diagnostics
-from clients import firehose_client
+from clients import firehose_client, logger
 
-logging.basicConfig()
-logger = logging.getLogger()
-logger.setLevel("INFO")
 
 STREAM_NAME = os.getenv("SPLUNK_FIREHOSE_NAME", "immunisation-fhir-api-internal-dev-splunk-firehose")
 
@@ -40,9 +36,8 @@ def ack_function_info(func):
             for record in event["Records"]:
                 try:
                     incoming_message_body = json.loads(record["body"])
-                    # TODO: What is the expected structure of incoming_message_body? Is it always a list?
-                    # if not isinstance(incoming_message_body, list):
-                    #     incoming_message_body = [incoming_message_body]
+                    if not isinstance(incoming_message_body, list):
+                        raise TypeError("Incoming message body is not a list")
 
                     for item in incoming_message_body:
                         print(f"Item: {item}")
@@ -77,11 +72,11 @@ def ack_function_info(func):
                     try:
                         logger.error(f"Error processing record: {record}. Error: {record_error}")
                         log_data = {
+                            **base_log_data,
+                            "time_taken": f"{round(time.time() - start_time, 5)}s",
                             "status": "fail",
                             "statusCode": 500,
                             "diagnostics": f"Error processing SQS message: {str(record_error)}",
-                            "date_time": str(datetime.now()),
-                            "error_source": "ack_lambda_handler",
                         }
                         send_log_to_firehose(log_data)
                     except Exception:
@@ -111,19 +106,13 @@ def ack_function_info(func):
 
 
 def process_diagnostics(diagnostics, file_key, message_id):
-    """Teturns a dictionary containing the status, statusCode and diagnostics"""
+    """Returns a dictionary containing the status, statusCode and diagnostics"""
     if diagnostics is not None:
-        return {
-            "status": "fail",
-            "statusCode": get_status_code_for_diagnostics(diagnostics),
-            "diagnostics": diagnostics,
-        }
+        status_code = get_status_code_for_diagnostics(diagnostics)
+        return {"status": "fail", "statusCode": status_code, "diagnostics": diagnostics}
 
     if file_key == "file_key_missing" or message_id == "unknown":
-        return {
-            "status": "fail",
-            "statusCode": 500,
-            "diagnostics": "An unhandled error happened during batch processing",
-        }
+        diagnostics = "An unhandled error occurred during batch processing"
+        return {"status": "fail", "statusCode": 500, "diagnostics": diagnostics}
 
     return {"status": "success", "statusCode": 200, "diagnostics": "Operation completed successfully"}
