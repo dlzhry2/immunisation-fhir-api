@@ -144,7 +144,7 @@ class TestAckProcessor(unittest.TestCase):
 
         s3_client.put_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_name, Body=existing_content)
 
-    @patch("log_structure_splunk.send_log_to_firehose")
+    @patch("logging_decorators.send_log_to_firehose")
     def test_lambda_handler_main(self, mock_send_log_to_firehose):
         """Test lambda handler with dynamic ack_file_name and consistent row_template."""
         test_bucket_name = "immunisation-batch-internal-testlambda-data-destinations"
@@ -207,7 +207,7 @@ class TestAckProcessor(unittest.TestCase):
 
                     s3_client.delete_object(Bucket=test_bucket_name, Key=file_info["ack_file_name"])
 
-    @patch("log_structure_splunk.send_log_to_firehose")
+    @patch("logging_decorators.send_log_to_firehose")
     def test_lambda_handler_existing(self, mock_send_log_to_firehose):
         """Test lambda handler with dynamic ack_file_name and consistent row_template with an already existing
         ack file with content."""
@@ -472,7 +472,7 @@ class TestAckProcessor(unittest.TestCase):
 
             s3_client.delete_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)
 
-    @patch("log_structure_splunk.send_log_to_firehose")
+    @patch("logging_decorators.send_log_to_firehose")
     @patch("update_ack_file.create_ack_data")
     @patch("update_ack_file.update_ack_file")
     def test_lambda_handler_error_scenarios(
@@ -485,16 +485,14 @@ class TestAckProcessor(unittest.TestCase):
 
             mock_send_log_to_firehose.assert_called()
             error_log = mock_send_log_to_firehose.call_args[0][0]
-            self.assertIn(
-                "Error in ack_processor_lambda_handler: No records found in the event", error_log["diagnostics"]
-            )
+            self.assertIn("No records found in the event", error_log["diagnostics"])
             mock_send_log_to_firehose.reset_mock()
 
         test_cases = [
             {
                 "description": "Malformed JSON in SQS body",
                 "event": {"Records": [{""}]},
-                "expected_message": "Error in ack_processor_lambda_handler: Could not load incoming message body",
+                "expected_message": "Could not load incoming message body",
             },
             {
                 "description": "Invalid value in 'diagnostics' field",
@@ -516,7 +514,7 @@ class TestAckProcessor(unittest.TestCase):
                         }
                     ]
                 },
-                "expected_message": "Error in ack_processor_lambda_handler: Diagnostics must be either None or a string",
+                "expected_message": "Diagnostics must be either None or a string",
             },
         ]
         # TODO: What was below meant to be testing?

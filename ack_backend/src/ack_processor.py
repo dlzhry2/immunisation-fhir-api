@@ -1,5 +1,7 @@
+"""Ack lambda handler"""
+
 import json
-from log_structure_splunk import ack_function_info, convert_messsage_to_ack_row_logging_decorator
+from logging_decorators import ack_lambda_handler_logging_decorator, convert_messsage_to_ack_row_logging_decorator
 from update_ack_file import update_ack_file, create_ack_data
 
 
@@ -29,7 +31,7 @@ def convert_message_to_ack_row(message, expected_file_key, expected_created_at_f
     )
 
 
-@ack_function_info
+@ack_lambda_handler_logging_decorator
 def lambda_handler(event, context):
 
     if not event.get("Records"):

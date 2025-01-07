@@ -34,9 +34,9 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
-    @patch("log_structure_splunk.send_log_to_firehose")
+    @patch("logging_decorators.send_log_to_firehose")
     @patch("time.time")
-    @patch("log_structure_splunk.datetime")
+    @patch("logging_decorators.datetime")
     def test_splunk_logging_successful_rows(
         self,
         mock_datetime,
@@ -88,9 +88,9 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
-    @patch("log_structure_splunk.send_log_to_firehose")
+    @patch("logging_decorators.send_log_to_firehose")
     @patch("time.time")
-    @patch("log_structure_splunk.datetime")
+    @patch("logging_decorators.datetime")
     def test_splunk_logging_missing_data(
         self,
         mock_datetime,
@@ -133,9 +133,9 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
-    @patch("log_structure_splunk.send_log_to_firehose")
+    @patch("logging_decorators.send_log_to_firehose")
     @patch("time.time")
-    @patch("log_structure_splunk.datetime")
+    @patch("logging_decorators.datetime")
     def test_splunk_logging_statuscode_diagnostics(
         self,
         mock_datetime,
@@ -194,9 +194,9 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
-    @patch("log_structure_splunk.send_log_to_firehose")
+    @patch("logging_decorators.send_log_to_firehose")
     @patch("time.time")
-    @patch("log_structure_splunk.datetime")
+    @patch("logging_decorators.datetime")
     def test_splunk_logging_multiple_rows(
         self,
         mock_datetime,
@@ -242,9 +242,9 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     @patch("update_ack_file.obtain_current_ack_content")
     @patch("ack_processor.create_ack_data")
     @patch("ack_processor.update_ack_file")
-    @patch("log_structure_splunk.send_log_to_firehose")
+    @patch("logging_decorators.send_log_to_firehose")
     @patch("time.time")
-    @patch("log_structure_splunk.datetime")
+    @patch("logging_decorators.datetime")
     def test_splunk_logging_multiple_with_diagnostics(
         self,
         mock_datetime,
