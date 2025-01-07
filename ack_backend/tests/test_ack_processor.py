@@ -494,7 +494,7 @@ class TestAckProcessor(unittest.TestCase):
             {
                 "description": "Malformed JSON in SQS body",
                 "event": {"Records": [{""}]},
-                "expected_message": "Error processing SQS message:",
+                "expected_message": "Error in ack_processor_lambda_handler: Could not load incoming message body",
             },
             {
                 "description": "Invalid value in 'diagnostics' field",
@@ -516,7 +516,7 @@ class TestAckProcessor(unittest.TestCase):
                         }
                     ]
                 },
-                "expected_message": "Error processing SQS message:",
+                "expected_message": "Error in ack_processor_lambda_handler: Diagnostics must be either None or a string",
             },
         ]
         # TODO: What was below meant to be testing?
@@ -524,7 +524,8 @@ class TestAckProcessor(unittest.TestCase):
 
         for scenario in test_cases:
             with self.subTest(msg=scenario["description"]):
-                lambda_handler(event=scenario["event"], context={})
+                with self.assertRaises(Exception):
+                    lambda_handler(event=scenario["event"], context={})
 
                 mock_send_log_to_firehose.assert_called()
                 error_log = mock_send_log_to_firehose.call_args[0][0]

@@ -1,17 +1,11 @@
 """Functions for adding a row of data to the ack file"""
 
 import os
-import logging
 from io import StringIO, BytesIO
 from typing import Union
 from botocore.exceptions import ClientError
-from boto3 import client as boto3_client
 from constants import Constants
-
-
-s3_client = boto3_client("s3", region_name="eu-west-2")
-
-logger = logging.getLogger()
+from clients import s3_client, logger
 
 
 def create_ack_data(
@@ -80,11 +74,7 @@ def upload_ack_file(
     logger.info("Ack file updated to %s: %s", ack_bucket_name, ack_file_key)
 
 
-def update_ack_file(
-    file_key: str,
-    created_at_formatted_string: str,
-    ack_data_rows: any
-) -> None:
+def update_ack_file(file_key: str, created_at_formatted_string: str, ack_data_rows: any) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
     ack_file_key = f"forwardedFile/{file_key.replace('.csv', f'_BusAck_{created_at_formatted_string}.csv')}"
     ack_bucket_name = os.getenv("ACK_BUCKET_NAME")

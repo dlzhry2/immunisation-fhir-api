@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, call
 import json
 import copy
 from src.ack_processor import lambda_handler
@@ -49,7 +49,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     ):
         """Tests a single object in the body of the event"""
         mock_datetime.now.return_value = ValidValues.fixed_datetime
-        mock_time.side_effect = [100000.0 + i for i in range(0, 9, 1)]
+        mock_time.side_effect = [100000.0 + i for i in range(0, 12, 1)]
 
         mock_create_ack_data.return_value = None
         mock_update_ack_file.return_value = {}
@@ -59,30 +59,28 @@ class TestSplunkFunctionInfo(unittest.TestCase):
             {"operation_request": "DELETE"},
         ]
 
-        for op in operations:
+        for operation in operations:
             with self.assertLogs(level="INFO") as log:
                 message_body = copy.deepcopy(self.message_body_base)
 
                 for record in message_body["Records"]:
                     body_data = json.loads(record["body"])
                     for item in body_data:
-                        item["action_flag"] = op["operation_request"]
+                        item["action_flag"] = operation["operation_request"]
                     record["body"] = json.dumps(body_data)
 
                 context = {}
-
                 result = lambda_handler(message_body, context)
                 self.assertIn("200", str(result["statusCode"]))
                 self.assertGreater(len(log.output), 0)
 
                 log_json = self.extract_log_json(log.output[0])
                 expected_values = copy.deepcopy(ValidValues.DPSFULL_expected_log_value)
-                expected_values["operation_requested"] = op["operation_request"]
+                expected_values["operation_requested"] = operation["operation_request"]
                 expected_values["time_taken"] = "1.0s"
 
                 for key, expected in expected_values.items():
                     self.assertEqual(log_json[key], expected)
-
                 mock_send_log_to_firehose.assert_called_once_with(log_json)
                 mock_send_log_to_firehose.reset_mock()
 
@@ -105,7 +103,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     ):
         """Tests missing key values in the body of the event"""
         mock_datetime.now.return_value = ValidValues.fixed_datetime
-        mock_time.side_effect = [100000.0 + i for i in range(0, 9, 1)]
+        mock_time.side_effect = [100000.0 + i for i in range(0, 12, 1)]
 
         mock_create_ack_data.return_value = None
         mock_update_ack_file.return_value = {}
@@ -115,8 +113,9 @@ class TestSplunkFunctionInfo(unittest.TestCase):
 
             context = {}
 
-            result = lambda_handler(message_body, context)
-            self.assertIn("200", str(result["statusCode"]))
+            with self.assertRaises(Exception):
+                lambda_handler(message_body, context)
+
             self.assertGreater(len(log.output), 0)
 
             log_json = self.extract_log_json(log.output[0])
@@ -126,7 +125,8 @@ class TestSplunkFunctionInfo(unittest.TestCase):
             for key, expected in expected_values.items():
                 self.assertEqual(log_json.get(key, "unknown"), expected)
 
-            mock_send_log_to_firehose.assert_called_once_with(log_json)
+            # TODO: ? Test for second firehose call
+            mock_send_log_to_firehose.assert_has_calls([call(log_json)])
             mock_send_log_to_firehose.reset_mock()
 
     @patch("update_ack_file.upload_ack_file")
@@ -149,7 +149,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
         """'Tests the correct codes are returned for diagnostics"""
 
         mock_datetime.now.return_value = ValidValues.fixed_datetime
-        mock_time.side_effect = [100000.0 + i for i in range(0, 18, 1)]
+        mock_time.side_effect = [100000.0 + i for i in range(0, 24, 1)]
 
         mock_create_ack_data.return_value = None
         mock_update_ack_file.return_value = {}
@@ -209,8 +209,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
     ):
         """Tests logging for multiple objects in the body of the event"""
         mock_datetime.now.return_value = ValidValues.fixed_datetime
-        # Mock start time as 100000.0 and end time as 100001.0 for each iteration
-        mock_time.side_effect = [100000.0 + i for i in [0, 1, 0, 1, 0, 1]]
+        mock_time.side_effect = [100000.0 + i for i in range(0, 12, 1)]
         mock_create_ack_data.return_value = None
         mock_update_ack_file.return_value = {}
 

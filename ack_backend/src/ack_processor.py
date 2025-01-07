@@ -1,47 +1,56 @@
 import json
-from datetime import datetime
-from log_structure_splunk import ack_function_info
-from log_structure_splunk import send_log_to_firehose
+from log_structure_splunk import ack_function_info, convert_messsage_to_ack_row_logging_decorator
 from update_ack_file import update_ack_file, create_ack_data
+
+
+@convert_messsage_to_ack_row_logging_decorator
+def convert_message_to_ack_row(message, expected_file_key, expected_created_at_formatted_string):
+    """
+    Takes a single message and returns the ack data row for that message.
+    A value error is raised if the file_key or created_at_formatted_string for the message do not match the
+    expected values.
+    """
+    # Check that the file_key and created_at_formatted_string are the same for each message
+    if message.get("file_key") != expected_file_key:
+        raise ValueError("File key mismatch")
+    if message.get("created_at_formatted_string") != expected_created_at_formatted_string:
+        raise ValueError("Created_at_formatted_string mismatch")
+
+    if (diagnostics := message.get("diagnostics")) is not None and not isinstance(diagnostics, str):
+        raise ValueError("Diagnostics must be either None or a string")
+
+    return create_ack_data(
+        created_at_formatted_string=expected_created_at_formatted_string,
+        local_id=message.get("local_id"),
+        row_id=message.get("row_id"),
+        successful_api_response=diagnostics is None,  # Response is successful if and only if there are no diagnostics
+        diagnostics=diagnostics,
+        imms_id=message.get("imms_id"),
+    )
 
 
 @ack_function_info
 def lambda_handler(event, context):
-    try:
-        array_of_rows = []
-        for record in event["Records"]:
+
+    if not event.get("Records"):
+        raise ValueError("Error in ack_processor_lambda_handler: No records found in the event")
+
+    for record in event["Records"]:
+
+        try:
             incoming_message_body = json.loads(record["body"])
-            file_key = incoming_message_body[0].get("file_key")
-            for message in incoming_message_body:
-                # Check that the file_key is the same for each message (since each message should be from the same file)
-                if message.get("file_key") != file_key:
-                    raise ValueError("File key mismatch")
-                row_id = message.get("row_id")
-                local_id = message.get("local_id")
-                imms_id = message.get("imms_id")
-                diagnostics = message.get("diagnostics")
-                created_at_formatted_string = message.get("created_at_formatted_string")
-                successful_response = diagnostics is None  # If diagnostics is None, then the response was successful
-                row = create_ack_data(
-                    created_at_formatted_string, local_id, row_id, successful_response, diagnostics, imms_id
-                )
-                array_of_rows.append(row)
+        except Exception as body_json_error:
+            raise ValueError("Could not load incoming message body") from body_json_error
 
-            update_ack_file(
-                file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows
-            )
+        # file_key and created_at_formatted_string should be the same for all messages in the incoming_message_body
+        file_key = incoming_message_body[0].get("file_key")
+        created_at_formatted_string = incoming_message_body[0].get("created_at_formatted_string")
+        array_of_rows = []
 
-    except Exception as e:
+        for message in incoming_message_body:
+            array_of_rows.append(convert_message_to_ack_row(message, file_key, created_at_formatted_string))
 
-        print(f"Error processing SQS message: {e}")
-        log_data = {
-            "status": "fail",
-            "statusCode": 500,
-            "diagnostics": f"Error processing SQS message: {str(e)}",
-            "date_time": str(datetime.now()),
-            "error_source": "ack_lambda_handler",
-        }
-        send_log_to_firehose(log_data)
+        update_ack_file(file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows)
 
     return {
         "statusCode": 200,

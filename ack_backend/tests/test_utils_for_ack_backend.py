@@ -82,7 +82,7 @@ class ValidValues:
     }
 
     DPSFULL_expected_log_value = {
-        "function_name": "ack_processor_lambda_handler",
+        "function_name": "ack_processor_convert_message_to_ack_row",
         "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
         "status": "success",
         "supplier": "DPSFULL",
@@ -168,7 +168,7 @@ class InvalidValues:
     fixed_datetime = datetime(2024, 10, 29, 12, 0, 0)
 
     Logging_with_no_values = {
-        "function_name": "ack_processor_lambda_handler",
+        "function_name": "ack_processor_convert_message_to_ack_row",
         "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
         "status": "fail",
         "supplier": "unknown",

@@ -20,68 +20,69 @@ def send_log_to_firehose(log_data: dict) -> None:
         logger.exception("Error sending log to Firehose: %s", error)
 
 
+def convert_messsage_to_ack_row_logging_decorator(func):
+    """This decorator logs the information on the conversion of a single message to an ack data row"""
+
+    @wraps(func)
+    def wrapper(message, expected_file_key, expected_created_at_formatted_string):
+
+        base_log_data = {"function_name": f"ack_processor_{func.__name__}", "date_time": str(datetime.now())}
+        start_time = time.time()
+
+        try:
+            result = func(message, expected_file_key, expected_created_at_formatted_string)
+
+            file_key = message.get("file_key", "file_key_missing")
+            message_id = message.get("row_id", "unknown")
+            diagnostics = message.get("diagnostics")
+
+            diagnostics_result = process_diagnostics(diagnostics, file_key, message_id)
+
+            log_data = {
+                **base_log_data,
+                "file_key": file_key,
+                "message_id": message.get("row_id", "unknown"),
+                "vaccine_type": message.get("vaccine_type", "unknown"),
+                "supplier": message.get("supplier", "unknown"),
+                "local_id": message.get("local_id", "unknown"),
+                "operation_requested": message.get("action_flag", "unknown"),
+                "time_taken": f"{round(time.time() - start_time, 5)}s",
+                **diagnostics_result,
+            }
+
+            try:
+                logger.info(f"Function executed successfully: {json.dumps(log_data)}")
+                send_log_to_firehose(log_data)
+            except Exception:
+                logger.warning("Issue with logging")
+
+            return result
+
+        except Exception as e:
+            log_data = {
+                "status": "fail",
+                "statusCode": 500,
+                "diagnostics": f"Error converting message to ack row: {str(e)}",
+                "date_time": str(datetime.now()),
+                "error_source": "convert_message_to_ack_row",
+            }
+            send_log_to_firehose(log_data)
+
+            raise
+
+    return wrapper
+
+
 def ack_function_info(func):
     """This decorator logs the execution info for the decorated function and sends it to Splunk."""
 
     @wraps(func)
     def wrapper(event, context, *args, **kwargs):
+
         base_log_data = {"function_name": f"ack_processor_{func.__name__}", "date_time": str(datetime.now())}
-
         start_time = time.time()
+
         try:
-
-            if not event or "Records" not in event:
-                raise ValueError("No records found in the event")
-
-            for record in event["Records"]:
-                try:
-                    incoming_message_body = json.loads(record["body"])
-                    if not isinstance(incoming_message_body, list):
-                        raise TypeError("Incoming message body is not a list")
-
-                    for item in incoming_message_body:
-                        print(f"Item: {item}")
-
-                        if not isinstance(item, dict):
-                            raise TypeError("Incoming message body is not a dictionary")
-
-                        file_key = item.get("file_key", "file_key_missing")
-                        message_id = item.get("row_id", "unknown")
-                        diagnostics = item.get("diagnostics")
-
-                        diagnostics_result = process_diagnostics(diagnostics, file_key, message_id)
-
-                        log_data = {
-                            **base_log_data,
-                            "file_key": file_key,
-                            "message_id": message_id,
-                            "vaccine_type": item.get("vaccine_type", "unknown"),
-                            "supplier": item.get("supplier", "unknown"),
-                            "local_id": item.get("local_id", "unknown"),
-                            "operation_requested": item.get("action_flag", "unknown"),
-                            "time_taken": f"{round(time.time() - start_time, 5)}s",
-                            **diagnostics_result,
-                        }
-                        try:
-                            logger.info(f"Function executed successfully: {json.dumps(log_data)}")
-                            send_log_to_firehose(log_data)
-                        except Exception:
-                            logger.warning("Issue with logging")
-
-                except Exception as record_error:
-                    try:
-                        logger.error(f"Error processing record: {record}. Error: {record_error}")
-                        log_data = {
-                            **base_log_data,
-                            "time_taken": f"{round(time.time() - start_time, 5)}s",
-                            "status": "fail",
-                            "statusCode": 500,
-                            "diagnostics": f"Error processing SQS message: {str(record_error)}",
-                        }
-                        send_log_to_firehose(log_data)
-                    except Exception:
-                        logger.warning("Issue with logging")
-
             result = func(event, context, *args, **kwargs)
             return result
 
