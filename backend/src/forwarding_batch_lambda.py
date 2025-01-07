@@ -8,13 +8,23 @@ import logging
 from fhir_batch_repository import create_table
 from fhir_batch_controller import ImmunizationBatchController, make_batch_controller
 from clients import sqs_client
-from models.errors import MessageNotSuccessfulError
+from models.errors import MessageNotSuccessfulError, RecordProcessorError
 
 
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
 
 QUEUE_URL = os.getenv("SQS_QUEUE_URL")
+
+
+def create_diagnostics_dictionary(error: Exception) -> dict:
+    """Returns a dictionary containing the error_type, statusCode, and error_message based on the type of the error"""
+
+    if isinstance(error, RecordProcessorError):
+        return error.diagnostics_dictionary
+
+    else:
+        return {"error_type": type(error).__name__, "statusCode": 500, "error_message": str(error)}
 
 
 def forward_request_to_dynamo(
@@ -53,7 +63,7 @@ def forward_lambda_handler(event, _):
             # TODO: Move section above here into own try-except block
 
             if incoming_diagnostics := incoming_message_body.get("diagnostics"):
-                raise MessageNotSuccessfulError(incoming_diagnostics)
+                raise RecordProcessorError(incoming_diagnostics)
 
             if not (fhir_json := incoming_message_body.get("fhir_json")):
                 raise MessageNotSuccessfulError("Server error - FHIR JSON not correctly sent to forwarder")
@@ -74,7 +84,9 @@ def forward_lambda_handler(event, _):
             array_of_messages.append({**base_outgoing_message_body, "imms_id": imms_id})
 
         except Exception as error:
-            array_of_messages.append({**base_outgoing_message_body, "diagnostics": str(error)})
+            array_of_messages.append(
+                {**base_outgoing_message_body, "diagnostics": create_diagnostics_dictionary(error)}
+            )
             logger.error("Error processing message: %s", error)
 
     # Send to SQS
