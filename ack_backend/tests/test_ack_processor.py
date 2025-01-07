@@ -11,6 +11,7 @@ from tests.test_utils_for_ack_backend import (
     AWS_REGION,
     ValidValues,
     CREATED_AT_FORMATTED_STRING,
+    DiagnosticsDictionaries,
 )
 from copy import deepcopy
 import uuid
@@ -95,7 +96,7 @@ class TestAckProcessor(unittest.TestCase):
     def create_expected_ack_content(self, row_input, actual_ack_file_content, expected_ack_file_content):
         """creates test ack rows from using a list containing multiple rows"""
         for i, row in enumerate(row_input):
-            diagnostics = row.get("diagnostics", "")
+            diagnostics = row.get("diagnostics", {}).get("error_message", "")
             imms_id = row.get("imms_id", "")
             row_id = row.get("row_id")
             if diagnostics:
@@ -159,22 +160,26 @@ class TestAckProcessor(unittest.TestCase):
             {
                 "description": "SQS event with multiple errors",
                 "rows": [
-                    {"row_id": "row_1", "diagnostics": "UNIQUE_ID or UNIQUE_ID_URI is NEW"},
-                    {"row_id": "row_2", "diagnostics": "unauthorized"},
-                    {"row_id": "row_3", "diagnostics": "not found"},
+                    {"row_id": "row_1", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
+                    {"row_id": "row_2", "diagnostics": DiagnosticsDictionaries.NO_PERMISSIONS},
+                    {"row_id": "row_3", "diagnostics": DiagnosticsDictionaries.RESOURCE_NOT_FOUND_ERROR},
                 ],
             },
             {
                 "description": "Multiple row processing from SQS event - mixture of success and failure rows",
                 "rows": [
                     {"row_id": "row_1", "imms_id": "TEST_IMMS_ID"},
-                    {"row_id": "row_2", "diagnostics": "UNIQUE_ID or UNIQUE_ID_URI is NEW"},
-                    {"row_id": "row_3", "diagnostics": "Validation_error"},
+                    {"row_id": "row_2", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
+                    {"row_id": "row_3", "diagnostics": DiagnosticsDictionaries.CUSTOM_VALIDATION_ERROR},
                     {"row_id": "row_4"},
-                    {"row_id": "row_5", "diagnostics": "Validation_error", "imms_id": "TEST_IMMS_ID"},
-                    {"row_id": "row_6", "diagnostics": "Validation_error"},
+                    {
+                        "row_id": "row_5",
+                        "diagnostics": DiagnosticsDictionaries.CUSTOM_VALIDATION_ERROR,
+                        "imms_id": "TEST_IMMS_ID",
+                    },
+                    {"row_id": "row_6", "diagnostics": DiagnosticsDictionaries.CUSTOM_VALIDATION_ERROR},
                     {"row_id": "row_7"},
-                    {"row_id": "row_8", "diagnostics": "Duplicate"},
+                    {"row_id": "row_8", "diagnostics": DiagnosticsDictionaries.IDENTIFIER_DUPLICATION_ERROR},
                 ],
             },
             {
@@ -222,20 +227,20 @@ class TestAckProcessor(unittest.TestCase):
             {
                 "description": "SQS event with multiple errors",
                 "rows": [
-                    {"row_id": "row_1", "diagnostics": "UNIQUE_ID or UNIQUE_ID_URI is missing"},
-                    {"row_id": "row_2", "diagnostics": "unauthorized"},
-                    {"row_id": "row_3", "diagnostics": "not found"},
+                    {"row_id": "row_1", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
+                    {"row_id": "row_2", "diagnostics": DiagnosticsDictionaries.NO_PERMISSIONS},
+                    {"row_id": "row_3", "diagnostics": DiagnosticsDictionaries.RESOURCE_NOT_FOUND_ERROR},
                 ],
             },
             {
                 "description": "SQS event with mixed success and failure rows",
                 "rows": [
-                    {"row_id": "row_4", "diagnostics": "UNIQUE_ID or UNIQUE_ID_URI is missing"},
+                    {"row_id": "row_4", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
                     {"row_id": "row_5"},
                     {"row_id": "row_6"},
-                    {"row_id": "row_7", "diagnostics": "UNIQUE_ID or UNIQUE_ID_URI is missing"},
-                    {"row_id": "row_8", "diagnostics": "UNIQUE_ID or UNIQUE_ID_URI is missing"},
-                    {"row_id": "row_9", "diagnostics": "UNIQUE_ID or UNIQUE_ID_URI is missing"},
+                    {"row_id": "row_7", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
+                    {"row_id": "row_8", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
+                    {"row_id": "row_9", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
                 ],
             },
             {
@@ -506,7 +511,7 @@ class TestAckProcessor(unittest.TestCase):
                                         "row_id": "123",
                                         "local_id": "111^222",
                                         "imms_id": "TEST_IMMS_ID",
-                                        "diagnostics": {"unexpected": "object"},
+                                        "diagnostics": "SHOULD BE A DICTIONARY, NOT A STRING",
                                         "created_at_formatted_string": "20241212T13000000",
                                     }
                                 ]
@@ -514,7 +519,7 @@ class TestAckProcessor(unittest.TestCase):
                         }
                     ]
                 },
-                "expected_message": "Diagnostics must be either None or a string",
+                "expected_message": "Diagnostics must be either None or a dictionary",
             },
         ]
         # TODO: What was below meant to be testing?

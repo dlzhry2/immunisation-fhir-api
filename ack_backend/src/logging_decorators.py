@@ -5,7 +5,6 @@ import json
 import time
 from datetime import datetime
 from functools import wraps
-from constants import get_status_code_for_diagnostics
 from clients import firehose_client, logger
 
 
@@ -100,8 +99,11 @@ def ack_lambda_handler_logging_decorator(func):
 def process_diagnostics(diagnostics, file_key, message_id):
     """Returns a dictionary containing the status, statusCode and diagnostics"""
     if diagnostics is not None:
-        status_code = get_status_code_for_diagnostics(diagnostics)
-        return {"status": "fail", "statusCode": status_code, "diagnostics": diagnostics}
+        return {
+            "status": "fail",
+            "statusCode": diagnostics.get("statusCode"),
+            "diagnostics": diagnostics.get("error_message"),
+        }
 
     if file_key == "file_key_missing" or message_id == "unknown":
         diagnostics = "An unhandled error occurred during batch processing"

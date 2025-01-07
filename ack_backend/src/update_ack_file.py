@@ -52,11 +52,12 @@ def obtain_current_ack_content(ack_bucket_name: str, ack_file_key: str) -> Strin
         existing_content = existing_ack_file["Body"].read().decode("utf-8")
         accumulated_csv_content.write(existing_content)
     except ClientError as error:
-        logger.error("error:%s", error)
         if error.response["Error"]["Code"] in ("404", "NoSuchKey"):
+            logger.info("No existing ack file found in S3 - creating new file")
             # If ack file does not exist in S3 create a new file
             accumulated_csv_content.write("|".join(Constants.ack_headers) + "\n")
         else:
+            logger.error("error whilst obtaining current ack content:%s", error)
             raise
     return accumulated_csv_content
 

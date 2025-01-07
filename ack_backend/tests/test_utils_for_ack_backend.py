@@ -14,6 +14,64 @@ AWS_REGION = "eu-west-2"
 STATIC_DATETIME = datetime(2021, 11, 20, 12, 0, 0)
 
 
+class DiagnosticsDictionaries:
+    """Example diagnostics dictionaries which may be received from the record forwarder"""
+
+    UNIQUE_ID_MISSING = {
+        "error_type": "MissingUniqueID",
+        "statusCode": 400,
+        "error_message": "UNIQUE_ID or UNIQUE_ID_URI is missing",
+    }
+
+    NO_PERMISSIONS = {
+        "error_type": "NoPermissions",
+        "statusCode": 403,
+        "error_message": "No permissions for requested operation",
+    }
+
+    INVALID_ACTION_FLAG = {
+        "error_type": "InvalidActionFlag",
+        "statusCode": 400,
+        "error_message": "Invalid ACTION_FLAG - ACTION_FLAG must be 'NEW', 'UPDATE' or 'DELETE'",
+    }
+
+    CUSTOM_VALIDATION_ERROR = {
+        "error_type": "CustomValidationError",
+        "statusCode": 400,
+        "error_message": "Custom validation error",
+    }
+
+    IDENTIFIER_DUPLICATION_ERROR = {
+        "error_type": "IdentifierDuplicationError",
+        "statusCode": 422,
+        "error_message": "Identifier duplication error",
+    }
+
+    RESOURCE_NOT_FOUND_ERROR = {
+        "error_type": "ResourceNotFoundError",
+        "statusCode": 404,
+        "error_message": "Resource not found error",
+    }
+
+    RESOURCE_FOUND_ERROR = {
+        "error_type": "ResourceFoundError",
+        "statusCode": 409,
+        "error_message": "Resource found error",
+    }
+
+    MESSAGE_NOT_SUCCESSFUL_ERROR = {
+        "error_type": "MessageNotSuccessfulError",
+        "statusCode": 500,
+        "error_message": "Message not successful error",
+    }
+
+    UNHANDLED_ERROR = {
+        "error_type": "UnhandledResponseError",
+        "statusCode": 500,
+        "error_message": "An unhandled error occurred during batch processing",
+    }
+
+
 class ValidValues:
     """Logging instances which are both valid and current"""
 
@@ -49,7 +107,7 @@ class ValidValues:
         "action_flag": "create",
         "imms_id": "4567",
         "created_at_formatted_string": "1223-12-232",
-        "diagnostics": "Immunization resource does not exist",
+        "diagnostics": DiagnosticsDictionaries.RESOURCE_NOT_FOUND_ERROR,
         "supplier": "EMIS",
         "vaccine_type": "RSV",
     }
@@ -61,7 +119,7 @@ class ValidValues:
         "action_flag": "create",
         "imms_id": "1232",
         "created_at_formatted_string": "1223-12-232",
-        "diagnostics": "Immunization resource does not exist",
+        "diagnostics": DiagnosticsDictionaries.RESOURCE_NOT_FOUND_ERROR,
         "supplier": "DPSFULL",
         "vaccine_type": "RSV",
     }

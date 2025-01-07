@@ -18,15 +18,15 @@ def convert_message_to_ack_row(message, expected_file_key, expected_created_at_f
     if message.get("created_at_formatted_string") != expected_created_at_formatted_string:
         raise ValueError("Created_at_formatted_string mismatch")
 
-    if (diagnostics := message.get("diagnostics")) is not None and not isinstance(diagnostics, str):
-        raise ValueError("Diagnostics must be either None or a string")
+    if (diagnostics := message.get("diagnostics")) is not None and not isinstance(diagnostics, dict):
+        raise ValueError("Diagnostics must be either None or a dictionary")
 
     return create_ack_data(
         created_at_formatted_string=expected_created_at_formatted_string,
         local_id=message.get("local_id"),
         row_id=message.get("row_id"),
         successful_api_response=diagnostics is None,  # Response is successful if and only if there are no diagnostics
-        diagnostics=diagnostics,
+        diagnostics=diagnostics.get("error_message") if diagnostics else None,
         imms_id=message.get("imms_id"),
     )
 

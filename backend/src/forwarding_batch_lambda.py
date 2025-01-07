@@ -8,7 +8,14 @@ import logging
 from fhir_batch_repository import create_table
 from fhir_batch_controller import ImmunizationBatchController, make_batch_controller
 from clients import sqs_client
-from models.errors import MessageNotSuccessfulError, RecordProcessorError
+from models.errors import (
+    MessageNotSuccessfulError,
+    RecordProcessorError,
+    CustomValidationError,
+    IdentifierDuplicationError,
+    ResourceNotFoundError,
+    ResourceFoundError,
+)
 
 
 logging.basicConfig(level="INFO")
@@ -20,11 +27,23 @@ QUEUE_URL = os.getenv("SQS_QUEUE_URL")
 def create_diagnostics_dictionary(error: Exception) -> dict:
     """Returns a dictionary containing the error_type, statusCode, and error_message based on the type of the error"""
 
+    # If error came from the record processor, then the diagnostics dictionary has already been completed
     if isinstance(error, RecordProcessorError):
         return error.diagnostics_dictionary
 
-    else:
-        return {"error_type": type(error).__name__, "statusCode": 500, "error_message": str(error)}
+    error_type_to_status_code_map = {
+        CustomValidationError: 400,
+        IdentifierDuplicationError: 422,
+        ResourceNotFoundError: 404,
+        ResourceFoundError: 409,
+        MessageNotSuccessfulError: 500,
+    }
+
+    return {
+        "error_type": type(error).__name__,
+        "statusCode": error_type_to_status_code_map.get(type(error), 500),
+        "error_message": str(error),
+    }
 
 
 def forward_request_to_dynamo(
@@ -83,7 +102,7 @@ def forward_lambda_handler(event, _):
             imms_id = forward_request_to_dynamo(incoming_message_body, table, identifier_already_present, controller)
             array_of_messages.append({**base_outgoing_message_body, "imms_id": imms_id})
 
-        except Exception as error:
+        except Exception as error:  # pylint: disable = broad-exception-caught
             array_of_messages.append(
                 {**base_outgoing_message_body, "diagnostics": create_diagnostics_dictionary(error)}
             )
