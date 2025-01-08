@@ -96,7 +96,12 @@ class TestAckProcessor(unittest.TestCase):
     def create_expected_ack_content(self, row_input, actual_ack_file_content, expected_ack_file_content):
         """creates test ack rows from using a list containing multiple rows"""
         for i, row in enumerate(row_input):
-            diagnostics = row.get("diagnostics", {}).get("error_message", "")
+            diagnostics_dictionary = row.get("diagnostics", {})
+            diagnostics = (
+                diagnostics_dictionary.get("error_message", "")
+                if isinstance(diagnostics_dictionary, dict)
+                else "Unable to determine diagnostics issue"
+            )
             imms_id = row.get("imms_id", "")
             row_id = row.get("row_id")
             if diagnostics:
@@ -185,6 +190,10 @@ class TestAckProcessor(unittest.TestCase):
             {
                 "description": "1 success row (No diagnostics)",
                 "rows": [{"row_id": "row_1"}],
+            },
+            {
+                "description": "1 row with malformed diagnostics info from forwarder",
+                "rows": [{"row_id": "row_1", "diagnostics": "SHOULD BE A DICTIONARY, NOT A STRING"}],
             },
         ]
 
@@ -498,28 +507,6 @@ class TestAckProcessor(unittest.TestCase):
                 "description": "Malformed JSON in SQS body",
                 "event": {"Records": [{""}]},
                 "expected_message": "Could not load incoming message body",
-            },
-            {
-                "description": "Invalid value in 'diagnostics' field",
-                "event": {
-                    "Records": [
-                        {
-                            "body": json.dumps(
-                                [
-                                    {
-                                        "file_key": "test_file.csv",
-                                        "row_id": "123",
-                                        "local_id": "111^222",
-                                        "imms_id": "TEST_IMMS_ID",
-                                        "diagnostics": "SHOULD BE A DICTIONARY, NOT A STRING",
-                                        "created_at_formatted_string": "20241212T13000000",
-                                    }
-                                ]
-                            )
-                        }
-                    ]
-                },
-                "expected_message": "Diagnostics must be either None or a dictionary",
             },
         ]
         # TODO: What was below meant to be testing?

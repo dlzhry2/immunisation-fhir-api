@@ -36,13 +36,13 @@ def convert_messsage_to_ack_row_logging_decorator(func):
     """This decorator logs the information on the conversion of a single message to an ack data row"""
 
     @wraps(func)
-    def wrapper(message, expected_file_key, expected_created_at_formatted_string):
+    def wrapper(message, created_at_formatted_string):
 
         base_log_data = {"function_name": f"ack_processor_{func.__name__}", "date_time": str(datetime.now())}
         start_time = time.time()
 
         try:
-            result = func(message, expected_file_key, expected_created_at_formatted_string)
+            result = func(message, created_at_formatted_string)
 
             file_key = message.get("file_key", "file_key_missing")
             message_id = message.get("row_id", "unknown")
@@ -101,8 +101,12 @@ def process_diagnostics(diagnostics, file_key, message_id):
     if diagnostics is not None:
         return {
             "status": "fail",
-            "statusCode": diagnostics.get("statusCode"),
-            "diagnostics": diagnostics.get("error_message"),
+            "statusCode": diagnostics.get("statusCode") if isinstance(diagnostics, dict) else 500,
+            "diagnostics": (
+                diagnostics.get("error_message")
+                if isinstance(diagnostics, dict)
+                else "Unable to determine diagnostics issue"
+            ),
         }
 
     if file_key == "file_key_missing" or message_id == "unknown":
