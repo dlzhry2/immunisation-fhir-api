@@ -113,6 +113,8 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
           "s3:ListBucket"
         ]
         Resource = [
+          "${data.aws_s3_bucket.existing_source_bucket.arn}",       
+          "${data.aws_s3_bucket.existing_source_bucket.arn}/*",
           "${data.aws_s3_bucket.existing_destination_bucket.arn}",       
           "${data.aws_s3_bucket.existing_destination_bucket.arn}/*"         
         ]
@@ -185,6 +187,7 @@ resource "aws_lambda_function" "ack_processor_lambda" {
     variables = {
       ACK_BUCKET_NAME     = data.aws_s3_bucket.existing_destination_bucket.bucket
       SPLUNK_FIREHOSE_NAME   = module.splunk.firehose_stream_name
+      SOURCE_BUCKET_NAME = data.aws_s3_bucket.existing_source_bucket.bucket
     }
   }
 

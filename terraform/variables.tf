@@ -79,6 +79,10 @@ data "aws_s3_bucket" "existing_destination_bucket" {
   bucket = "immunisation-batch-${local.local_config}-data-destinations"
 }
 
+data "aws_s3_bucket" "existing_source_bucket" {
+  bucket = "immunisation-batch-${local.local_config}-data-sources"
+}
+
 data "aws_kms_key" "existing_lambda_encryption_key" {
   key_id = "alias/imms-batch-lambda-env-encryption"
 }

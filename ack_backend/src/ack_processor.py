@@ -19,6 +19,7 @@ def lambda_handler(event, context):
     try:
         imms_id = None
         successful_api_response = True
+        source_bucket_name = os.getenv("SOURCE_BUCKET_NAME")
         array_of_rows = []
         for record in event["Records"]:
             body_json = record["body"]
@@ -39,6 +40,8 @@ def lambda_handler(event, context):
                     created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
                 )
                 array_of_rows.append(row)
+        row_count = get_row_count_stream(source_bucket_name, file_key)    
+        print(f"row_count: {row_count}")
         update_ack_file(file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows)
         # Delete the message from the queue
 
@@ -60,3 +63,10 @@ def lambda_handler(event, context):
         "statusCode": 200,
         "body": json.dumps("Lambda function executed successfully!"),
     }
+
+    
+def get_row_count_stream(bucket_name, key):
+    s3 = boto3.client('s3')
+    response = s3.get_object(Bucket=bucket_name, Key=key)
+    count = sum(1 for _ in response['Body'].iter_lines())
+    return count
