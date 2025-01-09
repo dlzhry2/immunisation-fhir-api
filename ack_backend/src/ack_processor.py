@@ -20,7 +20,8 @@ def convert_message_to_ack_row(message, created_at_formatted_string):
         status_code = diagnostics.get("statusCode")
         if status_code is None or status_code == 500:
             error_message_for_ack_file = "An unhandled error occurred during batch processing"
-        error_message_for_ack_file = diagnostics.get("error_message", "Unable to determine diagnostics issue")
+        else:
+            error_message_for_ack_file = diagnostics.get("error_message", "Unable to determine diagnostics issue")
     else:
         error_message_for_ack_file = "Unable to determine diagnostics issue"
 
@@ -48,6 +49,8 @@ def lambda_handler(event, context):
     file_key = None
     created_at_formatted_string = None
 
+    array_of_rows = []
+
     for i, record in enumerate(event["Records"]):
 
         try:
@@ -60,8 +63,6 @@ def lambda_handler(event, context):
             # for all messages in the event. The use of FIFO SQS queues ensures that this is the case.
             file_key = incoming_message_body[0].get("file_key")
             created_at_formatted_string = incoming_message_body[0].get("created_at_formatted_string")
-
-        array_of_rows = []
 
         for message in incoming_message_body:
             array_of_rows.append(convert_message_to_ack_row(message, created_at_formatted_string))
