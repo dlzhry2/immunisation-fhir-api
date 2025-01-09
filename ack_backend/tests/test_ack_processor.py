@@ -65,7 +65,7 @@ class TestAckProcessor(unittest.TestCase):
         "file_key": file_name,
         "row_id": "123^1",
         "local_id": ValidValues.local_id,
-        "action_flag": "create",
+        "operation_requested": "create",
         "imms_id": "",
         "created_at_formatted_string": "20241115T13435500",
     }

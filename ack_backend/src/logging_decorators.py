@@ -54,7 +54,7 @@ def convert_messsage_to_ack_row_logging_decorator(func):
                 "vaccine_type": message.get("vaccine_type", "unknown"),
                 "supplier": message.get("supplier", "unknown"),
                 "local_id": message.get("local_id", "unknown"),
-                "operation_requested": message.get("action_flag", "unknown"),
+                "operation_requested": message.get("operation_requested", "unknown"),
                 **process_diagnostics(diagnostics, file_key, message_id),
             }
             generate_and_send_logs(start_time, base_log_data, additional_log_data)
@@ -82,7 +82,11 @@ def ack_lambda_handler_logging_decorator(func):
         try:
             result = func(event, context, *args, **kwargs)
 
-            additional_log_data = {"statusCode": 200, "message": "Lambda function executed successfully!"}
+            additional_log_data = {
+                "status": "success",
+                "statusCode": 200,
+                "message": "Lambda function executed successfully!",
+            }
             generate_and_send_logs(start_time, base_log_data, additional_log_data)
 
             return result

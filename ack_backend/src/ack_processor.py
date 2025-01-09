@@ -17,7 +17,10 @@ def convert_message_to_ack_row(message, created_at_formatted_string):
     if (diagnostics := message.get("diagnostics")) is None:
         error_message_for_ack_file = None
     elif isinstance(diagnostics, dict):
-        error_message_for_ack_file = diagnostics.get("error_message")
+        status_code = diagnostics.get("statusCode")
+        if status_code is None or status_code == 500:
+            error_message_for_ack_file = "An unhandled error occurred during batch processing"
+        error_message_for_ack_file = diagnostics.get("error_message", "Unable to determine diagnostics issue")
     else:
         error_message_for_ack_file = "Unable to determine diagnostics issue"
 
@@ -53,8 +56,8 @@ def lambda_handler(event, context):
             raise ValueError("Could not load incoming message body") from body_json_error
 
         if i == 0:
-            # IMPORTANT NOTE: An assumption is made here that the file_key and created_at_formatted_string are the same for all
-            # messages in the event. The use of FIFO SQS queues ensures that this is the case.
+            # IMPORTANT NOTE: An assumption is made here that the file_key and created_at_formatted_string are the same
+            # for all messages in the event. The use of FIFO SQS queues ensures that this is the case.
             file_key = incoming_message_body[0].get("file_key")
             created_at_formatted_string = incoming_message_body[0].get("created_at_formatted_string")
 
@@ -65,7 +68,4 @@ def lambda_handler(event, context):
 
     update_ack_file(file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows)
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps("Lambda function executed successfully!"),
-    }
+    return {"statusCode": 200, "body": json.dumps("Lambda function executed successfully!")}

@@ -75,7 +75,7 @@ def forward_lambda_handler(event, _):
                 "row_id": incoming_message_body.get("row_id"),
                 "created_at_formatted_string": created_at_formatted_string,
                 "local_id": incoming_message_body.get("local_id"),
-                "action_flag": incoming_message_body.get("operation_requested"),
+                "operation_requested": incoming_message_body.get("operation_requested"),
                 "supplier": incoming_message_body.get("supplier"),
                 "vaccine_type": incoming_message_body.get("vax_type"),
             }

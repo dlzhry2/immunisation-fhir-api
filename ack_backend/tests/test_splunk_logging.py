@@ -66,7 +66,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                 for record in message_body["Records"]:
                     body_data = json.loads(record["body"])
                     for item in body_data:
-                        item["action_flag"] = operation["operation_request"]
+                        item["operation_requested"] = operation["operation_request"]
                     record["body"] = json.dumps(body_data)
 
                 context = {}
@@ -275,7 +275,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                 for record in message_body["Records"]:
                     body_data = json.loads(record["body"])
                     for item in body_data:
-                        item["action_flag"] = op["operation_request"]
+                        item["operation_requested"] = op["operation_request"]
                         item["diagnostics"] = op["diagnostics"]
                     record["body"] = json.dumps(body_data)
 
