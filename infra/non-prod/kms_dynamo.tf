@@ -49,6 +49,19 @@
         "kms:GenerateDataKey*"
       ],
       "Resource": "*"
+    },
+        {
+      "Sid": "AllowAccountA",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::603871901111:root"
+      },
+      "Action": [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:GenerateDataKey*"
+      ],
+      "Resource": "*"
     }
   ]
 }
@@ -58,9 +71,4 @@ POLICY
 resource "aws_kms_alias" "dynamodb_encryption" {
   name          = "alias/imms-event-dynamodb-encryption"
   target_key_id = aws_kms_key.dynamodb_encryption.key_id
-}
-
-data "aws_kms_key" "existing_dynamo_encryption_arn" {
-  key_id = "alias/imms-event-dynamodb-encryption"
-  arn = aws_kms_key.dynamodb_encryption.arn
 }
