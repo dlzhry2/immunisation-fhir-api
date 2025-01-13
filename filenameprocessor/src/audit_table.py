@@ -15,12 +15,23 @@ def add_to_audit_table(message_id: str,
     try:
         table_name = os.environ["AUDIT_TABLE_NAME"]
         file_name_gsi = "filename_index"
+        queue_name_gsi = "queue_name_index"
 
         # Check for duplicates before adding to the table (if the query returns any items, then the file is a duplicate)
         file_name_response = dynamodb_resource.Table(table_name).query(
             IndexName=file_name_gsi, KeyConditionExpression=Key("filename").eq(file_key)
         )
         duplicate_exists = bool(file_name_response.get("Items"))
+        
+        # Check for files un der processing for Supplier_Vaccine combination, if yes queue file for processing
+        if not duplicate_exists:
+            queue_response = dynamodb_resource.Table(table_name).query(
+                IndexName=queue_name_gsi, KeyConditionExpression=Key("queue_name").eq(queue_name) &
+                                                                Key("status").eq(process_status)
+            )
+            if queue_response["Items"]:
+                process_status = "Queued"
+        
 
         # Add to the audit table (regardless of whether it is a duplicate)
         dynamodb_client.put_item(
