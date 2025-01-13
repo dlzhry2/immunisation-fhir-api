@@ -7,6 +7,11 @@ locals {
 resource "aws_s3_bucket" "batch_data_destination_bucket" {
     bucket        = "immunisation-batch-prod-data-destinations"
     force_destroy = local.is_temp
+    tags = {
+          "Environment" = "prod"
+          "Project"     = "immunisation"
+          "Service"     = "fhir-api"
+    }
 }
 
 data "aws_iam_policy_document" "batch_data_destination_bucket_policy" {

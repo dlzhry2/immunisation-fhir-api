@@ -10,7 +10,7 @@ resource "aws_kms_key" "lambda_env_encryption" {
     {
     "Sid": "Allow administration of the key",
     "Effect": "Allow",
-    "Principal": { "AWS": "arn:aws:iam::345594581768:root" },
+    "Principal": { "AWS": "arn:aws:iam::664418956997:root" },
     "Action": [
         "kms:Create*",
         "kms:Describe*",
@@ -33,7 +33,7 @@ resource "aws_kms_key" "lambda_env_encryption" {
     {
     "Sid": "KMS KeyUser access",
     "Effect": "Allow",
-    "Principal": {"AWS": ["arn:aws:iam::345594581768:role/auto-ops"]},
+    "Principal": {"AWS": ["arn:aws:iam::664418956997:role/auto-ops"]},
     "Action": [
         "kms:Encrypt",
         "kms:GenerateDataKey*"
@@ -43,7 +43,7 @@ resource "aws_kms_key" "lambda_env_encryption" {
     {
     "Sid": "KMS KeyUser access for Devops",
     "Effect": "Allow",
-    "Principal": {"AWS": ["arn:aws:iam::345594581768:role/DevOps"]},
+    "Principal": {"AWS": ["arn:aws:iam::664418956997:role/DevOps"]},
     "Action": [
         "kms:Encrypt",
         "kms:GenerateDataKey*"

@@ -10,7 +10,7 @@
     {
       "Sid": "Allow administration of the key",
       "Effect": "Allow",
-      "Principal": { "AWS": "arn:aws:iam::345594581768:root" },
+      "Principal": { "AWS": "arn:aws:iam::664418956997:root" },
       "Action": [
         "kms:Create*",
         "kms:Describe*",
@@ -33,7 +33,7 @@
     {
       "Sid": "KMS KeyUser access",
       "Effect": "Allow",
-      "Principal": { "AWS": ["arn:aws:iam::345594581768:role/auto-ops"] },
+      "Principal": { "AWS": ["arn:aws:iam::664418956997:role/auto-ops"] },
       "Action": [
         "kms:Encrypt",
         "kms:GenerateDataKey*"
@@ -43,7 +43,7 @@
     {
       "Sid": "KMS KeyUser access for DevOps",
       "Effect": "Allow",
-      "Principal": { "AWS": ["arn:aws:iam::345594581768:role/DevOps"] },
+      "Principal": { "AWS": ["arn:aws:iam::664418956997:role/DevOps"] },
       "Action": [
         "kms:Encrypt",
         "kms:GenerateDataKey*"
@@ -54,7 +54,7 @@
       "Sid": "AllowAccountA",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::603871901111:root"
+        "AWS": "arn:aws:iam::232116723729:root"
       },
       "Action": [
         "kms:Encrypt",

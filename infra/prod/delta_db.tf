@@ -51,4 +51,10 @@ resource "aws_dynamodb_table" "delta-dynamodb-table" {
         enabled = true
         kms_key_arn = aws_kms_key.dynamodb_encryption.arn
     }
+
+    tags = {
+          "Environment" = "prod"
+          "Project"     = "immunisation"
+          "Service"     = "fhir-api"
+    }
 }

@@ -24,6 +24,9 @@ resource "aws_dynamodb_table" "events-dynamodb-table" {
 
     tags = {
         NHSE-Enable-Dynamo-Backup = "True"
+        "Environment" = "prod"
+        "Project"     = "immunisation"
+        "Service"     = "fhir-api"
     }
 
     global_secondary_index {
@@ -45,5 +48,5 @@ resource "aws_dynamodb_table" "events-dynamodb-table" {
     server_side_encryption {
         enabled = true
         kms_key_arn = aws_kms_key.dynamodb_encryption.arn
-    }
+    }    
 }

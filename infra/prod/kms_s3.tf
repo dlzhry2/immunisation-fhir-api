@@ -9,7 +9,7 @@ resource "aws_kms_key" "s3_shared_key" {
     {
     "Sid": "Allow administration of the key",
     "Effect": "Allow",
-    "Principal": { "AWS": "arn:aws:iam::345594581768:root" },
+    "Principal": { "AWS": "arn:aws:iam::664418956997:root" },
     "Action": [
         "kms:Create*",
         "kms:Describe*",
@@ -33,7 +33,7 @@ resource "aws_kms_key" "s3_shared_key" {
      "Sid": "AllowAccountA",
      "Effect": "Allow",
      "Principal": {
-       "AWS": "arn:aws:iam::603871901111:root"
+       "AWS": "arn:aws:iam::232116723729:root"
      },
      "Action": [
        "kms:Encrypt",
