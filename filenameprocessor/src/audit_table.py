@@ -3,7 +3,7 @@
 import os
 from boto3.dynamodb.conditions import Key
 from clients import dynamodb_client, dynamodb_resource, logger
-from errors import DuplicateFileError, UnhandledAuditTableError
+from errors import DuplicateFileError, UnhandledAuditTableError, ProcessingError
 
 
 def add_to_audit_table(
@@ -37,6 +37,7 @@ def add_to_audit_table(
             )
             if queue_response["Items"]:
                 process_status = "Queued"
+                processing_exists = True
 
         # Add to the audit table (regardless of whether it is a duplicate)
         dynamodb_client.put_item(
@@ -75,3 +76,12 @@ def add_to_audit_table(
             created_at_formatted_str,
         )
         raise DuplicateFileError(f"Duplicate file: {file_key}")
+
+    # If processing exists for supplier_vaccine, raise an exception
+    if processing_exists:
+        logger.error(
+            "%s file queued for processing at time: %s",
+            file_key,
+            created_at_formatted_str,
+        )
+        raise ProcessingError(f"Queued File: {file_key}")

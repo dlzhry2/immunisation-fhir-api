@@ -40,21 +40,39 @@ def handle_record(record) -> dict:
         file_key = record["s3"]["object"]["key"]
     except Exception as error:  # pylint: disable=broad-except
         logger.error("Error obtaining file_key: %s", error)
-        return {"statusCode": 500, "message": "Failed to download file key", "error": str(error)}
+        return {
+            "statusCode": 500,
+            "message": "Failed to download file key",
+            "error": str(error),
+        }
 
     if "data-sources" in bucket_name:
         try:
             # Get message details
             message_id = str(uuid4())  # Assign a unique message_id for the file
-            created_at_formatted_string = get_created_at_formatted_string(bucket_name, file_key)
+            created_at_formatted_string = get_created_at_formatted_string(
+                bucket_name, file_key
+            )
 
             vaccine_type, supplier = validate_file_key(file_key)
-            permissions = validate_vaccine_type_permissions(vaccine_type=vaccine_type, supplier=supplier)
+            permissions = validate_vaccine_type_permissions(
+                vaccine_type=vaccine_type, supplier=supplier
+            )
             # Process the file
-            add_to_audit_table(message_id,
-                               file_key, created_at_formatted_string, f"{supplier}_{vaccine_type}", "Processing")
+            add_to_audit_table(
+                message_id,
+                file_key,
+                created_at_formatted_string,
+                f"{supplier}_{vaccine_type}",
+                "Processing",
+            )
             make_and_send_sqs_message(
-                file_key, message_id, permissions, vaccine_type, supplier, created_at_formatted_string
+                file_key,
+                message_id,
+                permissions,
+                vaccine_type,
+                supplier,
+                created_at_formatted_string,
             )
 
             logger.info("File '%s' successfully processed", file_key)
@@ -80,8 +98,13 @@ def handle_record(record) -> dict:
         ) as error:
             logger.error("Error processing file '%s': %s", file_key, str(error))
             # Process the file
-            add_to_audit_table(message_id, file_key,
-                               created_at_formatted_string, f"{supplier}_{vaccine_type}", "Processed")
+            add_to_audit_table(
+                message_id,
+                file_key,
+                created_at_formatted_string,
+                f"{supplier}_{vaccine_type}",
+                "Processed",
+            )
             # Create ack file
             # (note that error may have occurred before message_id and created_at_formatted_string were generated)
             message_delivered = False
@@ -89,7 +112,9 @@ def handle_record(record) -> dict:
                 message_id = "Message id was not created"
             if "created_at_formatted_string" not in locals():
                 created_at_formatted_string = "created_at_time not identified"
-            make_and_upload_the_ack_file(message_id, file_key, message_delivered, created_at_formatted_string)
+            make_and_upload_the_ack_file(
+                message_id, file_key, message_delivered, created_at_formatted_string
+            )
 
             status_code_map = {
                 VaccineTypePermissionsError: 403,
@@ -114,7 +139,11 @@ def handle_record(record) -> dict:
         try:
             upload_to_elasticache(file_key, bucket_name)
             logger.info("%s content successfully uploaded to cache", file_key)
-            return {"statusCode": 200, "message": "File content successfully uploaded to cache", "file_key": file_key}
+            return {
+                "statusCode": 200,
+                "message": "File content successfully uploaded to cache",
+                "file_key": file_key,
+            }
         except Exception as error:  # pylint: disable=broad-except
             logger.error("Error uploading to cache for file '%s': %s", file_key, error)
             return {
@@ -125,7 +154,11 @@ def handle_record(record) -> dict:
             }
 
     else:
-        logger.error("Unable to process file %s due to unexpected bucket name %s", file_key, bucket_name)
+        logger.error(
+            "Unable to process file %s due to unexpected bucket name %s",
+            file_key,
+            bucket_name,
+        )
         return {
             "statusCode": 500,
             "message": f"Failed to process file due to unexpected bucket name {bucket_name}",
