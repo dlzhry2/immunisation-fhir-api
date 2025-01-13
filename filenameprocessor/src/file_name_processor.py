@@ -11,7 +11,7 @@ from utils_for_filenameprocessor import get_created_at_formatted_string
 from file_key_validation import validate_file_key
 from send_sqs_message import make_and_send_sqs_message
 from make_and_upload_ack_file import make_and_upload_the_ack_file
-from audit_table import add_to_audit_table
+from audit_table import add_to_audit_table, check_queue
 from clients import logger
 from elasticcache import upload_to_elasticache
 from logging_decorator import logging_decorator
@@ -36,8 +36,12 @@ def handle_record(record) -> dict:
     Returns a dictionary containing information to be included in the logs.
     """
     try:
+        queue_name = None
         bucket_name = record["s3"]["bucket"]["name"]
         file_key = record["s3"]["object"]["key"]
+        if "queue_name" in record:
+            queue_name = record["queue_name"]
+
     except Exception as error:  # pylint: disable=broad-except
         logger.error("Error obtaining file_key: %s", error)
         return {
@@ -48,8 +52,13 @@ def handle_record(record) -> dict:
 
     if "data-sources" in bucket_name:
         try:
-            # Get message details
+            query_type = "create"
             message_id = str(uuid4())  # Assign a unique message_id for the file
+            if "queue_name" in record:
+                file_key, message_id = check_queue(queue_name)
+                query_type = "update"
+            # Get message details
+
             created_at_formatted_string = get_created_at_formatted_string(
                 bucket_name, file_key
             )
@@ -65,6 +74,7 @@ def handle_record(record) -> dict:
                 created_at_formatted_string,
                 f"{supplier}_{vaccine_type}",
                 "Processing",
+                query_type
             )
             make_and_send_sqs_message(
                 file_key,
@@ -104,6 +114,7 @@ def handle_record(record) -> dict:
                 created_at_formatted_string,
                 f"{supplier}_{vaccine_type}",
                 "Processed",
+                query_type
             )
             # Create ack file
             # (note that error may have occurred before message_id and created_at_formatted_string were generated)

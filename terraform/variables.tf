@@ -103,3 +103,7 @@ data "aws_dynamodb_table" "delta-dynamodb-table" {
   name = "imms-${local.local_config}-delta" 
 }
 
+data "aws_lambda_function" "existing_file_name_proc_lambda" {
+  function_name = aws_lambda_function.file_processor_lambda.function_name
+}
+

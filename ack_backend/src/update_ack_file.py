@@ -1,15 +1,16 @@
 """Functions for adding a row of data to the ack file"""
 
 import os
+import json
 from io import StringIO, BytesIO
 from typing import Union
 from botocore.exceptions import ClientError
 from constants import Constants
+from audit_table import add_to_audit_table
 environment = os.getenv("ENVIRONMENT")
 source_bucket_name = f"immunisation-batch-{environment}-data-sources"
-from clients import s3_client, logger
-
-
+from clients import s3_client, logger, lambda_client
+FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")
 def create_ack_data(
     created_at_formatted_string: str,
     local_id: str,
@@ -66,6 +67,7 @@ def obtain_current_ack_content(ack_bucket_name: str, ack_file_key: str) -> Strin
 
 def upload_ack_file(
     ack_bucket_name: str, ack_file_key: str, accumulated_csv_content: StringIO, ack_data_row: any, row_count: int, archive_ack_file_key: str, file_key: str
+    , created_at_formatted_string: str
 ) -> None:
     """Adds the data row to the uploaded ack file"""
     for row in ack_data_row:
@@ -81,6 +83,24 @@ def upload_ack_file(
         source_key = f"processing/{file_key}"
         destination_key = f"archive/{file_key}"
         move_file(source_bucket_name, source_key, destination_key)
+        queue_name = add_to_audit_table(file_key, created_at_formatted_string)
+        # Directly invoke the Lambda function
+        lambda_payload = {
+            "s3": {
+                "bucket": {
+                    "name": source_bucket_name
+                },
+                "object": {
+                    "key": file_key
+                }
+            },
+            "queue_name": queue_name
+        }
+        lambda_client.invoke(
+            FunctionName=FILE_NAME_PROC_LAMBDA_NAME,
+            InvocationType="Event",  # Asynchronous invocation
+            Payload=json.dumps(lambda_payload)
+        )
     logger.info("Ack file updated to %s: %s", ack_bucket_name, ack_file_key)
 
 
@@ -92,10 +112,10 @@ def update_ack_file(
 ) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
     ack_file_key = f"TempAck/{file_key.replace('.csv', f'_BusAck_{created_at_formatted_string}.csv')}"
-    archive_ack_file_key = f"archive/{file_key.replace('.csv', f'_BusAck_{created_at_formatted_string}.csv')}"
+    archive_ack_file_key = f"forwardedFile/{file_key.replace('.csv', f'_BusAck_{created_at_formatted_string}.csv')}"
     ack_bucket_name = os.getenv("ACK_BUCKET_NAME")
     accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_key)
-    upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_rows, row_count, archive_ack_file_key, file_key)
+    upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_rows, row_count, archive_ack_file_key, file_key, created_at_formatted_string)
 
 def get_row_count_stream(bucket_name, key):
     response = s3_client.get_object(Bucket=bucket_name, Key=key)
