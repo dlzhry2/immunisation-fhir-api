@@ -3,7 +3,7 @@
 import os
 from boto3.dynamodb.conditions import Key
 from clients import dynamodb_client, dynamodb_resource, logger
-from errors import DuplicateFileError, UnhandledAuditTableError
+from errors import UnhandledAuditTableError
  
  
 def add_to_audit_table(file_key: str, created_at_formatted_str: str) -> None:
