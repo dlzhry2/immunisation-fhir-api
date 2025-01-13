@@ -19,6 +19,7 @@ def add_to_audit_table(
     Raises an error if the file is a duplicate (after adding it to the audit table).
     """
     try:
+        print(f"Determine process_status:{process_status}")
         table_name = os.environ["AUDIT_TABLE_NAME"]
         file_name_gsi = "filename_index"
         queue_name_gsi = "queue_name_index"
@@ -96,7 +97,7 @@ def add_to_audit_table(
             file_key,
             created_at_formatted_str,
         )
-        raise ProcessingError(f"Queued File: {file_key}")
+        raise ProcessingError(f"File Queued for processing: {file_key}")
 
 
 def check_queue(queue_name: str):

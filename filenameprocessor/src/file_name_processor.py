@@ -39,8 +39,6 @@ def handle_record(record) -> dict:
         queue_name = None
         bucket_name = record["s3"]["bucket"]["name"]
         file_key = record["s3"]["object"]["key"]
-        if "queue_name" in record:
-            queue_name = record["queue_name"]
 
     except Exception as error:  # pylint: disable=broad-except
         logger.error("Error obtaining file_key: %s", error)
@@ -55,6 +53,8 @@ def handle_record(record) -> dict:
             query_type = "create"
             message_id = str(uuid4())  # Assign a unique message_id for the file
             if "queue_name" in record:
+                queue_name = record["queue_name"]
+                print(f"Queue name for processing:{queue_name}")
                 file_key, message_id = check_queue(queue_name)
                 query_type = "update"
             # Get message details
@@ -113,7 +113,7 @@ def handle_record(record) -> dict:
                 file_key,
                 created_at_formatted_string,
                 f"{supplier}_{vaccine_type}",
-                "Processed",
+                "Processed in exception",
                 query_type
             )
             # Create ack file
