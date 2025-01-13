@@ -68,7 +68,8 @@ def handle_record(record) -> dict:
                 vaccine_type=vaccine_type, supplier=supplier
             )
             # Process the file
-            add_to_audit_table(
+            status = True
+            status = add_to_audit_table(
                 message_id,
                 file_key,
                 created_at_formatted_string,
@@ -76,14 +77,15 @@ def handle_record(record) -> dict:
                 "Processing",
                 query_type
             )
-            make_and_send_sqs_message(
-                file_key,
-                message_id,
-                permissions,
-                vaccine_type,
-                supplier,
-                created_at_formatted_string,
-            )
+            if status:
+                make_and_send_sqs_message(
+                    file_key,
+                    message_id,
+                    permissions,
+                    vaccine_type,
+                    supplier,
+                    created_at_formatted_string,
+                )
 
             logger.info("File '%s' successfully processed", file_key)
 
@@ -113,7 +115,7 @@ def handle_record(record) -> dict:
                 file_key,
                 created_at_formatted_string,
                 f"{supplier}_{vaccine_type}",
-                "Processed in exception",
+                "Processed",
                 query_type
             )
             # Create ack file

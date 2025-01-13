@@ -75,6 +75,7 @@ def add_to_audit_table(
             file_key,
             message_id,
         )
+        
 
     except Exception as error:  # pylint: disable = broad-exception-caught
         error_message = error  # f"Error adding {file_key} to the audit table"
@@ -92,12 +93,12 @@ def add_to_audit_table(
 
     # If processing exists for supplier_vaccine, raise an exception
     if processing_exists:
-        logger.error(
+        logger.info(
             "%s file queued for processing at time: %s",
             file_key,
             created_at_formatted_str,
         )
-        raise ProcessingError(f"File Queued for processing: {file_key}")
+        return False
 
 
 def check_queue(queue_name: str):
