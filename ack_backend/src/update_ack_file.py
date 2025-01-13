@@ -1,18 +1,13 @@
 """Functions for adding a row of data to the ack file"""
 
 import os
-import logging
 from io import StringIO, BytesIO
 from typing import Union
 from botocore.exceptions import ClientError
-from boto3 import client as boto3_client
 from constants import Constants
-
-
-s3_client = boto3_client("s3", region_name="eu-west-2")
 environment = os.getenv("ENVIRONMENT")
 source_bucket_name = f"immunisation-batch-{environment}-data-sources"
-logger = logging.getLogger()
+from clients import s3_client, logger
 
 
 def create_ack_data(
@@ -59,11 +54,12 @@ def obtain_current_ack_content(ack_bucket_name: str, ack_file_key: str) -> Strin
         existing_content = existing_ack_file["Body"].read().decode("utf-8")
         accumulated_csv_content.write(existing_content)
     except ClientError as error:
-        logger.error("error:%s", error)
         if error.response["Error"]["Code"] in ("404", "NoSuchKey"):
+            logger.info("No existing ack file found in S3 - creating new file")
             # If ack file does not exist in S3 create a new file
             accumulated_csv_content.write("|".join(Constants.ack_headers) + "\n")
         else:
+            logger.error("error whilst obtaining current ack content:%s", error)
             raise
     return accumulated_csv_content
 
@@ -98,10 +94,6 @@ def update_ack_file(
     ack_file_key = f"TempAck/{file_key.replace('.csv', f'_BusAck_{created_at_formatted_string}.csv')}"
     archive_ack_file_key = f"archive/{file_key.replace('.csv', f'_BusAck_{created_at_formatted_string}.csv')}"
     ack_bucket_name = os.getenv("ACK_BUCKET_NAME")
-      
-    # ack_data_row = create_ack_data(
-    #     created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
-    # )
     accumulated_csv_content = obtain_current_ack_content(ack_bucket_name, ack_file_key)
     upload_ack_file(ack_bucket_name, ack_file_key, accumulated_csv_content, ack_data_rows, row_count, archive_ack_file_key, file_key)
 
