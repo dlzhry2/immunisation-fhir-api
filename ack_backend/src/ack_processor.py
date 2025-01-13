@@ -1,15 +1,18 @@
 import json
 import logging
+import os
 from typing import Union
 from datetime import datetime
 from log_structure_splunk import ack_function_info
 from log_firehose_splunk import FirehoseLogger
 from update_ack_file import update_ack_file, create_ack_data
+from boto3 import client as boto3_client
+
 
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel("INFO")
-
+s3_client = boto3_client("s3", region_name="eu-west-2")
 
 firehose_logger = FirehoseLogger()
 
@@ -19,7 +22,8 @@ def lambda_handler(event, context):
     try:
         imms_id = None
         successful_api_response = True
-        source_bucket_name = os.getenv("SOURCE_BUCKET_NAME")
+        environment = os.getenv("ENVIRONMENT")
+        source_bucket_name = f"immunisation-batch-{environment}-data-sources"
         array_of_rows = []
         for record in event["Records"]:
             body_json = record["body"]
@@ -40,9 +44,10 @@ def lambda_handler(event, context):
                     created_at_formatted_string, local_id, row_id, successful_api_response, diagnostics, imms_id
                 )
                 array_of_rows.append(row)
-        row_count = get_row_count_stream(source_bucket_name, file_key)    
+        print(f"source_bucket_name: {source_bucket_name}")
+        row_count = get_row_count_stream(source_bucket_name, f"processing/{file_key}")    
         print(f"row_count: {row_count}")
-        update_ack_file(file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows)
+        update_ack_file(file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows, row_count= row_count)
         # Delete the message from the queue
 
     except Exception as e:
@@ -66,7 +71,6 @@ def lambda_handler(event, context):
 
     
 def get_row_count_stream(bucket_name, key):
-    s3 = boto3.client('s3')
-    response = s3.get_object(Bucket=bucket_name, Key=key)
+    response = s3_client.get_object(Bucket=bucket_name, Key=key)
     count = sum(1 for _ in response['Body'].iter_lines())
     return count

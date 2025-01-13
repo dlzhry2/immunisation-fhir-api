@@ -36,3 +36,20 @@ resource "aws_s3_bucket_versioning" "source_versioning" {
     status = "Enabled"
   }
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "datasources_lifecycle" {
+  bucket = "${local.batch_prefix}-data-sources"
+ 
+  rule {
+    id     = "DeleteFinalFilesAfter7Days"
+    status = "Enabled"
+ 
+    filter {
+      prefix = "archive/"
+    }
+ 
+    expiration {
+      days = 7
+    }
+  }
+}

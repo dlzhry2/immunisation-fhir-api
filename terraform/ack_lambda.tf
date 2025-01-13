@@ -110,11 +110,13 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
         Action   = [
           "s3:GetObject",
           "s3:PutObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:CopyObject",
+          "s3:DeleteObject"
         ]
         Resource = [
-          "${data.aws_s3_bucket.existing_source_bucket.arn}",       
-          "${data.aws_s3_bucket.existing_source_bucket.arn}/*",
+          "arn:aws:s3:::immunisation-batch-${local.env}-data-sources",       
+          "arn:aws:s3:::immunisation-batch-${local.env}-data-sources/*",
           "${data.aws_s3_bucket.existing_destination_bucket.arn}",       
           "${data.aws_s3_bucket.existing_destination_bucket.arn}/*"         
         ]
@@ -187,7 +189,7 @@ resource "aws_lambda_function" "ack_processor_lambda" {
     variables = {
       ACK_BUCKET_NAME     = data.aws_s3_bucket.existing_destination_bucket.bucket
       SPLUNK_FIREHOSE_NAME   = module.splunk.firehose_stream_name
-      SOURCE_BUCKET_NAME = data.aws_s3_bucket.existing_source_bucket.bucket
+      ENVIRONMENT         = terraform.workspace
     }
   }
 

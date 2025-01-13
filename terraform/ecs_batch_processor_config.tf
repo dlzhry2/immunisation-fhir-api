@@ -98,7 +98,9 @@ resource "aws_iam_policy" "ecs_task_exec_policy" {
         Action = [
           "s3:GetObject",
           "s3:ListBucket",
-          "s3:PutObject"
+          "s3:PutObject",
+          "s3:CopyObject",
+          "s3:DeleteObject"
         ],
         Resource = [
           "arn:aws:s3:::${local.batch_prefix}-data-sources",

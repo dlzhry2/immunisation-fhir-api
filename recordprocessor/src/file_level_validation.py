@@ -3,6 +3,8 @@ Functions for completing file-level validation
 (validating headers and ensuring that the supplier has permission to perform at least one of the requested operations)
 """
 
+import os
+from boto3 import client as boto3_client
 from constants import Constants
 from unique_permission import get_unique_action_flags_from_s3
 from clients import logger
@@ -11,6 +13,9 @@ from mappings import Vaccine
 from utils_for_recordprocessor import get_csv_content_dict_reader
 from errors import InvalidHeaders, NoOperationPermissions
 from logging_decorator import file_level_validation_logging_decorator
+
+s3_client = boto3_client("s3", region_name="eu-west-2")
+source_bucket_name = os.getenv("SOURCE_BUCKET_NAME")
 
 
 def validate_content_headers(csv_content_reader) -> None:
@@ -80,7 +85,8 @@ def file_level_validation(incoming_message_body: dict) -> None:
 
         # Initialise the accumulated_ack_file_content with the headers
         make_and_upload_ack_file(message_id, file_key, True, True, created_at_formatted_string)
-
+        destination_key = f"processing/{file_key}"
+        move_file(source_bucket_name, file_key, destination_key)
         return {
             "message_id": message_id,
             "vaccine": vaccine,
@@ -98,3 +104,18 @@ def file_level_validation(incoming_message_body: dict) -> None:
         created_at_formatted_string = created_at_formatted_string or "Unable to ascertain created_at_formatted_string"
         make_and_upload_ack_file(message_id, file_key, False, False, created_at_formatted_string)
         raise
+
+
+def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
+
+    """     Moves a file from one location to another in S3 by copying and then deleting it.     Args:
+    bucket_name (str): Name of the S3 bucket.         source_key (str): Source file key.
+    destination_key (str): Destination file key."""
+    print("started")
+    s3_client.copy_object(
+        Bucket=bucket_name,
+        CopySource={"Bucket": bucket_name, "Key": source_key},
+        Key=destination_key
+    )
+    s3_client.delete_object(Bucket=bucket_name, Key=source_key)
+    logger.info("File moved from %s to %s", source_key, destination_key)
