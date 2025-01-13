@@ -34,7 +34,7 @@ def add_to_audit_table(
                 ConditionExpression="attribute_exists(file_key)"
             )
             logger.info("%s file set for processing, and the status successfully updated to audit table", file_key)
-            return None
+            return True
         # Check for duplicates before adding to the table (if the query returns any items, then the file is a duplicate)
         file_name_response = dynamodb_resource.Table(table_name).query(
             IndexName=file_name_gsi, KeyConditionExpression=Key("filename").eq(file_key)
@@ -75,6 +75,25 @@ def add_to_audit_table(
             file_key,
             message_id,
         )
+        # If a duplicte exists, raise an exception
+        if duplicate_exists:
+            logger.error(
+                "%s file duplicate added to s3 at the following time: %s",
+                file_key,
+                created_at_formatted_str,
+            )
+            raise DuplicateFileError(f"Duplicate file: {file_key}")
+
+        # If processing exists for supplier_vaccine, raise an exception
+        if processing_exists:
+            logger.info(
+                "%s file queued for processing at time: %s",
+                file_key,
+                created_at_formatted_str,
+            )
+            return False
+        
+        return True
         
 
     except Exception as error:  # pylint: disable = broad-exception-caught
@@ -82,23 +101,7 @@ def add_to_audit_table(
         logger.error(error_message)
         raise UnhandledAuditTableError(error_message) from error
 
-    # If a duplicte exists, raise an exception
-    if duplicate_exists:
-        logger.error(
-            "%s file duplicate added to s3 at the following time: %s",
-            file_key,
-            created_at_formatted_str,
-        )
-        raise DuplicateFileError(f"Duplicate file: {file_key}")
-
-    # If processing exists for supplier_vaccine, raise an exception
-    if processing_exists:
-        logger.info(
-            "%s file queued for processing at time: %s",
-            file_key,
-            created_at_formatted_str,
-        )
-        return False
+    
 
 
 def check_queue(queue_name: str):
