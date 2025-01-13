@@ -72,6 +72,11 @@ resource "aws_dynamodb_table" "audit-table" {
         type = "S"
     }
 
+    attribute {
+        name = "status"
+        type = "S"
+    }
+
     global_secondary_index {
         name            = "filename_index"
         hash_key        = "filename"
@@ -81,6 +86,7 @@ resource "aws_dynamodb_table" "audit-table" {
      global_secondary_index {
         name               = "queue_name_index"
         hash_key           = "queue_name"
+        range_key          = "status"
         projection_type    = "ALL"
     }
 
