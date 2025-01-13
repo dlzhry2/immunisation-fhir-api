@@ -30,7 +30,7 @@ def add_to_audit_table(
                 UpdateExpression="SET #status = :status",
                 ExpressionAttributeNames={"#status": "status"},
                 ExpressionAttributeValues={":status": {"S": "Processing"}},
-                ConditionExpression="attribute_exists(file_key)",
+                ConditionExpression="attribute_exists(file_key)"
             )
             logger.info("%s file set for processing, and the status successfully updated to audit table", file_key)
             return None
@@ -76,7 +76,7 @@ def add_to_audit_table(
         )
 
     except Exception as error:  # pylint: disable = broad-exception-caught
-        error_message = f"Error adding {file_key} to the audit table"
+        error_message = error  # f"Error adding {file_key} to the audit table"
         logger.error(error_message)
         raise UnhandledAuditTableError(error_message) from error
 
