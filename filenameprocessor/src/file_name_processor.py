@@ -48,10 +48,10 @@ def handle_record(record) -> dict:
             message_id = str(uuid4())  # Assign a unique message_id for the file
             created_at_formatted_string = get_created_at_formatted_string(bucket_name, file_key)
 
-            # Process the file
-            add_to_audit_table(message_id, file_key, created_at_formatted_string)
             vaccine_type, supplier = validate_file_key(file_key)
             permissions = validate_vaccine_type_permissions(vaccine_type=vaccine_type, supplier=supplier)
+            # Process the file
+            add_to_audit_table(message_id, file_key, created_at_formatted_string, f"{supplier}_{vaccine_type}", "Processing")
             make_and_send_sqs_message(
                 file_key, message_id, permissions, vaccine_type, supplier, created_at_formatted_string
             )
@@ -78,7 +78,8 @@ def handle_record(record) -> dict:
             Exception,
         ) as error:
             logger.error("Error processing file '%s': %s", file_key, str(error))
-
+            # Process the file
+            add_to_audit_table(message_id, file_key, created_at_formatted_string, f"{supplier}_{vaccine_type}", "Processed")
             # Create ack file
             # (note that error may have occurred before message_id and created_at_formatted_string were generated)
             message_delivered = False
