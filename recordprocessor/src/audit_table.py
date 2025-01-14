@@ -1,7 +1,7 @@
 """Add the filename to the audit table and check for duplicates."""
  
 import os
-from boto3.dynamodb.conditions import Key,Attr
+from boto3.dynamodb.conditions import Key
 from clients import dynamodb_client, dynamodb_resource, logger
 from errors import UnhandledAuditTableError
  
@@ -55,6 +55,7 @@ def check_queue(queue_name: str):
         return file_name, message_id
     else:
         return None, None
+
 
 def get_file_name(queue_response: dict):
     sorted_item = sorted(queue_response["Items"], key=lambda x: x["timestamp"])

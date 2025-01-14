@@ -5,9 +5,9 @@ NOTE: The expected file format for incoming files from the data sources bucket i
 'VACCINETYPE_Vaccinations_version_ODSCODE_DATETIME.csv'. e.g. 'Flu_Vaccinations_v5_YYY78_20240708T12130100.csv'
 (ODS code has multiple lengths)
 """
-
+import os
 from uuid import uuid4
-from utils_for_filenameprocessor import get_created_at_formatted_string
+from utils_for_filenameprocessor import get_created_at_formatted_string, move_file, invoke_lambda
 from file_key_validation import validate_file_key
 from send_sqs_message import make_and_send_sqs_message
 from make_and_upload_ack_file import make_and_upload_the_ack_file
@@ -25,7 +25,7 @@ from errors import (
     UnhandledSqsError,
 )
 
-
+FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")
 # NOTE: logging_decorator is applied to handle_record function, rather than lambda_handler, because
 # the logging_decorator is for an individual record, whereas the lambda_handle could potentially be handling
 # multiple records.
@@ -36,7 +36,6 @@ def handle_record(record) -> dict:
     Returns a dictionary containing information to be included in the logs.
     """
     try:
-        queue_name = None
         bucket_name = record["s3"]["bucket"]["name"]
         file_key = record["s3"]["object"]["key"]
 
@@ -52,10 +51,8 @@ def handle_record(record) -> dict:
         try:
             query_type = "create"
             message_id = str(uuid4())  # Assign a unique message_id for the file
-            if "queue_name" in record:
-                queue_name = record["queue_name"]
-                print(f"Queue name for processing:{queue_name}")
-                file_key, message_id = check_queue(queue_name)
+            if "message_id" in record:
+                message_id = record["message_id"]
                 print(f"message_id:{message_id},file_key:{file_key}")
                 query_type = "update"
             # Get message details
@@ -64,7 +61,8 @@ def handle_record(record) -> dict:
                 created_at_formatted_string = get_created_at_formatted_string(
                     bucket_name, file_key
                 )
-
+                vaccine_type = "unknown"
+                supplier = "unknown"
                 vaccine_type, supplier = validate_file_key(file_key)
                 permissions = validate_vaccine_type_permissions(
                     vaccine_type=vaccine_type, supplier=supplier
@@ -118,7 +116,7 @@ def handle_record(record) -> dict:
                 message_id,
                 file_key,
                 created_at_formatted_string,
-                f"{supplier}_{vaccine_type}",
+                f"{supplier}_{vaccine_type}" ,
                 "Processed",
                 query_type
             )
@@ -132,7 +130,11 @@ def handle_record(record) -> dict:
             make_and_upload_the_ack_file(
                 message_id, file_key, message_delivered, created_at_formatted_string
             )
-
+            destination_key = f"archive/{file_key}" 
+            move_file(bucket_name, file_key, destination_key)
+            file_key, message_id =check_queue(f"{supplier}_{vaccine_type}")
+            if file_key and message_id is not None:
+                invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, bucket_name, file_key, message_id)    
             status_code_map = {
                 VaccineTypePermissionsError: 403,
                 InvalidFileKeyError: 400,  # Includes invalid ODS code, therefore unable to identify supplier

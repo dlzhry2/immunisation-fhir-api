@@ -156,6 +156,13 @@ resource "aws_iam_policy" "filenameprocessor_lambda_exec_policy" {
           "firehose:PutRecordBatch"
         ],
         "Resource": "arn:aws:firehose:*:*:deliverystream/${module.splunk.firehose_stream_name}"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "lambda:InvokeFunction"
+        Resource = [
+          "${data.aws_lambda_function.existing_file_name_proc_lambda.arn}",               
+        ]
       }
     ]
   })
@@ -279,6 +286,8 @@ resource "aws_lambda_function" "file_processor_lambda" {
       SPLUNK_FIREHOSE_NAME = module.splunk.firehose_stream_name
       AUDIT_TABLE_NAME     = "${data.aws_dynamodb_table.audit-table.name}"
       FILE_NAME_GSI        = "filename_index"
+      FILE_NAME_PROC_LAMBDA_NAME = data.aws_lambda_function.existing_file_name_proc_lambda.function_name
+
     }
   }
   kms_key_arn = data.aws_kms_key.existing_lambda_encryption_key.arn
