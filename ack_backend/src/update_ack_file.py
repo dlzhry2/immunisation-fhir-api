@@ -76,8 +76,7 @@ def upload_ack_file(
         accumulated_csv_content.write(cleaned_row + "\n")
     csv_file_like_object = BytesIO(accumulated_csv_content.getvalue().encode("utf-8"))
     s3_client.upload_fileobj(csv_file_like_object, ack_bucket_name, ack_file_key)
-    row_count_dest = get_row_count_stream(ack_bucket_name, ack_file_key)  
-    print(f"row_count_dest: {row_count_dest}")
+    row_count_dest = get_row_count_stream(ack_bucket_name, ack_file_key)
     if row_count == row_count_dest:
         move_file(ack_bucket_name, ack_file_key, archive_ack_file_key)
         source_key = f"processing/{file_key}"
@@ -113,7 +112,6 @@ def get_row_count_stream(bucket_name, key):
 def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
 
     """     Moves a file from one location to another in S3 by copying and then deleting it.     Args:         bucket_name (str): Name of the S3 bucket.         source_key (str): Source file key.         destination_key (str): Destination file key.     """
-    print("started")
     s3_client.copy_object(
         Bucket=bucket_name,
         CopySource={"Bucket": bucket_name, "Key": source_key},

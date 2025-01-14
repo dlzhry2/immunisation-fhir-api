@@ -19,13 +19,11 @@ def add_to_audit_table(
     Raises an error if the file is a duplicate (after adding it to the audit table).
     """
     try:
-        print(f"Determine process_status:{process_status}")
         table_name = os.environ["AUDIT_TABLE_NAME"]
         file_name_gsi = "filename_index"
         queue_name_gsi = "queue_name_index"
         processing_exists = False
         if query_type == "update":
-            print("entered update")
             dynamodb_client.update_item(
                 TableName=table_name,
                 Key={"message_id": {"S": message_id}},

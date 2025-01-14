@@ -28,7 +28,6 @@ def create_diagnostics_dictionary(error_type, status_code, error_message) -> dic
 
 def invoke_lambda(file_name_processor, source_bucket_name, file_key, message_id):
     try:
-        logger.info("lambda_task_started")
         lambda_payload = {"Records": [
             {
                 "s3": {
@@ -46,6 +45,5 @@ def invoke_lambda(file_name_processor, source_bucket_name, file_key, message_id)
             FunctionName=file_name_processor,
             InvocationType="Event",
             Payload=json.dumps(lambda_payload))
-        logger.info("lambda_task_completed")
     except Exception as error:
         logger.info("%s error", error)

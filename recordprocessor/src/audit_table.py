@@ -14,14 +14,11 @@ def add_to_audit_table(file_key: str) -> None:
     try:
         table_name = os.environ["AUDIT_TABLE_NAME"]
         file_name_gsi = "filename_index"
-        print("process_started")
         # Check for duplicates before adding to the table (if the query returns any items, then the file is a duplicate)
         file_name_response = dynamodb_resource.Table(table_name).query(
             IndexName=file_name_gsi, KeyConditionExpression=Key("filename").eq(file_key)
         )
-        print(f"file_name_response:{file_name_response}")
         items = file_name_response.get("Items", [])
-        print(f"items:{items}")
         message_id = items[0].get("message_id")
         queue_name = items[0].get("queue_name")
         # Add to the audit table (regardless of whether it is a duplicate)

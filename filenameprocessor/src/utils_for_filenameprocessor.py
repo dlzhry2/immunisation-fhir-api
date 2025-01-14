@@ -32,7 +32,6 @@ def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
     """     Moves a file from one location to another in S3 by copying and then deleting it.     Args:
     bucket_name (str): Name of the S3 bucket.         source_key (str): Source file key.
     destination_key (str): Destination file key."""
-    print("started")
     s3_client.copy_object(
         Bucket=bucket_name,
         CopySource={"Bucket": bucket_name, "Key": source_key},
@@ -42,7 +41,7 @@ def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
     logger.info("File moved from %s to %s", source_key, destination_key)
 
 
-def invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, source_bucket_name, file_key, message_id):
+def invoke_lambda(file_name_processor_name, source_bucket_name, file_key, message_id):
     lambda_payload = {"Records": [
         {
             "s3": {
@@ -57,6 +56,6 @@ def invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, source_bucket_name, file_key, mess
             ]
         }
     lambda_client.invoke(
-        FunctionName=FILE_NAME_PROC_LAMBDA_NAME,
+        FunctionName=file_name_processor_name,
         InvocationType="Event",
         Payload=json.dumps(lambda_payload))

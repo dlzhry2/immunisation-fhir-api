@@ -24,8 +24,9 @@ from errors import (
     DuplicateFileError,
     UnhandledSqsError,
 )
-
 FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")
+
+
 # NOTE: logging_decorator is applied to handle_record function, rather than lambda_handler, because
 # the logging_decorator is for an individual record, whereas the lambda_handle could potentially be handling
 # multiple records.
@@ -53,7 +54,6 @@ def handle_record(record) -> dict:
             message_id = str(uuid4())  # Assign a unique message_id for the file
             if "message_id" in record:
                 message_id = record["message_id"]
-                print(f"message_id:{message_id},file_key:{file_key}")
                 query_type = "update"
             # Get message details
             if file_key and message_id is not None:
@@ -116,7 +116,7 @@ def handle_record(record) -> dict:
                 message_id,
                 file_key,
                 created_at_formatted_string,
-                f"{supplier}_{vaccine_type}" ,
+                f"{supplier}_{vaccine_type}",
                 "Processed",
                 query_type
             )
@@ -132,9 +132,9 @@ def handle_record(record) -> dict:
             )
             destination_key = f"archive/{file_key}" 
             move_file(bucket_name, file_key, destination_key)
-            file_key, message_id =check_queue(f"{supplier}_{vaccine_type}")
+            file_key, message_id = check_queue(f"{supplier}_{vaccine_type}")
             if file_key and message_id is not None:
-                invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, bucket_name, file_key, message_id)    
+                invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, bucket_name, file_key, message_id)
             status_code_map = {
                 VaccineTypePermissionsError: 403,
                 InvalidFileKeyError: 400,  # Includes invalid ODS code, therefore unable to identify supplier

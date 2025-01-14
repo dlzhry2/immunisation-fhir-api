@@ -71,9 +71,7 @@ def lambda_handler(event, context):
 
         for message in incoming_message_body:
             array_of_rows.append(convert_message_to_ack_row(message, created_at_formatted_string))
-    print(f"source_bucket_name: {source_bucket_name}")
-    row_count = get_row_count_stream(source_bucket_name, f"processing/{file_key}")    
-    print(f"row_count: {row_count}")
+    row_count = get_row_count_stream(source_bucket_name, f"processing/{file_key}")
     update_ack_file(file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows, row_count=row_count)
     return {"statusCode": 200, "body": json.dumps("Lambda function executed successfully!")}
 

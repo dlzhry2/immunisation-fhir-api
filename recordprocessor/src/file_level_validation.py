@@ -83,17 +83,6 @@ def file_level_validation(incoming_message_body: dict) -> None:
             allowed_operations_set = validate_action_flag_permissions(supplier, vaccine.value, permission, csv_data)
         except (InvalidHeaders, NoOperationPermissions):
             make_and_upload_ack_file(message_id, file_key, False, False, created_at_formatted_string)
-            destination_key = f"archive/{file_key}"
-            move_file(source_bucket_name, file_key, destination_key)
-            queue_name = add_to_audit_table(file_key)
-            logger.info("%s queue_name",
-                        queue_name)
-            file_key, message_id = check_queue(queue_name)
-            logger.info("%s file_key_from_db, with message id %s",
-                        file_key,
-                        message_id)
-            if file_key and message_id is not None:
-                invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, source_bucket_name, file_key, message_id)
             raise
 
         # Initialise the accumulated_ack_file_content with the headers
@@ -119,12 +108,7 @@ def file_level_validation(incoming_message_body: dict) -> None:
         destination_key = f"archive/{file_key}"
         move_file(source_bucket_name, file_key, destination_key)
         queue_name = add_to_audit_table(file_key)
-        logger.info("%s queue_name",
-                    queue_name)
         file_key, message_id = check_queue(queue_name)
-        logger.info("%s file_key_from_db, with message id %s",
-                    file_key,
-                    message_id)
         if file_key and message_id is not None:
             invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, source_bucket_name, file_key, message_id)
         raise
@@ -135,7 +119,6 @@ def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
     """     Moves a file from one location to another in S3 by copying and then deleting it.     Args:
     bucket_name (str): Name of the S3 bucket.         source_key (str): Source file key.
     destination_key (str): Destination file key."""
-    print("started")
     s3_client.copy_object(
         Bucket=bucket_name,
         CopySource={"Bucket": bucket_name, "Key": source_key},
