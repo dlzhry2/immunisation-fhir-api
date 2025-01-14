@@ -48,7 +48,7 @@ def handle_record(record) -> dict:
             "error": str(error),
         }
 
-    if "data-sources" in bucket_name:
+    if "data-sources" in bucket_name and "/" not in file_key:
         try:
             query_type = "create"
             message_id = str(uuid4())  # Assign a unique message_id for the file
@@ -56,48 +56,52 @@ def handle_record(record) -> dict:
                 queue_name = record["queue_name"]
                 print(f"Queue name for processing:{queue_name}")
                 file_key, message_id = check_queue(queue_name)
+                print(f"message_id:{message_id},file_key:{file_key}")
                 query_type = "update"
             # Get message details
+            if file_key and message_id is not None:
 
-            created_at_formatted_string = get_created_at_formatted_string(
-                bucket_name, file_key
-            )
-
-            vaccine_type, supplier = validate_file_key(file_key)
-            permissions = validate_vaccine_type_permissions(
-                vaccine_type=vaccine_type, supplier=supplier
-            )
-            # Process the file
-            status = True
-            status = add_to_audit_table(
-                message_id,
-                file_key,
-                created_at_formatted_string,
-                f"{supplier}_{vaccine_type}",
-                "Processing",
-                query_type
-            )
-            if status:
-                make_and_send_sqs_message(
-                    file_key,
-                    message_id,
-                    permissions,
-                    vaccine_type,
-                    supplier,
-                    created_at_formatted_string,
+                created_at_formatted_string = get_created_at_formatted_string(
+                    bucket_name, file_key
                 )
 
-            logger.info("File '%s' successfully processed", file_key)
+                vaccine_type, supplier = validate_file_key(file_key)
+                permissions = validate_vaccine_type_permissions(
+                    vaccine_type=vaccine_type, supplier=supplier
+                )
+                # Process the file
+                status = True
+                status = add_to_audit_table(
+                    message_id,
+                    file_key,
+                    created_at_formatted_string,
+                    f"{supplier}_{vaccine_type}",
+                    "Processing",
+                    query_type
+                )
+                if status:
+                    make_and_send_sqs_message(
+                        file_key,
+                        message_id,
+                        permissions,
+                        vaccine_type,
+                        supplier,
+                        created_at_formatted_string,
+                    )
 
-            # Return details for logs
-            return {
-                "statusCode": 200,
-                "message": "Successfully sent to SQS queue",
-                "file_key": file_key,
-                "message_id": message_id,
-                "vaccine_type": vaccine_type,
-                "supplier": supplier,
-            }
+                logger.info("File '%s' successfully processed", file_key)
+
+                # Return details for logs
+                return {
+                    "statusCode": 200,
+                    "message": "Successfully sent to SQS queue",
+                    "file_key": file_key,
+                    "message_id": message_id,
+                    "vaccine_type": vaccine_type,
+                    "supplier": supplier,
+                }
+            else:
+                logger.info("No files are in queue")
 
         except (  # pylint: disable=broad-exception-caught
             VaccineTypePermissionsError,
@@ -183,7 +187,6 @@ def lambda_handler(event: dict, context) -> None:  # pylint: disable=unused-argu
     """Lambda handler for filenameprocessor lambda. Processes each record in event records."""
 
     logger.info("Filename processor lambda task started")
-
     for record in event["Records"]:
         handle_record(record)
 

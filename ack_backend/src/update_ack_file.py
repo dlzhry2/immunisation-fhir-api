@@ -85,7 +85,8 @@ def upload_ack_file(
         move_file(source_bucket_name, source_key, destination_key)
         queue_name = add_to_audit_table(file_key, created_at_formatted_string)
         # Directly invoke the Lambda function
-        lambda_payload = {
+        lambda_payload = {"Records":[
+            {
             "s3": {
                 "bucket": {
                     "name": source_bucket_name
@@ -94,7 +95,8 @@ def upload_ack_file(
                     "key": file_key
                 }
             },
-            "queue_name": queue_name
+            "queue_name": queue_name}
+            ]
         }
         lambda_client.invoke(
             FunctionName=FILE_NAME_PROC_LAMBDA_NAME,

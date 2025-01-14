@@ -3,7 +3,7 @@
 import os
 from boto3.dynamodb.conditions import Key
 from clients import dynamodb_client, dynamodb_resource, logger
-from errors import DuplicateFileError, UnhandledAuditTableError, ProcessingError
+from errors import DuplicateFileError, UnhandledAuditTableError
 
 
 def add_to_audit_table(
@@ -25,13 +25,14 @@ def add_to_audit_table(
         queue_name_gsi = "queue_name_index"
         processing_exists = False
         if query_type == "update":
+            print("entered update")
             dynamodb_client.update_item(
                 TableName=table_name,
-                Key={"filename": {"S": file_key}},
+                Key={"message_id": {"S": message_id}},
                 UpdateExpression="SET #status = :status",
                 ExpressionAttributeNames={"#status": "status"},
                 ExpressionAttributeValues={":status": {"S": "Processing"}},
-                ConditionExpression="attribute_exists(file_key)"
+                ConditionExpression="attribute_exists(message_id)"
             )
             logger.info("%s file set for processing, and the status successfully updated to audit table", file_key)
             return True
@@ -92,16 +93,13 @@ def add_to_audit_table(
                 created_at_formatted_str,
             )
             return False
-        
+
         return True
-        
 
     except Exception as error:  # pylint: disable = broad-exception-caught
         error_message = error  # f"Error adding {file_key} to the audit table"
         logger.error(error_message)
         raise UnhandledAuditTableError(error_message) from error
-
-    
 
 
 def check_queue(queue_name: str):
@@ -118,7 +116,7 @@ def check_queue(queue_name: str):
         file_name, message_id = get_file_name(queue_response)
         return file_name, message_id
     else:
-        return None
+        return None, None
 
 
 def get_file_name(queue_response: dict):
