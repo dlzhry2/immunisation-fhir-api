@@ -130,7 +130,7 @@ def handle_record(record) -> dict:
             make_and_upload_the_ack_file(
                 message_id, file_key, message_delivered, created_at_formatted_string
             )
-            destination_key = f"archive/{file_key}" 
+            destination_key = f"archive/{file_key}"
             move_file(bucket_name, file_key, destination_key)
             file_key, message_id = check_queue(f"{supplier}_{vaccine_type}")
             if file_key and message_id is not None:
