@@ -86,7 +86,12 @@ def file_level_validation(incoming_message_body: dict) -> None:
             destination_key = f"archive/{file_key}"
             move_file(source_bucket_name, file_key, destination_key)
             queue_name = add_to_audit_table(file_key)
+            logger.info("%s queue_name",
+                        queue_name)
             file_key, message_id = check_queue(queue_name)
+            logger.info("%s file_key_from_db, with message id %s",
+                        file_key,
+                        message_id)
             if file_key and message_id is not None:
                 invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, source_bucket_name, file_key, message_id)
             raise
@@ -114,7 +119,12 @@ def file_level_validation(incoming_message_body: dict) -> None:
         destination_key = f"archive/{file_key}"
         move_file(source_bucket_name, file_key, destination_key)
         queue_name = add_to_audit_table(file_key)
+        logger.info("%s queue_name",
+                    queue_name)
         file_key, message_id = check_queue(queue_name)
+        logger.info("%s file_key_from_db, with message id %s",
+                    file_key,
+                    message_id)
         if file_key and message_id is not None:
             invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, source_bucket_name, file_key, message_id)
         raise

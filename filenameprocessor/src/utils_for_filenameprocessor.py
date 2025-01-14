@@ -26,6 +26,7 @@ def identify_supplier(ods_code: str) -> str:
     """
     return Constants.ODS_TO_SUPPLIER_MAPPINGS.get(ods_code, "")
 
+
 def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
 
     """     Moves a file from one location to another in S3 by copying and then deleting it.     Args:
@@ -40,9 +41,10 @@ def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
     s3_client.delete_object(Bucket=bucket_name, Key=source_key)
     logger.info("File moved from %s to %s", source_key, destination_key)
 
+
 def invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, source_bucket_name, file_key, message_id):
-    lambda_payload = {"Records":[
-            {
+    lambda_payload = {"Records": [
+        {
             "s3": {
                 "bucket": {
                     "name": source_bucket_name

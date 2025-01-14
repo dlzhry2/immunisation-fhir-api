@@ -8,5 +8,6 @@ class NoOperationPermissions(Exception):
 class InvalidHeaders(Exception):
     """A custom exception for when the file headers are invalid."""
 
+
 class UnhandledAuditTableError(Exception):
     """A custom exception for when an unexpected error occurs whilst adding the file to the audit table."""

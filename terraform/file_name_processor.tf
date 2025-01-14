@@ -109,7 +109,10 @@ resource "aws_iam_policy" "filenameprocessor_lambda_exec_policy" {
         Effect   = "Allow"
         Action   = [
           "s3:GetObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:PutObject",
+          "s3:CopyObject",
+          "s3:DeleteObject"
         ]
         Resource = [
           "arn:aws:s3:::${local.batch_prefix}-data-sources",           
@@ -286,7 +289,7 @@ resource "aws_lambda_function" "file_processor_lambda" {
       SPLUNK_FIREHOSE_NAME = module.splunk.firehose_stream_name
       AUDIT_TABLE_NAME     = "${data.aws_dynamodb_table.audit-table.name}"
       FILE_NAME_GSI        = "filename_index"
-      FILE_NAME_PROC_LAMBDA_NAME = data.aws_lambda_function.existing_file_name_proc_lambda.function_name
+      FILE_NAME_PROC_LAMBDA_NAME = "imms-${local.env}-filenameproc_lambda"
 
     }
   }

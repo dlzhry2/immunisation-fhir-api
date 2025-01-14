@@ -1,11 +1,11 @@
 """Add the filename to the audit table and check for duplicates."""
- 
+
 import os
 from boto3.dynamodb.conditions import Key
 from clients import dynamodb_client, dynamodb_resource, logger
 from errors import UnhandledAuditTableError
- 
- 
+
+
 def add_to_audit_table(file_key: str) -> None:
     """
     Adds the filename to the audit table.
@@ -33,12 +33,14 @@ def add_to_audit_table(file_key: str) -> None:
             ExpressionAttributeValues={":status": {"S": "Processed"}},
             ConditionExpression="attribute_exists(message_id)"
         )
-        logger.info("%s file, with message id %s, and the status successfully updated to audit table", file_key, message_id)
+        logger.info("%s file, with message id %s, and the status successfully updated to audit table", file_key,
+                    message_id)
         return queue_name
     except Exception as error:  # pylint: disable = broad-exception-caught
-        error_message = error #f"Error adding {file_key} to the audit table"
+        error_message = error  # f"Error adding {file_key} to the audit table"
         logger.error(error_message)
         raise UnhandledAuditTableError(error_message) from error
+
 
 def check_queue(queue_name: str):
 
@@ -62,4 +64,4 @@ def get_file_name(queue_response: dict):
     first_record = sorted_item[0]
     file_name = first_record.get("filename")
     message_id = first_record.get("message_id")
-    return file_name, message_id    
+    return file_name, message_id
