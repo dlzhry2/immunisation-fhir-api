@@ -31,3 +31,20 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3_batch_source_e
     }
   }
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "datasources_lifecycle" {
+  bucket = "immunisation-batch-prod-data-sources"
+ 
+  rule {
+    id     = "DeleteFilesAfter7Days"
+    status = "Enabled"
+ 
+    filter {
+      prefix = "*"
+    }
+ 
+    expiration {
+      days = 7
+    }
+  }
+}
