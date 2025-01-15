@@ -220,7 +220,7 @@ class ValidValues:
         f"|MESSAGE_DELIVERY\n123^5|OK|Information|OK|30001|Business|30001|Success|{MOCK_CREATED_AT_FORMATTED_STRING}||999^TEST|||True\n"
     )
 
-    test_ack_header = (
+    ack_headers = (
         "MESSAGE_HEADER_ID|HEADER_RESPONSE_CODE|ISSUE_SEVERITY|ISSUE_CODE|ISSUE_DETAILS_CODE|RESPONSE_TYPE|"
         "RESPONSE_CODE|RESPONSE_DISPLAY|RECEIVED_TIME|MAILBOX_FROM|LOCAL_ID|IMMS_ID|OPERATION_OUTCOME"
         "|MESSAGE_DELIVERY\n"
@@ -324,3 +324,20 @@ class MockFileDetails:
     rsv_ravs = FileDetails("RSV", "RAVS", "X26")
     rsv_emis = FileDetails("RSV", "EMIS", "8HK48")
     flu_emis = FileDetails("FLU", "EMIS", "YGM41")
+
+
+def create_ack_row(row_id, created_at_formatted_string, local_id, imms_id="", diagnostics=None):
+    """
+    Create an ack row for a given message.
+    If diagnostics are present, the row will be marked as a failure.
+    """
+    if diagnostics:
+        return (
+            f"{row_id}|Fatal Error|Fatal|Fatal Error|30002|Business|30002|Business Level "
+            f"Response Value - Processing Error|{created_at_formatted_string}||{local_id}|{imms_id}|{diagnostics}|False"
+        )
+    else:
+        return (
+            f"{row_id}|OK|Information|OK|30001|Business|30001|Success|{created_at_formatted_string}|"
+            f"|{local_id}|{imms_id}||True"
+        )
