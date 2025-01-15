@@ -412,3 +412,8 @@ resource "aws_iam_role_policy_attachment" "elasticache_policy_attachment" {
   role       = aws_iam_role.elasticache_exec_role.name
   policy_arn = aws_iam_policy.elasticache_permissions.arn
 }
+
+resource "aws_cloudwatch_log_group" "file_name_processor_lambdalog_group" {
+  name              = "/aws/lambda/${local.short_prefix}-filenameproc_lambda"
+  retention_in_days = 30
+}

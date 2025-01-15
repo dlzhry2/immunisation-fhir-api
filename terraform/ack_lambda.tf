@@ -159,6 +159,10 @@ resource "aws_iam_policy" "ack_lambda_exec_policy" {
   })
 }
 
+resource "aws_cloudwatch_log_group" "ack_lambda_log_group" {
+  name              = "/aws/lambda/${local.short_prefix}-ack-lambda"
+  retention_in_days = 30
+}
 resource "aws_iam_policy" "ack_s3_kms_access_policy" {
   name        = "${local.short_prefix}-ack-s3-kms-policy"
   description = "Allow Lambda to decrypt environment variables"

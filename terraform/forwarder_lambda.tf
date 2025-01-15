@@ -227,3 +227,7 @@ resource "aws_lambda_function" "forwarding_lambda" {
    depends_on = [aws_lambda_function.forwarding_lambda]
  }
  
+ resource "aws_cloudwatch_log_group" "forwarding_lambda_log_group" {
+  name              = "/aws/lambda/${local.short_prefix}-forwarding_lambda"
+  retention_in_days = 30
+}
