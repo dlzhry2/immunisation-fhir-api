@@ -220,6 +220,9 @@ resource "aws_lambda_function" "ack_processor_lambda" {
   }
 
   reserved_concurrent_executions = 20
+  depends_on = [
+    aws_cloudwatch_log_group.ack_lambda_log_group
+  ]
 }
 
 resource "aws_lambda_event_source_mapping" "sqs_to_lambda"{ 
