@@ -70,7 +70,7 @@ module "source" {
           "delete_after" : 2
         },
         "name" : "daily_kept_for_2_days",
-        "schedule" : "cron(40 15 * * ? *)"
+        "schedule" : "cron(00 20 * * ? *)"
       }
     ],
     "selection_tag" : "NHSE-Enable-S3-Backup"
@@ -90,7 +90,7 @@ module "source" {
           "delete_after" : 2
         },
         "name" : "daily_kept_for_2_days",
-        "schedule" : "cron(40 15 * * ? *)"
+        "schedule" : "cron(00 20 * * ? *)"
       }
     ],
     "selection_tag" : "NHSE-Enable-Dynamo-Backup"
