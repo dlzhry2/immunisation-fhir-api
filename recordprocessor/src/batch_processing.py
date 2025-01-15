@@ -15,8 +15,6 @@ def process_csv_to_fhir(incoming_message_body: dict) -> None:
     For each row of the csv, attempts to transform into FHIR format, sends a message to kinesis,
     and documents the outcome for each row in the ack file.
     """
-    logger.info("Event: %s", incoming_message_body)
-
     try:
         interim_message_body = file_level_validation(incoming_message_body=incoming_message_body)
     except (InvalidHeaders, NoOperationPermissions, Exception):  # pylint: disable=broad-exception-caught
