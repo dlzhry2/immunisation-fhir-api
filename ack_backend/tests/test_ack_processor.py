@@ -7,48 +7,42 @@ from unittest.mock import patch
 from ack_processor import lambda_handler
 from update_ack_file import obtain_current_ack_content, create_ack_data, update_ack_file
 from tests.test_utils_for_ack_backend import (
-    DESTINATION_BUCKET_NAME,
-    AWS_REGION,
+    REGION_NAME,
     ValidValues,
-    CREATED_AT_FORMATTED_STRING,
+    MOCK_CREATED_AT_FORMATTED_STRING,
     DiagnosticsDictionaries,
+    MOCK_ENVIRONMENT_DICT,
+    BucketNames,
+    GenericSetUp,
+    GenericTearDown,
+    MockFileDetails,
 )
 from copy import deepcopy
 import uuid
 
 
-s3_client = boto3_client("s3", region_name=AWS_REGION)
-file_name = "COVID19_Vaccinations_v5_YGM41_20240909T13005902.csv"
-ack_file_key = "forwardedFile/COVID19_Vaccinations_v5_YGM41_20240909T13005902_BusAck_20241115T13435500.csv"
-test_ack_file_key = "forwardedFile/COVID19_Vaccinations_v5_YGM41_20240909T13005902_BusAck_20241115T13455555.csv"
+s3_client = boto3_client("s3", region_name=REGION_NAME)
 local_id = "111^222"
-os.environ["ACK_BUCKET_NAME"] = DESTINATION_BUCKET_NAME
-invalid_action_flag_diagnostics = "Invalid ACTION_FLAG - ACTION_FLAG must be 'NEW', 'UPDATE' or 'DELETE'"
-test_bucket_name = "immunisation-batch-internal-testlambda-data-destinations"
+INVALID_ACTION_FLAG_DIAGNOSTICS = "Invalid ACTION_FLAG - ACTION_FLAG must be 'NEW', 'UPDATE' or 'DELETE'"
+
+mock_file = MockFileDetails.flu_emis
+ack_file_key = mock_file.ack_file_key
 
 
+@patch.dict(os.environ, MOCK_ENVIRONMENT_DICT)
 @mock_s3
 @mock_sqs
 class TestAckProcessor(unittest.TestCase):
 
-    def setup_s3(self):
-        """Creates a mock S3 bucket contain a single file different to one created during tests
-        to ensure s3 bucket loads correctly"""
-        ack_bucket_name = "immunisation-batch-internal-testlambda-data-destinations"
-        os.environ["ACK_BUCKET_NAME"] = test_bucket_name
-        existing_content = ValidValues.test_ack_header
-        s3_client.create_bucket(
-            Bucket=ack_bucket_name,
-            CreateBucketConfiguration={"LocationConstraint": AWS_REGION},
-        )
-        s3_client.put_object(Bucket=test_bucket_name, Key="some_other_file", Body=existing_content)
+    def setUp(self) -> None:
+        GenericSetUp(s3_client)
 
-    def setup_existing_ack_file(self, bucket_name, file_key, file_content):
-        """Creates a mock S3 bucket and uploads an existing file with the given content."""
-        s3_client.create_bucket(
-            Bucket=DESTINATION_BUCKET_NAME, CreateBucketConfiguration={"LocationConstraint": AWS_REGION}
-        )
-        s3_client.put_object(Bucket=bucket_name, Key=file_key, Body=file_content)
+    def tearDown(self) -> None:
+        GenericTearDown(s3_client)
+
+    def setup_existing_ack_file(self, file_key, file_content):
+        """Uploads an existing file with the given content."""
+        s3_client.put_object(Bucket=BucketNames.DESTINATION, Key=file_key, Body=file_content)
 
     def create_event(self, test_data):
         """
@@ -62,12 +56,12 @@ class TestAckProcessor(unittest.TestCase):
         return {"Records": [{"body": json.dumps(rows)}]}
 
     row_template = {
-        "file_key": file_name,
+        "file_key": mock_file.file_key,
         "row_id": "123^1",
         "local_id": ValidValues.local_id,
         "operation_requested": "create",
         "imms_id": "",
-        "created_at_formatted_string": "20241115T13435500",
+        "created_at_formatted_string": mock_file.created_at_formatted_string,
     }
 
     def ack_row_order(self, row_input, expected_ack_file_content, actual_ack_file_content):
@@ -95,7 +89,7 @@ class TestAckProcessor(unittest.TestCase):
 
     def create_expected_ack_content(self, row_input, actual_ack_file_content, expected_ack_file_content):
         """creates test ack rows from using a list containing multiple rows"""
-        for i, row in enumerate(row_input):
+        for row in row_input:
             diagnostics_dictionary = row.get("diagnostics", {})
             diagnostics = (
                 diagnostics_dictionary.get("error_message", "")
@@ -107,11 +101,11 @@ class TestAckProcessor(unittest.TestCase):
             if diagnostics:
                 ack_row = (
                     f"{row_id}|Fatal Error|Fatal|Fatal Error|30002|Business|30002|Business Level "
-                    f"Response Value - Processing Error|20241115T13435500||111^222|{imms_id}|{diagnostics}|False"
+                    f"Response Value - Processing Error|{mock_file.created_at_formatted_string}||111^222|{imms_id}|{diagnostics}|False"
                 )
             else:
                 ack_row = (
-                    f"{row_id}|OK|Information|OK|30001|Business|30001|Success|20241115T13435500|"
+                    f"{row_id}|OK|Information|OK|30001|Business|30001|Success|{mock_file.created_at_formatted_string}|"
                     f"|111^222|{imms_id}||True"
                 )
 
@@ -125,7 +119,9 @@ class TestAckProcessor(unittest.TestCase):
         Returns:
             dict: A dictionary containing `file_key_existing`, `ack_file_name`, and `row_template`."""
         file_key_existing = f"COVID19_Vaccinations_v5_DPSREDUCED_{uuid.uuid4().hex}.csv"
-        ack_file_name = f"forwardedFile/{file_key_existing.replace('.csv', '_BusAck_20241115T13435500.csv')}"
+        ack_file_name = (
+            f"forwardedFile/{file_key_existing.replace('.csv', f'_BusAck_{mock_file.created_at_formatted_string}.csv')}"
+        )
 
         row_template = self.row_template.copy()
         row_template.update({"file_key": file_key_existing})
@@ -136,25 +132,9 @@ class TestAckProcessor(unittest.TestCase):
             "row_template": row_template,
         }
 
-    def environment_setup(self, ack_file_name, existing_content):
-        """
-        Generates a file with existing content in the mock s3 bucket and updates row_template.
-            test_case_description (str): Description of the test case.
-            existing_content (str): The initial content to upload to the file in S3.
-        """
-
-        try:
-            s3_client.delete_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_name)
-        except s3_client.exceptions.NoSuchKey:
-            pass
-
-        s3_client.put_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_name, Body=existing_content)
-
     @patch("logging_decorators.send_log_to_firehose")
     def test_lambda_handler_main(self, mock_send_log_to_firehose):
         """Test lambda handler with dynamic ack_file_name and consistent row_template."""
-        test_bucket_name = "immunisation-batch-internal-testlambda-data-destinations"
-        self.setup_s3()
         existing_content = ValidValues.test_ack_header
 
         test_cases = [
@@ -212,25 +192,23 @@ class TestAckProcessor(unittest.TestCase):
                     self.assertEqual(response["statusCode"], 200)
                     self.assertEqual(response["body"], '"Lambda function executed successfully!"')
 
-                    retrieved_object = s3_client.get_object(Bucket=test_bucket_name, Key=file_info["ack_file_name"])
+                    retrieved_object = s3_client.get_object(
+                        Bucket=BucketNames.DESTINATION, Key=file_info["ack_file_name"]
+                    )
                     actual_ack_file_content = retrieved_object["Body"].read().decode("utf-8")
 
                     self.create_expected_ack_content(test_data["rows"], actual_ack_file_content, existing_content)
 
                     mock_send_log_to_firehose.assert_called()
 
-                    s3_client.delete_object(Bucket=test_bucket_name, Key=file_info["ack_file_name"])
+                    s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=file_info["ack_file_name"])
 
     @patch("logging_decorators.send_log_to_firehose")
     def test_lambda_handler_existing(self, mock_send_log_to_firehose):
         """Test lambda handler with dynamic ack_file_name and consistent row_template with an already existing
         ack file with content."""
 
-        os.environ["ACK_BUCKET_NAME"] = DESTINATION_BUCKET_NAME
         existing_content = ValidValues.existing_ack_file_content
-        s3_client.create_bucket(
-            Bucket=DESTINATION_BUCKET_NAME, CreateBucketConfiguration={"LocationConstraint": AWS_REGION}
-        )
 
         test_cases = [
             {
@@ -263,7 +241,7 @@ class TestAckProcessor(unittest.TestCase):
                 with self.subTest(msg=case["description"]):
                     # Generate unique file names and set up the S3 file
                     file_info = self.generate_file_names()
-                    self.environment_setup(file_info["ack_file_name"], existing_content)
+                    self.setup_existing_ack_file(file_info["ack_file_name"], existing_content)
 
                     test_data = {"rows": [{**file_info["row_template"], **row} for row in case["rows"]]}
 
@@ -275,12 +253,12 @@ class TestAckProcessor(unittest.TestCase):
                     self.assertEqual(response["body"], '"Lambda function executed successfully!"')
 
                     retrieved_object = s3_client.get_object(
-                        Bucket=DESTINATION_BUCKET_NAME, Key=file_info["ack_file_name"]
+                        Bucket=BucketNames.DESTINATION, Key=file_info["ack_file_name"]
                     )
                     actual_ack_file_content = retrieved_object["Body"].read().decode("utf-8")
 
                     self.assertIn(
-                        "123^5|OK|Information|OK|30001|Business|30001|Success|20241115T13435500||999^TEST|||True",
+                        f"123^5|OK|Information|OK|30001|Business|30001|Success|{mock_file.created_at_formatted_string}||999^TEST|||True",
                         actual_ack_file_content,
                     )
                     self.assertIn(ValidValues.test_ack_header, actual_ack_file_content)
@@ -289,17 +267,14 @@ class TestAckProcessor(unittest.TestCase):
 
                     mock_send_log_to_firehose.assert_called()
 
-                    s3_client.delete_object(Bucket=DESTINATION_BUCKET_NAME, Key=file_info["ack_file_name"])
+                    s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=file_info["ack_file_name"])
 
     def test_update_ack_file(self):
         """Test creating ack file with and without diagnostics"""
-        self.setup_s3()
 
         test_cases = [
             {
                 "description": "Single successful row",
-                "file_key": "COVID19_Vaccinations_v5_YGM41_20240909T13005902.csv",
-                "created_at_formatted_string": "20241115T13435500",
                 "input_row": [ValidValues.create_ack_data_successful_row],
                 "expected_row": [
                     ValidValues.update_ack_file_successful_row_no_immsid,
@@ -307,8 +282,6 @@ class TestAckProcessor(unittest.TestCase):
             },
             {
                 "description": "With multiple rows - failure and success rows",
-                "file_key": "COVID19_Vaccinations_v5_YGM41_20240909T13005902.csv",
-                "created_at_formatted_string": "20241115T13435500",
                 "input_row": [
                     ValidValues.create_ack_data_successful_row,
                     {**ValidValues.create_ack_data_failure_row, "IMMS_ID": "TEST_IMMS_ID"},
@@ -326,8 +299,6 @@ class TestAckProcessor(unittest.TestCase):
             },
             {
                 "description": "Multiple rows With different diagnostics",
-                "file_key": "COVID19_Vaccinations_v5_YGM41_20240909T13005902.csv",
-                "created_at_formatted_string": "20241115T13435500",
                 "input_row": [
                     {**ValidValues.create_ack_data_failure_row, "OPERATION_OUTCOME": "Error 1"},
                     {**ValidValues.create_ack_data_failure_row, "OPERATION_OUTCOME": "Error 2"},
@@ -349,48 +320,42 @@ class TestAckProcessor(unittest.TestCase):
                     ack_data_rows_with_id = []
                     for row in deepcopy(case["input_row"]):
                         ack_data_rows_with_id.append(row)
-                    update_ack_file(case["file_key"], case["created_at_formatted_string"], ack_data_rows_with_id)
-                    created_string = case["created_at_formatted_string"]
-                    expected_file_key = (
-                        f"forwardedFile/{case['file_key'].replace('.csv', f'_BusAck_{created_string}.csv')}"
-                    )
-
-                    objects = s3_client.list_objects_v2(Bucket=test_bucket_name)
-                    self.assertIn(expected_file_key, [obj["Key"] for obj in objects.get("Contents", [])])
-                    retrieved_object = s3_client.get_object(Bucket=test_bucket_name, Key=ack_file_key)
+                    update_ack_file(mock_file.file_key, mock_file.created_at_formatted_string, ack_data_rows_with_id)
+                    expected_ack_file_key = mock_file.ack_file_key
+                    objects = s3_client.list_objects_v2(Bucket=BucketNames.DESTINATION)
+                    self.assertIn(expected_ack_file_key, [obj["Key"] for obj in objects.get("Contents", [])])
+                    retrieved_object = s3_client.get_object(Bucket=BucketNames.DESTINATION, Key=ack_file_key)
                     retrieved_body = retrieved_object["Body"].read().decode("utf-8")
 
                     for expected_row in deepcopy(case["expected_row"]):
                         self.assertIn(expected_row, retrieved_body)
 
-                    s3_client.delete_object(Bucket=test_bucket_name, Key=ack_file_key)
+                    s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=ack_file_key)
 
     def test_update_ack_file_existing(self):
         """Test appending new rows to an existing ack file."""
-
-        os.environ["ACK_BUCKET_NAME"] = DESTINATION_BUCKET_NAME
 
         # Mock existing content in the ack file
         existing_content = ValidValues.existing_ack_file_content
 
         file_key = "RSV_Vaccinations_v5_TEST_20240905T13005922.csv"
-        ack_file_key = f"forwardedFile/RSV_Vaccinations_v5_TEST_20240905T13005922_BusAck_20241115T13435500.csv"
+        ack_file_key = f"forwardedFile/RSV_Vaccinations_v5_TEST_20240905T13005922_BusAck_{mock_file.created_at_formatted_string}.csv"
         ack_data_rows = [
             ValidValues.create_ack_data_successful_row,
             ValidValues.create_ack_data_failure_row,
         ]
 
-        self.setup_existing_ack_file(DESTINATION_BUCKET_NAME, ack_file_key, existing_content)
-        retrieved_object = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)
+        self.setup_existing_ack_file(ack_file_key, existing_content)
+        retrieved_object = s3_client.get_object(Bucket=BucketNames.DESTINATION, Key=ack_file_key)
         retrieved_body = retrieved_object["Body"].read().decode("utf-8")
 
         with patch("update_ack_file.s3_client", s3_client):
-            update_ack_file(file_key, CREATED_AT_FORMATTED_STRING, ack_data_rows)
-            retrieved_object = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)
+            update_ack_file(file_key, MOCK_CREATED_AT_FORMATTED_STRING, ack_data_rows)
+            retrieved_object = s3_client.get_object(Bucket=BucketNames.DESTINATION, Key=ack_file_key)
             retrieved_body = retrieved_object["Body"].read().decode("utf-8")
 
             self.assertIn(
-                "123^5|OK|Information|OK|30001|Business|30001|Success|20241115T13435500||999^TEST|||True",
+                f"123^5|OK|Information|OK|30001|Business|30001|Success|{mock_file.created_at_formatted_string}||999^TEST|||True",
                 retrieved_body,
             )
 
@@ -398,10 +363,10 @@ class TestAckProcessor(unittest.TestCase):
             self.assertIn("123^1|OK|", retrieved_body)
             self.assertIn("123^1|Fatal Error|", retrieved_body)
 
-            objects = s3_client.list_objects_v2(Bucket=DESTINATION_BUCKET_NAME)
+            objects = s3_client.list_objects_v2(Bucket=BucketNames.DESTINATION)
             self.assertIn(ack_file_key, [obj["Key"] for obj in objects.get("Contents", [])])
 
-            s3_client.delete_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)
+            s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=ack_file_key)
 
     def test_create_ack_data(self):
         """Test create_ack_data with success and failure cases."""
@@ -409,7 +374,7 @@ class TestAckProcessor(unittest.TestCase):
         test_cases = [
             {
                 "description": "Success row",
-                "created_at_formatted_string": "20241115T13435500",
+                "created_at_formatted_string": mock_file.created_at_formatted_string,
                 "local_id": "local123",
                 "row_id": "row456",
                 "successful_api_response": True,
@@ -453,38 +418,31 @@ class TestAckProcessor(unittest.TestCase):
 
                 self.assertEqual(result, expected_result)
 
-    @mock_s3
     def test_obtain_current_ack_content_file_no_existing(self):
         """Test obtain current ack content when there a file does not already exist."""
-        os.environ["ACK_BUCKET_NAME"] = test_bucket_name
-        ack_bucket_name = "immunisation-batch-internal-testlambda-data-destinations"
         ACK_KEY = "forwardedFile/COVID19_Vaccinations_v5_YGM41_20240909T13005902_BusAck_20241115T13454555.csv"
-        self.setup_s3()
         with patch("update_ack_file.s3_client", s3_client):
-            result = obtain_current_ack_content(ack_bucket_name, ACK_KEY)
+            result = obtain_current_ack_content(BucketNames.DESTINATION, ACK_KEY)
+        self.assertEqual(result.getvalue(), ValidValues.test_ack_header)
 
-            self.assertEqual(result.getvalue(), ValidValues.test_ack_header)
-
-    @mock_s3
     def test_obtain_current_ack_content_file_exists(self):
         """Test that the existing ack file content is retrieved and new rows are added."""
-
         existing_content = ValidValues.existing_ack_file_content
-        self.setup_existing_ack_file(DESTINATION_BUCKET_NAME, ack_file_key, existing_content)
+        self.setup_existing_ack_file(ack_file_key, existing_content)
 
         with patch("update_ack_file.s3_client", s3_client):
-            result = obtain_current_ack_content(DESTINATION_BUCKET_NAME, ack_file_key)
+            result = obtain_current_ack_content(BucketNames.DESTINATION, ack_file_key)
             self.assertIn(existing_content, result.getvalue())
             self.assertEqual(result.getvalue(), existing_content)
 
-            retrieved_object = s3_client.get_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)
+            retrieved_object = s3_client.get_object(Bucket=BucketNames.DESTINATION, Key=ack_file_key)
             retrieved_body = retrieved_object["Body"].read().decode("utf-8")
             self.assertEqual(retrieved_body, existing_content)
 
-            objects = s3_client.list_objects_v2(Bucket=DESTINATION_BUCKET_NAME)
+            objects = s3_client.list_objects_v2(Bucket=BucketNames.DESTINATION)
             self.assertIn(ack_file_key, [obj["Key"] for obj in objects.get("Contents", [])])
 
-            s3_client.delete_object(Bucket=DESTINATION_BUCKET_NAME, Key=ack_file_key)
+            s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=ack_file_key)
 
     @patch("logging_decorators.send_log_to_firehose")
     @patch("update_ack_file.create_ack_data")
@@ -521,11 +479,6 @@ class TestAckProcessor(unittest.TestCase):
                 error_log = mock_send_log_to_firehose.call_args[0][0]
                 self.assertIn(scenario["expected_message"], error_log["diagnostics"])
                 mock_send_log_to_firehose.reset_mock()
-
-    def tearDown(self):
-        """'Clear all mock resources"""
-        # Clean up mock resources
-        os.environ.pop("ACK_BUCKET_NAME", None)
 
 
 if __name__ == "__main__":
