@@ -88,7 +88,9 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
         Action    = [
           "s3:GetObject",
           "s3:PutObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:CopyObject",
+          "s3:DeleteObject"
         ]
         Resource  = [
           "arn:aws:s3:::${var.project_name}-pr-78-data-sources",
