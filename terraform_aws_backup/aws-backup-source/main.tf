@@ -52,7 +52,7 @@ module "source" {
   backup_copy_vault_account_id = local.destination_account_id
   backup_copy_vault_arn        = data.aws_arn.destination_vault_arn.arn
   notifications_target_email_address = data.aws_ssm_parameter.notified_email.value
-  environment_name      = terraform.workspace
+  environment_name      = "prod"
   project_name          = "imms-fhir-api-"
   terraform_role_arn    = "arn:aws:iam::${local.source_account_id}:role/${local.assume_role}"
   source_account_id     = data.aws_caller_identity.current.account_id
@@ -70,7 +70,7 @@ module "source" {
           "delete_after" : 2
         },
         "name" : "daily_kept_for_2_days",
-        "schedule" : "cron(15 11 * * ? *)"
+        "schedule" : "cron(00 20 * * ? *)"
       }
     ],
     "selection_tag" : "NHSE-Enable-S3-Backup"
@@ -90,7 +90,7 @@ module "source" {
           "delete_after" : 2
         },
         "name" : "daily_kept_for_2_days",
-        "schedule" : "cron(15 11 * * ? *)"
+        "schedule" : "cron(00 20 * * ? *)"
       }
     ],
     "selection_tag" : "NHSE-Enable-Dynamo-Backup"
