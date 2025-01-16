@@ -19,6 +19,6 @@ resource "aws_kms_key" "destination_backup_key" {
 }
 
 resource "aws_kms_alias" "destination_backup_key" {
-  name          = "alias/imms-bkp-encryption"
+  name          = "alias/imms-bkp-prod-encryption"
   target_key_id = aws_kms_key.destination_backup_key.key_id
 }

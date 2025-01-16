@@ -47,7 +47,7 @@ resource "aws_vpc_endpoint" "sqs_endpoint" {
         Effect    = "Allow"
         Principal = {
           "AWS": [
-            "arn:aws:iam::${local.local_account_id}:root"
+            "*"
           ]
         },
         Action    = [
@@ -55,10 +55,7 @@ resource "aws_vpc_endpoint" "sqs_endpoint" {
           "sqs:ReceiveMessage",
           "kms:Decrypt"
         ]
-        Resource  = ["arn:aws:sqs:${var.aws_region}:${local.local_account_id}:${var.project_short_name}-int-metadata-queue.fifo",
-          "arn:aws:sqs:${var.aws_region}:${local.local_account_id}:${var.project_short_name}-ref-metadata-queue.fifo",
-          "arn:aws:sqs:${var.aws_region}:${local.local_account_id}:${var.project_short_name}-internal-dev-metadata-queue.fifo",
-          "arn:aws:sqs:${var.aws_region}:${local.local_account_id}:${var.project_short_name}-pr-78-metadata-queue.fifo"]
+        Resource  = "*"
       }
     ]
   })
@@ -82,7 +79,7 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
         Effect    = "Allow"
         Principal = {
           "AWS": [
-            "arn:aws:iam::${local.local_account_id}:root"
+            "*"
           ]
         },
         Action    = [
@@ -92,27 +89,7 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
           "s3:CopyObject",
           "s3:DeleteObject"
         ]
-        Resource  = [
-          "arn:aws:s3:::${var.project_name}-pr-78-data-sources",
-          "arn:aws:s3:::${var.project_name}-pr-78-data-sources/*",
-          "arn:aws:s3:::${var.project_name}-int-data-sources",
-          "arn:aws:s3:::${var.project_name}-int-data-sources/*",
-          "arn:aws:s3:::${var.project_name}-ref-data-sources",
-          "arn:aws:s3:::${var.project_name}-ref-data-sources/*",
-          "arn:aws:s3:::${var.project_name}-internal-dev-data-sources",
-          "arn:aws:s3:::${var.project_name}-internal-dev-data-sources/*",
-          "arn:aws:s3:::${var.project_name}-pr-78-data-destinations",
-          "arn:aws:s3:::${var.project_name}-pr-78-data-destinations/*",
-          "arn:aws:s3:::${var.project_name}-int-data-destinations",
-          "arn:aws:s3:::${var.project_name}-int-data-destinations/*",
-          "arn:aws:s3:::${var.project_name}-ref-data-destinations",
-          "arn:aws:s3:::${var.project_name}-ref-data-destinations/*",
-          "arn:aws:s3:::${var.project_name}-internal-dev-data-destinations",
-          "arn:aws:s3:::${var.project_name}-internal-dev-data-destinations/*",
-          "arn:aws:s3:::${aws_s3_bucket.batch_config_bucket.bucket}",
-          "arn:aws:s3:::${aws_s3_bucket.batch_config_bucket.bucket}/*",
-          "arn:aws:s3:::prod-${var.aws_region}-starport-layer-bucket/*"
-        ]
+        Resource  = "*"
       }
     ]
   })
@@ -135,11 +112,7 @@ resource "aws_vpc_endpoint" "kinesis_endpoint" {
     Statement = [
       {
         Effect = "Allow",
-        Principal = {
-          "AWS":[
-            "arn:aws:iam::${local.local_account_id}:root"
-        ]
-        },
+        Principal =  "*",
         Action = [
           "firehose:ListDeliveryStreams",
           "firehose:PutRecord",
@@ -237,7 +210,7 @@ resource "aws_vpc_endpoint" "kinesis_stream_endpoint" {
         Effect = "Allow",
         Principal = {
           "AWS":[
-            "arn:aws:iam::${local.local_account_id}:root"
+            "*"
         ]
         },
         Action = [
@@ -254,3 +227,36 @@ resource "aws_vpc_endpoint" "kinesis_stream_endpoint" {
     Name = "immunisation-kinesis-streams-endpoint"
   }
 }
+
+resource "aws_vpc_endpoint" "kms_endpoint" {
+  vpc_id            = data.aws_vpc.default.id
+  service_name      = "com.amazonaws.${var.aws_region}.kms"
+  vpc_endpoint_type = "Interface"
+
+  subnet_ids          = data.aws_subnets.default.ids
+  security_group_ids  = [aws_security_group.lambda_redis_sg.id]
+  private_dns_enabled = true
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = "*",
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey*"
+        ],
+        Resource = [
+           "arn:aws:kms:eu-west-2:664418956997:key/4e643221-4cb8-49c5-9a78-ced991ff52ae",
+				   "arn:aws:kms:eu-west-2:664418956997:key/d7b3c213-3c05-4caf-bb95-fdb2a6e533b1"
+        ]
+      }
+    ]
+  })
+  tags = {
+    Name = "immunisation-kms-endpoint"
+  }
+}
+
