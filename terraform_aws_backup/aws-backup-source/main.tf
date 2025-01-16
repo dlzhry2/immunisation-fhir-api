@@ -64,13 +64,13 @@ module "source" {
     "rules" : [
       {
         "copy_action" : {
-          "delete_after" : 4
+          "delete_after" : 61
         },
         "lifecycle" : {
           "delete_after" : 2
         },
         "name" : "daily_kept_for_2_days",
-        "schedule" : "cron(00 20 * * ? *)"
+        "schedule" : "cron(15 11 * * ? *)"
       }
     ],
     "selection_tag" : "NHSE-Enable-S3-Backup"
@@ -84,13 +84,13 @@ module "source" {
     "rules" : [
       {
         "copy_action" : {
-          "delete_after" : 4
+          "delete_after" : 61
         },
         "lifecycle" : {
           "delete_after" : 2
         },
         "name" : "daily_kept_for_2_days",
-        "schedule" : "cron(00 20 * * ? *)"
+        "schedule" : "cron(15 11 * * ? *)"
       }
     ],
     "selection_tag" : "NHSE-Enable-Dynamo-Backup"

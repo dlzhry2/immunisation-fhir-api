@@ -6,6 +6,7 @@ variable "project_name" {
 variable "environment_name" {
   description = "The name of the environment where AWS Backup is configured."
   type        = string  
+  default     = "prod"
 }
 
 variable "source_account_id" {
