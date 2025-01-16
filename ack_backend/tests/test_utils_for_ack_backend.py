@@ -278,7 +278,7 @@ class GenericSetUp:
 class GenericTearDown:
     """Performs generic tear down of mock resources"""
 
-    def __init__(self, s3_client=None, firehose_client=None, kinesis_client=None):
+    def __init__(self, s3_client=None, firehose_client=None):
 
         if s3_client:
             for bucket_name in [BucketNames.DESTINATION]:

@@ -56,6 +56,8 @@ class TestAckProcessor(unittest.TestCase):
         "operation_requested": "create",
         "imms_id": "",
         "created_at_formatted_string": mock_file_details.created_at_formatted_string,
+        "vaccine_type": "RSV",
+        "supplier": "RAVS"
     }
 
     def obtain_current_ack_file_content(self, ack_file_key: str = mock_file_details.ack_file_key) -> str:
@@ -84,7 +86,7 @@ class TestAckProcessor(unittest.TestCase):
         for expected_line, uploaded_line in zip(expected_lines, uploaded_lines):
             self.assertEqual(expected_line, uploaded_line)
 
-    def generate_expected_ack_content(self, incoming_messages: list[dict], existing_content: str) -> str:
+    def generate_expected_ack_content(self, incoming_messages: list[dict], base_content: str) -> str:
         """Returns the expected_ack_file_content based on the incoming messages"""
         for row in incoming_messages:
             diagnostics_dictionary = row.get("diagnostics", {})
@@ -98,8 +100,8 @@ class TestAckProcessor(unittest.TestCase):
             ack_row = create_ack_row(
                 row_id, mock_file_details.created_at_formatted_string, "111^222", imms_id, diagnostics
             )
-            existing_content += ack_row + "\n"
-        return existing_content
+            base_content += ack_row + "\n"
+        return base_content
 
     def test_lambda_handler_main(self):
         """Test lambda handler with dynamic ack_file_name and consistent row_template."""
@@ -145,17 +147,14 @@ class TestAckProcessor(unittest.TestCase):
 
         for case in test_cases:
             with self.subTest(msg=case["description"]):
-                with (
-                    patch("update_ack_file.s3_client", s3_client),
-                    patch("logging_decorators.send_log_to_firehose") as mock_send_log_to_firehose,
-                ):
+                with (patch("logging_decorators.send_log_to_firehose") as mock_send_log_to_firehose,):
                     response = lambda_handler(event=self.create_event(case["messages"]), context={})
 
                 self.assertEqual(response, {"statusCode": 200, "body": '"Lambda function executed successfully!"'})
 
                 actual_ack_file_content = self.obtain_current_ack_file_content()
                 expected_ack_file_content = self.generate_expected_ack_content(
-                    case["messages"], existing_content=ValidValues.ack_headers
+                    case["messages"], base_content=ValidValues.ack_headers
                 )
                 self.validate_ack_file_content(case["messages"], expected_ack_file_content, actual_ack_file_content)
 
@@ -196,10 +195,7 @@ class TestAckProcessor(unittest.TestCase):
             with self.subTest(msg=case["description"]):
                 self.setup_existing_ack_file(mock_file_details.ack_file_key, ValidValues.existing_ack_file_content)
 
-                with (
-                    patch("update_ack_file.s3_client", s3_client),
-                    patch("logging_decorators.send_log_to_firehose") as mock_send_log_to_firehose,
-                ):
+                with (patch("logging_decorators.send_log_to_firehose") as mock_send_log_to_firehose,):
                     response = lambda_handler(event=self.create_event(case["messages"]), context={})
 
                 self.assertEqual(response, {"statusCode": 200, "body": '"Lambda function executed successfully!"'})
@@ -223,7 +219,7 @@ class TestAckProcessor(unittest.TestCase):
             {
                 "description": "Single successful row",
                 "input_rows": [ValidValues.create_ack_data_successful_row],
-                "expected_row": [
+                "expected_rows": [
                     ValidValues.update_ack_file_successful_row_no_immsid,
                 ],
             },
@@ -236,7 +232,7 @@ class TestAckProcessor(unittest.TestCase):
                     ValidValues.create_ack_data_failure_row,
                     {**ValidValues.create_ack_data_successful_row, "IMMS_ID": "TEST_IMMS_ID"},
                 ],
-                "expected_row": [
+                "expected_rows": [
                     ValidValues.update_ack_file_successful_row_no_immsid,
                     ValidValues.update_ack_file_failure_row_immsid,
                     ValidValues.update_ack_file_failure_row_no_immsid,
@@ -252,7 +248,7 @@ class TestAckProcessor(unittest.TestCase):
                     {**ValidValues.create_ack_data_failure_row, "OPERATION_OUTCOME": "Error 3"},
                     {**ValidValues.create_ack_data_failure_row, "OPERATION_OUTCOME": "Error 4"},
                 ],
-                "expected_row": [
+                "expected_rows": [
                     ValidValues.update_ack_file_failure_row_no_immsid.replace("Error_value", "Error 1"),
                     ValidValues.update_ack_file_failure_row_no_immsid.replace("Error_value", "Error 2"),
                     ValidValues.update_ack_file_failure_row_no_immsid.replace("Error_value", "Error 3"),
@@ -267,7 +263,7 @@ class TestAckProcessor(unittest.TestCase):
                     mock_file_details.file_key, mock_file_details.created_at_formatted_string, case["input_rows"]
                 )
 
-                for expected_row in case["expected_row"]:
+                for expected_row in case["expected_rows"]:
                     self.assertIn(expected_row, self.obtain_current_ack_file_content())
 
                 s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=mock_file_details.ack_file_key)
@@ -296,20 +292,20 @@ class TestAckProcessor(unittest.TestCase):
                 "description": "Success row",
                 "created_at_formatted_string": mock_file_details.created_at_formatted_string,
                 "local_id": "local123",
-                "row_id": "row456",
+                "row_id": "row123",
                 "successful_api_response": True,
                 "diagnostics": None,
-                "imms_id": "imms789",
+                "imms_id": "imms123",
                 "expected_base": ValidValues.create_ack_data_successful_row,
             },
             {
                 "description": "Failure row",
                 "created_at_formatted_string": "20241115T13435501",
-                "local_id": "local123",
+                "local_id": "local4556",
                 "row_id": "row456",
                 "successful_api_response": False,
                 "diagnostics": "Some error occurred",
-                "imms_id": "imms789",
+                "imms_id": "imms456",
                 "expected_base": ValidValues.create_ack_data_failure_row,
             },
         ]
@@ -342,7 +338,8 @@ class TestAckProcessor(unittest.TestCase):
 
     def test_obtain_current_ack_content_file_exists(self):
         """Test that the existing ack file content is retrieved and new rows are added."""
-        # TODO: This test doesn't check that new rows are added, but this funtion doesn't add them. Should there be another test?
+        # TODO: This test doesn't check that new rows are added, but this funtion doesn't add them.
+        # Should there be another test?
         existing_content = ValidValues.existing_ack_file_content
         self.setup_existing_ack_file(mock_file_details.ack_file_key, existing_content)
 
@@ -372,15 +369,10 @@ class TestAckProcessor(unittest.TestCase):
 
         for scenario in test_cases:
             with self.subTest(msg=scenario["description"]):
-                with (
-                    patch("logging_decorators.send_log_to_firehose") as mock_send_log_to_firehose,
-                    patch("update_ack_file.create_ack_data"),
-                    patch("update_ack_file.update_ack_file"),
-                ):
+                with patch("logging_decorators.send_log_to_firehose") as mock_send_log_to_firehose:
                     with self.assertRaises(Exception):
                         lambda_handler(event=scenario["event"], context={})
 
-                mock_send_log_to_firehose.assert_called()
                 error_log = mock_send_log_to_firehose.call_args[0][0]
                 self.assertIn(scenario["expected_message"], error_log["diagnostics"])
 
