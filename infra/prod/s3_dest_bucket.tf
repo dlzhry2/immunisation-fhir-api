@@ -1,20 +1,22 @@
 locals {
     policy_path = "${path.root}/policies"
     env         = terraform.workspace
-    batch_prefix = "immunisation-batch-${local.env}"
     is_temp = length(regexall("[a-z]{2,4}-?[0-9]+", local.env)) > 0
     }
 
 resource "aws_s3_bucket" "batch_data_destination_bucket" {
-    bucket        = "${local.batch_prefix}-data-destinations"
+    bucket        = "immunisation-batch-prod-data-destinations"
     force_destroy = local.is_temp
+    tags = {
+          "Environment" = "prod"
+          "Project"     = "immunisation"
+          "Service"     = "fhir-api"
+    }
 }
 
 data "aws_iam_policy_document" "batch_data_destination_bucket_policy" {
     source_policy_documents = [
-        local.environment == "prod" ? templatefile("${local.policy_path}/s3_batch_dest_policy_prod.json", {
-            "bucket-name" : aws_s3_bucket.batch_data_destination_bucket.bucket
-        } ):  templatefile("${local.policy_path}/s3_batch_dest_policy.json", {
+        templatefile("${local.policy_path}/s3_batch_dest_policy.json", {
             "bucket-name" : aws_s3_bucket.batch_data_destination_bucket.bucket
         } ),
     ]
