@@ -5,7 +5,7 @@ import os
 import json
 from unittest.mock import patch
 from boto3 import client as boto3_client
-from moto import mock_s3
+from moto import mock_s3, mock_firehose
 from ack_processor import lambda_handler
 from update_ack_file import obtain_current_ack_content, create_ack_data, update_ack_file
 from tests.test_utils_for_ack_backend import (
@@ -21,6 +21,7 @@ from tests.test_utils_for_ack_backend import (
 
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
+firehose_client = boto3_client("firehose", region_name=REGION_NAME)
 
 # Mock message details are used as the default message details for the tests
 mock_message_details = MockMessageDetails.rsv_ravs
@@ -28,14 +29,15 @@ mock_message_details = MockMessageDetails.rsv_ravs
 
 @patch.dict(os.environ, MOCK_ENVIRONMENT_DICT)
 @mock_s3
+@mock_firehose
 class TestAckProcessor(unittest.TestCase):
     """Tests for the ack processor lambda handler."""
 
     def setUp(self) -> None:
-        GenericSetUp(s3_client)
+        GenericSetUp(s3_client, firehose_client)
 
     def tearDown(self) -> None:
-        GenericTearDown(s3_client)
+        GenericTearDown(s3_client, firehose_client)
 
     @staticmethod
     def setup_existing_ack_file(file_key, file_content):
@@ -43,10 +45,11 @@ class TestAckProcessor(unittest.TestCase):
         s3_client.put_object(Bucket=BucketNames.DESTINATION, Key=file_key, Body=file_content)
 
     @staticmethod
-    def generate_event(test_messages):
-        """Dynamically create the event for tests with multiple messages."""
-        # Create a list of messages for the incoming message body, where each message in the list is based on
-        # a standard mock message, updated with the details from the test_message.
+    def generate_event(test_messages: list[dict]) -> dict:
+        """
+        Returns an event where each message in the incoming message body list is based on a standard mock message,
+        updated with the details from the corresponsing message in the given test_messages list.
+        """
         incoming_message_body = [{**mock_message_details.message, **message} for message in test_messages]
         return {"Records": [{"body": json.dumps(incoming_message_body)}]}
 
@@ -57,7 +60,7 @@ class TestAckProcessor(unittest.TestCase):
         return retrieved_object["Body"].read().decode("utf-8")
 
     @staticmethod
-    def generate_ack_file_row(
+    def generate_expected_ack_file_row(
         success: bool,
         imms_id: str = mock_message_details.imms_id,
         diagnostics: str = None,
@@ -79,28 +82,7 @@ class TestAckProcessor(unittest.TestCase):
 
     def generate_sample_existing_ack_content(self) -> str:
         """Returns sample ack file content with a single success row."""
-        return ValidValues.ack_headers + self.generate_ack_file_row(success=True)
-
-    def validate_ack_file_content(
-        self, incoming_messages: list[dict], expected_ack_file_content: str, actual_ack_file_content: str
-    ) -> None:
-        """
-        Validates that rows in actual_ack_file_content match the full row details in expected_ack_file_content
-        and appear in the same order as in row_input.
-        """
-        for message in incoming_messages:
-            self.assertIn(f"{message.get('row_id')}|", actual_ack_file_content)
-
-        # Split expected and uploaded content into lines for line-by-line comparison
-        expected_lines = expected_ack_file_content.strip().split("\n")
-        actual_lines = actual_ack_file_content.strip().split("\n")
-
-        # Check each file content the correct amount of lines
-        self.assertEqual(len(expected_lines), len(actual_lines))
-
-        # Checks each row in expected and actual ack file outputs has exact match and order
-        for expected_line, uploaded_line in zip(expected_lines, actual_lines):
-            self.assertEqual(expected_line, uploaded_line)
+        return ValidValues.ack_headers + self.generate_expected_ack_file_row(success=True)
 
     def generate_expected_ack_content(
         self, incoming_messages: list[dict], existing_content: str = ValidValues.ack_headers
@@ -116,7 +98,7 @@ class TestAckProcessor(unittest.TestCase):
             )
 
             # Create the ack row based on the incoming message details
-            ack_row = self.generate_ack_file_row(
+            ack_row = self.generate_expected_ack_file_row(
                 success=diagnostics is "",
                 row_id=message.get("row_id", mock_message_details.row_id),
                 created_at_formatted_string=message.get(
@@ -131,8 +113,19 @@ class TestAckProcessor(unittest.TestCase):
 
         return existing_content
 
+    def validate_ack_file_content(
+        self, incoming_messages: list[dict], existing_file_content: str = ValidValues.ack_headers
+    ) -> None:
+        """
+        Obtains the ack file content and ensures that it matches the expected content (expected content is based
+        on the incoming messages).
+        """
+        actual_ack_file_content = self.obtain_current_ack_file_content()
+        expected_ack_file_content = self.generate_expected_ack_content(incoming_messages, existing_file_content)
+        self.assertEqual(expected_ack_file_content, actual_ack_file_content)
+
     def test_lambda_handler_main(self):
-        """Test lambda handler with dynamic ack_file_name and consistent row_template."""
+        """Test lambda handler with consitent ack_file_name and message_template."""
         test_cases = [
             {
                 "description": "Multiple messages: all successful",
@@ -173,211 +166,24 @@ class TestAckProcessor(unittest.TestCase):
             },
         ]
 
-        for case in test_cases:
-            with self.subTest(msg=case["description"]):
-                with patch("logging_decorators.send_log_to_firehose") as mock_send_log_to_firehose:
-                    response = lambda_handler(event=self.generate_event(case["messages"]), context={})
-
+        for test_case in test_cases:
+            # Test scenario where there is no existing ack file
+            with self.subTest(msg=f"No existing ack file: {test_case['description']}"):
+                response = lambda_handler(event=self.generate_event(test_case["messages"]), context={})
                 self.assertEqual(response, {"statusCode": 200, "body": '"Lambda function executed successfully!"'})
-
-                actual_ack_file_content = self.obtain_current_ack_file_content()
-                expected_ack_file_content = self.generate_expected_ack_content(
-                    case["messages"], existing_content=ValidValues.ack_headers
-                )
-                self.validate_ack_file_content(case["messages"], expected_ack_file_content, actual_ack_file_content)
-
-                mock_send_log_to_firehose.assert_called()
+                self.validate_ack_file_content(test_case["messages"])
 
                 s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=mock_message_details.ack_file_key)
 
-    def test_lambda_handler_existing(self):
-        """Test lambda handler with dynamic ack_file_name and consistent row_template with an already existing
-        ack file with content."""
-        test_cases = [
-            {
-                "description": "Multiples messages: all failure messages",
-                "messages": [
-                    {"row_id": "row_1", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
-                    {"row_id": "row_2", "diagnostics": DiagnosticsDictionaries.NO_PERMISSIONS},
-                    {"row_id": "row_3", "diagnostics": DiagnosticsDictionaries.RESOURCE_NOT_FOUND_ERROR},
-                ],
-            },
-            {
-                "description": "Multiples messages: mixture of success and failure messages",
-                "messages": [
-                    {"row_id": "row_4", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
-                    {"row_id": "row_5"},
-                    {"row_id": "row_6"},
-                    {"row_id": "row_7", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
-                    {"row_id": "row_8", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
-                    {"row_id": "row_9", "diagnostics": DiagnosticsDictionaries.UNIQUE_ID_MISSING},
-                ],
-            },
-            {
-                "description": "Single message: success",
-                "messages": [{"row_id": "row_412"}, {"row_id": "row_413"}],
-            },
-        ]
-
-        existing_ack_file_content = self.generate_sample_existing_ack_content()
-
-        for case in test_cases:
-            with self.subTest(msg=case["description"]):
+            # Test scenario where there is an existing ack file
+            with self.subTest(msg=f"Existing ack file: {test_case['description']}"):
+                existing_ack_file_content = test_case.get("existing_ack_file_content", "")
                 self.setup_existing_ack_file(mock_message_details.ack_file_key, existing_ack_file_content)
-
-                with (patch("logging_decorators.send_log_to_firehose") as mock_send_log_to_firehose,):
-                    response = lambda_handler(event=self.generate_event(case["messages"]), context={})
-
+                response = lambda_handler(event=self.generate_event(test_case["messages"]), context={})
                 self.assertEqual(response, {"statusCode": 200, "body": '"Lambda function executed successfully!"'})
-
-                actual_ack_file_content = self.obtain_current_ack_file_content()
-                expected_ack_file_content = self.generate_expected_ack_content(
-                    case["messages"], existing_ack_file_content
-                )
-                self.assertIn(existing_ack_file_content, actual_ack_file_content)
-                self.validate_ack_file_content(case["messages"], expected_ack_file_content, actual_ack_file_content)
-
-                mock_send_log_to_firehose.assert_called()
-
-                # Tear down after each case to ensure independence of the test cases
-                s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=mock_message_details.ack_file_key)
-
-    def test_update_ack_file(self):
-        """Test creating ack file with and without diagnostics"""
-
-        test_cases = [
-            {
-                "description": "Single successful row",
-                "input_rows": [ValidValues.ack_data_success_dict],
-                "expected_rows": [self.generate_ack_file_row(success=True, imms_id="")],
-            },
-            {
-                "description": "With multiple rows - failure and success rows",
-                "input_rows": [
-                    ValidValues.ack_data_success_dict,
-                    {**ValidValues.ack_data_failure_dict, "IMMS_ID": "TEST_IMMS_ID"},
-                    ValidValues.ack_data_failure_dict,
-                    ValidValues.ack_data_failure_dict,
-                    {**ValidValues.ack_data_success_dict, "IMMS_ID": "TEST_IMMS_ID"},
-                ],
-                "expected_rows": [
-                    self.generate_ack_file_row(success=True, imms_id=""),
-                    self.generate_ack_file_row(success=False, imms_id="TEST_IMMS_ID", diagnostics="DIAGNOSTICS"),
-                    self.generate_ack_file_row(success=False, imms_id="", diagnostics="DIAGNOSTICS"),
-                    self.generate_ack_file_row(success=False, imms_id="", diagnostics="DIAGNOSTICS"),
-                    self.generate_ack_file_row(success=True, imms_id="TEST_IMMS_ID"),
-                ],
-            },
-            {
-                "description": "Multiple rows With different diagnostics",
-                "input_rows": [
-                    {**ValidValues.ack_data_failure_dict, "OPERATION_OUTCOME": "Error 1"},
-                    {**ValidValues.ack_data_failure_dict, "OPERATION_OUTCOME": "Error 2"},
-                    {**ValidValues.ack_data_failure_dict, "OPERATION_OUTCOME": "Error 3"},
-                ],
-                "expected_rows": [
-                    self.generate_ack_file_row(success=False, imms_id="", diagnostics="Error 1"),
-                    self.generate_ack_file_row(success=False, imms_id="", diagnostics="Error 2"),
-                    self.generate_ack_file_row(success=False, imms_id="", diagnostics="Error 3"),
-                ],
-            },
-        ]
-
-        for case in test_cases:
-            with self.subTest(case["description"]):
-                update_ack_file(
-                    mock_message_details.file_key, mock_message_details.created_at_formatted_string, case["input_rows"]
-                )
-
-                actual_ack_file_content = self.obtain_current_ack_file_content()
-
-                for expected_row in case["expected_rows"]:
-                    self.assertIn(expected_row, actual_ack_file_content)
+                self.validate_ack_file_content(test_case["messages"], existing_ack_file_content)
 
                 s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=mock_message_details.ack_file_key)
-
-    def test_update_ack_file_existing(self):
-        """Test appending new rows to an existing ack file."""
-        # Mock existing content in the ack file
-        existing_content = self.generate_sample_existing_ack_content()
-        self.setup_existing_ack_file(mock_message_details.ack_file_key, existing_content)
-
-        ack_data_rows = [ValidValues.ack_data_success_dict, ValidValues.ack_data_failure_dict]
-        update_ack_file(mock_message_details.file_key, mock_message_details.created_at_formatted_string, ack_data_rows)
-
-        actual_ack_file_content = self.obtain_current_ack_file_content(mock_message_details.ack_file_key)
-        self.assertIn(existing_content, actual_ack_file_content)
-        self.assertIn(self.generate_ack_file_row(success=True, imms_id=""), actual_ack_file_content)
-        self.assertIn(
-            self.generate_ack_file_row(success=False, imms_id="", diagnostics="DIAGNOSTICS"), actual_ack_file_content
-        )
-
-        s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=mock_message_details.ack_file_key)
-
-    def test_create_ack_data(self):
-        """Test create_ack_data with success and failure cases."""
-
-        test_cases = [
-            {
-                "description": "Success row",
-                "created_at_formatted_string": mock_message_details.created_at_formatted_string,
-                "local_id": "local123",
-                "row_id": "row123",
-                "successful_api_response": True,
-                "diagnostics": None,
-                "imms_id": "imms123",
-                "expected_base": ValidValues.ack_data_success_dict,
-            },
-            {
-                "description": "Failure row",
-                "created_at_formatted_string": "20241115T13435501",
-                "local_id": "local4556",
-                "row_id": "row456",
-                "successful_api_response": False,
-                "diagnostics": "Some error occurred",
-                "imms_id": "imms456",
-                "expected_base": ValidValues.ack_data_failure_dict,
-            },
-        ]
-
-        for case in test_cases:
-            with self.subTest(case["description"]):
-                result = create_ack_data(
-                    created_at_formatted_string=case["created_at_formatted_string"],
-                    local_id=case["local_id"],
-                    row_id=case["row_id"],
-                    successful_api_response=case["successful_api_response"],
-                    diagnostics=case["diagnostics"],
-                    imms_id=case["imms_id"],
-                )
-
-                expected_result = {
-                    **case["expected_base"],
-                    "MESSAGE_HEADER_ID": case["row_id"],
-                    "RECEIVED_TIME": case["created_at_formatted_string"],
-                    "LOCAL_ID": case["local_id"],
-                    "IMMS_ID": case["imms_id"] or "",
-                    "OPERATION_OUTCOME": case["diagnostics"] or "",
-                }
-                self.assertEqual(result, expected_result)
-
-    def test_obtain_current_ack_content_file_no_existing(self):
-        """Test that when the ack file does not yet exist, obtain_current_ack_content returns the ack headers only."""
-        result = obtain_current_ack_content(BucketNames.DESTINATION, mock_message_details.ack_file_key)
-        self.assertEqual(result.getvalue(), ValidValues.ack_headers)
-
-    def test_obtain_current_ack_content_file_exists(self):
-        """Test that the existing ack file content is retrieved and new rows are added."""
-        # TODO: This test doesn't check that new rows are added, but this funtion doesn't add them.
-        # Should there be another test?
-        existing_content = self.generate_sample_existing_ack_content()
-        self.setup_existing_ack_file(mock_message_details.ack_file_key, existing_content)
-
-        result = obtain_current_ack_content(BucketNames.DESTINATION, mock_message_details.ack_file_key)
-
-        self.assertEqual(result.getvalue(), existing_content)
-
-        s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=mock_message_details.ack_file_key)
 
     def test_lambda_handler_error_scenarios(self):
         """Test that the lambda handler raises appropriate exceptions for malformed event data."""
@@ -394,17 +200,154 @@ class TestAckProcessor(unittest.TestCase):
                 "expected_message": "Could not load incoming message body",
             },
         ]
-        # TODO: What was below meant to be testing?
-        # mock_update_ack_file.side_effect = Exception("Simulated create_ack_data error")
 
-        for scenario in test_cases:
-            with self.subTest(msg=scenario["description"]):
+        for test_case in test_cases:
+            with self.subTest(msg=test_case["description"]):
                 with patch("logging_decorators.send_log_to_firehose") as mock_send_log_to_firehose:
                     with self.assertRaises(Exception):
-                        lambda_handler(event=scenario["event"], context={})
-
+                        lambda_handler(event=test_case["event"], context={})
                 error_log = mock_send_log_to_firehose.call_args[0][0]
-                self.assertIn(scenario["expected_message"], error_log["diagnostics"])
+                self.assertIn(test_case["expected_message"], error_log["diagnostics"])
+
+    def test_update_ack_file(self):
+        """Test that update_ack_file correctly creates the ack file when there was no existing ack file"""
+
+        test_cases = [
+            {
+                "description": "Single successful row",
+                "input_rows": [ValidValues.ack_data_success_dict],
+                "expected_rows": [self.generate_expected_ack_file_row(success=True, imms_id="")],
+            },
+            {
+                "description": "With multiple rows - failure and success rows",
+                "input_rows": [
+                    ValidValues.ack_data_success_dict,
+                    {**ValidValues.ack_data_failure_dict, "IMMS_ID": "TEST_IMMS_ID_1"},
+                    ValidValues.ack_data_failure_dict,
+                    ValidValues.ack_data_failure_dict,
+                    {**ValidValues.ack_data_success_dict, "IMMS_ID": "TEST_IMMS_ID_2"},
+                ],
+                "expected_rows": [
+                    self.generate_expected_ack_file_row(success=True, imms_id=""),
+                    self.generate_expected_ack_file_row(
+                        success=False, imms_id="TEST_IMMS_ID_1", diagnostics="DIAGNOSTICS"
+                    ),
+                    self.generate_expected_ack_file_row(success=False, imms_id="", diagnostics="DIAGNOSTICS"),
+                    self.generate_expected_ack_file_row(success=False, imms_id="", diagnostics="DIAGNOSTICS"),
+                    self.generate_expected_ack_file_row(success=True, imms_id="TEST_IMMS_ID_2"),
+                ],
+            },
+            {
+                "description": "Multiple rows With different diagnostics",
+                "input_rows": [
+                    {**ValidValues.ack_data_failure_dict, "OPERATION_OUTCOME": "Error 1"},
+                    {**ValidValues.ack_data_failure_dict, "OPERATION_OUTCOME": "Error 2"},
+                    {**ValidValues.ack_data_failure_dict, "OPERATION_OUTCOME": "Error 3"},
+                ],
+                "expected_rows": [
+                    self.generate_expected_ack_file_row(success=False, imms_id="", diagnostics="Error 1"),
+                    self.generate_expected_ack_file_row(success=False, imms_id="", diagnostics="Error 2"),
+                    self.generate_expected_ack_file_row(success=False, imms_id="", diagnostics="Error 3"),
+                ],
+            },
+        ]
+
+        for test_case in test_cases:
+            with self.subTest(test_case["description"]):
+                update_ack_file(
+                    mock_message_details.file_key,
+                    mock_message_details.created_at_formatted_string,
+                    test_case["input_rows"],
+                )
+
+                actual_ack_file_content = self.obtain_current_ack_file_content()
+                expected_ack_file_content = ValidValues.ack_headers + "\n".join(test_case["expected_rows"]) + "\n"
+                self.assertEqual(expected_ack_file_content, actual_ack_file_content)
+
+                s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=mock_message_details.ack_file_key)
+
+    def test_update_ack_file_existing(self):
+        """Test that update_ack_file correctly updates the ack file when there was an existing ack file"""
+        # Mock existing content in the ack file
+        existing_content = self.generate_sample_existing_ack_content()
+        self.setup_existing_ack_file(mock_message_details.ack_file_key, existing_content)
+
+        ack_data_rows = [ValidValues.ack_data_success_dict, ValidValues.ack_data_failure_dict]
+        update_ack_file(mock_message_details.file_key, mock_message_details.created_at_formatted_string, ack_data_rows)
+
+        actual_ack_file_content = self.obtain_current_ack_file_content()
+        expected_rows = [
+            self.generate_expected_ack_file_row(success=True, imms_id=""),
+            self.generate_expected_ack_file_row(success=False, imms_id="", diagnostics="DIAGNOSTICS"),
+        ]
+        expected_ack_file_content = existing_content + "\n".join(expected_rows) + "\n"
+        self.assertEqual(expected_ack_file_content, actual_ack_file_content)
+
+    def test_create_ack_data(self):
+        """Test create_ack_data with success and failure cases."""
+
+        success_expected_result = {
+            "MESSAGE_HEADER_ID": mock_message_details.row_id,
+            "HEADER_RESPONSE_CODE": "OK",
+            "ISSUE_SEVERITY": "Information",
+            "ISSUE_CODE": "OK",
+            "ISSUE_DETAILS_CODE": "30001",
+            "RESPONSE_TYPE": "Business",
+            "RESPONSE_CODE": "30001",
+            "RESPONSE_DISPLAY": "Success",
+            "RECEIVED_TIME": mock_message_details.created_at_formatted_string,
+            "MAILBOX_FROM": "",
+            "LOCAL_ID": mock_message_details.local_id,
+            "IMMS_ID": mock_message_details.imms_id,
+            "OPERATION_OUTCOME": "",
+            "MESSAGE_DELIVERY": True,
+        }
+
+        failure_expected_result = {
+            "MESSAGE_HEADER_ID": mock_message_details.row_id,
+            "HEADER_RESPONSE_CODE": "Fatal Error",
+            "ISSUE_SEVERITY": "Fatal",
+            "ISSUE_CODE": "Fatal Error",
+            "ISSUE_DETAILS_CODE": "30002",
+            "RESPONSE_TYPE": "Business",
+            "RESPONSE_CODE": "30002",
+            "RESPONSE_DISPLAY": "Business Level Response Value - Processing Error",
+            "RECEIVED_TIME": mock_message_details.created_at_formatted_string,
+            "MAILBOX_FROM": "",
+            "LOCAL_ID": mock_message_details.local_id,
+            "IMMS_ID": "",
+            "OPERATION_OUTCOME": "test diagnostics message",
+            "MESSAGE_DELIVERY": False,
+        }
+
+        test_cases = [
+            {"success": True, "imms_id": mock_message_details.imms_id, "expected_result": success_expected_result},
+            {"success": False, "diagnostics": "test diagnostics message", "expected_result": failure_expected_result},
+        ]
+
+        for test_case in test_cases:
+            with self.subTest(f"success is {test_case['success']}"):
+                result = create_ack_data(
+                    created_at_formatted_string=mock_message_details.created_at_formatted_string,
+                    local_id=mock_message_details.local_id,
+                    row_id=mock_message_details.row_id,
+                    successful_api_response=test_case["success"],
+                    diagnostics=test_case.get("diagnostics"),
+                    imms_id=test_case.get("imms_id"),
+                )
+                self.assertEqual(result, test_case["expected_result"])
+
+    def test_obtain_current_ack_content_file_no_existing(self):
+        """Test that when the ack file does not yet exist, obtain_current_ack_content returns the ack headers only."""
+        result = obtain_current_ack_content(BucketNames.DESTINATION, mock_message_details.ack_file_key)
+        self.assertEqual(result.getvalue(), ValidValues.ack_headers)
+
+    def test_obtain_current_ack_content_file_exists(self):
+        """Test that the existing ack file content is retrieved and new rows are added."""
+        existing_content = self.generate_sample_existing_ack_content()
+        self.setup_existing_ack_file(mock_message_details.ack_file_key, existing_content)
+        result = obtain_current_ack_content(BucketNames.DESTINATION, mock_message_details.ack_file_key)
+        self.assertEqual(result.getvalue(), existing_content)
 
 
 if __name__ == "__main__":

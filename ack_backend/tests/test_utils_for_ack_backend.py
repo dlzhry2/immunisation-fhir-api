@@ -9,9 +9,19 @@ class BucketNames:
     """Bucket Names for testing"""
 
     DESTINATION = "immunisation-batch-internal-test-data-destinations"
+    MOCK_FIREHOSE = "mock-firehose-bucket"
 
 
-MOCK_ENVIRONMENT_DICT = {"ACK_BUCKET_NAME": BucketNames.DESTINATION}
+class Firehose:
+    """Class containing Firehose values for use in tests"""
+
+    STREAM_NAME = "immunisation-fhir-api-internal-dev-splunk-firehose"
+
+
+MOCK_ENVIRONMENT_DICT = {
+    "ACK_BUCKET_NAME": BucketNames.DESTINATION,
+    "FIREHOSE_STREAM_NAME": Firehose.STREAM_NAME,
+}
 
 
 class DefaultValues:
@@ -231,25 +241,39 @@ class GenericSetUp:
     * If firehose_client is provided, creates a firehose delivery stream
     """
 
-    def __init__(self, s3_client=None):
+    def __init__(self, s3_client=None, firehose_client=None):
 
         if s3_client:
-            for bucket_name in [BucketNames.DESTINATION]:
+            for bucket_name in [BucketNames.DESTINATION, BucketNames.MOCK_FIREHOSE]:
                 s3_client.create_bucket(
                     Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME}
                 )
+
+        if firehose_client:
+            firehose_client.create_delivery_stream(
+                DeliveryStreamName=Firehose.STREAM_NAME,
+                DeliveryStreamType="DirectPut",
+                S3DestinationConfiguration={
+                    "RoleARN": "arn:aws:iam::123456789012:role/mock-role",
+                    "BucketARN": "arn:aws:s3:::" + BucketNames.MOCK_FIREHOSE,
+                    "Prefix": "firehose-backup/",
+                },
+            )
 
 
 class GenericTearDown:
     """Performs generic tear down of mock resources"""
 
-    def __init__(self, s3_client=None):
+    def __init__(self, s3_client=None, firehose_client=None):
 
         if s3_client:
             for bucket_name in [BucketNames.DESTINATION]:
                 for obj in s3_client.list_objects_v2(Bucket=bucket_name).get("Contents", []):
                     s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
                 s3_client.delete_bucket(Bucket=bucket_name)
+
+        if firehose_client:
+            firehose_client.delete_delivery_stream(DeliveryStreamName=Firehose.STREAM_NAME)
 
 
 class MessageDetails:
