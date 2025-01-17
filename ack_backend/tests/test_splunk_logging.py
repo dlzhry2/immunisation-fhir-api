@@ -12,7 +12,6 @@ from tests.test_utils_for_ack_backend import (
     GenericSetUp,
     GenericTearDown,
     MOCK_ENVIRONMENT_DICT,
-    ValidValues,
 )
 
 s3_client = boto3_client("s3")
@@ -41,7 +40,8 @@ class TestSplunkFunctionInfo(unittest.TestCase):
             # The logging_decorator.logger is patched individually in each test to allow for assertions to be made.
             # Any uses of the logger in other files will confound the tests and should be patched here.
             patch("update_ack_file.logger"),
-            # Time is incremented by 1.0 for each call to time.time for ease of testing
+            # Time is incremented by 1.0 for each call to time.time for ease of testing.
+            # Range is set to a large number (100) due to many calls being made to time.time for some tests.
             patch("logging_decorators.time.time", side_effect=[0.0 + i for i in range(100)]),
         ]
 
@@ -117,7 +117,6 @@ class TestSplunkFunctionInfo(unittest.TestCase):
             expected_first_logger_info_data = {
                 **ValidValues.DPSFULL_expected_log_value,
                 "operation_requested": operation,
-                "time_taken": "1.0s",  # Start and end times are mocked as one second apart
             }
 
             expected_second_logger_info_data = self.expected_lambda_handler_logs(success=True, number_of_rows=1)
@@ -142,10 +141,7 @@ class TestSplunkFunctionInfo(unittest.TestCase):
             with self.assertRaises(Exception):
                 lambda_handler(event={"Records": [{"body": json.dumps([{"": "456"}])}]}, context={})
 
-            expected_first_logger_info_data = {
-                **InvalidValues.Logging_with_no_values,
-                "time_taken": "1.0s",  # Start and end times are mocked as one second apart
-            }
+            expected_first_logger_info_data = {**InvalidValues.Logging_with_no_values}
 
             expected_first_logger_error_data = self.expected_lambda_handler_logs(
                 success=False, number_of_rows=1, diagnostics="'NoneType' object has no attribute 'replace'"
@@ -192,7 +188,6 @@ class TestSplunkFunctionInfo(unittest.TestCase):
                 "diagnostics": test_case["diagnostics"].get("error_message"),
                 "statusCode": test_case["expected_code"],
                 "status": "fail",
-                "time_taken": "1.0s",  # Start and end times are mocked as one second apart
             }
 
             expected_second_logger_info_data = self.expected_lambda_handler_logs(success=True, number_of_rows=1)
