@@ -37,3 +37,33 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3_batch_destinat
     }
   }
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "data_destinations" {
+  bucket = aws_s3_bucket.batch_data_destination_bucket.id
+ 
+  rule {
+    id     = "DeleteFilesFromForwardedFile"
+    status = "Enabled"
+ 
+    filter {
+      prefix = "forwardedFile/"
+    }
+ 
+    expiration {
+      days = 14
+    }
+  }
+ 
+  rule {
+    id     = "DeleteFilesFromAckFolder"
+    status = "Enabled"
+ 
+    filter {
+      prefix = "ack/"
+    }
+ 
+    expiration {
+      days = 14
+    }
+  }
+}
