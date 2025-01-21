@@ -4,21 +4,18 @@ Functions for completing file-level validation
 """
 
 import os
-from boto3 import client as boto3_client
 from constants import Constants
 from unique_permission import get_unique_action_flags_from_s3
-from clients import logger
+from clients import logger,s3_client
 from make_and_upload_ack_file import make_and_upload_ack_file
 from mappings import Vaccine
-from utils_for_recordprocessor import get_csv_content_dict_reader, invoke_lambda
+from utils_for_recordprocessor import get_csv_content_dict_reader, invoke_filename_lambda
 from errors import InvalidHeaders, NoOperationPermissions
 from logging_decorator import file_level_validation_logging_decorator
-from audit_table import add_to_audit_table, check_queue
-
-s3_client = boto3_client("s3", region_name="eu-west-2")
-source_bucket_name = os.getenv("SOURCE_BUCKET_NAME")
+from audit_table import update_audit_table_status, get_queued_file_details
+#TODO Move to constants
+SOURCE_BUCKET_NAME = os.getenv("SOURCE_BUCKET_NAME")
 FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")
-
 
 def validate_content_headers(csv_content_reader) -> None:
     """Raises an InvalidHeaders error if the headers in the CSV file do not match the expected headers."""
@@ -88,7 +85,7 @@ def file_level_validation(incoming_message_body: dict) -> None:
         # Initialise the accumulated_ack_file_content with the headers
         make_and_upload_ack_file(message_id, file_key, True, True, created_at_formatted_string)
         destination_key = f"processing/{file_key}"
-        move_file(source_bucket_name, file_key, destination_key)
+        move_file(SOURCE_BUCKET_NAME, file_key, destination_key)
         return {
             "message_id": message_id,
             "vaccine": vaccine,
@@ -106,11 +103,12 @@ def file_level_validation(incoming_message_body: dict) -> None:
         created_at_formatted_string = created_at_formatted_string or "Unable to ascertain created_at_formatted_string"
         make_and_upload_ack_file(message_id, file_key, False, False, created_at_formatted_string)
         destination_key = f"archive/{file_key}"
-        move_file(source_bucket_name, file_key, destination_key)
-        queue_name = add_to_audit_table(file_key)
-        file_key, message_id = check_queue(queue_name)
+        move_file(SOURCE_BUCKET_NAME, file_key, destination_key)
+        # Following code excutes on failure to update audit.
+        queue_name = update_audit_table_status(file_key)
+        file_key, message_id = get_queued_file_details(queue_name)
         if file_key and message_id is not None:
-            invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, source_bucket_name, file_key, message_id)
+            invoke_filename_lambda(FILE_NAME_PROC_LAMBDA_NAME, SOURCE_BUCKET_NAME, file_key, message_id)
         raise
 
 

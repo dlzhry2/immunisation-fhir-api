@@ -6,7 +6,7 @@ from clients import dynamodb_client, dynamodb_resource, logger
 from errors import DuplicateFileError, UnhandledAuditTableError
 
 
-def add_to_audit_table(
+def upsert_audit_table(
     message_id: str,
     file_key: str,
     created_at_formatted_str: str,
@@ -15,7 +15,7 @@ def add_to_audit_table(
     query_type: str
 ) -> None:
     """
-    Adds the filename to the audit table.
+    Adds or updates the filename in the audit table.
     Raises an error if the file is a duplicate (after adding it to the audit table).
     """
     try:
@@ -32,7 +32,7 @@ def add_to_audit_table(
                 ExpressionAttributeValues={":status": {"S": "Processing"}},
                 ConditionExpression="attribute_exists(message_id)"
             )
-            logger.info("%s file set for processing, and the status successfully updated to audit table", file_key)
+            logger.info("%s file set for processing, and the status successfully updated in audit table", file_key)
             return True
         # Check for duplicates before adding to the table (if the query returns any items, then the file is a duplicate)
         file_name_response = dynamodb_resource.Table(table_name).query(
@@ -40,12 +40,12 @@ def add_to_audit_table(
         )
         duplicate_exists = bool(file_name_response.get("Items"))
 
-        # Check for files un der processing for Supplier_Vaccine combination, if yes queue file for processing
-        if not duplicate_exists:
+        # Check for files under processing for Supplier_Vaccine combination, if yes queue file for processing
+        if not duplicate_exists and not process_status.eq("Processed"):
             queue_response = dynamodb_resource.Table(table_name).query(
                 IndexName=queue_name_gsi,
                 KeyConditionExpression=Key("queue_name").eq(queue_name)
-                & Key("status").eq(process_status),
+                & Key("status").eq(process_status), # Need to update it to processing
             )
             if queue_response["Items"]:
                 process_status = "Queued"
@@ -100,7 +100,7 @@ def add_to_audit_table(
         raise UnhandledAuditTableError(error_message) from error
 
 
-def check_queue(queue_name: str):
+def get_queued_file_details(queue_name: str):
 
     table_name = os.environ["AUDIT_TABLE_NAME"]
     queue_name_gsi = "queue_name_index"

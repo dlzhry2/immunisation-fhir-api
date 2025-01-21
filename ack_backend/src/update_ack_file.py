@@ -6,11 +6,13 @@ from io import StringIO, BytesIO
 from typing import Union
 from botocore.exceptions import ClientError
 from constants import Constants
-from audit_table import add_to_audit_table, check_queue
-environment = os.getenv("ENVIRONMENT")
-source_bucket_name = f"immunisation-batch-{environment}-data-sources"
+from audit_table import update_audit_table_status, get_queued_file_details
 from clients import s3_client, logger, lambda_client
+#TODO move to constants
+ENVIRONMENT = os.getenv("ENVIRONMENT")
+SOURCE_BUCKET_NAME = f"immunisation-batch-{ENVIRONMENT}-data-sources"
 FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")
+
 def create_ack_data(
     created_at_formatted_string: str,
     local_id: str,
@@ -81,14 +83,14 @@ def upload_ack_file(
         move_file(ack_bucket_name, ack_file_key, archive_ack_file_key)
         source_key = f"processing/{file_key}"
         destination_key = f"archive/{file_key}"
-        move_file(source_bucket_name, source_key, destination_key)
-        queue_name = add_to_audit_table(file_key)
-        file_key, message_id = check_queue(queue_name)
+        move_file(SOURCE_BUCKET_NAME, source_key, destination_key)
+        queue_name = update_audit_table_status(file_key)
+        file_key, message_id = get_queued_file_details(queue_name)
         if file_key and message_id is not None:
             # Directly invoke the Lambda function
-            invoke_lambda(source_bucket_name, file_key, message_id)
+            invoke_filename_lambda(SOURCE_BUCKET_NAME, file_key, message_id)
         
-    logger.info("Ack file updated to %s: %s", ack_bucket_name, ack_file_key)
+    logger.info("Ack file updated to %s: %s", ack_bucket_name, archive_ack_file_key)
 
 
 def update_ack_file(
@@ -111,7 +113,11 @@ def get_row_count_stream(bucket_name, key):
 
 def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
 
-    """     Moves a file from one location to another in S3 by copying and then deleting it.     Args:         bucket_name (str): Name of the S3 bucket.         source_key (str): Source file key.         destination_key (str): Destination file key.     """
+    """     Moves a file from one location to another in S3 by copying and then deleting it.     
+            Args: bucket_name (str): Name of the S3 bucket.         
+            source_key (str): Source file key.         
+            destination_key (str): Destination file key.     
+    """
     s3_client.copy_object(
         Bucket=bucket_name,
         CopySource={"Bucket": bucket_name, "Key": source_key},
@@ -121,7 +127,7 @@ def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
     logger.info("File moved from %s to %s", source_key, destination_key)
 
 
-def invoke_lambda(source_bucket_name, file_key, message_id):
+def invoke_filename_lambda(source_bucket_name, file_key, message_id):
     lambda_payload = {"Records":[
             {
             "s3": {

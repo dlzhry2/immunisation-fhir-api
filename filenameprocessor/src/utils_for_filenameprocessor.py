@@ -41,7 +41,7 @@ def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
     logger.info("File moved from %s to %s", source_key, destination_key)
 
 
-def invoke_lambda(file_name_processor_name, source_bucket_name, file_key, message_id):
+def invoke_filename_lambda(file_name_processor_name, source_bucket_name, file_key, message_id):
     lambda_payload = {"Records": [
         {
             "s3": {
