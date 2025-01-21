@@ -67,6 +67,7 @@ def forward_lambda_handler(event, _):
             kinesis_payload = record["kinesis"]["data"]
             decoded_payload = base64.b64decode(kinesis_payload).decode("utf-8")
             incoming_message_body = json.loads(decoded_payload, use_decimal=True)
+            print(f"INCOMING MESSAGE BODY:, {incoming_message_body}")
 
             file_key = incoming_message_body.get("file_key")
             created_at_formatted_string = incoming_message_body.get("created_at_formatted_string")
