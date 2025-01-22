@@ -6,6 +6,7 @@ from boto3.dynamodb.conditions import Key
 from clients import dynamodb_client, dynamodb_resource, logger
 from errors import UnhandledAuditTableError
 
+
 # TODO update the function name in filename, ack lambda and ecs task
 def update_audit_table_status(file_key: str) -> None:
     """
@@ -27,10 +28,13 @@ def update_audit_table_status(file_key: str) -> None:
             UpdateExpression="SET #status = :status",
             ExpressionAttributeNames={"#status": "status"},
             ExpressionAttributeValues={":status": {"S": "Processed"}},
-            ConditionExpression="attribute_exists(message_id)"
+            ConditionExpression="attribute_exists(message_id)",
         )
-        logger.info("%s file, with message id %s, and the status successfully updated to audit table", file_key,
-                    message_id)
+        logger.info(
+            "%s file, with message id %s, and the status successfully updated to audit table",
+            file_key,
+            message_id,
+        )
         return queue_name
     except Exception as error:  # pylint: disable = broad-exception-caught
         error_message = error  # f"Error adding {file_key} to the audit table"
@@ -38,7 +42,9 @@ def update_audit_table_status(file_key: str) -> None:
         raise UnhandledAuditTableError(error_message) from error
 
 
-def get_queued_file_details(queue_name: str) -> tuple[Union[None,str],Union[None,str]]:  
+def get_queued_file_details(
+    queue_name: str,
+) -> tuple[Union[None, str], Union[None, str]]:
     """
     Check for queued files which return none or oldest file queued for processing.
     Returns a tuple in the format (file_name, message_id) for the oldest file.
@@ -48,10 +54,10 @@ def get_queued_file_details(queue_name: str) -> tuple[Union[None,str],Union[None
     queue_name_gsi = "queue_name_index"
 
     queue_response = dynamodb_resource.Table(table_name).query(
-            IndexName=queue_name_gsi,
-            KeyConditionExpression=Key("queue_name").eq(queue_name)
-            & Key("status").eq("Queued"),
-        )
+        IndexName=queue_name_gsi,
+        KeyConditionExpression=Key("queue_name").eq(queue_name)
+        & Key("status").eq("Queued"),
+    )
     if queue_response["Items"]:
         file_name, message_id = get_file_name(queue_response)
         return file_name, message_id
@@ -59,9 +65,9 @@ def get_queued_file_details(queue_name: str) -> tuple[Union[None,str],Union[None
         return None, None
 
 
-def get_file_name(queue_response: dict) -> tuple[str,str]: 
+def get_file_name(queue_response: dict) -> tuple[str, str]:
     """
-     Returns (file_name, message_id) for the oldest file.
+    Returns (file_name, message_id) for the oldest file.
     """
     sorted_item = sorted(queue_response["Items"], key=lambda x: x["timestamp"])
     first_record = sorted_item[0]

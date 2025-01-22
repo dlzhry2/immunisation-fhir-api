@@ -5,9 +5,14 @@ NOTE: The expected file format for incoming files from the data sources bucket i
 'VACCINETYPE_Vaccinations_version_ODSCODE_DATETIME.csv'. e.g. 'Flu_Vaccinations_v5_YYY78_20240708T12130100.csv'
 (ODS code has multiple lengths)
 """
+
 import os
 from uuid import uuid4
-from utils_for_filenameprocessor import get_created_at_formatted_string, move_file, invoke_filename_lambda
+from utils_for_filenameprocessor import (
+    get_created_at_formatted_string,
+    move_file,
+    invoke_filename_lambda,
+)
 from file_key_validation import validate_file_key
 from send_sqs_message import make_and_send_sqs_message
 from make_and_upload_ack_file import make_and_upload_the_ack_file
@@ -24,6 +29,7 @@ from errors import (
     DuplicateFileError,
     UnhandledSqsError,
 )
+
 FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")
 
 
@@ -50,7 +56,7 @@ def handle_record(record) -> dict:
 
     if "data-sources" in bucket_name and "/" not in file_key:
         try:
-            query_type = "create" #Type of operation on the audit db
+            query_type = "create"  # Type of operation on the audit db
             message_id = str(uuid4())  # Assign a unique message_id for the file
             if "message_id" in record:
                 message_id = record["message_id"]
@@ -69,14 +75,14 @@ def handle_record(record) -> dict:
                 )
                 # Process the file
                 # TODO rename to add clarity
-                status = True # Based on the status the file will be forwarded to sqs fifo queue.
+                status = True  # Based on the status the file will be forwarded to sqs fifo queue.
                 status = upsert_audit_table(
                     message_id,
                     file_key,
                     created_at_formatted_string,
                     f"{supplier}_{vaccine_type}",
                     "Processing",
-                    query_type
+                    query_type,
                 )
                 if status:
                     make_and_send_sqs_message(
@@ -115,14 +121,14 @@ def handle_record(record) -> dict:
         ) as error:
             logger.error("Error processing file '%s': %s", file_key, str(error))
             # Process the file if the error is not of type Duplicate since it is already updated in audit table
-            if not isinstance(error,DuplicateFileError):
+            if not isinstance(error, DuplicateFileError):
                 upsert_audit_table(
                     message_id,
                     file_key,
                     created_at_formatted_string,
                     f"{supplier}_{vaccine_type}",
                     "Processed",
-                    query_type
+                    query_type,
                 )
             # Create ack file
             # (note that error may have occurred before message_id and created_at_formatted_string were generated)
@@ -139,8 +145,10 @@ def handle_record(record) -> dict:
             # Following code will get executed in case of duplicate scenario, vaccine permission error, etc
             file_key, message_id = get_queued_file_details(f"{supplier}_{vaccine_type}")
             if file_key and message_id is not None:
-                invoke_filename_lambda(FILE_NAME_PROC_LAMBDA_NAME, bucket_name, file_key, message_id)
-            
+                invoke_filename_lambda(
+                    FILE_NAME_PROC_LAMBDA_NAME, bucket_name, file_key, message_id
+                )
+
             status_code_map = {
                 VaccineTypePermissionsError: 403,
                 InvalidFileKeyError: 400,  # Includes invalid ODS code, therefore unable to identify supplier
