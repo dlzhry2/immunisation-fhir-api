@@ -12,7 +12,7 @@ def upsert_audit_table(
     created_at_formatted_str: str,
     queue_name: str,
     process_status: str,
-    query_type: str
+    query_type: str,
 ) -> None:
     """
     Adds or updates the filename in the audit table.
@@ -30,9 +30,12 @@ def upsert_audit_table(
                 UpdateExpression="SET #status = :status",
                 ExpressionAttributeNames={"#status": "status"},
                 ExpressionAttributeValues={":status": {"S": "Processing"}},
-                ConditionExpression="attribute_exists(message_id)"
+                ConditionExpression="attribute_exists(message_id)",
             )
-            logger.info("%s file set for processing, and the status successfully updated in audit table", file_key)
+            logger.info(
+                "%s file set for processing, and the status successfully updated in audit table",
+                file_key,
+            )
             return True
         # Check for duplicates before adding to the table (if the query returns any items, then the file is a duplicate)
         file_name_response = dynamodb_resource.Table(table_name).query(
@@ -45,7 +48,7 @@ def upsert_audit_table(
             queue_response = dynamodb_resource.Table(table_name).query(
                 IndexName=queue_name_gsi,
                 KeyConditionExpression=Key("queue_name").eq(queue_name)
-                & Key("status").eq(process_status), # Need to update it to processing
+                & Key("status").eq(process_status),  # Need to update it to processing
             )
             if queue_response["Items"]:
                 process_status = "Queued"
@@ -106,10 +109,10 @@ def get_queued_file_details(queue_name: str):
     queue_name_gsi = "queue_name_index"
 
     queue_response = dynamodb_resource.Table(table_name).query(
-            IndexName=queue_name_gsi,
-            KeyConditionExpression=Key("queue_name").eq(queue_name)
-            & Key("status").eq("Queued"),
-        )
+        IndexName=queue_name_gsi,
+        KeyConditionExpression=Key("queue_name").eq(queue_name)
+        & Key("status").eq("Queued"),
+    )
     if queue_response["Items"]:
         file_name, message_id = get_file_name(queue_response)
         return file_name, message_id
