@@ -1,76 +1,60 @@
 """Add the filename to the audit table and check for duplicates."""
 
-import os
 from typing import Union
 from boto3.dynamodb.conditions import Key
 from clients import dynamodb_client, dynamodb_resource, logger
 from errors import UnhandledAuditTableError
+from constants import AUDIT_TABLE_NAME, AUDIT_TABLE_FILENAME_GSI, AUDIT_TABLE_QUEUE_NAME_GSI, AuditTableKeys, FileStatus
 
 
-# TODO update the function name in filename, ack lambda and ecs task
-def update_audit_table_status(file_key: str) -> None:
-    """
-    Update the status in the audit table.
-    """
+def change_audit_table_status_to_processed(file_key: str) -> str:
+    """Updates the status in the audit table to 'Processed' and returns the queue name."""
     try:
-        table_name = os.environ["AUDIT_TABLE_NAME"]
-        file_name_gsi = "filename_index"
-        file_name_response = dynamodb_resource.Table(table_name).query(
-            IndexName=file_name_gsi, KeyConditionExpression=Key("filename").eq(file_key)
+        # TODO: This could create problems if there are duplicate filenames in the audit table
+        file_details_in_audit_table: dict = (
+            dynamodb_resource.Table(AUDIT_TABLE_NAME)
+            .query(IndexName=AUDIT_TABLE_FILENAME_GSI, KeyConditionExpression=Key(AuditTableKeys.FILENAME).eq(file_key))
+            .get("Items", [])[0]
         )
-        items = file_name_response.get("Items", [])
-        message_id = items[0].get("message_id")
-        queue_name = items[0].get("queue_name")
-        # Add to the audit table
+
+        message_id = file_details_in_audit_table.get("message_id")
+
+        # Update the status in the audit table to "Processed"
         dynamodb_client.update_item(
-            TableName=table_name,
-            Key={"message_id": {"S": message_id}},
+            TableName=AUDIT_TABLE_NAME,
+            Key={AuditTableKeys.MESSAGE_ID: {"S": message_id}},
             UpdateExpression="SET #status = :status",
             ExpressionAttributeNames={"#status": "status"},
-            ExpressionAttributeValues={":status": {"S": "Processed"}},
+            ExpressionAttributeValues={":status": {"S": FileStatus.PROCESSED}},
             ConditionExpression="attribute_exists(message_id)",
         )
+
         logger.info(
-            "%s file, with message id %s, and the status successfully updated to audit table",
+            "The status of %s file, with message id %s, was successfully updated to %s in the audit table",
             file_key,
             message_id,
+            FileStatus.PROCESSED,
         )
-        return queue_name
+
+        return file_details_in_audit_table.get("queue_name")
+
     except Exception as error:  # pylint: disable = broad-exception-caught
-        error_message = error  # f"Error adding {file_key} to the audit table"
-        logger.error(error_message)
-        raise UnhandledAuditTableError(error_message) from error
+        logger.error(error)
+        raise UnhandledAuditTableError(error) from error
 
 
-def get_queued_file_details(
-    queue_name: str,
-) -> tuple[Union[None, str], Union[None, str]]:
+def get_next_queued_file_details(queue_name: str) -> Union[dict, None]:
     """
-    Check for queued files which return none or oldest file queued for processing.
-    Returns a tuple in the format (file_name, message_id) for the oldest file.
-    Defaults to (none,none) if no file found in queued status
+    Checks for queued files.
+    Returns a dictionary containing the details of the oldest queued file, or returns None if no queued files are found.
     """
-    table_name = os.environ["AUDIT_TABLE_NAME"]
-    queue_name_gsi = "queue_name_index"
-
-    queue_response = dynamodb_resource.Table(table_name).query(
-        IndexName=queue_name_gsi,
-        KeyConditionExpression=Key("queue_name").eq(queue_name)
-        & Key("status").eq("Queued"),
+    queued_files_found_in_audit_table: dict = dynamodb_resource.Table(AUDIT_TABLE_NAME).query(
+        IndexName=AUDIT_TABLE_QUEUE_NAME_GSI,
+        KeyConditionExpression=Key(AuditTableKeys.QUEUE_NAME).eq(queue_name)
+        & Key(AuditTableKeys.STATUS).eq(FileStatus.QUEUED),
     )
-    if queue_response["Items"]:
-        file_name, message_id = get_file_name(queue_response)
-        return file_name, message_id
-    else:
-        return None, None
 
+    queued_files_details: list = queued_files_found_in_audit_table["Items"]
 
-def get_file_name(queue_response: dict) -> tuple[str, str]:
-    """
-    Returns (file_name, message_id) for the oldest file.
-    """
-    sorted_item = sorted(queue_response["Items"], key=lambda x: x["timestamp"])
-    first_record = sorted_item[0]
-    file_name = first_record.get("filename")
-    message_id = first_record.get("message_id")
-    return file_name, message_id
+    # Return the oldest queued file
+    return sorted(queued_files_details, key=lambda x: x["timestamp"])[0] if queued_files_details else None

@@ -1,11 +1,11 @@
-"""Functions for adding a row of data to the ack file"""
+"""Functions for uploading the data to the ack file"""
 
 import json
 from io import StringIO, BytesIO
 from typing import Union
 from botocore.exceptions import ClientError
 from constants import ACK_HEADERS, SOURCE_BUCKET_NAME, ACK_BUCKET_NAME, FILE_NAME_PROC_LAMBDA_NAME
-from audit_table import update_audit_table_status, get_next_queued_file_details
+from audit_table import change_audit_table_status_to_processed, get_next_queued_file_details
 from clients import s3_client, logger, lambda_client
 from utils_for_ack_lambda import get_row_count
 
@@ -88,7 +88,7 @@ def upload_ack_file(
         move_file(SOURCE_BUCKET_NAME, f"processing/{file_key}", f"archive/{file_key}")
 
         # Update the audit table and invoke the filename lambda with next file in the queue (if one exists)
-        queue_name = update_audit_table_status(file_key)
+        queue_name = change_audit_table_status_to_processed(file_key)
         next_queued_file_details = get_next_queued_file_details(queue_name)
         if next_queued_file_details:
             invoke_filename_lambda(next_queued_file_details["filename"], next_queued_file_details["message_id"])
@@ -116,11 +116,15 @@ def move_file(bucket_name: str, source_file_key: str, destination_file_key: str)
 
 def invoke_filename_lambda(file_key: str, message_id: str) -> None:
     """Invokes the filenameprocessor lambda with the given file key and message id"""
-    lambda_payload = {
-        "Records": [
-            {"s3": {"bucket": {"name": SOURCE_BUCKET_NAME}, "object": {"key": file_key}}, "message_id": message_id}
-        ]
-    }
-    lambda_client.invoke(
-        FunctionName=FILE_NAME_PROC_LAMBDA_NAME, InvocationType="Event", Payload=json.dumps(lambda_payload)
-    )
+    try:
+        lambda_payload = {
+            "Records": [
+                {"s3": {"bucket": {"name": SOURCE_BUCKET_NAME}, "object": {"key": file_key}}, "message_id": message_id}
+            ]
+        }
+        lambda_client.invoke(
+            FunctionName=FILE_NAME_PROC_LAMBDA_NAME, InvocationType="Event", Payload=json.dumps(lambda_payload)
+        )
+    except Exception as error:
+        logger.error("Error invoking filename lambda: %s", error)
+        raise
