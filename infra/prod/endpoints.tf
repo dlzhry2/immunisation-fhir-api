@@ -78,9 +78,7 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
       {
         Effect    = "Allow"
         Principal = {
-          "AWS": [
-            "*"
-          ]
+          "AWS": "*"
         },
         Action    = [
           "s3:GetObject",
@@ -257,6 +255,19 @@ resource "aws_vpc_endpoint" "kms_endpoint" {
   })
   tags = {
     Name = "immunisation-kms-endpoint"
+  }
+}
+
+resource "aws_vpc_endpoint" "lambda_endpoint" {
+  vpc_id            = data.aws_vpc.default.id
+  service_name      = "com.amazonaws.${var.aws_region}.lambda"
+  vpc_endpoint_type = "Interface"
+
+  subnet_ids = data.aws_subnets.default.ids
+  security_group_ids = [aws_security_group.lambda_redis_sg.id]
+  private_dns_enabled = true
+  tags = {
+    Name = "immunisation-lambda-endpoint"
   }
 }
 
