@@ -11,7 +11,10 @@ def get_environment() -> str:
     return _env if _env in ["internal-dev", "int", "ref", "sandbox", "prod"] else "internal-dev"
 
 
-def get_row_count(bucket_name: str, key: str) -> int:
-    """Returns the count of the number of lines in the file at the given key, in the source bucket."""
-    response = s3_client.get_object(Bucket=bucket_name, Key=key)
+def get_row_count(bucket_name: str, file_key: str) -> int:
+    """
+    Looks in the given bucket and returns the count of the number of lines in the given file.
+    NOTE: Blank lines are not included in the count.
+    """
+    response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
     return sum(1 for line in response["Body"].iter_lines() if line.strip())

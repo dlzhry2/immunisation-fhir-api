@@ -1,18 +1,13 @@
 """Functions for adding a row of data to the ack file"""
 
-import os
 import json
 from io import StringIO, BytesIO
 from typing import Union
 from botocore.exceptions import ClientError
-from constants import Constants, SOURCE_BUCKET_NAME, ACK_BUCKET_NAME
-from audit_table import update_audit_table_status, get_queued_file_details
+from constants import ACK_HEADERS, SOURCE_BUCKET_NAME, ACK_BUCKET_NAME, FILE_NAME_PROC_LAMBDA_NAME
+from audit_table import update_audit_table_status, get_next_queued_file_details
 from clients import s3_client, logger, lambda_client
 from utils_for_ack_lambda import get_row_count
-
-
-# TODO move to constants
-FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")
 
 
 def create_ack_data(
@@ -50,79 +45,77 @@ def create_ack_data(
     }
 
 
-def obtain_current_ack_content(ack_bucket_name: str, ack_file_key: str) -> StringIO:
+def obtain_current_ack_content(temp_ack_file_key: str) -> StringIO:
     """Returns the current ack file content if the file exists, or else initialises the content with the ack headers."""
-    accumulated_csv_content = StringIO()
     try:
         # If ack file exists in S3 download the contents
-        existing_ack_file = s3_client.get_object(Bucket=ack_bucket_name, Key=ack_file_key)
+        existing_ack_file = s3_client.get_object(Bucket=ACK_BUCKET_NAME, Key=temp_ack_file_key)
         existing_content = existing_ack_file["Body"].read().decode("utf-8")
-        accumulated_csv_content.write(existing_content)
     except ClientError as error:
+        # If ack file does not exist in S3 create a new file containing the headers only
         if error.response["Error"]["Code"] in ("404", "NoSuchKey"):
             logger.info("No existing ack file found in S3 - creating new file")
-            # If ack file does not exist in S3 create a new file
-            accumulated_csv_content.write("|".join(Constants.ack_headers) + "\n")
+            existing_content = "|".join(ACK_HEADERS) + "\n"
         else:
-            logger.error("error whilst obtaining current ack content:%s", error)
+            logger.error("error whilst obtaining current ack content: %s", error)
             raise
+
+    accumulated_csv_content = StringIO()
+    accumulated_csv_content.write(existing_content)
     return accumulated_csv_content
 
 
 def upload_ack_file(
-    ack_file_key: str,
+    temp_ack_file_key: str,
     accumulated_csv_content: StringIO,
-    ack_data_row: any,
+    ack_data_rows: list,
     archive_ack_file_key: str,
     file_key: str,
-    row_count_source: int,
 ) -> None:
     """Adds the data row to the uploaded ack file"""
-    for row in ack_data_row:
+    for row in ack_data_rows:
         data_row_str = [str(item) for item in row.values()]
         cleaned_row = "|".join(data_row_str).replace(" |", "|").replace("| ", "|").strip()
         accumulated_csv_content.write(cleaned_row + "\n")
     csv_file_like_object = BytesIO(accumulated_csv_content.getvalue().encode("utf-8"))
-    s3_client.upload_fileobj(csv_file_like_object, ACK_BUCKET_NAME, ack_file_key)
+    s3_client.upload_fileobj(csv_file_like_object, ACK_BUCKET_NAME, temp_ack_file_key)
 
-    row_count_destination = get_row_count(ACK_BUCKET_NAME, ack_file_key)
+    row_count_source = get_row_count(SOURCE_BUCKET_NAME, f"processing/{file_key}")
+    row_count_destination = get_row_count(ACK_BUCKET_NAME, temp_ack_file_key)
     # TODO: Should we check for > and if so what handling is required
     if row_count_destination == row_count_source:
-        move_file(ACK_BUCKET_NAME, ack_file_key, archive_ack_file_key)
-        move_file(SOURCE_BUCKET_NAME, source_key=f"processing/{file_key}", destination_key=f"archive/{file_key}")
+        move_file(ACK_BUCKET_NAME, temp_ack_file_key, archive_ack_file_key)
+        move_file(SOURCE_BUCKET_NAME, f"processing/{file_key}", f"archive/{file_key}")
 
+        # Update the audit table and invoke the filename lambda with next file in the queue (if one exists)
         queue_name = update_audit_table_status(file_key)
-        oldest_queued_file_details = get_queued_file_details(queue_name)
-        if oldest_queued_file_details:
-            invoke_filename_lambda(oldest_queued_file_details["filename"], oldest_queued_file_details["message_id"])
+        next_queued_file_details = get_next_queued_file_details(queue_name)
+        if next_queued_file_details:
+            invoke_filename_lambda(next_queued_file_details["filename"], next_queued_file_details["message_id"])
 
     logger.info("Ack file updated to %s: %s", ACK_BUCKET_NAME, archive_ack_file_key)
 
 
-def update_ack_file(file_key: str, created_at_formatted_string: str, ack_data_rows: any, row_count_source: int) -> None:
+def update_ack_file(file_key: str, created_at_formatted_string: str, ack_data_rows: list) -> None:
     """Updates the ack file with the new data row based on the given arguments"""
-    ack_file_key = f"TempAck/{file_key.replace('.csv', f'_BusAck_{created_at_formatted_string}.csv')}"
-    archive_ack_file_key = f"forwardedFile/{file_key.replace('.csv', f'_BusAck_{created_at_formatted_string}.csv')}"
-    accumulated_csv_content = obtain_current_ack_content(ACK_BUCKET_NAME, ack_file_key)
-    upload_ack_file(
-        ack_file_key, accumulated_csv_content, ack_data_rows, archive_ack_file_key, file_key, row_count_source
-    )
+    ack_filename = f"{file_key.replace('.csv', f'_BusAck_{created_at_formatted_string}.csv')}"
+    temp_ack_file_key = f"TempAck/{ack_filename}"
+    archive_ack_file_key = f"forwardedFile/{ack_filename}"
+    accumulated_csv_content = obtain_current_ack_content(temp_ack_file_key)
+    upload_ack_file(temp_ack_file_key, accumulated_csv_content, ack_data_rows, archive_ack_file_key, file_key)
 
 
-def move_file(bucket_name: str, source_key: str, destination_key: str) -> None:
-    """Moves a file from one location to another in S3 by copying and then deleting it.
-    Args: bucket_name (str): Name of the S3 bucket.
-    source_key (str): Source file key.
-    destination_key (str): Destination file key.
-    """
+def move_file(bucket_name: str, source_file_key: str, destination_file_key: str) -> None:
+    """Moves a file from one location to another within a single S3 bucket by copying and then deleting the file."""
     s3_client.copy_object(
-        Bucket=bucket_name, CopySource={"Bucket": bucket_name, "Key": source_key}, Key=destination_key
+        Bucket=bucket_name, CopySource={"Bucket": bucket_name, "Key": source_file_key}, Key=destination_file_key
     )
-    s3_client.delete_object(Bucket=bucket_name, Key=source_key)
-    logger.info("File moved from %s to %s", source_key, destination_key)
+    s3_client.delete_object(Bucket=bucket_name, Key=source_file_key)
+    logger.info("File moved from %s to %s", source_file_key, destination_file_key)
 
 
-def invoke_filename_lambda(file_key, message_id):
+def invoke_filename_lambda(file_key: str, message_id: str) -> None:
+    """Invokes the filenameprocessor lambda with the given file key and message id"""
     lambda_payload = {
         "Records": [
             {"s3": {"bucket": {"name": SOURCE_BUCKET_NAME}, "object": {"key": file_key}}, "message_id": message_id}

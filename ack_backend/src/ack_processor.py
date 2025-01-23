@@ -4,8 +4,20 @@ import json
 from typing import Union
 from logging_decorators import ack_lambda_handler_logging_decorator, convert_messsage_to_ack_row_logging_decorator
 from update_ack_file import update_ack_file, create_ack_data
-from utils_for_ack_lambda import get_row_count
-from constants import SOURCE_BUCKET_NAME
+
+
+def get_error_message_for_ack_file(message_diagnostics) -> Union[None, str]:
+    """Determines and returns the error message to be displayed in the ack file"""
+    if message_diagnostics is None:
+        return None
+
+    if not isinstance(message_diagnostics, dict):
+        return "Unable to determine diagnostics issue"
+
+    if message_diagnostics.get("statusCode") in (None, 500):
+        return "An unhandled error occurred during batch processing"
+
+    return message_diagnostics.get("error_message", "Unable to determine diagnostics issue")
 
 
 @convert_messsage_to_ack_row_logging_decorator
@@ -15,24 +27,13 @@ def convert_message_to_ack_row(message, created_at_formatted_string):
     A value error is raised if the file_key or created_at_formatted_string for the message do not match the
     expected values.
     """
-    error_message_for_ack_file: Union[None, str]
-    if (diagnostics := message.get("diagnostics")) is None:
-        error_message_for_ack_file = None
-    elif isinstance(diagnostics, dict):
-        status_code = diagnostics.get("statusCode")
-        if status_code is None or status_code == 500:
-            error_message_for_ack_file = "An unhandled error occurred during batch processing"
-        else:
-            error_message_for_ack_file = diagnostics.get("error_message", "Unable to determine diagnostics issue")
-    else:
-        error_message_for_ack_file = "Unable to determine diagnostics issue"
-
+    diagnostics = message.get("diagnostics")
     return create_ack_data(
         created_at_formatted_string=created_at_formatted_string,
         local_id=message.get("local_id"),
         row_id=message.get("row_id"),
         successful_api_response=diagnostics is None,  # Response is successful if and only if there are no diagnostics
-        diagnostics=error_message_for_ack_file,
+        diagnostics=get_error_message_for_ack_file(diagnostics),
         imms_id=message.get("imms_id"),
     )
 
@@ -50,9 +51,8 @@ def lambda_handler(event, context):
 
     file_key = None
     created_at_formatted_string = None
-    row_count_source: int
 
-    array_of_rows = []
+    ack_data_rows = []
 
     for i, record in enumerate(event["Records"]):
 
@@ -68,13 +68,8 @@ def lambda_handler(event, context):
             created_at_formatted_string = incoming_message_body[0].get("created_at_formatted_string")
 
         for message in incoming_message_body:
-            array_of_rows.append(convert_message_to_ack_row(message, created_at_formatted_string))
+            ack_data_rows.append(convert_message_to_ack_row(message, created_at_formatted_string))
 
-    update_ack_file(
-        file_key,
-        created_at_formatted_string=created_at_formatted_string,
-        ack_data_rows=array_of_rows,
-        row_count_source=get_row_count(SOURCE_BUCKET_NAME, f"processing/{file_key}"),
-    )
+    update_ack_file(file_key, created_at_formatted_string, ack_data_rows)
 
     return {"statusCode": 200, "body": json.dumps("Lambda function executed successfully!")}
