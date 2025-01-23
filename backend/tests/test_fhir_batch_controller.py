@@ -131,9 +131,8 @@ class TestCreateImmunizationBatchController(unittest.TestCase):
 class TestUpdateImmunizationBatchController(unittest.TestCase):
 
     def setUp(self):
-        # Mocking dependencies
-        self.mock_repo = Mock(spec=ImmunizationBatchRepository)
-        self.mock_service = Mock(spec=ImmunizationBatchService)
+        self.mock_repo = create_autospec(ImmunizationBatchRepository)
+        self.mock_service = create_autospec(ImmunizationBatchService)
         self.mock_table = Mock()
         self.controller = ImmunizationBatchController(
             immunization_repo=self.mock_repo,
@@ -247,9 +246,8 @@ class TestUpdateImmunizationBatchController(unittest.TestCase):
 class TestDeleteImmunizationBatchController(unittest.TestCase):
 
     def setUp(self):
-        # Mocking dependencies
-        self.mock_repo = Mock(spec=ImmunizationBatchRepository)
-        self.mock_service = Mock(spec=ImmunizationBatchService)
+        self.mock_repo = create_autospec(ImmunizationBatchRepository)
+        self.mock_service = create_autospec(ImmunizationBatchService)
         self.mock_table = Mock()
         self.controller = ImmunizationBatchController(
             immunization_repo=self.mock_repo,
