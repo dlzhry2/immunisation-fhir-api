@@ -1,9 +1,39 @@
 """Add the filename to the audit table and check for duplicates."""
 
-import os
+from typing import Union
 from boto3.dynamodb.conditions import Key
 from clients import dynamodb_client, dynamodb_resource, logger
 from errors import DuplicateFileError, UnhandledAuditTableError
+from constants import AUDIT_TABLE_NAME, AUDIT_TABLE_QUEUE_NAME_GSI, AUDIT_TABLE_FILENAME_GSI, AuditTableKeys, FileStatus
+
+
+def get_next_queued_file_details(queue_name: str) -> Union[dict, None]:
+    """
+    Checks for queued files.
+    Returns a dictionary containing the details of the oldest queued file, or returns None if no queued files are found.
+    """
+    queued_files_found_in_audit_table: dict = dynamodb_resource.Table(AUDIT_TABLE_NAME).query(
+        IndexName=AUDIT_TABLE_QUEUE_NAME_GSI,
+        KeyConditionExpression=Key(AuditTableKeys.QUEUE_NAME).eq(queue_name)
+        & Key(AuditTableKeys.STATUS).eq(FileStatus.QUEUED),
+    )
+
+    queued_files_details: list = queued_files_found_in_audit_table["Items"]
+
+    # Return the oldest queued file
+    return sorted(queued_files_details, key=lambda x: x["timestamp"])[0] if queued_files_details else None
+
+
+def ensure_file_is_not_a_duplicate(file_key: str, created_at_formatted_string: str) -> None:
+    """Raises an error if the file is a duplicate."""
+    files_already_in_audit_table = (
+        dynamodb_resource.Table(AUDIT_TABLE_NAME)
+        .query(IndexName=AUDIT_TABLE_FILENAME_GSI, KeyConditionExpression=Key(AuditTableKeys.FILENAME).eq(file_key))
+        .get("Items")
+    )
+    if files_already_in_audit_table:
+        logger.error("%s file duplicate added to s3 at the following time: %s", file_key, created_at_formatted_string)
+        raise DuplicateFileError(f"Duplicate file: {file_key}")
 
 
 def upsert_audit_table(
@@ -11,118 +41,58 @@ def upsert_audit_table(
     file_key: str,
     created_at_formatted_str: str,
     queue_name: str,
-    process_status: str,
-    query_type: str,
-) -> None:
+    file_status: str,
+    is_existing_file: bool,
+) -> bool:
     """
-    Adds or updates the filename in the audit table.
-    Raises an error if the file is a duplicate (after adding it to the audit table).
+    Updates the audit table with the file details. Returns a bool indicating whether the file is ready to process
+    (i.e. if the file has passed initial validation and there are no other files in the queue, then the file is ready
+    to be sent for row level processing.)
     """
     try:
-        table_name = os.environ["AUDIT_TABLE_NAME"]
-        file_name_gsi = "filename_index"
-        queue_name_gsi = "queue_name_index"
-        processing_exists = False
-        if query_type == "update":
+        # If the file is not new, then the lambda has been invoked by the next file in the queue for processing
+        if is_existing_file:
             dynamodb_client.update_item(
-                TableName=table_name,
-                Key={"message_id": {"S": message_id}},
+                TableName=AUDIT_TABLE_NAME,
+                Key={AuditTableKeys.MESSAGE_ID: {"S": message_id}},
                 UpdateExpression="SET #status = :status",
                 ExpressionAttributeNames={"#status": "status"},
-                ExpressionAttributeValues={":status": {"S": "Processing"}},
+                ExpressionAttributeValues={":status": {"S": FileStatus.PROCESSING}},
                 ConditionExpression="attribute_exists(message_id)",
             )
-            logger.info(
-                "%s file set for processing, and the status successfully updated in audit table",
-                file_key,
-            )
+            logger.info("%s file set for processing, and the status successfully updated in audit table", file_key)
             return True
-        # Check for duplicates before adding to the table (if the query returns any items, then the file is a duplicate)
-        file_name_response = dynamodb_resource.Table(table_name).query(
-            IndexName=file_name_gsi, KeyConditionExpression=Key("filename").eq(file_key)
-        )
-        duplicate_exists = bool(file_name_response.get("Items"))
 
-        # Check for files under processing for Supplier_Vaccine combination, if yes queue file for processing
-        if not duplicate_exists and not process_status.eq("Processed"):
-            queue_response = dynamodb_resource.Table(table_name).query(
-                IndexName=queue_name_gsi,
-                KeyConditionExpression=Key("queue_name").eq(queue_name)
-                & Key("status").eq(process_status),  # Need to update it to processing
+        # If the file is not already processed, check whether there is a file ahead in the queue already processing
+        file_in_same_queue_already_processing = False
+        if not file_status.eq(FileStatus.PROCESSED):
+            queue_response = dynamodb_resource.Table(AUDIT_TABLE_NAME).query(
+                IndexName=AUDIT_TABLE_QUEUE_NAME_GSI,
+                KeyConditionExpression=Key(AuditTableKeys.QUEUE_NAME).eq(queue_name)
+                & Key(AuditTableKeys.STATUS).eq(FileStatus.PROCESSING),
             )
             if queue_response["Items"]:
-                process_status = "Queued"
-                processing_exists = True
+                file_status = FileStatus.QUEUED
+                logger.info("%s file queued for processing: %s", file_key)
+                file_in_same_queue_already_processing = True
 
         # Add to the audit table (regardless of whether it is a duplicate)
         dynamodb_client.put_item(
-            TableName=table_name,
+            TableName=AUDIT_TABLE_NAME,
             Item={
-                "message_id": {"S": message_id},
-                "filename": {"S": file_key},
-                "queue_name": {"S": queue_name},
-                "status": {
-                    "S": (
-                        "Not processed - duplicate"
-                        if duplicate_exists
-                        else process_status
-                    )
-                },
-                "timestamp": {"S": created_at_formatted_str},
+                AuditTableKeys.MESSAGE_ID: {"S": message_id},
+                AuditTableKeys.FILENAME: {"S": file_key},
+                AuditTableKeys.QUEUE_NAME: {"S": queue_name},
+                AuditTableKeys.STATUS: {"S": file_status},
+                AuditTableKeys.TIMESTAMP: {"S": created_at_formatted_str},
             },
             ConditionExpression="attribute_not_exists(message_id)",  # Prevents accidental overwrites
         )
-        logger.info(
-            "%s file, with message id %s, successfully added to audit table",
-            file_key,
-            message_id,
-        )
-        # If a duplicte exists, raise an exception
-        if duplicate_exists:
-            logger.error(
-                "%s file duplicate added to s3 at the following time: %s",
-                file_key,
-                created_at_formatted_str,
-            )
-            raise DuplicateFileError(f"Duplicate file: {file_key}")
+        logger.info("%s file, with message id %s, successfully added to audit table", file_key, message_id)
 
-        # If processing exists for supplier_vaccine, raise an exception
-        if processing_exists:
-            logger.info(
-                "%s file queued for processing at time: %s",
-                file_key,
-                created_at_formatted_str,
-            )
-            return False
-
-        return True
+        # If processing exists for supplier_vaccine, return false as this file must queue for processing
+        return False if file_in_same_queue_already_processing else True
 
     except Exception as error:  # pylint: disable = broad-exception-caught
-        error_message = error  # f"Error adding {file_key} to the audit table"
-        logger.error(error_message)
-        raise UnhandledAuditTableError(error_message) from error
-
-
-def get_queued_file_details(queue_name: str):
-
-    table_name = os.environ["AUDIT_TABLE_NAME"]
-    queue_name_gsi = "queue_name_index"
-
-    queue_response = dynamodb_resource.Table(table_name).query(
-        IndexName=queue_name_gsi,
-        KeyConditionExpression=Key("queue_name").eq(queue_name)
-        & Key("status").eq("Queued"),
-    )
-    if queue_response["Items"]:
-        file_name, message_id = get_file_name(queue_response)
-        return file_name, message_id
-    else:
-        return None, None
-
-
-def get_file_name(queue_response: dict):
-    sorted_item = sorted(queue_response["Items"], key=lambda x: x["timestamp"])
-    first_record = sorted_item[0]
-    file_name = first_record.get("filename")
-    message_id = first_record.get("message_id")
-    return file_name, message_id
+        logger.error(error)
+        raise UnhandledAuditTableError(error) from error

@@ -1,5 +1,50 @@
 """Constants for the filenameprocessor lambda"""
 
+import os
+from errors import (
+    VaccineTypePermissionsError,
+    InvalidFileKeyError,
+    InvalidSupplierError,
+    UnhandledAuditTableError,
+    DuplicateFileError,
+    UnhandledSqsError,
+)
+
+SOURCE_BUCKET_NAME = os.getenv("SOURCE_BUCKET_NAME")
+FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")
+AUDIT_TABLE_NAME = os.environ["AUDIT_TABLE_NAME"]
+AUDIT_TABLE_QUEUE_NAME_GSI = "queue_name_index"
+AUDIT_TABLE_FILENAME_GSI = "filename_index"
+
+ERROR_TYPE_TO_STATUS_CODE_MAP = {
+    VaccineTypePermissionsError: 403,
+    InvalidFileKeyError: 400,  # Includes invalid ODS code, therefore unable to identify supplier
+    InvalidSupplierError: 500,  # Only raised if supplier variable is not correctly set
+    UnhandledAuditTableError: 500,
+    DuplicateFileError: 422,
+    UnhandledSqsError: 500,
+    Exception: 500,
+}
+
+
+class FileStatus:
+    """File status constants"""
+
+    QUEUED = "Queued"
+    PROCESSING = "Processing"
+    PROCESSED = "Processed"
+    DUPLICATE = "Not processed - duplicate"
+
+
+class AuditTableKeys:
+    """Audit table keys"""
+
+    FILENAME = "filename"
+    MESSAGE_ID = "message_id"
+    QUEUE_NAME = "queue_name"
+    STATUS = "status"
+    TIMESTAMP = "timestamp"
+
 
 class Constants:
     """Constants for the filenameprocessor lambda"""
