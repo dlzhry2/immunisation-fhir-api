@@ -28,7 +28,7 @@ from constants import FileStatus, ERROR_TYPE_TO_STATUS_CODE_MAP
 
 
 # NOTE: logging_decorator is applied to handle_record function, rather than lambda_handler, because
-# the logging_decorator is for an individual record, whereas the lambda_handle could potentially be handling
+# the logging_decorator is for an individual record, whereas the lambda_handler could potentially be handling
 # multiple records.
 @logging_decorator
 def handle_record(record) -> dict:
@@ -44,6 +44,9 @@ def handle_record(record) -> dict:
         logger.error("Error obtaining file_key: %s", error)
         return {"statusCode": 500, "message": "Failed to download file key", "error": str(error)}
 
+    # The lambda is unintentionally invoked when a file is moved into a different folder in the source bucket.
+    # Excluding file keys containing a "/" is a workaround to prevent the lambda from processing files that
+    # are not in the root of the source bucket.
     if "data-sources" in bucket_name and "/" not in file_key:
         try:
             # If the record contains a message_id, then the lambda has been invoked by a file already in the queue
@@ -52,46 +55,41 @@ def handle_record(record) -> dict:
             # Get message_id if the file is not new, else assign one
             message_id = record.get("message_id", str(uuid4()))
 
-            if not file_key or message_id is None:
-                # TODO Update the logger
-                logger.info("No files are in queue")
+            created_at_formatted_string = get_created_at_formatted_string(bucket_name, file_key)
+            vaccine_type = "unknown"
+            supplier = "unknown"
+            vaccine_type, supplier = validate_file_key(file_key)
+            permissions = validate_vaccine_type_permissions(vaccine_type=vaccine_type, supplier=supplier)
+            if not is_existing_file:
+                ensure_file_is_not_a_duplicate(file_key, created_at_formatted_string)
 
-            else:
-                created_at_formatted_string = get_created_at_formatted_string(bucket_name, file_key)
-                vaccine_type = "unknown"
-                supplier = "unknown"
-                vaccine_type, supplier = validate_file_key(file_key)
-                permissions = validate_vaccine_type_permissions(vaccine_type=vaccine_type, supplier=supplier)
-                if not is_existing_file:
-                    ensure_file_is_not_a_duplicate(file_key, created_at_formatted_string)
+            queue_name = f"{supplier}_{vaccine_type}"
+            ready_to_process = upsert_audit_table(
+                message_id,
+                file_key,
+                created_at_formatted_string,
+                queue_name,
+                FileStatus.PROCESSING,
+                is_existing_file,
+            )
 
-                queue_name = f"{supplier}_{vaccine_type}"
-                ready_to_process = upsert_audit_table(
-                    message_id,
-                    file_key,
-                    created_at_formatted_string,
-                    queue_name,
-                    FileStatus.PROCESSING,
-                    is_existing_file,
+            if ready_to_process:
+                make_and_send_sqs_message(
+                    file_key, message_id, permissions, vaccine_type, supplier, created_at_formatted_string
                 )
 
-                if ready_to_process:
-                    make_and_send_sqs_message(
-                        file_key, message_id, permissions, vaccine_type, supplier, created_at_formatted_string
-                    )
+            logger.info("File '%s' successfully processed", file_key)
 
-                logger.info("File '%s' successfully processed", file_key)
-
-                # Return details for logs
-                # TODO Update message
-                return {
-                    "statusCode": 200,
-                    "message": "Successfully sent to SQS queue",
-                    "file_key": file_key,
-                    "message_id": message_id,
-                    "vaccine_type": vaccine_type,
-                    "supplier": supplier,
-                }
+            # Return details for logs
+            # TODO Update message
+            return {
+                "statusCode": 200,
+                "message": "Successfully sent to SQS queue",
+                "file_key": file_key,
+                "message_id": message_id,
+                "vaccine_type": vaccine_type,
+                "supplier": supplier,
+            }
 
         except (  # pylint: disable=broad-exception-caught
             VaccineTypePermissionsError,

@@ -69,8 +69,12 @@ def upsert_audit_table(
             queue_response = dynamodb_resource.Table(AUDIT_TABLE_NAME).query(
                 IndexName=AUDIT_TABLE_QUEUE_NAME_GSI,
                 KeyConditionExpression=Key(AuditTableKeys.QUEUE_NAME).eq(queue_name)
-                & Key(AuditTableKeys.STATUS).eq(FileStatus.PROCESSING),
+                & (
+                    Key(AuditTableKeys.STATUS).eq(FileStatus.PROCESSING)
+                    | Key(AuditTableKeys.STATUS).eq(FileStatus.QUEUED)
+                ),
             )
+            # TODO: Is the above logic correct?
             if queue_response["Items"]:
                 file_status = FileStatus.QUEUED
                 logger.info("%s file queued for processing: %s", file_key)
