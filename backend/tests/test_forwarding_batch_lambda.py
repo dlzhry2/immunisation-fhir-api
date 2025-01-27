@@ -1,126 +1,247 @@
 import unittest
 from unittest import TestCase
-from unittest.mock import patch, MagicMock, Mock
-from forwarding_batch_lambda import forward_lambda_handler, ImmunizationBatchController, create_diagnostics_dictionary
-import base64
-import json
-import os
+from unittest.mock import patch, MagicMock
+from forwarding_batch_lambda import forward_lambda_handler, create_diagnostics_dictionary
 from models.errors import (
+    MessageNotSuccessfulError,
     RecordProcessorError,
     CustomValidationError,
     IdentifierDuplicationError,
     ResourceNotFoundError,
     ResourceFoundError,
-    MessageNotSuccessfulError,
 )
 import base64
+import json
 
 
-class TestForwardLambdaHandler(unittest.TestCase):
+class TestForwardLambdaHandler(TestCase):
+    """Generates the fhir json for cases where included and None if excluded"""
 
-    def setUp(self):
-        """Setup mock clients and helper functions for testing."""
-        self.mock_dynamo_client = Mock()
-        self.mock_sqs_client = Mock()
-        os.environ["DYNAMODB_TABLE_NAME"] = "mock_table_name"
+    @staticmethod
+    def generate_fhir_json(include_fhir_json=True):
+        """Helper to generate FHIR JSON."""
+        if include_fhir_json:
+            return {
+                "identifier": [{"system": "http://example.com", "value": "12345"}],
+                "resourceType": "Immunization",
+            }
+        return None
 
-    def tearDown(self):
-        """Clean up environment variables after the test."""
-        del os.environ["DYNAMODB_TABLE_NAME"]
-
-    def encode_kinesis_payload(self, row):
-        """Encodes a row into a base64 string."""
-        row_json = json.dumps(row)
-        return base64.b64encode(row_json.encode("utf-8")).decode("utf-8")
-
-    def generate_kinesis_rows(self, file_key, row_data):
-        """Generate and encode Kinesis rows dynamically based on provided row_data."""
-        return [self.encode_kinesis_payload(self.generate_kinesis_row(file_key, *row)) for row in row_data]
-
-    def generate_kinesis_row(self, file_key, row_id, created_at, local_id, operation_requested, supplier, vaccine_type):
-        """Generate a single Kinesis row with required attributes."""
-        return {
-            "file_key": file_key,
-            "row_id": row_id,
-            "created_at": created_at,
+    @staticmethod
+    def generate_details_from_processing(include_fhir_json=True, operation_requested="create", local_id="local-1"):
+        """Helper to generate details_from_processing."""
+        details = {
+            "operation_requested": operation_requested,
             "local_id": local_id,
-            "operation_requested": operation_requested,
-            "supplier": supplier,
-            "vax_type": vaccine_type,
         }
+        if include_fhir_json:
+            details["fhir_json"] = TestForwardLambdaHandler.generate_fhir_json(include_fhir_json)
+        return details
 
-    def generate_expected_sqs_row(self, file_key, row_id, operation_requested, imms_id=None, diagnostics=None):
-        """
-        Generate a single row for the expected SQS output.
-        If `diagnostics` is provided, include error details in the output.
-        """
+    @staticmethod
+    def generate_input(
+        row_id,
+        file_key="test_file_key",
+        created_at_formatted_string="2025-01-24T12:00:00Z",
+        include_fhir_json=True,
+        operation_requested="create",
+        diagnostics=None,
+    ):
+        """Generates input rows for test_cases."""
+        details_from_processing = TestForwardLambdaHandler.generate_details_from_processing(
+            include_fhir_json=include_fhir_json, operation_requested=operation_requested, local_id=f"local-{row_id}"
+        )
         row = {
+            "row_id": f"row-{row_id}",
             "file_key": file_key,
-            "row_id": row_id,
-            "operation_requested": operation_requested,
+            "created_at_formatted_string": created_at_formatted_string,
+            "supplier": "test_supplier",
+            "vax_type": "COVID19",
+            **details_from_processing,
         }
         if diagnostics:
             row["diagnostics"] = diagnostics
-        else:
-            row["imms_id"] = imms_id
         return row
 
-    def assert_sqs_output(self, mock_sqs_client, expected_output):
-        """Assert that the SQS output matches expectations."""
-        mock_sqs_client.send_message.assert_called_once()
-        sent_message = json.loads(mock_sqs_client.send_message.call_args[1]["MessageBody"])
-        self.assertEqual(len(sent_message), len(expected_output))
-        for i, expected_row in enumerate(expected_output):
-            self.assertEqual(sent_message[i], expected_row)
+    @staticmethod
+    def generate_event(test_cases):
+        """Generates an event from test_cases."""
+        records = []
+        for case in test_cases:
+            message_body = case["input"]
+            encoded_body = base64.b64encode(json.dumps(message_body).encode("utf-8")).decode("utf-8")
+            records.append({"kinesis": {"data": encoded_body}})
+        return {"Records": records}
 
-    def assert_dynamo_response(self, dynamo_responses, expected_responses):
-        """Assert that the DynamoDB responses match expectations."""
-        self.assertEqual(len(dynamo_responses), len(expected_responses))
-        for i, expected_response in enumerate(expected_responses):
-            if isinstance(expected_response, Exception):
-                self.assertIsInstance(dynamo_responses[i], type(expected_response))
-                self.assertEqual(str(dynamo_responses[i]), str(expected_response))
-            else:
-                self.assertEqual(dynamo_responses[i], expected_response)
+    def assert_values_in_sqs_messages(self, mock_send_message, test_cases):
+        """Assert keys are found in SQS messages."""
+        # Extract messages sent to SQS
+        sqs_messages = [json.loads(call[1]["MessageBody"]) for call in mock_send_message.call_args_list]
 
-    # def get_test_cases(self):
-    #     """Define test cases with Kinesis input rows and expected outputs."""
-    #     return [
-    #         {
-    #             "description": "Test Case 1: All operations succeed",
-    #             "file_key": "COVID19_Vaccinations_v5_YGM41_20240909T13005902.csv",
-    #             "kinesis_rows": self.generate_kinesis_rows(
-    #                 "file1",
-    #                 [
-    #                     ("321", "2025-01-01T12:00:00Z", "local321", "CREATE", "supplier1", "type1"),
-    #                 ],
-    #             ),
-    #             "expected_dynamo_responses": ["imms_id_321", "imms_id_654", "imms_id_987"],
-    #             "expected_sqs_output": [
-    #                 self.generate_expected_sqs_row("file1", "321", "CREATE", imms_id="imms_id_321")
-    #             ],
-    #         },
-    #     ]
+        # Flatten the list if necessary
+        sqs_messages = sqs_messages[0] if len(sqs_messages) == 1 and isinstance(sqs_messages[0], list) else sqs_messages
 
-    # def test_forward_lambda_handler(self):
-    #     """Test the forward_lambda_handler with multiple test cases."""
-    #     for test_case in self.get_test_cases():
-    #         with self.subTest(msg=test_case["description"]):
+        for idx, test_case in enumerate(test_cases):
+            expected_keys = test_case["expected_keys"]
+            expected_values = test_case["expected_values"]
 
-    #             kinesis_event = {
-    #                 "Records": [{"kinesis": {"data": json.dumps(row)}} for row in test_case["kinesis_rows"]]
-    #             }
-    #             print(f"KINESIS EVENT: {kinesis_event}")
-    #             self.mock_dynamo_client.query.side_effect = test_case["expected_dynamo_responses"]
+            with self.subTest(test_case=test_case["name"]):
+                for key in expected_keys:
+                    assert key in sqs_messages[idx]
 
-    #             forward_lambda_handler(kinesis_event, "_")
+                message = sqs_messages[idx]
+                for key, value in expected_values.items():
+                    if isinstance(value, dict):
+                        for sub_key, sub_value in value.items():
+                            assert message[key][sub_key] == sub_value
 
-    #             # Assert SQS output
-    #             self.assert_sqs_output(self.mock_sqs_client, test_case["expected_sqs_output"])
+                    else:
+                        assert message[key] == value
 
-    #             # Assert DynamoDB responses
-    #             dynamo_responses = [call[1]["Response"] for call in self.mock_dynamo_client.method_calls]
-    #             self.assert_dynamo_response(dynamo_responses, test_case["expected_dynamo_responses"])
+    def assert_forward_request_to_dynamo(self, mock_forward_request_to_dynamo, test_cases):
+        """Helper to assert forward_request_to_dynamo invocations."""
+
+        # Check if the number of invocations matches the number of test cases
+        assert len(mock_forward_request_to_dynamo.call_args_list) == len(
+            test_cases
+        ), f"Expected {len(test_cases)} calls, but got {len(mock_forward_request_to_dynamo.call_args_list)}"
+
+        for i, (test_case, call) in enumerate(zip(test_cases, mock_forward_request_to_dynamo.call_args_list)):
+            expected_row = test_case["input"]
+            call_data = call[0]
+
+            with self.subTest(test_case=test_case["name"]):
+
+                required_keys = ["row_id", "file_key", "created_at_formatted_string", "local_id", "fhir_json"]
+
+                for key in required_keys:
+                    assert key in call_data[0]
+                    assert call_data[0][key] == expected_row[key], f"{key} does not match in call {i+1}"
+
+        # Ensure the total number of invocations matches the expected counts for each operation
+        create_calls = sum(1 for case in test_cases if case["input"]["operation_requested"] == "create")
+        update_calls = sum(1 for case in test_cases if case["input"]["operation_requested"] == "update")
+        delete_calls = sum(1 for case in test_cases if case["input"]["operation_requested"] == "delete")
+
+        assert mock_forward_request_to_dynamo.call_count == create_calls + update_calls + delete_calls
+
+    @patch("forwarding_batch_lambda.sqs_client.send_message")
+    @patch("forwarding_batch_lambda.forward_request_to_dynamo")
+    @patch("forwarding_batch_lambda.create_table")
+    @patch("forwarding_batch_lambda.make_batch_controller")
+    def test_forward_lambda_handler_multiple_scenarios(
+        self, mock_make_controller, mock_create_table, mock_forward_request_to_dynamo, mock_send_message
+    ):
+        """Test forward lambda handler with multiple rows in the event with create, update, and delete operations,
+        and diagnostics handling.
+        In the format name: name of test scenario, input: generates the kinesis data for the event,
+        expected_keys: expected output dictionary keys, expected_values:
+        Assumption: Maximum 10 rows received in event for the same file at a time to the forward_lambda_handler.
+        All records are for the same file"""
+        # TODO - update expected_values definition
+
+        mock_create_table.return_value = {}
+        mock_make_controller.return_value = mock_controller = MagicMock()
+        mock_forward_request_to_dynamo.side_effect = [
+            "IMMS123",
+            IdentifierDuplicationError("Duplicate_Id"),
+            "IMMS456",
+            ResourceNotFoundError(resource_type="Immunization", resource_id=None),
+            "IMMS789",
+            Exception("Unexpected failure"),
+            MessageNotSuccessfulError("Unable to reach API"),
+            ResourceFoundError(resource_type="Immunization", resource_id="A-primary-key"),
+            MessageNotSuccessfulError("Server error - FHIR JSON not correctly sent to forwarder"),
+        ]
+
+        test_cases = [
+            {
+                "name": "Row 1: Create Success",
+                "input": self.generate_input(row_id=1, operation_requested="create", include_fhir_json=True),
+                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "imms_id"],
+                "expected_values": {"imms_id": "IMMS123"},
+            },
+            {
+                "name": "Row 2: Unexpected Error: Create failure ",
+                "input": self.generate_input(row_id=2, operation_requested="create", include_fhir_json=True),
+                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "diagnostics"],
+                "expected_values": {
+                    "diagnostics": create_diagnostics_dictionary(IdentifierDuplicationError("Duplicate_Id")),
+                },
+            },
+            {
+                "name": "Row 3: Update success",
+                "input": self.generate_input(row_id=3, operation_requested="update", include_fhir_json=True),
+                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "imms_id"],
+                "expected_values": {"imms_id": "IMMS456"},
+            },
+            {
+                "name": "Row 4: Update failure",
+                "input": self.generate_input(row_id=4, operation_requested="update", include_fhir_json=True),
+                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "diagnostics"],
+                "expected_values": {
+                    "diagnostics": create_diagnostics_dictionary(
+                        ResourceNotFoundError(resource_type="Immunization", resource_id=None)
+                    ),
+                },
+            },
+            {
+                "name": "Row 5: Delete Success",
+                "input": self.generate_input(row_id=5, operation_requested="delete", include_fhir_json=True),
+                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "imms_id"],
+                "expected_values": {"imms_id": "IMMS789"},
+            },
+            {
+                "name": "Row 6: Delete Failure",
+                "input": self.generate_input(row_id=6, operation_requested="delete", include_fhir_json=True),
+                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "diagnostics"],
+                "expected_values": {
+                    "diagnostics": create_diagnostics_dictionary(Exception("Unexpected failure")),
+                },
+            },
+            {
+                "name": "Row 7: Diagnostics Already Present",
+                "input": self.generate_input(
+                    row_id=7,
+                    operation_requested="create",
+                    include_fhir_json=True,
+                ),
+                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "diagnostics"],
+                "expected_values": {
+                    "diagnostics": create_diagnostics_dictionary(MessageNotSuccessfulError("Unable to reach API")),
+                },
+            },
+            {
+                "name": "Row 8: Delete Failure",
+                "input": self.generate_input(row_id=8, operation_requested="delete", include_fhir_json=True),
+                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "diagnostics"],
+                "expected_values": {
+                    "diagnostics": create_diagnostics_dictionary(
+                        ResourceFoundError(resource_type="Immunization", resource_id="A-primary-key")
+                    ),
+                },
+            },
+            {
+                "name": "Row 9: FHIR_JSON does not exist",
+                "input": self.generate_input(row_id=9, operation_requested="create"),
+                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "diagnostics"],
+                "expected_values": {
+                    "diagnostics": create_diagnostics_dictionary(
+                        MessageNotSuccessfulError("Server error - FHIR JSON not correctly sent to forwarder")
+                    ),
+                },
+            },
+        ]
+
+        # TODO - add custom validation error, any other failure scenario
+
+        event = self.generate_event(test_cases)
+
+        forward_lambda_handler(event, {})
+
+        self.assert_forward_request_to_dynamo(mock_forward_request_to_dynamo, test_cases)
+
+        self.assert_values_in_sqs_messages(mock_send_message, test_cases)
 
     def test_create_diagnostics_dictionary(self):
 
@@ -187,3 +308,16 @@ class TestForwardLambdaHandler(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    #  "name": "Row 7: Diagnostics Already Present",
+    #             "input": self.generate_input(
+    #                 row_id=7,
+    #                 operation_requested="create",
+    #                 include_fhir_json=True,
+    #                 diagnostics=create_diagnostics_dictionary(CustomValidationError("Already validated")),
+    #             ),
+    #             "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "diagnostics"],
+    #             "expected_values": {
+    #                 "diagnostics": create_diagnostics_dictionary(CustomValidationError("Already validated")),
+    #             },
+    #         }
