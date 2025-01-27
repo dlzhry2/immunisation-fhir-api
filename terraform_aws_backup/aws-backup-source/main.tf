@@ -64,12 +64,12 @@ module "source" {
     "rules" : [
       {
         "copy_action" : {
-          "delete_after" : 61
+          "delete_after" : 31
         },
         "lifecycle" : {
-          "delete_after" : 2
+          "delete_after" : 4
         },
-        "name" : "daily_kept_for_2_days",
+        "name" : "daily_kept_for_4_days",
         "schedule" : "cron(00 20 * * ? *)"
       }
     ],
@@ -84,12 +84,12 @@ module "source" {
     "rules" : [
       {
         "copy_action" : {
-          "delete_after" : 61
+          "delete_after" : 31
         },
         "lifecycle" : {
-          "delete_after" : 2
+          "delete_after" : 4
         },
-        "name" : "daily_kept_for_2_days",
+        "name" : "daily_kept_for_4_days",
         "schedule" : "cron(00 20 * * ? *)"
       }
     ],

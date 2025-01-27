@@ -5,13 +5,18 @@ NOTE: The expected file format for incoming files from the data sources bucket i
 'VACCINETYPE_Vaccinations_version_ODSCODE_DATETIME.csv'. e.g. 'Flu_Vaccinations_v5_YYY78_20240708T12130100.csv'
 (ODS code has multiple lengths)
 """
+
 import os
 from uuid import uuid4
-from utils_for_filenameprocessor import get_created_at_formatted_string, move_file, invoke_lambda
+from utils_for_filenameprocessor import (
+    get_created_at_formatted_string,
+    move_file,
+    invoke_filename_lambda,
+)
 from file_key_validation import validate_file_key
 from send_sqs_message import make_and_send_sqs_message
 from make_and_upload_ack_file import make_and_upload_the_ack_file
-from audit_table import add_to_audit_table, check_queue
+from audit_table import upsert_audit_table, get_queued_file_details
 from clients import logger
 from elasticcache import upload_to_elasticache
 from logging_decorator import logging_decorator
@@ -24,6 +29,7 @@ from errors import (
     DuplicateFileError,
     UnhandledSqsError,
 )
+
 FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")
 
 
@@ -50,7 +56,7 @@ def handle_record(record) -> dict:
 
     if "data-sources" in bucket_name and "/" not in file_key:
         try:
-            query_type = "create"
+            query_type = "create"  # Type of operation on the audit db
             message_id = str(uuid4())  # Assign a unique message_id for the file
             if "message_id" in record:
                 message_id = record["message_id"]
@@ -68,14 +74,15 @@ def handle_record(record) -> dict:
                     vaccine_type=vaccine_type, supplier=supplier
                 )
                 # Process the file
-                status = True
-                status = add_to_audit_table(
+                # TODO rename to add clarity
+                status = True  # Based on the status the file will be forwarded to sqs fifo queue.
+                status = upsert_audit_table(
                     message_id,
                     file_key,
                     created_at_formatted_string,
                     f"{supplier}_{vaccine_type}",
                     "Processing",
-                    query_type
+                    query_type,
                 )
                 if status:
                     make_and_send_sqs_message(
@@ -90,6 +97,7 @@ def handle_record(record) -> dict:
                 logger.info("File '%s' successfully processed", file_key)
 
                 # Return details for logs
+                # TODO Update message
                 return {
                     "statusCode": 200,
                     "message": "Successfully sent to SQS queue",
@@ -99,6 +107,7 @@ def handle_record(record) -> dict:
                     "supplier": supplier,
                 }
             else:
+                # TODO Update the logger
                 logger.info("No files are in queue")
 
         except (  # pylint: disable=broad-exception-caught
@@ -111,15 +120,16 @@ def handle_record(record) -> dict:
             Exception,
         ) as error:
             logger.error("Error processing file '%s': %s", file_key, str(error))
-            # Process the file
-            add_to_audit_table(
-                message_id,
-                file_key,
-                created_at_formatted_string,
-                f"{supplier}_{vaccine_type}",
-                "Processed",
-                query_type
-            )
+            # Process the file if the error is not of type Duplicate since it is already updated in audit table
+            if not isinstance(error, DuplicateFileError):
+                upsert_audit_table(
+                    message_id,
+                    file_key,
+                    created_at_formatted_string,
+                    f"{supplier}_{vaccine_type}",
+                    "Processed",
+                    query_type,
+                )
             # Create ack file
             # (note that error may have occurred before message_id and created_at_formatted_string were generated)
             message_delivered = False
@@ -132,9 +142,13 @@ def handle_record(record) -> dict:
             )
             destination_key = f"archive/{file_key}"
             move_file(bucket_name, file_key, destination_key)
-            file_key, message_id = check_queue(f"{supplier}_{vaccine_type}")
+            # Following code will get executed in case of duplicate scenario, vaccine permission error, etc
+            file_key, message_id = get_queued_file_details(f"{supplier}_{vaccine_type}")
             if file_key and message_id is not None:
-                invoke_lambda(FILE_NAME_PROC_LAMBDA_NAME, bucket_name, file_key, message_id)
+                invoke_filename_lambda(
+                    FILE_NAME_PROC_LAMBDA_NAME, bucket_name, file_key, message_id
+                )
+
             status_code_map = {
                 VaccineTypePermissionsError: 403,
                 InvalidFileKeyError: 400,  # Includes invalid ODS code, therefore unable to identify supplier

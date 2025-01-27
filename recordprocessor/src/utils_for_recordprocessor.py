@@ -26,7 +26,7 @@ def create_diagnostics_dictionary(error_type, status_code, error_message) -> dic
     return {"error_type": error_type, "statusCode": status_code, "error_message": error_message}
 
 
-def invoke_lambda(file_name_processor, source_bucket_name, file_key, message_id):
+def invoke_filename_lambda(file_name_processor, source_bucket_name, file_key, message_id):
     try:
         lambda_payload = {"Records": [
             {
