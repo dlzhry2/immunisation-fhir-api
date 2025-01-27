@@ -75,7 +75,7 @@ def lambda_handler(event, context):
             # IMPORTANT NOTE: An assumption is made here that the file_key and created_at_formatted_string are the same
             # for all messages in the event. The use of FIFO SQS queues ensures that this is the case.
             file_key = incoming_message_body[0].get("file_key")
-            message_id = (incoming_message_body[0].get("row_id")).splint("^")[0]
+            message_id = (incoming_message_body[0].get("row_id")).split("^")[0]
             vaccine_type = incoming_message_body[0].get("vaccine_type")
             supplier = incoming_message_body[0].get("supplier")
             supplier_queue = f"{supplier}_{vaccine_type}"
