@@ -2,10 +2,27 @@
 
 import json
 from decimal import Decimal
-from constants import Urls
-from mappings import Vaccine
+from enum import Enum
 
 REGION_NAME = "eu-west-2"
+
+
+class Urls:
+    """Urls"""
+
+    SNOMED = "http://snomed.info/sct"
+    NHS_NUMBER = "https://fhir.nhs.uk/Id/nhs-number"
+    NULL_FLAVOUR_CODES = "http://terminology.hl7.org/CodeSystem/v3-NullFlavor"
+    VACCINATION_PROCEDURE = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
+
+
+class Vaccine(Enum):
+    """Disease Codes"""
+
+    COVID_19: str = "COVID19"
+    FLU: str = "FLU"
+    MMR: str = "MMR"
+    RSV: str = "RSV"
 
 
 class MockUniqueIdUris:
@@ -180,6 +197,8 @@ class FileDetails:
         self.create_permissions_only = [f"{vaccine_type}_CREATE"]
         self.update_permissions_only = [f"{vaccine_type}_UPDATE"]
         self.delete_permissions_only = [f"{vaccine_type}_DELETE"]
+
+        self.queue_name = f"{supplier}_{vaccine_type}"
 
         self.base_event = {
             "message_id": self.message_id,

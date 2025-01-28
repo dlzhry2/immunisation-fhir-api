@@ -6,7 +6,6 @@ from io import StringIO
 import csv
 import boto3
 from moto import mock_s3
-from utils_for_recordprocessor import get_environment, get_csv_content_dict_reader, create_diagnostics_dictionary
 from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import GenericSetUp, GenericTearDown
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
     MOCK_ENVIRONMENT_DICT,
@@ -15,6 +14,10 @@ from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests impo
     BucketNames,
     REGION_NAME,
 )
+
+with patch("os.environ", MOCK_ENVIRONMENT_DICT):
+    from utils_for_recordprocessor import get_environment, get_csv_content_dict_reader, create_diagnostics_dictionary
+
 
 s3_client = boto3.client("s3", region_name=REGION_NAME)
 test_file = MockFileDetails.rsv_emis

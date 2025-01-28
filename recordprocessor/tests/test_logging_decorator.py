@@ -2,15 +2,13 @@
 
 import unittest
 from unittest.mock import patch
+from contextlib import ExitStack
 from datetime import datetime
 import json
 from copy import deepcopy
 from boto3 import client as boto3_client
 from moto import mock_s3, mock_firehose
-from file_level_validation import file_level_validation
-from logging_decorator import send_log_to_firehose, generate_and_send_logs
-from clients import REGION_NAME
-from errors import InvalidHeaders, NoOperationPermissions
+
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
     MOCK_ENVIRONMENT_DICT,
     MockFileDetails,
@@ -18,6 +16,14 @@ from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests impo
     ValidMockFileContent,
     Firehose,
 )
+
+with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
+    from clients import REGION_NAME
+    from errors import InvalidHeaders, NoOperationPermissions
+    from logging_decorator import send_log_to_firehose, generate_and_send_logs
+    from file_level_validation import file_level_validation
+
+
 from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import GenericSetUp, GenericTearDown
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
@@ -46,6 +52,24 @@ class TestLoggingDecorator(unittest.TestCase):
 
     def tearDown(self):
         GenericTearDown(s3_client, firehose_client)
+
+    def run(self, result=None):
+        """
+        This method is run by Unittest, and is being utilised here to apply common patches to all of the tests in the
+        class. Using ExitStack allows multiple patches to be applied, whilst ensuring that the mocks are cleaned up
+        after the test has run.
+        """
+        # Set up common patches to be applied to all tests in the class.
+        # These patches can be overridden in individual tests.
+        common_patches = [
+            patch("file_level_validation.change_audit_table_status_to_processed"),
+            patch("file_level_validation.get_next_queued_file_details", return_value=None),
+        ]
+
+        with ExitStack() as stack:
+            for common_patch in common_patches:
+                stack.enter_context(common_patch)
+            super().run(result)
 
     def test_send_log_to_firehose(self):
         """

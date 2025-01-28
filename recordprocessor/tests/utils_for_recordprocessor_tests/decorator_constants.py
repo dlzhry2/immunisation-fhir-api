@@ -1,14 +1,32 @@
 """Constants for use when testing decorators"""
 
+from enum import Enum
 from decimal import Decimal
-from src.constants import Urls
-from src.mappings import Vaccine
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import TargetDiseaseElements
 
 VALID_NHS_NUMBER = "1345678940"
 ADDRESS_UNKNOWN_POSTCODE = "ZZ99 3WZ"
 
+
+class Vaccine(Enum):
+    """Disease Codes"""
+
+    COVID_19: str = "COVID19"
+    FLU: str = "FLU"
+    MMR: str = "MMR"
+    RSV: str = "RSV"
+
+
 RSV_TARGET_DISEASE_ELEMENT = getattr(TargetDiseaseElements, Vaccine.RSV.value)
+
+
+class Urls:
+    """Urls"""
+
+    SNOMED = "http://snomed.info/sct"
+    NHS_NUMBER = "https://fhir.nhs.uk/Id/nhs-number"
+    NULL_FLAVOUR_CODES = "http://terminology.hl7.org/CodeSystem/v3-NullFlavor"
+    VACCINATION_PROCEDURE = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
 
 
 class ExtensionItems:
