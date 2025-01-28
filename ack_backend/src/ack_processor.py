@@ -2,10 +2,7 @@
 
 import json
 from typing import Union
-from logging_decorators import (
-    ack_lambda_handler_logging_decorator,
-    convert_messsage_to_ack_row_logging_decorator,
-)
+from logging_decorators import ack_lambda_handler_logging_decorator, convert_messsage_to_ack_row_logging_decorator
 from update_ack_file import update_ack_file, create_ack_data
 
 
@@ -20,9 +17,7 @@ def get_error_message_for_ack_file(message_diagnostics) -> Union[None, str]:
     if message_diagnostics.get("statusCode") in (None, 500):
         return "An unhandled error occurred during batch processing"
 
-    return message_diagnostics.get(
-        "error_message", "Unable to determine diagnostics issue"
-    )
+    return message_diagnostics.get("error_message", "Unable to determine diagnostics issue")
 
 
 @convert_messsage_to_ack_row_logging_decorator
@@ -37,8 +32,7 @@ def convert_message_to_ack_row(message, created_at_formatted_string):
         created_at_formatted_string=created_at_formatted_string,
         local_id=message.get("local_id"),
         row_id=message.get("row_id"),
-        successful_api_response=diagnostics
-        is None,  # Response is successful if and only if there are no diagnostics
+        successful_api_response=diagnostics is None,  # Response is successful if and only if there are no diagnostics
         diagnostics=get_error_message_for_ack_file(diagnostics),
         imms_id=message.get("imms_id"),
     )
@@ -53,9 +47,7 @@ def lambda_handler(event, context):
     """
 
     if not event.get("Records"):
-        raise ValueError(
-            "Error in ack_processor_lambda_handler: No records found in the event"
-        )
+        raise ValueError("Error in ack_processor_lambda_handler: No records found in the event")
 
     file_key = None
     created_at_formatted_string = None
@@ -67,9 +59,7 @@ def lambda_handler(event, context):
         try:
             incoming_message_body = json.loads(record["body"])
         except Exception as body_json_error:
-            raise ValueError(
-                "Could not load incoming message body"
-            ) from body_json_error
+            raise ValueError("Could not load incoming message body") from body_json_error
 
         if i == 0:
             # IMPORTANT NOTE: An assumption is made here that the file_key and created_at_formatted_string are the same
@@ -79,18 +69,12 @@ def lambda_handler(event, context):
             vaccine_type = incoming_message_body[0].get("vaccine_type")
             supplier = incoming_message_body[0].get("supplier")
             supplier_queue = f"{supplier}_{vaccine_type}"
-            created_at_formatted_string = incoming_message_body[0].get(
-                "created_at_formatted_string"
-            )
+            created_at_formatted_string = incoming_message_body[0].get("created_at_formatted_string")
 
         for message in incoming_message_body:
-            ack_data_rows.append(
-                convert_message_to_ack_row(message, created_at_formatted_string)
-            )
+            ack_data_rows.append(convert_message_to_ack_row(message, created_at_formatted_string))
 
-    update_ack_file(
-        file_key, message_id, supplier_queue, created_at_formatted_string, ack_data_rows
-    )
+    update_ack_file(file_key, message_id, supplier_queue, created_at_formatted_string, ack_data_rows)
 
     return {
         "statusCode": 200,
