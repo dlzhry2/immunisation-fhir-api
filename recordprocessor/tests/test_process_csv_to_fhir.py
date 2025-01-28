@@ -10,12 +10,11 @@ from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests impor
     GenericTearDown,
 )
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
-    MOCK_ENVIRONMENT_DICT,
     MockFileDetails,
     ValidMockFileContent,
-    BucketNames,
     REGION_NAME,
 )
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames
 
 with patch("os.environ", MOCK_ENVIRONMENT_DICT):
     from batch_processing import process_csv_to_fhir

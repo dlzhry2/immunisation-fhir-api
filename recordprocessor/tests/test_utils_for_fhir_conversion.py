@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import patch
 from decimal import Decimal
-from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import MOCK_ENVIRONMENT_DICT
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
 
 with patch("os.environ", MOCK_ENVIRONMENT_DICT):
     from constants import Urls

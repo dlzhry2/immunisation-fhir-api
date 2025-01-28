@@ -13,18 +13,16 @@ from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests impor
     GenericTearDown,
 )
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
-    Kinesis,
-    MOCK_ENVIRONMENT_DICT,
     MockFileDetails,
     FileDetails,
     ValidMockFileContent,
-    BucketNames,
     MockFhirImmsResources,
     MockFieldDictionaries,
     MockLocalIds,
     InfAckFileRows,
     REGION_NAME,
 )
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames, Kinesis
 
 with patch("os.environ", MOCK_ENVIRONMENT_DICT):
     from constants import Diagnostics

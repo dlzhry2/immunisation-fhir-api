@@ -8,12 +8,11 @@ import boto3
 from moto import mock_s3
 from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import GenericSetUp, GenericTearDown
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
-    MOCK_ENVIRONMENT_DICT,
     MockFileDetails,
     ValidMockFileContent,
-    BucketNames,
     REGION_NAME,
 )
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames
 
 with patch("os.environ", MOCK_ENVIRONMENT_DICT):
     from utils_for_recordprocessor import get_environment, get_csv_content_dict_reader, create_diagnostics_dictionary

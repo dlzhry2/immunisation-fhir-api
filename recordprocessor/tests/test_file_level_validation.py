@@ -6,11 +6,8 @@ from unittest.mock import patch
 # If mock_s3 is not imported here then tests in other files fail when running 'make test'. It is not clear why this is.
 from moto import mock_s3  # noqa: F401
 from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import convert_string_to_dict_reader
-from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
-    MOCK_ENVIRONMENT_DICT,
-    MockFileDetails,
-    ValidMockFileContent,
-)
+from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import MockFileDetails, ValidMockFileContent
+from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import MOCK_ENVIRONMENT_DICT
 
 with patch("os.environ", MOCK_ENVIRONMENT_DICT):
     from errors import NoOperationPermissions, InvalidHeaders

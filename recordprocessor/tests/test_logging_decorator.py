@@ -9,11 +9,10 @@ from copy import deepcopy
 from boto3 import client as boto3_client
 from moto import mock_s3, mock_firehose
 
-from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
+from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import MockFileDetails, ValidMockFileContent
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import (
     MOCK_ENVIRONMENT_DICT,
-    MockFileDetails,
     BucketNames,
-    ValidMockFileContent,
     Firehose,
 )
 

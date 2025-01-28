@@ -1,32 +1,19 @@
 """Constants for use when testing decorators"""
 
-from enum import Enum
+from unittest.mock import patch
 from decimal import Decimal
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import TargetDiseaseElements
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
+
+with patch("os.environ", MOCK_ENVIRONMENT_DICT):
+    from constants import Urls
+    from mappings import Vaccine
+
 
 VALID_NHS_NUMBER = "1345678940"
 ADDRESS_UNKNOWN_POSTCODE = "ZZ99 3WZ"
 
-
-class Vaccine(Enum):
-    """Disease Codes"""
-
-    COVID_19: str = "COVID19"
-    FLU: str = "FLU"
-    MMR: str = "MMR"
-    RSV: str = "RSV"
-
-
 RSV_TARGET_DISEASE_ELEMENT = getattr(TargetDiseaseElements, Vaccine.RSV.value)
-
-
-class Urls:
-    """Urls"""
-
-    SNOMED = "http://snomed.info/sct"
-    NHS_NUMBER = "https://fhir.nhs.uk/Id/nhs-number"
-    NULL_FLAVOUR_CODES = "http://terminology.hl7.org/CodeSystem/v3-NullFlavor"
-    VACCINATION_PROCEDURE = "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure"
 
 
 class ExtensionItems:
