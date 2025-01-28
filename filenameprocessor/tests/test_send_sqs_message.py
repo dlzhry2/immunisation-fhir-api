@@ -26,7 +26,10 @@ class TestSendSQSMessage(TestCase):
         # Set up the sqs_queue
         queue_url = sqs_client.create_queue(QueueName=Sqs.QUEUE_NAME, Attributes=Sqs.ATTRIBUTES)["QueueUrl"]
 
-        self.assertIsNone(send_to_supplier_queue(deepcopy(FILE_DETAILS.sqs_message_body)))
+        message_body = deepcopy(FILE_DETAILS.sqs_message_body)
+        vaccine_type = message_body["vaccine_type"]
+        supplier = message_body["supplier"]
+        self.assertIsNone(send_to_supplier_queue(message_body, vaccine_type, supplier))
 
         # Assert that correct message has reached the queue
         messages = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1)
@@ -34,24 +37,33 @@ class TestSendSQSMessage(TestCase):
 
     def test_send_to_supplier_queue_failure_due_to_queue_does_not_exist(self):
         """Test send_to_supplier_queue function for a failed message send due to queue not existing"""
+        message_body = deepcopy(FILE_DETAILS.sqs_message_body)
+        vaccine_type = message_body["vaccine_type"]
+        supplier = message_body["supplier"]
         with self.assertRaises(UnhandledSqsError) as context:
-            send_to_supplier_queue(deepcopy(FILE_DETAILS.sqs_message_body))
+            send_to_supplier_queue(message_body, vaccine_type, supplier)
         self.assertIn("An unexpected error occurred whilst sending to SQS", str(context.exception))
 
-    def test_send_to_supplier_queue_failure_due_to_absent_supplier(self):
+    def test_send_to_supplier_queue_failure_due_to_absent_supplier_or_vaccine_type(self):
         """Test send_to_supplier_queue function for a failed message send"""
-        mock_sqs_client = boto3_client("sqs", region_name=REGION_NAME)
-        mock_sqs_client.send_message = MagicMock()
-        mock_sqs_client.create_queue(QueueName=Sqs.QUEUE_NAME, Attributes=Sqs.ATTRIBUTES)
+        keys_to_set_to_empty = ["supplier", "vaccine_type"]
+        for key_to_set_to_empty in keys_to_set_to_empty:
+            with self.subTest(f"{key_to_set_to_empty} set to empty string"):
+                mock_sqs_client = boto3_client("sqs", region_name=REGION_NAME)
+                mock_sqs_client.send_message = MagicMock()
+                mock_sqs_client.create_queue(QueueName=Sqs.QUEUE_NAME, Attributes=Sqs.ATTRIBUTES)
+                with patch("send_sqs_message.sqs_client", mock_sqs_client):
+                    with self.assertRaises(InvalidSupplierError) as context:
+                        message_body = {**deepcopy(FILE_DETAILS.sqs_message_body), key_to_set_to_empty: ""}
+                        vaccine_type = message_body["vaccine_type"]
+                        supplier = message_body["supplier"]
+                        send_to_supplier_queue(message_body, supplier, vaccine_type)
 
-        with patch("send_sqs_message.sqs_client", mock_sqs_client):
-            with self.assertRaises(InvalidSupplierError) as context:
-                message_body = deepcopy(FILE_DETAILS.sqs_message_body)
-                message_body["supplier"] = ""
-                send_to_supplier_queue(message_body)
-
-        self.assertEqual(str(context.exception), "Message not sent to supplier queue as unable to identify supplier")
-        mock_sqs_client.send_message.assert_not_called()
+                self.assertEqual(
+                    str(context.exception),
+                    "Message not sent to supplier queue as unable to identify supplier and/ or vaccine type",
+                )
+                mock_sqs_client.send_message.assert_not_called()
 
     def test_make_and_send_sqs_message_success(self):
         """Test make_and_send_sqs_message function for a successful message send"""

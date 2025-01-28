@@ -9,7 +9,6 @@ from copy import deepcopy
 from boto3 import client as boto3_client
 from moto import mock_s3, mock_sqs
 from clients import REGION_NAME
-from file_name_processor import lambda_handler
 from supplier_permissions import PERMISSIONS_CONFIG_FILE_KEY
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
 from tests.utils_for_tests.values_for_tests import (
@@ -19,6 +18,11 @@ from tests.utils_for_tests.values_for_tests import (
     Sqs,
     MockFileDetails,
 )
+
+# Some environment variables are evaluated when lambda handler is imported,
+# so environment dictionary must be mocked first
+with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
+    from file_name_processor import lambda_handler
 
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
@@ -44,7 +48,7 @@ class TestLambdaHandlerDataSource(TestCase):
             # (it is already unittested separately).
             patch("file_name_processor.get_created_at_formatted_string", return_value=MOCK_CREATED_AT_FORMATTED_STRING),
             # Patch add_to_audit_table to prevent it from being called (it is already unittested separately).
-            patch("file_name_processor.add_to_audit_table"),
+            patch("file_name_processor.upsert_audit_table"),
             # Patch the firehose client to prevent it from being called.
             patch("logging_decorator.firehose_client.put_record"),
         ]
@@ -94,12 +98,18 @@ class TestLambdaHandlerDataSource(TestCase):
                         "supplier_permissions.redis_client.get", return_value=permissions_config_content  # noqa: E999
                     ),  # noqa: E999
                     patch("file_name_processor.uuid4", return_value=file_details.message_id),  # noqa: E999
-                    patch("file_name_processor.add_to_audit_table") as mock_add_to_audit_table,  # noqa: E999
+                    patch("file_name_processor.ensure_file_is_not_a_duplicate"),  # noqa: E999
+                    patch("file_name_processor.upsert_audit_table") as mock_upsert_audit_table,  # noqa: E999
                 ):  # noqa: E999
                     lambda_handler(self.make_event(file_details.file_key), None)
 
-                mock_add_to_audit_table.assert_called_with(
-                    file_details.message_id, file_details.file_key, MOCK_CREATED_AT_FORMATTED_STRING
+                mock_upsert_audit_table.assert_called_with(
+                    file_details.message_id,
+                    file_details.file_key,
+                    MOCK_CREATED_AT_FORMATTED_STRING,
+                    f"{file_details.supplier}_{file_details.vaccine_type}",
+                    "Processing",
+                    False,
                 )
 
                 # Check if the message was sent to the SQS queue
@@ -113,7 +123,10 @@ class TestLambdaHandlerDataSource(TestCase):
         test_file_key = "InvalidVaccineType_Vaccinations_v5_YGM41_20240708T12130100.csv"
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=test_file_key)
 
-        with patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue:  # noqa: E999
+        with (  # noqa: E999
+            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("file_name_processor.get_next_queued_file_details", return_value=None),  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
@@ -129,6 +142,7 @@ class TestLambdaHandlerDataSource(TestCase):
         with (  # noqa: E999
             patch("supplier_permissions.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("file_name_processor.get_next_queued_file_details", return_value=None),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(file_details.file_key), context=None)
 
