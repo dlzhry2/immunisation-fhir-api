@@ -55,7 +55,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
                     del performer["actor"]["identifier"]["system"]
 
         expected_errors = [
-            "contained[?(@.resourceType=='Patient')].name[0].family is a mandatory field",
+            "Validation errors: contained[?(@.resourceType=='Patient')].name[0].family is a mandatory field",
             "performer[?(@.actor.type=='Organization')].actor.identifier.system is a mandatory field",
         ]
 
@@ -65,7 +65,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
 
         # extract the error messages from the exception
         actual_errors = str(cm.exception).split("; ")
-
+       
         # assert length of errors
         assert len(actual_errors) == len(expected_errors)
 
@@ -84,7 +84,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         values and rejects missing data
         """
         all_target_disease_codes_field_location = (
-            "protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
+            "Validation errors: protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
         )
         first_target_disease_code_field_location = (
             "protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
@@ -106,8 +106,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             valid_json_data=deepcopy(self.completed_json_data[VaccineTypes.covid_19]),
             field_location=all_target_disease_codes_field_location,
             invalid_value="INVALID_VALUE",
-            expected_error_message=f"{all_target_disease_codes_field_location}"
-            + " - ['INVALID_VALUE'] is not a valid combination of disease codes for this service",
+            expected_error_message=f"Validation errors: {all_target_disease_codes_field_location} - ['INVALID_VALUE'] is not a valid combination of disease codes for this service",
         )
 
         # Test that an invalid combination of disease codes is rejected
@@ -122,7 +121,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             valid_json_data=deepcopy(self.completed_json_data[VaccineTypes.covid_19]),
             field_location="protocolApplied[0].targetDisease",
             invalid_value=invalid_target_disease,
-            expected_error_message=f"{all_target_disease_codes_field_location} - "
+            expected_error_message=f"Validation errors: {all_target_disease_codes_field_location} - "
             + "['14189004', 'INVALID', '36653000'] is not a valid combination"
             + " of disease codes for this service",
         )
@@ -160,7 +159,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         """Test that the JSON data is rejected if it does not contain patient_name_given"""
         valid_json_data = deepcopy(self.completed_json_data[VaccineTypes.rsv])
         patient_name_given_field_location = "contained[?(@.resourceType=='Patient')].name[0].given"
-        expected_error_message = f"{patient_name_given_field_location} is a mandatory field"
+        expected_error_message = f"Validation errors: {patient_name_given_field_location} is a mandatory field"
 
         # Case 1: No name field fails validation
         patient_name_field_location = "contained[?(@.resourceType=='Patient')].name"
@@ -208,7 +207,8 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         invalid_json_data = parse(patient_name_field_location).filter(lambda d: True, deepcopy(valid_json_data))
         with self.assertRaises(ValueError) as error:
             self.validator.validate(invalid_json_data)
-        self.assertIn(expected_error_message, str(error.exception))
+        actual_erorr = str(error.exception).replace("Validation errors: ", "")
+        self.assertIn(expected_error_message, actual_erorr)
 
         # Case 2: One name instance with no given field fails validation
         MandationTests.test_missing_mandatory_field_rejected(self, patient_name_family_field_location)
@@ -224,7 +224,8 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         json_data = update_contained_resource_field(json_data, "Patient", "name", invalid_name_array)
         with self.assertRaises(ValueError) as error:
             self.validator.validate(json_data)
-        self.assertEqual(expected_error_message, str(error.exception))
+        actual_erorr = str(error.exception).replace("Validation errors: ", "")
+        self.assertEqual(expected_error_message, actual_erorr)
 
     def test_post_patient_birth_date(self):
         """Test that the JSON data is rejected if it does not contain patient_birth_date"""
