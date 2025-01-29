@@ -85,7 +85,11 @@ jobs:
           if [ -s failed_tests.txt ]; then
             echo "The following tests failed:"
             cat failed_tests.txt
-            echo "##[error]Test Failures: $(cat failed_tests.txt)"
+
+            while IFS= read -r line; do
+              echo "##[error]Test Failures: $line"
+            done < failed_tests.txt
+            
             exit 1
           else
             echo "All tests passed."
