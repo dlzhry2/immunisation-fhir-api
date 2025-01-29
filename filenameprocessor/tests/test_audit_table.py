@@ -12,8 +12,6 @@ from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT
 # so environment dictionary must be mocked first
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from constants import AuditTableKeys, AUDIT_TABLE_NAME, AUDIT_TABLE_QUEUE_NAME_GSI, AUDIT_TABLE_FILENAME_GSI
-
-    # This import must be AFTER the constants import for environment mocking to work. The reason for this is unclear.
     from audit_table import upsert_audit_table
 
 
