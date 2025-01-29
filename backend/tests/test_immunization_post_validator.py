@@ -84,7 +84,7 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
         values and rejects missing data
         """
         all_target_disease_codes_field_location = (
-            "Validation errors: protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
+            "protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
         )
         first_target_disease_code_field_location = (
             "protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
@@ -106,7 +106,8 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             valid_json_data=deepcopy(self.completed_json_data[VaccineTypes.covid_19]),
             field_location=all_target_disease_codes_field_location,
             invalid_value="INVALID_VALUE",
-            expected_error_message=f"Validation errors: {all_target_disease_codes_field_location} - ['INVALID_VALUE'] is not a valid combination of disease codes for this service",
+            expected_error_message=f"{all_target_disease_codes_field_location}"
+            + " - ['INVALID_VALUE'] is not a valid combination of disease codes for this service",
         )
 
         # Test that an invalid combination of disease codes is rejected
@@ -121,13 +122,14 @@ class TestImmunizationModelPostValidationRules(unittest.TestCase):
             valid_json_data=deepcopy(self.completed_json_data[VaccineTypes.covid_19]),
             field_location="protocolApplied[0].targetDisease",
             invalid_value=invalid_target_disease,
-            expected_error_message=f"Validation errors: {all_target_disease_codes_field_location} - "
+            expected_error_message=f"{all_target_disease_codes_field_location} - "
             + "['14189004', 'INVALID', '36653000'] is not a valid combination"
             + " of disease codes for this service",
         )
 
         # Test that json data which doesn't contain a targetDisease code is rejected
-        MandationTests.test_missing_mandatory_field_rejected(self, first_target_disease_code_field_location)
+        expected_error_message = f"{first_target_disease_code_field_location} is a mandatory field"
+        MandationTests.test_missing_mandatory_field_rejected(self, first_target_disease_code_field_location, None, expected_error_message)
 
     def test_post_vaccination_procedure_code(self):
         """Test that the JSON data is rejected if it does not contain vaccination_procedure_code"""
