@@ -6,7 +6,7 @@ from utils_for_ack_lambda import get_environment
 ENVIRONMENT = get_environment()
 SOURCE_BUCKET_NAME = f"immunisation-batch-{ENVIRONMENT}-data-sources"
 ACK_BUCKET_NAME = os.getenv("ACK_BUCKET_NAME")
-AUDIT_TABLE_NAME = os.environ["AUDIT_TABLE_NAME"]
+AUDIT_TABLE_NAME = os.getenv("AUDIT_TABLE_NAME")
 AUDIT_TABLE_FILENAME_GSI = "filename_index"
 AUDIT_TABLE_QUEUE_NAME_GSI = "queue_name_index"
 FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")

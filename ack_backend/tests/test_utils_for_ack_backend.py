@@ -8,7 +8,8 @@ REGION_NAME = "eu-west-2"
 class BucketNames:
     """Bucket Names for testing"""
 
-    DESTINATION = "immunisation-batch-internal-test-data-destinations"
+    SOURCE = "immunisation-batch-internal-dev-data-sources"
+    DESTINATION = "immunisation-batch-internal-dev-data-destinations"
     MOCK_FIREHOSE = "mock-firehose-bucket"
 
 
@@ -21,12 +22,15 @@ class Firehose:
 MOCK_ENVIRONMENT_DICT = {
     "ACK_BUCKET_NAME": BucketNames.DESTINATION,
     "FIREHOSE_STREAM_NAME": Firehose.STREAM_NAME,
+    "AUDIT_TABLE_NAME": "immunisation-batch-internal-dev-audit-table",
+    "ENVIRONMENT": "internal-dev",
 }
 
 
 class DefaultValues:
     """Class to hold default values for tests"""
 
+    message_id = "test_file_id"
     row_id = "test_file_id#1"
     local_id = "test_system_uri^testabc"
     imms_id = "test_imms_id"
@@ -244,7 +248,7 @@ class GenericSetUp:
     def __init__(self, s3_client=None, firehose_client=None):
 
         if s3_client:
-            for bucket_name in [BucketNames.DESTINATION, BucketNames.MOCK_FIREHOSE]:
+            for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION, BucketNames.MOCK_FIREHOSE]:
                 s3_client.create_bucket(
                     Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME}
                 )
@@ -267,7 +271,7 @@ class GenericTearDown:
     def __init__(self, s3_client=None, firehose_client=None):
 
         if s3_client:
-            for bucket_name in [BucketNames.DESTINATION]:
+            for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION, BucketNames.MOCK_FIREHOSE]:
                 for obj in s3_client.list_objects_v2(Bucket=bucket_name).get("Contents", []):
                     s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
                 s3_client.delete_bucket(Bucket=bucket_name)
@@ -288,6 +292,7 @@ class MessageDetails:
         supplier: str,
         ods_code: str,
         operation_requested: str = DefaultValues.operation_requested,
+        message_id: str = DefaultValues.message_id,
         row_id: str = DefaultValues.row_id,
         local_id: str = DefaultValues.local_id,
         imms_id: str = DefaultValues.imms_id,
@@ -295,17 +300,23 @@ class MessageDetails:
     ):
         self.name = f"{vaccine_type.upper()}/ {supplier.upper()} {operation_requested} message"
         self.file_key = f"{vaccine_type}_Vaccinations_v5_{ods_code}_20210730T12000000.csv"
-        self.ack_file_key = (
+        self.temp_ack_file_key = (
+            f"TempAck/{vaccine_type}_Vaccinations_v5_{ods_code}_20210730T12000000_BusAck_20211120T12000000.csv"
+        )
+        self.archive_ack_file_key = (
             f"forwardedFile/{vaccine_type}_Vaccinations_v5_{ods_code}_20210730T12000000_BusAck_20211120T12000000.csv"
         )
         self.vaccine_type = vaccine_type
         self.ods_code = ods_code
         self.supplier = supplier
         self.operation_requested = operation_requested
+        self.message_id = message_id
         self.row_id = row_id
         self.local_id = local_id
         self.imms_id = imms_id
         self.created_at_formatted_string = created_at_formatted_string
+
+        self.queue_name = f"{supplier}_{vaccine_type}"
 
         self.message = {
             "file_key": self.file_key,

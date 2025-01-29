@@ -1,10 +1,11 @@
 import unittest
 from unittest.mock import patch, call
 import json
+from io import StringIO
 from contextlib import ExitStack
 from moto import mock_s3
 from boto3 import client as boto3_client
-from src.ack_processor import lambda_handler
+
 from tests.test_utils_for_ack_backend import (
     ValidValues,
     InvalidValues,
@@ -12,7 +13,11 @@ from tests.test_utils_for_ack_backend import (
     GenericSetUp,
     GenericTearDown,
     MOCK_ENVIRONMENT_DICT,
+    BucketNames,
 )
+
+with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
+    from src.ack_processor import lambda_handler
 
 s3_client = boto3_client("s3")
 
@@ -22,6 +27,15 @@ s3_client = boto3_client("s3")
 class TestSplunkFunctionInfo(unittest.TestCase):
     def setUp(self):
         GenericSetUp(s3_client)
+
+        # MOCK SOURCE FILE WITH 100 ROWS TO SIMULATE THE SCENARIO WHERE THE ACK FILE IS NO FULL.
+        # TODO: Test all other scenarios.
+        mock_source_file_with_100_rows = StringIO("\n".join(f"Row {i}" for i in range(1, 101)))
+        s3_client.put_object(
+            Bucket=BucketNames.SOURCE,
+            Key=f"processing/{ValidValues.DPSFULL_ack_processor_input.get('file_key')}",
+            Body=mock_source_file_with_100_rows.getvalue(),
+        )
 
     def tearDown(self):
         GenericTearDown(s3_client)
