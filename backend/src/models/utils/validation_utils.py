@@ -23,7 +23,7 @@ def get_target_disease_codes(immunization: dict):
         target_disease = ObtainFieldValue.target_disease(immunization)
     except (KeyError, IndexError) as error:
         raise MandatoryError(
-            f"{obtain_field_location(FieldNames.target_disease_codes)} is a mandatory field"
+            f"Validation errors: {obtain_field_location(FieldNames.target_disease_codes)} is a mandatory field"
         ) from error
 
     # For each item in the target disease list, extract the snomed code
@@ -60,7 +60,7 @@ def convert_disease_codes_to_vaccine_type(disease_codes_input: list) -> Union[st
         )
     except Exception as e:
         raise ValueError(
-            f"protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code - "
+            f"Validation errors: protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code - "
             f"{disease_codes_input} is not a valid combination of disease codes for this service"
         ) from e
 
