@@ -78,7 +78,4 @@ def lambda_handler(event, context):
 
     update_ack_file(file_key, message_id, supplier_queue, created_at_formatted_string, ack_data_rows)
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps("Lambda function executed successfully!"),
-    }
+    return {"statusCode": 200, "body": json.dumps("Lambda function executed successfully!")}

@@ -99,7 +99,9 @@ class TestLambdaHandlerDataSource(TestCase):
                     ),  # noqa: E999
                     patch("file_name_processor.uuid4", return_value=file_details.message_id),  # noqa: E999
                     patch("file_name_processor.ensure_file_is_not_a_duplicate"),  # noqa: E999
-                    patch("file_name_processor.upsert_audit_table") as mock_upsert_audit_table,  # noqa: E999
+                    patch(  # noqa: E999
+                        "file_name_processor.upsert_audit_table", return_value=False  # noqa: E999
+                    ) as mock_upsert_audit_table,  # noqa: E999
                 ):  # noqa: E999
                     lambda_handler(self.make_event(file_details.file_key), None)
 

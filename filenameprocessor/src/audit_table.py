@@ -45,9 +45,9 @@ def upsert_audit_table(
     is_existing_file: bool,
 ) -> bool:
     """
-    Updates the audit table with the file details. Returns a bool indicating whether the file is ready to process
-    (i.e. if the file has passed initial validation and there are no other files in the queue, then the file is ready
-    to be sent for row level processing.)
+    Updates the audit table with the file details. Returns a bool indicating whether the file status is queued
+    (i.e. if the file has passed initial validation and there are no other files in the queue, then the file is status
+    will be 'processing' and the file is ready to be sent for row level processing.)
     """
     try:
         # If the file is not new, then the lambda has been invoked by the next file in the queue for processing
@@ -64,21 +64,22 @@ def upsert_audit_table(
                 "%s file set for processing, and the status successfully updated in audit table",
                 file_key,
             )
-            return True
+            return False
 
         # If the file is not already processed, check whether there is a file ahead in the queue already processing
-        file_in_same_queue_already_processing = False
         if file_status not in (FileStatus.PROCESSED, FileStatus.DUPLICATE):
-            queue_response = dynamodb_resource.Table(AUDIT_TABLE_NAME).query(
+            files_in_processing = dynamodb_resource.Table(AUDIT_TABLE_NAME).query(
                 IndexName=AUDIT_TABLE_QUEUE_NAME_GSI,
                 KeyConditionExpression=Key(AuditTableKeys.QUEUE_NAME).eq(queue_name)
                 & Key(AuditTableKeys.STATUS).eq(FileStatus.PROCESSING),
             )
-            # TODO: Is the above logic correct?
-            if queue_response["Items"]:
+            # TODO: There is a short time lag between a file being marked as processed, and the next queued file being
+            # marked as processing. If a third file is added to the queue during this time this could result in
+            # two files processing simultanously. This is a known issue which needs to be addressed in a future
+            # iteration.
+            if files_in_processing["Items"]:
                 file_status = FileStatus.QUEUED
                 logger.info("%s file queued for processing", file_key)
-                file_in_same_queue_already_processing = True
 
         # Add to the audit table (regardless of whether it is a duplicate)
         dynamodb_client.put_item(
@@ -98,8 +99,8 @@ def upsert_audit_table(
             message_id,
         )
 
-        # If processing exists for supplier_vaccine, return false as this file must queue for processing
-        return False if file_in_same_queue_already_processing else True
+        # Return a bool indicating whether the file status is queued
+        return True if file_status == FileStatus.QUEUED else False
 
     except Exception as error:  # pylint: disable = broad-exception-caught
         logger.error(error)

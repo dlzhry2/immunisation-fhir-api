@@ -39,7 +39,7 @@ class TestLoggingDecorator(unittest.TestCase):
         with (  # noqa: E999
             patch("file_name_processor.uuid4", return_value=FILE_DETAILS.message_id),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue"),  # noqa: E999
-            patch("file_name_processor.upsert_audit_table"),  # noqa: E999
+            patch("file_name_processor.upsert_audit_table", return_value=False),  # noqa: E999
             patch("file_name_processor.ensure_file_is_not_a_duplicate"),  # noqa: E999
             patch("supplier_permissions.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
@@ -52,7 +52,7 @@ class TestLoggingDecorator(unittest.TestCase):
             "date_time": "REPLACE THIS VALUE",
             "time_taken": "REPLACE THIS VALUE",
             "statusCode": 200,
-            "message": "Successfully sent to SQS queue",
+            "message": "Successfully sent to SQS for further processing",
             "file_key": FILE_DETAILS.file_key,
             "message_id": FILE_DETAILS.message_id,
             "vaccine_type": FILE_DETAILS.vaccine_type,

@@ -48,6 +48,13 @@ def handle_record(record) -> dict:
     # Excluding file keys containing a "/" is a workaround to prevent the lambda from processing files that
     # are not in the root of the source bucket.
     if "data-sources" in bucket_name and "/" not in file_key:
+
+        # Set default values for file-specific variables
+        message_id = "Message id was not created"
+        created_at_formatted_string = "created_at_time not identified"
+        vaccine_type = "unknown"
+        supplier = "unknown"
+
         try:
             # If the record contains a message_id, then the lambda has been invoked by a file already in the queue
             is_existing_file = "message_id" in record
@@ -56,15 +63,14 @@ def handle_record(record) -> dict:
             message_id = record.get("message_id", str(uuid4()))
 
             created_at_formatted_string = get_created_at_formatted_string(bucket_name, file_key)
-            vaccine_type = "unknown"
-            supplier = "unknown"
+
             vaccine_type, supplier = validate_file_key(file_key)
             permissions = validate_vaccine_type_permissions(vaccine_type=vaccine_type, supplier=supplier)
             if not is_existing_file:
                 ensure_file_is_not_a_duplicate(file_key, created_at_formatted_string)
 
             queue_name = f"{supplier}_{vaccine_type}"
-            ready_to_process = upsert_audit_table(
+            file_status_is_queued = upsert_audit_table(
                 message_id,
                 file_key,
                 created_at_formatted_string,
@@ -73,18 +79,20 @@ def handle_record(record) -> dict:
                 is_existing_file,
             )
 
-            if ready_to_process:
+            if file_status_is_queued:
+                message_for_logs = "File is successfully queued for processing"
+            else:
                 make_and_send_sqs_message(
                     file_key, message_id, permissions, vaccine_type, supplier, created_at_formatted_string
                 )
+                message_for_logs = "Successfully sent to SQS for further processing"
 
-            logger.info("File '%s' successfully processed", file_key)
+            logger.info("Lambda invocation successful for file '%s'", file_key)
 
             # Return details for logs
-            # TODO Update message
             return {
                 "statusCode": 200,
-                "message": "Successfully sent to SQS queue",
+                "message": message_for_logs,
                 "file_key": file_key,
                 "message_id": message_id,
                 "vaccine_type": vaccine_type,
@@ -109,12 +117,7 @@ def handle_record(record) -> dict:
             )
 
             # Create ack file
-            # (note that error may have occurred before message_id and created_at_formatted_string were generated)
             message_delivered = False
-            if "message_id" not in locals():
-                message_id = "Message id was not created"
-            if "created_at_formatted_string" not in locals():
-                created_at_formatted_string = "created_at_time not identified"
             make_and_upload_the_ack_file(message_id, file_key, message_delivered, created_at_formatted_string)
 
             # Move file to archive

@@ -118,7 +118,7 @@ class TestAuditTable(TestCase):
         }
 
         # Add a file to the audit table
-        self.assertTrue(
+        self.assertFalse(
             upsert_audit_table(
                 message_id_1,
                 file_key_1,
@@ -133,7 +133,7 @@ class TestAuditTable(TestCase):
         assert expected_table_item_1 in table_items
 
         # Add another file to the audit table
-        self.assertFalse(
+        self.assertTrue(
             upsert_audit_table(
                 message_id_2,
                 file_key_2,
@@ -149,7 +149,7 @@ class TestAuditTable(TestCase):
         assert expected_table_item_2 in table_items
 
         # Attempt to add the file 1 again
-        self.assertTrue(
+        self.assertFalse(
             upsert_audit_table(
                 message_id_3,
                 file_key_1,
