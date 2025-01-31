@@ -75,7 +75,7 @@ class MandationTests:
 
         # Set the expected error message
         expected_error_message = (
-            expected_error_message if expected_error_message else f"{field_location} is a mandatory field"
+            expected_error_message if expected_error_message else f"Validation errors: {field_location} is a mandatory field"
         )
 
         if is_mandatory_fhir:

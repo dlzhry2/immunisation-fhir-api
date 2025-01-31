@@ -153,4 +153,4 @@ class PostValidators:
         # Raise any errors
         if self.errors:
             all_errors = "; ".join(self.errors)
-            raise ValueError(all_errors)
+            raise ValueError(f"Validation errors: {all_errors}")
