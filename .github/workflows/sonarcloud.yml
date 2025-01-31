@@ -51,7 +51,8 @@ jobs:
         id: recordforwarder
         continue-on-error: true
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)/backend/src:$(pwd)/backend/tests/utils
+          export PYTHONPATH=$PYTHONPATH:$(pwd)/backend
+          pip install poetry pydantic==1.10.13
           poetry run coverage run --source=backend/src -m unittest discover -s backend/tests -p "*batch*.py" || echo "recordforwarder tests failed" >> failed_tests.txt
           poetry run coverage xml -o sonarcloud-coverage-recordforwarder-coverage.xml
 
