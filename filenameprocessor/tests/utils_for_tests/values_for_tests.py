@@ -27,12 +27,14 @@ MOCK_ENVIRONMENT_DICT = {
     "LOCAL_ACCOUNT_ID": "123456789012",
     "PROD_ACCOUNT_ID": "3456789109",
     "CONFIG_BUCKET_NAME": BucketNames.CONFIG,
+    "SOURCE_BUCKET_NAME": BucketNames.SOURCE,
     "ACK_BUCKET_NAME": BucketNames.DESTINATION,
     "QUEUE_URL": "https://sqs.eu-west-2.amazonaws.com/123456789012/imms-batch-internal-dev-metadata-queue.fifo",
     "REDIS_HOST": "localhost",
     "REDIS_PORT": "6379",
     "AUDIT_TABLE_NAME": "immunisation-batch-internal-dev-audit-table",
     "FILE_NAME_GSI": "filename_index",
+    "FILE_NAME_PROC_LAMBDA_NAME": "imms-batch-internal-dev-filenameproc_lambda",
 }
 
 

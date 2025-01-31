@@ -2,21 +2,23 @@
 
 import unittest
 from unittest.mock import patch
-import boto3
 from copy import deepcopy
+import boto3
 from moto import mock_s3, mock_firehose
-from batch_processing import process_csv_to_fhir
 from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import (
     GenericSetUp,
     GenericTearDown,
 )
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
-    MOCK_ENVIRONMENT_DICT,
     MockFileDetails,
     ValidMockFileContent,
-    BucketNames,
     REGION_NAME,
 )
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames
+
+with patch("os.environ", MOCK_ENVIRONMENT_DICT):
+    from batch_processing import process_csv_to_fhir
+
 
 s3_client = boto3.client("s3", region_name=REGION_NAME)
 firehose_client = boto3.client("firehose", region_name=REGION_NAME)
