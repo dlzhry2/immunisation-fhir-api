@@ -16,7 +16,7 @@ from models.errors import (
     UnauthorizedVaxError,
 )
 from tests.utils.generic_utils import update_target_disease_code
-from tests.immunization_utils import create_covid_19_immunization_dict
+from tests.utils.immunization_utils import create_covid_19_immunization_dict
 
 "test"
 
