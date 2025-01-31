@@ -7,25 +7,26 @@ from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from moto import mock_s3, mock_kinesis, mock_firehose
 from boto3 import client as boto3_client
-from batch_processing import main
-from constants import Diagnostics
+
 from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import (
     GenericSetUp,
     GenericTearDown,
 )
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
-    Kinesis,
-    MOCK_ENVIRONMENT_DICT,
     MockFileDetails,
     FileDetails,
     ValidMockFileContent,
-    BucketNames,
     MockFhirImmsResources,
     MockFieldDictionaries,
     MockLocalIds,
     InfAckFileRows,
     REGION_NAME,
 )
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames, Kinesis
+
+with patch("os.environ", MOCK_ENVIRONMENT_DICT):
+    from constants import Diagnostics
+    from batch_processing import main
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
 kinesis_client = boto3_client("kinesis", region_name=REGION_NAME)
@@ -110,7 +111,7 @@ class TestRecordProcessor(unittest.TestCase):
             with self.subTest(test_name):
 
                 kinesis_record = kinesis_records[index]
-                self.assertEqual(kinesis_record["PartitionKey"], mock_rsv_emis_file.supplier)
+                self.assertEqual(kinesis_record["PartitionKey"], mock_rsv_emis_file.queue_name)
                 self.assertEqual(kinesis_record["SequenceNumber"], f"{index+1}")
 
                 # Ensure that arrival times are sequential

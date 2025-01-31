@@ -1,14 +1,19 @@
 """Tests for convert_to_fhir_imms_resource"""
 
 import unittest
-from convert_to_fhir_imms_resource import convert_to_fhir_imms_resource
+from unittest.mock import patch
 
-# Do not attempt 'from src.mappings import Vaccine' as this imports a different instance of Vaccine and tests will break
-from mappings import Vaccine
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
     MockFhirImmsResources,
     MockFieldDictionaries,
 )
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
+
+with patch("os.environ", MOCK_ENVIRONMENT_DICT):
+    # Do not attempt 'from src.mappings import Vaccine' as this imports a different instance of Vaccine
+    # and tests will break
+    from mappings import Vaccine
+    from convert_to_fhir_imms_resource import convert_to_fhir_imms_resource
 
 
 class TestConvertToFhirImmsResource(unittest.TestCase):

@@ -20,3 +20,6 @@ class Urls:
     )
     ods_organization_code = "https://fhir.nhs.uk/Id/ods-organization-code"
     urn_school_number = "https://fhir.hl7.org.uk/Id/urn-school-number"
+
+
+GENERIC_SERVER_ERROR_DIAGNOSTICS_MESSAGE = "Unable to process request. Issue may be transient."
