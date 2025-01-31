@@ -1,15 +1,24 @@
 """Ack lambda handler"""
 
 import json
-from utils_for_ack_lambda import get_environment
 from typing import Union
 from logging_decorators import ack_lambda_handler_logging_decorator, convert_messsage_to_ack_row_logging_decorator
 from update_ack_file import update_ack_file, create_ack_data
-from clients import s3_client
 
 
-ENVIRONMENT = get_environment()
-SOURCE_BUCKET_NAME = f"immunisation-batch-{ENVIRONMENT}-data-sources"
+def get_error_message_for_ack_file(message_diagnostics) -> Union[None, str]:
+    """Determines and returns the error message to be displayed in the ack file"""
+    if message_diagnostics is None:
+        return None
+
+    if not isinstance(message_diagnostics, dict):
+        return "Unable to determine diagnostics issue"
+
+    if message_diagnostics.get("statusCode") in (None, 500):
+        return "An unhandled error occurred during batch processing"
+
+    return message_diagnostics.get("error_message", "Unable to determine diagnostics issue")
+
 
 @convert_messsage_to_ack_row_logging_decorator
 def convert_message_to_ack_row(message, created_at_formatted_string):
@@ -18,24 +27,13 @@ def convert_message_to_ack_row(message, created_at_formatted_string):
     A value error is raised if the file_key or created_at_formatted_string for the message do not match the
     expected values.
     """
-    error_message_for_ack_file: Union[None, str]
-    if (diagnostics := message.get("diagnostics")) is None:
-        error_message_for_ack_file = None
-    elif isinstance(diagnostics, dict):
-        status_code = diagnostics.get("statusCode")
-        if status_code is None or status_code == 500:
-            error_message_for_ack_file = "An unhandled error occurred during batch processing"
-        else:
-            error_message_for_ack_file = diagnostics.get("error_message", "Unable to determine diagnostics issue")
-    else:
-        error_message_for_ack_file = "Unable to determine diagnostics issue"
-
+    diagnostics = message.get("diagnostics")
     return create_ack_data(
         created_at_formatted_string=created_at_formatted_string,
         local_id=message.get("local_id"),
         row_id=message.get("row_id"),
         successful_api_response=diagnostics is None,  # Response is successful if and only if there are no diagnostics
-        diagnostics=error_message_for_ack_file,
+        diagnostics=get_error_message_for_ack_file(diagnostics),
         imms_id=message.get("imms_id"),
     )
 
@@ -53,9 +51,11 @@ def lambda_handler(event, context):
 
     file_key = None
     created_at_formatted_string = None
+    message_id = None
+    supplier_queue = None
 
-    array_of_rows = []
-    
+    ack_data_rows = []
+
     for i, record in enumerate(event["Records"]):
 
         try:
@@ -67,17 +67,15 @@ def lambda_handler(event, context):
             # IMPORTANT NOTE: An assumption is made here that the file_key and created_at_formatted_string are the same
             # for all messages in the event. The use of FIFO SQS queues ensures that this is the case.
             file_key = incoming_message_body[0].get("file_key")
+            message_id = (incoming_message_body[0].get("row_id", "")).split("^")[0]
+            vaccine_type = incoming_message_body[0].get("vaccine_type")
+            supplier = incoming_message_body[0].get("supplier")
+            supplier_queue = f"{supplier}_{vaccine_type}"
             created_at_formatted_string = incoming_message_body[0].get("created_at_formatted_string")
 
         for message in incoming_message_body:
-            array_of_rows.append(convert_message_to_ack_row(message, created_at_formatted_string))
-    row_count = get_row_count_stream(SOURCE_BUCKET_NAME, f"processing/{file_key}")
-    update_ack_file(file_key, created_at_formatted_string=created_at_formatted_string, ack_data_rows=array_of_rows, row_count=row_count)
+            ack_data_rows.append(convert_message_to_ack_row(message, created_at_formatted_string))
+
+    update_ack_file(file_key, message_id, supplier_queue, created_at_formatted_string, ack_data_rows)
+
     return {"statusCode": 200, "body": json.dumps("Lambda function executed successfully!")}
-
-
-def get_row_count_stream(bucket_name, key):
-    response = s3_client.get_object(Bucket=bucket_name, Key=key)
-    count = sum(1 for line in response['Body'].iter_lines() if line.strip())
- 
-    return count

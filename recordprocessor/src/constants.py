@@ -1,62 +1,69 @@
 """Constants for recordprocessor"""
 
+import os
 
-class Constants:
-    """Constants for recordprocessor"""
+SOURCE_BUCKET_NAME = os.getenv("SOURCE_BUCKET_NAME")
+ACK_BUCKET_NAME = os.getenv("ACK_BUCKET_NAME")
+AUDIT_TABLE_NAME = os.getenv("AUDIT_TABLE_NAME")
+AUDIT_TABLE_FILENAME_GSI = "filename_index"
+AUDIT_TABLE_QUEUE_NAME_GSI = "queue_name_index"
+FILE_NAME_PROC_LAMBDA_NAME = os.getenv("FILE_NAME_PROC_LAMBDA_NAME")
 
-    ack_headers = [
-        "MESSAGE_HEADER_ID",
-        "HEADER_RESPONSE_CODE",
-        "ISSUE_SEVERITY",
-        "ISSUE_CODE",
-        "ISSUE_DETAILS_CODE",
-        "RESPONSE_TYPE",
-        "RESPONSE_CODE",
-        "RESPONSE_DISPLAY",
-        "RECEIVED_TIME",
-        "MAILBOX_FROM",
-        "LOCAL_ID",
-        "IMMS_ID",
-        "OPERATION_OUTCOME",
-        "MESSAGE_DELIVERY",
-    ]
+EXPECTED_CSV_HEADERS = [
+    "NHS_NUMBER",
+    "PERSON_FORENAME",
+    "PERSON_SURNAME",
+    "PERSON_DOB",
+    "PERSON_GENDER_CODE",
+    "PERSON_POSTCODE",
+    "DATE_AND_TIME",
+    "SITE_CODE",
+    "SITE_CODE_TYPE_URI",
+    "UNIQUE_ID",
+    "UNIQUE_ID_URI",
+    "ACTION_FLAG",
+    "PERFORMING_PROFESSIONAL_FORENAME",
+    "PERFORMING_PROFESSIONAL_SURNAME",
+    "RECORDED_DATE",
+    "PRIMARY_SOURCE",
+    "VACCINATION_PROCEDURE_CODE",
+    "VACCINATION_PROCEDURE_TERM",
+    "DOSE_SEQUENCE",
+    "VACCINE_PRODUCT_CODE",
+    "VACCINE_PRODUCT_TERM",
+    "VACCINE_MANUFACTURER",
+    "BATCH_NUMBER",
+    "EXPIRY_DATE",
+    "SITE_OF_VACCINATION_CODE",
+    "SITE_OF_VACCINATION_TERM",
+    "ROUTE_OF_VACCINATION_CODE",
+    "ROUTE_OF_VACCINATION_TERM",
+    "DOSE_AMOUNT",
+    "DOSE_UNIT_CODE",
+    "DOSE_UNIT_TERM",
+    "INDICATION_CODE",
+    "LOCATION_CODE",
+    "LOCATION_CODE_TYPE_URI",
+]
 
-    expected_csv_headers = [
-        "NHS_NUMBER",
-        "PERSON_FORENAME",
-        "PERSON_SURNAME",
-        "PERSON_DOB",
-        "PERSON_GENDER_CODE",
-        "PERSON_POSTCODE",
-        "DATE_AND_TIME",
-        "SITE_CODE",
-        "SITE_CODE_TYPE_URI",
-        "UNIQUE_ID",
-        "UNIQUE_ID_URI",
-        "ACTION_FLAG",
-        "PERFORMING_PROFESSIONAL_FORENAME",
-        "PERFORMING_PROFESSIONAL_SURNAME",
-        "RECORDED_DATE",
-        "PRIMARY_SOURCE",
-        "VACCINATION_PROCEDURE_CODE",
-        "VACCINATION_PROCEDURE_TERM",
-        "DOSE_SEQUENCE",
-        "VACCINE_PRODUCT_CODE",
-        "VACCINE_PRODUCT_TERM",
-        "VACCINE_MANUFACTURER",
-        "BATCH_NUMBER",
-        "EXPIRY_DATE",
-        "SITE_OF_VACCINATION_CODE",
-        "SITE_OF_VACCINATION_TERM",
-        "ROUTE_OF_VACCINATION_CODE",
-        "ROUTE_OF_VACCINATION_TERM",
-        "DOSE_AMOUNT",
-        "DOSE_UNIT_CODE",
-        "DOSE_UNIT_TERM",
-        "INDICATION_CODE",
-        "LOCATION_CODE",
-        "LOCATION_CODE_TYPE_URI",
-    ]
+
+class FileStatus:
+    """File status constants"""
+
+    QUEUED = "Queued"
+    PROCESSING = "Processing"
+    PROCESSED = "Processed"
+    DUPLICATE = "Duplicate"
+
+
+class AuditTableKeys:
+    """Audit table keys"""
+
+    FILENAME = "filename"
+    MESSAGE_ID = "message_id"
+    QUEUE_NAME = "queue_name"
+    STATUS = "status"
+    TIMESTAMP = "timestamp"
 
 
 class Diagnostics:

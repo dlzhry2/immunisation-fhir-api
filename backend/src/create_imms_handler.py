@@ -7,6 +7,7 @@ from fhir_controller import FhirController, make_controller
 from local_lambda import load_string
 from models.errors import Severity, Code, create_operation_outcome
 from log_structure import function_info
+from constants import GENERIC_SERVER_ERROR_DIAGNOSTICS_MESSAGE
 
 
 @function_info
@@ -17,9 +18,12 @@ def create_imms_handler(event, context):
 def create_immunization(event, controller: FhirController):
     try:
         return controller.create_immunization(event)
-    except Exception as e:
+    except Exception:  # pylint: disable = broad-exception-caught
         exp_error = create_operation_outcome(
-            resource_id=str(uuid.uuid4()), severity=Severity.error, code=Code.server_error, diagnostics=str(e)
+            resource_id=str(uuid.uuid4()),
+            severity=Severity.error,
+            code=Code.server_error,
+            diagnostics=GENERIC_SERVER_ERROR_DIAGNOSTICS_MESSAGE,
         )
         return FhirController.create_response(500, exp_error)
 

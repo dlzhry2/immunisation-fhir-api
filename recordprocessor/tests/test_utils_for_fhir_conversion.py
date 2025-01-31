@@ -1,9 +1,13 @@
 """Unit tests for batch utils"""
 
 import unittest
+from unittest.mock import patch
 from decimal import Decimal
-from utils_for_fhir_conversion import _is_not_empty, Generate, Add, Convert
-from constants import Urls
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
+
+with patch("os.environ", MOCK_ENVIRONMENT_DICT):
+    from constants import Urls
+    from utils_for_fhir_conversion import _is_not_empty, Generate, Add, Convert
 
 
 class TestBatchUtils(unittest.TestCase):
