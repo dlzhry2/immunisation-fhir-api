@@ -1,7 +1,7 @@
 import unittest
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from forwarding_batch_lambda import forward_lambda_handler, create_diagnostics_dictionary
+from src.forwarding_batch_lambda import forward_lambda_handler, create_diagnostics_dictionary
 from models.errors import (
     MessageNotSuccessfulError,
     RecordProcessorError,
@@ -316,7 +316,7 @@ class TestForwardLambdaHandler(TestCase):
     @patch("forwarding_batch_lambda.forward_request_to_dynamo")
     @patch("forwarding_batch_lambda.create_table")
     @patch("forwarding_batch_lambda.make_batch_controller")
-    def test_forward_lambda_handler_errors(
+    def test_forward_lambda_handler_all_operations_success(
         self, mock_make_controller, mock_create_table, mock_forward_request_to_dynamo, mock_send_message
     ):
         """Test each operation independently in forward lambda handler.
