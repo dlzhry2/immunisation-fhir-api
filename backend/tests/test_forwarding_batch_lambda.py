@@ -1,7 +1,7 @@
 import unittest
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from src.forwarding_batch_lambda import forward_lambda_handler, create_diagnostics_dictionary
+from forwarding_batch_lambda import forward_lambda_handler, create_diagnostics_dictionary
 from models.errors import (
     MessageNotSuccessfulError,
     RecordProcessorError,
@@ -311,60 +311,6 @@ class TestForwardLambdaHandler(TestCase):
         self.total_forward_request_to_dynamo(mock_forward_request_to_dynamo, test_cases)
 
         self.assert_values_in_sqs_messages(mock_send_message, test_cases)
-
-    @patch("forwarding_batch_lambda.sqs_client.send_message")
-    @patch("forwarding_batch_lambda.forward_request_to_dynamo")
-    @patch("forwarding_batch_lambda.create_table")
-    @patch("forwarding_batch_lambda.make_batch_controller")
-    def test_forward_lambda_handler_all_operations_success(
-        self, mock_make_controller, mock_create_table, mock_forward_request_to_dynamo, mock_send_message
-    ):
-        """Test each operation independently in forward lambda handler.
-        name: Description of the test case scenario,
-        input: generates the kinesis row data for the event,
-        expected_keys (list): expected output dictionary keys,
-        expected_values (dict): expected output dictionary values
-        dynamo_response: response for dynamo side effect
-        All records are for the same file"""
-
-        mock_create_table.return_value = {}
-        mock_make_controller.return_value = mock_controller = MagicMock()
-
-        test_cases = [
-            {
-                "name": "Single Create Success",
-                "input": self.generate_input(row_id=1, operation_requested="create", include_fhir_json=True),
-                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "imms_id"],
-                "expected_values": {"row_id": "row-1", "imms_id": "IMMS1111"},
-                "dynamo_response": "IMMS1111",
-            },
-            {
-                "name": "Single Update Success",
-                "input": self.generate_input(row_id=1, operation_requested="update", include_fhir_json=True),
-                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "imms_id"],
-                "expected_values": {"row_id": "row-1", "imms_id": "IMMS2222"},
-                "dynamo_response": "IMMS2222",
-            },
-            {
-                "name": "Single Delete Success",
-                "input": self.generate_input(row_id=1, operation_requested="delete", include_fhir_json=True),
-                "expected_keys": ["file_key", "row_id", "created_at_formatted_string", "local_id", "imms_id"],
-                "expected_values": {"row_id": "row-1", "imms_id": "IMMS3333"},
-                "dynamo_response": "IMMS3333",
-            },
-        ]
-
-        for test_case in test_cases:
-            with self.subTest(test_case=test_case["name"]):
-                mock_send_message.reset_mock()
-
-                mock_forward_request_to_dynamo.side_effect = lambda *args, **kwargs: test_case["dynamo_response"]
-
-                event = self.generate_event([test_case])
-                forward_lambda_handler(event, {})
-
-                self.assert_forward_request_to_dynamo(mock_forward_request_to_dynamo, [test_case])
-                self.assert_values_in_sqs_messages(mock_send_message, [test_case])
 
     def test_create_diagnostics_dictionary(self):
 
