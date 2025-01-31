@@ -122,7 +122,7 @@ class PreValidators:
         try:
             contained = values["contained"]
         except KeyError as error:
-            raise MandatoryError("contained is a mandatory field") from error
+            raise MandatoryError("Validation errors: contained is a mandatory field") from error
 
         # Contained must be a non-empty list of non-empty dictionaries
         PreValidation.for_list(contained, "contained", elements_are_dicts=True)
@@ -435,7 +435,7 @@ class PreValidators:
             PreValidation.for_list(field_value, "identifier", defined_length=1, elements_are_dicts=True)
 
         except KeyError as error:
-            raise MandatoryError("identifier is a mandatory field") from error
+            raise MandatoryError("Validation errors: identifier is a mandatory field") from error
 
     def pre_validate_identifier_value(self, values: dict) -> dict:
         """
@@ -538,16 +538,16 @@ class PreValidators:
     def pre_validate_value_codeable_concept(self, values: dict) -> dict:
         """Pre-validate that valueCodeableConcept with coding exists within extension"""
         if "extension" not in values:
-            raise MandatoryError("extension is a mandatory field")
+            raise MandatoryError("Validation errors: extension is a mandatory field")
         
         # Iterate over each extension and check for valueCodeableConcept and coding
         for extension in values["extension"]:
             if "valueCodeableConcept" not in extension:
-                raise MandatoryError("extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept is a mandatory field")
+                raise MandatoryError("Validation errors: extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept is a mandatory field")
             
             # Check that coding exists within valueCodeableConcept
             if "coding" not in extension["valueCodeableConcept"]:
-                raise MandatoryError("extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding is a mandatory field")    
+                raise MandatoryError("Validation errors: extension[?(@.url=='https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-VaccinationProcedure')].valueCodeableConcept.coding is a mandatory field")    
     
     def pre_validate_extension_length(self, values: dict) -> dict:
             """Pre-validate that, if extension exists, then the length of the list should be 1"""

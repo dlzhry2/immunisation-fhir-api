@@ -674,7 +674,7 @@ class FhirController:
 
     def _validate_id(self, _id: str) -> Optional[dict]:
         if not re.match(self.immunization_id_pattern, _id):
-            msg = "the provided event ID is either missing or not in the expected format."
+            msg = "Validation errors: the provided event ID is either missing or not in the expected format."
             return create_operation_outcome(
                 resource_id=str(uuid.uuid4()),
                 severity=Severity.error,
