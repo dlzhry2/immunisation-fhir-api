@@ -80,7 +80,7 @@ class TestGenericUtils(unittest.TestCase):
             get_vaccine_type(invalid_covid_19_json_data)
         self.assertEqual(
             str(error.exception),
-            "protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
+            "Validation errors: protocolApplied[0].targetDisease[0].coding[?(@.system=='http://snomed.info/sct')].code"
             + " is a mandatory field",
         )
 
@@ -110,7 +110,7 @@ class TestGenericUtils(unittest.TestCase):
             get_vaccine_type(invalid_covid_19_json_data)
         self.assertEqual(
             str(error.exception),
-            "protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
+            "Validation errors: protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code"
             + " - ['INVALID_CODE'] is not a valid combination of disease codes for this service",
         )
 
@@ -125,7 +125,7 @@ class TestGenericUtils(unittest.TestCase):
             get_vaccine_type(invalid_mmr_json_data)
         self.assertEqual(
             str(error.exception),
-            "protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code - "
+            "Validation errors: protocolApplied[0].targetDisease[*].coding[?(@.system=='http://snomed.info/sct')].code - "
             + f"['{DiseaseCodes.flu}', '36989005', '36653000'] is not a valid combination of disease codes for this "
             + "service",
         )
