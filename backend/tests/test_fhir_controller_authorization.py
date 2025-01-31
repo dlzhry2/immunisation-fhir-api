@@ -17,7 +17,7 @@ from fhir_controller import FhirController
 from fhir_repository import ImmunizationRepository
 from fhir_service import FhirService, UpdateOutcome
 from models.errors import UnauthorizedError, UnauthorizedVaxError
-from tests.utils.immunization_utils import create_covid_19_immunization
+from tests.immunization_utils import create_covid_19_immunization
 
 "test"
 def full_access(exclude: Set[Permission] = None) -> Set[Permission]:

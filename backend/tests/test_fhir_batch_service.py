@@ -2,7 +2,7 @@ import unittest
 import uuid
 from copy import deepcopy
 from unittest.mock import Mock, create_autospec
-from utils.immunization_utils import  create_covid_19_immunization_dict_no_id
+from tests.immunization_utils import  create_covid_19_immunization_dict_no_id
 from models.errors import CustomValidationError
 from models.fhir_immunization import ImmunizationValidator
 from fhir_batch_repository import ImmunizationBatchRepository

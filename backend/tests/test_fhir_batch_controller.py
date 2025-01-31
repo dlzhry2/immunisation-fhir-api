@@ -1,7 +1,7 @@
 import unittest
 import uuid
 from unittest.mock import Mock, create_autospec
-from utils.immunization_utils import create_covid_19_immunization
+from tests.immunization_utils import create_covid_19_immunization
 from fhir_batch_service import ImmunizationBatchService
 from fhir_batch_repository import ImmunizationBatchRepository
 from models.errors import (

@@ -16,7 +16,7 @@ from models.fhir_immunization import ImmunizationValidator
 from pds_service import PdsService
 from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
-from tests.utils.immunization_utils import (
+from tests.immunization_utils import (
     create_covid_19_immunization,
     create_covid_19_immunization_dict,
     create_covid_19_immunization_dict_no_id,
