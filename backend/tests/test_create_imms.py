@@ -5,8 +5,9 @@ from unittest.mock import create_autospec
 from create_imms_handler import create_immunization
 from fhir_controller import FhirController
 from models.errors import Severity, Code, create_operation_outcome
+from constants import GENERIC_SERVER_ERROR_DIAGNOSTICS_MESSAGE
 
-"test"
+
 class TestCreateImmunizationById(unittest.TestCase):
     def setUp(self):
         self.controller = create_autospec(FhirController)
@@ -31,9 +32,12 @@ class TestCreateImmunizationById(unittest.TestCase):
         error_msg = "an unhandled error"
         self.controller.create_immunization.side_effect = Exception(error_msg)
 
-        exp_error = create_operation_outcome(resource_id=None, severity=Severity.error,
-                                             code=Code.server_error,
-                                             diagnostics=error_msg)
+        exp_error = create_operation_outcome(
+            resource_id=None,
+            severity=Severity.error,
+            code=Code.server_error,
+            diagnostics=GENERIC_SERVER_ERROR_DIAGNOSTICS_MESSAGE,
+        )
 
         # When
         act_res = create_immunization(lambda_event, self.controller)

@@ -1,9 +1,14 @@
 """Constants for use when testing decorators"""
 
+from unittest.mock import patch
 from decimal import Decimal
-from src.constants import Urls
-from src.mappings import Vaccine
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import TargetDiseaseElements
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
+
+with patch("os.environ", MOCK_ENVIRONMENT_DICT):
+    from constants import Urls
+    from mappings import Vaccine
+
 
 VALID_NHS_NUMBER = "1345678940"
 ADDRESS_UNKNOWN_POSTCODE = "ZZ99 3WZ"

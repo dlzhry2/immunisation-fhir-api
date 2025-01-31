@@ -1,9 +1,13 @@
 """Tests for map_target_disease"""
 
 import unittest
+from unittest.mock import patch
 from typing import List
-from mappings import map_target_disease, Vaccine
 from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import TargetDiseaseElements
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
+
+with patch("os.environ", MOCK_ENVIRONMENT_DICT):
+    from mappings import map_target_disease, Vaccine
 
 
 class TestMapTargetDisease(unittest.TestCase):

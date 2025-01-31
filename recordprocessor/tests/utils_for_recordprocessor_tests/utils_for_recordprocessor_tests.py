@@ -2,12 +2,8 @@
 
 from csv import DictReader
 from io import StringIO
-from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import (
-    BucketNames,
-    REGION_NAME,
-    Firehose,
-    Kinesis,
-)
+from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import REGION_NAME
+from tests.utils_for_recordprocessor_tests.mock_environment_variables import BucketNames, Firehose, Kinesis
 
 
 def convert_string_to_dict_reader(data_string: str):

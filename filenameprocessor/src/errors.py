@@ -5,10 +5,6 @@ class DuplicateFileError(Exception):
     """A custom exception for when it is identified that the file is a duplicate."""
 
 
-class ProcessingError(Exception):
-    """A custom exception for when it is identified that supplier_vaccine file is under processing"""
-
-
 class UnhandledAuditTableError(Exception):
     """A custom exception for when an unexpected error occurs whilst adding the file to the audit table."""
 
