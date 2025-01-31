@@ -51,7 +51,7 @@ jobs:
         id: recordforwarder
         continue-on-error: true
         run: |
-          PYTHONPATH=$(pwd)/backend:$(pwd)/backend/tests poetry run coverage run --source=backend -m unittest discover -s backend/tests -p "*batch*.py" || echo "recordforwarder tests failed" >> failed_tests.txt
+          PYTHONPATH=$(pwd)/backend/tests poetry run coverage run --source=backend -m unittest discover -s backend/tests -p "*batch*.py" || echo "recordforwarder tests failed" >> failed_tests.txt
           poetry run coverage xml -o sonarcloud-coverage-recordforwarder-coverage.xml
 
           
