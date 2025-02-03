@@ -2,30 +2,6 @@
 
 from datetime import datetime
 
-REGION_NAME = "eu-west-2"
-
-
-class BucketNames:
-    """Bucket Names for testing"""
-
-    SOURCE = "immunisation-batch-internal-dev-data-sources"
-    DESTINATION = "immunisation-batch-internal-dev-data-destinations"
-    MOCK_FIREHOSE = "mock-firehose-bucket"
-
-
-class Firehose:
-    """Class containing Firehose values for use in tests"""
-
-    STREAM_NAME = "immunisation-fhir-api-internal-dev-splunk-firehose"
-
-
-MOCK_ENVIRONMENT_DICT = {
-    "ACK_BUCKET_NAME": BucketNames.DESTINATION,
-    "FIREHOSE_STREAM_NAME": Firehose.STREAM_NAME,
-    "AUDIT_TABLE_NAME": "immunisation-batch-internal-dev-audit-table",
-    "ENVIRONMENT": "internal-dev",
-}
-
 
 class DefaultValues:
     """Class to hold default values for tests"""
@@ -235,49 +211,6 @@ class InvalidValues:
         "statusCode": 500,
         "diagnostics": "An unhandled error occurred during batch processing",
     }
-
-
-class GenericSetUp:
-    """
-    Performs generic setup of mock resources:
-    * If s3_client is provided, creates source, destination and firehose buckets (firehose bucket is used for testing
-        only)
-    * If firehose_client is provided, creates a firehose delivery stream
-    """
-
-    def __init__(self, s3_client=None, firehose_client=None):
-
-        if s3_client:
-            for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION, BucketNames.MOCK_FIREHOSE]:
-                s3_client.create_bucket(
-                    Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME}
-                )
-
-        if firehose_client:
-            firehose_client.create_delivery_stream(
-                DeliveryStreamName=Firehose.STREAM_NAME,
-                DeliveryStreamType="DirectPut",
-                S3DestinationConfiguration={
-                    "RoleARN": "arn:aws:iam::123456789012:role/mock-role",
-                    "BucketARN": "arn:aws:s3:::" + BucketNames.MOCK_FIREHOSE,
-                    "Prefix": "firehose-backup/",
-                },
-            )
-
-
-class GenericTearDown:
-    """Performs generic tear down of mock resources"""
-
-    def __init__(self, s3_client=None, firehose_client=None):
-
-        if s3_client:
-            for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION, BucketNames.MOCK_FIREHOSE]:
-                for obj in s3_client.list_objects_v2(Bucket=bucket_name).get("Contents", []):
-                    s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
-                s3_client.delete_bucket(Bucket=bucket_name)
-
-        if firehose_client:
-            firehose_client.delete_delivery_stream(DeliveryStreamName=Firehose.STREAM_NAME)
 
 
 class MessageDetails:

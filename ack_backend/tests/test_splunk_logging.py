@@ -1,3 +1,5 @@
+"""Tests for ack lambda logging decorators"""
+
 import unittest
 from unittest.mock import patch, call
 import json
@@ -6,15 +8,13 @@ from contextlib import ExitStack
 from moto import mock_s3
 from boto3 import client as boto3_client
 
-from tests.test_utils_for_ack_backend import (
+from tests.utils_for_ack_backend_tests.values_for_ack_backend_tests import (
     ValidValues,
     InvalidValues,
     DiagnosticsDictionaries,
-    GenericSetUp,
-    GenericTearDown,
-    MOCK_ENVIRONMENT_DICT,
-    BucketNames,
 )
+from tests.utils_for_ack_backend_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames
+from tests.utils_for_ack_backend_tests.generic_setup_and_teardown_for_ack_backend import GenericSetUp, GenericTearDown
 
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from src.ack_processor import lambda_handler
@@ -24,7 +24,9 @@ s3_client = boto3_client("s3")
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 @mock_s3
-class TestSplunkFunctionInfo(unittest.TestCase):
+class TestLoggingDecorators(unittest.TestCase):
+    """Tests for the ack lambda logging decorators"""
+
     def setUp(self):
         GenericSetUp(s3_client)
 
