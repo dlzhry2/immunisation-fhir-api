@@ -26,7 +26,7 @@ from models.errors import (
     UnauthorizedError,
     IdentifierDuplicationError,
 )
-from tests.immunization_utils import create_covid_19_immunization
+from tests.utils.immunization_utils import create_covid_19_immunization
 from mappings import VaccineTypes
 from parameter_parser import patient_identifier_system, process_search_params
 from tests.utils.generic_utils import load_json_data
