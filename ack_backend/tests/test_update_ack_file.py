@@ -7,7 +7,7 @@ from io import StringIO
 from boto3 import client as boto3_client
 from moto import mock_s3
 
-from tests.utils_for_ack_backend_tests.values_for_ack_backend_tests import ValidValues
+from tests.utils_for_ack_backend_tests.values_for_ack_backend_tests import ValidValues, DefaultValues
 from tests.utils_for_ack_backend_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames, REGION_NAME
 from tests.utils_for_ack_backend_tests.generic_setup_and_teardown_for_ack_backend import GenericSetUp, GenericTearDown
 from tests.utils_for_ack_backend_tests.utils_for_ack_backend_tests import (
@@ -64,7 +64,7 @@ class TestUpdateAckFile(unittest.TestCase):
             {
                 "description": "Single successful row",
                 "input_rows": [ValidValues.ack_data_success_dict],
-                "expected_rows": [generate_expected_ack_file_row(success=True, imms_id="")],
+                "expected_rows": [generate_expected_ack_file_row(success=True, imms_id=DefaultValues.imms_id)],
             },
             {
                 "description": "With multiple rows - failure and success rows",
@@ -76,7 +76,7 @@ class TestUpdateAckFile(unittest.TestCase):
                     {**ValidValues.ack_data_success_dict, "IMMS_ID": "TEST_IMMS_ID_2"},
                 ],
                 "expected_rows": [
-                    generate_expected_ack_file_row(success=True, imms_id=""),
+                    generate_expected_ack_file_row(success=True, imms_id=DefaultValues.imms_id),
                     generate_expected_ack_file_row(success=False, imms_id="TEST_IMMS_ID_1", diagnostics="DIAGNOSTICS"),
                     generate_expected_ack_file_row(success=False, imms_id="", diagnostics="DIAGNOSTICS"),
                     generate_expected_ack_file_row(success=False, imms_id="", diagnostics="DIAGNOSTICS"),
@@ -131,7 +131,7 @@ class TestUpdateAckFile(unittest.TestCase):
 
         actual_ack_file_content = obtain_current_ack_file_content()
         expected_rows = [
-            generate_expected_ack_file_row(success=True, imms_id=""),
+            generate_expected_ack_file_row(success=True, imms_id=DefaultValues.imms_id),
             generate_expected_ack_file_row(success=False, imms_id="", diagnostics="DIAGNOSTICS"),
         ]
         expected_ack_file_content = existing_content + "\n".join(expected_rows) + "\n"

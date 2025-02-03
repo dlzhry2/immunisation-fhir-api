@@ -164,7 +164,7 @@ class ValidValues:
         "RECEIVED_TIME": DefaultValues.created_at_formatted_string,
         "MAILBOX_FROM": "",
         "LOCAL_ID": DefaultValues.local_id,
-        "IMMS_ID": "",
+        "IMMS_ID": DefaultValues.imms_id,
         "OPERATION_OUTCOME": "",
         "MESSAGE_DELIVERY": True,
     }
