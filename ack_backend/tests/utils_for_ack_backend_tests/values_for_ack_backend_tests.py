@@ -1,5 +1,6 @@
 """Values for use in ack_processor tests"""
 
+import json
 from datetime import datetime
 
 
@@ -72,147 +73,6 @@ class DiagnosticsDictionaries:
     }
 
 
-class ValidValues:
-    """Logging instances which are both valid and current"""
-
-    fixed_datetime = datetime(2024, 10, 29, 12, 0, 0)
-
-    EMIS_ack_processor_input = {
-        "file_key": "RSV_Vaccinations_v5_YGM41_20240905T13005922",
-        "row_id": "456",
-        "local_id": "local_456",
-        "operation_requested": "create",
-        "imms_id": "4567",
-        "created_at_formatted_string": "1223-12-232",
-        "supplier": "EMIS",
-        "vaccine_type": "RSV",
-    }
-    DPSFULL_ack_processor_input = {
-        "file_key": "RSV_Vaccinations_v5_DPSFULL_20240905T13005922",
-        "row_id": "123",
-        "local_id": "local_123",
-        "operation_requested": "create",
-        "imms_id": "1232",
-        "created_at_formatted_string": "1223-12-232",
-        "supplier": "DPSFULL",
-        "vaccine_type": "RSV",
-    }
-
-    EMIS_ack_processor_input_diagnostics = {
-        "file_key": "RSV_Vaccinations_v5_YGM41_20240905T13005922",
-        "row_id": "456",
-        "local_id": "local_456",
-        "operation_requested": "create",
-        "imms_id": "4567",
-        "created_at_formatted_string": "1223-12-232",
-        "diagnostics": DiagnosticsDictionaries.RESOURCE_NOT_FOUND_ERROR,
-        "supplier": "EMIS",
-        "vaccine_type": "RSV",
-    }
-
-    DPSFULL_ack_processor_input_diagnostics = {
-        "file_key": "RSV_Vaccinations_v5_DPSFULL_20240905T13005922",
-        "row_id": "123",
-        "local_id": "local_123",
-        "operation_requested": "create",
-        "imms_id": "1232",
-        "created_at_formatted_string": "1223-12-232",
-        "diagnostics": DiagnosticsDictionaries.RESOURCE_NOT_FOUND_ERROR,
-        "supplier": "DPSFULL",
-        "vaccine_type": "RSV",
-    }
-
-    EMIS_expected_log_value = {
-        "function_name": "ack_processor_lambda_handler",
-        "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-        "status": "success",
-        "supplier": "EMIS",
-        "file_key": "RSV_Vaccinations_v5_YGM41_20240905T13005922",
-        "vaccine_type": "RSV",
-        "message_id": "456",
-        "operation_requested": "create",
-        "time_taken": "3.0s",
-        "local_id": "local_456",
-        "statusCode": 200,
-        "diagnostics": "Operation completed successfully",
-    }
-
-    DPSFULL_expected_log_value = {
-        "function_name": "ack_processor_convert_message_to_ack_row",
-        "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-        "status": "success",
-        "supplier": "DPSFULL",
-        "file_key": "RSV_Vaccinations_v5_DPSFULL_20240905T13005922",
-        "vaccine_type": "RSV",
-        "message_id": "123",
-        "operation_requested": "create",
-        "time_taken": "1.0s",
-        "local_id": "local_123",
-        "statusCode": 200,
-        "diagnostics": "Operation completed successfully",
-    }
-
-    ack_data_success_dict = {
-        "MESSAGE_HEADER_ID": DefaultValues.row_id,
-        "HEADER_RESPONSE_CODE": "OK",
-        "ISSUE_SEVERITY": "Information",
-        "ISSUE_CODE": "OK",
-        "ISSUE_DETAILS_CODE": "30001",
-        "RESPONSE_TYPE": "Business",
-        "RESPONSE_CODE": "30001",
-        "RESPONSE_DISPLAY": "Success",
-        "RECEIVED_TIME": DefaultValues.created_at_formatted_string,
-        "MAILBOX_FROM": "",
-        "LOCAL_ID": DefaultValues.local_id,
-        "IMMS_ID": DefaultValues.imms_id,
-        "OPERATION_OUTCOME": "",
-        "MESSAGE_DELIVERY": True,
-    }
-
-    ack_data_failure_dict = {
-        "MESSAGE_HEADER_ID": DefaultValues.row_id,
-        "HEADER_RESPONSE_CODE": "Fatal Error",
-        "ISSUE_SEVERITY": "Fatal",
-        "ISSUE_CODE": "Fatal Error",
-        "ISSUE_DETAILS_CODE": "30002",
-        "RESPONSE_TYPE": "Business",
-        "RESPONSE_CODE": "30002",
-        "RESPONSE_DISPLAY": "Business Level Response Value - Processing Error",
-        "RECEIVED_TIME": DefaultValues.created_at_formatted_string,
-        "MAILBOX_FROM": "",
-        "LOCAL_ID": DefaultValues.local_id,
-        "IMMS_ID": "",
-        "OPERATION_OUTCOME": "DIAGNOSTICS",
-        "MESSAGE_DELIVERY": False,
-    }
-
-    ack_headers = (
-        "MESSAGE_HEADER_ID|HEADER_RESPONSE_CODE|ISSUE_SEVERITY|ISSUE_CODE|ISSUE_DETAILS_CODE|RESPONSE_TYPE|"
-        "RESPONSE_CODE|RESPONSE_DISPLAY|RECEIVED_TIME|MAILBOX_FROM|LOCAL_ID|IMMS_ID|OPERATION_OUTCOME"
-        "|MESSAGE_DELIVERY\n"
-    )
-
-
-class InvalidValues:
-
-    fixed_datetime = datetime(2024, 10, 29, 12, 0, 0)
-
-    Logging_with_no_values = {
-        "function_name": "ack_processor_convert_message_to_ack_row",
-        "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-        "status": "fail",
-        "supplier": "unknown",
-        "file_key": "file_key_missing",
-        "vaccine_type": "unknown",
-        "message_id": "unknown",
-        "operation_requested": "unknown",
-        "time_taken": "1.0s",
-        "local_id": "unknown",
-        "statusCode": 500,
-        "diagnostics": "An unhandled error occurred during batch processing",
-    }
-
-
 class MessageDetails:
     """
     Class to create and hold values for a mock message, based on the vaccine type, supplier and ods code.
@@ -276,3 +136,106 @@ class MockMessageDetails:
 
 # Mock message details are used as the default message details for the tests
 MOCK_MESSAGE_DETAILS = MockMessageDetails.rsv_ravs
+
+EXPECTED_ACK_LAMBDA_RESPONSE_FOR_SUCCESS = {
+    "statusCode": 200,
+    "body": json.dumps("Lambda function executed successfully!"),
+}
+
+
+class ValidValues:
+    """Valid values for use in tests"""
+
+    fixed_datetime = datetime(2024, 10, 29, 12, 0, 0)
+
+    mock_message_expected_log_value = {
+        "function_name": "ack_processor_convert_message_to_ack_row",
+        "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "success",
+        "supplier": MOCK_MESSAGE_DETAILS.supplier,
+        "file_key": MOCK_MESSAGE_DETAILS.file_key,
+        "vaccine_type": MOCK_MESSAGE_DETAILS.vaccine_type,
+        "message_id": MOCK_MESSAGE_DETAILS.row_id,
+        "operation_requested": "CREATE",
+        "time_taken": "1.0s",
+        "local_id": MOCK_MESSAGE_DETAILS.local_id,
+        "statusCode": 200,
+        "diagnostics": "Operation completed successfully",
+    }
+
+    ack_data_success_dict = {
+        "MESSAGE_HEADER_ID": DefaultValues.row_id,
+        "HEADER_RESPONSE_CODE": "OK",
+        "ISSUE_SEVERITY": "Information",
+        "ISSUE_CODE": "OK",
+        "ISSUE_DETAILS_CODE": "30001",
+        "RESPONSE_TYPE": "Business",
+        "RESPONSE_CODE": "30001",
+        "RESPONSE_DISPLAY": "Success",
+        "RECEIVED_TIME": DefaultValues.created_at_formatted_string,
+        "MAILBOX_FROM": "",
+        "LOCAL_ID": DefaultValues.local_id,
+        "IMMS_ID": DefaultValues.imms_id,
+        "OPERATION_OUTCOME": "",
+        "MESSAGE_DELIVERY": True,
+    }
+
+    ack_data_failure_dict = {
+        "MESSAGE_HEADER_ID": DefaultValues.row_id,
+        "HEADER_RESPONSE_CODE": "Fatal Error",
+        "ISSUE_SEVERITY": "Fatal",
+        "ISSUE_CODE": "Fatal Error",
+        "ISSUE_DETAILS_CODE": "30002",
+        "RESPONSE_TYPE": "Business",
+        "RESPONSE_CODE": "30002",
+        "RESPONSE_DISPLAY": "Business Level Response Value - Processing Error",
+        "RECEIVED_TIME": DefaultValues.created_at_formatted_string,
+        "MAILBOX_FROM": "",
+        "LOCAL_ID": DefaultValues.local_id,
+        "IMMS_ID": "",
+        "OPERATION_OUTCOME": "DIAGNOSTICS",
+        "MESSAGE_DELIVERY": False,
+    }
+
+    lambda_handler_success_expected_log = {
+        "function_name": "ack_processor_lambda_handler",
+        "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "success",
+        "statusCode": 200,
+        "message": "Lambda function executed successfully!",
+    }
+
+    lambda_handler_failure_expected_log = {
+        "function_name": "ack_processor_lambda_handler",
+        "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "fail",
+        "statusCode": 500,
+        "diagnostics": "DIAGNOSTICS MESSAGE",
+    }
+
+    ack_headers = (
+        "MESSAGE_HEADER_ID|HEADER_RESPONSE_CODE|ISSUE_SEVERITY|ISSUE_CODE|ISSUE_DETAILS_CODE|RESPONSE_TYPE|"
+        "RESPONSE_CODE|RESPONSE_DISPLAY|RECEIVED_TIME|MAILBOX_FROM|LOCAL_ID|IMMS_ID|OPERATION_OUTCOME"
+        "|MESSAGE_DELIVERY\n"
+    )
+
+
+class InvalidValues:
+    """Invalid values for use in tests"""
+
+    fixed_datetime = datetime(2024, 10, 29, 12, 0, 0)
+
+    Logging_with_no_values = {
+        "function_name": "ack_processor_convert_message_to_ack_row",
+        "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "fail",
+        "supplier": "unknown",
+        "file_key": "file_key_missing",
+        "vaccine_type": "unknown",
+        "message_id": "unknown",
+        "operation_requested": "unknown",
+        "time_taken": "1.0s",
+        "local_id": "unknown",
+        "statusCode": 500,
+        "diagnostics": "An unhandled error occurred during batch processing",
+    }

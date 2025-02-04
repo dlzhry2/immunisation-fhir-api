@@ -1,6 +1,5 @@
 """Utils for ack lambda"""
 
-import os
 from clients import s3_client
 
 

@@ -18,6 +18,7 @@ from tests.utils_for_ack_backend_tests.values_for_ack_backend_tests import (
     DiagnosticsDictionaries,
     MOCK_MESSAGE_DETAILS,
     ValidValues,
+    EXPECTED_ACK_LAMBDA_RESPONSE_FOR_SUCCESS,
 )
 
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
@@ -109,7 +110,7 @@ class TestAckProcessor(unittest.TestCase):
 
         response = lambda_handler(event=event, context={})
 
-        self.assertEqual(response, {"statusCode": 200, "body": '"Lambda function executed successfully!"'})
+        self.assertEqual(response, EXPECTED_ACK_LAMBDA_RESPONSE_FOR_SUCCESS)
         validate_ack_file_content(
             [*array_of_success_messages, *array_of_failure_messages, *array_of_mixed_success_and_failure_messages],
             existing_file_content=ValidValues.ack_headers,
@@ -157,7 +158,7 @@ class TestAckProcessor(unittest.TestCase):
             # Test scenario where there is no existing ack file
             with self.subTest(msg=f"No existing ack file: {test_case['description']}"):
                 response = lambda_handler(event=self.generate_event(test_case["messages"]), context={})
-                self.assertEqual(response, {"statusCode": 200, "body": '"Lambda function executed successfully!"'})
+                self.assertEqual(response, EXPECTED_ACK_LAMBDA_RESPONSE_FOR_SUCCESS)
                 validate_ack_file_content(test_case["messages"])
 
                 s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=MOCK_MESSAGE_DETAILS.temp_ack_file_key)
@@ -168,7 +169,7 @@ class TestAckProcessor(unittest.TestCase):
                 existing_ack_file_content = test_case.get("existing_ack_file_content", "")
                 setup_existing_ack_file(MOCK_MESSAGE_DETAILS.temp_ack_file_key, existing_ack_file_content)
                 response = lambda_handler(event=self.generate_event(test_case["messages"]), context={})
-                self.assertEqual(response, {"statusCode": 200, "body": '"Lambda function executed successfully!"'})
+                self.assertEqual(response, EXPECTED_ACK_LAMBDA_RESPONSE_FOR_SUCCESS)
                 validate_ack_file_content(test_case["messages"], existing_ack_file_content)
 
                 s3_client.delete_object(Bucket=BucketNames.DESTINATION, Key=MOCK_MESSAGE_DETAILS.temp_ack_file_key)

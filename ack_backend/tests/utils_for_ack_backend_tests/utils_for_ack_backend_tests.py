@@ -1,11 +1,28 @@
 """Utils functions for the ack backend tests"""
 
+import json
 from boto3 import client as boto3_client
 from tests.utils_for_ack_backend_tests.values_for_ack_backend_tests import ValidValues, MOCK_MESSAGE_DETAILS
 from tests.utils_for_ack_backend_tests.mock_environment_variables import REGION_NAME, BucketNames
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
 firehose_client = boto3_client("firehose", region_name=REGION_NAME)
+
+
+def generate_event(test_messages: list[dict]) -> dict:
+    """
+    Returns an event where each message in the incoming message body list is based on a standard mock message,
+    updated with the details from the corresponsing message in the given test_messages list.
+    """
+    incoming_message_body = [
+        (
+            {**MOCK_MESSAGE_DETAILS.failure_message, **message}
+            if message.get("diagnostics")
+            else {**MOCK_MESSAGE_DETAILS.success_message, **message}
+        )
+        for message in test_messages
+    ]
+    return {"Records": [{"body": json.dumps(incoming_message_body)}]}
 
 
 def setup_existing_ack_file(file_key, file_content):

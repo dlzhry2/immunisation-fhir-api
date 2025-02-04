@@ -1,3 +1,5 @@
+"""Module containing mock environment variables for use in ack backend tests"""
+
 REGION_NAME = "eu-west-2"
 
 
