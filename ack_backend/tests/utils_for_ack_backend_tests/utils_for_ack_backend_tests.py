@@ -1,12 +1,11 @@
+"""Utils functions for the ack backend tests"""
+
 from boto3 import client as boto3_client
-from tests.utils_for_ack_backend_tests.values_for_ack_backend_tests import ValidValues, MockMessageDetails
+from tests.utils_for_ack_backend_tests.values_for_ack_backend_tests import ValidValues, MOCK_MESSAGE_DETAILS
 from tests.utils_for_ack_backend_tests.mock_environment_variables import REGION_NAME, BucketNames
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
 firehose_client = boto3_client("firehose", region_name=REGION_NAME)
-
-# Mock message details are used as the default message details for the tests
-MOCK_MESSAGE_DETAILS = MockMessageDetails.rsv_ravs
 
 
 def setup_existing_ack_file(file_key, file_content):
@@ -67,10 +66,22 @@ def generate_expected_ack_content(
                 "created_at_formatted_string", MOCK_MESSAGE_DETAILS.created_at_formatted_string
             ),
             local_id=message.get("local_id", MOCK_MESSAGE_DETAILS.local_id),
-            imms_id=message.get("imms_id", MOCK_MESSAGE_DETAILS.imms_id),
+            imms_id="" if diagnostics else message.get("imms_id", MOCK_MESSAGE_DETAILS.imms_id),
             diagnostics=diagnostics,
         )
 
         existing_content += ack_row + "\n"
 
     return existing_content
+
+
+def validate_ack_file_content(
+    incoming_messages: list[dict], existing_file_content: str = ValidValues.ack_headers
+) -> None:
+    """
+    Obtains the ack file content and ensures that it matches the expected content (expected content is based
+    on the incoming messages).
+    """
+    actual_ack_file_content = obtain_current_ack_file_content()
+    expected_ack_file_content = generate_expected_ack_content(incoming_messages, existing_file_content)
+    assert expected_ack_file_content == actual_ack_file_content

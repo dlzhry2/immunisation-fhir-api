@@ -251,16 +251,19 @@ class MessageDetails:
 
         self.queue_name = f"{supplier}_{vaccine_type}"
 
-        self.message = {
+        self.base_message = {
             "file_key": self.file_key,
             "supplier": self.supplier,
             "vaccine_type": self.vaccine_type,
             "created_at_formatted_string": self.created_at_formatted_string,
-            "row_id": row_id,
-            "local_id": local_id,
-            "imms_id": imms_id,
-            "operation_requested": operation_requested,
+            "row_id": self.row_id,
+            "local_id": self.local_id,
+            "operation_requested": self.operation_requested,
         }
+
+        self.success_message = {**self.base_message, "imms_id": imms_id}
+
+        self.failure_message = {**self.base_message, "diagnostics": DiagnosticsDictionaries.NO_PERMISSIONS}
 
 
 class MockMessageDetails:
@@ -269,3 +272,7 @@ class MockMessageDetails:
     rsv_ravs = MessageDetails("RSV", "RAVS", "X26")
     rsv_emis = MessageDetails("RSV", "EMIS", "8HK48")
     flu_emis = MessageDetails("FLU", "EMIS", "YGM41")
+
+
+# Mock message details are used as the default message details for the tests
+MOCK_MESSAGE_DETAILS = MockMessageDetails.rsv_ravs
