@@ -4,11 +4,6 @@ import os
 from clients import s3_client
 
 
-def get_environment() -> str:
-    """Returns the current environment"""
-    return os.getenv("ENVIRONMENT")
-
-
 def get_row_count(bucket_name: str, file_key: str) -> int:
     """
     Looks in the given bucket and returns the count of the number of lines in the given file.

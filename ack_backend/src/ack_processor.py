@@ -33,7 +33,9 @@ def lambda_handler(event, context):
 
         if i == 0:
             # IMPORTANT NOTE: An assumption is made here that the file_key and created_at_formatted_string are the same
-            # for all messages in the event. The use of FIFO SQS queues ensures that this is the case.
+            # for all messages in the event. The use of FIFO SQS queues ensures that this is the case, provided that
+            # there is only one file processing at a time for each supplier queue (combination of supplier and vaccine
+            # type).
             file_key = incoming_message_body[0].get("file_key")
             message_id = (incoming_message_body[0].get("row_id", "")).split("^")[0]
             vaccine_type = incoming_message_body[0].get("vaccine_type")
