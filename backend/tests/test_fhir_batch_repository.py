@@ -1,13 +1,15 @@
 import os
 import unittest
-from unittest.mock import MagicMock, ANY
+from unittest.mock import MagicMock, ANY, patch
 import boto3
-import json
+import time
+import simplejson as json
 import botocore.exceptions
 from moto import mock_dynamodb
 from uuid import uuid4
 from models.errors import IdentifierDuplicationError, ResourceNotFoundError, UnhandledResponseError
-from fhir_batch_repository import ImmunizationBatchRepository
+from fhir_batch_repository import ImmunizationBatchRepository, create_table
+from tests.utils.immunization_utils import create_covid_19_immunization_dict
 imms_id = str(uuid4())
 
 @mock_dynamodb
@@ -16,64 +18,61 @@ class TestImmunizationBatchRepository(unittest.TestCase):
     def setUp(self):
         os.environ["DYNAMODB_TABLE_NAME"] = "test-immunization-table"
         self.dynamodb = boto3.resource("dynamodb", region_name="eu-west-2")
-        self.table = self.dynamodb.create_table(
-            TableName=os.environ["DYNAMODB_TABLE_NAME"],
-            KeySchema=[
-                {"AttributeName": "PK", "KeyType": "HASH"},
-            ],
-            AttributeDefinitions=[
-                {"AttributeName": "PK", "AttributeType": "S"},
-                {"AttributeName": "IdentifierPK", "AttributeType": "S"},
-            ],
-            GlobalSecondaryIndexes=[
-                {
-                    "IndexName": "IdentifierGSI",
-                    "KeySchema": [
-                        {"AttributeName": "IdentifierPK", "KeyType": "HASH"},
-                    ],
-                    "Projection": {"ProjectionType": "ALL"},
-                }
-            ],
-            BillingMode="PAY_PER_REQUEST",
-        )
-        
+        self.table = MagicMock()
         self.table.wait_until_exists()
         self.repository = ImmunizationBatchRepository()
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
         self.table.query = MagicMock(return_value={})
-        self.immunization = {
-            "id": imms_id,
-            "identifier": [{"system": "test-system", "value": "12345"}],
-            "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}],
-        }
+        self.immunization = create_covid_19_immunization_dict(imms_id)
         self.table.update_item = MagicMock(return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}})
 
 class TestCreateImmunization(TestImmunizationBatchRepository): 
     
-    def test_create_immunization(self):
-        """it should create Immunization and return imms id location"""
+    def modify_immunization(self, remove_nhs):
+        """Modify the immunization object by removing NHS number if required."""
+        if remove_nhs:
+            for i, x in enumerate(self.immunization["contained"]):
+                if x["resourceType"] == "Patient":
+                    del self.immunization["contained"][i]
+                    break
 
-        self.repository.create_immunization(self.immunization , "supplier", "vax-type", self.table, False)
-        item = self.table.put_item.call_args.kwargs["Item"]
-        self.table.put_item.assert_called_once_with(
-            Item={
-                    "PK": ANY,
-                    "PatientPK": ANY,
-                    "PatientSK": ANY,
-                    "Resource": json.dumps(self.immunization),
-                    "IdentifierPK": ANY,
-                    "Operation": "CREATE",
-                    "Version": 1,
-                    "SupplierSystem": "supplier",
-                },
-                ConditionExpression=ANY
+    def create_immunization_test_logic(self, is_present, remove_nhs):
+        """Common logic for testing immunization creation."""
+        self.modify_immunization(remove_nhs)
+
+        self.repository.create_immunization(
+            self.immunization, "supplier", "vax-type", self.table, is_present
         )
-        self.assertEqual(item["PK"], f'Immunization#{self.immunization ["id"]}')
+        item = self.table.put_item.call_args.kwargs["Item"]
+
+        self.table.put_item.assert_called_with(
+            Item={
+                "PK": ANY,
+                "PatientPK": ANY,
+                "PatientSK": ANY,
+                "Resource": json.dumps(self.immunization, use_decimal=True) if is_present else json.dumps(self.immunization),
+                "IdentifierPK": ANY,
+                "Operation": "CREATE",
+                "Version": 1,
+                "SupplierSystem": "supplier",
+            },
+            ConditionExpression=ANY
+        )
+        self.assertEqual(item["PK"], f'Immunization#{self.immunization["id"]}')
+
+    def test_create_immunization_with_nhs_number(self):
+        """Test creating Immunization with NHS number."""
+        
+        self.create_immunization_test_logic(is_present=True, remove_nhs=False)
+
+    def test_create_immunization_without_nhs_number(self):
+        """Test creating Immunization without NHS number."""
+
+        self.create_immunization_test_logic(is_present=False, remove_nhs=True)    
 
 
     def test_create_immunization_duplicate(self):
         """it should not create Immunization since the request is duplicate"""
-
 
         self.table.query = MagicMock(return_value={
             "id": imms_id,
@@ -147,12 +146,15 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                 }
             }
         ] 
-        for case in test_cases:
-            with self.subTest():
-                self.table.query = MagicMock(return_value=case["query_response"])
-                response = self.repository.update_immunization(self.immunization, "supplier", "vax-type", self.table, False)
+        for is_present in [True, False]:
+            for case in test_cases:
+                with self.subTest(is_present=is_present, case=case):
+                    self.table.query = MagicMock(return_value=case["query_response"])
+                    response = self.repository.update_immunization(
+                    self.immunization, "supplier", "vax-type", self.table, is_present
+                )
                 self.table.update_item.assert_called()
-                self.assertEqual(response, f'Immunization#{self.immunization ["id"]}')
+                self.assertEqual(response, f'Immunization#{self.immunization["id"]}')
   
     def test_update_immunization_not_found(self):
         """it should not update Immunization since the imms id not found"""
@@ -227,15 +229,16 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
                     }]
                 }
             )
-        response = self.repository.delete_immunization(self.immunization, "supplier", "vax-type", self.table, False)
-        self.table.update_item.assert_called_once_with(
-            Key={"PK": f"Immunization#{imms_id}"},
-            UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation, SupplierSystem = :supplier_system",
-            ExpressionAttributeValues={":timestamp": ANY, ":operation": "DELETE", ":supplier_system": "supplier"},
-            ReturnValues=ANY,
-            ConditionExpression=ANY,
-        )
-        self.assertEqual(response, f'Immunization#{self.immunization ["id"]}')  
+        for is_present in [True, False]:
+            response = self.repository.delete_immunization(self.immunization, "supplier", "vax-type", self.table, is_present)
+            self.table.update_item.assert_called_with(
+                Key={"PK": f"Immunization#{imms_id}"},
+                UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation, SupplierSystem = :supplier_system",
+                ExpressionAttributeValues={":timestamp": ANY, ":operation": "DELETE", ":supplier_system": "supplier"},
+                ReturnValues=ANY,
+                ConditionExpression=ANY,
+            )
+            self.assertEqual(response, f'Immunization#{self.immunization ["id"]}')  
 
     def test_delete_immunization_not_found(self):
         """it should not delete Immunization since the imms id not found"""
@@ -297,5 +300,27 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
             )
                 self.repository.delete_immunization(self.immunization, "supplier", "vax-type", self.table, False)
 
-if __name__ == "__main__":
-    unittest.main()
+@mock_dynamodb
+@patch.dict(os.environ, {"DYNAMODB_TABLE_NAME": "TestTable"})
+class TestCreateTable(TestImmunizationBatchRepository):
+
+    def test_create_table_success(self):
+        """Test if create_table returns a DynamoDB Table instance with the correct name"""
+
+        # Create a mock DynamoDB table
+        dynamodb = boto3.resource("dynamodb", region_name="eu-west-2")
+        table_name = os.environ["DYNAMODB_TABLE_NAME"]
+
+        # Define table schema
+        dynamodb.create_table(
+            TableName=table_name,
+            KeySchema=[{"AttributeName": "PK", "KeyType": "HASH"}],
+            AttributeDefinitions=[{"AttributeName": "PK", "AttributeType": "S"}],
+            ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
+        )
+
+        # Call the function
+        table = create_table(region_name="eu-west-2")
+
+        # Assertions
+        self.assertEqual(table.table_name, table_name)
