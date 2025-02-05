@@ -7,6 +7,7 @@ from moto import mock_dynamodb
 from uuid import uuid4
 from models.errors import IdentifierDuplicationError, ResourceNotFoundError, UnhandledResponseError
 from fhir_batch_repository import ImmunizationBatchRepository
+imms_id = str(uuid4())
 
 @mock_dynamodb
 class TestImmunizationBatchRepository(unittest.TestCase):
@@ -40,7 +41,7 @@ class TestImmunizationBatchRepository(unittest.TestCase):
         self.table.put_item = MagicMock(return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
         self.table.query = MagicMock(return_value={})
         self.immunization = {
-            "id": str(uuid4()),
+            "id": imms_id,
             "identifier": [{"system": "test-system", "value": "12345"}],
             "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}],
         }
@@ -60,7 +61,7 @@ class TestCreateImmunization(TestImmunizationBatchRepository):
         """it should not create Immunization since the request is duplicate"""
 
         self.table.query = MagicMock(return_value={
-            "id": str(uuid4()),
+            "id": imms_id,
             "identifier": [{"system": "test-system", "value": "12345"}],
             "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}],
             "Count": 1
@@ -97,8 +98,8 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                 "query_response": {
                     "Count": 1,
                     "Items": [{
-                        "PK": "Immunization#653dc8d5-b9c1-4eec-9df6-14a61818496b",
-                        "Resource": '{"id": "653dc8d5-b9c1-4eec-9df6-14a61818496b", "identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "PK": f"Immunization#{imms_id}",
+                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
                         "Version": 1
                     }]
                 }
@@ -108,8 +109,8 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                 "query_response": {
                     "Count": 1,
                     "Items": [{
-                        "PK": "Immunization#653dc8d5-b9c1-4eec-9df6-14a61818496b",
-                        "Resource": '{"id": "653dc8d5-b9c1-4eec-9df6-14a61818496b", "identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "PK": f"Immunization#{imms_id}",
+                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
                         "Version": 1,
                         "DeletedAt": "20210101"
                     }]
@@ -120,8 +121,8 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                 "query_response": {
                     "Count": 1,
                     "Items": [{
-                        "PK": "Immunization#653dc8d5-b9c1-4eec-9df6-14a61818496b",
-                        "Resource": '{"id": "653dc8d5-b9c1-4eec-9df6-14a61818496b", "identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "PK": f"Immunization#{imms_id}",
+                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
                         "Version": 1,
                         "DeletedAt": "reinstated"
                     }]
@@ -131,19 +132,15 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
         for case in test_cases:
             with self.subTest():
                 self.table.query = MagicMock(return_value=case["query_response"])
-                self.repository.update_immunization(self.immunization, "supplier", "vax-type", self.table, False)
+                response = self.repository.update_immunization(self.immunization, "supplier", "vax-type", self.table, False)
                 self.table.update_item.assert_called()
+                self.assertEqual(response, f'Immunization#{self.immunization ["id"]}')
   
     def test_update_immunization_not_found(self):
         """it should not update Immunization since the imms id not found"""
 
-        immunization = {
-            "id": str(uuid4()),
-            "identifier": [{"system": "test-system", "value": "12345"}],
-            "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}],
-        }
         with self.assertRaises(ResourceNotFoundError):
-            self.repository.update_immunization(immunization, "supplier", "vax-type", self.table, False)
+            self.repository.update_immunization(self.immunization, "supplier", "vax-type", self.table, False)
         self.table.update_item.assert_not_called()
 
     def test_update_should_catch_dynamo_error(self):
@@ -154,8 +151,8 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
         self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": "Immunization#653dc8d5-b9c1-4eec-9df6-14a61818496b",
-                        "Resource": '{"id": "653dc8d5-b9c1-4eec-9df6-14a61818496b", "identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "PK": f"Immunization#{imms_id}",
+                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
                         "Version": 1
                     }]
                 }
@@ -172,8 +169,8 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                 self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": "Immunization#653dc8d5-b9c1-4eec-9df6-14a61818496b",
-                        "Resource": '{"id": "653dc8d5-b9c1-4eec-9df6-14a61818496b", "identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "PK": f"Immunization#{imms_id}",
+                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
                         "Version": 1
                     }]
                 }
@@ -188,8 +185,8 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                 self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": "Immunization#653dc8d5-b9c1-4eec-9df6-14a61818496b",
-                        "Resource": '{"id": "653dc8d5-b9c1-4eec-9df6-14a61818496b", "identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "PK": f"Immunization#{imms_id}",
+                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
                         "Version": 1
                     }]
                 }
@@ -203,14 +200,15 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
         self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": "Immunization#653dc8d5-b9c1-4eec-9df6-14a61818496b",
-                        "Resource": '{"id": "653dc8d5-b9c1-4eec-9df6-14a61818496b", "identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "PK": f"Immunization#{imms_id}",
+                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
                         "Version": 1
                     }]
                 }
             )
-        self.repository.delete_immunization(self.immunization, "supplier", "vax-type", self.table, False)
+        response = self.repository.delete_immunization(self.immunization, "supplier", "vax-type", self.table, False)
         self.table.update_item.assert_called()
+        self.assertEqual(response, f'Immunization#{self.immunization ["id"]}')  
 
     def test_delete_immunization_not_found(self):
         """it should not delete Immunization since the imms id not found"""
@@ -227,8 +225,8 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
         self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": "Immunization#653dc8d5-b9c1-4eec-9df6-14a61818496b",
-                        "Resource": '{"id": "653dc8d5-b9c1-4eec-9df6-14a61818496b", "identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "PK": f"Immunization#{imms_id}",
+                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
                         "Version": 1
                     }]
                 }
@@ -245,8 +243,8 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
                 self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": "Immunization#653dc8d5-b9c1-4eec-9df6-14a61818496b",
-                        "Resource": '{"id": "653dc8d5-b9c1-4eec-9df6-14a61818496b", "identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "PK": f"Immunization#{imms_id}",
+                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
                         "Version": 1
                     }]
                 }
@@ -261,8 +259,8 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
                 self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": "Immunization#653dc8d5-b9c1-4eec-9df6-14a61818496b",
-                        "Resource": '{"id": "653dc8d5-b9c1-4eec-9df6-14a61818496b", "identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "PK": f"Immunization#{imms_id}",
+                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
                         "Version": 1
                     }]
                 }
