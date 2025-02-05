@@ -1,7 +1,8 @@
 import os
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, ANY
 import boto3
+import json
 import botocore.exceptions
 from moto import mock_dynamodb
 from uuid import uuid4
@@ -54,11 +55,25 @@ class TestCreateImmunization(TestImmunizationBatchRepository):
 
         self.repository.create_immunization(self.immunization , "supplier", "vax-type", self.table, False)
         item = self.table.put_item.call_args.kwargs["Item"]
+        self.table.put_item.assert_called_once_with(
+            Item={
+                    "PK": ANY,
+                    "PatientPK": ANY,
+                    "PatientSK": ANY,
+                    "Resource": json.dumps(self.immunization),
+                    "IdentifierPK": ANY,
+                    "Operation": "CREATE",
+                    "Version": 1,
+                    "SupplierSystem": "supplier",
+                },
+                ConditionExpression=ANY
+        )
         self.assertEqual(item["PK"], f'Immunization#{self.immunization ["id"]}')
 
 
     def test_create_immunization_duplicate(self):
         """it should not create Immunization since the request is duplicate"""
+
 
         self.table.query = MagicMock(return_value={
             "id": imms_id,
@@ -72,6 +87,7 @@ class TestCreateImmunization(TestImmunizationBatchRepository):
 
     def test_create_should_catch_dynamo_error(self):
         """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+
         bad_request = 400
         response = {"ResponseMetadata": {"HTTPStatusCode": bad_request}}
         self.table.put_item = MagicMock(return_value=response)
@@ -82,6 +98,7 @@ class TestCreateImmunization(TestImmunizationBatchRepository):
 
     def test_create_immunization_unhandled_error(self):
         """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+
         response = {'Error': {'Code': 'InternalServerError'}}
         with unittest.mock.patch.object(self.table, 'put_item', side_effect=botocore.exceptions.ClientError({"Error": {"Code": "InternalServerError"}}, "PutItem")):
             with self.assertRaises(UnhandledResponseError) as e:
@@ -92,6 +109,7 @@ class TestCreateImmunization(TestImmunizationBatchRepository):
 class TestUpdateImmunization(TestImmunizationBatchRepository): 
     def test_update_immunization(self):
         """it should update Immunization record"""
+
         test_cases = [
             # Update cenario
             {
@@ -99,7 +117,7 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                     "Count": 1,
                     "Items": [{
                         "PK": f"Immunization#{imms_id}",
-                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
                 }
@@ -110,7 +128,7 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                     "Count": 1,
                     "Items": [{
                         "PK": f"Immunization#{imms_id}",
-                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "Resource": json.dumps(self.immunization),
                         "Version": 1,
                         "DeletedAt": "20210101"
                     }]
@@ -122,7 +140,7 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                     "Count": 1,
                     "Items": [{
                         "PK": f"Immunization#{imms_id}",
-                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "Resource": json.dumps(self.immunization),
                         "Version": 1,
                         "DeletedAt": "reinstated"
                     }]
@@ -145,6 +163,7 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
 
     def test_update_should_catch_dynamo_error(self):
         """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+
         bad_request = 400
         response = {"ResponseMetadata": {"HTTPStatusCode": bad_request}}
         self.table.update_item = MagicMock(return_value=response)
@@ -152,7 +171,7 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                     "Count": 1,
                     "Items": [{
                         "PK": f"Immunization#{imms_id}",
-                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
                 }
@@ -163,6 +182,7 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
 
     def test_update_immunization_unhandled_error(self):
         """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+
         response = {'Error': {'Code': 'InternalServerError'}}
         with unittest.mock.patch.object(self.table, 'update_item', side_effect=botocore.exceptions.ClientError({"Error": {"Code": "InternalServerError"}}, "UpdateItem")):
             with self.assertRaises(UnhandledResponseError) as e:
@@ -170,7 +190,7 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                     "Count": 1,
                     "Items": [{
                         "PK": f"Immunization#{imms_id}",
-                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
                 }
@@ -180,13 +200,14 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
 
     def test_update_immunization_conditionalcheckfailedexception_error(self):
         """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+
         with unittest.mock.patch.object(self.table, 'update_item', side_effect=botocore.exceptions.ClientError({"Error": {"Code": "ConditionalCheckFailedException"}}, "UpdateItem")):
             with self.assertRaises(ResourceNotFoundError) as e:
                 self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
                         "PK": f"Immunization#{imms_id}",
-                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
                 }
@@ -201,13 +222,19 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
                     "Count": 1,
                     "Items": [{
                         "PK": f"Immunization#{imms_id}",
-                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
                 }
             )
         response = self.repository.delete_immunization(self.immunization, "supplier", "vax-type", self.table, False)
-        self.table.update_item.assert_called()
+        self.table.update_item.assert_called_once_with(
+            Key={"PK": f"Immunization#{imms_id}"},
+            UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation, SupplierSystem = :supplier_system",
+            ExpressionAttributeValues={":timestamp": ANY, ":operation": "DELETE", ":supplier_system": "supplier"},
+            ReturnValues=ANY,
+            ConditionExpression=ANY,
+        )
         self.assertEqual(response, f'Immunization#{self.immunization ["id"]}')  
 
     def test_delete_immunization_not_found(self):
@@ -219,6 +246,7 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
 
     def test_delete_should_catch_dynamo_error(self):
         """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+
         bad_request = 400
         response = {"ResponseMetadata": {"HTTPStatusCode": bad_request}}
         self.table.update_item = MagicMock(return_value=response)
@@ -226,7 +254,7 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
                     "Count": 1,
                     "Items": [{
                         "PK": f"Immunization#{imms_id}",
-                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
                 }
@@ -237,6 +265,7 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
 
     def test_delete_immunization_unhandled_error(self):
         """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+
         response = {'Error': {'Code': 'InternalServerError'}}
         with unittest.mock.patch.object(self.table, 'update_item', side_effect=botocore.exceptions.ClientError({"Error": {"Code": "InternalServerError"}}, "UpdateItem")):
             with self.assertRaises(UnhandledResponseError) as e:
@@ -244,7 +273,7 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
                     "Count": 1,
                     "Items": [{
                         "PK": f"Immunization#{imms_id}",
-                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
                 }
@@ -254,13 +283,14 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
 
     def test_delete_immunization_conditionalcheckfailedexception_error(self):
         """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+
         with unittest.mock.patch.object(self.table, 'update_item', side_effect=botocore.exceptions.ClientError({"Error": {"Code": "ConditionalCheckFailedException"}}, "UpdateItem")):
             with self.assertRaises(ResourceNotFoundError) as e:
                 self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
                         "PK": f"Immunization#{imms_id}",
-                        "Resource": '{"identifier": [{"system": "test-system", "value": "12345"}], "contained": [{"resourceType": "Patient", "identifier": [{"value": "98765"}]}]}',
+                        "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
                 }
