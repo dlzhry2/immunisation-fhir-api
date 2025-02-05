@@ -6,10 +6,14 @@ import simplejson as json
 import botocore.exceptions
 from moto import mock_dynamodb
 from uuid import uuid4
-from models.errors import IdentifierDuplicationError, ResourceNotFoundError, UnhandledResponseError
+from models.errors import IdentifierDuplicationError, ResourceNotFoundError, UnhandledResponseError, ResourceFoundError
 from fhir_batch_repository import ImmunizationBatchRepository, create_table
 from tests.utils.immunization_utils import create_covid_19_immunization_dict
 imms_id = str(uuid4())
+
+
+def _make_immunization_pk(_id):
+    return f"Immunization#{_id}"
 
 @mock_dynamodb
 class TestImmunizationBatchRepository(unittest.TestCase):
@@ -101,48 +105,58 @@ class TestCreateImmunization(TestImmunizationBatchRepository):
         with unittest.mock.patch.object(self.table, 'put_item', side_effect=botocore.exceptions.ClientError({"Error": {"Code": "InternalServerError"}}, "PutItem")):
             with self.assertRaises(UnhandledResponseError) as e:
                 self.repository.create_immunization(self.immunization, "supplier", "vax-type", self.table, False)
-        self.assertDictEqual(e.exception.response, response)          
+        self.assertDictEqual(e.exception.response, response)
 
+    def test_create_immunization_conditionalcheckfailedexception_error(self):
+        """it should throw UnhandledResponse when the response from dynamodb can't be handled"""
+
+        with unittest.mock.patch.object(self.table, 'put_item', side_effect=botocore.exceptions.ClientError({"Error": {"Code": "ConditionalCheckFailedException"}}, "PutItem")):
+            with self.assertRaises(ResourceFoundError):
+                self.repository.create_immunization(self.immunization, "supplier", "vax-type", self.table, False)              
+        
 
 class TestUpdateImmunization(TestImmunizationBatchRepository): 
     def test_update_immunization(self):
         """it should update Immunization record"""
 
         test_cases = [
-            # Update cenario
+            # Update scenario
             {
                 "query_response": {
                     "Count": 1,
                     "Items": [{
-                        "PK": f"Immunization#{imms_id}",
+                        "PK": _make_immunization_pk(imms_id),
                         "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
-                }
+                },
+                "expected_extra_values": {}  # No extra assertion values
             },
             # Reinstated scenario
             {
                 "query_response": {
                     "Count": 1,
                     "Items": [{
-                        "PK": f"Immunization#{imms_id}",
+                        "PK": _make_immunization_pk(imms_id),
                         "Resource": json.dumps(self.immunization),
                         "Version": 1,
                         "DeletedAt": "20210101"
                     }]
-                }
+                },
+                "expected_extra_values": {":respawn": "reinstated"}
             },
-            # update reinstated scenario
+            # Update reinstated scenario
             {
                 "query_response": {
                     "Count": 1,
                     "Items": [{
-                        "PK": f"Immunization#{imms_id}",
+                        "PK": _make_immunization_pk(imms_id),
                         "Resource": json.dumps(self.immunization),
                         "Version": 1,
                         "DeletedAt": "reinstated"
                     }]
-                }
+                },
+                "expected_extra_values": {}
             }
         ] 
         for is_present in [True, False]:
@@ -150,11 +164,29 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                 with self.subTest(is_present=is_present, case=case):
                     self.table.query = MagicMock(return_value=case["query_response"])
                     response = self.repository.update_immunization(
-                    self.immunization, "supplier", "vax-type", self.table, is_present
-                )
-                self.table.update_item.assert_called()
-                self.assertEqual(response, f'Immunization#{self.immunization["id"]}')
-  
+                        self.immunization, "supplier", "vax-type", self.table, is_present
+                    )
+                    expected_values = {
+                        ":timestamp": ANY,
+                        ":patient_pk": ANY,
+                        ":patient_sk": ANY,
+                        ":imms_resource_val": json.dumps(self.immunization),
+                        ":operation": "UPDATE",
+                        ":version": 2,
+                        ":supplier_system": "supplier"
+                    }
+                    expected_values.update(case["expected_extra_values"])
+                    
+                    self.table.update_item.assert_called_with(
+                        Key={"PK": _make_immunization_pk(imms_id)},
+                        UpdateExpression=ANY,
+                        ExpressionAttributeNames={"#imms_resource": "Resource"},
+                        ExpressionAttributeValues=expected_values,
+                        ReturnValues=ANY,
+                        ConditionExpression=ANY,
+                    )
+                    self.assertEqual(response, f'Immunization#{self.immunization["id"]}')
+    
     def test_update_immunization_not_found(self):
         """it should not update Immunization since the imms id not found"""
 
@@ -171,7 +203,7 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
         self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": f"Immunization#{imms_id}",
+                        "PK": _make_immunization_pk(imms_id),
                         "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
@@ -190,7 +222,7 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                 self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": f"Immunization#{imms_id}",
+                        "PK": _make_immunization_pk(imms_id),
                         "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
@@ -207,7 +239,7 @@ class TestUpdateImmunization(TestImmunizationBatchRepository):
                 self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": f"Immunization#{imms_id}",
+                        "PK": _make_immunization_pk(imms_id),
                         "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
@@ -222,7 +254,7 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
         self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": f"Immunization#{imms_id}",
+                        "PK": _make_immunization_pk(imms_id),
                         "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
@@ -231,7 +263,7 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
         for is_present in [True, False]:
             response = self.repository.delete_immunization(self.immunization, "supplier", "vax-type", self.table, is_present)
             self.table.update_item.assert_called_with(
-                Key={"PK": f"Immunization#{imms_id}"},
+                Key={"PK": _make_immunization_pk(imms_id)},
                 UpdateExpression="SET DeletedAt = :timestamp, Operation = :operation, SupplierSystem = :supplier_system",
                 ExpressionAttributeValues={":timestamp": ANY, ":operation": "DELETE", ":supplier_system": "supplier"},
                 ReturnValues=ANY,
@@ -255,7 +287,7 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
         self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": f"Immunization#{imms_id}",
+                        "PK": _make_immunization_pk(imms_id),
                         "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
@@ -274,7 +306,7 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
                 self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": f"Immunization#{imms_id}",
+                        "PK": _make_immunization_pk(imms_id),
                         "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
@@ -291,7 +323,7 @@ class TestDeleteImmunization(TestImmunizationBatchRepository):
                 self.table.query = MagicMock(return_value={
                     "Count": 1,
                     "Items": [{
-                        "PK": f"Immunization#{imms_id}",
+                        "PK": _make_immunization_pk(imms_id),
                         "Resource": json.dumps(self.immunization),
                         "Version": 1
                     }]
