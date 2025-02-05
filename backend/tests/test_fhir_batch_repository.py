@@ -2,7 +2,6 @@ import os
 import unittest
 from unittest.mock import MagicMock, ANY, patch
 import boto3
-import time
 import simplejson as json
 import botocore.exceptions
 from moto import mock_dynamodb
@@ -62,7 +61,7 @@ class TestCreateImmunization(TestImmunizationBatchRepository):
 
     def test_create_immunization_with_nhs_number(self):
         """Test creating Immunization with NHS number."""
-        
+
         self.create_immunization_test_logic(is_present=True, remove_nhs=False)
 
     def test_create_immunization_without_nhs_number(self):
