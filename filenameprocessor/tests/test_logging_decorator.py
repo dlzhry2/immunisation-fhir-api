@@ -7,13 +7,14 @@ from copy import deepcopy
 from boto3 import client as boto3_client
 from moto import mock_s3
 from clients import REGION_NAME
-from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, MockFileDetails, BucketNames
+from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, MockFileDetails, BucketNames, Firehose
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
 
 # Some environment variables are evaluated when lambda handler is imported,
 # so environment dictionary must be mocked first
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from file_name_processor import lambda_handler
+    from logging_decorator import send_log_to_firehose, generate_and_send_logs
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
 FILE_DETAILS = MockFileDetails.flu_emis
@@ -32,6 +33,40 @@ class TestLoggingDecorator(unittest.TestCase):
 
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=FILE_DETAILS.file_key)
 
+    def test_send_log_to_firehose(self):
+        """
+        Tests that the send_log_to_firehose function calls firehose_client.put_record with the correct arguments.
+        NOTE: mock_firehose does not persist the data, so at this level it is only possible to test what the call args
+        were, not that the data reached the destination.
+        """
+        log_data = {"test_key": "test_value"}
+
+        with patch("logging_decorator.firehose_client") as mock_firehose_client:
+            send_log_to_firehose(log_data)
+
+        expected_firehose_record = {"Data": json.dumps({"event": log_data}).encode("utf-8")}
+        mock_firehose_client.put_record.assert_called_once_with(
+            DeliveryStreamName=Firehose.STREAM_NAME, Record=expected_firehose_record
+        )
+
+    def test_generate_and_send_logs(self):
+        """
+        Tests that the generate_and_send_logs function logs the correct data at the correct level for cloudwatch
+        and calls send_log_to_firehose with the correct log data
+        """
+        base_log_data = {"base_key": "base_value"}
+        additional_log_data = {"additional_key": "additional_value"}
+        start_time = 1672531200
+
+        # CASE: Successful log - is_error_log arg set to False
+        with (  # noqa: E999
+            patch("logging_decorator.logger") as mock_logger,  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
+            patch("logging_decorator.time") as mock_time,  # noqa: E999
+        ):  # noqa: E999
+            mock_time.time.return_value = 1672531200.123456  # Mocks the end time to be 0.123456s after the start time
+            generate_and_send_logs(start_time, base_log_data, additional_log_data, is_error_log=False)
+
     def test_splunk_logger_successful_validation(self):
         """Tests the splunk logger is called when file validation is successful"""
         # Mock full permissions so that validation will pass
@@ -41,7 +76,7 @@ class TestLoggingDecorator(unittest.TestCase):
             patch("send_sqs_message.send_to_supplier_queue"),  # noqa: E999
             patch("file_name_processor.upsert_audit_table", return_value=False),  # noqa: E999
             patch("file_name_processor.ensure_file_is_not_a_duplicate"),  # noqa: E999
-            patch("supplier_permissions.redis_client.get", return_value=permissions_config_content),  # noqa: E999
+            patch("elasticache.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
             patch("logging_decorator.logger") as mock_logger,  # noqa: E999
         ):  # noqa: E999
@@ -75,7 +110,7 @@ class TestLoggingDecorator(unittest.TestCase):
             patch("file_name_processor.uuid4", return_value=FILE_DETAILS.message_id),  # noqa: E999
             patch("file_name_processor.upsert_audit_table"),  # noqa: E999
             patch("file_name_processor.get_next_queued_file_details", return_value=None),  # noqa: E999
-            patch("supplier_permissions.redis_client.get", return_value=permissions_config_content),  # noqa: E999
+            patch("elasticache.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue"),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
             patch("logging_decorator.logger") as mock_logger,  # noqa: E999

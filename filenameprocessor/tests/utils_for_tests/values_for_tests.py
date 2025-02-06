@@ -13,6 +13,12 @@ class BucketNames:
     DESTINATION = "immunisation-batch-internal-dev-data-destinations"
 
 
+class Firehose:
+    """Class containing Firehose values for use in tests"""
+
+    STREAM_NAME = "immunisation-fhir-api-internal-dev-splunk-firehose"
+
+
 class Sqs:
     """Class to hold SQS values for use in tests"""
 

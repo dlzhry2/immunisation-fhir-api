@@ -8,8 +8,7 @@ from contextlib import ExitStack
 from copy import deepcopy
 from boto3 import client as boto3_client
 from moto import mock_s3, mock_sqs
-from clients import REGION_NAME
-from supplier_permissions import PERMISSIONS_CONFIG_FILE_KEY
+
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
 from tests.utils_for_tests.values_for_tests import (
     MOCK_ENVIRONMENT_DICT,
@@ -23,6 +22,8 @@ from tests.utils_for_tests.values_for_tests import (
 # so environment dictionary must be mocked first
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from file_name_processor import lambda_handler
+    from clients import REGION_NAME
+    from constants import PERMISSIONS_CONFIG_FILE_KEY
 
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
@@ -95,7 +96,7 @@ class TestLambdaHandlerDataSource(TestCase):
                 )
                 with (  # noqa: E999
                     patch(  # noqa: E999
-                        "supplier_permissions.redis_client.get", return_value=permissions_config_content  # noqa: E999
+                        "elasticache.redis_client.get", return_value=permissions_config_content  # noqa: E999
                     ),  # noqa: E999
                     patch("file_name_processor.uuid4", return_value=file_details.message_id),  # noqa: E999
                     patch("file_name_processor.ensure_file_is_not_a_duplicate"),  # noqa: E999
@@ -142,7 +143,7 @@ class TestLambdaHandlerDataSource(TestCase):
         # Mock the supplier permissions with a value which doesn't include the requested Flu permissions
         permissions_config_content = generate_permissions_config_content({"EMIS": ["RSV_DELETE"]})
         with (  # noqa: E999
-            patch("supplier_permissions.redis_client.get", return_value=permissions_config_content),  # noqa: E999
+            patch("elasticache.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
             patch("file_name_processor.get_next_queued_file_details", return_value=None),  # noqa: E999
         ):  # noqa: E999
@@ -159,20 +160,20 @@ class TestLambdaHandlerConfig(TestCase):
 
     def setUp(self):
         self.mock_config_file_content = BytesIO(b"mock_file_content")
-        self.mock_elasticcache_get_object_return_value = {"Body": self.mock_config_file_content}
+        self.mock_elasticache_get_object_return_value = {"Body": self.mock_config_file_content}
 
     config_event = {
         "Records": [{"s3": {"bucket": {"name": BucketNames.CONFIG}, "object": {"key": (PERMISSIONS_CONFIG_FILE_KEY)}}}]
     }
 
     def test_successful_processing_from_configs(self):
-        mock_config_body = self.mock_elasticcache_get_object_return_value
+        mock_config_body = self.mock_elasticache_get_object_return_value
 
         with (  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
-            patch("elasticcache.redis_client.set") as mock_redis_set,  # noqa: E999
+            patch("elasticache.redis_client.set") as mock_redis_set,  # noqa: E999
             patch(  # noqa: E999
-                "elasticcache.s3_client.get_object", return_value=mock_config_body  # noqa: E999
+                "elasticache.s3_client.get_object", return_value=mock_config_body  # noqa: E999
             ) as mock_s3_get_object,  # noqa: E999
         ):  # noqa: E999
             lambda_handler(self.config_event, None)
@@ -181,14 +182,14 @@ class TestLambdaHandlerConfig(TestCase):
         mock_redis_set.assert_called_once_with(PERMISSIONS_CONFIG_FILE_KEY, "mock_file_content")
 
     def test_processing_from_configs_failed(self):
-        elasticcache_exception = Exception("Simulated ElastiCache upload failure")
-        mock_config_body = self.mock_elasticcache_get_object_return_value
+        elasticache_exception = Exception("Simulated ElastiCache upload failure")
+        mock_config_body = self.mock_elasticache_get_object_return_value
 
         with (  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
-            patch("elasticcache.upload_to_elasticache", side_effect=elasticcache_exception),  # noqa: E999
+            patch("elasticache.upload_to_elasticache", side_effect=elasticache_exception),  # noqa: E999
             patch(  # noqa: E999
-                "elasticcache.s3_client.get_object", return_value=mock_config_body  # noqa: E999
+                "elasticache.s3_client.get_object", return_value=mock_config_body  # noqa: E999
             ) as mock_s3_get_object,  # noqa: E999
         ):  # noqa: E999
             lambda_handler(self.config_event, None)

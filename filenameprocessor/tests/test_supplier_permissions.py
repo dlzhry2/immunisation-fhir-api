@@ -31,7 +31,7 @@ class TestSupplierPermissions(TestCase):
         # Run the subtests
         for supplier, expected_result in test_cases:
             with self.subTest(supplier=supplier):
-                with patch("supplier_permissions.redis_client.get", return_value=permissions_config_content):
+                with patch("elasticache.redis_client.get", return_value=permissions_config_content):
                     actual_permissions = get_supplier_permissions(supplier)
                     self.assertEqual(actual_permissions, expected_result)
 
