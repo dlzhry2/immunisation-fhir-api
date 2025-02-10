@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from moto import mock_s3
 from boto3 import client as boto3_client
 
-from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, BucketNames
+from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames
 from tests.utils_for_tests.generic_setup_and_teardown import GenericSetUp, GenericTearDown
 
 # Ensure environment variables are mocked before importing from src files

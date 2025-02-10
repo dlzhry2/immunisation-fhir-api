@@ -6,7 +6,7 @@ import fakeredis
 from boto3 import client as boto3_client
 from moto import mock_s3
 
-from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, BucketNames
+from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames
 from tests.utils_for_tests.generic_setup_and_teardown import GenericSetUp, GenericTearDown
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
 

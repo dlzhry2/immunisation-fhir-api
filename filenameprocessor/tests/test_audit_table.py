@@ -5,7 +5,7 @@ from unittest.mock import patch
 from boto3 import resource as boto3_resource
 from moto import mock_dynamodb
 
-from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT
+from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
 
 # Ensure environment variables are mocked before importing from src files
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
@@ -27,7 +27,6 @@ class TestAuditTable(TestCase):
             TableName=AUDIT_TABLE_NAME,
             KeySchema=[
                 {"AttributeName": AuditTableKeys.MESSAGE_ID, "KeyType": "HASH"},
-                # {"AttributeName": "placeholder", "KeyType": "RANGE"},
             ],
             AttributeDefinitions=[
                 {"AttributeName": AuditTableKeys.MESSAGE_ID, "AttributeType": "S"},

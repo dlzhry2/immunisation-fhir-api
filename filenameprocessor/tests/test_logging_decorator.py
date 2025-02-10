@@ -4,13 +4,16 @@ import unittest
 from unittest.mock import patch
 import json
 from copy import deepcopy
+from contextlib import ExitStack
 from boto3 import client as boto3_client
 from moto import mock_s3
-from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, MockFileDetails, BucketNames, Firehose
+
+from tests.utils_for_tests.generic_setup_and_teardown import GenericSetUp, GenericTearDown
+from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames, Firehose
+from tests.utils_for_tests.values_for_tests import MockFileDetails, fixed_datetime
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
 
-# Some environment variables are evaluated when lambda handler is imported,
-# so environment dictionary must be mocked first
+# Ensure environment variables are mocked before importing from src files
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from clients import REGION_NAME
     from file_name_processor import lambda_handler
@@ -29,10 +32,49 @@ class TestLoggingDecorator(unittest.TestCase):
 
     def setUp(self):
         """Set up the S3 buckets and upload the valid FLU/EMIS file example"""
-        for bucket_name in [BucketNames.SOURCE, BucketNames.DESTINATION]:
-            s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION_NAME})
-
+        GenericSetUp(s3_client)
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=FILE_DETAILS.file_key)
+
+    def tearDown(self):
+        """Tear down the S3 buckets"""
+        GenericTearDown(s3_client)
+
+    def run(self, result=None):
+        """
+        This method is run by Unittest, and is being utilised here to apply common patches to all of the tests in the
+        class. Using ExitStack allows multiple patches to be applied, whilst ensuring that the mocks are cleaned up
+        after the test has run.
+        """
+        # Set up common patches to be applied to all tests in the class.
+        # These patches can be overridden in individual tests.
+        common_patches = [
+            # NOTE: python3.10/logging/__init__.py file, which is run when logger.info is called, makes a call to
+            # time.time. This interferes with patching of the time.time function in these tests.
+            # The logging_decorator.logger is patched individually in each test to allow for assertions to be made.
+            # Any uses of the logger in other files will confound the tests and should be patched here.
+            patch("audit_table.logger"),
+            patch("file_name_processor.logger"),
+            patch("send_sqs_message.logger"),
+            patch("supplier_permissions.logger"),
+            patch("utils_for_filenameprocessor.logger"),
+            # Time is incremented by 1.0 for each call to time.time for ease of testing.
+            # Range is set to a large number (100) due to many calls being made to time.time for some tests.
+            patch("logging_decorator.time.time", side_effect=[0.0 + i for i in range(100)]),
+        ]
+
+        # Set up the ExitStack. Note that patches need to be explicitly started so that they will be applied even when
+        # only running one individual test.
+        with ExitStack() as stack:
+            # datetime.now is patched to return a fixed datetime for ease of testing
+            mock_datetime = patch("logging_decorator.datetime").start()
+            mock_datetime.now.return_value = fixed_datetime
+            stack.enter_context(patch("logging_decorator.datetime", mock_datetime))
+
+            for common_patch in common_patches:
+                common_patch.start()
+                stack.enter_context(common_patch)
+
+            super().run(result)
 
     def test_send_log_to_firehose(self):
         """
@@ -104,8 +146,8 @@ class TestLoggingDecorator(unittest.TestCase):
 
         expected_log_data = {
             "function_name": "filename_processor_handle_record",
-            "date_time": "REPLACE THIS VALUE",
-            "time_taken": "REPLACE THIS VALUE",
+            "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            "time_taken": "1.0s",
             "statusCode": 200,
             "message": "Successfully sent to SQS for further processing",
             "file_key": FILE_DETAILS.file_key,
@@ -115,8 +157,6 @@ class TestLoggingDecorator(unittest.TestCase):
         }
 
         log_data = json.loads(mock_logger.info.call_args[0][0])
-        expected_log_data["time_taken"] = log_data["time_taken"]
-        expected_log_data["date_time"] = log_data["date_time"]
         self.assertEqual(log_data, expected_log_data)
 
         mock_send_log_to_firehose.assert_called_once_with(log_data)
@@ -139,8 +179,8 @@ class TestLoggingDecorator(unittest.TestCase):
 
         expected_log_data = {
             "function_name": "filename_processor_handle_record",
-            "date_time": "REPLACE THIS VALUE",
-            "time_taken": "REPLACE THIS VALUE",
+            "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            "time_taken": "1.0s",
             "statusCode": 403,
             "message": "Infrastructure Level Response Value - Processing Error",
             "file_key": FILE_DETAILS.file_key,
@@ -149,8 +189,6 @@ class TestLoggingDecorator(unittest.TestCase):
         }
 
         log_data = json.loads(mock_logger.info.call_args[0][0])
-        expected_log_data["time_taken"] = log_data["time_taken"]
-        expected_log_data["date_time"] = log_data["date_time"]
         self.assertEqual(log_data, expected_log_data)
 
         mock_send_log_to_firehose.assert_called_once_with(log_data)

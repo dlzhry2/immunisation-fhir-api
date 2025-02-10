@@ -7,7 +7,8 @@ from copy import deepcopy
 from moto import mock_sqs
 from boto3 import client as boto3_client
 
-from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, MockFileDetails, Sqs
+from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, Sqs
+from tests.utils_for_tests.values_for_tests import MockFileDetails
 
 # Ensure environment variables are mocked before importing from src files
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):

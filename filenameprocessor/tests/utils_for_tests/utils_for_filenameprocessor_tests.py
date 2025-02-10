@@ -1,8 +1,14 @@
 """Utils functions for filenameprocessor tests"""
 
+from unittest.mock import patch
 from io import StringIO
 import json
-from csv import DictReader
+
+from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
+
+# Ensure environment variables are mocked before importing from src files
+with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
+    from csv import DictReader
 
 
 def download_csv_file_as_dict_reader(s3_client, bucket_name: str, file_key: str) -> DictReader:

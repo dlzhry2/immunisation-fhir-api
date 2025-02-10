@@ -1,44 +1,12 @@
 """File of values which can be used for testing"""
 
+from datetime import datetime
+
+fixed_datetime = datetime(2024, 10, 29, 12, 0, 0)
+
 # Mock_created_at_formatted string is used throughout the test suite, so that the ack file name
 # (which includes the created_at_formatted_string) can be predicted.
 MOCK_CREATED_AT_FORMATTED_STRING = "20211120T12000000"
-
-
-class BucketNames:
-    """Class to hold bucket names for use in tests"""
-
-    CONFIG = "immunisation-batch-internal-dev-data-configs"
-    SOURCE = "immunisation-batch-internal-dev-data-sources"
-    DESTINATION = "immunisation-batch-internal-dev-data-destinations"
-
-
-class Firehose:
-    """Class containing Firehose values for use in tests"""
-
-    STREAM_NAME = "immunisation-fhir-api-internal-dev-splunk-firehose"
-
-
-class Sqs:
-    """Class to hold SQS values for use in tests"""
-
-    ATTRIBUTES = {"FifoQueue": "true", "ContentBasedDeduplication": "true"}
-    QUEUE_NAME = "imms-batch-internal-dev-metadata-queue.fifo"
-
-
-# Dictionary for mocking the os.environ dict
-# NOTE: FILE_NAME_GSI and CONFIG_BUCKET_NAME environment variables are set in the terraform,
-# but not used in the src code and so are not set here.
-MOCK_ENVIRONMENT_DICT = {
-    "SOURCE_BUCKET_NAME": BucketNames.SOURCE,
-    "ACK_BUCKET_NAME": BucketNames.DESTINATION,
-    "QUEUE_URL": "https://sqs.eu-west-2.amazonaws.com/123456789012/imms-batch-internal-dev-metadata-queue.fifo",
-    "REDIS_HOST": "localhost",
-    "REDIS_PORT": "6379",
-    "SPLUNK_FIREHOSE_NAME": Firehose.STREAM_NAME,
-    "AUDIT_TABLE_NAME": "immunisation-batch-internal-dev-audit-table",
-    "FILE_NAME_PROC_LAMBDA_NAME": "imms-batch-internal-dev-filenameproc_lambda",
-}
 
 
 class FileDetails:
@@ -81,3 +49,4 @@ class MockFileDetails:
 
     rsv_ravs = FileDetails("RSV", "RAVS", "X26")
     flu_emis = FileDetails("FLU", "EMIS", "YGM41")
+
