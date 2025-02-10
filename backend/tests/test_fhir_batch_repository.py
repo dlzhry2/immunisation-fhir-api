@@ -53,7 +53,7 @@ class TestCreateImmunization(TestImmunizationBatchRepository):
                 "PK": ANY,
                 "PatientPK": ANY,
                 "PatientSK": ANY,
-                "Resource": json.dumps(self.immunization, use_decimal=True) if is_present else json.dumps(self.immunization),
+                "Resource": json.dumps(self.immunization, use_decimal=True),
                 "IdentifierPK": ANY,
                 "Operation": "CREATE",
                 "Version": 1,
