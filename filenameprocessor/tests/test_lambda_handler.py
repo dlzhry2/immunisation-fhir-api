@@ -7,7 +7,7 @@ from contextlib import ExitStack
 from copy import deepcopy
 import fakeredis
 from boto3 import client as boto3_client
-from moto import mock_s3, mock_sqs
+from moto import mock_s3, mock_sqs, mock_firehose, mock_dynamodb
 
 from tests.utils_for_tests.generic_setup_and_teardown import GenericSetUp, GenericTearDown
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
@@ -19,15 +19,20 @@ with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from file_name_processor import lambda_handler
     from clients import REGION_NAME
     from constants import PERMISSIONS_CONFIG_FILE_KEY
+    from audit_table import AUDIT_TABLE_NAME
 
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
 sqs_client = boto3_client("sqs", region_name=REGION_NAME)
+firehose_client = boto3_client("firehose", region_name=REGION_NAME)
+dynamodb_client = boto3_client("dynamodb", region_name=REGION_NAME)
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 @mock_s3
 @mock_sqs
+@mock_firehose
+@mock_dynamodb
 class TestLambdaHandlerDataSource(TestCase):
     """Tests for lambda_handler when a data sources (vaccine data) file is received."""
 
@@ -39,13 +44,9 @@ class TestLambdaHandlerDataSource(TestCase):
         """
         # Set up common patches to be applied to all tests in the class (these can be overridden in individual tests.)
         common_patches = [
-            # Patch the created_at_formatted_string, so that the ack file key can be deduced
+            # Patch get_created_at_formatted_string, so that the ack file key can be deduced
             # (it is already unittested separately).
             patch("file_name_processor.get_created_at_formatted_string", return_value=MOCK_CREATED_AT_FORMATTED_STRING),
-            # Patch add_to_audit_table to prevent it from being called (it is already unittested separately).
-            patch("file_name_processor.upsert_audit_table"),
-            # Patch the firehose client to prevent it from being called.
-            patch("logging_decorator.firehose_client.put_record"),
             # Patch redis_client to use a fake redis client.
             patch("elasticache.redis_client", new=fakeredis.FakeStrictRedis()),
         ]
@@ -56,10 +57,10 @@ class TestLambdaHandlerDataSource(TestCase):
             super().run(result)
 
     def setUp(self):
-        GenericSetUp(s3_client, sqs_client)
+        GenericSetUp(s3_client, firehose_client, sqs_client, dynamodb_client)
 
     def tearDown(self):
-        GenericTearDown(s3_client, sqs_client)
+        GenericTearDown(s3_client, firehose_client, sqs_client, dynamodb_client)
 
     @staticmethod
     def make_event(file_key: str):
@@ -77,12 +78,18 @@ class TestLambdaHandlerDataSource(TestCase):
         object_keys_in_destination_bucket = [obj["Key"] for obj in objects_in_destination_bucket.get("Contents", [])]
         self.assertIn(ack_file_key, object_keys_in_destination_bucket)
 
+    @staticmethod
+    def get_table_items():
+        """Return all items in the audit table"""
+        return dynamodb_client.scan(TableName=AUDIT_TABLE_NAME).get("Items", [])
+
     def test_lambda_handler_success(self):
         """Tests that lambda handler runs successfully for files with valid file keys and permissions."""
         # NOTE: Add a test case for each vaccine type
-        test_cases = [MockFileDetails.rsv_ravs, MockFileDetails.flu_emis]
+        test_cases = [MockFileDetails.flu_emis, MockFileDetails.rsv_ravs]
         for file_details in test_cases:
             with self.subTest(file_details.name):
+                # Setup the file in the source bucket
                 s3_client.put_object(Bucket=BucketNames.SOURCE, Key=file_details.file_key)
 
                 # Mock full permissions for the supplier for the vaccine type, and the message_id as the file_details
@@ -90,42 +97,40 @@ class TestLambdaHandlerDataSource(TestCase):
                 permissions_config_content = generate_permissions_config_content(
                     deepcopy(file_details.permissions_config)
                 )
-                with (  # noqa: E999
-                    patch("elasticache.redis_client.get", return_value=permissions_config_content),  # noqa: E999
-                    patch("file_name_processor.uuid4", return_value=file_details.message_id),  # noqa: E999
-                    patch("file_name_processor.ensure_file_is_not_a_duplicate"),  # noqa: E999
-                    patch(  # noqa: E999
-                        "file_name_processor.upsert_audit_table", return_value=False  # noqa: E999
-                    ) as mock_upsert_audit_table,  # noqa: E999
-                ):  # noqa: E999
+                with (
+                    patch("elasticache.redis_client.get", return_value=permissions_config_content),
+                    patch("file_name_processor.uuid4", return_value=file_details.message_id),
+                ):
                     lambda_handler(self.make_event(file_details.file_key), None)
 
-                mock_upsert_audit_table.assert_called_with(
-                    file_details.message_id,
-                    file_details.file_key,
-                    MOCK_CREATED_AT_FORMATTED_STRING,
-                    f"{file_details.supplier}_{file_details.vaccine_type}",
-                    "Processing",
-                    False,
-                )
+                # Check if file was successfully added to the audit table
+                table_items = dynamodb_client.scan(TableName=AUDIT_TABLE_NAME)["Items"]
+                self.assertEqual(len(table_items), 1)
+                expected_table_item = {
+                    "message_id": {"S": file_details.message_id},
+                    "filename": {"S": file_details.file_key},
+                    "queue_name": {"S": file_details.queue_name},
+                    "status": {"S": "Processing"},
+                    "timestamp": {"S": file_details.created_at_formatted_string},
+                }
+                self.assertEqual(table_items[0], expected_table_item)
 
                 # Check if the message was sent to the SQS queue
-                messages = sqs_client.receive_message(
-                    QueueUrl=Sqs.TEST_QUEUE_URL, WaitTimeSeconds=1, MaxNumberOfMessages=1
-                )
-                self.assertIn("Messages", messages)
-                received_message = json_loads(messages["Messages"][0]["Body"])
-                self.assertEqual(received_message, file_details.sqs_message_body)
+                messages = sqs_client.receive_message(QueueUrl=Sqs.TEST_QUEUE_URL, MaxNumberOfMessages=10)
+                received_messages = messages.get("Messages", [])
+                self.assertEqual(len(received_messages), 1)
+                self.assertEqual(json_loads(received_messages[0]["Body"]), file_details.sqs_message_body)
+
+                # Reset audit table
+                for item in self.get_table_items():
+                    dynamodb_client.delete_item(TableName=AUDIT_TABLE_NAME, Key=dict(item.items()))
 
     def test_lambda_invalid_file_key(self):
         """tests SQS queue is not called when file key includes invalid file key"""
         test_file_key = "InvalidVaccineType_Vaccinations_v5_YGM41_20240708T12130100.csv"
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=test_file_key)
 
-        with (  # noqa: E999
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-            patch("file_name_processor.get_next_queued_file_details", return_value=None),  # noqa: E999
-        ):  # noqa: E999
+        with patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue:
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
         mock_send_to_supplier_queue.assert_not_called()
@@ -141,7 +146,6 @@ class TestLambdaHandlerDataSource(TestCase):
         with (  # noqa: E999
             patch("elasticache.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
-            patch("file_name_processor.get_next_queued_file_details", return_value=None),  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(file_details.file_key), context=None)
 
@@ -151,6 +155,7 @@ class TestLambdaHandlerDataSource(TestCase):
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 @mock_s3
+@mock_firehose
 class TestLambdaHandlerConfig(TestCase):
     """Tests for lambda_handler when a config file is uploaded."""
 
@@ -158,24 +163,23 @@ class TestLambdaHandlerConfig(TestCase):
         "Records": [{"s3": {"bucket": {"name": BucketNames.CONFIG}, "object": {"key": (PERMISSIONS_CONFIG_FILE_KEY)}}}]
     }
 
+    mock_permissions_config = generate_permissions_config_content(
+        {"test_supplier_1": ["RSV_FULL"], "test_supplier_2": ["FLU_CREATE", "FLU_UPDATE"]}
+    )
+
     def setUp(self):
-        GenericSetUp(s3_client)
-        self.mock_permissions_config = generate_permissions_config_content(
-            {"test_supplier_1": ["RSV_FULL"], "test_supplier_2": ["FLU_CREATE", "FLU_UPDATE"]}
-        )
+        GenericSetUp(s3_client, firehose_client)
+
         s3_client.put_object(
             Bucket=BucketNames.CONFIG, Key=PERMISSIONS_CONFIG_FILE_KEY, Body=self.mock_permissions_config
         )
 
     def tearDown(self):
-        GenericTearDown(s3_client)
+        GenericTearDown(s3_client, firehose_client)
 
     def test_successful_processing_from_configs(self):
         """Tests that the permissions config file content is uploaded to elasticache successfully"""
-        with (  # noqa: E999
-            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
-            patch("elasticache.redis_client", new=fakeredis.FakeStrictRedis()) as fake_redis,  # noqa: E999
-        ):  # noqa: E999
+        with patch("elasticache.redis_client", new=fakeredis.FakeStrictRedis()) as fake_redis:
             lambda_handler(self.config_event, None)
 
         self.assertEqual(

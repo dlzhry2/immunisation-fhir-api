@@ -6,7 +6,7 @@ from copy import deepcopy
 from boto3 import client as boto3_client
 from moto import mock_s3
 
-from tests.utils_for_tests.utils_for_filenameprocessor_tests import download_csv_file_as_dict_reader
+from tests.utils_for_tests.utils_for_filenameprocessor_tests import get_csv_file_dict_reader
 from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames
 from tests.utils_for_tests.values_for_tests import MockFileDetails
 
@@ -72,9 +72,7 @@ class TestMakeAndUploadAckFile(TestCase):
         expected_result = [deepcopy(EXPECTED_ACK_DATA)]
         # Note that the data downloaded from the CSV will contain the bool as a string
         expected_result[0]["MESSAGE_DELIVERY"] = "False"
-        csv_dict_reader = download_csv_file_as_dict_reader(
-            s3_client, BucketNames.DESTINATION, FILE_DETAILS.ack_file_key
-        )
+        csv_dict_reader = get_csv_file_dict_reader(s3_client, BucketNames.DESTINATION, FILE_DETAILS.ack_file_key)
         self.assertEqual(list(csv_dict_reader), expected_result)
 
     def test_make_and_upload_ack_file(self):
@@ -87,8 +85,7 @@ class TestMakeAndUploadAckFile(TestCase):
         )
 
         expected_result = [deepcopy(EXPECTED_ACK_DATA)]
+        # Note that the data downloaded from the CSV will contain the bool as a string
         expected_result[0]["MESSAGE_DELIVERY"] = "False"
-        csv_dict_reader = download_csv_file_as_dict_reader(
-            s3_client, BucketNames.DESTINATION, FILE_DETAILS.ack_file_key
-        )
+        csv_dict_reader = get_csv_file_dict_reader(s3_client, BucketNames.DESTINATION, FILE_DETAILS.ack_file_key)
         self.assertEqual(list(csv_dict_reader), expected_result)

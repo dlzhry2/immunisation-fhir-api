@@ -37,11 +37,10 @@ class TestElasticache(TestCase):
         Test that upload_to_elasticache successfully uploads the file to elasticache, which is then successfully read
         by get_permissions_config_json_from_cache
         """
-        fake_redis = fakeredis.FakeStrictRedis()
         mock_permissions = {"test_supplier_1": ["RSV_FULL"], "test_supplier_2": ["FLU_CREATE", "FLU_UPDATE"]}
         mock_permissions_config = generate_permissions_config_content(mock_permissions)
         s3_client.put_object(Bucket=BucketNames.CONFIG, Key=PERMISSIONS_CONFIG_FILE_KEY, Body=mock_permissions_config)
 
-        with patch("elasticache.redis_client", fake_redis):
+        with patch("elasticache.redis_client", fakeredis.FakeStrictRedis()):
             upload_to_elasticache(PERMISSIONS_CONFIG_FILE_KEY, BucketNames.CONFIG)
             self.assertEqual(get_permissions_config_json_from_cache(), {"all_permissions": mock_permissions})
