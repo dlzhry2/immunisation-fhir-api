@@ -38,7 +38,7 @@ class TestSupplierPermissions(TestCase):
             with self.subTest(supplier=supplier):
                 with patch("elasticache.redis_client.get", return_value=permissions_config_content):
                     actual_permissions = get_supplier_permissions(supplier)
-                    self.assertEqual(actual_permissions, expected_result)
+                self.assertEqual(actual_permissions, expected_result)
 
     def test_validate_vaccine_type_permissions(self):
         """
