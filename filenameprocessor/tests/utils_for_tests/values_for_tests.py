@@ -27,19 +27,16 @@ class Sqs:
 
 
 # Dictionary for mocking the os.environ dict
+# NOTE: FILE_NAME_GSI and CONFIG_BUCKET_NAME environment variables are set in the terraform,
+# but not used in the src code and so are not set here.
 MOCK_ENVIRONMENT_DICT = {
-    "ENVIRONMENT": "internal-dev",
-    "SHORT_QUEUE_PREFIX": "imms-batch-internal-dev",
-    "LOCAL_ACCOUNT_ID": "123456789012",
-    "PROD_ACCOUNT_ID": "3456789109",
-    "CONFIG_BUCKET_NAME": BucketNames.CONFIG,
     "SOURCE_BUCKET_NAME": BucketNames.SOURCE,
     "ACK_BUCKET_NAME": BucketNames.DESTINATION,
     "QUEUE_URL": "https://sqs.eu-west-2.amazonaws.com/123456789012/imms-batch-internal-dev-metadata-queue.fifo",
     "REDIS_HOST": "localhost",
     "REDIS_PORT": "6379",
+    "SPLUNK_FIREHOSE_NAME": Firehose.STREAM_NAME,
     "AUDIT_TABLE_NAME": "immunisation-batch-internal-dev-audit-table",
-    "FILE_NAME_GSI": "filename_index",
     "FILE_NAME_PROC_LAMBDA_NAME": "imms-batch-internal-dev-filenameproc_lambda",
 }
 

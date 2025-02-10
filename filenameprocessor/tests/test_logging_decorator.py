@@ -67,6 +67,25 @@ class TestLoggingDecorator(unittest.TestCase):
             mock_time.time.return_value = 1672531200.123456  # Mocks the end time to be 0.123456s after the start time
             generate_and_send_logs(start_time, base_log_data, additional_log_data, is_error_log=False)
 
+        expected_log_data = {"base_key": "base_value", "time_taken": "0.12346s", "additional_key": "additional_value"}
+        log_data = json.loads(mock_logger.info.call_args[0][0])
+        self.assertEqual(log_data, expected_log_data)
+        mock_send_log_to_firehose.assert_called_once_with(expected_log_data)
+
+        # CASE: Error log - is_error_log arg set to True
+        with (  # noqa: E999
+            patch("logging_decorator.logger") as mock_logger,  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
+            patch("logging_decorator.time") as mock_time,  # noqa: E999
+        ):  # noqa: E999
+            mock_time.time.return_value = 1672531200.123456  # Mocks the end time to be 0.123456s after the start time
+            generate_and_send_logs(start_time, base_log_data, additional_log_data, is_error_log=True)
+
+        expected_log_data = {"base_key": "base_value", "time_taken": "0.12346s", "additional_key": "additional_value"}
+        log_data = json.loads(mock_logger.error.call_args[0][0])
+        self.assertEqual(log_data, expected_log_data)
+        mock_send_log_to_firehose.assert_called_once_with(expected_log_data)
+
     def test_splunk_logger_successful_validation(self):
         """Tests the splunk logger is called when file validation is successful"""
         # Mock full permissions so that validation will pass

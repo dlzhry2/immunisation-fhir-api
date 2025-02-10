@@ -13,5 +13,5 @@ def download_csv_file_as_dict_reader(s3_client, bucket_name: str, file_key: str)
 
 
 def generate_permissions_config_content(permissions_dict: dict) -> str:
-    """Converts the permissions dictionary to a JSON string"""
+    """Converts the permissions dictionary to a JSON string of the permissions config file content"""
     return json.dumps({"all_permissions": permissions_dict})

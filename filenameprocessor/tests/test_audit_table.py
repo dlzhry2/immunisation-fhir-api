@@ -4,15 +4,15 @@ from unittest import TestCase
 from unittest.mock import patch
 from boto3 import resource as boto3_resource
 from moto import mock_dynamodb
-from errors import UnhandledAuditTableError
-from clients import REGION_NAME
+
 from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT
 
-# Some environment variables are evaluated when  constants and upsert_audit_table are imported,
-# so environment dictionary must be mocked first
+# Ensure environment variables are mocked before importing from src files
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from constants import AuditTableKeys, AUDIT_TABLE_NAME, AUDIT_TABLE_QUEUE_NAME_GSI, AUDIT_TABLE_FILENAME_GSI
     from audit_table import upsert_audit_table
+    from errors import UnhandledAuditTableError
+    from clients import REGION_NAME
 
 
 @mock_dynamodb

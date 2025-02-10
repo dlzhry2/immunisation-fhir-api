@@ -6,10 +6,14 @@ from json import loads as json_loads
 from copy import deepcopy
 from moto import mock_sqs
 from boto3 import client as boto3_client
-from send_sqs_message import send_to_supplier_queue, make_and_send_sqs_message
-from errors import UnhandledSqsError, InvalidSupplierError
-from clients import REGION_NAME
+
 from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, MockFileDetails, Sqs
+
+# Ensure environment variables are mocked before importing from src files
+with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
+    from send_sqs_message import send_to_supplier_queue, make_and_send_sqs_message
+    from errors import UnhandledSqsError, InvalidSupplierError
+    from clients import REGION_NAME
 
 sqs_client = boto3_client("sqs", region_name=REGION_NAME)
 

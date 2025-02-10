@@ -2,9 +2,14 @@
 
 from unittest import TestCase
 from unittest.mock import patch
-from supplier_permissions import validate_vaccine_type_permissions, get_supplier_permissions
-from errors import VaccineTypePermissionsError
+
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
+from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT
+
+# Ensure environment variables are mocked before importing from src files
+with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
+    from supplier_permissions import validate_vaccine_type_permissions, get_supplier_permissions
+    from errors import VaccineTypePermissionsError
 
 
 class TestSupplierPermissions(TestCase):

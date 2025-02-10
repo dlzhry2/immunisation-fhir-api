@@ -1,9 +1,14 @@
 """Tests for file_key_validation functions"""
 
 from unittest import TestCase
-from file_key_validation import is_valid_datetime, validate_file_key
-from errors import InvalidFileKeyError
-from tests.utils_for_tests.values_for_tests import MockFileDetails
+from unittest.mock import patch
+
+from tests.utils_for_tests.values_for_tests import MockFileDetails, MOCK_ENVIRONMENT_DICT
+
+# Ensure environment variables are mocked before importing from src files
+with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
+    from file_key_validation import is_valid_datetime, validate_file_key
+    from errors import InvalidFileKeyError
 
 VALID_FLU_EMIS_FILE_KEY = MockFileDetails.flu_emis.file_key
 VALID_RSV_RAVS_FILE_KEY = MockFileDetails.rsv_ravs.file_key
