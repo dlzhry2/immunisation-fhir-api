@@ -38,7 +38,7 @@ class TestFileKeyValidation(TestCase):
             with self.subTest():
                 self.assertEqual(is_valid_datetime(date_time_string), expected_result)
 
-    def test_file_key_validation(self):
+    def test_validate_file_key(self):
         """Tests that file_key_validation returns True if all elements pass validation, and False otherwise"""
         # Test case tuples are structured as (file_key, expected_result)
         test_cases_for_success_scenarios = [
@@ -86,7 +86,7 @@ class TestFileKeyValidation(TestCase):
             # File key with invalid ODS code
             (VALID_FLU_EMIS_FILE_KEY.replace("YGM41", "YGAM"), invalid_file_key_error_message),
             # File key with missing ODS code
-            (VALID_FLU_EMIS_FILE_KEY.replace("YGM41", "YGAM"), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("YGM41", ""), invalid_file_key_error_message),
             # File key with invalid timestamp
             (VALID_FLU_EMIS_FILE_KEY.replace("20240708T12130100", "20200132T12345600"), invalid_file_key_error_message),
             # File key with missing timestamp

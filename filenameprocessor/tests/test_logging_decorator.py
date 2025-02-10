@@ -6,17 +6,18 @@ import json
 from copy import deepcopy
 from boto3 import client as boto3_client
 from moto import mock_s3
-from clients import REGION_NAME
 from tests.utils_for_tests.values_for_tests import MOCK_ENVIRONMENT_DICT, MockFileDetails, BucketNames, Firehose
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
 
 # Some environment variables are evaluated when lambda handler is imported,
 # so environment dictionary must be mocked first
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
+    from clients import REGION_NAME
     from file_name_processor import lambda_handler
     from logging_decorator import send_log_to_firehose, generate_and_send_logs
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
+
 FILE_DETAILS = MockFileDetails.flu_emis
 MOCK_EVENT = {"Records": [{"s3": {"bucket": {"name": BucketNames.SOURCE}, "object": {"key": FILE_DETAILS.file_key}}}]}
 
