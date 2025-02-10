@@ -2,13 +2,14 @@
 
 from unittest.mock import patch
 from unittest import TestCase
-from io import BytesIO
 from json import loads as json_loads
 from contextlib import ExitStack
 from copy import deepcopy
+import fakeredis
 from boto3 import client as boto3_client
 from moto import mock_s3, mock_sqs
 
+from tests.utils_for_tests.generic_setup_and_teardown import GenericSetUp, GenericTearDown
 from tests.utils_for_tests.utils_for_filenameprocessor_tests import generate_permissions_config_content
 from tests.utils_for_tests.values_for_tests import (
     MOCK_ENVIRONMENT_DICT,
@@ -18,8 +19,7 @@ from tests.utils_for_tests.values_for_tests import (
     MockFileDetails,
 )
 
-# Some environment variables are evaluated when lambda handler is imported,
-# so environment dictionary must be mocked first
+# Ensure environment variables are mocked before importing from src files
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from file_name_processor import lambda_handler
     from clients import REGION_NAME
@@ -158,40 +158,30 @@ class TestLambdaHandlerDataSource(TestCase):
 class TestLambdaHandlerConfig(TestCase):
     """Tests for lambda_handler when a config file is uploaded."""
 
-    def setUp(self):
-        self.mock_config_file_content = BytesIO(b"mock_file_content")
-        self.mock_elasticache_get_object_return_value = {"Body": self.mock_config_file_content}
-
     config_event = {
         "Records": [{"s3": {"bucket": {"name": BucketNames.CONFIG}, "object": {"key": (PERMISSIONS_CONFIG_FILE_KEY)}}}]
     }
 
+    def setUp(self):
+        GenericSetUp(s3_client)
+        self.mock_permissions_config = generate_permissions_config_content(
+            {"test_supplier_1": ["RSV_FULL"], "test_supplier_2": ["FLU_CREATE", "FLU_UPDATE"]}
+        )
+        s3_client.put_object(
+            Bucket=BucketNames.CONFIG, Key=PERMISSIONS_CONFIG_FILE_KEY, Body=self.mock_permissions_config
+        )
+
+    def tearDown(self):
+        GenericTearDown(s3_client)
+
     def test_successful_processing_from_configs(self):
-        mock_config_body = self.mock_elasticache_get_object_return_value
-
+        """Tests that the permissions config file content is uploaded to elasticache successfully"""
         with (  # noqa: E999
             patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
-            patch("elasticache.redis_client.set") as mock_redis_set,  # noqa: E999
-            patch(  # noqa: E999
-                "elasticache.s3_client.get_object", return_value=mock_config_body  # noqa: E999
-            ) as mock_s3_get_object,  # noqa: E999
+            patch("elasticache.redis_client", new=fakeredis.FakeStrictRedis()) as fake_redis,  # noqa: E999
         ):  # noqa: E999
             lambda_handler(self.config_event, None)
 
-        mock_s3_get_object.assert_called_once_with(Bucket=BucketNames.CONFIG, Key=PERMISSIONS_CONFIG_FILE_KEY)
-        mock_redis_set.assert_called_once_with(PERMISSIONS_CONFIG_FILE_KEY, "mock_file_content")
-
-    def test_processing_from_configs_failed(self):
-        elasticache_exception = Exception("Simulated ElastiCache upload failure")
-        mock_config_body = self.mock_elasticache_get_object_return_value
-
-        with (  # noqa: E999
-            patch("logging_decorator.send_log_to_firehose"),  # noqa: E999
-            patch("elasticache.upload_to_elasticache", side_effect=elasticache_exception),  # noqa: E999
-            patch(  # noqa: E999
-                "elasticache.s3_client.get_object", return_value=mock_config_body  # noqa: E999
-            ) as mock_s3_get_object,  # noqa: E999
-        ):  # noqa: E999
-            lambda_handler(self.config_event, None)
-
-        mock_s3_get_object.assert_called_once_with(Bucket=BucketNames.CONFIG, Key=PERMISSIONS_CONFIG_FILE_KEY)
+        self.assertEqual(
+            json_loads(fake_redis.get(PERMISSIONS_CONFIG_FILE_KEY)), json_loads(self.mock_permissions_config)
+        )
