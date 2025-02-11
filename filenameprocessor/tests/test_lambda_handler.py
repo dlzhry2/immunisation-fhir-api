@@ -72,11 +72,22 @@ class TestLambdaHandlerDataSource(TestCase):
         """Returns the ack file key for the given file key"""
         return f"ack/{file_key.replace('.csv', '_InfAck_' + MOCK_CREATED_AT_FORMATTED_STRING + '.csv')}"
 
-    def assert_ack_file_in_destination_s3_bucket(self, ack_file_key: str):
+    @staticmethod
+    def generate_expected_failure_inf_ack_content(message_id: str, created_at_formatted_string: str) -> str:
+        """Create an ack row, containing the given message details."""
+        return (
+            "MESSAGE_HEADER_ID|HEADER_RESPONSE_CODE|ISSUE_SEVERITY|ISSUE_CODE|ISSUE_DETAILS_CODE|RESPONSE_TYPE|"
+            + "RESPONSE_CODE|RESPONSE_DISPLAY|RECEIVED_TIME|MAILBOX_FROM|LOCAL_ID|MESSAGE_DELIVERY\r\n"
+            + f"{message_id}|Failure|Fatal|Fatal Error|10001|Technical|10002|"
+            + f"Infrastructure Level Response Value - Processing Error|{created_at_formatted_string}|||False\r\n"
+        )
+
+    def assert_ack_file_contents(self, ack_file_key: str, message_id: str, created_at_formatted_string: str) -> None:
         """Assert that the ack file if given, else the VALID_FLU_EMIS_ACK_FILE_KEY, is in the destination S3 bucket"""
-        objects_in_destination_bucket = s3_client.list_objects_v2(Bucket=BucketNames.DESTINATION)
-        object_keys_in_destination_bucket = [obj["Key"] for obj in objects_in_destination_bucket.get("Contents", [])]
-        self.assertIn(ack_file_key, object_keys_in_destination_bucket)
+        retrieved_object = s3_client.get_object(Bucket=BucketNames.DESTINATION, Key=ack_file_key)
+        actual_ack_content = retrieved_object["Body"].read().decode("utf-8")
+        expected_ack_content = self.generate_expected_failure_inf_ack_content(message_id, created_at_formatted_string)
+        self.assertEqual(actual_ack_content, expected_ack_content)
 
     @staticmethod
     def get_table_items():
@@ -104,7 +115,7 @@ class TestLambdaHandlerDataSource(TestCase):
                     lambda_handler(self.make_event(file_details.file_key), None)
 
                 # Check if file was successfully added to the audit table
-                table_items = dynamodb_client.scan(TableName=AUDIT_TABLE_NAME)["Items"]
+                table_items = self.get_table_items()
                 self.assertEqual(len(table_items), 1)
                 expected_table_item = {
                     "message_id": {"S": file_details.message_id},
@@ -130,11 +141,31 @@ class TestLambdaHandlerDataSource(TestCase):
         test_file_key = "InvalidVaccineType_Vaccinations_v5_YGM41_20240708T12130100.csv"
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=test_file_key)
 
-        with patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue:
+        with (  # noqa: E999
+            patch(  # noqa: E999
+                "file_name_processor.validate_vaccine_type_permissions"  # noqa: E999
+            ) as mock_validate_vaccine_type_permissions,  # noqa: E999
+            patch("file_name_processor.uuid4", return_value="test_id"),  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
-        mock_send_to_supplier_queue.assert_not_called()
-        self.assert_ack_file_in_destination_s3_bucket(ack_file_key=self.get_ack_file_key(test_file_key))
+        table_items = self.get_table_items()
+        self.assertEqual(len(table_items), 1)
+        expected_table_item = {
+            "message_id": {"S": "test_id"},
+            "filename": {"S": test_file_key},
+            "queue_name": {"S": "unknown_unknown"},
+            "status": {"S": "Processed"},
+            "timestamp": {"S": MOCK_CREATED_AT_FORMATTED_STRING},
+        }
+        self.assertEqual(table_items[0], expected_table_item)
+
+        mock_validate_vaccine_type_permissions.assert_not_called()
+        self.assert_ack_file_contents(
+            ack_file_key=self.get_ack_file_key(test_file_key),
+            message_id="test_id",
+            created_at_formatted_string=MOCK_CREATED_AT_FORMATTED_STRING,
+        )
 
     def test_lambda_invalid_permissions(self):
         """Tests that SQS queue is not called when supplier has no permissions for the vaccine type"""
@@ -144,13 +175,29 @@ class TestLambdaHandlerDataSource(TestCase):
         # Mock the supplier permissions with a value which doesn't include the requested Flu permissions
         permissions_config_content = generate_permissions_config_content({"EMIS": ["RSV_DELETE"]})
         with (  # noqa: E999
+            patch("file_name_processor.uuid4", return_value=file_details.message_id),  # noqa: E999
             patch("elasticache.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(file_details.file_key), context=None)
 
+        table_items = self.get_table_items()
+        self.assertEqual(len(table_items), 1)
+        expected_table_item = {
+            "message_id": {"S": file_details.message_id},
+            "filename": {"S": file_details.file_key},
+            "queue_name": {"S": file_details.queue_name},
+            "status": {"S": "Processed"},
+            "timestamp": {"S": file_details.created_at_formatted_string},
+        }
+        self.assertEqual(table_items[0], expected_table_item)
+
         mock_send_to_supplier_queue.assert_not_called()
-        self.assert_ack_file_in_destination_s3_bucket(ack_file_key=file_details.ack_file_key)
+        self.assert_ack_file_contents(
+            ack_file_key=self.get_ack_file_key(file_details.file_key),
+            message_id=file_details.message_id,
+            created_at_formatted_string=file_details.created_at_formatted_string,
+        )
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)

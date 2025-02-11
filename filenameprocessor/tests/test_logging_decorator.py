@@ -6,7 +6,7 @@ import json
 from copy import deepcopy
 from contextlib import ExitStack
 from boto3 import client as boto3_client
-from moto import mock_s3
+from moto import mock_s3, mock_firehose, mock_sqs, mock_dynamodb
 
 from tests.utils_for_tests.generic_setup_and_teardown import GenericSetUp, GenericTearDown
 from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames, Firehose
@@ -20,24 +20,30 @@ with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from logging_decorator import send_log_to_firehose, generate_and_send_logs
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
+sqs_client = boto3_client("sqs", region_name=REGION_NAME)
+firehose_client = boto3_client("firehose", region_name=REGION_NAME)
+dynamodb_client = boto3_client("dynamodb", region_name=REGION_NAME)
 
 FILE_DETAILS = MockFileDetails.flu_emis
 MOCK_EVENT = {"Records": [{"s3": {"bucket": {"name": BucketNames.SOURCE}, "object": {"key": FILE_DETAILS.file_key}}}]}
 
 
 @mock_s3
+@mock_firehose
+@mock_sqs
+@mock_dynamodb
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
 class TestLoggingDecorator(unittest.TestCase):
     """Tests for the logging_decorator and its helper functions"""
 
     def setUp(self):
         """Set up the S3 buckets and upload the valid FLU/EMIS file example"""
-        GenericSetUp(s3_client)
+        GenericSetUp(s3_client, firehose_client, sqs_client, dynamodb_client)
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=FILE_DETAILS.file_key)
 
     def tearDown(self):
         """Tear down the S3 buckets"""
-        GenericTearDown(s3_client)
+        GenericTearDown(s3_client, firehose_client, sqs_client, dynamodb_client)
 
     def run(self, result=None):
         """
@@ -135,9 +141,6 @@ class TestLoggingDecorator(unittest.TestCase):
         permissions_config_content = generate_permissions_config_content(deepcopy(FILE_DETAILS.permissions_config))
         with (  # noqa: E999
             patch("file_name_processor.uuid4", return_value=FILE_DETAILS.message_id),  # noqa: E999
-            patch("send_sqs_message.send_to_supplier_queue"),  # noqa: E999
-            patch("file_name_processor.upsert_audit_table", return_value=False),  # noqa: E999
-            patch("file_name_processor.ensure_file_is_not_a_duplicate"),  # noqa: E999
             patch("elasticache.redis_client.get", return_value=permissions_config_content),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
             patch("logging_decorator.logger") as mock_logger,  # noqa: E999
@@ -168,10 +171,7 @@ class TestLoggingDecorator(unittest.TestCase):
 
         with (  # noqa: E999
             patch("file_name_processor.uuid4", return_value=FILE_DETAILS.message_id),  # noqa: E999
-            patch("file_name_processor.upsert_audit_table"),  # noqa: E999
-            patch("file_name_processor.get_next_queued_file_details", return_value=None),  # noqa: E999
             patch("elasticache.redis_client.get", return_value=permissions_config_content),  # noqa: E999
-            patch("send_sqs_message.send_to_supplier_queue"),  # noqa: E999
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
             patch("logging_decorator.logger") as mock_logger,  # noqa: E999
         ):  # noqa: E999
