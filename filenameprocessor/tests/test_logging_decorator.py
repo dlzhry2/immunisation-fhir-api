@@ -18,6 +18,7 @@ with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from clients import REGION_NAME
     from file_name_processor import lambda_handler
     from logging_decorator import send_log_to_firehose, generate_and_send_logs
+    from constants import PERMISSIONS_CONFIG_FILE_KEY
 
 s3_client = boto3_client("s3", region_name=REGION_NAME)
 sqs_client = boto3_client("sqs", region_name=REGION_NAME)
@@ -25,7 +26,12 @@ firehose_client = boto3_client("firehose", region_name=REGION_NAME)
 dynamodb_client = boto3_client("dynamodb", region_name=REGION_NAME)
 
 FILE_DETAILS = MockFileDetails.flu_emis
-MOCK_EVENT = {"Records": [{"s3": {"bucket": {"name": BucketNames.SOURCE}, "object": {"key": FILE_DETAILS.file_key}}}]}
+MOCK_VACCINATION_EVENT = {
+    "Records": [{"s3": {"bucket": {"name": BucketNames.SOURCE}, "object": {"key": FILE_DETAILS.file_key}}}]
+}
+MOCK_CONFIG_EVENT = {
+    "Records": [{"s3": {"bucket": {"name": BucketNames.CONFIG}, "object": {"key": PERMISSIONS_CONFIG_FILE_KEY}}}]
+}
 
 
 @mock_s3
@@ -37,12 +43,12 @@ class TestLoggingDecorator(unittest.TestCase):
     """Tests for the logging_decorator and its helper functions"""
 
     def setUp(self):
-        """Set up the S3 buckets and upload the valid FLU/EMIS file example"""
+        """Set up the mock AWS environment and upload a valid FLU/EMIS file example"""
         GenericSetUp(s3_client, firehose_client, sqs_client, dynamodb_client)
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=FILE_DETAILS.file_key)
 
     def tearDown(self):
-        """Tear down the S3 buckets"""
+        """Clean the mock AWS environment"""
         GenericTearDown(s3_client, firehose_client, sqs_client, dynamodb_client)
 
     def run(self, result=None):
@@ -135,8 +141,8 @@ class TestLoggingDecorator(unittest.TestCase):
         self.assertEqual(log_data, expected_log_data)
         mock_send_log_to_firehose.assert_called_once_with(expected_log_data)
 
-    def test_splunk_logger_successful_validation(self):
-        """Tests the splunk logger is called when file validation is successful"""
+    def test_logging_successful_validation(self):
+        """Tests that the correct logs are sent to cloudwatch and splunk when file validation is successful"""
         # Mock full permissions so that validation will pass
         permissions_config_content = generate_permissions_config_content(deepcopy(FILE_DETAILS.permissions_config))
         with (  # noqa: E999
@@ -145,7 +151,7 @@ class TestLoggingDecorator(unittest.TestCase):
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
             patch("logging_decorator.logger") as mock_logger,  # noqa: E999
         ):  # noqa: E999
-            lambda_handler(MOCK_EVENT, context=None)
+            lambda_handler(MOCK_VACCINATION_EVENT, context=None)
 
         expected_log_data = {
             "function_name": "filename_processor_handle_record",
@@ -164,8 +170,8 @@ class TestLoggingDecorator(unittest.TestCase):
 
         mock_send_log_to_firehose.assert_called_once_with(log_data)
 
-    def test_splunk_logger_failed_validation(self):
-        """Tests the splunk logger is called when file validation is unsuccessful"""
+    def test_logging_failed_validation(self):
+        """Tests that the correct logs are sent to cloudwatch and splunk when file validation fails"""
         # Set up permissions for COVID19 only (file is for FLU), so that validation will fail
         permissions_config_content = generate_permissions_config_content({"EMIS": ["COVID19_FULL"]})
 
@@ -175,7 +181,7 @@ class TestLoggingDecorator(unittest.TestCase):
             patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
             patch("logging_decorator.logger") as mock_logger,  # noqa: E999
         ):  # noqa: E999
-            lambda_handler(MOCK_EVENT, context=None)
+            lambda_handler(MOCK_VACCINATION_EVENT, context=None)
 
         expected_log_data = {
             "function_name": "filename_processor_handle_record",
@@ -186,6 +192,37 @@ class TestLoggingDecorator(unittest.TestCase):
             "file_key": FILE_DETAILS.file_key,
             "message_id": FILE_DETAILS.message_id,
             "error": "Initial file validation failed: EMIS does not have permissions for FLU",
+        }
+
+        log_data = json.loads(mock_logger.info.call_args[0][0])
+        self.assertEqual(log_data, expected_log_data)
+
+        mock_send_log_to_firehose.assert_called_once_with(log_data)
+
+    def test_logging_successful_config_upload(self):
+        """
+        Tests that the correct logs are sent to cloudwatch and splunk when the config cache is successfully updated
+        """
+        # Create a permissions config file and upload it to the config bucket
+        permissions_config_content = generate_permissions_config_content(deepcopy(FILE_DETAILS.permissions_config))
+        s3_client.put_object(
+            Bucket=BucketNames.CONFIG, Key=PERMISSIONS_CONFIG_FILE_KEY, Body=permissions_config_content
+        )
+
+        with (  # noqa: E999
+            patch("elasticache.redis_client.set"),  # noqa: E999
+            patch("logging_decorator.send_log_to_firehose") as mock_send_log_to_firehose,  # noqa: E999
+            patch("logging_decorator.logger") as mock_logger,  # noqa: E999
+        ):  # noqa: E999
+            lambda_handler(MOCK_CONFIG_EVENT, context=None)
+
+        expected_log_data = {
+            "function_name": "filename_processor_handle_record",
+            "date_time": fixed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            "time_taken": "1.0s",
+            "statusCode": 200,
+            "message": "File content successfully uploaded to cache",
+            "file_key": PERMISSIONS_CONFIG_FILE_KEY,
         }
 
         log_data = json.loads(mock_logger.info.call_args[0][0])

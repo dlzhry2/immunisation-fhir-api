@@ -50,9 +50,7 @@ class GenericSetUp:
         if dynamodb_client:
             dynamodb_client.create_table(
                 TableName=AUDIT_TABLE_NAME,
-                KeySchema=[
-                    {"AttributeName": AuditTableKeys.MESSAGE_ID, "KeyType": "HASH"},
-                ],
+                KeySchema=[{"AttributeName": AuditTableKeys.MESSAGE_ID, "KeyType": "HASH"}],
                 AttributeDefinitions=[
                     {"AttributeName": AuditTableKeys.MESSAGE_ID, "AttributeType": "S"},
                     {"AttributeName": AuditTableKeys.FILENAME, "AttributeType": "S"},

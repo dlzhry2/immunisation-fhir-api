@@ -49,4 +49,3 @@ class MockFileDetails:
 
     rsv_ravs = FileDetails("RSV", "RAVS", "X26")
     flu_emis = FileDetails("FLU", "EMIS", "YGM41")
-
