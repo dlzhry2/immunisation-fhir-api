@@ -8,7 +8,11 @@ from moto import mock_dynamodb
 from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
 from tests.utils_for_tests.generic_setup_and_teardown import GenericSetUp, GenericTearDown
 from tests.utils_for_tests.values_for_tests import MockFileDetails, FileDetails
-from tests.utils_for_tests.utils_for_filenameprocessor_tests import deserialize_dynamodb_types
+from tests.utils_for_tests.utils_for_filenameprocessor_tests import (
+    deserialize_dynamodb_types,
+    add_entry_to_table,
+    assert_audit_table_entry,
+)
 
 # Ensure environment variables are mocked before importing from src files
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
@@ -40,20 +44,6 @@ class TestAuditTable(TestCase):
         """Return all items in the audit table"""
         return dynamodb_client.scan(TableName=AUDIT_TABLE_NAME).get("Items", [])
 
-    @staticmethod
-    def add_entry_to_table(file_details: MockFileDetails, file_status: FileStatus) -> None:
-        """Add an entry to the audit table"""
-        audit_table_entry = {**file_details.audit_table_entry, "status": {"S": file_status}}
-        dynamodb_client.put_item(TableName=AUDIT_TABLE_NAME, Item=audit_table_entry)
-
-    def assert_audit_table_entry(self, file_details: FileDetails, expected_status: FileStatus) -> None:
-        """Assert that the file details are in the audit table"""
-        table_entry = dynamodb_client.get_item(
-            TableName=AUDIT_TABLE_NAME, Key={AuditTableKeys.MESSAGE_ID: {"S": file_details.message_id}}
-        ).get("Item")
-        expected_audit_table_entry = {**file_details.audit_table_entry, "status": {"S": expected_status}}
-        self.assertEqual(table_entry, expected_audit_table_entry)
-
     def test_get_next_queued_file_details(self):
         """Test that the get_next_queued_file_details function returns the correct file details"""
         # NOTE: Throughout this test the assertions will be checking for the next queued RAVS_RSV file.
@@ -63,21 +53,21 @@ class TestAuditTable(TestCase):
         self.assertIsNone(get_next_queued_file_details(queue_to_check))
 
         # Test case 2: files in audit table, but none of the files are in the RAVS_RSV queue
-        self.add_entry_to_table(MockFileDetails.emis_flu, file_status=FileStatus.QUEUED)  # different queue
-        self.add_entry_to_table(MockFileDetails.emis_rsv, file_status=FileStatus.QUEUED)  # different queue
-        self.add_entry_to_table(MockFileDetails.ravs_flu, file_status=FileStatus.QUEUED)  # different queue
-        self.add_entry_to_table(MockFileDetails.ravs_rsv_1, FileStatus.PROCESSED)  # same queue but already processed
+        add_entry_to_table(MockFileDetails.emis_flu, file_status=FileStatus.QUEUED)  # different queue
+        add_entry_to_table(MockFileDetails.emis_rsv, file_status=FileStatus.QUEUED)  # different queue
+        add_entry_to_table(MockFileDetails.ravs_flu, file_status=FileStatus.QUEUED)  # different queue
+        add_entry_to_table(MockFileDetails.ravs_rsv_1, FileStatus.PROCESSED)  # same queue but already processed
         self.assertIsNone(get_next_queued_file_details(queue_to_check))
 
         # Test case 3: one queued file in the ravs_rsv queue
-        self.add_entry_to_table(MockFileDetails.ravs_rsv_2, file_status=FileStatus.QUEUED)
+        add_entry_to_table(MockFileDetails.ravs_rsv_2, file_status=FileStatus.QUEUED)
         expected_table_entry = {**MockFileDetails.ravs_rsv_2.audit_table_entry, "status": {"S": FileStatus.QUEUED}}
         self.assertEqual(get_next_queued_file_details(queue_to_check), deserialize_dynamodb_types(expected_table_entry))
 
         # Test case 4: multiple queued files in the RAVS_RSV queue
         # Note that ravs_rsv files 3 and 4 have later timestamps than file 2, so file 2 remains the first in the queue
-        self.add_entry_to_table(MockFileDetails.ravs_rsv_3, file_status=FileStatus.QUEUED)
-        self.add_entry_to_table(MockFileDetails.ravs_rsv_4, file_status=FileStatus.QUEUED)
+        add_entry_to_table(MockFileDetails.ravs_rsv_3, file_status=FileStatus.QUEUED)
+        add_entry_to_table(MockFileDetails.ravs_rsv_4, file_status=FileStatus.QUEUED)
         self.assertEqual(get_next_queued_file_details(queue_to_check), deserialize_dynamodb_types(expected_table_entry))
 
     def test_ensure_file_is_not_a_duplicate(self):
@@ -118,9 +108,9 @@ class TestAuditTable(TestCase):
         7. New file but with duplicated message_id.
         """
         # Populate the table with some entries which are not in the same queue
-        self.add_entry_to_table(MockFileDetails.emis_flu, file_status=FileStatus.QUEUED)  # different queue
-        self.add_entry_to_table(MockFileDetails.emis_rsv, file_status=FileStatus.QUEUED)  # different queue
-        self.add_entry_to_table(MockFileDetails.ravs_flu, file_status=FileStatus.QUEUED)  # different queue
+        add_entry_to_table(MockFileDetails.emis_flu, file_status=FileStatus.QUEUED)  # different queue
+        add_entry_to_table(MockFileDetails.emis_rsv, file_status=FileStatus.QUEUED)  # different queue
+        add_entry_to_table(MockFileDetails.ravs_flu, file_status=FileStatus.QUEUED)  # different queue
 
         # Test case 1: new file with status of 'Processed'.
         # File should be added to the audit table, with status 'Processed'. Return value should be False.
@@ -136,7 +126,7 @@ class TestAuditTable(TestCase):
         )
 
         self.assertFalse(result)
-        self.assert_audit_table_entry(ravs_rsv_test_file_1, FileStatus.PROCESSED)
+        assert_audit_table_entry(ravs_rsv_test_file_1, FileStatus.PROCESSED)
 
         # Test case 2: Duplicate file with status of 'Duplicate'.
         # Audit table status should be updated to 'Duplicate'. Return value should be False.
@@ -154,7 +144,7 @@ class TestAuditTable(TestCase):
         )
 
         self.assertFalse(result)
-        self.assert_audit_table_entry(ravs_rsv_test_file_2, FileStatus.DUPLICATE)
+        assert_audit_table_entry(ravs_rsv_test_file_2, FileStatus.DUPLICATE)
 
         # Test case 3: new file with status of 'Processing', and no files ahead in the queue.
         # Audit table status should be updated to 'Processing'. Return value should be False.
@@ -170,7 +160,7 @@ class TestAuditTable(TestCase):
         )
 
         self.assertFalse(result)
-        self.assert_audit_table_entry(ravs_rsv_test_file_3, FileStatus.PROCESSING)
+        assert_audit_table_entry(ravs_rsv_test_file_3, FileStatus.PROCESSING)
 
         # Test case 4: new file with status of 'Processing', and files ahead in the queue.
         # File should be added to the audit table, with status 'Queued'. Return value should be True.
@@ -186,7 +176,7 @@ class TestAuditTable(TestCase):
         )
 
         self.assertTrue(result)
-        self.assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.QUEUED)
+        assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.QUEUED)
 
         # Test case 5: existing file with status of 'Processing'.
         # Audit table status should be updated to 'Processing'. Return value should be False.
@@ -200,7 +190,7 @@ class TestAuditTable(TestCase):
         )
 
         self.assertFalse(result)
-        self.assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.PROCESSING)
+        assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.PROCESSING)
 
         # Test case 6: existing file with status of 'Processed'.
         # Audit table status should be updated to 'Processed'. Return value should be False.
@@ -214,7 +204,7 @@ class TestAuditTable(TestCase):
         )
 
         self.assertFalse(result)
-        self.assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.PROCESSING)  # TODO: ?Should be processed
+        assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.PROCESSING)  # TODO: ?Should be processed
 
         # Test case 7: new file but with duplicated message_id.
         # Audit table status should not be updated. Error should be raised.
@@ -235,10 +225,10 @@ class TestAuditTable(TestCase):
         # Final reconciliation: ensure that all of the correct items are in the audit table
         table_items = self.get_table_items()
         assert len(table_items) == 7
-        self.assert_audit_table_entry(MockFileDetails.emis_flu, FileStatus.QUEUED)
-        self.assert_audit_table_entry(MockFileDetails.emis_rsv, FileStatus.QUEUED)
-        self.assert_audit_table_entry(MockFileDetails.ravs_flu, FileStatus.QUEUED)
-        self.assert_audit_table_entry(ravs_rsv_test_file_1, FileStatus.PROCESSED)
-        self.assert_audit_table_entry(ravs_rsv_test_file_2, FileStatus.DUPLICATE)
-        self.assert_audit_table_entry(ravs_rsv_test_file_3, FileStatus.PROCESSING)
-        self.assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.PROCESSING)
+        assert_audit_table_entry(MockFileDetails.emis_flu, FileStatus.QUEUED)
+        assert_audit_table_entry(MockFileDetails.emis_rsv, FileStatus.QUEUED)
+        assert_audit_table_entry(MockFileDetails.ravs_flu, FileStatus.QUEUED)
+        assert_audit_table_entry(ravs_rsv_test_file_1, FileStatus.PROCESSED)
+        assert_audit_table_entry(ravs_rsv_test_file_2, FileStatus.DUPLICATE)
+        assert_audit_table_entry(ravs_rsv_test_file_3, FileStatus.PROCESSING)
+        assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.PROCESSING)
