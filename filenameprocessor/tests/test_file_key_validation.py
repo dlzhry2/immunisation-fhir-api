@@ -3,7 +3,7 @@
 from unittest import TestCase
 from unittest.mock import patch
 
-from tests.utils_for_tests.values_for_tests import MockFileDetails
+from tests.utils_for_tests.values_for_tests import MockFileDetails, MOCK_CREATED_AT_FORMATTED_STRING
 from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
 
 # Ensure environment variables are mocked before importing from src files
@@ -11,8 +11,8 @@ with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
     from file_key_validation import is_valid_datetime, validate_file_key
     from errors import InvalidFileKeyError
 
-VALID_FLU_EMIS_FILE_KEY = MockFileDetails.flu_emis.file_key
-VALID_RSV_RAVS_FILE_KEY = MockFileDetails.rsv_ravs.file_key
+VALID_FLU_EMIS_FILE_KEY = MockFileDetails.emis_flu.file_key
+VALID_RSV_RAVS_FILE_KEY = MockFileDetails.ravs_rsv_1.file_key
 
 
 class TestFileKeyValidation(TestCase):
@@ -89,9 +89,9 @@ class TestFileKeyValidation(TestCase):
             # File key with missing ODS code
             (VALID_FLU_EMIS_FILE_KEY.replace("YGM41", ""), invalid_file_key_error_message),
             # File key with invalid timestamp
-            (VALID_FLU_EMIS_FILE_KEY.replace("20240708T12130100", "20200132T12345600"), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("20000101T00000001", "20200132T12345600"), invalid_file_key_error_message),
             # File key with missing timestamp
-            (VALID_FLU_EMIS_FILE_KEY.replace("20240708T12130100", ""), invalid_file_key_error_message),
+            (VALID_FLU_EMIS_FILE_KEY.replace("20000101T00000001", ""), invalid_file_key_error_message),
             # File key with incorrect extension
             (VALID_FLU_EMIS_FILE_KEY.replace(".csv", ".dat"), invalid_file_key_error_message),
         ]

@@ -97,7 +97,7 @@ class TestLambdaHandlerDataSource(TestCase):
     def test_lambda_handler_success(self):
         """Tests that lambda handler runs successfully for files with valid file keys and permissions."""
         # NOTE: Add a test case for each vaccine type
-        test_cases = [MockFileDetails.flu_emis, MockFileDetails.rsv_ravs]
+        test_cases = [MockFileDetails.emis_flu, MockFileDetails.ravs_rsv_1]
         for file_details in test_cases:
             with self.subTest(file_details.name):
                 # Setup the file in the source bucket
@@ -115,16 +115,8 @@ class TestLambdaHandlerDataSource(TestCase):
                     lambda_handler(self.make_event(file_details.file_key), None)
 
                 # Check if file was successfully added to the audit table
-                table_items = self.get_table_items()
-                self.assertEqual(len(table_items), 1)
-                expected_table_item = {
-                    "message_id": {"S": file_details.message_id},
-                    "filename": {"S": file_details.file_key},
-                    "queue_name": {"S": file_details.queue_name},
-                    "status": {"S": "Processing"},
-                    "timestamp": {"S": file_details.created_at_formatted_string},
-                }
-                self.assertEqual(table_items[0], expected_table_item)
+                expected_table_items = [{**file_details.audit_table_entry, "status": {"S": "Processing"}}]
+                self.assertEqual(self.get_table_items(), expected_table_items)
 
                 # Check if the message was sent to the SQS queue
                 messages = sqs_client.receive_message(QueueUrl=Sqs.TEST_QUEUE_URL, MaxNumberOfMessages=10)
@@ -149,16 +141,16 @@ class TestLambdaHandlerDataSource(TestCase):
         ):  # noqa: E999
             lambda_handler(event=self.make_event(test_file_key), context=None)
 
-        table_items = self.get_table_items()
-        self.assertEqual(len(table_items), 1)
-        expected_table_item = {
-            "message_id": {"S": "test_id"},
-            "filename": {"S": test_file_key},
-            "queue_name": {"S": "unknown_unknown"},
-            "status": {"S": "Processed"},
-            "timestamp": {"S": MOCK_CREATED_AT_FORMATTED_STRING},
-        }
-        self.assertEqual(table_items[0], expected_table_item)
+        expected_table_items = [
+            {
+                "message_id": {"S": "test_id"},
+                "filename": {"S": test_file_key},
+                "queue_name": {"S": "unknown_unknown"},
+                "status": {"S": "Processed"},
+                "timestamp": {"S": MOCK_CREATED_AT_FORMATTED_STRING},
+            }
+        ]
+        self.assertEqual(self.get_table_items(), expected_table_items)
 
         mock_validate_vaccine_type_permissions.assert_not_called()
         self.assert_ack_file_contents(
@@ -169,7 +161,7 @@ class TestLambdaHandlerDataSource(TestCase):
 
     def test_lambda_invalid_permissions(self):
         """Tests that SQS queue is not called when supplier has no permissions for the vaccine type"""
-        file_details = MockFileDetails.flu_emis
+        file_details = MockFileDetails.emis_flu
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=file_details.file_key)
 
         # Mock the supplier permissions with a value which doesn't include the requested Flu permissions
@@ -181,16 +173,8 @@ class TestLambdaHandlerDataSource(TestCase):
         ):  # noqa: E999
             lambda_handler(event=self.make_event(file_details.file_key), context=None)
 
-        table_items = self.get_table_items()
-        self.assertEqual(len(table_items), 1)
-        expected_table_item = {
-            "message_id": {"S": file_details.message_id},
-            "filename": {"S": file_details.file_key},
-            "queue_name": {"S": file_details.queue_name},
-            "status": {"S": "Processed"},
-            "timestamp": {"S": file_details.created_at_formatted_string},
-        }
-        self.assertEqual(table_items[0], expected_table_item)
+        expected_table_items = [{**file_details.audit_table_entry, "status": {"S": "Processed"}}]
+        self.assertEqual(self.get_table_items(), expected_table_items)
 
         mock_send_to_supplier_queue.assert_not_called()
         self.assert_ack_file_contents(

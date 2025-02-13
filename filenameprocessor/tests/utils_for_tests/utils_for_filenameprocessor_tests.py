@@ -3,6 +3,7 @@
 from unittest.mock import patch
 from io import StringIO
 import json
+from boto3.dynamodb.types import TypeDeserializer
 
 from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
 
@@ -21,3 +22,11 @@ def get_csv_file_dict_reader(s3_client, bucket_name: str, file_key: str) -> Dict
 def generate_permissions_config_content(permissions_dict: dict) -> str:
     """Converts the permissions dictionary to a JSON string of the permissions config file content"""
     return json.dumps({"all_permissions": permissions_dict})
+
+
+def deserialize_dynamodb_types(dynamodb_table_entry_with_types):
+    """
+    Convert a dynamodb table entry with types to a table entry without types
+    e.g. {'Attr1': {'S': 'val1'}, 'Attr2': {'N': 'val2'}} becomes  {'Attr1': 'val1'}
+    """
+    return {k: TypeDeserializer().deserialize(v) for k, v in dynamodb_table_entry_with_types.items()}
