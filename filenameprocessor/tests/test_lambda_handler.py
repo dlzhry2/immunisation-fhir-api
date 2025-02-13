@@ -181,22 +181,35 @@ class TestLambdaHandlerDataSource(TestCase):
                 for item in self.get_audit_table_items():
                     dynamodb_client.delete_item(TableName=AUDIT_TABLE_NAME, Key=dict(item.items()))
 
-    def test_lambda_handler_failure(self):
-        """ "
-        # 1. New file fails validation. - nothing in queue
-        # New file fails permissions - something in queue
-        #2. Duplicate file. - something in queue
-        # 3. New file passes validation, and no files ahead in the queue.
-        4. New file passes validation, and files ahead in the queue.
-        5. Existing file passes validation.
-        6. Existing file fails validation.
-        #7. File not in root
+    def test_lambda_handler_new_file_success_and_other_files_in_queue(self):
         """
+        Tests that for a new file, which passes validation and there are other files in the supplier_vaccineType queue:
+        * The file is added to the audit table with a status of 'queued'
+        * The message is not sent to SQS
+        * The make_and_upload_the_ack_file method is not called
+        * The invoke_filename_lambda method is not called
+        """
+        file_details = MockFileDetails.ravs_rsv_1
+        file_already_processing_details = MockFileDetails.ravs_rsv_2
 
-    def test_lambda_handler_existing_file_success(self):
+        s3_client.put_object(Bucket=BucketNames.SOURCE, Key=file_details.file_key)
+
+        add_entry_to_table(file_already_processing_details, FileStatus.PROCESSING)
+
+        with (
+            patch("file_name_processor.uuid4", return_value=file_details.message_id),
+            patch("file_name_processor.invoke_filename_lambda") as mock_invoke_filename_lambda,
+        ):
+            lambda_handler(self.make_event(file_details.file_key), None)
+
+        assert_audit_table_entry(file_details, FileStatus.QUEUED)
+        self.assert_no_sqs_message()
+        self.assert_no_ack_file(file_details)
+        mock_invoke_filename_lambda.assert_not_called()
+
+    def test_lambda_handler_existing_file(self):
         """
-        Tests that for an existing file, which passes validation and is the only file processing for the
-        supplier_vaccineType queue:
+        Tests that for an existing file, which is the only file processing for the supplier_vaccineType queue:
         * The file status is updated to 'processing' in the audit table
         * The message is sent to SQS
         * The make_and_upload_the_ack_file method is not called
@@ -309,25 +322,33 @@ class TestLambdaHandlerDataSource(TestCase):
         mock_invoke_filename_lambda.assert_not_called()
         self.assert_no_sqs_message()
 
-    def test_lambda_invalid_permissions(self):
-        """Tests that SQS queue is not called when supplier has no permissions for the vaccine type"""
-        file_details = MockFileDetails.emis_flu
+    def test_lambda_invalid_permissions_other_files_in_queue(self):
+        """
+        Tests that when the file permissions are invalid, and there are other files in the supplier_vaccineType queue:
+        * The file is added to the audit table with a status of 'Processed'
+        * The message is not sent to SQS
+        * The failure inf_ack file is created
+        * The invoke_filename_lambda method is called with queued file details
+        """
+        file_details = MockFileDetails.ravs_rsv_1
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=file_details.file_key)
+
+        queued_file_details = MockFileDetails.ravs_rsv_2
+        add_entry_to_table(queued_file_details, FileStatus.QUEUED)
 
         # Mock the supplier permissions with a value which doesn't include the requested Flu permissions
         permissions_config_content = generate_permissions_config_content({"EMIS": ["RSV_DELETE"]})
         with (  # noqa: E999
             patch("file_name_processor.uuid4", return_value=file_details.message_id),  # noqa: E999
             patch("elasticache.redis_client.get", return_value=permissions_config_content),  # noqa: E999
-            patch("send_sqs_message.send_to_supplier_queue") as mock_send_to_supplier_queue,  # noqa: E999
+            patch("file_name_processor.invoke_filename_lambda") as mock_invoke_filename_lambda,  # noqa: E999
         ):  # noqa: E999
             lambda_handler(event=self.make_event(file_details.file_key), context=None)
 
-        expected_table_items = [{**file_details.audit_table_entry, "status": {"S": "Processed"}}]
-        self.assertEqual(self.get_audit_table_items(), expected_table_items)
-
-        mock_send_to_supplier_queue.assert_not_called()
+        assert_audit_table_entry(file_details, FileStatus.PROCESSED)
+        self.assert_no_sqs_message()
         self.assert_ack_file_contents(file_details)
+        mock_invoke_filename_lambda.assert_called_with(queued_file_details.file_key, queued_file_details.message_id)
 
 
 @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
