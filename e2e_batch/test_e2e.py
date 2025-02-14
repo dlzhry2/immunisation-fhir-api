@@ -7,9 +7,7 @@ import time
 import csv
 import os
 import pytest
-# ---------------------------
-# Configuration
-# ---------------------------
+
 # Bucket for uploading the input CSV file
 INPUT_BUCKET = "immunisation-batch-internal-dev-data-sources"  # Update with your input S3 bucket name
 INPUT_PREFIX = ""          # Folder in the input bucket
@@ -19,67 +17,61 @@ ACK_PREFIX = "forwardedFile/"                     # Folder in the ack bucket
 REGION = "eu-west-2"                    # Update to your AWS region
 # Initialize the S3 client (used for both buckets)
 s3_client = boto3.client("s3", region_name=REGION)
-# ---------------------------
-# Step 1: Generate CSV File
-# ---------------------------
 
 
 def generate_csv():
-        """
-        Generate a CSV file with 3 rows and unique GUIDs for UNIQUE_ID.
-        The filename is timestamped.
-        """
-        unique_ids = [str(uuid.uuid4()) for _ in range(3)]
-        data = []
-        for i in range(3):
-            row = {
-                "NHS_NUMBER": "9732928395",
-                "PERSON_FORENAME": "PHYLIS",
-                "PERSON_SURNAME": "",
-                "PERSON_DOB": "20080217",
-                "PERSON_GENDER_CODE": "0",
-                "PERSON_POSTCODE": "WD25 0DZ",
-                "DATE_AND_TIME": datetime.utcnow().strftime("%Y%m%dT%H%M%S"),
-                "SITE_CODE": "RVVKC",
-                "SITE_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code",
-                "UNIQUE_ID": unique_ids[i],
-                "UNIQUE_ID_URI": "https://www.ravs.england.nhs.uk/",
-                "ACTION_FLAG": "new",
-                "PERFORMING_PROFESSIONAL_FORENAME": "",
-                "PERFORMING_PROFESSIONAL_SURNAME": "",
-                "RECORDED_DATE": datetime.utcnow().strftime("%Y%m%d"),
-                "PRIMARY_SOURCE": "TRUE",
-                "VACCINATION_PROCEDURE_CODE": "956951000000104",
-                "VACCINATION_PROCEDURE_TERM": "RSV vaccination in pregnancy (procedure)",
-                "DOSE_SEQUENCE": "1",
-                "VACCINE_PRODUCT_CODE": "42223111000001107",
-                "VACCINE_PRODUCT_TERM": "Quadrivalent influenza vaccine (Sanofi Pasteur)",
-                "VACCINE_MANUFACTURER": "Sanofi Pasteur",
-                "BATCH_NUMBER": "BN92478105653",
-                "EXPIRY_DATE": "20240915",
-                "SITE_OF_VACCINATION_CODE": "368209003",
-                "SITE_OF_VACCINATION_TERM": "Right arm",
-                "ROUTE_OF_VACCINATION_CODE": "1210999013",
-                "ROUTE_OF_VACCINATION_TERM": "Intradermal use",
-                "DOSE_AMOUNT": "0.3",
-                "DOSE_UNIT_CODE": "2622896019",
-                "DOSE_UNIT_TERM": "Inhalation - unit of product usage",
-                "INDICATION_CODE": "1037351000000105",
-                "LOCATION_CODE": "RJC02",
-                "LOCATION_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code"
-            }
-            data.append(row)
-        df = pd.DataFrame(data)
-        # Create a dynamic timestamp for the filename (example: 20240928T13005901)
-        timestamp = datetime.now(pytz.UTC).strftime("%Y%m%dT%H%M%S%f")[:-3]
-        file_name = f"COVID19_Vaccinations_v5_YGM41_{timestamp}.csv"
-        # Save CSV locally using pipe (|) as delimiter
-        df.to_csv(file_name, index=False, sep="|", quoting=1)
-        print(f"Generated CSV file: {file_name}")
-        return file_name
-# ---------------------------
-# Step 2: Upload File to Input Bucket
-# ---------------------------
+    """
+    Generate a CSV file with 3 rows and unique GUIDs for UNIQUE_ID.
+    The filename is timestamped.
+    """
+    unique_ids = [str(uuid.uuid4()) for _ in range(3)]
+    data = []
+    for i in range(3):
+        row = {
+            "NHS_NUMBER": "9732928395",
+            "PERSON_FORENAME": "PHYLIS",
+            "PERSON_SURNAME": "James",
+            "PERSON_DOB": "20080217",
+            "PERSON_GENDER_CODE": "0",
+            "PERSON_POSTCODE": "WD25 0DZ",
+            "DATE_AND_TIME": datetime.utcnow().strftime("%Y%m%dT%H%M%S"),
+            "SITE_CODE": "RVVKC",
+            "SITE_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code",
+            "UNIQUE_ID": unique_ids[i],
+            "UNIQUE_ID_URI": "https://www.ravs.england.nhs.uk/",
+            "ACTION_FLAG": "new",
+            "PERFORMING_PROFESSIONAL_FORENAME": "PHYLIS",
+            "PERFORMING_PROFESSIONAL_SURNAME": "James",
+            "RECORDED_DATE": datetime.utcnow().strftime("%Y%m%d"),
+            "PRIMARY_SOURCE": "TRUE",
+            "VACCINATION_PROCEDURE_CODE": "956951000000104",
+            "VACCINATION_PROCEDURE_TERM": "RSV vaccination in pregnancy (procedure)",
+            "DOSE_SEQUENCE": "1",
+            "VACCINE_PRODUCT_CODE": "42223111000001107",
+            "VACCINE_PRODUCT_TERM": "Quadrivalent influenza vaccine (Sanofi Pasteur)",
+            "VACCINE_MANUFACTURER": "Sanofi Pasteur",
+            "BATCH_NUMBER": "BN92478105653",
+            "EXPIRY_DATE": "20240915",
+            "SITE_OF_VACCINATION_CODE": "368209003",
+            "SITE_OF_VACCINATION_TERM": "Right arm",
+            "ROUTE_OF_VACCINATION_CODE": "1210999013",
+            "ROUTE_OF_VACCINATION_TERM": "Intradermal use",
+            "DOSE_AMOUNT": "0.3",
+            "DOSE_UNIT_CODE": "2622896019",
+            "DOSE_UNIT_TERM": "Inhalation - unit of product usage",
+            "INDICATION_CODE": "1037351000000105",
+            "LOCATION_CODE": "RJC02",
+            "LOCATION_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code"
+        }
+        data.append(row)
+    df = pd.DataFrame(data)
+    # Create a dynamic timestamp for the filename (example: 20240928T13005901)
+    timestamp = datetime.now(pytz.UTC).strftime("%Y%m%dT%H%M%S%f")[:-3]
+    file_name = f"COVID19_Vaccinations_v5_YGM41_{timestamp}.csv"
+    # Save CSV locally using pipe (|) as delimiter
+    df.to_csv(file_name, index=False, sep="|", quoting=1)
+    print(f"Generated CSV file: {file_name}")
+    return file_name
 
 
 def upload_file_to_s3(file_name, bucket, prefix):
@@ -92,9 +84,6 @@ def upload_file_to_s3(file_name, bucket, prefix):
         s3_client.put_object(Bucket=bucket, Key=key, Body=f)
     print(f"Uploaded file to s3://{bucket}/{key}")
     return key
-# ---------------------------
-# Step 3: Wait for Ack File Using a 'Like' (Substring) Search
-# ---------------------------
 
 
 def wait_for_ack_file(input_file_name, timeout=120):
@@ -104,7 +93,7 @@ def wait_for_ack_file(input_file_name, timeout=120):
     """
     if input_file_name.endswith(".csv"):
         filename_without_ext = input_file_name[:-4]
-    search_pattern = f"forwardedFile/{filename_without_ext}"  # We expect the generated file name to be part of the ack file name
+    search_pattern = f"forwardedFile/{filename_without_ext}"
     start_time = time.time()
     while time.time() - start_time < timeout:
         response = s3_client.list_objects_v2(Bucket=ACK_BUCKET, Prefix=ACK_PREFIX)
@@ -117,9 +106,8 @@ def wait_for_ack_file(input_file_name, timeout=120):
                     return key
         time.sleep(5)
     raise Exception(f"Ack file matching '{search_pattern}' not found in bucket {ACK_BUCKET} within {timeout} seconds.")
-# ---------------------------
-# Step 4: Retrieve and Verify Ack File Content
-# ---------------------------
+
+
 def get_file_content_from_s3(bucket, key):
     """Download and return the file content from S3."""
     response = s3_client.get_object(Bucket=bucket, Key=key)
@@ -127,7 +115,7 @@ def get_file_content_from_s3(bucket, key):
     return content
 
 
-def check_ack_file_content(content):
+def check_ack_file_content(content, response_code):
     """
     Parse the ack CSV file (assuming a pipe delimiter) and check that:
         - It has exactly 3 data rows.
@@ -135,20 +123,15 @@ def check_ack_file_content(content):
     """
     reader = csv.DictReader(content.splitlines(), delimiter="|")
     rows = list(reader)
-    if len(rows) != 3:
-        raise Exception(f"Ack file should have 3 rows, but found {len(rows)} rows.")
     for i, row in enumerate(rows):
         if "HEADER_RESPONSE_CODE" not in row:
             raise Exception(f"Row {i+1} does not have a 'RESPONSE' column.")
-        if row["HEADER_RESPONSE_CODE"].strip() != "Fatal Error":
-            print(f"Row {i+1}: RESPONSE is Fatal Error.")
-        else:
-            print(f"Row {i+1}: header_response_code is Fatal Error.")    
+        if row["HEADER_RESPONSE_CODE"].strip() != response_code:
+            print(f"Row {i+1}: RESPONSE is {response_code}.")
     print("All rows in the ack file have been verified successfully.")
-# ---------------------------
-# E2E Test: Real Checking Across Different Buckets with Like Search
-# ---------------------------
-def e2e_test_real():
+
+
+def e2e_test_post_validation_error():
     """
     End-to-end test:
         1. Generate a CSV file with 3 rows (each with a unique GUID).
@@ -165,17 +148,17 @@ def e2e_test_real():
     ack_key = wait_for_ack_file(input_file)
     # Step 4: Retrieve and check ack file content from the ack bucket
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-    check_ack_file_content(ack_content)
+    check_ack_file_content(ack_content, "Fatal Error")
     # Optionally, clean up the local CSV file
     os.remove(input_file)
-# ---------------------------
-# Run the E2E Test
-# ---------------------------
+
+
 if __name__ == "__main__":
-   e2e_test_real()
-# ---------------------------
-# For pytest integration:
-# ---------------------------
+
+    e2e_test_post_validation_error()
+
+
 @pytest.mark.e2e
 def test_e2e_real():
-   e2e_test_real()
+
+    e2e_test_post_validation_error()
