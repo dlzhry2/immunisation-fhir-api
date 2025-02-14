@@ -59,8 +59,9 @@ class TestLambdaHandlerDataSource(TestCase):
 
         # Set up common patches to be applied to all tests in the class (these can be overridden in individual tests.)
         common_patches = [
-            # Patch get_created_at_formatted_string, so that the ack file key can be deduced
-            # (it is already unittested separately).
+            # Patch get_created_at_formatted_string, so that the ack file key can be deduced  (it is already unittested
+            # separately). Note that files numbered '1', which are predominantly used in these tests, use the
+            # MOCK_CREATED_AT_FORMATTED_STRING.
             patch("file_name_processor.get_created_at_formatted_string", return_value=MOCK_CREATED_AT_FORMATTED_STRING),
             # Patch redis_client to use a fake redis client.
             patch("elasticache.redis_client", new=fakeredis.FakeStrictRedis()),
@@ -95,15 +96,6 @@ class TestLambdaHandlerDataSource(TestCase):
     def make_event(self, records: list):
         """Makes an event with s3 bucket name set to BucketNames.SOURCE and and s3 object key set to the file_key."""
         return {"Records": records}
-
-    @staticmethod
-    def make_event_with_message_id(file_key: str, message_id: str):
-        """Makes an event with s3 bucket name set to BucketNames.SOURCE and and s3 object key set to the file_key."""
-        return {
-            "Records": [
-                {"s3": {"bucket": {"name": BucketNames.SOURCE}, "object": {"key": file_key}}, "message_id": message_id}
-            ]
-        }
 
     @staticmethod
     def get_ack_file_key(file_key: str, created_at_formatted_string: str = MOCK_CREATED_AT_FORMATTED_STRING) -> str:
@@ -312,6 +304,7 @@ class TestLambdaHandlerDataSource(TestCase):
         file_details = deepcopy(MockFileDetails.ravs_rsv_1)
         file_details.file_key = invalid_file_key
         file_details.ack_file_key = self.get_ack_file_key(invalid_file_key)
+        file_details.sqs_message_body["filename"] = invalid_file_key
 
         with (  # noqa: E999
             patch(  # noqa: E999
@@ -398,6 +391,7 @@ class TestLambdaHandlerDataSource(TestCase):
         invalid_file_details_3.queue_name = "unknown_unknown"
         invalid_file_details_3.audit_table_entry[AuditTableKeys.FILENAME] = {"S": invalid_file_details_3.file_key}
         invalid_file_details_3.audit_table_entry[AuditTableKeys.QUEUE_NAME] = {"S": invalid_file_details_3.queue_name}
+        invalid_file_details_3.sqs_message_body["filename"] = invalid_file_details_3.file_key
 
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=valid_file_details_1.file_key)
         s3_client.put_object(Bucket=BucketNames.SOURCE, Key=valid_file_details_2.file_key)
