@@ -18,7 +18,7 @@ def e2e_test_create_success():
     ack_key = wait_for_ack_file(None, input_file)
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
     check_ack_file_content(ack_content, "OK")
-    logger.info("Test e2e_test_create_success successfully executed")
+    logger.info("Test e2e_test_create_success successfully passed")
 
 
 def e2e_test_update_success():
@@ -29,7 +29,7 @@ def e2e_test_update_success():
     ack_key = wait_for_ack_file(None, input_file)
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
     check_ack_file_content(ack_content, "OK")
-    logger.info("Test e2e_test_update_success successfully executed")
+    logger.info("Test e2e_test_update_success successfully passed")
 
 
 def e2e_test_delete_success():
@@ -40,7 +40,7 @@ def e2e_test_delete_success():
     ack_key = wait_for_ack_file(None, input_file)
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
     check_ack_file_content(ack_content, "OK")
-    logger.info("Test e2e_test_delete_success successfully executed")
+    logger.info("Test e2e_test_delete_success successfully passed")
 
 
 def e2e_test_pre_validation_error():
@@ -51,7 +51,7 @@ def e2e_test_pre_validation_error():
     ack_key = wait_for_ack_file(None, input_file)
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
     check_ack_file_content(ack_content, "Fatal Error")
-    logger.info("Test e2e_test_pre_validation_error successfully executed")
+    logger.info("Test e2e_test_pre_validation_error successfully passed")
 
 
 def e2e_test_post_validation_error():
@@ -62,7 +62,7 @@ def e2e_test_post_validation_error():
     ack_key = wait_for_ack_file(None, input_file)
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
     check_ack_file_content(ack_content, "Fatal Error")
-    logger.info("Test e2e_test_post_validation_error successfully executed")
+    logger.info("Test e2e_test_post_validation_error successfully passed")
 
 
 if __name__ == "__main__":
