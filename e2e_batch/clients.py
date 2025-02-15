@@ -1,5 +1,6 @@
 """Initialise clients, resources and logger. Note that all clients, resources and logger for the filenameprocessor
-lambda should be initialised ONCE ONLY (in this file) and then imported into the files where they are needed."""
+lambda should be initialised ONCE ONLY (in this file) and then imported into the files where they are needed.
+"""
 
 import logging
 from boto3 import client as boto3_client
