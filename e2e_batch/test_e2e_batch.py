@@ -6,7 +6,7 @@ from utils import (
     wait_for_ack_file,
     check_ack_file_content,
 )
-from constants import INPUT_BUCKET, INPUT_PREFIX, ACK_BUCKET
+from constants import INPUT_BUCKET, INPUT_PREFIX, ACK_BUCKET, PRE_VALIDATION_ERROR, POST_VALIDATION_ERROR
 from clients import logger
 
 
@@ -17,7 +17,7 @@ def e2e_test_create_success():
     os.remove(input_file)
     ack_key = wait_for_ack_file(None, input_file)
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-    check_ack_file_content(ack_content, "OK")
+    check_ack_file_content(ack_content, "OK", None)
     logger.info("Test e2e_test_create_success successfully passed")
 
 
@@ -28,7 +28,7 @@ def e2e_test_update_success():
     os.remove(input_file)
     ack_key = wait_for_ack_file(None, input_file)
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-    check_ack_file_content(ack_content, "OK")
+    check_ack_file_content(ack_content, "OK", None)
     logger.info("Test e2e_test_update_success successfully passed")
 
 
@@ -39,7 +39,7 @@ def e2e_test_delete_success():
     os.remove(input_file)
     ack_key = wait_for_ack_file(None, input_file)
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-    check_ack_file_content(ack_content, "OK")
+    check_ack_file_content(ack_content, "OK", None)
     logger.info("Test e2e_test_delete_success successfully passed")
 
 
@@ -50,7 +50,11 @@ def e2e_test_pre_validation_error():
     os.remove(input_file)
     ack_key = wait_for_ack_file(None, input_file)
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-    check_ack_file_content(ack_content, "Fatal Error")
+    check_ack_file_content(
+        ack_content,
+        "Fatal Error",
+        PRE_VALIDATION_ERROR,
+    )
     logger.info("Test e2e_test_pre_validation_error successfully passed")
 
 
@@ -61,7 +65,11 @@ def e2e_test_post_validation_error():
     os.remove(input_file)
     ack_key = wait_for_ack_file(None, input_file)
     ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-    check_ack_file_content(ack_content, "Fatal Error")
+    check_ack_file_content(
+        ack_content,
+        "Fatal Error",
+        POST_VALIDATION_ERROR,
+    )
     logger.info("Test e2e_test_post_validation_error successfully passed")
 
 

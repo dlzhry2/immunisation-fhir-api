@@ -118,7 +118,7 @@ def get_file_content_from_s3(bucket, key):
     return content
 
 
-def check_ack_file_content(content, response_code):
+def check_ack_file_content(content, response_code, operation_outcome):
     """Parse the ack CSV file and verify each row's 'HEADER_RESPONSE_CODE' column matches the response code."""
     reader = csv.DictReader(content.splitlines(), delimiter="|")
     rows = list(reader)
@@ -129,4 +129,9 @@ def check_ack_file_content(content, response_code):
             raise AssertionError(
                 f"Row {i + 1}: Expected RESPONSE '{response_code}', but found '{row['HEADER_RESPONSE_CODE']}'"
             )
+        if row["HEADER_RESPONSE_CODE"].strip() == "Fatal Error":
+            if row["OPERATION_OUTCOME"].strip() != operation_outcome:
+                raise AssertionError(
+                    f"Row {i + 1}: Expected RESPONSE '{operation_outcome}', but found '{row['OPERATION_OUTCOME']}'"
+                )
     # logger.info("All rows in the ack file have been verified successfully.")
