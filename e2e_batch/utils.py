@@ -1,7 +1,6 @@
 import time
 import csv
 import pandas as pd
-import pytz
 import uuid
 from datetime import datetime, timezone
 import csv
@@ -32,7 +31,7 @@ def generate_csv(file_name, fore_name, dose_amount, action_flag):
         data.append(create_row(unique_id, fore_name, dose_amount, "DELETE"))
 
     df = pd.DataFrame(data)
-    timestamp = datetime.now(pytz.UTC).strftime("%Y%m%dT%H%M%S%f")[:-3]
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")[:-3]
     file_name = (
         f"COVID19_Vaccinations_v4_YGM41_{timestamp}.csv"
         if file_name
