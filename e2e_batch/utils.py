@@ -119,7 +119,9 @@ def get_file_content_from_s3(bucket, key):
 
 
 def check_ack_file_content(content, response_code, operation_outcome):
-    """Parse the ack CSV file and verify each row's 'HEADER_RESPONSE_CODE' column matches the response code."""
+    """Parse the acknowledgment (ACK) CSV file and verify that each row's 'HEADER_RESPONSE_CODE' column 
+    matches the expected response code. If the response code is 'Fatal Error', it also validates 
+    the 'OPERATION_OUTCOME' column."""
     reader = csv.DictReader(content.splitlines(), delimiter="|")
     rows = list(reader)
     for i, row in enumerate(rows):
