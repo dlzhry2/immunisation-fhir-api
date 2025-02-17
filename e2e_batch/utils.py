@@ -5,7 +5,7 @@ import pytz
 import uuid
 from datetime import datetime
 import csv
-from clients import logger, s3_client
+from clients import logger, s3_client, table
 from constants import ACK_BUCKET, FORWARDEDFILE_PREFIX
 
 
@@ -39,7 +39,6 @@ def generate_csv(file_name, fore_name, dose_amount, action_flag):
         else f"COVID19_Vaccinations_v5_YGM41_{timestamp}.csv"
     )
     df.to_csv(file_name, index=False, sep="|", quoting=csv.QUOTE_MINIMAL)
-    # logger.info(f"Generated CSV file: {file_name}")
     return file_name
 
 
@@ -88,7 +87,6 @@ def upload_file_to_s3(file_name, bucket, prefix):
     key = f"{prefix}{file_name}"
     with open(file_name, "rb") as f:
         s3_client.put_object(Bucket=bucket, Key=key, Body=f)
-    # logger.info(f"Uploaded file to s3://{bucket}/{key}")
     return key
 
 
@@ -105,7 +103,6 @@ def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
             for obj in response["Contents"]:
                 key = obj["Key"]
                 if search_pattern in key:
-                    # logger.info(f"Ack file found: s3://{ACK_BUCKET}/{key}")
                     return key
         time.sleep(5)
     raise Exception(f"Ack file matching '{search_pattern}' not found in bucket {ACK_BUCKET} within {timeout} seconds.")
@@ -119,9 +116,12 @@ def get_file_content_from_s3(bucket, key):
 
 
 def check_ack_file_content(content, response_code, operation_outcome):
-    """Parse the acknowledgment (ACK) CSV file and verify that each row's 'HEADER_RESPONSE_CODE' column 
-    matches the expected response code. If the response code is 'Fatal Error', it also validates 
-    the 'OPERATION_OUTCOME' column."""
+    """Parse the acknowledgment (ACK) CSV file and verify that:
+    1. 'HEADER_RESPONSE_CODE' matches the expected response code.
+    2. If 'HEADER_RESPONSE_CODE' is 'Fatal Error', check 'OPERATION_OUTCOME'.
+    3. If 'OPERATION_OUTCOME' is 'Ok', extract 'LOCAL_ID', convert it to IdentifierPK,
+       fetch PK from DynamoDB, and ensure it matches 'IMMS_ID'."""
+    
     reader = csv.DictReader(content.splitlines(), delimiter="|")
     rows = list(reader)
     for i, row in enumerate(rows):
@@ -136,4 +136,39 @@ def check_ack_file_content(content, response_code, operation_outcome):
                 raise AssertionError(
                     f"Row {i + 1}: Expected RESPONSE '{operation_outcome}', but found '{row['OPERATION_OUTCOME']}'"
                 )
-    # logger.info("All rows in the ack file have been verified successfully.")
+
+        if row["HEADER_RESPONSE_CODE"].strip() == "OK":
+            if "LOCAL_ID" not in row:
+                raise Exception(f"Row {i + 1} does not have a 'LOCAL_ID' column.")
+            
+            # Extract LOCAL_ID and convert to IdentifierPK
+            try:
+                local_id, unique_id_uri = row["LOCAL_ID"].split("^")
+                identifier_pk = f"{unique_id_uri}#{local_id}"
+            except ValueError:
+                raise Exception(f"Row {i + 1}: Invalid LOCAL_ID format - {row['LOCAL_ID']}")
+            
+            # Fetch PK from DynamoDB
+            dynamo_pk = fetch_pk_from_dynamodb(identifier_pk)
+            # Compare DynamoDB PK with IMMS_ID
+            if dynamo_pk != row["IMMS_ID"]:
+                raise AssertionError(
+                    f"Row {i + 1}: Mismatch - DynamoDB PK '{dynamo_pk}' does not match ACK file IMMS_ID '{row['IMMS_ID']}'"
+                )
+
+def fetch_pk_from_dynamodb(identifier_pk):
+    """Fetch PK with IdentifierPK as the query key."""
+    try:
+        response = table.query(
+            IndexName="IdentifierGSI",  
+            KeyConditionExpression="IdentifierPK = :identifier_pk",
+            ExpressionAttributeValues={":identifier_pk": identifier_pk}
+        )
+        if "Items" in response and response["Items"]:
+            return response["Items"][0]["PK"]  # Return the first matched PK
+        else:
+            return "NOT_FOUND"
+
+    except Exception as e:
+        logger.error(f"Error fetching from DynamoDB: {e}")
+        return "ERROR"
