@@ -3,7 +3,7 @@ import csv
 import pandas as pd
 import pytz
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import csv
 from clients import logger, s3_client, table
 from constants import ACK_BUCKET, FORWARDEDFILE_PREFIX
@@ -51,7 +51,7 @@ def create_row(unique_id, fore_name, dose_amount, action_flag):
         "PERSON_DOB": "20080217",
         "PERSON_GENDER_CODE": "0",
         "PERSON_POSTCODE": "WD25 0DZ",
-        "DATE_AND_TIME": datetime.utcnow().strftime("%Y%m%dT%H%M%S"),
+        "DATE_AND_TIME": datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S"),
         "SITE_CODE": "RVVKC",
         "SITE_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code",
         "UNIQUE_ID": unique_id,
@@ -59,7 +59,7 @@ def create_row(unique_id, fore_name, dose_amount, action_flag):
         "ACTION_FLAG": action_flag,
         "PERFORMING_PROFESSIONAL_FORENAME": "PHYLIS",
         "PERFORMING_PROFESSIONAL_SURNAME": "James",
-        "RECORDED_DATE": datetime.utcnow().strftime("%Y%m%d"),
+        "RECORDED_DATE": datetime.now(timezone.utc).strftime("%Y%m%d"),
         "PRIMARY_SOURCE": "TRUE",
         "VACCINATION_PROCEDURE_CODE": "956951000000104",
         "VACCINATION_PROCEDURE_TERM": "RSV vaccination in pregnancy (procedure)",
