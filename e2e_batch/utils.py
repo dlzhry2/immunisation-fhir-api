@@ -3,7 +3,6 @@ import csv
 import pandas as pd
 import uuid
 from datetime import datetime, timezone
-import csv
 from clients import logger, s3_client, table
 from constants import ACK_BUCKET, FORWARDEDFILE_PREFIX
 
@@ -104,7 +103,9 @@ def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
                 if search_pattern in key:
                     return key
         time.sleep(5)
-    raise Exception(f"Ack file matching '{search_pattern}' not found in bucket {ACK_BUCKET} within {timeout} seconds.")
+    raise AssertionError(
+                    f"Ack file matching '{search_pattern}' not found in bucket {ACK_BUCKET} within {timeout} seconds."
+                    )
 
 
 def get_file_content_from_s3(bucket, key):
@@ -120,12 +121,12 @@ def check_ack_file_content(content, response_code, operation_outcome):
     2. If 'HEADER_RESPONSE_CODE' is 'Fatal Error', check 'OPERATION_OUTCOME'.
     3. If 'OPERATION_OUTCOME' is 'Ok', extract 'LOCAL_ID', convert it to IdentifierPK,
        fetch PK from DynamoDB, and ensure it matches 'IMMS_ID'."""
-    
+
     reader = csv.DictReader(content.splitlines(), delimiter="|")
     rows = list(reader)
     for i, row in enumerate(rows):
         if "HEADER_RESPONSE_CODE" not in row:
-            raise Exception(f"Row {i + 1} does not have a 'HEADER_RESPONSE_CODE' column.")
+            raise AssertionError(f"Row {i + 1} does not have a 'HEADER_RESPONSE_CODE' column.")
         if row["HEADER_RESPONSE_CODE"].strip() != response_code:
             raise AssertionError(
                 f"Row {i + 1}: Expected RESPONSE '{response_code}', but found '{row['HEADER_RESPONSE_CODE']}'"
@@ -138,30 +139,31 @@ def check_ack_file_content(content, response_code, operation_outcome):
 
         if row["HEADER_RESPONSE_CODE"].strip() == "OK":
             if "LOCAL_ID" not in row:
-                raise Exception(f"Row {i + 1} does not have a 'LOCAL_ID' column.")
-            
+                raise AssertionError(f"Row {i + 1} does not have a 'LOCAL_ID' column.")
+
             # Extract LOCAL_ID and convert to IdentifierPK
             try:
                 local_id, unique_id_uri = row["LOCAL_ID"].split("^")
                 identifier_pk = f"{unique_id_uri}#{local_id}"
             except ValueError:
-                raise Exception(f"Row {i + 1}: Invalid LOCAL_ID format - {row['LOCAL_ID']}")
-            
+                raise AssertionError(f"Row {i + 1}: Invalid LOCAL_ID format - {row['LOCAL_ID']}")
+
             # Fetch PK from DynamoDB
             dynamo_pk = fetch_pk_from_dynamodb(identifier_pk)
             # Compare DynamoDB PK with IMMS_ID
             if dynamo_pk != row["IMMS_ID"]:
                 raise AssertionError(
-                    f"Row {i + 1}: Mismatch - DynamoDB PK '{dynamo_pk}' does not match ACK file IMMS_ID '{row['IMMS_ID']}'"
+                 f"Row {i + 1}: Mismatch - DynamoDB PK '{dynamo_pk}' does not match ACK file IMMS_ID '{row['IMMS_ID']}'"
                 )
+
 
 def fetch_pk_from_dynamodb(identifier_pk):
     """Fetch PK with IdentifierPK as the query key."""
     try:
         response = table.query(
-            IndexName="IdentifierGSI",  
+            IndexName="IdentifierGSI",
             KeyConditionExpression="IdentifierPK = :identifier_pk",
-            ExpressionAttributeValues={":identifier_pk": identifier_pk}
+            ExpressionAttributeValues={":identifier_pk": identifier_pk},
         )
         if "Items" in response and response["Items"]:
             return response["Items"][0]["PK"]  # Return the first matched PK

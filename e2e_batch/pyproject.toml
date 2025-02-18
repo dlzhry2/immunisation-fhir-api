@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "e2e_batch"
 version = "0.1.0"
-description = "End-to-end tests for immunization-fhir-api"
+description = "End-to-end tests for immunization-batch"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
