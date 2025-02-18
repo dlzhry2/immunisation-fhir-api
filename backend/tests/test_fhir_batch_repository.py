@@ -32,7 +32,7 @@ class TestImmunizationBatchRepository(unittest.TestCase):
 class TestCreateImmunization(TestImmunizationBatchRepository): 
     
     def modify_immunization(self, remove_nhs):
-        """Modify the immunization object by removing NHS number if required."""
+        """Modify the immunization object by removing NHS number if required"""
         if remove_nhs:
             for i, x in enumerate(self.immunization["contained"]):
                 if x["resourceType"] == "Patient":
