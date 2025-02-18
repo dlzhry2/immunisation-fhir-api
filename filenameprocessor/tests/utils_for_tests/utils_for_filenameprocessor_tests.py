@@ -11,10 +11,11 @@ from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DI
 
 # Ensure environment variables are mocked before importing from src files
 with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
+    from clients import REGION_NAME
     from csv import DictReader
     from constants import AuditTableKeys, AUDIT_TABLE_NAME, FileStatus
 
-dynamodb_client = boto3_client("dynamodb")
+dynamodb_client = boto3_client("dynamodb", region_name=REGION_NAME)
 
 
 def get_csv_file_dict_reader(s3_client, bucket_name: str, file_key: str) -> DictReader:
