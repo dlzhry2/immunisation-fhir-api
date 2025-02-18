@@ -204,7 +204,7 @@ class TestAuditTable(TestCase):
         )
 
         self.assertFalse(result)
-        assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.PROCESSING)  # TODO: ?Should be processed
+        assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.PROCESSED)
 
         # Test case 7: new file but with duplicated message_id.
         # Audit table status should not be updated. Error should be raised.
@@ -231,4 +231,4 @@ class TestAuditTable(TestCase):
         assert_audit_table_entry(ravs_rsv_test_file_1, FileStatus.PROCESSED)
         assert_audit_table_entry(ravs_rsv_test_file_2, FileStatus.DUPLICATE)
         assert_audit_table_entry(ravs_rsv_test_file_3, FileStatus.PROCESSING)
-        assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.PROCESSING)
+        assert_audit_table_entry(rsv_ravs_test_file_4, FileStatus.PROCESSED)
