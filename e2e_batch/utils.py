@@ -104,8 +104,8 @@ def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
                     return key
         time.sleep(5)
     raise AssertionError(
-                    f"Ack file matching '{search_pattern}' not found in bucket {ACK_BUCKET} within {timeout} seconds."
-                    )
+        f"Ack file matching '{search_pattern}' not found in bucket {ACK_BUCKET} within {timeout} seconds."
+    )
 
 
 def get_file_content_from_s3(bucket, key):
@@ -116,45 +116,54 @@ def get_file_content_from_s3(bucket, key):
 
 
 def check_ack_file_content(content, response_code, operation_outcome):
-    """Parse the acknowledgment (ACK) CSV file and verify that:
-    1. 'HEADER_RESPONSE_CODE' matches the expected response code.
-    2. If 'HEADER_RESPONSE_CODE' is 'Fatal Error', check 'OPERATION_OUTCOME'.
-    3. If 'OPERATION_OUTCOME' is 'Ok', extract 'LOCAL_ID', convert it to IdentifierPK,
-       fetch PK from DynamoDB, and ensure it matches 'IMMS_ID'."""
-
+    """Parse the acknowledgment (ACK) CSV file and verify its content."""
     reader = csv.DictReader(content.splitlines(), delimiter="|")
     rows = list(reader)
     for i, row in enumerate(rows):
-        if "HEADER_RESPONSE_CODE" not in row:
-            raise AssertionError(f"Row {i + 1} does not have a 'HEADER_RESPONSE_CODE' column.")
-        if row["HEADER_RESPONSE_CODE"].strip() != response_code:
-            raise AssertionError(
-                f"Row {i + 1}: Expected RESPONSE '{response_code}', but found '{row['HEADER_RESPONSE_CODE']}'"
-            )
+        validate_header_response_code(row, i, response_code)
         if row["HEADER_RESPONSE_CODE"].strip() == "Fatal Error":
-            if row["OPERATION_OUTCOME"].strip() != operation_outcome:
-                raise AssertionError(
-                    f"Row {i + 1}: Expected RESPONSE '{operation_outcome}', but found '{row['OPERATION_OUTCOME']}'"
-                )
-
+            validate_fatal_error(row, i, operation_outcome)
         if row["HEADER_RESPONSE_CODE"].strip() == "OK":
-            if "LOCAL_ID" not in row:
-                raise AssertionError(f"Row {i + 1} does not have a 'LOCAL_ID' column.")
+            validate_ok_response(row, i)
 
-            # Extract LOCAL_ID and convert to IdentifierPK
-            try:
-                local_id, unique_id_uri = row["LOCAL_ID"].split("^")
-                identifier_pk = f"{unique_id_uri}#{local_id}"
-            except ValueError:
-                raise AssertionError(f"Row {i + 1}: Invalid LOCAL_ID format - {row['LOCAL_ID']}")
 
-            # Fetch PK from DynamoDB
-            dynamo_pk = fetch_pk_from_dynamodb(identifier_pk)
-            # Compare DynamoDB PK with IMMS_ID
-            if dynamo_pk != row["IMMS_ID"]:
-                raise AssertionError(
-                 f"Row {i + 1}: Mismatch - DynamoDB PK '{dynamo_pk}' does not match ACK file IMMS_ID '{row['IMMS_ID']}'"
-                )
+def validate_header_response_code(row, index, expected_code):
+    """Ensure HEADER_RESPONSE_CODE exists and matches expected response code."""
+    if "HEADER_RESPONSE_CODE" not in row:
+        raise AssertionError(f"Row {index + 1} does not have a 'HEADER_RESPONSE_CODE' column.")
+    if row["HEADER_RESPONSE_CODE"].strip() != expected_code:
+        raise AssertionError(
+            f"Row {index + 1}: Expected RESPONSE '{expected_code}', but found '{row['HEADER_RESPONSE_CODE']}'"
+        )
+
+
+def validate_fatal_error(row, index, expected_outcome):
+    """Ensure OPERATION_OUTCOME matches expected outcome for Fatal Error responses."""
+    if row["OPERATION_OUTCOME"].strip() != expected_outcome:
+        raise AssertionError(
+            f"Row {index + 1}: Expected RESPONSE '{expected_outcome}', but found '{row['OPERATION_OUTCOME']}'"
+        )
+
+
+def validate_ok_response(row, index):
+    """Validate LOCAL_ID format and verify PK match from DynamoDB for OK responses."""
+    if "LOCAL_ID" not in row:
+        raise AssertionError(f"Row {index + 1} does not have a 'LOCAL_ID' column.")
+    identifier_pk = extract_identifier_pk(row, index)
+    dynamo_pk = fetch_pk_from_dynamodb(identifier_pk)
+    if dynamo_pk != row["IMMS_ID"]:
+        raise AssertionError(
+            f"Row {index + 1}: Mismatch - DynamoDB PK '{dynamo_pk}' does not match ACK file IMMS_ID '{row['IMMS_ID']}'"
+        )
+
+
+def extract_identifier_pk(row, index):
+    """Extract LOCAL_ID and convert to IdentifierPK."""
+    try:
+        local_id, unique_id_uri = row["LOCAL_ID"].split("^")
+        return f"{unique_id_uri}#{local_id}"
+    except ValueError:
+        raise AssertionError(f"Row {index + 1}: Invalid LOCAL_ID format - {row['LOCAL_ID']}")
 
 
 def fetch_pk_from_dynamodb(identifier_pk):
