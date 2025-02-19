@@ -170,10 +170,10 @@ class TestLambdaHandlerDataSource(TestCase):
                 # Setup the file in the source bucket
                 s3_client.put_object(Bucket=BucketNames.SOURCE, Key=file_details.file_key)
 
-                with (
-                    patch("file_name_processor.uuid4", return_value=file_details.message_id),
-                    patch("file_name_processor.invoke_filename_lambda") as mock_invoke_filename_lambda,
-                ):
+                with (  # noqa: E999
+                    patch("file_name_processor.uuid4", return_value=file_details.message_id),  # noqa: E999
+                    patch("file_name_processor.invoke_filename_lambda") as mock_invoke_filename_lambda,  # noqa: E999
+                ):  # noqa: E999
                     lambda_handler(self.make_event([self.make_record(file_details.file_key)]), None)
 
                 assert_audit_table_entry(file_details, FileStatus.PROCESSING)
@@ -200,10 +200,10 @@ class TestLambdaHandlerDataSource(TestCase):
 
         add_entry_to_table(file_already_processing_details, FileStatus.PROCESSING)
 
-        with (
-            patch("file_name_processor.uuid4", return_value=file_details.message_id),
-            patch("file_name_processor.invoke_filename_lambda") as mock_invoke_filename_lambda,
-        ):
+        with (  # noqa: E999
+            patch("file_name_processor.uuid4", return_value=file_details.message_id),  # noqa: E999
+            patch("file_name_processor.invoke_filename_lambda") as mock_invoke_filename_lambda,  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(self.make_event([self.make_record(file_details.file_key)]), None)
 
         assert_audit_table_entry(file_details, FileStatus.QUEUED)
@@ -222,10 +222,10 @@ class TestLambdaHandlerDataSource(TestCase):
         file_details = MockFileDetails.ravs_rsv_1
         add_entry_to_table(file_details, FileStatus.QUEUED)
 
-        with (
-            patch("file_name_processor.uuid4", return_value=file_details.message_id),
-            patch("file_name_processor.invoke_filename_lambda") as mock_invoke_filename_lambda,
-        ):
+        with (  # noqa: E999
+            patch("file_name_processor.uuid4", return_value=file_details.message_id),  # noqa: E999
+            patch("file_name_processor.invoke_filename_lambda") as mock_invoke_filename_lambda,  # noqa: E999
+        ):  # noqa: E999
             lambda_handler(
                 self.make_event([self.make_record_with_message_id(file_details.file_key, file_details.message_id)]),
                 None,

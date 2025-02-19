@@ -3,7 +3,7 @@
 from unittest import TestCase
 from unittest.mock import patch
 
-from tests.utils_for_tests.values_for_tests import MockFileDetails, MOCK_CREATED_AT_FORMATTED_STRING
+from tests.utils_for_tests.values_for_tests import MockFileDetails
 from tests.utils_for_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
 
 # Ensure environment variables are mocked before importing from src files
