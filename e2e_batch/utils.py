@@ -4,6 +4,7 @@ import pandas as pd
 import uuid
 from datetime import datetime, timezone
 from clients import logger, s3_client, table
+from errors import AckFileNotFoundError, DynamoDBMismatchError
 from constants import ACK_BUCKET, FORWARDEDFILE_PREFIX
 
 
@@ -90,8 +91,12 @@ def upload_file_to_s3(file_name, bucket, prefix):
 
 def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
     """Poll the ACK_BUCKET for an ack file that contains the input_file_name as a substring."""
-    filename_without_ext = input_file_name[:-4] if input_file_name.endswith(".csv") else input_file_name
-    search_pattern = f"{ack_prefix if ack_prefix else FORWARDEDFILE_PREFIX}{filename_without_ext}"
+    filename_without_ext = (
+        input_file_name[:-4] if input_file_name.endswith(".csv") else input_file_name
+    )
+    search_pattern = (
+        f"{ack_prefix if ack_prefix else FORWARDEDFILE_PREFIX}{filename_without_ext}"
+    )
     start_time = time.time()
     while time.time() - start_time < timeout:
         response = s3_client.list_objects_v2(
@@ -103,7 +108,7 @@ def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
                 if search_pattern in key:
                     return key
         time.sleep(5)
-    raise AssertionError(
+    raise AckFileNotFoundError(
         f"Ack file matching '{search_pattern}' not found in bucket {ACK_BUCKET} within {timeout} seconds."
     )
 
@@ -130,9 +135,11 @@ def check_ack_file_content(content, response_code, operation_outcome):
 def validate_header_response_code(row, index, expected_code):
     """Ensure HEADER_RESPONSE_CODE exists and matches expected response code."""
     if "HEADER_RESPONSE_CODE" not in row:
-        raise AssertionError(f"Row {index + 1} does not have a 'HEADER_RESPONSE_CODE' column.")
+        raise ValueError(
+            f"Row {index + 1} does not have a 'HEADER_RESPONSE_CODE' column."
+        )
     if row["HEADER_RESPONSE_CODE"].strip() != expected_code:
-        raise AssertionError(
+        raise ValueError(
             f"Row {index + 1}: Expected RESPONSE '{expected_code}', but found '{row['HEADER_RESPONSE_CODE']}'"
         )
 
@@ -140,7 +147,7 @@ def validate_header_response_code(row, index, expected_code):
 def validate_fatal_error(row, index, expected_outcome):
     """Ensure OPERATION_OUTCOME matches expected outcome for Fatal Error responses."""
     if row["OPERATION_OUTCOME"].strip() != expected_outcome:
-        raise AssertionError(
+        raise ValueError(
             f"Row {index + 1}: Expected RESPONSE '{expected_outcome}', but found '{row['OPERATION_OUTCOME']}'"
         )
 
@@ -148,11 +155,11 @@ def validate_fatal_error(row, index, expected_outcome):
 def validate_ok_response(row, index):
     """Validate LOCAL_ID format and verify PK match from DynamoDB for OK responses."""
     if "LOCAL_ID" not in row:
-        raise AssertionError(f"Row {index + 1} does not have a 'LOCAL_ID' column.")
+        raise ValueError(f"Row {index + 1} does not have a 'LOCAL_ID' column.")
     identifier_pk = extract_identifier_pk(row, index)
     dynamo_pk = fetch_pk_from_dynamodb(identifier_pk)
     if dynamo_pk != row["IMMS_ID"]:
-        raise AssertionError(
+        raise DynamoDBMismatchError(
             f"Row {index + 1}: Mismatch - DynamoDB PK '{dynamo_pk}' does not match ACK file IMMS_ID '{row['IMMS_ID']}'"
         )
 
@@ -163,7 +170,9 @@ def extract_identifier_pk(row, index):
         local_id, unique_id_uri = row["LOCAL_ID"].split("^")
         return f"{unique_id_uri}#{local_id}"
     except ValueError:
-        raise AssertionError(f"Row {index + 1}: Invalid LOCAL_ID format - {row['LOCAL_ID']}")
+        raise AssertionError(
+            f"Row {index + 1}: Invalid LOCAL_ID format - {row['LOCAL_ID']}"
+        )
 
 
 def fetch_pk_from_dynamodb(identifier_pk):
