@@ -92,12 +92,8 @@ def upload_file_to_s3(file_name, bucket, prefix):
 
 def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
     """Poll the ACK_BUCKET for an ack file that contains the input_file_name as a substring."""
-    filename_without_ext = (
-        input_file_name[:-4] if input_file_name.endswith(".csv") else input_file_name
-    )
-    search_pattern = (
-        f"{ack_prefix if ack_prefix else FORWARDEDFILE_PREFIX}{filename_without_ext}"
-    )
+    filename_without_ext = input_file_name[:-4] if input_file_name.endswith(".csv") else input_file_name
+    search_pattern = f"{ack_prefix if ack_prefix else FORWARDEDFILE_PREFIX}{filename_without_ext}"
     start_time = time.time()
     while time.time() - start_time < timeout:
         response = s3_client.list_objects_v2(
@@ -121,9 +117,7 @@ def get_file_content_from_s3(bucket, key):
     return content
 
 
-def check_ack_file_content(
-    content, response_code, operation_outcome, operation_requested
-):
+def check_ack_file_content(content, response_code, operation_outcome, operation_requested):
     """Parse the acknowledgment (ACK) CSV file and verify its content."""
     reader = csv.DictReader(content.splitlines(), delimiter="|")
     rows = list(reader)
@@ -138,9 +132,7 @@ def check_ack_file_content(
 def validate_header_response_code(row, index, expected_code):
     """Ensure HEADER_RESPONSE_CODE exists and matches expected response code."""
     if "HEADER_RESPONSE_CODE" not in row:
-        raise ValueError(
-            f"Row {index + 1} does not have a 'HEADER_RESPONSE_CODE' column."
-        )
+        raise ValueError(f"Row {index + 1} does not have a 'HEADER_RESPONSE_CODE' column.")
     if row["HEADER_RESPONSE_CODE"].strip() != expected_code:
         raise ValueError(
             f"Row {index + 1}: Expected RESPONSE '{expected_code}', but found '{row['HEADER_RESPONSE_CODE']}'"
@@ -167,7 +159,9 @@ def validate_ok_response(row, index, operation_requested):
         )
     if operation != operation_requested:
         raise DynamoDBMismatchError(
-            f"Row {index + 1}: Mismatch - DynamoDB Operation '{operation}' does not match operation requested '{operation_requested}'"
+            f"Row {index + 1}: Mismatch - 
+            DynamoDB Operation '{operation}' 
+            does not match operation requested '{operation_requested}'"
         )
 
 
@@ -177,9 +171,7 @@ def extract_identifier_pk(row, index):
         local_id, unique_id_uri = row["LOCAL_ID"].split("^")
         return f"{unique_id_uri}#{local_id}"
     except ValueError:
-        raise AssertionError(
-            f"Row {index + 1}: Invalid LOCAL_ID format - {row['LOCAL_ID']}"
-        )
+        raise AssertionError(f"Row {index + 1}: Invalid LOCAL_ID format - {row['LOCAL_ID']}")
 
 
 def fetch_pk_and_operation_from_dynamodb(identifier_pk):
@@ -209,9 +201,7 @@ def validate_row_count(source_file_name, ack_file_name):
     Raises:
         AssertionError: If the row counts do not match.
     """
-    source_file_row_count = fetch_row_count(
-        SOURCE_BUCKET, f"archive/{source_file_name}"
-    )
+    source_file_row_count = fetch_row_count(SOURCE_BUCKET, f"archive/{source_file_name}")
     ack_file_row_count = fetch_row_count(ACK_BUCKET, ack_file_name)
     assert (
         source_file_row_count == ack_file_row_count
