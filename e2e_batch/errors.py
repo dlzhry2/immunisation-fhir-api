@@ -3,4 +3,4 @@ class AckFileNotFoundError(Exception):
 
 
 class DynamoDBMismatchError(Exception):
-    """Raised when DynamoDB primary key doesn't match the ACK file IMMS_ID."""
+    """Raised when DynamoDB primary key doesn't match the ACK file IMMS_ID"""
