@@ -120,7 +120,7 @@ def get_file_content_from_s3(bucket, key):
     return content
 
 
-def check_ack_file_content(content, response_code, operation_outcome):
+def check_ack_file_content(content, response_code, operation_outcome, operation_requested):
     """Parse the acknowledgment (ACK) CSV file and verify its content."""
     reader = csv.DictReader(content.splitlines(), delimiter="|")
     rows = list(reader)
@@ -129,7 +129,7 @@ def check_ack_file_content(content, response_code, operation_outcome):
         if row["HEADER_RESPONSE_CODE"].strip() == "Fatal Error":
             validate_fatal_error(row, i, operation_outcome)
         if row["HEADER_RESPONSE_CODE"].strip() == "OK":
-            validate_ok_response(row, i)
+            validate_ok_response(row, i, operation_requested)
 
 
 def validate_header_response_code(row, index, expected_code):
@@ -152,15 +152,19 @@ def validate_fatal_error(row, index, expected_outcome):
         )
 
 
-def validate_ok_response(row, index):
+def validate_ok_response(row, index, operation_requested):
     """Validate LOCAL_ID format and verify PK match from DynamoDB for OK responses."""
     if "LOCAL_ID" not in row:
         raise ValueError(f"Row {index + 1} does not have a 'LOCAL_ID' column.")
     identifier_pk = extract_identifier_pk(row, index)
-    dynamo_pk = fetch_pk_from_dynamodb(identifier_pk)
+    dynamo_pk, operation = fetch_pk_and_operation_from_dynamodb(identifier_pk)
     if dynamo_pk != row["IMMS_ID"]:
         raise DynamoDBMismatchError(
             f"Row {index + 1}: Mismatch - DynamoDB PK '{dynamo_pk}' does not match ACK file IMMS_ID '{row['IMMS_ID']}'"
+        )
+    if operation != operation_requested:
+        raise DynamoDBMismatchError(
+            f"Row {index + 1}: Mismatch - DynamoDB Operation '{operation}' does not operation requested '{operation_requested}'"
         )
 
 
@@ -175,7 +179,7 @@ def extract_identifier_pk(row, index):
         )
 
 
-def fetch_pk_from_dynamodb(identifier_pk):
+def fetch_pk_and_operation_from_dynamodb(identifier_pk):
     """Fetch PK with IdentifierPK as the query key."""
     try:
         response = table.query(
@@ -184,7 +188,7 @@ def fetch_pk_from_dynamodb(identifier_pk):
             ExpressionAttributeValues={":identifier_pk": identifier_pk},
         )
         if "Items" in response and response["Items"]:
-            return response["Items"][0]["PK"]  # Return the first matched PK
+            return response["Items"][0]["PK"],response["Items"][0]["Operation"]  # Return the first matched PK
         else:
             return "NOT_FOUND"
 

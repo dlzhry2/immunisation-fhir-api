@@ -25,7 +25,7 @@ class TestE2EBatch(unittest.TestCase):
         os.remove(input_file)
         ack_key = wait_for_ack_file(None, input_file)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-        check_ack_file_content(ack_content, "OK", None)
+        check_ack_file_content(ack_content, "OK", None, "CREATE")
 
     def test_update_success(self):
         """Test UPDATE scenario."""
@@ -34,7 +34,7 @@ class TestE2EBatch(unittest.TestCase):
         os.remove(input_file)
         ack_key = wait_for_ack_file(None, input_file)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-        check_ack_file_content(ack_content, "OK", None)
+        check_ack_file_content(ack_content, "OK", None, "UPDATE")
 
     def test_delete_success(self):
         """Test DELETE scenario."""
@@ -43,7 +43,7 @@ class TestE2EBatch(unittest.TestCase):
         os.remove(input_file)
         ack_key = wait_for_ack_file(None, input_file)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-        check_ack_file_content(ack_content, "OK", None)
+        check_ack_file_content(ack_content, "OK", None, "DELETE")
 
     def test_pre_validation_error(self):
         """Test pre-validation error scenario."""
@@ -52,7 +52,7 @@ class TestE2EBatch(unittest.TestCase):
         os.remove(input_file)
         ack_key = wait_for_ack_file(None, input_file)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-        check_ack_file_content(ack_content, "Fatal Error", PRE_VALIDATION_ERROR)
+        check_ack_file_content(ack_content, "Fatal Error", PRE_VALIDATION_ERROR, None)
 
     def test_post_validation_error(self):
         """Test post-validation error scenario."""
@@ -61,7 +61,7 @@ class TestE2EBatch(unittest.TestCase):
         os.remove(input_file)
         ack_key = wait_for_ack_file(None, input_file)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
-        check_ack_file_content(ack_content, "Fatal Error", POST_VALIDATION_ERROR)
+        check_ack_file_content(ack_content, "Fatal Error", POST_VALIDATION_ERROR, None)
 
 
 if __name__ == "__main__":
