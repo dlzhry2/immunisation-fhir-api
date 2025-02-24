@@ -115,6 +115,16 @@ steps:
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
 
   - bash: |
+      # Install and set Python 3.10
+      pyenv install -s 3.10.8
+      pyenv global 3.10.8
+
+      # Verify the correct Python version
+      python --version
+    displayName: Set Python 3.10
+    
+
+  - bash: |
       set -e
       if ! [[ "$APIGEE_ENVIRONMENT" == "ref-prod-int-.*-*sandbox" ]]; then
         echo "Running E2E batch folder test cases"
