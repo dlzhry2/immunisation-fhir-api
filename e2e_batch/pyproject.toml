@@ -7,6 +7,6 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python                  = "~3.10"
+python                  = "~3.8"
 boto3                   = "~1.26.90"
 pandas                  = "^2.2.3"
