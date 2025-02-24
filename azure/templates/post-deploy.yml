@@ -131,7 +131,8 @@ steps:
           workspace=$APIGEE_ENVIRONMENT
         else
           workspace=pr-$pr_no
-      
+        
+        cd e2e_batch
         poetry lock --no-update
         poetry install
 
@@ -143,7 +144,7 @@ steps:
         echo "Skipping E2E batch folder test cases as the environment is ref-prod-int"
       fi
     displayName: Run full batch test suite
-    workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e_batch"
+    workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
    
 
   - bash: |
