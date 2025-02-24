@@ -116,7 +116,7 @@ steps:
 
   - bash: |
       set -e
-      if ! [[ "$APIGEE_ENVIRONMENT" == "ref-prod-int" ]]; then
+      if ! [[ "$APIGEE_ENVIRONMENT" == "ref-prod-int-.*-*sandbox" ]]; then
         echo "Running E2E batch folder test cases"
 
         export AWS_PROFILE="apim-dev"
@@ -132,7 +132,6 @@ steps:
           workspace="pr-$pr_no"
         fi
 
-        cd e2e_batch
         poetry install --no-root  # Install dependencies defined in pyproject.toml
 
         ENV="$workspace" poetry run python -m unittest -v -c
@@ -143,7 +142,7 @@ steps:
       fi
 
     displayName: Run full batch test suite
-    workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
+    workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e_batch"
    
 
   - bash: |
