@@ -159,9 +159,10 @@ def validate_ok_response(row, index, operation_requested):
         )
     if operation != operation_requested:
         raise DynamoDBMismatchError(
-            f"Row {index + 1}: Mismatch -
-            DynamoDB Operation '{operation}'
-            does not match operation requested '{operation_requested}'"
+            (
+                f"Row {index + 1}: Mismatch - DynamoDB Operation '{operation}' "
+                f"does not match operation requested '{operation_requested}'"
+            )
         )
 
 
