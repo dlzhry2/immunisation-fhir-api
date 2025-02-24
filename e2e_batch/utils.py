@@ -2,10 +2,11 @@ import time
 import csv
 import pandas as pd
 import uuid
+from io import StringIO
 from datetime import datetime, timezone
 from clients import logger, s3_client, table
 from errors import AckFileNotFoundError, DynamoDBMismatchError
-from constants import ACK_BUCKET, FORWARDEDFILE_PREFIX
+from constants import ACK_BUCKET, FORWARDEDFILE_PREFIX, SOURCE_BUCKET
 
 
 def generate_csv(file_name, fore_name, dose_amount, action_flag):
@@ -120,7 +121,9 @@ def get_file_content_from_s3(bucket, key):
     return content
 
 
-def check_ack_file_content(content, response_code, operation_outcome, operation_requested):
+def check_ack_file_content(
+    content, response_code, operation_outcome, operation_requested
+):
     """Parse the acknowledgment (ACK) CSV file and verify its content."""
     reader = csv.DictReader(content.splitlines(), delimiter="|")
     rows = list(reader)
@@ -153,7 +156,7 @@ def validate_fatal_error(row, index, expected_outcome):
 
 
 def validate_ok_response(row, index, operation_requested):
-    """Validate LOCAL_ID format and verify PK match from DynamoDB for OK responses."""
+    """Validate LOCAL_ID format and verify PK and operation match from DynamoDB for OK responses."""
     if "LOCAL_ID" not in row:
         raise ValueError(f"Row {index + 1} does not have a 'LOCAL_ID' column.")
     identifier_pk = extract_identifier_pk(row, index)
@@ -164,7 +167,7 @@ def validate_ok_response(row, index, operation_requested):
         )
     if operation != operation_requested:
         raise DynamoDBMismatchError(
-            f"Row {index + 1}: Mismatch - DynamoDB Operation '{operation}' does not operation requested '{operation_requested}'"
+            f"Row {index + 1}: Mismatch - DynamoDB Operation '{operation}' does not match operation requested '{operation_requested}'"
         )
 
 
@@ -180,7 +183,7 @@ def extract_identifier_pk(row, index):
 
 
 def fetch_pk_and_operation_from_dynamodb(identifier_pk):
-    """Fetch PK with IdentifierPK as the query key."""
+    """Fetch PK and operation with IdentifierPK as the query key."""
     try:
         response = table.query(
             IndexName="IdentifierGSI",
@@ -188,10 +191,36 @@ def fetch_pk_and_operation_from_dynamodb(identifier_pk):
             ExpressionAttributeValues={":identifier_pk": identifier_pk},
         )
         if "Items" in response and response["Items"]:
-            return response["Items"][0]["PK"],response["Items"][0]["Operation"]  # Return the first matched PK
+            return (
+                response["Items"][0]["PK"],
+                response["Items"][0]["Operation"],
+            )
         else:
             return "NOT_FOUND"
 
     except Exception as e:
         logger.error(f"Error fetching from DynamoDB: {e}")
         return "ERROR"
+
+
+def validate_row_count(source_file_name, ack_file_name):
+    """
+    Compare the row count of a file in one S3 bucket with a file in another S3 bucket.
+    Raises:
+        AssertionError: If the row counts do not match.
+    """
+    source_file_row_count = fetch_row_count(
+        SOURCE_BUCKET, f"archive/{source_file_name}"
+    )
+    ack_file_row_count = fetch_row_count(ACK_BUCKET, ack_file_name)
+    assert (
+        source_file_row_count == ack_file_row_count
+    ), f"Row count mismatch: Input ({source_file_row_count}) vs Ack ({ack_file_row_count})"
+
+
+def fetch_row_count(bucket, file_name):
+    "Fetch the row count for the file from the s3 bucket"
+
+    response_input = s3_client.get_object(Bucket=bucket, Key=file_name)
+    content_input = response_input["Body"].read().decode("utf-8")
+    return sum(1 for _ in csv.reader(StringIO(content_input)))
