@@ -126,18 +126,13 @@ steps:
 
   - bash: |
       set -e
-      if ! [[ "$APIGEE_ENVIRONMENT" == "ref-prod-int-.*-*sandbox" ]]; then
+      if ! [[ $APIGEE_ENVIRONMENT =~ ^ref-prod-int-.*[-]sandbox$ ]]; then
         echo "Running E2E batch folder test cases"
 
         export AWS_PROFILE="apim-dev"
         aws_account_no="$(aws sts get-caller-identity --query Account --output text)"
         echo "Using AWS Account: $aws_account_no"
         
-        echo "Current working directory: $(pwd)"
-        echo "List contents of the working directory:"
-        ls -la
-
-
         service_name="${FULLY_QUALIFIED_SERVICE_NAME}"
 
         pr_no=$(echo "$service_name" | { grep -oE '[0-9]+$' || true; })
