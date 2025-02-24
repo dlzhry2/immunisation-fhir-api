@@ -126,7 +126,7 @@ steps:
 
   - bash: |
       set -e 
-      if ! [[ $APIGEE_ENVIRONMENT =~ ^ref-prod-int-.*-*sandbox ]]; then
+      if ! [[ "$APIGEE_ENVIRONMENT" == "ref-prod-int" || "$APIGEE_ENVIRONMENT" == *"sandbox" ]]; then
         echo "Running E2E batch folder test cases"
     
         export AWS_PROFILE="apim-dev"
