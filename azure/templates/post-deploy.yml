@@ -77,7 +77,7 @@ steps:
     displayName: Apply Terraform
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
     retryCountOnTaskFailure: 2
-
+  
   - bash: |
       set -ex
       if ! [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
@@ -113,6 +113,38 @@ steps:
       fi
     displayName: Waiting for TF resources to be UP
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
+
+  - bash: |
+      set -e
+      if ! [[ $APIGEE_ENVIRONMENT == "ref-prod-int" ]]; then
+        echo "Running E2E batch folder test cases"
+
+        # Configure AWS credentials
+        export AWS_PROFILE=apim-dev
+        aws_account_no="$(aws sts get-caller-identity --query Account --output text)"
+        echo "Using AWS Account: $aws_account_no"
+        
+        service_name="${FULLY_QUALIFIED_SERVICE_NAME}"
+
+        pr_no=$(echo $service_name | { grep -oE '[0-9]+$' || true; })
+        if [ -z $pr_no ]; then
+          workspace=$APIGEE_ENVIRONMENT
+        else
+          workspace=pr-$pr_no
+      
+        poetry lock --no-update
+        poetry install
+
+        
+        ENV=$workspace poetry run python -m unittest -v -c
+
+        echo "E2E batch folder test cases executed successfully"
+      else
+        echo "Skipping E2E batch folder test cases as the environment is ref-prod-int"
+      fi
+    displayName: Run full batch test suite
+    workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e_batch"
+   
 
   - bash: |
       set -e
