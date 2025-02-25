@@ -203,9 +203,10 @@ steps:
       elif [[ $APIGEE_ENVIRONMENT == "prod" ]]; then
         echo "Proxy test completed successfully as part of terraform resource up status check"
 
-      else
-        echo "running: $test_cmd -v -c"
-        $test_cmd -v -c
+      else  
+        echo "running: $test_cmd -v -c with 20s timeout per test"
+        # Apply 20s timeout for each test case using xargs
+        find . -name "*_test.py" | xargs -n 1 -I {} timeout 20s $test_cmd -v -c {}
       fi
 
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
