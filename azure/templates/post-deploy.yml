@@ -166,18 +166,27 @@ steps:
         echo "Proxy test completed successfully as part of terraform resource up status check"
 
       else
-        echo "running tests with 20 sec delay"
+        # Find all test files
         for test_file in $(find . -name "test_*.py"); do
-          echo "Running tests in file: $test_file"
-          test_cases=$(python extract_test_cases.py "$test_file")
-          
-          for test_case in $test_cases; do
-              echo "Running test: $test_case"
-              $test_cmd -v -c $test_case || echo "Test $test_case failed"
-              echo "Waiting for 20 seconds before the next test..."
-              sleep 20
-          done
-      done
+            echo "Extracting test cases from: $test_file"
+            
+            # Extract test cases using the Python script
+            test_cases=$(python extract_test_cases.py "$test_file")
+
+            # Check if extraction was successful
+            if [ $? -ne 0 ] || [ -z "$test_cases" ]; then
+                echo "Skipping $test_file due to extraction error."
+                continue
+            fi
+
+            # Run each test case with a 20-second delay
+            while IFS= read -r test_case; do
+                echo "Running test: $test_case"
+                $test_cmd -v -c "$test_case" || echo "Test $test_case failed"
+                echo "Waiting for 20 seconds before the next test..."
+                sleep 20
+            done <<< "$test_cases"
+        done
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite
