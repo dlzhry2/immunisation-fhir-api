@@ -126,12 +126,11 @@ steps:
 
   - bash: |
       set -e 
-      if ! [[ "$APIGEE_ENVIRONMENT" == "ref-prod-int" || "$APIGEE_ENVIRONMENT" == *"sandbox" ]]; then
+      if ! [[ "$APIGEE_ENVIRONMENT" == "ref" || "$APIGEE_ENVIRONMENT" == "prod" || "$APIGEE_ENVIRONMENT" == "int" || "$APIGEE_ENVIRONMENT" == *"sandbox" ]]; then
         echo "Running E2E batch folder test cases"
     
         export AWS_PROFILE="apim-dev"
         aws_account_no="$(aws sts get-caller-identity --query Account --output text)"
-        echo "Using AWS Account: $aws_account_no"
         
         service_name="${FULLY_QUALIFIED_SERVICE_NAME}"
 
