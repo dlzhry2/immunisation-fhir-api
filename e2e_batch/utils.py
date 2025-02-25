@@ -9,7 +9,7 @@ from errors import AckFileNotFoundError, DynamoDBMismatchError
 from constants import ACK_BUCKET, FORWARDEDFILE_PREFIX, SOURCE_BUCKET, DUPLICATE, create_row
 
 
-def generate_csv(file_name, fore_name, dose_amount, action_flag, same_id=False):
+def generate_csv(fore_name, dose_amount, action_flag, same_id=False):
     """
     Generate a CSV file with 2 or 3 rows depending on the action_flag.
 
@@ -61,11 +61,7 @@ def generate_csv(file_name, fore_name, dose_amount, action_flag, same_id=False):
 
     df = pd.DataFrame(data)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")[:-3]
-    file_name = (
-        f"COVID19_Vaccinations_v4_YGM41_{timestamp}.csv"
-        if file_name
-        else f"COVID19_Vaccinations_v5_YGM41_{timestamp}.csv"
-    )
+    file_name = f"COVID19_Vaccinations_v5_YGM41_{timestamp}.csv"
     df.to_csv(file_name, index=False, sep="|", quoting=csv.QUOTE_MINIMAL)
     return file_name
 
@@ -78,14 +74,14 @@ def upload_file_to_s3(file_name, bucket, prefix):
     return key
 
 
-def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
+def wait_for_ack_file(input_file_name, timeout=120):
     """Poll the ACK_BUCKET for an ack file that contains the input_file_name as a substring."""
     filename_without_ext = input_file_name[:-4] if input_file_name.endswith(".csv") else input_file_name
-    search_pattern = f"{ack_prefix if ack_prefix else FORWARDEDFILE_PREFIX}{filename_without_ext}"
+    search_pattern = f"{FORWARDEDFILE_PREFIX}{filename_without_ext}"
     start_time = time.time()
     while time.time() - start_time < timeout:
         response = s3_client.list_objects_v2(
-            Bucket=ACK_BUCKET, Prefix=ack_prefix if ack_prefix else FORWARDEDFILE_PREFIX
+            Bucket=ACK_BUCKET, Prefix=FORWARDEDFILE_PREFIX
         )
         if "Contents" in response:
             for obj in response["Contents"]:
