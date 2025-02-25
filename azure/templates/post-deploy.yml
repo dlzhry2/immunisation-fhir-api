@@ -8,22 +8,22 @@ parameters:
 
 steps:
   - ${{ if parameters.is_ptl }}:
-    - template: "azure/components/aws-assume-role.yml@common"
-      parameters:
-        role: "auto-ops"
-        profile: "apm_ptl"
+      - template: "azure/components/aws-assume-role.yml@common"
+        parameters:
+          role: "auto-ops"
+          profile: "apm_ptl"
 
-    - template: "azure/components/get-aws-secrets-and-ssm-params.yml@common"
-      parameters:
-        secret_file_ids:
-          - ptl/app-credentials/jwt_testing/non-prod/JWT_TESTING_PRIVATE_KEY
-        secret_ids:
-          - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INTROSPECTION_CLIENT_ID
-          - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INTROSPECTION_CLIENT_SECRET
-          - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INTROSPECTION_CLIENT_ID_INT
-          - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INTROSPECTION_CLIENT_SECRET_INT
-          - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INT_CLIENT_ID
-          - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INT_CLIENT_SECRET
+      - template: "azure/components/get-aws-secrets-and-ssm-params.yml@common"
+        parameters:
+          secret_file_ids:
+            - ptl/app-credentials/jwt_testing/non-prod/JWT_TESTING_PRIVATE_KEY
+          secret_ids:
+            - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INTROSPECTION_CLIENT_ID
+            - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INTROSPECTION_CLIENT_SECRET
+            - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INTROSPECTION_CLIENT_ID_INT
+            - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INTROSPECTION_CLIENT_SECRET_INT
+            - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INT_CLIENT_ID
+            - ptl/app-credentials/immunisation-fhir-api-testing-app/non-prod/INT_CLIENT_SECRET
 
   - bash: |
       make install-python
@@ -58,7 +58,7 @@ steps:
         echo Apigee environment: $APIGEE_ENVIRONMENT
         echo pr_no: $pr_no
 
-          cd terraform
+        cd terraform
 
         make init
         make apply aws_account_no=${aws_account_no} environment=$workspace
@@ -68,6 +68,7 @@ steps:
         DYNAMODB_TABLE_NAME=$(make -s output name=dynamodb_table_name)
         AWS_SQS_QUEUE_NAME=$(make -s output name=aws_sqs_queue_name)
         AWS_SNS_TOPIC_NAME=$(make -s output name=aws_sns_topic_name)
+
         echo "##vso[task.setvariable variable=DYNAMODB_TABLE_NAME]$DYNAMODB_TABLE_NAME"
         echo "##vso[task.setvariable variable=AWS_DOMAIN_NAME]$AWS_DOMAIN_NAME"
         echo "##vso[task.setvariable variable=IMMS_DELTA_TABLE_NAME]$IMMS_DELTA_TABLE_NAME"
@@ -77,7 +78,7 @@ steps:
     displayName: Apply Terraform
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
     retryCountOnTaskFailure: 2
-  
+
   - bash: |
       set -ex
       if ! [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
@@ -96,16 +97,18 @@ steps:
           response=$(curl -H "apikey: $(status-endpoint-api-key)" -s "$endpoint")
           response_code=$(jq -r '.checks.healthcheck.responseCode' <<< "$response")
           response_body=$(jq -r '.checks.healthcheck.outcome' <<< "$response")
+
           if [ "$response_code" -eq 200 ] && [ "$response_body" == "OK" ]; then
               echo "Status test successful"
               break
           else
               echo "Waiting for $endpoint to return a 200 response with 'OK' body..."
-              ((counter=counter+1)) # Increment counter by 1
+              ((counter=counter+1))
               echo "Attempt $counter"
               sleep 30
           fi
         done
+
         if [ $counter -eq 11 ]; then
             echo "Status test failed: Maximum number of attempts reached"
             exit 1
@@ -115,15 +118,12 @@ steps:
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
 
   - bash: |
-      # Install and set Python 3.10
       pyenv install -s 3.10.8
       pyenv global 3.10.8
 
-      # Verify the correct Python version
       python --version
     displayName: Set Python 3.10
     
-
   # - bash: |
   #     set -e 
   #     if ! [[ "$APIGEE_ENVIRONMENT" == "ref" || "$APIGEE_ENVIRONMENT" == "prod" || "$APIGEE_ENVIRONMENT" == "int" || "$APIGEE_ENVIRONMENT" == *"sandbox" ]]; then
@@ -147,94 +147,90 @@ steps:
 
   #       echo "E2E batch folder test cases executed successfully"
   #     else
-  #       echo "Skipping E2E batch folder test cases as the environment is ref-prod-int"
+  #       echo "Skipping E2E batch folder test cases as the environment is ref-prod-int-sandbox"
   #     fi
 
   #   displayName: Run full batch test suite
-  #   workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e_batch"
-   
+  #   workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e_batch
 
-  - bash: |
-      set -e
-      export RELEASE_RELEASEID=$(Build.BuildId)
-      export SOURCE_COMMIT_ID=$(Build.SourceVersion)
-      export APIGEE_ENVIRONMENT="$(ENVIRONMENT)"
-      export APIGEE_USERNAME=apm-testing-internal-dev@nhs.net
-      export SERVICE_BASE_PATH="$(SERVICE_BASE_PATH)"
-      export APIGEE_ACCESS_TOKEN="$(secret.AccessToken)"
-      export PROXY_NAME="$(FULLY_QUALIFIED_SERVICE_NAME)"
-      export STATUS_API_KEY="$(status-endpoint-api-key)"
-      export AWS_DOMAIN_NAME="$(AWS_DOMAIN_NAME)"
-      export DYNAMODB_TABLE_NAME="$(DYNAMODB_TABLE_NAME)"
-      export IMMS_DELTA_TABLE_NAME="$(IMMS_DELTA_TABLE_NAME)"
-      export AWS_SQS_QUEUE_NAME="$(AWS_SQS_QUEUE_NAME)"
-      export AWS_SNS_TOPIC_NAME="$(AWS_SNS_TOPIC_NAME)"
-      export APIGEE_APP_ID=973b20ff-6e57-4248-b94f-200a18a03e37
-      echo "api key- $STATUS_API_KEY"
+    - bash: |
+        set -e
 
-      # Exporting the same profile with which Terraform got deployed
-      export AWS_PROFILE=apim-dev
-      aws_account_no="$(aws sts get-caller-identity --query Account --output text)"
-      echo aws_account_no: $aws_account_no
+        export RELEASE_RELEASEID=$(Build.BuildId)
+        export SOURCE_COMMIT_ID=$(Build.SourceVersion)
+        export APIGEE_ENVIRONMENT="$(ENVIRONMENT)"
+        export APIGEE_USERNAME=apm-testing-internal-dev@nhs.net
+        export SERVICE_BASE_PATH="$(SERVICE_BASE_PATH)"
+        export APIGEE_ACCESS_TOKEN="$(secret.AccessToken)"
+        export PROXY_NAME="$(FULLY_QUALIFIED_SERVICE_NAME)"
+        export STATUS_API_KEY="$(status-endpoint-api-key)"
+        export AWS_DOMAIN_NAME="$(AWS_DOMAIN_NAME)"
+        export DYNAMODB_TABLE_NAME="$(DYNAMODB_TABLE_NAME)"
+        export IMMS_DELTA_TABLE_NAME="$(IMMS_DELTA_TABLE_NAME)"
+        export AWS_SQS_QUEUE_NAME="$(AWS_SQS_QUEUE_NAME)"
+        export AWS_SNS_TOPIC_NAME="$(AWS_SNS_TOPIC_NAME)"
+        export APIGEE_APP_ID=973b20ff-6e57-4248-b94f-200a18a03e37
 
-      poetry lock --no-update
-      poetry install
+        echo "api key- $STATUS_API_KEY"
 
-      test_cmd="poetry run python -m unittest"
+        export AWS_PROFILE=apim-dev
+        aws_account_no="$(aws sts get-caller-identity --query Account --output text)"
+        echo aws_account_no: $aws_account_no
 
-      # Run test_deployment before doing anything. This will wait until deployment is ready
-      $test_cmd -c -v -k test_deployment
+        poetry lock --no-update
+        poetry install
 
-      if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
-        echo "Sandbox env tests"
-        echo "running: $test_cmd -c -v -k test_proxy.TestProxyHealthcheck -k test_deployment"
-        $test_cmd -c -v -k test_proxy.TestProxyHealthcheck -k test_deployment
+        test_cmd="poetry run python -m unittest"
 
-      elif [[ $APIGEE_ENVIRONMENT == "ref" ]]; then
-        echo "running: $test_cmd -v -c test_deployment.py test_proxy.py"
-        $test_cmd -v -c test_deployment.py test_proxy.py
+        $test_cmd -c -v -k test_deployment
 
-      elif [[ $APIGEE_ENVIRONMENT == "int" ]]; then
-        export DEFAULT_CLIENT_ID="$(INT_CLIENT_ID)"
-        export DEFAULT_CLIENT_SECRET="$(INT_CLIENT_SECRET)"
-        echo "running: $test_cmd -v -c test_deployment.py test_proxy.py"
-        $test_cmd -v -c test_deployment.py test_proxy.py
+        if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
+            $test_cmd -c -v -k test_proxy.TestProxyHealthcheck -k test_deployment
 
-      elif [[ $APIGEE_ENVIRONMENT == "prod" ]]; then
-        echo "Proxy test completed successfully as part of terraform resource up status check"
+        elif [[ $APIGEE_ENVIRONMENT == "ref" ]]; then
+            $test_cmd -v -c test_deployment.py test_proxy.py
 
-      else
-        echo "running tests with 20 sec delay"
-        
-        # Find all test files and iterate over them one by one.
-        for test_file in $(find . -name "test_*.py"); do
-          echo "Running tests in file: $test_file"
-          
-          # Get all test case names within the file
-          test_cases=$(python -c "
-          import unittest
-          loader = unittest.TestLoader()
-          suite = loader.discover('.', pattern='$test_file')
-          tests = []
-          def get_tests(suite):
-              for test in suite:
-                  if isinstance(test, unittest.TestSuite):
-                      get_tests(test)
-                  else:
-                      tests.append(str(test))
+        elif [[ $APIGEE_ENVIRONMENT == "int" ]]; then
+            export DEFAULT_CLIENT_ID="$(INT_CLIENT_ID)"
+            export DEFAULT_CLIENT_SECRET="$(INT_CLIENT_SECRET)"
+            $test_cmd -v -c test_deployment.py test_proxy.py
+
+        elif [[ $APIGEE_ENVIRONMENT == "prod" ]]; then
+            echo "Proxy test completed successfully as part of terraform resource up status check"
+
+        else
+            for test_file in $(find . -name "test_*.py"); do
+                test_cases=$(python - <<END
+      import unittest
+      import sys
+
+      loader = unittest.TestLoader()
+      suite = loader.discover('.', pattern="$test_file")
+      tests = []
+
+      def get_tests(suite):
+          for test in suite:
+              if isinstance(test, unittest.TestSuite):
+                  get_tests(test)
+              else:
+                  tests.append(str(test))
+
+      try:
           get_tests(suite)
           print('\n'.join(tests))
-          ")
-          
-          # Run each test case individually with a 20-second delay
-          for test_case in $test_cases; do
-            echo "Running test: $test_case"
-            $test_cmd -v -c $test_case || echo "Test $test_case failed"
-            echo "Waiting for 20 seconds before the next test..."
-            sleep 20
-          done
-        done
-      fi
+      except Exception as e:
+          print(f"Error while loading test cases: {e}", file=sys.stderr)
+          sys.exit(1)
+      END
+                )
+
+                for test_case in $test_cases; do
+                    echo "Running test: $test_case"
+                    $test_cmd -v -c $test_case || echo "Test $test_case failed"
+                    sleep 20
+                done
+            done
+        fi
 
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite
