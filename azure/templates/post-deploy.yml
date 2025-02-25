@@ -205,11 +205,34 @@ steps:
 
       else
         echo "running tests with 20 sec delay"
-        for test_case in $($test_cmd discover -s . -p "*.py" -v | grep "test_" | awk '{print $1}'); do
-          echo "Running test: $test_case"
-          $test_cmd -v -c $test_case || echo "Test $test_case failed"
-          echo "Waiting for 20 seconds before next test..."
-          sleep 20
+        
+        # Find all test files and iterate over them one by one
+        for test_file in $(find . -name "test_*.py"); do
+          echo "Running tests in file: $test_file"
+          
+          # Get all test case names within the file
+          test_cases=$(python -c "
+          import unittest
+          loader = unittest.TestLoader()
+          suite = loader.discover('.', pattern='$test_file')
+          tests = []
+          def get_tests(suite):
+              for test in suite:
+                  if isinstance(test, unittest.TestSuite):
+                      get_tests(test)
+                  else:
+                      tests.append(str(test))
+          get_tests(suite)
+          print('\n'.join(tests))
+          ")
+          
+          # Run each test case individually with a 20-second delay
+          for test_case in $test_cases; do
+            echo "Running test: $test_case"
+            $test_cmd -v -c $test_case || echo "Test $test_case failed"
+            echo "Waiting for 20 seconds before the next test..."
+            sleep 20
+          done
         done
       fi
 
