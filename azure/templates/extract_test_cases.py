@@ -3,6 +3,7 @@ import unittest
 import sys
 import os
 
+
 def get_tests(suite):
     """Recursively fetch all test cases from the test suite."""
     tests = []
@@ -12,6 +13,7 @@ def get_tests(suite):
         else:
             tests.append(str(test))
     return tests
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
