@@ -176,7 +176,7 @@ steps:
             $test_cmd -v -c "$test_file" || echo "Test in $test_file failed"
             
             echo "Waiting for 20 seconds before the next test..."
-            sleep 20
+            sleep 80
       done
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
