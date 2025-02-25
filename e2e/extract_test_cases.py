@@ -1,3 +1,4 @@
+# extract_test_cases.py
 import unittest
 import sys
 import os
@@ -6,12 +7,11 @@ import os
 def get_tests(suite):
     """Recursively fetch all test cases from the test suite."""
     tests = []
-    for unit_test in suite:
-        if isinstance(unit_test, unittest.TestSuite):
-            tests.extend(get_tests(unit_test))
+    for test in suite:
+        if isinstance(test, unittest.TestSuite):
+            tests.extend(get_tests(test))
         else:
-            test_case = f"{unit_test.__class__.__module__}.{unit_test.__class__.__name__}.{unit_test._testMethodName}"
-            tests.append(test_case)
+            tests.append(str(test))
     return tests
 
 
@@ -25,19 +25,13 @@ if __name__ == "__main__":
         print(f"Error: File '{test_file}' does not exist.")
         sys.exit(1)
 
-    test_module = os.path.splitext(os.path.basename(test_file))[0]
+    # Load and discover tests from the specified file
+    loader = unittest.TestLoader()
+    suite = loader.discover('.', pattern=os.path.basename(test_file))
 
     try:
-        loader = unittest.TestLoader()
-        suite = loader.loadTestsFromName(test_module)
         test_cases = get_tests(suite)
-
-        if test_cases:
-            print("\n".join(test_cases))
-        else:
-            print(f"No test cases found in '{test_file}'", file=sys.stderr)
-            sys.exit(1)
-
+        print('\n'.join(test_cases))
     except Exception as e:
-        print(f"Error while loading test cases from '{test_file}': {e}", file=sys.stderr)
+        print(f"Error while loading test cases: {e}", file=sys.stderr)
         sys.exit(1)
