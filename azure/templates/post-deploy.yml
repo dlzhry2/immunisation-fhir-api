@@ -206,7 +206,7 @@ steps:
       else
         echo "running tests with 20 sec delay"
         
-        # Find all test files and iterate over them one by one
+        # Find all test files and iterate over them one by one.
         for test_file in $(find . -name "test_*.py"); do
           echo "Running tests in file: $test_file"
           
