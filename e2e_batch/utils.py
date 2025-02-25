@@ -70,7 +70,6 @@ def generate_csv(file_name, fore_name, dose_amount, action_flag, same_id=False):
     return file_name
 
 
-
 def upload_file_to_s3(file_name, bucket, prefix):
     """Upload the given file to the specified bucket under the provided prefix."""
     key = f"{prefix}{file_name}"

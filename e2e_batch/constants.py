@@ -12,8 +12,10 @@ PRE_VALIDATION_ERROR = "Validation errors: doseQuantity.value must be a number"
 POST_VALIDATION_ERROR = "Validation errors: contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
 DUPLICATE = "The provided identifier:"
 
+
 def create_row(unique_id, fore_name, dose_amount, action_flag):
     """Helper function to create a single row with the specified UNIQUE_ID and ACTION_FLAG."""
+
     return {
         "NHS_NUMBER": "9732928395",
         "PERSON_FORENAME": fore_name,
