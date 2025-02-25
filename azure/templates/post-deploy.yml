@@ -169,39 +169,15 @@ steps:
         echo "running tests with 20 sec delay"
         for test_file in $(find . -name "test_*.py"); do
           echo "Running tests in file: $test_file"
-          test_cases=$(python - <<END
-import unittest
-import sys
-loader = unittest.TestLoader()
-suite = loader.discover('.', pattern="$test_file")
-tests = []
-def get_tests(suite):
-    for test in suite:
-        if isinstance(test, unittest.TestSuite):
-            get_tests(test)
-        else:
-            tests.append(str(test))
-try:
-    get_tests(suite)
-    print('\n'.join(tests))
-except Exception as e:
-    print(f"Error while loading test cases: {e}", file=sys.stderr)
-    sys.exit(1)
-END
-          )
-
-          if [ $? -ne 0 ]; then
-            echo "Error while extracting test cases for file: $test_file"
-            continue
-          fi
-
+          test_cases=$(python extract_test_cases.py "$test_file")
+          
           for test_case in $test_cases; do
-            echo "Running test: $test_case"
-            $test_cmd -v -c $test_case || echo "Test $test_case failed"
-            echo "Waiting for 20 seconds before the next test..."
-            sleep 20
+              echo "Running test: $test_case"
+              $test_cmd -v -c $test_case || echo "Test $test_case failed"
+              echo "Waiting for 20 seconds before the next test..."
+              sleep 20
           done
-        done
+      done
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite
