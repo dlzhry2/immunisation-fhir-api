@@ -174,13 +174,8 @@ steps:
         for test_file in $(find . -name "test_*.py"); do
             echo "Running tests in file: $test_file"
             poetry run python $clear_dynamodb_script
-            echo "Waiting for 40 seconds to execute test cases..."
-            sleep 40
             # Run the whole test file using unittest
-            $test_cmd -v -c "$test_file" || echo "Test in $test_file failed"
-            
-            echo "Waiting for 80 seconds before the next test..."
-            sleep 80
+            $test_cmd -v -c "$test_file" || echo "Test in $test_file failed"        
             poetry run python $clear_dynamodb_script
       done
       fi

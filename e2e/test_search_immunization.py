@@ -1,6 +1,7 @@
 import datetime
 import pprint
 import uuid
+import time
 from typing import NamedTuple, Literal, Optional, List
 from decimal import Decimal
 
@@ -42,18 +43,22 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 self.assertEqual(response.status_code, 200, response.text)
                 body = response.json()
                 self.assertEqual(body["resourceType"], "Bundle")
+                time.sleep(20)
 
                 resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
                 self.assertTrue(covid_19_p1_id in resource_ids)
                 self.assertTrue(covid_19_p2_id not in resource_ids)
+                time.sleep(50)
 
                 self.assertEqual(response_rsv.status_code, 200, response_rsv.text)
                 body_rsv = response_rsv.json()
                 self.assertEqual(body_rsv["resourceType"], "Bundle")
+                time.sleep(50)
 
                 resource_ids = [entity["resource"]["id"] for entity in body_rsv["entry"]]
                 self.assertTrue(rsv_p1_id in resource_ids)
                 self.assertTrue(rsv_p2_id not in resource_ids)
+                time.sleep(50)
 
     def test_search_patient_multiple_diseases(self):
         # Given patient has two vaccines
@@ -71,6 +76,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         resource_ids = [entity["resource"]["id"] for entity in body["entry"]]
         self.assertIn(covid_19_id, resource_ids)
         self.assertNotIn(flu_id, resource_ids)
+        time.sleep(50)
 
     def test_search_backwards_compatible(self):
         """Test that SEARCH 200 response body is backwards compatible with Immunisation History FHIR API"""
@@ -136,6 +142,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 )
                 self.assertEqual(response_imm["search"], {"mode": "match"})
                 self.assertEqual(response_imm["resource"], expected_imms_resource)
+                time.sleep(50)
 
     def test_search_ignore_deleted(self):
         # Given patient has three vaccines and the last one is deleted
@@ -157,6 +164,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         self.assertTrue(mmr1_id in resource_ids)
         self.assertTrue(mmr2_id in resource_ids)
         self.assertTrue(deleted_mmr["id"] not in resource_ids)
+        time.sleep(50)
 
     def test_search_immunization_parameter_smoke_tests(self):
         time_1 = "2024-01-30T13:28:17.271+00:00"
@@ -311,6 +319,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 assert len(created_and_returned_ids) == len(search.expected_indexes)
                 for expected_index in search.expected_indexes:
                     assert created_resource_ids[expected_index] in result_ids
+        time.sleep(50)            
 
     def test_search_immunization_accepts_include_and_provides_patient(self):
         """it should accept the _include parameter of "Immunization:patient" and return the patient."""
@@ -367,6 +376,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 entry["fullUrl"] = "MOCK VALUE"
 
         self.assertEqual(result, result_without_include)
+        time.sleep(50)
 
     def test_search_reject_tbc(self):
         # Given patient has a vaccine with no NHS number
@@ -379,3 +389,4 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
         # Then
         self.assert_operation_outcome(response, 400)
+        time.sleep(50)
