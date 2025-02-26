@@ -44,6 +44,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         """it should get Immunization if app has immunization:read permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
         self.make_app({Permission.READ})
+        time.sleep(20)
         # When
         response = self.my_imms_api.get_immunization_by_id(imms_id)
         # Then
@@ -54,6 +55,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         """it should not get Immunization if app doesn't have immunization:read permission"""
         perms = app_full_access(exclude={Permission.READ})
         self.make_app(perms)
+        time.sleep(20)
         # When
         response = self.my_imms_api.get_immunization_by_id("id-doesn't-matter")
         # Then
@@ -63,6 +65,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
     def test_create_imms_authorised(self):
         """it should create Immunization if app has immunization:create permission"""
         self.make_app({Permission.CREATE})
+        time.sleep(20)
         # When
         imms = generate_imms_resource()
         response = self.my_imms_api.create_immunization(imms)
@@ -73,6 +76,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
     def test_create_imms_unauthorised_vaxx(self):
         """it should not create Immunization if app does not have the correct vaccine permission"""
         self.make_app({Permission.CREATE}, {"flu:create"})
+        time.sleep(20)
         # When
         imms = generate_imms_resource()
         response = self.my_imms_api.create_immunization(imms)
@@ -84,6 +88,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         """it should not create Immunization if app doesn't immunization:create permission"""
         perms = app_full_access(exclude={Permission.CREATE})
         self.make_app(perms)
+        time.sleep(20)
         # When
         imms = generate_imms_resource()
         result = self.my_imms_api.create_immunization(imms)
@@ -98,6 +103,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         imms["id"] = imms_id
 
         self.make_app({Permission.CREATE, Permission.UPDATE})
+        time.sleep(20)
         # When
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
@@ -108,6 +114,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         """it should not update Immunization if app doesn't immunization:update permission"""
         perms = app_full_access(exclude={Permission.UPDATE})
         self.make_app(perms)
+        time.sleep(20)
         # When
         response = self.my_imms_api.update_immunization("doesn't-matter", {})
         # Then
@@ -122,6 +129,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
 
         perms = app_full_access(exclude={Permission.CREATE})
         self.make_app(perms)
+        time.sleep(20)
         # When
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
@@ -132,6 +140,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         """it should delete Immunization if app has immunization:delete permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
         self.make_app({Permission.DELETE})
+        time.sleep(20)
         # When
         response = self.my_imms_api.delete_immunization(imms_id)
         # Then
@@ -142,6 +151,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         """it should not delete Immunization if app doesn't have immunization:delete permission"""
         perms = app_full_access(exclude={Permission.DELETE})
         self.make_app(perms)
+        time.sleep(20)
         # When
         response = self.my_imms_api.delete_immunization("doesn't-matter")
         # Then
@@ -154,6 +164,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         _ = self.create_immunization_resource(self.default_imms_api, mmr)
 
         self.make_app({Permission.SEARCH})
+        time.sleep(20)
         # When
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.mmr)
         # Then
@@ -164,6 +175,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         """it should not search Immunization if app doesn't immunization:search permission"""
         perms = app_full_access(exclude={Permission.SEARCH})
         self.make_app(perms)
+        time.sleep(20)
         # When
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.mmr)
         # Then
@@ -176,6 +188,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         _ = self.create_immunization_resource(self.default_imms_api, mmr)
 
         self.make_app({Permission.SEARCH}, {"flu:read"})
+        time.sleep(20)
         # When
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.mmr)
         # Then
@@ -209,6 +222,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         """it should get Immunization if app has immunization:read permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
         self.make_app({Permission.READ})
+        time.sleep(20)
         # When
         response = self.my_imms_api.get_immunization_by_id(imms_id)
         # Then
@@ -219,6 +233,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         """it should not get Immunization if app doesn't have immunization:read permission"""
         perms = app_full_access(exclude={Permission.READ})
         self.make_app(perms)
+        time.sleep(20)
         # When
         response = self.my_imms_api.get_immunization_by_id("id-doesn't-matter")
         # Then
@@ -229,6 +244,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         """it should not get Immunization if app does not have the correct vaccine permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
         self.make_app({Permission.READ}, {"flu:create"})
+        time.sleep(20)
         # When
         response = self.my_imms_api.get_immunization_by_id(imms_id)
         # Then
@@ -238,6 +254,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
     def test_create_imms_authorised(self):
         """it should create Immunization if app has immunization:create permission"""
         self.make_app({Permission.CREATE})
+        time.sleep(20)
         # When
         imms = generate_imms_resource()
         response = self.my_imms_api.create_immunization(imms)
@@ -249,6 +266,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         """it should not create Immunization if app doesn't immunization:create permission"""
         perms = app_full_access(exclude={Permission.CREATE})
         self.make_app(perms)
+        time.sleep(20)
         # When
         imms = generate_imms_resource()
         result = self.my_imms_api.create_immunization(imms)
@@ -259,6 +277,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
     def test_create_imms_unauthorised_vaxx(self):
         """it should not create Immunization if app does not have the correct vaccine permission"""
         self.make_app({Permission.CREATE}, {"flu:create"})
+        time.sleep(20)
         # When
         imms = generate_imms_resource()
         response = self.my_imms_api.create_immunization(imms)
@@ -273,6 +292,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         imms["id"] = imms_id
 
         self.make_app({Permission.CREATE, Permission.UPDATE})
+        time.sleep(20)
         # When
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
@@ -283,6 +303,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         """it should not update Immunization if app doesn't have the immunization:update permission"""
         perms = app_full_access(exclude={Permission.UPDATE})
         self.make_app(perms)
+        time.sleep(20)
         # When
         response = self.my_imms_api.update_immunization("doesn't-matter", {})
         # Then
@@ -296,6 +317,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         imms["id"] = imms_id
 
         self.make_app({Permission.CREATE, Permission.UPDATE}, {"flu:create"})
+        time.sleep(20)
         # When
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
@@ -306,6 +328,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         """it should delete Immunization if app has immunization:delete permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
         self.make_app({Permission.DELETE})
+        time.sleep(20)
         # When
         response = self.my_imms_api.delete_immunization(imms_id)
         # Then
@@ -316,6 +339,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         """it should not delete Immunization if app doesn't have immunization:delete permission"""
         perms = app_full_access(exclude={Permission.DELETE})
         self.make_app(perms)
+        time.sleep(20)
         # When
         response = self.my_imms_api.delete_immunization("doesn't-matter")
         # Then
@@ -326,6 +350,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         """it should not delete Immunization if app does not have the correct vaccine permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
         self.make_app({Permission.READ}, {"flu:create"})
+        time.sleep(20)
         # When
         response = self.my_imms_api.delete_immunization(imms_id)
         # Then
@@ -338,6 +363,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         _ = self.create_immunization_resource(self.default_imms_api, mmr)
 
         self.make_app({Permission.SEARCH})
+        time.sleep(20)
         # When
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.mmr)
         # Then
@@ -348,6 +374,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         """it should not search Immunization if app doesn't have the immunization:search permission"""
         perms = app_full_access(exclude={Permission.SEARCH})
         self.make_app(perms)
+        time.sleep(20)
         # When
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.mmr)
         # Then
