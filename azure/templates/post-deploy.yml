@@ -122,37 +122,6 @@ steps:
       pyenv global 3.10.8
       python --version
     displayName: Set Python 3.10
-  
-  - bash: |
-      set -e
-      if ! [[ "$APIGEE_ENVIRONMENT" == "ref" || "$APIGEE_ENVIRONMENT" == "prod" || "$APIGEE_ENVIRONMENT" == "int" || "$APIGEE_ENVIRONMENT" == *"sandbox" ]]; then
-        echo "Running E2E batch folder test cases"
- 
-        export AWS_PROFILE="apim-dev"
-        aws_account_no="$(aws sts get-caller-identity --query Account --output text)"
-        echo "Using AWS Account: $aws_account_no"
-        
-        service_name="${FULLY_QUALIFIED_SERVICE_NAME}"
- 
-        pr_no=$(echo "$service_name" | { grep -oE '[0-9]+$' || true; })
-        if [ -z "$pr_no" ]; then
-          workspace="$APIGEE_ENVIRONMENT"
-        else
-          workspace="pr-$pr_no"
-        fi
- 
-        poetry install --no-root  # Install dependencies defined in pyproject.toml
- 
-        ENV="$workspace" poetry run python -m unittest -v -c
- 
-        echo "E2E batch folder test cases executed successfully"
-      else
-        echo "Skipping E2E batch folder test cases as the environment is ref-prod-int"
-      fi
- 
-    displayName: Run full batch test suite
-    workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e_batch"
-
 
   - bash: |
       set -e
@@ -197,21 +166,58 @@ steps:
         echo "Proxy test completed successfully as part of terraform resource up status check"
 
       else
-        # Run individual test cases in test_search_immunization.py with a 20s delay
-        echo "Running tests from test_search_immunization.py with a 20s delay between each test case"
+        echo "Running each test file with a 20-second delay"
+        
+        clear_dynamodb_script="clear_dynamodb.py"
 
-        # Extract all test cases from test_search_immunization.py
-        test_cases=$($test_cmd discover -s . -p "test_search_immunization.py" | grep -o "test_[a-zA-Z0-9_]*" | sort -u)
-
-        for test_case in $test_cases; do
-            echo "Running test: $test_case"
-            $test_cmd test_search_immunization.TestSearchImmunization.$test_case || echo "Test $test_case failed"
-            echo "Waiting for 20 seconds before running the next test..."
-            sleep 50
-        done
+        # Find all test files and iterate over them one by one.
+        for test_file in $(find . -name "test_*.py"); do
+            echo "Running tests in file: $test_file"
+            poetry run python $clear_dynamodb_script
+            echo "Waiting for 40 seconds to execute test cases..."
+            sleep 40
+            # Run the whole test file using unittest
+            $test_cmd -v -c "$test_file" || echo "Test in $test_file failed"
+            
+            echo "Waiting for 80 seconds before the next test..."
+            sleep 80
+            poetry run python $clear_dynamodb_script
+      done
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite
+  
+
+  - bash: |
+      set -e
+      if ! [[ "$APIGEE_ENVIRONMENT" == "ref" || "$APIGEE_ENVIRONMENT" == "prod" || "$APIGEE_ENVIRONMENT" == "int" || "$APIGEE_ENVIRONMENT" == *"sandbox" ]]; then
+        echo "Running E2E batch folder test cases"
+ 
+        export AWS_PROFILE="apim-dev"
+        aws_account_no="$(aws sts get-caller-identity --query Account --output text)"
+        echo "Using AWS Account: $aws_account_no"
+        
+        service_name="${FULLY_QUALIFIED_SERVICE_NAME}"
+ 
+        pr_no=$(echo "$service_name" | { grep -oE '[0-9]+$' || true; })
+        if [ -z "$pr_no" ]; then
+          workspace="$APIGEE_ENVIRONMENT"
+        else
+          workspace="pr-$pr_no"
+        fi
+ 
+        poetry install --no-root  # Install dependencies defined in pyproject.toml
+ 
+        ENV="$workspace" poetry run python -m unittest -v -c
+ 
+        echo "E2E batch folder test cases executed successfully"
+      else
+        echo "Skipping E2E batch folder test cases as the environment is ref-prod-int"
+      fi
+ 
+    displayName: Run full batch test suite
+    workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e_batch"
+
 
   - task: PublishTestResults@2
     displayName: 'Publish test results'
