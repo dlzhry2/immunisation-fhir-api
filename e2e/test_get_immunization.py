@@ -1,3 +1,4 @@
+import time
 from decimal import Decimal
 
 from utils.base_test import ImmunizationBaseTest
@@ -45,22 +46,26 @@ class TestGetImmunization(ImmunizationBaseTest):
                     self.assertEqual(response.status_code, 200)
                     self.assertEqual(response.json()["id"], immunization["id"])
                     self.assertEqual(response.json(parse_float=Decimal), immunization["expected"])
+                    time.sleep(20)
 
     def not_found(self):
         """it should return 404 if resource doesn't exist"""
         response = self.default_imms_api.get_immunization_by_id("some-id-that-does-not-exist")
         self.assert_operation_outcome(response, 404)
+        time.sleep(20)
 
     def malformed_id(self):
         """it should return 400 if resource id is invalid"""
         response = self.default_imms_api.get_immunization_by_id("some_id_that_is_malformed")
         self.assert_operation_outcome(response, 400)
+        time.sleep(20)
 
     def get_deleted_imms(self):
         """it should return 404 if resource has been deleted"""
         imms = self.create_a_deleted_immunization_resource(self.default_imms_api)
         response = self.default_imms_api.get_immunization_by_id(imms["id"])
         self.assert_operation_outcome(response, 404)
+        time.sleep(20)
 
     def test_get_imms_with_tbc_pk(self):
         """it should get a FHIR Immunization resource if the nhs number is TBC"""
@@ -72,3 +77,4 @@ class TestGetImmunization(ImmunizationBaseTest):
 
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.json()["id"], imms_id)
+        time.sleep(20)

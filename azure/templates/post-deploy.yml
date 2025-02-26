@@ -166,18 +166,11 @@ steps:
         echo "Proxy test completed successfully as part of terraform resource up status check"
 
       else
-        echo "Running each test file with a 20-second delay"
-        
+        echo "Running each testcases with a 20-second delay"   
         clear_dynamodb_script="clear_dynamodb.py"
-
-        # Find all test files and iterate over them one by one.
-        for test_file in $(find . -name "test_*.py"); do
-            echo "Running tests in file: $test_file"
-            poetry run python $clear_dynamodb_script
-            # Run the whole test file using unittest
-            $test_cmd -v -c "$test_file" || echo "Test in $test_file failed"        
-            poetry run python $clear_dynamodb_script
-      done
+        poetry run python $clear_dynamodb_script
+        echo "running: $test_cmd -v -c"
+        $test_cmd -v -c
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite

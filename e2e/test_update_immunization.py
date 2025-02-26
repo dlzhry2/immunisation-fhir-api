@@ -1,5 +1,6 @@
 import copy
 import uuid
+import time
 
 from utils.base_test import ImmunizationBaseTest
 from utils.immunisation_api import parse_location
@@ -34,6 +35,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
                     self.assertEqual(response.status_code, 200, response.text)
                     self.assertEqual(response.text, "")
                     self.assertNotIn("Location", response.headers)
+                    time.sleep(20)
 
     def test_update_non_existent_identifier(self):
         """update a record should fail if identifier is not present"""
@@ -49,6 +51,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
         response = self.default_imms_api.update_immunization(new_imms_id, imms)
         # Then
         self.assert_operation_outcome(response, 404)
+        time.sleep(20)
 
     def test_update_inconsistent_id(self):
         """update should fail if id in the path doesn't match with the id in the message"""
@@ -58,6 +61,7 @@ class TestUpdateImmunization(ImmunizationBaseTest):
         path_id = str(uuid.uuid4())
         response = self.default_imms_api.update_immunization(path_id, imms)
         self.assert_operation_outcome(response, 400, contains=path_id)
+        time.sleep(20)
 
     # TODO: Uncomment this test if it is needed
     # def test_update_deleted_imms(self):
