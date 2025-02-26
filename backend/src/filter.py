@@ -103,7 +103,7 @@ class Filter:
 
     @staticmethod
     def search(imms: dict, patient_full_url: str, bundle_patient: dict = None) -> dict:
-        """Apply filtering for an individual FHIR Immunization Resource as part of SEARCH request."""
+        """Apply filtering for an individual FHIR Immunization Resource as part of SEARCH request"""
         imms = remove_reference_to_contained_practitioner(imms)
         imms.pop("contained")
         imms["patient"] = create_reference_to_patient_resource(patient_full_url, bundle_patient)
