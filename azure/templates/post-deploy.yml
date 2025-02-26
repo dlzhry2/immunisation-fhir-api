@@ -197,19 +197,18 @@ steps:
         echo "Proxy test completed successfully as part of terraform resource up status check"
 
       else
-        echo "Running each test file with a 20-second delay"
+        # Run individual test cases in test_search_immunization.py with a 20s delay
+        echo "Running tests from test_search_immunization.py with a 20s delay between each test case"
 
-        # Find all test files and iterate over them one by one.
-        for test_file in $(find . -name "test_*.py"); do
-            echo "Running tests in file: $test_file"
-            echo "Waiting for 40 seconds to execute test cases..."
-            sleep 40
-            # Run the whole test file using unittest
-            $test_cmd -v -c "$test_file" || echo "Test in $test_file failed"
-            
-            echo "Waiting for 80 seconds before the next test..."
-            sleep 80
-      done
+        # Extract all test cases from test_search_immunization.py
+        test_cases=$($test_cmd discover -s . -p "test_search_immunization.py" | grep -o "test_[a-zA-Z0-9_]*" | sort -u)
+
+        for test_case in $test_cases; do
+            echo "Running test: $test_case"
+            $test_cmd test_search_immunization.TestSearchImmunization.$test_case || echo "Test $test_case failed"
+            echo "Waiting for 20 seconds before running the next test..."
+            sleep 50
+        done
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite
