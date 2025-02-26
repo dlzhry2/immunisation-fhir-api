@@ -319,7 +319,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 assert len(created_and_returned_ids) == len(search.expected_indexes)
                 for expected_index in search.expected_indexes:
                     assert created_resource_ids[expected_index] in result_ids
-        time.sleep(50)            
+        time.sleep(50)         
 
     def test_search_immunization_accepts_include_and_provides_patient(self):
         """it should accept the _include parameter of "Immunization:patient" and return the patient."""
