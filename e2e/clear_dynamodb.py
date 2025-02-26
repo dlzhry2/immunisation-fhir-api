@@ -22,5 +22,6 @@ def clear_dynamodb():
 
     print(f"Deleted {len(items)} items from DynamoDB")
 
+
 if __name__ == "__main__":
     clear_dynamodb()
