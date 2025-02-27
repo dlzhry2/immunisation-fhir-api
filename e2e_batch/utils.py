@@ -2,14 +2,28 @@ import time
 import csv
 import pandas as pd
 import uuid
+import json
+import os
 from io import StringIO
 from datetime import datetime, timezone
 from clients import logger, s3_client, table
 from errors import AckFileNotFoundError, DynamoDBMismatchError
-from constants import ACK_BUCKET, FORWARDEDFILE_PREFIX, SOURCE_BUCKET, DUPLICATE, create_row
+from constants import (
+    ACK_BUCKET,
+    FORWARDEDFILE_PREFIX,
+    SOURCE_BUCKET,
+    DUPLICATE,
+    create_row,
+    ACK_PREFIX,
+    FILE_NAME_VAL_ERROR,
+    CONFIG_BUCKET,
+    create_permissions_json,
+    PERMISSIONS_CONFIG_FILE_KEY,
+    INPUT_PREFIX
+)
 
 
-def generate_csv(fore_name, dose_amount, action_flag, same_id=False):
+def generate_csv(fore_name, dose_amount, action_flag, headers="NHS_NUMBER", same_id=False, file_key=False):
     """
     Generate a CSV file with 2 or 3 rows depending on the action_flag.
 
@@ -36,32 +50,36 @@ def generate_csv(fore_name, dose_amount, action_flag, same_id=False):
         if same_id:
 
             unique_id = str(uuid.uuid4())
-            data.append(create_row(unique_id, fore_name, dose_amount, "NEW"))
-            data.append(create_row(unique_id, fore_name, dose_amount, "NEW"))
+            data.append(create_row(unique_id, fore_name, dose_amount, "NEW", headers))
+            data.append(create_row(unique_id, fore_name, dose_amount, "NEW", headers))
         else:
             unique_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
             for unique_id in unique_ids:
-                data.append(create_row(unique_id, fore_name, dose_amount, "NEW"))
+                data.append(create_row(unique_id, fore_name, dose_amount, "NEW", headers))
 
     elif action_flag == "UPDATE":
         unique_id = str(uuid.uuid4())
-        data.append(create_row(unique_id, fore_name, dose_amount, "NEW"))
-        data.append(create_row(unique_id, fore_name, dose_amount, "UPDATE"))
+        data.append(create_row(unique_id, fore_name, dose_amount, "NEW", headers))
+        data.append(create_row(unique_id, fore_name, dose_amount, "UPDATE", headers))
 
     elif action_flag == "DELETE":
         unique_id = str(uuid.uuid4())
-        data.append(create_row(unique_id, fore_name, dose_amount, "NEW"))
-        data.append(create_row(unique_id, fore_name, dose_amount, "DELETE"))
+        data.append(create_row(unique_id, fore_name, dose_amount, "NEW", headers))
+        data.append(create_row(unique_id, fore_name, dose_amount, "DELETE", headers))
 
     elif action_flag == "REINSTATED":
         unique_id = str(uuid.uuid4())
-        data.append(create_row(unique_id, fore_name, dose_amount, "NEW"))
-        data.append(create_row(unique_id, fore_name, dose_amount, "DELETE"))
-        data.append(create_row(unique_id, fore_name, dose_amount, "UPDATE"))
+        data.append(create_row(unique_id, fore_name, dose_amount, "NEW", headers))
+        data.append(create_row(unique_id, fore_name, dose_amount, "DELETE", headers))
+        data.append(create_row(unique_id, fore_name, dose_amount, "UPDATE", headers))
 
     df = pd.DataFrame(data)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")[:-3]
-    file_name = f"COVID19_Vaccinations_v5_YGM41_{timestamp}.csv"
+    file_name = (
+        f"COVID19_Vaccinations_v4_YGM41_{timestamp}.csv"
+        if file_key
+        else f"COVID19_Vaccinations_v5_YGM41_{timestamp}.csv"
+    )
     df.to_csv(file_name, index=False, sep="|", quoting=csv.QUOTE_MINIMAL)
     return file_name
 
@@ -71,17 +89,19 @@ def upload_file_to_s3(file_name, bucket, prefix):
     key = f"{prefix}{file_name}"
     with open(file_name, "rb") as f:
         s3_client.put_object(Bucket=bucket, Key=key, Body=f)
+    os.remove(file_name)    
     return key
 
 
-def wait_for_ack_file(input_file_name, timeout=120):
+def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
     """Poll the ACK_BUCKET for an ack file that contains the input_file_name as a substring."""
+
     filename_without_ext = input_file_name[:-4] if input_file_name.endswith(".csv") else input_file_name
-    search_pattern = f"{FORWARDEDFILE_PREFIX}{filename_without_ext}"
+    search_pattern = f"{ACK_PREFIX if ack_prefix else FORWARDEDFILE_PREFIX}{filename_without_ext}"
     start_time = time.time()
     while time.time() - start_time < timeout:
         response = s3_client.list_objects_v2(
-            Bucket=ACK_BUCKET, Prefix=FORWARDEDFILE_PREFIX
+            Bucket=ACK_BUCKET, Prefix=ACK_PREFIX if ack_prefix else FORWARDEDFILE_PREFIX
         )
         if "Contents" in response:
             for obj in response["Contents"]:
@@ -96,6 +116,7 @@ def wait_for_ack_file(input_file_name, timeout=120):
 
 def get_file_content_from_s3(bucket, key):
     """Download and return the file content from S3."""
+
     response = s3_client.get_object(Bucket=bucket, Key=key)
     content = response["Body"].read().decode("utf-8")
     return content
@@ -131,6 +152,7 @@ def check_ack_file_content(content, response_code, operation_outcome, operation_
     Raises:
         AssertionError: If the row count, HEADER_RESPONSE_CODE, or OPERATION_OUTCOME is incorrect.
     """
+
     reader = csv.DictReader(content.splitlines(), delimiter="|")
     rows = list(reader)
 
@@ -166,6 +188,7 @@ def check_ack_file_content(content, response_code, operation_outcome, operation_
 
 def validate_header_response_code(row, index, expected_code):
     """Ensure HEADER_RESPONSE_CODE exists and matches expected response code."""
+
     if "HEADER_RESPONSE_CODE" not in row:
         raise ValueError(f"Row {index + 1} does not have a 'HEADER_RESPONSE_CODE' column.")
     if row["HEADER_RESPONSE_CODE"].strip() != expected_code:
@@ -176,6 +199,13 @@ def validate_header_response_code(row, index, expected_code):
 
 def validate_fatal_error(row, index, expected_outcome):
     """Ensure OPERATION_OUTCOME matches expected outcome for Fatal Error responses."""
+
+    if FILE_NAME_VAL_ERROR in expected_outcome:
+        if expected_outcome not in row["RESPONSE_DISPLAY"].strip():
+            raise ValueError(
+                f"Row {index + 1}: Expected RESPONSE '{expected_outcome}', but found '{row['RESPONSE_DISPLAY']}'"
+            )
+
     if expected_outcome not in row["OPERATION_OUTCOME"].strip():
         raise ValueError(
             f"Row {index + 1}: Expected RESPONSE '{expected_outcome}', but found '{row['OPERATION_OUTCOME']}'"
@@ -201,6 +231,7 @@ def validate_ok_response(row, index, operation_requested):
         ValueError: If the 'LOCAL_ID' column is missing in the row.
         DynamoDBMismatchError: If the DynamoDB PK, operation, or reinstatement status does not match.
     """
+
     if "LOCAL_ID" not in row:
         raise ValueError(f"Row {index + 1} does not have a 'LOCAL_ID' column.")
     identifier_pk = extract_identifier_pk(row, index)
@@ -299,3 +330,15 @@ def fetch_row_count(bucket, file_name):
     response_input = s3_client.get_object(Bucket=bucket, Key=file_name)
     content_input = response_input["Body"].read().decode("utf-8")
     return sum(1 for _ in csv.reader(StringIO(content_input)))
+
+
+def save_json_to_file(json_data, filename="permissions_config.json"):
+    with open(filename, "w") as json_file:
+        json.dump(json_data, json_file, indent=4)
+
+
+def upload_config_file(value):
+    input_file = create_permissions_json(value)
+    save_json_to_file(input_file)
+    upload_file_to_s3(PERMISSIONS_CONFIG_FILE_KEY, CONFIG_BUCKET, INPUT_PREFIX)
+    os.remove(PERMISSIONS_CONFIG_FILE_KEY)

@@ -5,6 +5,7 @@ should be initialised ONCE ONLY (in this file) and then imported into the files 
 import logging
 from boto3 import client as boto3_client, resource as boto3_resource
 
+
 # AWS Clients and Resources
 REGION = "eu-west-2"
 

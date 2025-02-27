@@ -1,4 +1,4 @@
-import os
+import time
 import unittest
 from utils import (
     generate_csv,
@@ -7,8 +7,17 @@ from utils import (
     wait_for_ack_file,
     check_ack_file_content,
     validate_row_count,
+    upload_config_file
 )
-from constants import SOURCE_BUCKET, INPUT_PREFIX, ACK_BUCKET, PRE_VALIDATION_ERROR, POST_VALIDATION_ERROR, DUPLICATE
+from constants import (
+    SOURCE_BUCKET,
+    INPUT_PREFIX,
+    ACK_BUCKET,
+    PRE_VALIDATION_ERROR,
+    POST_VALIDATION_ERROR,
+    DUPLICATE,
+    FILE_NAME_VAL_ERROR,
+)
 
 
 class TestE2EBatch(unittest.TestCase):
@@ -17,8 +26,7 @@ class TestE2EBatch(unittest.TestCase):
         """Test CREATE scenario."""
         input_file = generate_csv("PHYLIS", "0.3", action_flag="CREATE")
         upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
-        os.remove(input_file)
-        ack_key = wait_for_ack_file(input_file)
+        ack_key = wait_for_ack_file(None, input_file)
         validate_row_count(input_file, ack_key)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
         check_ack_file_content(ack_content, "OK", None, "CREATE")
@@ -27,8 +35,7 @@ class TestE2EBatch(unittest.TestCase):
         """Test DUPLICATE scenario."""
         input_file = generate_csv("PHYLIS", "0.3", action_flag="CREATE", same_id=True)
         upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
-        os.remove(input_file)
-        ack_key = wait_for_ack_file(input_file)
+        ack_key = wait_for_ack_file(None, input_file)
         validate_row_count(input_file, ack_key)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
         check_ack_file_content(ack_content, "Fatal Error", DUPLICATE, "CREATE")
@@ -37,8 +44,7 @@ class TestE2EBatch(unittest.TestCase):
         """Test UPDATE scenario."""
         input_file = generate_csv("PHYLIS", "0.5", action_flag="UPDATE")
         upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
-        os.remove(input_file)
-        ack_key = wait_for_ack_file(input_file)
+        ack_key = wait_for_ack_file(None, input_file)
         validate_row_count(input_file, ack_key)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
         check_ack_file_content(ack_content, "OK", None, "UPDATE")
@@ -47,8 +53,7 @@ class TestE2EBatch(unittest.TestCase):
         """Test REINSTATED scenario."""
         input_file = generate_csv("PHYLIS", "0.5", action_flag="REINSTATED")
         upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
-        os.remove(input_file)
-        ack_key = wait_for_ack_file(input_file)
+        ack_key = wait_for_ack_file(None, input_file)
         validate_row_count(input_file, ack_key)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
         check_ack_file_content(ack_content, "OK", None, "reinstated")
@@ -57,8 +62,7 @@ class TestE2EBatch(unittest.TestCase):
         """Test DELETE scenario."""
         input_file = generate_csv("PHYLIS", "0.8", action_flag="DELETE")
         upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
-        os.remove(input_file)
-        ack_key = wait_for_ack_file(input_file)
+        ack_key = wait_for_ack_file(None, input_file)
         validate_row_count(input_file, ack_key)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
         check_ack_file_content(ack_content, "OK", None, "DELETE")
@@ -67,8 +71,7 @@ class TestE2EBatch(unittest.TestCase):
         """Test PRE-VALIDATION error scenario."""
         input_file = generate_csv("PHYLIS", "TRUE", action_flag="CREATE")
         upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
-        os.remove(input_file)
-        ack_key = wait_for_ack_file(input_file)
+        ack_key = wait_for_ack_file(None, input_file)
         validate_row_count(input_file, ack_key)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
         check_ack_file_content(ack_content, "Fatal Error", PRE_VALIDATION_ERROR, None)
@@ -77,11 +80,38 @@ class TestE2EBatch(unittest.TestCase):
         """Test POST-VALIDATION error scenario."""
         input_file = generate_csv("", "0.3", action_flag="CREATE")
         upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
-        os.remove(input_file)
-        ack_key = wait_for_ack_file(input_file)
-        validate_row_count(input_file, ack_key)
+        ack_key = wait_for_ack_file(None, input_file)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
         check_ack_file_content(ack_content, "Fatal Error", POST_VALIDATION_ERROR, None)
+
+    def test_file_name_validation_error(self):
+        """Test FILE-NAME-VALIDATION error scenario."""
+        input_file = generate_csv("PHYLIS", "0.3", action_flag="CREATE", file_key=True)
+        upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
+        ack_key = wait_for_ack_file(True, input_file)
+        ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
+        check_ack_file_content(ack_content, "Failure", FILE_NAME_VAL_ERROR, None)
+
+    def test_header_name_validation_error(self):
+        """Test HEADER-NAME-VALIDATION error scenario."""
+        input_file = generate_csv("PHYLIS", "0.3", action_flag="CREATE", headers="NH_NUMBER")
+        upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX) 
+        ack_key = wait_for_ack_file(True, input_file)
+        ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
+        check_ack_file_content(ack_content, "Failure", FILE_NAME_VAL_ERROR, None)
+
+    def test_invalid_permission(self):
+        """Test INVALID-PERMISSION error scenario."""
+        upload_config_file("MMR_FULL")
+        time.sleep(10)
+        input_file = generate_csv("PHYLIS", "0.3", action_flag="CREATE")
+        upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
+        ack_key = wait_for_ack_file(True, input_file)
+        ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
+        check_ack_file_content(ack_content, "Failure", FILE_NAME_VAL_ERROR, None)
+        time.sleep(10)
+        upload_config_file("COVID19_FULL")
+        time.sleep(20)
 
 
 if __name__ == "__main__":

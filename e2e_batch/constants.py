@@ -1,5 +1,9 @@
 import os
+# import logging
 from datetime import datetime, timezone
+# logging.basicConfig(level="INFO")
+# logger = logging.getLogger()
+# logger.setLevel("INFO")
 from clients import logger
 
 env_value = os.environ.get("ENV", "internal-dev")
@@ -11,13 +15,17 @@ FORWARDEDFILE_PREFIX = "forwardedFile/"
 PRE_VALIDATION_ERROR = "Validation errors: doseQuantity.value must be a number"
 POST_VALIDATION_ERROR = "Validation errors: contained[?(@.resourceType=='Patient')].name[0].given is a mandatory field"
 DUPLICATE = "The provided identifier:"
+ACK_PREFIX = "ack/"
+FILE_NAME_VAL_ERROR = "Infrastructure Level Response Value - Processing Error"
+CONFIG_BUCKET = "imms-internal-dev-supplier-config"
+PERMISSIONS_CONFIG_FILE_KEY = "permissions_config.json"
 
 
-def create_row(unique_id, fore_name, dose_amount, action_flag):
+def create_row(unique_id, fore_name, dose_amount, action_flag, header):
     """Helper function to create a single row with the specified UNIQUE_ID and ACTION_FLAG."""
 
     return {
-        "NHS_NUMBER": "9732928395",
+        header: "9732928395",
         "PERSON_FORENAME": fore_name,
         "PERSON_SURNAME": "James",
         "PERSON_DOB": "20080217",
@@ -51,4 +59,33 @@ def create_row(unique_id, fore_name, dose_amount, action_flag):
         "INDICATION_CODE": "1037351000000105",
         "LOCATION_CODE": "RJC02",
         "LOCATION_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code",
+    }
+
+
+def create_permissions_json(value):
+    return {
+        "all_permissions": {
+            "DPSFULL": ["RSV_FULL", "COVID19_FULL", "FLU_FULL", "MMR_FULL"],
+            "DPSREDUCED": ["COVID19_FULL", "FLU_FULL", "MMR_FULL"],
+            "EMIS": [value, "RSV_FULL"],
+            "PINNACLE": ["COVID19_UPDATE", "RSV_FULL"],
+            "SONAR": "",
+            "TPP": [""],
+            "AGEM-NIVS": [""],
+            "NIMS": [""],
+            "EVA": [""],
+            "RAVS": [""],
+            "MEDICAL_DIRECTOR": [""],
+            "WELSH_DA_1": [""],
+            "WELSH_DA_2": [""],
+            "NORTHERN_IRELAND_DA": [""],
+            "SCOTLAND_DA": [""],
+            "COVID19_VACCINE_RESOLUTION_SERVICEDESK": [""],
+        },
+        "definitions:": {
+            "FULL": "Full permissions to create, update and delete a batch record",
+            "CREATE": "Permission to create a batch record",
+            "UPDATE": "Permission to update a batch record",
+            "DELETE": "Permission to delete a batch record",
+        },
     }
