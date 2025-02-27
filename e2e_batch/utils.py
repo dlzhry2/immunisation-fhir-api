@@ -341,4 +341,4 @@ def upload_config_file(value):
     input_file = create_permissions_json(value)
     save_json_to_file(input_file)
     upload_file_to_s3(PERMISSIONS_CONFIG_FILE_KEY, CONFIG_BUCKET, INPUT_PREFIX)
-    os.remove(PERMISSIONS_CONFIG_FILE_KEY)
+
