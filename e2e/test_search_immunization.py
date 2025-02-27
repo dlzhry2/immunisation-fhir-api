@@ -66,7 +66,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
 
         # When
         response = self.default_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.covid_19)
-
+        time.sleep(20)
         # Then
         self.assertEqual(response.status_code, 200, response.text)
         body = response.json()
@@ -302,7 +302,7 @@ class TestSearchImmunization(ImmunizationBaseTest):
         for search in searches:
             pprint.pprint(search)
             response = self.default_imms_api.search_immunizations_full(search.method, search.query_string, search.body)
-
+            time.sleep(20)
             # Then
             assert response.ok == search.should_be_success, response.text
 

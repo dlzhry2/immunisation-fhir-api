@@ -76,13 +76,13 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
     def test_create_imms_unauthorised_vaxx(self):
         """it should not create Immunization if app does not have the correct vaccine permission"""
         self.make_app({Permission.CREATE}, {"flu:create"})
-        time.sleep(20)
+        time.sleep(30)
         # When
         imms = generate_imms_resource()
         response = self.my_imms_api.create_immunization(imms)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
+        time.sleep(30)
 
     def test_create_imms_unauthorised(self):
         """it should not create Immunization if app doesn't immunization:create permission"""
@@ -140,7 +140,7 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         """it should delete Immunization if app has immunization:delete permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
         self.make_app({Permission.DELETE})
-        time.sleep(20)
+        time.sleep(30)
         # When
         response = self.my_imms_api.delete_immunization(imms_id)
         # Then
@@ -277,7 +277,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
     def test_create_imms_unauthorised_vaxx(self):
         """it should not create Immunization if app does not have the correct vaccine permission"""
         self.make_app({Permission.CREATE}, {"flu:create"})
-        time.sleep(20)
+        time.sleep(30)
         # When
         imms = generate_imms_resource()
         response = self.my_imms_api.create_immunization(imms)
@@ -328,7 +328,7 @@ class TestCis2Authorization(ImmunizationBaseTest):
         """it should delete Immunization if app has immunization:delete permission"""
         imms_id = self.create_immunization_resource(self.default_imms_api)
         self.make_app({Permission.DELETE})
-        time.sleep(20)
+        time.sleep(30)
         # When
         response = self.my_imms_api.delete_immunization(imms_id)
         # Then
