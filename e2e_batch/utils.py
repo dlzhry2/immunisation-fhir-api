@@ -77,7 +77,7 @@ def generate_csv(fore_name, dose_amount, action_flag, headers="NHS_NUMBER", same
         unique_id = str(uuid.uuid4())
         data.append(create_row(unique_id, fore_name, dose_amount, "NEW", headers))
         data.append(create_row(unique_id, fore_name, dose_amount, "DELETE", headers))
-        data.append(create_row(unique_id, fore_name, dose_amount, "UPDATE", headers))    
+        data.append(create_row(unique_id, fore_name, dose_amount, "UPDATE", headers))
         data.append(create_row(unique_id, "fore_name", dose_amount, "UPDATE", headers))
 
     df = pd.DataFrame(data)
