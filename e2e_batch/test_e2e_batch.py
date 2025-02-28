@@ -95,7 +95,7 @@ class TestE2EBatch(unittest.TestCase):
     def test_header_name_validation_error(self):
         """Test HEADER-NAME-VALIDATION error scenario."""
         input_file = generate_csv("PHYLIS", "0.3", action_flag="CREATE", headers="NH_NUMBER")
-        upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX) 
+        upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
         ack_key = wait_for_ack_file(True, input_file)
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
         check_ack_file_content(ack_content, "Failure", FILE_NAME_VAL_ERROR, None)

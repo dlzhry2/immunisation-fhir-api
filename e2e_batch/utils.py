@@ -89,7 +89,7 @@ def upload_file_to_s3(file_name, bucket, prefix):
     key = f"{prefix}{file_name}"
     with open(file_name, "rb") as f:
         s3_client.put_object(Bucket=bucket, Key=key, Body=f)
-    os.remove(file_name)    
+    os.remove(file_name)
     return key
 
 
@@ -341,4 +341,3 @@ def upload_config_file(value):
     input_file = create_permissions_json(value)
     save_json_to_file(input_file)
     upload_file_to_s3(PERMISSIONS_CONFIG_FILE_KEY, CONFIG_BUCKET, INPUT_PREFIX)
-
