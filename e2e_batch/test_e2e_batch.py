@@ -58,6 +58,15 @@ class TestE2EBatch(unittest.TestCase):
         ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
         check_ack_file_content(ack_content, "OK", None, "reinstated")
 
+    def test_update_reinstated_success(self):
+        """Test UPDATE-REINSTATED scenario."""
+        input_file = generate_csv("PHYLIS", "0.5", action_flag="UPDATE-REINSTATED")
+        upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
+        ack_key = wait_for_ack_file(None, input_file)
+        validate_row_count(input_file, ack_key)
+        ack_content = get_file_content_from_s3(ACK_BUCKET, ack_key)
+        check_ack_file_content(ack_content, "OK", None, "update-reinstated")
+
     def test_delete_success(self):
         """Test DELETE scenario."""
         input_file = generate_csv("PHYLIS", "0.8", action_flag="DELETE")

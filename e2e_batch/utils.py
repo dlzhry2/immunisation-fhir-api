@@ -73,6 +73,13 @@ def generate_csv(fore_name, dose_amount, action_flag, headers="NHS_NUMBER", same
         data.append(create_row(unique_id, fore_name, dose_amount, "DELETE", headers))
         data.append(create_row(unique_id, fore_name, dose_amount, "UPDATE", headers))
 
+    elif action_flag == "UPDATE-REINSTATED":
+        unique_id = str(uuid.uuid4())
+        data.append(create_row(unique_id, fore_name, dose_amount, "NEW", headers))
+        data.append(create_row(unique_id, fore_name, dose_amount, "DELETE", headers))
+        data.append(create_row(unique_id, fore_name, dose_amount, "UPDATE", headers))    
+        data.append(create_row(unique_id, "fore_name", dose_amount, "UPDATE", headers))
+
     df = pd.DataFrame(data)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")[:-3]
     file_name = (
@@ -241,7 +248,7 @@ def validate_ok_response(row, index, operation_requested):
             f"Row {index + 1}: Mismatch - DynamoDB PK '{dynamo_pk}' does not match ACK file IMMS_ID '{row['IMMS_ID']}'"
         )
 
-    if operation_requested == "reinstated":
+    if operation_requested == "reinstated" or operation_requested == "update-reinstated":
         if operation != "UPDATE":
             raise DynamoDBMismatchError(
                 (
@@ -249,11 +256,11 @@ def validate_ok_response(row, index, operation_requested):
                     f"does not match operation requested '{operation_requested}'"
                 )
             )
-        if is_reinstate != operation_requested:
+        if is_reinstate != "reinstated":
             raise DynamoDBMismatchError(
                 (
-                    f"Row {index + 1}: Mismatch - DynamoDB Operation '{operation}' "
-                    f"does not match operation requested '{operation_requested}'"
+                    f"Row {index + 1}: Mismatch - DynamoDB Operation '{is_reinstate}' "
+                    f"does not match operation requested 'reinstated'"
                 )
             )
     elif operation != operation_requested:
