@@ -1,4 +1,3 @@
-import time
 from utils.base_test import ImmunizationBaseTest
 from utils.resource import generate_imms_resource, get_full_row_from_identifier
 
@@ -22,7 +21,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
                     self.assertEqual(response.status_code, 201, response.text)
                     self.assertEqual(response.text, "")
                     self.assertIn("Location", response.headers)
-                    time.sleep(20)
 
     def test_non_unique_identifier(self):
         """
@@ -55,7 +53,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
         self.assertEqual(self.default_imms_api.get_immunization_by_id(imms_id).status_code, 200)
         del imms["id"]  # Imms fhir resource should not include an id for create
         self.assert_operation_outcome(self.default_imms_api.create_immunization(imms), 422)
-        time.sleep(20)
 
     def test_bad_nhs_number(self):
         """it should reject the request if nhs-number does not exist"""
@@ -65,7 +62,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
         response = self.default_imms_api.create_immunization(imms)
 
         self.assert_operation_outcome(response, 400, bad_nhs_number)
-        time.sleep(20)
 
     def test_validation(self):
         """it should validate Immunization"""
@@ -79,7 +75,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
         # Then
         self.assert_operation_outcome(response, 400, "occurrenceDateTime")
-        time.sleep(20)
 
     def test_no_nhs_number(self):
         """it should accept the request if nhs-number is missing"""
@@ -96,7 +91,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
         identifier = response.headers.get("location").split("/")[-1]
         patient_pk = get_full_row_from_identifier(identifier).get("PatientPK")
         self.assertEqual(patient_pk, "Patient#TBC")
-        time.sleep(20)
 
     def test_no_patient_identifier(self):
         """it should accept the request if patient identifier is missing"""
@@ -113,7 +107,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
         identifier = response.headers.get("location").split("/")[-1]
         patient_pk = get_full_row_from_identifier(identifier).get("PatientPK")
         self.assertEqual(patient_pk, "Patient#TBC")
-        time.sleep(20)
 
     def test_create_imms_for_mandatory_fields_only(self):
         """Test that data containing only the mandatory fields is accepted for create"""
@@ -128,7 +121,6 @@ class TestCreateImmunization(ImmunizationBaseTest):
         self.assertEqual(response.status_code, 201, response.text)
         self.assertEqual(response.text, "")
         self.assertTrue("Location" in response.headers)
-        time.sleep(20)
 
     def test_create_imms_with_missing_mandatory_field(self):
         """Test that data  is rejected for create if one of the mandatory fields is missing"""
@@ -142,4 +134,3 @@ class TestCreateImmunization(ImmunizationBaseTest):
 
         # Then
         self.assert_operation_outcome(response, 400, "primarySource is a mandatory field")
-        time.sleep(20)

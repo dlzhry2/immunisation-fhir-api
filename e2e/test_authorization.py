@@ -1,5 +1,4 @@
 import uuid
-import time
 from typing import Set
 
 from lib.apigee import ApigeeApp
@@ -48,7 +47,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.get_immunization_by_id(imms_id)
         # Then
         self.assertEqual(response.status_code, 200, response.text)
-        time.sleep(20)
 
     def test_get_imms_unauthorised(self):
         """it should not get Immunization if app doesn't have immunization:read permission"""
@@ -58,7 +56,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.get_immunization_by_id("id-doesn't-matter")
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_create_imms_authorised(self):
         """it should create Immunization if app has immunization:create permission"""
@@ -68,7 +65,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.create_immunization(imms)
         # Then
         self.assertEqual(response.status_code, 201, response.text)
-        time.sleep(20)
 
     def test_create_imms_unauthorised_vaxx(self):
         """it should not create Immunization if app does not have the correct vaccine permission"""
@@ -78,7 +74,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.create_immunization(imms)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(30)
 
     def test_create_imms_unauthorised(self):
         """it should not create Immunization if app doesn't immunization:create permission"""
@@ -89,7 +84,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         result = self.my_imms_api.create_immunization(imms)
         # Then
         self.assertEqual(result.status_code, 403, result.text)
-        time.sleep(20)
 
     def test_update_imms_authorised(self):
         """it should update Immunization if app has immunization:update and immunization:create permission"""
@@ -102,7 +96,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
         self.assertEqual(response.status_code, 200, response.text)
-        time.sleep(20)
 
     def test_update_imms_unauthorised(self):
         """it should not update Immunization if app doesn't immunization:update permission"""
@@ -112,7 +105,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.update_immunization("doesn't-matter", {})
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_update_imms_unauthorised_2(self):
         """it should not update Immunization if app doesn't immunization:create permission"""
@@ -126,7 +118,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_delete_imms_authorised(self):
         """it should delete Immunization if app has immunization:delete permission"""
@@ -136,7 +127,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.delete_immunization(imms_id)
         # Then
         self.assertEqual(response.status_code, 204, response.text)
-        time.sleep(20)
 
     def test_delete_imms_unauthorised(self):
         """it should not delete Immunization if app doesn't have immunization:delete permission"""
@@ -146,7 +136,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.delete_immunization("doesn't-matter")
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_search_imms_authorised(self):
         """it should search Immunization if app has immunization:search permission"""
@@ -158,7 +147,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.mmr)
         # Then
         self.assertEqual(response.status_code, 200, response.text)
-        time.sleep(20)
 
     def test_search_imms_unauthorised(self):
         """it should not search Immunization if app doesn't immunization:search permission"""
@@ -168,7 +156,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.mmr)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_search_imms_unauthorised_vax(self):
         """it should not search Immunization if app does not have proper vax permissions"""
@@ -180,7 +167,6 @@ class TestApplicationRestrictedAuthorization(ImmunizationBaseTest):
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.mmr)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
 
 class TestCis2Authorization(ImmunizationBaseTest):
@@ -213,7 +199,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.get_immunization_by_id(imms_id)
         # Then
         self.assertEqual(response.status_code, 200, response.text)
-        time.sleep(20)
 
     def test_get_imms_unauthorised(self):
         """it should not get Immunization if app doesn't have immunization:read permission"""
@@ -223,7 +208,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.get_immunization_by_id("id-doesn't-matter")
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_get_imms__unauthorised_vaxx(self):
         """it should not get Immunization if app does not have the correct vaccine permission"""
@@ -233,7 +217,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.get_immunization_by_id(imms_id)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_create_imms_authorised(self):
         """it should create Immunization if app has immunization:create permission"""
@@ -243,7 +226,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.create_immunization(imms)
         # Then
         self.assertEqual(response.status_code, 201, response.text)
-        time.sleep(20)
 
     def test_create_imms_unauthorised(self):
         """it should not create Immunization if app doesn't immunization:create permission"""
@@ -254,7 +236,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         result = self.my_imms_api.create_immunization(imms)
         # Then
         self.assertEqual(result.status_code, 403, result.text)
-        time.sleep(20)
 
     def test_create_imms_unauthorised_vaxx(self):
         """it should not create Immunization if app does not have the correct vaccine permission"""
@@ -264,7 +245,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.create_immunization(imms)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_update_imms_authorised(self):
         """it should update Immunization if app has the immunization:update and immunization:create permission"""
@@ -277,7 +257,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
         self.assertEqual(response.status_code, 200, response.text)
-        time.sleep(20)
 
     def test_update_imms_unauthorised(self):
         """it should not update Immunization if app doesn't have the immunization:update permission"""
@@ -287,7 +266,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.update_immunization("doesn't-matter", {})
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_update_imms_unauthorised_vaxx(self):
         """it should not update Immunization if app does not have the correct vaccine permission"""
@@ -300,7 +278,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.update_immunization(imms_id, imms)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_delete_imms_authorised(self):
         """it should delete Immunization if app has immunization:delete permission"""
@@ -310,7 +287,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.delete_immunization(imms_id)
         # Then
         self.assertEqual(response.status_code, 204, response.text)
-        time.sleep(20)
 
     def test_delete_imms_unauthorised(self):
         """it should not delete Immunization if app doesn't have immunization:delete permission"""
@@ -320,7 +296,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.delete_immunization("doesn't-matter")
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_delete_imms__unauthorised_vaxx(self):
         """it should not delete Immunization if app does not have the correct vaccine permission"""
@@ -330,7 +305,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.delete_immunization(imms_id)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)
 
     def test_search_imms_authorised(self):
         """it should search Immunization if app has immunization:search permission"""
@@ -342,7 +316,6 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.mmr)
         # Then
         self.assertEqual(response.status_code, 200, response.text)
-        time.sleep(20)
 
     def test_search_imms_unauthorised(self):
         """it should not search Immunization if app doesn't have the immunization:search permission"""
@@ -352,4 +325,3 @@ class TestCis2Authorization(ImmunizationBaseTest):
         response = self.my_imms_api.search_immunizations(valid_nhs_number1, VaccineTypes.mmr)
         # Then
         self.assertEqual(response.status_code, 403, response.text)
-        time.sleep(20)

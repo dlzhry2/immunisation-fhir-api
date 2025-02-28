@@ -87,4 +87,3 @@ class TestDeltaImmunization(ImmunizationBaseTest):
             self.assertTrue((create_update_imms_id, self.UPDATE_OPERATION) in delta_imms_query_response)
         elif operation == self.DELETE_OPERATION:
             self.assertTrue((create_delete_imms_id, self.DELETE_OPERATION) in delta_imms_query_response)
-        time.sleep(20)

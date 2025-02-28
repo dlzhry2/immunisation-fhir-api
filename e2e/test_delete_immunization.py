@@ -1,4 +1,3 @@
-import time
 from utils.base_test import ImmunizationBaseTest
 from utils.immunisation_api import parse_location
 from utils.resource import generate_imms_resource
@@ -31,11 +30,9 @@ class TestDeleteImmunization(ImmunizationBaseTest):
                     self.assertEqual(delete_response.status_code, 204)
                     self.assertEqual(delete_response.text, "")
                     self.assertTrue("Location" not in delete_response.headers)
-                    time.sleep(20)
 
     def test_delete_immunization_already_deleted(self):
         """it should return 404 when deleting a deleted resource"""
         imms = self.create_a_deleted_immunization_resource(self.default_imms_api)
         response = self.default_imms_api.delete_immunization(imms["id"])
         self.assert_operation_outcome(response, 404)
-        time.sleep(20)

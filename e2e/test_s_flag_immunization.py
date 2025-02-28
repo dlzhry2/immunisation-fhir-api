@@ -1,4 +1,3 @@
-import time
 from typing import List
 from decimal import Decimal
 
@@ -38,7 +37,6 @@ class TestGetSFlagImmunization(SFlagBaseTest):
                 )
                 expected_response["id"] = read_imms["id"]
                 self.assertEqual(read_imms, expected_response)
-                time.sleep(20)
 
     def test_get_not_s_flagged_imms(self):
         """Test that sensitive data is not filtered out for a READ when the patient is not s-flagged"""
@@ -53,7 +51,6 @@ class TestGetSFlagImmunization(SFlagBaseTest):
                 )
                 expected_response["id"] = read_imms["id"]
                 self.assertEqual(read_imms, expected_response)
-                time.sleep(20)
 
 
 class TestSearchSFlagImmunization(SFlagBaseTest):
@@ -83,7 +80,6 @@ class TestSearchSFlagImmunization(SFlagBaseTest):
                     expected_response["patient"]["reference"] = hit_imm["patient"]["reference"]
                     expected_response["identifier"][0]["value"] = hit_imm["identifier"][0]["value"]
                     self.assertEqual(hit_imm, expected_response)
-                    time.sleep(20)
 
     def test_search_not_s_flagged_imms(self):
         """Test that sensitive data is not filtered out for a SEARCH when the patient is not s-flagged"""
@@ -109,7 +105,6 @@ class TestSearchSFlagImmunization(SFlagBaseTest):
                     expected_response["patient"]["reference"] = hit_imm["patient"]["reference"]
                     expected_response["identifier"][0]["value"] = hit_imm["identifier"][0]["value"]
                     self.assertEqual(hit_imm, expected_response)
-                    time.sleep(20)
 
     @staticmethod
     def filter_my_imms_from_search_result(search_body: dict, *my_ids) -> List[dict]:
