@@ -201,7 +201,7 @@ steps:
  
         echo "E2E batch folder test cases executed successfully"
       else
-        echo "Skipping E2E batch folder test cases as the environment is ref-prod-int"
+        echo "Skipping E2E batch folder test cases as the environment is ref-prod-int-sandbox"
       fi
  
     displayName: Run full batch test suite
