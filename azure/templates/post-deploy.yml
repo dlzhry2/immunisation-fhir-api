@@ -167,9 +167,6 @@ steps:
         echo "Proxy test completed successfully as part of terraform resource up status check"
 
       else
-        echo "Cleared DB before running testcases"   
-        clear_dynamodb_script="clear_dynamodb.py"
-        poetry run python $clear_dynamodb_script
         echo "running: $test_cmd -v -c"
         $test_cmd -v -c
       fi
