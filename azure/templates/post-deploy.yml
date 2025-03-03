@@ -113,11 +113,11 @@ steps:
       fi
     displayName: Waiting for TF resources to be UP
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
-  - bash: |
-      pyenv install -s 3.10.8
-      pyenv global 3.10.8
-      python --version
-    displayName: Set Python 3.10
+  # - bash: |
+  #     pyenv install -s 3.10.8
+  #     pyenv global 3.10.8
+  #     python --version
+  #   displayName: Set Python 3.10
   - bash: |
       set -e
       export RELEASE_RELEASEID=$(Build.BuildId)
