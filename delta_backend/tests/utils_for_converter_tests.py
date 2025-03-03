@@ -41,6 +41,7 @@ class ValuesForTests:
                 },
             }
         ],
+        "identifier": [{"system": "https://supplierABC/identifiers/vacc", "value": "ACME-vacc123456"}],
         "status": "completed",
         "vaccineCode": {
             "coding": [
@@ -177,7 +178,7 @@ class ValuesForTests:
                 "DATE_AND_TIME": "20210207T132817",
                 "SITE_CODE": "B0C4P",
                 "SITE_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code",
-                "UNIQUE_ID": "ACME-vac456",
+                "UNIQUE_ID": "ACME-vacc123456",
                 "UNIQUE_ID_URI": "https://supplierABC/identifiers/vacc",
                 "ACTION_FLAG": expected_action_flag,
                 "PERFORMING_PROFESSIONAL_FORENAME": "Florence",
@@ -187,8 +188,8 @@ class ValuesForTests:
                 "VACCINATION_PROCEDURE_CODE": "1324681000000101",
                 "VACCINATION_PROCEDURE_TERM": "Administration of first dose of severe acute respiratory syndrome coronavirus 2 vaccine (procedure)",
                 "DOSE_SEQUENCE": Decimal("1"),
-                "VACCINE_PRODUCT_CODE": "39116211000001106",
-                "VACCINE_PRODUCT_TERM": "Generic COVID-19 Vaccine Vaxzevria (ChAdOx1 S [recombinant]) not less than 2.5x100,000,000 infectious units/0.5ml dose suspension for injection multidose vials (product)",
+                "VACCINE_PRODUCT_CODE": "39114911000001105",
+                "VACCINE_PRODUCT_TERM": "COVID-19 Vaccine Vaxzevria (ChAdOx1 S [recombinant]) not less than 2.5x100,000,000 infectious units/0.5ml dose suspension for injection multidose vials (AstraZeneca UK Ltd) (product)",
                 "VACCINE_MANUFACTURER": "AstraZeneca Ltd",
                 "BATCH_NUMBER": "4120Z001",
                 "EXPIRY_DATE": "20210702",
