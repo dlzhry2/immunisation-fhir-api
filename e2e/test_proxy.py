@@ -41,7 +41,6 @@ class TestMtls(unittest.TestCase):
 
         with self.assertRaises(requests.exceptions.RequestException) as e:
             requests.get(backend_health, headers={"X-Request-ID": str(uuid.uuid4())})
-        print(f"exception:{str(e.exception)}")
         self.assertTrue("RemoteDisconnected" in str(e.exception))
 
     @staticmethod
