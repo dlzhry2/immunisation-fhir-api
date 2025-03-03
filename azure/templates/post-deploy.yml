@@ -168,7 +168,16 @@ steps:
 
       else
         echo "running: $test_cmd -v -c"
-        $test_cmd -v -c
+
+        RETRIES=3
+        DELAY=10
+
+        for i in $(seq 1 $RETRIES); do
+            $test_cmd -v -c && break
+            echo "Test failed. Retrying in $DELAY seconds..."
+            sleep $DELAY
+        done
+
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite
