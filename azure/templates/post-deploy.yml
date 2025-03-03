@@ -180,7 +180,7 @@ steps:
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite
 
-   - bash: |
+  - bash: |
       if [ "$(TEST_FAILURE)" -ne 0 ]; then
         echo "Tests failed. Failing the pipeline."
         exit 1
