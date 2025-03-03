@@ -168,12 +168,18 @@ steps:
         echo "Proxy test completed successfully as part of terraform resource up status check"
 
       else
-        echo "running tests with 20 sec delay"
-        for test_case in $($test_cmd discover -s . -p "*.py" -v | grep "test_" | awk '{print $1}'); do
-          echo "Running test: $test_case"
-          $test_cmd -v -c $test_case || echo "Test $test_case failed"
-          echo "Waiting for 20 seconds before next test..."
-          sleep 20
+        echo "Running each test file with a delay"
+
+        # Find all test files and iterate over them one by one.
+        for test_file in $(find . -name "test_*.py"); do
+            echo "Running tests in file: $test_file"
+            echo "Waiting for 40 seconds to execute test cases..."
+            sleep 40
+            # Run the whole test file using unittest
+            $test_cmd -v -c "$test_file" || echo "Test in $test_file failed"
+            
+            echo "Waiting for 80 seconds before the next test..."
+            sleep 80
         done
       fi
       echo "##vso[task.setvariable variable=TEST_FAILURE;]$test_status"
