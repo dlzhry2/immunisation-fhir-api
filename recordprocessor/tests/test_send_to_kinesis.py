@@ -30,7 +30,7 @@ class TestSendToKinesis(unittest.TestCase):
     @patch.dict("os.environ", MOCK_ENVIRONMENT_DICT)
     def test_send_to_kinesis_success(self):
 
-        kinesis_client.return_value = {'ResponseMetadata': {'HTTPStatusCode': 200}}
+        kinesis_client.return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}}
 
         # arrange required parameters
         supplier = "test_supplier"
@@ -41,5 +41,5 @@ class TestSendToKinesis(unittest.TestCase):
         self.assertTrue(result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

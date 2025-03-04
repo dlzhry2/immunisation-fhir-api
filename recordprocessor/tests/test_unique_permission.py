@@ -15,5 +15,6 @@ class TestGetUniqueFlagsFromS3(unittest.TestCase):
         result = get_unique_action_flags_from_s3(csv_data)
         self.assertEqual(result, expected_output)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
