@@ -3,7 +3,7 @@ import sys
 
 
 def extract_failed_tests(log_file):
-    """Extract failed test names from the log file."""
+    """Extract failed test names from the log file.."""
     failed_tests = []
     print(f"log_file:{log_file}")
     with open(log_file, "r") as f:
