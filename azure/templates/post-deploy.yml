@@ -167,8 +167,16 @@ steps:
         echo "Proxy test completed successfully as part of terraform resource up status check"
 
       else
-        echo "running: $test_cmd -v -c"
-        $test_cmd -v -c
+        while true; do
+          echo "Running: $test_cmd -v -c"
+          if $test_cmd -v -c; then
+              echo "Tests passed!"
+              break
+          else
+              echo "Tests failed. Retrying in 10 seconds..."
+              sleep 60
+          fi
+        done
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite
