@@ -113,11 +113,13 @@ steps:
       fi
     displayName: Waiting for TF resources to be UP
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)"
+
   - bash: |
       pyenv install -s 3.10.8
       pyenv global 3.10.8
       python --version
     displayName: Set Python 3.10
+
   - bash: |
       set -e
       export RELEASE_RELEASEID=$(Build.BuildId)
@@ -167,35 +169,42 @@ steps:
         echo "Proxy test completed successfully as part of terraform resource up status check"
 
       else
-        echo "Running full test suite..."
-        failed_tests=$($test_cmd -v | tee /tmp/test_output.log | grep -E 'FAIL|ERROR' | awk '{print $1}')
+          echo "Running full test suite..."
+          test_output="/tmp/test_output.log"
 
-        if [ -z "$failed_tests" ]; then
-            echo "All tests passed successfully!"
-            exit 0
-        fi
+          # Execute the test suite and store output
+          $test_cmd -v | tee "$test_output"
 
-        # Loop to retry failed tests
-        while [[ -n "$failed_tests" ]]; do
-            echo "Retrying failed tests..."
-            for test in $failed_tests; do
-                echo "Running: $test_cmd $test"
-                if $test_cmd $test; then
-                    echo "$test passed!"
-                    failed_tests=$(echo "$failed_tests" | grep -v "$test")  # Remove passed test from the list
-                else
-                    echo "$test failed again. Will retry."
-                fi
-            done
+          # Extract failed test names
+          failed_tests=$(grep -E 'FAIL|ERROR' "$test_output" | awk '{print $1}')
 
-            if [ -z "$failed_tests" ]; then
-                echo "All retried tests passed!"
-                exit 0
-            fi
+          if [[ -z "$failed_tests" ]]; then
+              echo "All tests passed successfully!"
+              exit 0
+          fi
 
-            echo "Waiting before retrying failed tests..."
-            sleep 10
-        done
+          # Retry failed tests
+          while [[ -n "$failed_tests" ]]; do
+              echo "Retrying failed tests..."
+              for test in $failed_tests; do
+                  echo "Running: $test_cmd -v $test"
+                  if $test_cmd -v $test; then
+                      echo "$test passed!"
+                      failed_tests=$(echo "$failed_tests" | grep -v "$test")  # Remove passed test
+                  else
+                      echo "$test failed again. Will retry."
+                  fi
+              done
+
+              if [[ -z "$failed_tests" ]]; then
+                  echo "All retried tests passed!"
+                  exit 0
+              fi
+
+              echo "Waiting before retrying failed tests..."
+              sleep 10
+          done
+      fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite
   
