@@ -189,7 +189,7 @@ steps:
 
           while [[ -n "$failed_tests" && $retry_count -lt $max_retries ]]; do
               ((retry_count++))
-              echo "Retrying failed tests (Attempt $retry_count/$max_retries)..."
+              echo "Retrying failed tests (Attempt $retry_count/$max_retries).."
 
               for test in $failed_tests; do
                   echo "Running: $test_cmd -v $test"
