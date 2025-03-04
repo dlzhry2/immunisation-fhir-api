@@ -169,43 +169,8 @@ steps:
         echo "Proxy test completed successfully as part of terraform resource up status check"
 
       else
-        echo "Running each test file with a delay"
-
-        # Find all test files and iterate over them one by one.
-        for test_file in $(find . -name "test_*.py"); do
-            echo "Running tests in file: $test_file"
-            
-            # Set a retry counter
-            max_retries=5
-            retry_count=0
-            test_success=1  # Assume test fails initially
-
-            while [[ $test_success -ne 0 && $retry_count -lt $max_retries ]]; do
-                echo "Waiting for 40 seconds to execute test cases..."
-                sleep 20
-
-                # Run the whole test file using unittest
-                $test_cmd -v -c "$test_file"
-                test_success=$?  # Capture exit status (0 means success)
-                echo "Running test_success: $test_success"
-
-                if [[ $test_success -ne 0 ]]; then
-                    echo "Test in $test_file failed. Retrying... ($((retry_count + 1))/$max_retries)"
-                    retry_count=$((retry_count + 1))
-                    echo "Waiting for 30 seconds before retrying..."
-                    sleep 30
-                else
-                    echo "Test in $test_file succeeded!"
-                fi
-            done
-
-            if [[ $test_success -ne 0 ]]; then
-                echo "Test in $test_file failed after $max_retries attempts. Moving to next file."
-            fi
-
-            echo "Waiting for 20 seconds before the next test..."
-            sleep 20
-        done
+        echo "running: $test_cmd -v -c"
+        $test_cmd -v -c
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run Full Test Suite
