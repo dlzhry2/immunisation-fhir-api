@@ -1,6 +1,7 @@
 import re
 import sys
 
+
 def extract_failed_tests(log_file):
     """Extract failed test names from the log file."""
     failed_tests = []
@@ -11,6 +12,7 @@ def extract_failed_tests(log_file):
             if match:
                 failed_tests.append(match.group(1))
     return failed_tests
+
 
 if __name__ == "__main__":
     log_file = sys.argv[1]  # Get the log file path from arguments
