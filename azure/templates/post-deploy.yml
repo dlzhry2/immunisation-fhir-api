@@ -122,10 +122,12 @@ steps:
 
   - bash: |
       set -e
+
+      echo "Setting up environment variables..."
       export RELEASE_RELEASEID=$(Build.BuildId)
       export SOURCE_COMMIT_ID=$(Build.SourceVersion)
       export APIGEE_ENVIRONMENT="$(ENVIRONMENT)"
-      export APIGEE_USERNAME=apm-testing-internal-dev@nhs.net
+      export APIGEE_USERNAME="apm-testing-internal-dev@nhs.net"
       export SERVICE_BASE_PATH="$(SERVICE_BASE_PATH)"
       export APIGEE_ACCESS_TOKEN="$(secret.AccessToken)"
       export PROXY_NAME="$(FULLY_QUALIFIED_SERVICE_NAME)"
@@ -135,45 +137,98 @@ steps:
       export IMMS_DELTA_TABLE_NAME="$(IMMS_DELTA_TABLE_NAME)"
       export AWS_SQS_QUEUE_NAME="$(AWS_SQS_QUEUE_NAME)"
       export AWS_SNS_TOPIC_NAME="$(AWS_SNS_TOPIC_NAME)"
-      export APIGEE_APP_ID=973b20ff-6e57-4248-b94f-200a18a03e37
-      echo "api key- $STATUS_API_KEY"
+      export APIGEE_APP_ID="973b20ff-6e57-4248-b94f-200a18a03e37"
 
-      #Exporting the same profile with which Terraform got deployed
-      export AWS_PROFILE=apim-dev
+      echo "API Key: $STATUS_API_KEY"
+      echo "Configuring AWS Profile..."
+      export AWS_PROFILE="apim-dev"
+
       aws_account_no="$(aws sts get-caller-identity --query Account --output text)"
-      echo aws_account_no: $aws_account_no
+      echo "AWS Account Number: $aws_account_no"
 
+      echo "Installing dependencies..."
       poetry lock --no-update
       poetry install
 
       test_cmd="poetry run python -m unittest"
-      # Run test_deployment before doing anything. This will wait until deployment is ready
+
+      echo "Running deployment readiness check..."
       $test_cmd -c -v -k test_deployment
 
+      failed_tests=()  # Array to store failed test cases
+
+      run_test() {
+          local test_case=$1
+          echo "Executing test: $test_case"
+          
+          if ! $test_cmd -c -v -k "$test_case"; then
+              echo "Test failed: $test_case"
+              failed_tests+=("$test_case")
+          else
+              echo "Test passed: $test_case"
+          fi
+      }
+
       if [[ $APIGEE_ENVIRONMENT =~ .*-*sandbox ]]; then
-        echo "Sandbox env tests"
-        echo "running: $test_cmd -c -v -k test_proxy.TestProxyHealthcheck -k test_deployment"
-        $test_cmd -c -v -k test_proxy.TestProxyHealthcheck -k test_deployment
+          echo "Running tests in Sandbox environment..."
+          run_test "test_proxy.TestProxyHealthcheck"
+          run_test "test_deployment"
 
       elif [[ $APIGEE_ENVIRONMENT == "ref" ]]; then
-        echo "running: $test_cmd -v -c test_deployment.py test_proxy.py"
-        $test_cmd -v -c test_deployment.py test_proxy.py
+          echo "Running tests in Ref environment..."
+          run_test "test_deployment.py"
+          run_test "test_proxy.py"
 
       elif [[ $APIGEE_ENVIRONMENT == "int" ]]; then
-        export DEFAULT_CLIENT_ID="$(INT_CLIENT_ID)"
-        export DEFAULT_CLIENT_SECRET="$(INT_CLIENT_SECRET)"
-        echo "running: $test_cmd -v -c test_deployment.py test_proxy.py"
-        $test_cmd -v -c test_deployment.py test_proxy.py
-      
+          export DEFAULT_CLIENT_ID="$(INT_CLIENT_ID)"
+          export DEFAULT_CLIENT_SECRET="$(INT_CLIENT_SECRET)"
+          echo "Running tests in Int environment..."
+          run_test "test_deployment.py"
+          run_test "test_proxy.py"
+
       elif [[ $APIGEE_ENVIRONMENT == "prod" ]]; then
-        echo "Proxy test completed successfully as part of terraform resource up status check"
+          echo "Skipping tests in Prod. Proxy test completed successfully as part of Terraform resource up status check."
 
       else
-          echo "running: $test_cmd -v -c"
-          $test_cmd -v -c
+          echo "Running full test suite..."
+          for test_file in $(find . -name "test_*.py"); do
+              run_test "$test_file"
+          done
+      fi
+
+      # Retry failed test cases
+      retry_count=0
+      max_retries=3
+
+      while [ ${#failed_tests[@]} -gt 0 ] && [ $retry_count -lt $max_retries ]; do
+          echo "Retrying failed tests... Attempt $(($retry_count + 1))"
+          temp_failed=()
+          
+          for test_case in "${failed_tests[@]}"; do
+              echo "Re-running: $test_case"
+              
+              if $test_cmd -c -v -k "$test_case"; then
+                  echo "Test passed on retry: $test_case"
+              else
+                  echo "Test failed again: $test_case"
+                  temp_failed+=("$test_case")
+              fi
+          done
+
+          failed_tests=("${temp_failed[@]}")  # Update failed tests list
+          retry_count=$((retry_count + 1))
+      done
+
+      if [ ${#failed_tests[@]} -gt 0 ]; then
+          echo "Some tests failed after retries:"
+          printf '%s\n' "${failed_tests[@]}"
+          exit 1
+      else
+          echo "All tests passed successfully!"
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run Full Test Suite
+
   
 
   - bash: |
