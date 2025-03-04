@@ -175,8 +175,8 @@ steps:
           # Execute the test suite and store output
           $test_cmd -v | tee "$test_output"
 
-          # Extract failed test names
-          failed_tests=$(grep -E 'FAIL|ERROR' "$test_output" | awk '{print $1}')
+          # Extract failed test names using a more reliable approach
+          failed_tests=$(grep -E "FAIL: " "$test_output" | awk '{print $2}')
 
           if [[ -z "$failed_tests" ]]; then
               echo "All tests passed successfully!"
@@ -184,17 +184,28 @@ steps:
           fi
 
           # Retry failed tests
-          while [[ -n "$failed_tests" ]]; do
-              echo "Retrying failed tests..."
+          retry_count=0
+          max_retries=3
+
+          while [[ -n "$failed_tests" && $retry_count -lt $max_retries ]]; do
+              ((retry_count++))
+              echo "Retrying failed tests (Attempt $retry_count/$max_retries)..."
+
               for test in $failed_tests; do
                   echo "Running: $test_cmd -v $test"
                   if $test_cmd -v $test; then
                       echo "$test passed!"
-                      failed_tests=$(echo "$failed_tests" | grep -v "$test")  # Remove passed test
                   else
                       echo "$test failed again. Will retry."
                   fi
               done
+
+              # Check again for failed tests
+              test_output_retry="/tmp/test_output_retry.log"
+              $test_cmd -v | tee "$test_output_retry"
+
+              # Update failed_tests list
+              failed_tests=$(grep -E "FAIL: " "$test_output_retry" | awk '{print $2}')
 
               if [[ -z "$failed_tests" ]]; then
                   echo "All retried tests passed!"
@@ -204,6 +215,11 @@ steps:
               echo "Waiting before retrying failed tests..."
               sleep 10
           done
+
+          if [[ -n "$failed_tests" ]]; then
+              echo "Some tests are still failing after $max_retries retries."
+              exit 1
+          fi
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
     displayName: Run full test suite
