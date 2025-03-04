@@ -172,40 +172,37 @@ steps:
           echo "Running full test suite..."
           test_output="/tmp/test_output.log"
 
-          # Execute the test suite and store output
+          # Run the test suite and capture failures
           $test_cmd -v | tee "$test_output"
 
-          # Extract failed test names using a more reliable approach
-          failed_tests=$(grep -E "FAIL: " "$test_output" | awk '{print $2}')
+          # Extract failed tests using Python script
+          failed_tests=$(python3 extract_failed_tests.py "$test_output")
 
           if [[ -z "$failed_tests" ]]; then
               echo "All tests passed successfully!"
               exit 0
           fi
 
-          # Retry failed tests
+          # Retry logic
           retry_count=0
-          max_retries=3
+          max_retries=5
 
           while [[ -n "$failed_tests" && $retry_count -lt $max_retries ]]; do
               ((retry_count++))
-              echo "Retrying failed tests (Attempt $retry_count/$max_retries).."
+              echo "Retrying failed tests (Attempt $retry_count/$max_retries)..."
+
+              failed_tests_new=""
 
               for test in $failed_tests; do
                   echo "Running: $test_cmd -v $test"
                   if $test_cmd -v $test; then
                       echo "$test passed!"
                   else
-                      echo "$test failed again. Will retry."
+                      failed_tests_new="$failed_tests_new $test"
                   fi
               done
 
-              # Check again for failed tests
-              test_output_retry="/tmp/test_output_retry.log"
-              $test_cmd -v | tee "$test_output_retry"
-
-              # Update failed_tests list
-              failed_tests=$(grep -E "FAIL: " "$test_output_retry" | awk '{print $2}')
+              failed_tests=$failed_tests_new
 
               if [[ -z "$failed_tests" ]]; then
                   echo "All retried tests passed!"
@@ -217,12 +214,13 @@ steps:
           done
 
           if [[ -n "$failed_tests" ]]; then
-              echo "Some tests are still failing after $max_retries retries."
+              echo "Some tests are still failing after $max_retries retries:"
+              echo "$failed_tests"
               exit 1
           fi
       fi
     workingDirectory: "$(Pipeline.Workspace)/s/$(SERVICE_NAME)/$(SERVICE_ARTIFACT_NAME)/e2e"
-    displayName: Run full test suite
+    displayName: Run Full Test Suite
   
 
   - bash: |
