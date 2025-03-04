@@ -176,7 +176,8 @@ steps:
           $test_cmd -v | tee "$test_output"
 
           # Extract failed tests using Python script
-          failed_tests=$(python3 extract_failed_tests.py "$test_output")
+          failed_tests=$(python extract_failed_tests.py "$test_output")
+          echo "Extracted failed tests: $failed_tests"
 
           if [[ -z "$failed_tests" ]]; then
               echo "All tests passed successfully!"
