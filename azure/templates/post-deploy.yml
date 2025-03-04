@@ -174,6 +174,7 @@ steps:
 
           # Run the test suite and capture failures
           $test_cmd -v | tee "$test_output"
+          echo "Extracted test_output: $test_output"
 
           # Extract failed tests using Python script
           failed_tests=$(python extract_failed_tests.py "$test_output")
