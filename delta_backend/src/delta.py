@@ -44,14 +44,13 @@ def handler(event, context):
     log_data["function_name"] = "delta_sync"
     intrusion_check = True
     try:
-        dynamodb = boto3.resource("dynamodb")
+        dynamodb = boto3.resource("dynamodb", region_name="eu-west-2")
         delta_table = dynamodb.Table(delta_table_name)
 
         # Converting ApproximateCreationDateTime directly to string will give Unix timestamp
         # I am converting it to isofformat for filtering purpose. This can be changed accordingly
 
         for record in event["Records"]:
-            print(f"RECORD handler:{record}")
             start = time.time()
             log_data["date_time"] = str(datetime.now())
             intrusion_check = False
@@ -71,11 +70,11 @@ def handler(event, context):
                     if operation == "CREATE":
                         operation = "NEW"
                     resource_json = json.loads(new_image["Resource"]["S"])
-                    FHIRConverter = Converter(json.dumps(resource_json))  # Convert JSON to string
+                    FHIRConverter = Converter(json.dumps(resource_json))
                     flat_json = FHIRConverter.runConversion(False, True)  # Get the flat JSON
+                    error_records = FHIRConverter.getErrorRecords()
+                    print(error_records)  # TODO REMOVE
                     flat_json[0]["ACTION_FLAG"] = operation
-                    print(f"FLAT JSOOON: {flat_json}")  # TODO -Delete PRINT statement
-                    # print(f"{operation}")
                     response = delta_table.put_item(
                         Item={
                             "PK": str(uuid.uuid4()),
