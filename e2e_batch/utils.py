@@ -113,14 +113,20 @@ def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
     else:
         search_pattern = f"{FORWARDEDFILE_PREFIX}{filename_without_ext}"
         ack_prefix = FORWARDEDFILE_PREFIX
-    while True:
-        response = s3_client.list_objects_v2(Bucket=ACK_BUCKET, Prefix=FORWARDEDFILE_PREFIX)
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        response = s3_client.list_objects_v2(
+            Bucket=ACK_BUCKET, Prefix=ack_prefix
+        )
         if "Contents" in response:
             for obj in response["Contents"]:
                 key = obj["Key"]
                 if search_pattern in key:
                     return key
         time.sleep(5)
+    raise AckFileNotFoundError(
+        f"Ack file matching '{search_pattern}' not found in bucket {ACK_BUCKET} within {timeout} seconds."
+    )    
 
 
 def get_file_content_from_s3(bucket, key):
@@ -401,7 +407,7 @@ def generate_csv_with_ordered_100000_rows(file_name=None):
     return file_name
 
 def verify_final_ack_file(file_key):
-    """Verify if the final ack file has 100,001 rows and HEADER_RESPONSE_CODE column has only 'OK' values."""
+    """Verify if the final ack file has 100,000 rows and HEADER_RESPONSE_CODE column has only 'OK' values."""
     response = s3_client.get_object(Bucket=ACK_BUCKET, Key=file_key)
     df = pd.read_csv(io.BytesIO(response["Body"].read()), delimiter="|")
 
