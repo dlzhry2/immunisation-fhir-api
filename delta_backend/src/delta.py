@@ -57,6 +57,7 @@ def handler(event, context):
             approximate_creation_time = datetime.utcfromtimestamp(record["dynamodb"]["ApproximateCreationDateTime"])
             expiry_time = approximate_creation_time + timedelta(days=30)
             expiry_time_epoch = int(expiry_time.timestamp())
+            error_records = []
             response = str()
             imms_id = str()
             operation = str()
