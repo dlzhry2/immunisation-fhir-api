@@ -6,11 +6,6 @@ class FHIRParser:
     # parser variables
     FHIRFile = {}
 
-    # used for files
-    def parseFHIRFile(self, fhirFileName):
-        with open(fhirFileName, "r") as JSON:
-            self.FHIRFile = json.load(JSON)
-
     # used for JSON data
     def parseFHIRData(self, fhirData):
         self.FHIRFile = json.loads(fhirData) if isinstance(fhirData, str) else fhirData

@@ -7,7 +7,7 @@ from ConversionChecker import ConversionChecker
 import ConversionLayout
 
 # Converter variables
-FilePath = ""
+FHIRData = ""
 SchemaFile = {}
 imms = []
 Converted = {}

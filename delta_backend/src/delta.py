@@ -71,9 +71,8 @@ def handler(event, context):
                         operation = "NEW"
                     resource_json = json.loads(new_image["Resource"]["S"])
                     FHIRConverter = Converter(json.dumps(resource_json))
-                    flat_json = FHIRConverter.runConversion(False, True)  # Get the flat JSON
+                    flat_json = FHIRConverter.runConversion()  # Get the flat JSON
                     error_records = FHIRConverter.getErrorRecords()
-                    print(error_records)  # TODO REMOVE
                     flat_json[0]["ACTION_FLAG"] = operation
                     response = delta_table.put_item(
                         Item={
@@ -118,9 +117,16 @@ def handler(event, context):
             log_data["time_taken"] = f"{round(end - start, 5)}s"
             operation_outcome = {"record": imms_id, "operation_type": operation}
             if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                log = f"Record Successfully created for {imms_id}"
-                operation_outcome["statusCode"] = "200"
-                operation_outcome["statusDesc"] = "Successfully synched into delta"
+                if error_records:
+                    log = f"Partial success: successfully synced into delta, but issues found within record {imms_id}"
+                    operation_outcome["statusCode"] = "207"
+                    operation_outcome["statusDesc"] = (
+                        f"Partial success: successfully synced into delta, but issues found within record {json.dumps(error_records)}"
+                    )
+                else:
+                    log = f"Record Successfully created for {imms_id}"
+                    operation_outcome["statusCode"] = "200"
+                    operation_outcome["statusDesc"] = "Successfully synched into delta"
                 log_data["operation_outcome"] = operation_outcome
                 firehose_log["event"] = log_data
                 firehose_logger.send_log(firehose_log)

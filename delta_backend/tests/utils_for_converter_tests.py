@@ -59,7 +59,7 @@ class ValuesForTests:
         "manufacturer": {"display": "AstraZeneca Ltd"},
         "location": {
             "type": "Location",
-            "identifier": {"value": "X99999", "system": "https://fhir.nhs.uk/Id/ods-organization-code"},
+            "identifier": {"value": "EC1111", "system": "https://fhir.nhs.uk/Id/ods-organization-code"},
         },
         "lotNumber": "4120Z001",
         "expirationDate": "2021-07-02",
@@ -201,7 +201,7 @@ class ValuesForTests:
                 "DOSE_UNIT_CODE": "",
                 "DOSE_UNIT_TERM": "milliliter",
                 "INDICATION_CODE": "443684005",
-                "LOCATION_CODE": "X99999",
+                "LOCATION_CODE": "EC1111",
                 "LOCATION_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code",
             }
         ]
@@ -240,7 +240,7 @@ class ValuesForTests:
             "DOSE_UNIT_CODE": "",
             "DOSE_UNIT_TERM": "milliliter",
             "INDICATION_CODE": "443684005",
-            "LOCATION_CODE": "X99999",
+            "LOCATION_CODE": "EC1111",
             "LOCATION_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code",
         }
     ]
@@ -259,10 +259,10 @@ class ErrorValuesForTests:
             {
                 "resourceType": "Patient",
                 "id": "Pat1",
-                "identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number", "value": "9000000009"}],
+                "identifier": [{"system": "https://fhir.nhs.uk/Id/nhs-number", "value": ""}],
                 "name": [{"family": "Trailor", "given": ["Sam"]}],
                 "gender": "unknown",
-                "birthDate": "",
+                "birthDate": "196502-28",
                 "address": [{"postalCode": "EC1A 1BB"}],
             },
         ],
@@ -298,7 +298,7 @@ class ErrorValuesForTests:
         "manufacturer": {"display": "AstraZeneca Ltd"},
         "location": {
             "type": "Location",
-            "identifier": {"value": "X99999", "system": "https://fhir.nhs.uk/Id/ods-organization-code"},
+            "identifier": {"value": "E712", "system": "https://fhir.nhs.uk/Id/ods-organization-code"},
         },
         "lotNumber": "4120Z001",
         "expirationDate": "2021-07-02",
@@ -393,7 +393,7 @@ class ErrorValuesForTests:
                 "DOSE_UNIT_CODE": "",
                 "DOSE_UNIT_TERM": "milliliter",
                 "INDICATION_CODE": "443684005",
-                "LOCATION_CODE": "X99999",
+                "LOCATION_CODE": "E712",
                 "LOCATION_CODE_TYPE_URI": "https://fhir.nhs.uk/Id/ods-organization-code",
             }
         ]

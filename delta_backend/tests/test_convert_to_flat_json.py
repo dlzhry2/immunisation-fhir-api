@@ -21,7 +21,7 @@ MOCK_ENV_VARS = {
 
 with patch.dict("os.environ", MOCK_ENV_VARS):
     from delta import handler, Converter
-    from Converter import imms, ErrorRecords
+    from Converter import imms
 
 
 @patch.dict("os.environ", MOCK_ENV_VARS, clear=True)
@@ -97,7 +97,7 @@ class TestConvertToFlatJson(unittest.TestCase):
             self.assertEqual(filtered_items[0][key], expected_value, f"{key} mismatch")
 
     def test_fhir_converter_json_direct_data(self):
-        """it should convert json data to flat fhir"""
+        """it should convert fhir json data to flat json"""
         imms.clear()
         json_data = json.dumps(ValuesForTests.json_data)
 
@@ -107,7 +107,6 @@ class TestConvertToFlatJson(unittest.TestCase):
         FlatFile = FHIRConverter.runConversion(False, True)
 
         flatJSON = json.dumps(FlatFile)
-
         expected_imms_value = deepcopy(ValuesForTests.expected_imms)  # UPDATE is currently the default action-flag
         expected_imms = json.dumps(expected_imms_value)
         self.assertEqual(flatJSON, expected_imms)
@@ -123,12 +122,11 @@ class TestConvertToFlatJson(unittest.TestCase):
         print(end - start)
 
     def test_fhir_converter_json_error_scenario(self):
-        """it should convert json data to flat fhir - error scenarios"""
+        """it should convert fhir json data to flat json - error scenarios"""
         error_test_cases = [ErrorValuesForTests.missing_json, ErrorValuesForTests.json_dob_error]
 
         for test_case in error_test_cases:
             imms.clear()
-            ErrorRecords.clear()
             json_data = json.dumps(test_case)
 
             start = time.time()
