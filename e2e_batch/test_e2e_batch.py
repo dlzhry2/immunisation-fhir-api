@@ -9,7 +9,7 @@ from utils import (
     validate_row_count,
     upload_config_file,
     generate_csv_with_ordered_100000_rows,
-    verify_final_ack_file
+    verify_final_ack_file,
 )
 from constants import (
     SOURCE_BUCKET,
@@ -19,12 +19,13 @@ from constants import (
     POST_VALIDATION_ERROR,
     DUPLICATE,
     FILE_NAME_VAL_ERROR,
-    env_value
+    env_value,
 )
 
 
 class TestE2EBatch(unittest.TestCase):
     if env_value != "ref":
+
         def test_create_success(self):
             """Test CREATE scenario."""
             input_file = generate_csv("PHYLIS", "0.3", action_flag="CREATE")
@@ -124,9 +125,9 @@ class TestE2EBatch(unittest.TestCase):
             upload_config_file("COVID19_FULL")
             time.sleep(20)
 
-    else :
+    else:
 
-        def end_to_end_speed_test_with_100000_rows(self):
+        def test_end_to_end_speed_test_with_100000_rows(self):
             """Test end_to_end_speed_test_with_100000_rows scenario with full integration."""
             input_file = generate_csv_with_ordered_100000_rows(None)
             upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)

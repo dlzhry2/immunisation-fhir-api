@@ -1,9 +1,6 @@
 import os
-# import logging
+
 from datetime import datetime, timezone
-# logging.basicConfig(level="INFO")
-# logger = logging.getLogger()
-# logger.setLevel("INFO")
 from clients import logger
 
 env_value = os.environ.get("ENV", "internal-dev")

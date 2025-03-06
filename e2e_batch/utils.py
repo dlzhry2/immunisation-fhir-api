@@ -115,9 +115,7 @@ def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
         ack_prefix = FORWARDEDFILE_PREFIX
     start_time = time.time()
     while time.time() - start_time < timeout:
-        response = s3_client.list_objects_v2(
-            Bucket=ACK_BUCKET, Prefix=ack_prefix
-        )
+        response = s3_client.list_objects_v2(Bucket=ACK_BUCKET, Prefix=ack_prefix)
         if "Contents" in response:
             for obj in response["Contents"]:
                 key = obj["Key"]
@@ -126,7 +124,7 @@ def wait_for_ack_file(ack_prefix, input_file_name, timeout=120):
         time.sleep(5)
     raise AckFileNotFoundError(
         f"Ack file matching '{search_pattern}' not found in bucket {ACK_BUCKET} within {timeout} seconds."
-    )    
+    )
 
 
 def get_file_content_from_s3(bucket, key):
@@ -355,7 +353,8 @@ def save_json_to_file(json_data, filename="permissions_config.json"):
 def upload_config_file(value):
     input_file = create_permissions_json(value)
     save_json_to_file(input_file)
-    upload_file_to_s3(PERMISSIONS_CONFIG_FILE_KEY, CONFIG_BUCKET, INPUT_PREFIX)  
+    upload_file_to_s3(PERMISSIONS_CONFIG_FILE_KEY, CONFIG_BUCKET, INPUT_PREFIX)
+
 
 def generate_csv_with_ordered_100000_rows(file_name=None):
     """
@@ -372,9 +371,15 @@ def generate_csv_with_ordered_100000_rows(file_name=None):
 
     # Generate first 300 rows as structured NEW → UPDATE → DELETE sets
     for i in range(special_row_count // 3):  # 100 sets
-        new_row = create_row(unique_id=unique_ids[i], fore_name="PHYLIS", dose_amount="0.3", action_flag="NEW", header="NHS_NUMBER")
-        update_row = create_row(unique_id=unique_ids[i], fore_name="PHYLIS", dose_amount="0.4", action_flag="UPDATE", header="NHS_NUMBER")
-        delete_row = create_row(unique_id=unique_ids[i], fore_name="PHYLIS", dose_amount="0.1", action_flag="DELETE", header="NHS_NUMBER")
+        new_row = create_row(
+            unique_id=unique_ids[i], fore_name="PHYLIS", dose_amount="0.3", action_flag="NEW", header="NHS_NUMBER"
+        )
+        update_row = create_row(
+            unique_id=unique_ids[i], fore_name="PHYLIS", dose_amount="0.4", action_flag="UPDATE", header="NHS_NUMBER"
+        )
+        delete_row = create_row(
+            unique_id=unique_ids[i], fore_name="PHYLIS", dose_amount="0.1", action_flag="DELETE", header="NHS_NUMBER"
+        )
 
         special_data.append((new_row, update_row, delete_row))  # Keep them as ordered tuples
 
@@ -386,7 +391,9 @@ def generate_csv_with_ordered_100000_rows(file_name=None):
 
     # Generate remaining 99,700 rows as CREATE operations
     create_data = [
-        create_row(unique_id=str(uuid.uuid4()), action_flag="NEW", dose_amount="0.3", fore_name="PHYLIS", header="NHS_NUMBER")
+        create_row(
+            unique_id=str(uuid.uuid4()), action_flag="NEW", dose_amount="0.3", fore_name="PHYLIS", header="NHS_NUMBER"
+        )
         for _ in range(total_rows - special_row_count)
     ]
 
@@ -405,6 +412,7 @@ def generate_csv_with_ordered_100000_rows(file_name=None):
     file_name = f"RSV_Vaccinations_v5_YGM41_{timestamp}.csv" if not file_name else file_name
     df.to_csv(file_name, index=False, sep="|", quoting=csv.QUOTE_MINIMAL)
     return file_name
+
 
 def verify_final_ack_file(file_key):
     """Verify if the final ack file has 100,000 rows and HEADER_RESPONSE_CODE column has only 'OK' values."""
