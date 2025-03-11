@@ -425,6 +425,8 @@ def verify_final_ack_file(file_key):
     if row_count != 100000 or not all_ok:
         raise AssertionError(
             f"Final Ack file '{file_key}' failed validation. "
-            f"Row count: {row_count}, Unique HEADER_RESPONSE_CODE values: {df[HEADER_RESPONSE_CODE_COLUMN].iloc[0]}, All values OK: {all_ok}"
+            f"Row count: {row_count}"
+            f"Unique HEADER_RESPONSE_CODE values: {df[HEADER_RESPONSE_CODE_COLUMN].iloc[0]}"
+            f"All values OK: {all_ok}"
         )
     return True
