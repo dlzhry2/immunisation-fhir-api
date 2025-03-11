@@ -128,7 +128,7 @@ class TestE2EBatch(unittest.TestCase):
     else:
 
         def test_end_to_end_speed_test_with_100000_rows(self):
-            """Test end_to_end_speed_test_with_100000_rows scenario with full integration"""
+            """Test end_to_end_speed_test_with_100000_rows scenario with full integration."""
             input_file = generate_csv_with_ordered_100000_rows(None)
             upload_file_to_s3(input_file, SOURCE_BUCKET, INPUT_PREFIX)
             final_ack_key = wait_for_ack_file(None, input_file, timeout=1800)
