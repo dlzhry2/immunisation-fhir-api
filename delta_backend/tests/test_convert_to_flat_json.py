@@ -11,7 +11,7 @@ from tests.utils_for_converter_tests import ValuesForTests, ErrorValuesForTests
 from unittest.mock import patch
 from botocore.config import Config
 from pathlib import Path
-
+from SchemaParser import SchemaParser
 
 MOCK_ENV_VARS = {
     "AWS_SQS_QUEUE_URL": "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
@@ -184,6 +184,33 @@ class TestConvertToFlatJson(unittest.TestCase):
                 result = self.table.scan()
                 items = result.get("Items", [])
                 self.clear_table()
+
+    class TestSchemaParser(unittest.TestCase):
+        """Tests the schema parser"""
+
+        def setUp(self):
+            self.parser = SchemaParser()
+            self.schema_data = {
+                "conversions": [{"conversion": "type1"}, {"conversion": "type2"}, {"conversion": "type3"}]
+            }
+            self.parser.parseSchema(self.schema_data)
+
+        def test_parseSchema(self):
+            self.assertEqual(self.parser.SchemaFile, self.schema_data)
+            self.assertEqual(self.parser.Conversions, self.schema_data["conversions"])
+
+        def test_conversionCount(self):
+            self.assertEqual(self.parser.conversionCount(), 3)
+
+        def test_getConversions(self):
+            self.assertEqual(self.parser.getConversions(), self.schema_data["conversions"])
+
+        def test_getConversion_valid_index(self):
+            self.assertEqual(self.parser.getConversion(1), {"conversion": "type2"})
+
+        def test_getConversion_invalid_index(self):
+            with self.assertRaises(IndexError):
+                self.parser.getConversion(5)
 
     def clear_table(self):
         scan = self.table.scan()
