@@ -5,14 +5,15 @@ import time
 from decimal import Decimal
 from copy import deepcopy
 from unittest import TestCase
+from unittest.mock import patch, Mock
 from moto import mock_dynamodb, mock_sqs
 from boto3 import resource as boto3_resource, client as boto3_client
 from tests.utils_for_converter_tests import ValuesForTests, ErrorValuesForTests
-from unittest.mock import patch
 from botocore.config import Config
 from pathlib import Path
 from SchemaParser import SchemaParser
 from Converter import Converter
+from ConversionChecker import ConversionChecker
 
 
 MOCK_ENV_VARS = {
@@ -292,6 +293,51 @@ class TestConvertToFlatJson(unittest.TestCase):
             error_records[0]["message"],
         )
         self.assertEqual(error_records[0]["code"], 0)
+
+    @patch("ConversionChecker.LookUpData")
+    def test_convert_to_not_empty(self, MockLookUpData):
+
+        dataParser = Mock()
+
+        checker = ConversionChecker(dataParser, summarise=False, report_unexpected_exception=True)
+
+        result = checker._convertToNotEmpty(None, "fieldName", "Some data", False, True)
+        self.assertEqual(result, "Some data")
+
+        result = checker._convertToNotEmpty(None, "fieldName", "", False, True)
+        self.assertEqual(result, "")
+
+    @patch("ConversionChecker.LookUpData")
+    def test_convert_to_nhs_number(self, MockLookUpData):
+
+        dataParser = Mock()
+
+        checker = ConversionChecker(dataParser, summarise=False, report_unexpected_exception=True)
+
+        valid_nhs_number = "6000000000"
+        result = checker._convertToNHSNumber(None, "fieldName", valid_nhs_number, False, True)
+        self.assertTrue("NHS Number does not meet regex " in result)
+
+        invalid_nhs_number = "1234567890"
+        result = checker._convertToNHSNumber(None, "fieldName", invalid_nhs_number, False, True)
+
+    @patch("ConversionChecker.LookUpData")
+    def test_convert_to_date(self, MockLookUpData):
+        dataParser = Mock()
+
+        checker = ConversionChecker(dataParser, summarise=False, report_unexpected_exception=True)
+
+        valid_date = "2022-01-01"
+        result = checker._convertToDate("%Y-%m-%d", "fieldName", valid_date, False, True)
+        self.assertEqual(result, "2022-01-01")
+
+        invalid_date = "invalid_date"
+        result = checker._convertToDate("%Y-%m-%d", "fieldName", invalid_date, False, True)
+        self.assertTrue("Unexpected exception" in result)
+
+        # Test for error case with exception
+        result = checker._convertToDate("%Y-%m-%d", "fieldName", None, False, True)
+        self.assertTrue("Unexpected exception" in result)
 
     def clear_table(self):
         scan = self.table.scan()
