@@ -112,6 +112,7 @@ class TestConvertToFlatJson(unittest.TestCase):
         self.assertEqual(flatJSON, expected_imms)
 
         errorRecords = FHIRConverter.getErrorRecords()
+        print(flatJSON)
 
         if len(errorRecords) > 0:
             print("Converted With Errors")
@@ -135,7 +136,7 @@ class TestConvertToFlatJson(unittest.TestCase):
             FlatFile = FHIRConverter.runConversion(False, True)
 
             flatJSON = json.dumps(FlatFile)
-
+            print(flatJSON)
             # if len(flatJSON) > 0:
             #     print(flatJSON)
             # Fix error handling
