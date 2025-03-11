@@ -23,7 +23,7 @@ MOCK_ENV_VARS = {
 
 with patch.dict("os.environ", MOCK_ENV_VARS):
     from delta import handler, Converter
-    from Converter import imms
+    from Converter import imms, ErrorRecords
 
 
 @patch.dict("os.environ", MOCK_ENV_VARS, clear=True)
@@ -262,6 +262,36 @@ class TestConvertToFlatJson(unittest.TestCase):
             converter.getErrorRecords()[0]["message"],
         )
         self.assertEqual(converter.getErrorRecords()[0]["code"], 0)
+
+    @patch("Converter.SchemaParser.getConversions")
+    @patch("Converter.FHIRParser.getKeyValue")
+    def test_conversion_exceptions(self, mock_get_key_value, mock_get_conversions):
+        mock_get_conversions.side_effect = Exception("Error while getting conversions")
+        mock_get_key_value.side_effect = Exception("Key value retrieval failed")
+        ErrorRecords.clear()
+        converter = Converter(fhir_data="some_data")
+
+        schema = {
+            "conversions": [
+                {
+                    "fieldNameFHIR": "some_field",
+                    "fieldNameFlat": "flat_field",
+                    "expression": {"expressionType": "type", "expressionRule": "rule"},
+                }
+            ]
+        }
+        converter.SchemaFile = schema
+
+        response = converter.runConversion()
+
+        error_records = converter.getErrorRecords()
+        self.assertEqual(len(error_records), 1)
+
+        self.assertIn(
+            "FHIR Parser Unexpected exception [JSONDecodeError]: Expecting value: line 1 column 1 (char 0)",
+            error_records[0]["message"],
+        )
+        self.assertEqual(error_records[0]["code"], 0)
 
     def clear_table(self):
         scan = self.table.scan()
