@@ -12,6 +12,8 @@ from unittest.mock import patch
 from botocore.config import Config
 from pathlib import Path
 from SchemaParser import SchemaParser
+from Converter import Converter
+
 
 MOCK_ENV_VARS = {
     "AWS_SQS_QUEUE_URL": "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
@@ -197,6 +199,69 @@ class TestConvertToFlatJson(unittest.TestCase):
         schema_data = {"conversions": [{"conversion": "type1"}, {"conversion": "type2"}, {"conversion": "type3"}]}
         parser.parseSchema(schema_data)
         self.assertEqual(parser.getConversion(1), {"conversion": "type2"})
+
+    # TODO revisit and amend if necessary
+
+    @patch("Converter.FHIRParser")
+    def test_fhir_parser_exception(self, mock_fhir_parser):
+        # Mock FHIRParser to raise an exception
+        mock_fhir_parser.side_effect = Exception("FHIR Parsing Error")
+        converter = Converter(fhir_data="some_data")
+
+        response = converter.runConversion()
+
+        # Check if the error message was added to ErrorRecords
+        self.assertEqual(len(converter.getErrorRecords()), 2)
+        self.assertIn("FHIR Parser Unexpected exception", converter.getErrorRecords()[0]["message"])
+        self.assertEqual(converter.getErrorRecords()[0]["code"], 0)
+
+    @patch("Converter.SchemaParser")
+    def test_schema_parser_exception(self, mock_schema_parser):
+        # Mock SchemaParser to raise an exception
+        mock_schema_parser.side_effect = Exception("Schema Parsing Error")
+        converter = Converter(fhir_data="some_data")
+
+        response = converter.runConversion()
+
+        # Check if the error message was added to ErrorRecords
+        self.assertEqual(len(converter.getErrorRecords()), 4)
+        self.assertIn(
+            "FHIR Parser Unexpected exception [JSONDecodeError]: Expecting value: line 1 column 1 (char 0)",
+            converter.getErrorRecords()[0]["message"],
+        )
+        self.assertEqual(converter.getErrorRecords()[0]["code"], 0)
+
+    @patch("Converter.ConversionChecker")
+    def test_conversion_checker_exception(self, mock_conversion_checker):
+        # Mock ConversionChecker to raise an exception
+        mock_conversion_checker.side_effect = Exception("Conversion Checking Error")
+        converter = Converter(fhir_data="some_data")
+
+        response = converter.runConversion()
+
+        # Check if the error message was added to ErrorRecords
+        self.assertEqual(len(converter.getErrorRecords()), 1)
+        self.assertIn(
+            "FHIR Parser Unexpected exception [JSONDecodeError]: Expecting value: line 1 column 1 (char 0)",
+            converter.getErrorRecords()[0]["message"],
+        )
+        self.assertEqual(converter.getErrorRecords()[0]["code"], 0)
+
+    @patch("Converter.SchemaParser.getConversions")
+    def test_get_conversions_exception(self, mock_get_conversions):
+        # Mock getConversions to raise an exception
+        mock_get_conversions.side_effect = Exception("Error while getting conversions")
+        converter = Converter(fhir_data="some_data")
+
+        response = converter.runConversion()
+
+        # Check if the error message was added to ErrorRecords
+        self.assertEqual(len(converter.getErrorRecords()), 3)
+        self.assertIn(
+            "FHIR Parser Unexpected exception [JSONDecodeError]: Expecting value: line 1 column 1 (char 0)",
+            converter.getErrorRecords()[0]["message"],
+        )
+        self.assertEqual(converter.getErrorRecords()[0]["code"], 0)
 
     def clear_table(self):
         scan = self.table.scan()
