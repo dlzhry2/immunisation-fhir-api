@@ -112,7 +112,7 @@ class TestConvertToFlatJson(unittest.TestCase):
         self.assertEqual(flatJSON, expected_imms)
 
         errorRecords = FHIRConverter.getErrorRecords()
-        print(flatJSON)
+        # print(flatJSON)
 
         if len(errorRecords) > 0:
             print("Converted With Errors")
@@ -136,7 +136,8 @@ class TestConvertToFlatJson(unittest.TestCase):
             FlatFile = FHIRConverter.runConversion(False, True)
 
             flatJSON = json.dumps(FlatFile)
-            print(flatJSON)
+            # TODO Error handling tests to be updated
+            # print(flatJSON)
             # if len(flatJSON) > 0:
             #     print(flatJSON)
             # Fix error handling
@@ -185,32 +186,17 @@ class TestConvertToFlatJson(unittest.TestCase):
                 items = result.get("Items", [])
                 self.clear_table()
 
-    class TestSchemaParser(unittest.TestCase):
-        """Tests the schema parser"""
+    def test_conversionCount(self):
+        parser = SchemaParser()
+        schema_data = {"conversions": [{"conversion": "type1"}, {"conversion": "type2"}, {"conversion": "type3"}]}
+        parser.parseSchema(schema_data)
+        self.assertEqual(parser.conversionCount(), 3)
 
-        def setUp(self):
-            self.parser = SchemaParser()
-            self.schema_data = {
-                "conversions": [{"conversion": "type1"}, {"conversion": "type2"}, {"conversion": "type3"}]
-            }
-            self.parser.parseSchema(self.schema_data)
-
-        def test_parseSchema(self):
-            self.assertEqual(self.parser.SchemaFile, self.schema_data)
-            self.assertEqual(self.parser.Conversions, self.schema_data["conversions"])
-
-        def test_conversionCount(self):
-            self.assertEqual(self.parser.conversionCount(), 3)
-
-        def test_getConversions(self):
-            self.assertEqual(self.parser.getConversions(), self.schema_data["conversions"])
-
-        def test_getConversion_valid_index(self):
-            self.assertEqual(self.parser.getConversion(1), {"conversion": "type2"})
-
-        def test_getConversion_invalid_index(self):
-            with self.assertRaises(IndexError):
-                self.parser.getConversion(5)
+    def test_getConversion(self):
+        parser = SchemaParser()
+        schema_data = {"conversions": [{"conversion": "type1"}, {"conversion": "type2"}, {"conversion": "type3"}]}
+        parser.parseSchema(schema_data)
+        self.assertEqual(parser.getConversion(1), {"conversion": "type2"})
 
     def clear_table(self):
         scan = self.table.scan()
