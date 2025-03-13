@@ -31,6 +31,11 @@ resource "aws_iam_policy" "kinesis_kms_policy" {
       Resource = aws_kms_key.kinesis_stream_encryption.arn
     }]
   })
+
+  tags = {
+           Environment = "non-prod"
+           Project     = "immunisation-fhir-api"
+        }
 }
 
 resource "aws_iam_role_policy_attachment" "kinesis_role_policy_attachment" {

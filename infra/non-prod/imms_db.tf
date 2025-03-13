@@ -23,7 +23,10 @@ resource "aws_dynamodb_table" "events-dynamodb-int-table" {
     }
 
     tags = {
+        Environment               = "non-prod"
         NHSE-Enable-Dynamo-Backup = "True"
+        Project                   = "immunisation-fhir-api"
+        
     }
 
     global_secondary_index {
@@ -70,7 +73,10 @@ resource "aws_dynamodb_table" "events-dynamodb-ref-table" {
     }
 
     tags = {
+        Environment               = "non-prod"
         NHSE-Enable-Dynamo-Backup = "True"
+        Project                   = "immunisation-fhir-api"
+        
     }
 
     global_secondary_index {
@@ -117,7 +123,10 @@ resource "aws_dynamodb_table" "events-dynamodb-table" {
     }
 
     tags = {
+        Environment               = "non-prod"
         NHSE-Enable-Dynamo-Backup = "True"
+        Project                   = "immunisation-fhir-api"
+        
     }
 
     global_secondary_index {

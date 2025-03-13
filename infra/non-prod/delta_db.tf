@@ -48,6 +48,11 @@ resource "aws_dynamodb_table" "delta-dynamodb-int-table" {
         enabled = true
         kms_key_arn = aws_kms_key.dynamodb_encryption.arn
     }
+
+    tags = {
+           Environment = "non-prod"
+           Project     = "immunisation-fhir-api"
+        }
 }
 
 resource "aws_dynamodb_table" "delta-dynamodb-ref-table" {
@@ -100,6 +105,11 @@ resource "aws_dynamodb_table" "delta-dynamodb-ref-table" {
         enabled = true
         kms_key_arn = aws_kms_key.dynamodb_encryption.arn
     }
+
+    tags = {
+           Environment = "non-prod"
+           Project     = "immunisation-fhir-api"
+        }
 }
 
 resource "aws_dynamodb_table" "delta-dynamodb-table" {
@@ -152,4 +162,9 @@ resource "aws_dynamodb_table" "delta-dynamodb-table" {
         enabled = true
         kms_key_arn = aws_kms_key.dynamodb_encryption.arn
     }
+
+    tags = {
+           Environment = "non-prod"
+           Project     = "immunisation-fhir-api"
+        }
 }
