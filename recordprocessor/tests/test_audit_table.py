@@ -4,10 +4,11 @@ from unittest import TestCase
 from unittest.mock import patch
 from boto3 import client as boto3_client
 from moto import mock_dynamodb
+from errors import UnhandledAuditTableError
 
 from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT
 from tests.utils_for_recordprocessor_tests.generic_setup_and_teardown import GenericSetUp, GenericTearDown
-from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import MockFileDetails
+from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests import MockFileDetails, FileDetails
 from tests.utils_for_recordprocessor_tests.utils_for_recordprocessor_tests import (
     deserialize_dynamodb_types,
     add_entry_to_table,
@@ -22,6 +23,7 @@ with patch.dict("os.environ", MOCK_ENVIRONMENT_DICT):
 
     from audit_table import get_next_queued_file_details, change_audit_table_status_to_processed
     from clients import REGION_NAME
+
 
 dynamodb_client = boto3_client("dynamodb", region_name=REGION_NAME)
 
@@ -75,17 +77,32 @@ class TestAuditTable(TestCase):
 
     def test_change_audit_table_status_to_processed(self):
         """Checks audit table correctly updates a record as processed"""
+        # Test case 1: file should be updated with status of 'Processed'.
 
         add_entry_to_table(MockFileDetails.rsv_ravs, file_status=FileStatus.QUEUED)
         add_entry_to_table(MockFileDetails.flu_emis, file_status=FileStatus.QUEUED)
         table_items = dynamodb_client.scan(TableName=AUDIT_TABLE_NAME).get("Items", [])
 
         expected_table_entry = {**MockFileDetails.rsv_ravs.audit_table_entry, "status": {"S": FileStatus.PROCESSED}}
-
-        file_key = "RSV_Vaccinations_v5_X26_20210730T12000000.csv"
-        message_id = "rsv_ravs_test_id_1"
+        ravs_rsv_test_file = FileDetails("RSV", "RAVS", "X26")
+        file_key = ravs_rsv_test_file.file_key
+        message_id = ravs_rsv_test_file.message_id_order
 
         change_audit_table_status_to_processed(file_key, message_id)
         table_items = dynamodb_client.scan(TableName=AUDIT_TABLE_NAME).get("Items", [])
 
         self.assertIn(expected_table_entry, table_items)
+
+        # Test case 2: # Audit table status should not be updated. Error should be raised.
+        emis_flu_test_file_2 = FileDetails("FLU", "EMIS", "YGM41")
+
+        message_id = emis_flu_test_file_2.message_id
+        file_key = (emis_flu_test_file_2.file_key,)
+        with self.assertRaises(UnhandledAuditTableError):
+            change_audit_table_status_to_processed(file_key, message_id)
+
+        # Test case 3: # Audit table status should updated to processed for all values.
+        message_id = emis_flu_test_file_2.message_id_order
+        file_key = emis_flu_test_file_2.file_key
+        change_audit_table_status_to_processed(file_key, message_id)
+        table_items = dynamodb_client.scan(TableName=AUDIT_TABLE_NAME).get("Items", [])
