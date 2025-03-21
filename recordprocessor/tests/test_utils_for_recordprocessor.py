@@ -14,7 +14,7 @@ from tests.utils_for_recordprocessor_tests.values_for_recordprocessor_tests impo
 )
 from tests.utils_for_recordprocessor_tests.mock_environment_variables import MOCK_ENVIRONMENT_DICT, BucketNames
 
-with patch("os.environ", MOCK_ENVIRONMENT_DICT):  
+with patch("os.environ", MOCK_ENVIRONMENT_DICT):
     from utils_for_recordprocessor import get_environment, get_csv_content_dict_reader, create_diagnostics_dictionary, extract_content
     from file_level_validation import move_file
 
