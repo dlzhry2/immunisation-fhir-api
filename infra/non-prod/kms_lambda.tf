@@ -53,11 +53,6 @@ resource "aws_kms_key" "lambda_env_encryption" {
  ]
 }
 POLICY
-
-tags = {
-           Environment = "non-prod"
-           Project     = "immunisation-fhir-api"
-        }
 }
 
 resource "aws_kms_alias" "lambda_env_encryption" {

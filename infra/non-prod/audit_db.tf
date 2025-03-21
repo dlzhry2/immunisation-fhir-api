@@ -40,11 +40,6 @@ resource "aws_dynamodb_table" "audit-table-int" {
         enabled = true
         kms_key_arn = aws_kms_key.dynamodb_encryption.arn
     }
-
-    tags = {
-           Environment = "non-prod"
-           Project     = "immunisation-fhir-api"
-        }
 }
 
 resource "aws_dynamodb_table" "audit-table-ref" {
@@ -89,11 +84,6 @@ resource "aws_dynamodb_table" "audit-table-ref" {
         enabled = true
         kms_key_arn = aws_kms_key.dynamodb_encryption.arn
     }
-
-    tags = {
-           Environment = "non-prod"
-           Project     = "immunisation-fhir-api"
-        }
 }
 
 resource "aws_dynamodb_table" "audit-table" {
@@ -138,9 +128,4 @@ resource "aws_dynamodb_table" "audit-table" {
         enabled = true
         kms_key_arn = aws_kms_key.dynamodb_encryption.arn
     }
-
-    tags = {
-           Environment = "non-prod"
-           Project     = "immunisation-fhir-api"
-        }
 }

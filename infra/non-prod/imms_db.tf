@@ -22,13 +22,6 @@ resource "aws_dynamodb_table" "events-dynamodb-int-table" {
         type = "S"
     }
 
-    tags = {
-        Environment               = "non-prod"
-        NHSE-Enable-Dynamo-Backup = "True"
-        Project                   = "immunisation-fhir-api"
-        
-    }
-
     global_secondary_index {
         name               = "PatientGSI"
         hash_key           = "PatientPK"
@@ -72,13 +65,6 @@ resource "aws_dynamodb_table" "events-dynamodb-ref-table" {
         type = "S"
     }
 
-    tags = {
-        Environment               = "non-prod"
-        NHSE-Enable-Dynamo-Backup = "True"
-        Project                   = "immunisation-fhir-api"
-        
-    }
-
     global_secondary_index {
         name               = "PatientGSI"
         hash_key           = "PatientPK"
@@ -120,13 +106,6 @@ resource "aws_dynamodb_table" "events-dynamodb-table" {
     attribute {
         name = "IdentifierPK"
         type = "S"
-    }
-
-    tags = {
-        Environment               = "non-prod"
-        NHSE-Enable-Dynamo-Backup = "True"
-        Project                   = "immunisation-fhir-api"
-        
     }
 
     global_secondary_index {

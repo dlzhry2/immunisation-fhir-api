@@ -45,11 +45,6 @@ resource "aws_kms_key" "s3_shared_key" {
  ]
 }
 POLICY
-
-tags = {
-           Environment = "non-prod"
-           Project     = "immunisation-fhir-api"
-        }
 }
 
 resource "aws_kms_alias" "s3_shared_key" {
