@@ -16,13 +16,12 @@ variable "az_count" {
 }
 
 variable "app_image" {
-    description = "Docker image to run in the ECS cluster change to Grafana image in registry"
+    description = "Docker image to run in the ECS cluster, derived from the account ID and region"
 }
 
-variable "tags" {
-  description = "A map of tags to add to all resources"
-  type        = map(string)
-  default     = {}
+variable "app_version" {
+    description = "Version of the Docker image to run in the ECS cluster"
+    default     = "11.0.0-22.04_stable"
 }
 
 variable "app_port" {
@@ -49,16 +48,39 @@ variable "cidr_block" {
     description = "CIDR block for the VPC"
 }
 
-variable "prefix" {
-  description = "Prefix for all resources"
-}
-
 variable "log_group" {
-  description = "CloudWatch log group name"
+    description = "CloudWatch log group name"
 }
 
 variable "use_natgw" {
-  description = "Boolean to determine whether to use the NAT Gateway module"
-  type        = bool
-  default     = true
+    description = "Boolean to determine whether to use the NAT Gateway module"
+    type        = bool
+    default     = true
+}
+
+variable "environment" {
+    description = "Environment to deploy to"
+}
+
+variable "prefix" {
+    description = "Prefix for all resources"
+}
+
+variable "tags" {
+    description = "A map of tags to add to all resources"
+    type        = map(string)
+    default     = {}
+}
+
+locals {
+    account_id = data.aws_caller_identity.current.account_id
+    app_image  = "${local.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.prefix}:${var.app_version}"
+    tags = {
+        Environment = var.environment
+        Project     = var.prefix
+    }
+}
+
+output "app_image" {
+    value = local.app_image
 }

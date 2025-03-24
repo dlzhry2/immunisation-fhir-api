@@ -6,11 +6,6 @@ output "alb_hostname" {
   value = "${aws_alb.main.dns_name}:3000"
 }
 
-output "app_image" {
-  description = "The Docker image used for the Grafana application"
-  value       = var.app_image
-}
-
 output "ecs_cluster_id" {
   description = "The ID of the ECS cluster"
   value       = aws_ecs_cluster.main.id

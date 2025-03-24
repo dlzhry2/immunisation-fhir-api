@@ -6,8 +6,6 @@ ecs_auto_scale_role_name = "myEcsAutoScaleRole"
 
 az_count = 2
 
-app_image = "345594581768.dkr.ecr.eu-west-2.amazonaws.com/imms-fhir-api-grafana:11.0.0-22.04_stable"
-
 app_port = 3000
 
 app_count = 1
@@ -22,11 +20,10 @@ cidr_block = "10.0.0.0/16"
 
 prefix = "imms-fhir-api-grafana"
 
-tags = {
-  Environment = "non-prod"
-  Project     = "immunisation-fhir-api"
-}
+app_version = "11.0.0-22.04_stable"
 
 log_group = "/ecs/imms-fhir-api-grafana"
 
 use_natgw = true
+
+environment = "non-prod"
