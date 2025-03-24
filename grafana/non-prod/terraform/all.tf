@@ -106,7 +106,7 @@ data "template_file" "grafana_app" {
     template = file("${path.module}/templates/ecs/grafana_app.json.tpl")
 
     vars = {
-        app_image      = var.app_image
+        app_image      = local.app_image
         app_port       = var.app_port
         fargate_cpu    = var.fargate_cpu
         fargate_memory = var.fargate_memory
@@ -303,7 +303,7 @@ data "aws_iam_policy_document" "ecs_auto_scale_role" {
 }
 # ECS auto scale role
 resource "aws_iam_role" "ecs_auto_scale_role" {
-  name               = var.ecs_auto_scale_role_name
+  name               = "${var.prefix}-${var.ecs_auto_scale_role_name}"
   assume_role_policy = data.aws_iam_policy_document.ecs_auto_scale_role.json
 }
 # ECS auto scale role policy attachment

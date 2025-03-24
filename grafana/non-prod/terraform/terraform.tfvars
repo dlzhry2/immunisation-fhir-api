@@ -1,8 +1,6 @@
 aws_region = "eu-west-2"
 
-ec2_task_execution_role_name = "myEcsTaskExecutionRole"
-
-ecs_auto_scale_role_name = "myEcsAutoScaleRole"
+ecs_auto_scale_role_name = "EcsAutoScaleRole"
 
 az_count = 2
 
