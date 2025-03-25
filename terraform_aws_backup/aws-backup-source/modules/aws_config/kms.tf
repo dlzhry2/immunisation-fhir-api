@@ -31,4 +31,13 @@ data "aws_iam_policy_document" "backup_key_policy" {
     actions   = ["kms:*"]
     resources = ["*"]
   }
+  statement {
+    sid = "AllowBackupUseOfKey"
+    principals {
+      type        = "Service"
+      identifiers = ["sns.amazonaws.com"]
+    }
+    actions   = ["kms:GenerateDataKey", "kms:Decrypt"]
+    resources = ["*"]
+  }
 }
