@@ -175,7 +175,7 @@ class TestConvertToFlatJson(unittest.TestCase):
 
                 # Retrieve items from DynamoDB
                 result = self.table.scan()
-                items = str(result.get("Items", []))
+                items = result.get("Items", [])
 
                 expected_values = ValuesForTests.expected_static_values
                 expected_imms = ValuesForTests.get_expected_imms(test_case["EXPECTED_ACTION_FLAG"])
