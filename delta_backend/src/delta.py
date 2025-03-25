@@ -84,7 +84,7 @@ def handler(event, context):
                             "SupplierSystem": supplier_system,
                             "DateTimeStamp": approximate_creation_time.isoformat(),
                             "Source": delta_source,
-                            "Imms": flat_json,
+                            "Imms": str(flat_json),
                             "ExpiresAt": expiry_time_epoch,
                         }
                     )
