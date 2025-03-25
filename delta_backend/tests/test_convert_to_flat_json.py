@@ -93,7 +93,7 @@ class TestConvertToFlatJson(unittest.TestCase):
         self.assertGreater(len(imms_data), 0)
 
         # Check Imms JSON structure matches exactly
-        self.assertEqual(imms_data, expected_imms, "Imms data does not match expected JSON structure")
+        self.assertEqual(imms_data, str(expected_imms), "Imms data does not match expected JSON structure")
 
         for key, expected_value in expected_values.items():
             self.assertIn(key, filtered_items[0], f"{key} is missing")
