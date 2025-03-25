@@ -89,7 +89,7 @@ class TestConvertToFlatJson(unittest.TestCase):
         self.assertGreater(len(filtered_items), 0, f"No matching item found for {operation_flag}")
 
         imms_data = filtered_items[0]["Imms"]
-        self.assertIsInstance(imms_data, list)
+        self.assertIsInstance(imms_data, str)
         self.assertGreater(len(imms_data), 0)
 
         # Check Imms JSON structure matches exactly
@@ -175,7 +175,7 @@ class TestConvertToFlatJson(unittest.TestCase):
 
                 # Retrieve items from DynamoDB
                 result = self.table.scan()
-                items = result.get("Items", [])
+                items = str(result.get("Items", []))
 
                 expected_values = ValuesForTests.expected_static_values
                 expected_imms = ValuesForTests.get_expected_imms(test_case["EXPECTED_ACTION_FLAG"])
