@@ -309,11 +309,6 @@ class TestSearchImmunization(ImmunizationBaseTest):
                 result_ids = [result["resource"]["id"] for result in results["entry"]]
                 created_and_returned_ids = list(set(result_ids) & set(created_resource_ids))
                 assert len(created_and_returned_ids) == len(search.expected_indexes)
-                print("Expected indexes:", search.expected_indexes)
-                print("Expected resource IDs:", [created_resource_ids[i] for i in search.expected_indexes])
-                print("Actual returned IDs:", result_ids)
-                print("Created and returned IDs:", created_and_returned_ids)
-
                 for expected_index in search.expected_indexes:
                     assert created_resource_ids[expected_index] in result_ids
 
