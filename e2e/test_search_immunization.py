@@ -162,13 +162,15 @@ class TestSearchImmunization(ImmunizationBaseTest):
         time_1 = "2024-01-30T13:28:17.271+00:00"
         time_2 = "2024-02-01T13:28:17.271+00:00"
         stored_records = [
-            generate_imms_resource(valid_nhs_number1, VaccineTypes.mmr),
-            generate_imms_resource(valid_nhs_number1, VaccineTypes.flu),
-            generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19),
-            generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19, time_1),
-            generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19, time_2),
-            generate_imms_resource(valid_nhs_number2, VaccineTypes.flu),
-            generate_imms_resource(valid_nhs_number2, VaccineTypes.covid_19),
+            generate_imms_resource(valid_nhs_number1, VaccineTypes.mmr, imms_identifier_value=str(uuid.uuid4())),
+            generate_imms_resource(valid_nhs_number1, VaccineTypes.flu, imms_identifier_value=str(uuid.uuid4())),
+            generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19, imms_identifier_value=str(uuid.uuid4())),
+            generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19, time_1,
+                                   imms_identifier_value=str(uuid.uuid4())),
+            generate_imms_resource(valid_nhs_number1, VaccineTypes.covid_19, time_2,
+                                   imms_identifier_value=str(uuid.uuid4())),
+            generate_imms_resource(valid_nhs_number2, VaccineTypes.flu, imms_identifier_value=str(uuid.uuid4())),
+            generate_imms_resource(valid_nhs_number2, VaccineTypes.covid_19, imms_identifier_value=str(uuid.uuid4())),
         ]
 
         created_resource_ids = list(self.store_records(*stored_records))
