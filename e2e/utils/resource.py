@@ -36,8 +36,7 @@ def generate_imms_resource(
     imms = deepcopy(load_example(f"Immunization/{sample_data_file_name}.json"))
 
     # Apply identifier directly
-    if imms_identifier_value is not None:
-        imms["identifier"][0]["value"] = imms_identifier_value
+    imms["identifier"][0]["value"] = imms_identifier_value or str(uuid.uuid4())
 
     if nhs_number is not None:
         imms["contained"][1]["identifier"][0]["value"] = nhs_number
@@ -74,7 +73,6 @@ def generate_filtered_imms_resource(
         + f"_filtered_for_{crud_operation_to_filter_for.lower()}{s_flag_string}"
     )
     imms = deepcopy(load_example(f"{file_name}.json"))
-
     # Apply identifier directly
     imms["identifier"][0]["value"] = imms_identifier_value or str(uuid.uuid4())
 
