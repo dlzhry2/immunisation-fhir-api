@@ -37,7 +37,7 @@ def generate_imms_resource(
 
     # Apply identifier directly
     if imms_identifier_value is not None:
-        imms["identifier"][0]["value"] = imms_identifier_value or str(uuid.uuid4())
+        imms["identifier"][0]["value"] = imms_identifier_value
 
     if nhs_number is not None:
         imms["contained"][1]["identifier"][0]["value"] = nhs_number
