@@ -1,13 +1,16 @@
+
+# Handles the transformation logic for each field based on the schema
 # Root and base type expression checker functions
 import ExceptionMessages
-import datetime
+from datetime import datetime,timedelta
 import uuid
+import pytz
 import re
 from LookUpData import LookUpData
-
+     
 
 # --------------------------------------------------------------------------------------------------------
-# record exception capture
+# Custom error type to handle validation failures
 class RecordError(Exception):
 
     def __init__(self, code=None, message=None, details=None):
@@ -24,6 +27,7 @@ class RecordError(Exception):
 
 # ---------------------------------------------------------------------------------------------------------
 # main conversion checker
+# Conversion engine for expression-based field transformation
 class ConversionChecker:
     # checker settings
     summarise = False
@@ -37,11 +41,15 @@ class ConversionChecker:
         self.summarise = summarise  # instance attribute
         self.report_unexpected_exception = report_unexpected_exception  # instance attribute
 
-    # exposed functions
+    # Main entry point called by converter.py
     def convertData(self, expressionType, expressionRule, fieldName, fieldValue):
         match expressionType:
             case "DATECONVERT":
                 return self._convertToDate(
+                    expressionRule, fieldName, fieldValue, self.summarise, self.report_unexpected_exception
+                )
+            case "DATETIME":
+                return self._convertToDateTime(
                     expressionRule, fieldName, fieldValue, self.summarise, self.report_unexpected_exception
                 )
             case "NOTEMPTY":
@@ -75,15 +83,57 @@ class ConversionChecker:
             case _:
                 return "Schema expression not found! Check your expression type : " + expressionType
 
-    # iso8086 date time validate
+    # Convert ISO date string to a specific format (e.g. YYYYMMDD)
     def _convertToDate(self, expressionRule, fieldName, fieldValue, summarise, report_unexpected_exception):
-        try:
-            convertDate = datetime.datetime.fromisoformat(fieldValue)
-            return convertDate.strftime(expressionRule)
-        except Exception as e:
-            if report_unexpected_exception:
-                message = ExceptionMessages.MESSAGES[ExceptionMessages.UNEXPECTED_EXCEPTION] % (e.__class__.__name__, e)
-                return message
+        if not fieldValue:
+            return ""
+        if re.match(r"^\d{4}(-\d{2})?$", fieldValue):
+            raise RecordError(
+                ExceptionMessages.RECORD_CHECK_FAILED,
+                f"{fieldName} rejected: partial date not accepted.",
+                f"Invalid partial date: {fieldValue}",
+            )
+        dt = datetime.fromisoformat(fieldValue)
+        format_str = expressionRule.replace("format:", "")
+        return dt.strftime(format_str)
+
+    # Convert FHIR datetime into CSV-safe UTC format
+    def _convertToDateTime(self, expressionRule, fieldName, fieldValue, summarise, report_unexpected_exception):
+        if not fieldValue:
+            return ""
+        if re.match(r"^\d{4}(-\d{2})?$", fieldValue):
+            raise RecordError(
+                ExceptionMessages.RECORD_CHECK_FAILED,
+                f"{fieldName} rejected: partial datetime not accepted.",
+                f"Invalid partial datetime: {fieldValue}",
+            )
+
+        dt = datetime.fromisoformat(fieldValue)
+
+        # Allow only +00:00 or +01:00 offsets (UTC and BST) and reject unsupported timezones
+        offset = dt.utcoffset()
+        allowed_offsets = [timedelta(hours=0), timedelta(hours=1)]
+        if offset not in allowed_offsets:
+            raise RecordError(
+                ExceptionMessages.RECORD_CHECK_FAILED,
+                f"{fieldName} rejected: unsupported timezone.",
+                f"Unsupported offset: {offset}",
+            )
+
+        # Convert to UTC
+        dt_utc = dt.astimezone(pytz.UTC).replace(microsecond=0)
+
+        format_str = expressionRule.replace("format:", "")
+
+        if format_str == "csv-utc":
+            formatted = dt_utc.strftime("%Y-%m-%dT%H:%M:%S %z")
+            return formatted.replace(" +0000", " 00").replace(" +0100", " 01")
+        print("🧪 expressionRule =", expressionRule)
+        print("🧪 fieldValue =", fieldValue)
+        print("🧪 About to run conversion for:", fieldName)
+
+    
+        return dt_utc.strftime(format_str)
 
     # Not Empty Validate
     def _convertToNotEmpty(self, expressionRule, fieldName, fieldValue, summarise, report_unexpected_exception):
