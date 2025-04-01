@@ -22,7 +22,7 @@ def get_csv_content_dict_reader(file_key: str) -> DictReader:
     csv_data = response["Body"].read().decode("utf-8")
 
     # Verify and process the DAT file content coming from MESH
-    if '.dat' in file_key:
+    if ".dat" in file_key:
         csv_data = extract_content(csv_data)
     return DictReader(StringIO(csv_data), delimiter="|"), csv_data
 
@@ -50,16 +50,16 @@ def invoke_filename_lambda(file_key: str, message_id: str) -> None:
 
 def extract_content(dat_file_content):
 
-    boundary_pattern = re.compile(r'----------------------------\d+')
+    boundary_pattern = re.compile(r"----------------------------\d+")
 
     parts = boundary_pattern.split(dat_file_content)
 
     # Extract the content between the boundaries
     filecontent = None
     for part in parts:
-        if 'Content-Disposition' in part and 'Content-Type' in part:
+        if "Content-Disposition" in part and "Content-Type" in part:
 
-            content_start = part.index('Content-Type') + len('Content-Type: text/csv') + 2
+            content_start = part.index("Content-Type") + len("Content-Type: text/csv") + 2
             filecontent = part[content_start:].strip()
             break
 
