@@ -5,4 +5,7 @@ package: build
 	mkdir -p build
 	docker run --rm -v $(shell pwd)/build:/build mesh-lambda-build
 
-.PHONY: build package 
+test:
+	python -m unittest
+
+.PHONY: build package test

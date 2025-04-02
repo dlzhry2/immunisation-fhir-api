@@ -178,7 +178,7 @@ resource "aws_lambda_function" "mesh_file_converter_lambda" {
   function_name = "${local.short_prefix}-mesh_processor_lambda"
   role          = aws_iam_role.mesh_processor_lambda_exec_role.arn
   package_type  = "Image"
-  image_uri     = module.mesh_converter_docker_image.image_uri
+  image_uri     = module.mesh_processor_docker_image.image_uri
   architectures = ["x86_64"]
   timeout       = 360
 
