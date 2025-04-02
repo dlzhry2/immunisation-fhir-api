@@ -87,28 +87,45 @@ class ConversionChecker:
     def _convertToDate(self, expressionRule, fieldName, fieldValue, summarise, report_unexpected_exception):
         if not fieldValue:
             return ""
+        
+        if not isinstance(fieldValue, str):
+            raise RecordError(
+                ExceptionMessages.RECORD_CHECK_FAILED,
+                f"{fieldName} rejected: not a string.",
+                f"Received: {type(fieldValue)}",
+        )
+        # Reject partial dates like "2024" or "2024-05"
         if re.match(r"^\d{4}(-\d{2})?$", fieldValue):
             raise RecordError(
                 ExceptionMessages.RECORD_CHECK_FAILED,
                 f"{fieldName} rejected: partial date not accepted.",
                 f"Invalid partial date: {fieldValue}",
             )
-        dt = datetime.fromisoformat(fieldValue)
-        format_str = expressionRule.replace("format:", "")
-        return dt.strftime(format_str)
+        try:
+            dt = datetime.fromisoformat(fieldValue)
+            format_str = expressionRule.replace("format:", "")
+            return dt.strftime(format_str)
+        except ValueError:
+            if report_unexpected_exception:
+                return f"Unexpected format: {fieldValue}"
 
     # Convert FHIR datetime into CSV-safe UTC format
     def _convertToDateTime(self, expressionRule, fieldName, fieldValue, summarise, report_unexpected_exception):
         if not fieldValue:
             return ""
+ 
+        # Reject partial dates like "2024" or "2024-05"
         if re.match(r"^\d{4}(-\d{2})?$", fieldValue):
             raise RecordError(
                 ExceptionMessages.RECORD_CHECK_FAILED,
                 f"{fieldName} rejected: partial datetime not accepted.",
                 f"Invalid partial datetime: {fieldValue}",
             )
-
-        dt = datetime.fromisoformat(fieldValue)
+        try:
+            dt = datetime.fromisoformat(fieldValue)
+        except ValueError:
+            if report_unexpected_exception:
+                return f"Unexpected format: {fieldValue}"
 
         # Allow only +00:00 or +01:00 offsets (UTC and BST) and reject unsupported timezones
         offset = dt.utcoffset()
@@ -126,10 +143,12 @@ class ConversionChecker:
         format_str = expressionRule.replace("format:", "")
 
         if format_str == "csv-utc":
-            formatted = dt_utc.strftime("%Y-%m-%dT%H:%M:%S %z")
-            return formatted
-
+            formatted = dt_utc.strftime("%Y%m%dT%H%M%S%z")
+            return formatted.replace("+0000", "00").replace("+0100", "01")
+        
         return dt_utc.strftime(format_str)
+        
+
 
     # Not Empty Validate
     def _convertToNotEmpty(self, expressionRule, fieldName, fieldValue, summarise, report_unexpected_exception):

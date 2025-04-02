@@ -82,22 +82,4 @@ This script loads sample FHIR data, runs it through the converter, and automatic
 ```bash
 python test_runner.py
 ```
-
-### 📁 Output Location
-When the script runs, it will automatically:
-- Save a **flat JSON file** as `output.json`
-- Save a **CSV file** as `output.csv`
-
-These will be located one level up from the `src/` folder:
-
-```
-/mnt/c/Users/USER/desktop/shn/immunisation-fhir-api/delta_backend/output.json
-/mnt/c/Users/USER/desktop/shn/immunisation-fhir-api/delta_backend/output.csv
-```
-
-### 👀 Visualization
-You can now:
-- Open `output.csv` in Excel or Google Sheets to view cleanly structured records
-- Inspect `output.json` to validate the flat key-value output programmatically
-
----
+--- 

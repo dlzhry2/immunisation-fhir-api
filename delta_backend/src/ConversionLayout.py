@@ -41,7 +41,7 @@ ConvertLayout = {
       "expression": {
         "expressionName": "Date Convert",
         "expressionType": "DATECONVERT",
-        "expressionRule": "%Y-%m-%d"
+        "expressionRule": "%Y%m%d"
       }
     },
     {
@@ -221,7 +221,7 @@ ConvertLayout = {
       "expression": {
         "expressionName": "Date Convert",
         "expressionType": "DATECONVERT",
-        "expressionRule": "format:%Y-%m-%d"
+        "expressionRule": "format:%Y%m%d"
       }
     },
     {

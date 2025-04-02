@@ -1,7 +1,12 @@
-from Converter import Converter
+
 import json
 import csv
 import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from Converter import Converter
+
 
 # Sample FHIR Immunization resource (minimal test data)
 fhir_sample = {
@@ -178,5 +183,5 @@ if result:
         writer.writeheader()
         writer.writerows(result)
 
-print("✅ CSV saved to:", csv_path)
-print("✅ JSON saved to:", json_path)
+print("CSV saved to:", csv_path)
+print("JSON saved to:", json_path)
