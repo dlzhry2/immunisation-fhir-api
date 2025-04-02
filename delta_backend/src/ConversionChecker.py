@@ -127,12 +127,8 @@ class ConversionChecker:
 
         if format_str == "csv-utc":
             formatted = dt_utc.strftime("%Y-%m-%dT%H:%M:%S %z")
-            return formatted.replace(" +0000", " 00").replace(" +0100", " 01")
-        print("🧪 expressionRule =", expressionRule)
-        print("🧪 fieldValue =", fieldValue)
-        print("🧪 About to run conversion for:", fieldName)
+            return formatted
 
-    
         return dt_utc.strftime(format_str)
 
     # Not Empty Validate
