@@ -14,7 +14,7 @@ resource "aws_ecr_repository" "mesh_file_converter_lambda_repository" {
 }
 
 # Module for building and pushing Docker image to ECR
-module "mesh_converter_docker_image" {
+module "mesh_processor_docker_image" {
   source = "terraform-aws-modules/lambda/aws//modules/docker-build"
 
   create_ecr_repo = false
