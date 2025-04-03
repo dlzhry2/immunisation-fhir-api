@@ -52,7 +52,7 @@ fhir_sample = {
       "valueCodeableConcept": {
         "coding": [
           {
-            "system": "http://snomed.info/sct",
+            "system": "https://snomed.info/sct",
             "code": "1324681000000101",
             "display": "Administration of first dose of severe acute respiratory syndrome coronavirus 2 vaccine (procedure)"
           }
@@ -64,7 +64,7 @@ fhir_sample = {
   "vaccineCode": {
     "coding": [
       {
-        "system": "http://snomed.info/sct",
+        "system": "https://snomed.info/sct",
         "code": "39114911000001105",
         "display": "COVID-19 Vaccine Vaxzevria (ChAdOx1 S [recombinant]) not less than 2.5x100,000,000 infectious units/0.5ml dose suspension for injection multidose vials (AstraZeneca UK Ltd) (product)"
       }
@@ -90,7 +90,7 @@ fhir_sample = {
   "site": {
     "coding": [
       {
-        "system": "http://snomed.info/sct",
+        "system": "https://snomed.info/sct",
         "code": "368208006",
         "display": "Left upper arm structure (body structure)"
       }
@@ -99,7 +99,7 @@ fhir_sample = {
   "route": {
     "coding": [
       {
-        "system": "http://snomed.info/sct",
+        "system": "https://snomed.info/sct",
         "code": "78421000",
         "display": "Intramuscular route (qualifier value)"
       }
@@ -108,7 +108,7 @@ fhir_sample = {
   "doseQuantity": {
     "value": 0.5,
     "unit": "milliliter",
-    "system": "http://unitsofmeasure.org",
+    "system": "https://unitsofmeasure.org",
     "code": "ml"
   },
   "performer": [
@@ -132,7 +132,7 @@ fhir_sample = {
       "coding": [
         {
           "code": "443684005",
-          "system": "http://snomed.info/sct"
+          "system": "https://snomed.info/sct"
         }
       ]
     }
@@ -143,7 +143,7 @@ fhir_sample = {
         {
           "coding": [
             {
-              "system": "http://snomed.info/sct",
+              "system": "https://snomed.info/sct",
               "code": "840539006",
               "display": "Disease caused by severe acute respiratory syndrome coronavirus 2"
             }
