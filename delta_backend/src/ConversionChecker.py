@@ -3,8 +3,7 @@
 # Root and base type expression checker functions
 import ExceptionMessages
 from datetime import datetime,timedelta
-import uuid
-import pytz
+from zoneinfo import ZoneInfo
 import re
 from LookUpData import LookUpData
 
@@ -129,7 +128,8 @@ class ConversionChecker:
 
         # Allow only +00:00 or +01:00 offsets (UTC and BST) and reject unsupported timezones
         offset = dt.utcoffset()
-        allowed_offsets = [timedelta(hours=0), timedelta(hours=1)]
+        allowed_offsets = [ZoneInfo("UTC").utcoffset(dt),
+                           ZoneInfo("Europe/London").utcoffset(dt)]
         if offset not in allowed_offsets:
             raise RecordError(
                 ExceptionMessages.RECORD_CHECK_FAILED,
@@ -138,7 +138,7 @@ class ConversionChecker:
             )
 
         # Convert to UTC
-        dt_utc = dt.astimezone(pytz.UTC).replace(microsecond=0)
+        dt_utc = dt.astimezone(ZoneInfo("UTC")).replace(microsecond=0)
 
         format_str = expressionRule.replace("format:", "")
 
