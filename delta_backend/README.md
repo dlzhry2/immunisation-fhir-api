@@ -36,19 +36,19 @@ This project is designed to convert FHIR-compliant JSON data (e.g., Immunization
 
 ---
 
-## ✅ Getting Started with `test_runner.py`
+## ✅ Getting Started with `check_conversion.py`
 
-To quickly test your conversion, use the provided `test_runner.py` script.
+To quickly test your conversion, use the provided `check_conversion.py` script.
 This script loads sample FHIR data, runs it through the converter, and automatically saves the output in both JSON and CSV formats.
 
 ### 🔄 How to Use It
 
-1. Add your FHIR data (e.g., a dictionary or sample JSON) into the `fhir_sample` variable inside `test_runner.py`
+1. Add your FHIR data (e.g., a dictionary or sample JSON) into the `fhir_sample` variable inside `check_conversion.py`
 2. Ensure the field mapping in `ConversionLayout.py` matches your desired output
-3. Run the script from the `src` folder:
+3. Run the script from the `tests` folder:
 
 ```bash
-python test_runner.py
+python check_conversion.py
 ```
 
 ### 📁 Output Location
@@ -68,18 +68,4 @@ You can now:
 - Open `output.csv` in Excel or Google Sheets to view cleanly structured records
 - Inspect `output.json` to validate the flat key-value output programmatically
 
----## ✅ Getting Started with `test_runner.py`
-
-To quickly test your conversion, use the provided `test_runner.py` script.
-This script loads sample FHIR data, runs it through the converter, and automatically saves the output in both JSON and CSV formats.
-
-### 🔄 How to Use It
-
-1. Add your FHIR data (e.g., a dictionary or sample JSON) into the `fhir_sample` variable inside `test_runner.py`
-2. Ensure the field mapping in `ConversionLayout.py` matches your desired output
-3. Run the script from the `src` folder:
-
-```bash
-python test_runner.py
-```
---- 
+---
