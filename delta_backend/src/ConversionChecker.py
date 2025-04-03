@@ -86,7 +86,7 @@ class ConversionChecker:
     def _convertToDate(self, expressionRule, fieldName, fieldValue, summarise, report_unexpected_exception):
         if not fieldValue:
             return ""
-        
+
         if not isinstance(fieldValue, str):
             raise RecordError(
                 ExceptionMessages.RECORD_CHECK_FAILED,
@@ -112,7 +112,7 @@ class ConversionChecker:
     def _convertToDateTime(self, expressionRule, fieldName, fieldValue, summarise, report_unexpected_exception):
         if not fieldValue:
             return ""
- 
+
         # Reject partial dates like "2024" or "2024-05"
         if re.match(r"^\d{4}(-\d{2})?$", fieldValue):
             raise RecordError(
@@ -145,10 +145,8 @@ class ConversionChecker:
         if format_str == "csv-utc":
             formatted = dt_utc.strftime("%Y%m%dT%H%M%S%z")
             return formatted.replace("+0000", "00").replace("+0100", "01")
-        
-        return dt_utc.strftime(format_str)
-        
 
+        return dt_utc.strftime(format_str)
 
     # Not Empty Validate
     def _convertToNotEmpty(self, expressionRule, fieldName, fieldValue, summarise, report_unexpected_exception):
