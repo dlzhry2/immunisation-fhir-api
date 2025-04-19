@@ -14,20 +14,17 @@ from Extractor import (
     get_valid_address,
 )
 
-# Converter variables
-FHIRData = ""
-SchemaFile = {}
-imms = []
-Converted = {}
-ErrorRecords = []
-
 
 # Converter
 class Converter:
 
     def __init__(self, fhir_data):
-        self.FHIRData = fhir_data  # Store JSON data directly
-        self.SchemaFile = ConversionLayout.ConvertLayout
+        #Converter variables
+        self.imms = []
+        self.converted = {}
+        self.error_records = []
+        self.fhir_data = fhir_data  # Store JSON data directly
+        self.schema_file = ConversionLayout.ConvertLayout
 
     # create a FHIR  parser - uses fhir json data from delta 
     # (helper methods to extract values from the nested FHIR structure)
@@ -56,7 +53,7 @@ class Converter:
         except Exception as e:
             message = "Data get value Unexpected exception [%s]: %s" % (e.__class__.__name__, e)
             p = {"code": ExceptionMessages.PARSING_ERROR, "message": message}
-            ErrorRecords.append(p)
+            self.error_records.append(p)
             return p
 
         for conversionValue in conversionValues:
@@ -66,26 +63,26 @@ class Converter:
             if "address" in FHIRFieldName or "performer" in FHIRFieldName or "name" in FHIRFieldName:
                 convertedData = self.extract_patient_details(json_data, FlatFieldName)
             if convertedData is not None:
-                Converted[FlatFieldName] = convertedData
+                self.converted[FlatFieldName] = convertedData
 
     # run the conversion against the data
     def runConversion(self, json_data, summarise=False, report_unexpected_exception=True):
         try:
-            dataParser = self._getFHIRParser(self.FHIRData)
+            dataParser = self._getFHIRParser(self.fhir_data)
         except Exception as e:
             if report_unexpected_exception:
                 message = "FHIR Parser Unexpected exception [%s]: %s" % (e.__class__.__name__, e)
                 p = {"code": 0, "message": message}
-                ErrorRecords.append(p)
+                self.error_records.append(p)
                 return p
 
         try:
-            schemaParser = self._getSchemaParser(self.SchemaFile)
+            schemaParser = self._getSchemaParser(self.schema_file)
         except Exception as e:
             if report_unexpected_exception:
                 message = "Schema Parser Unexpected exception [%s]: %s" % (e.__class__.__name__, e)
                 p = {"code": 0, "message": message}
-                ErrorRecords.append(p)
+                self.error_records.append(p)
                 return p
 
         try:
@@ -94,7 +91,7 @@ class Converter:
             if report_unexpected_exception:
                 message = "Expression Checker Unexpected exception [%s]: %s" % (e.__class__.__name__, e)
                 p = {"code": 0, "message": message}
-                ErrorRecords.append(p)
+                self.error_records.append(p)
                 return p
 
         # get list of expressions
@@ -104,17 +101,17 @@ class Converter:
             if report_unexpected_exception:
                 message = "Expression Getter Unexpected exception [%s]: %s" % (e.__class__.__name__, e)
                 p = {"code": 0, "message": message}
-                ErrorRecords.append(p)
+                self.error_records.append(p)
                 return p
 
         for conversion in conversions:
             rows = self._convertData(ConversionValidate, conversion, dataParser, json_data)
 
-        imms.append(Converted)
-        return imms
+        self.imms.append(self.converted)
+        return self.imms
 
     def getErrorRecords(self):
-        return ErrorRecords
+        return self.error_records
     
     def extract_patient_details(self, json_data, FlatFieldName):
         if not hasattr(self, "_cached_values"):
