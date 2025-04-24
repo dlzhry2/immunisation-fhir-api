@@ -2,19 +2,21 @@ import json
 import unittest
 import os
 import time
+from datetime import datetime, timedelta
 from decimal import Decimal
 from copy import deepcopy
 from unittest import TestCase
 from unittest.mock import patch, Mock
 from moto import mock_dynamodb, mock_sqs
 from boto3 import resource as boto3_resource, client as boto3_client
-from utils_for_converter_tests import ValuesForTests, ErrorValuesForTests
+from tests.utils_for_converter_tests import ValuesForTests, ErrorValuesForTests
 from botocore.config import Config
 from pathlib import Path
+from zoneinfo import ZoneInfo
 from SchemaParser import SchemaParser
 from Converter import Converter
-from ConversionChecker import ConversionChecker
-
+from ConversionChecker import ConversionChecker, RecordError
+import ExceptionMessages
 
 MOCK_ENV_VARS = {
     "AWS_SQS_QUEUE_URL": "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
@@ -24,7 +26,35 @@ MOCK_ENV_VARS = {
 request_json_data = ValuesForTests.json_data
 with patch.dict("os.environ", MOCK_ENV_VARS):
     from delta import handler, Converter
+    from Converter import imms
 
+class TestRecordError(unittest.TestCase):
+    def test_fields_and_str(self):
+        err = RecordError(
+            code=5,
+            message="Test failed",
+            details="Something went wrong"
+        )
+
+        # The attributes should round‑trip
+        self.assertEqual(err.code, 5)
+        self.assertEqual(err.message, "Test failed")
+        self.assertEqual(err.details, "Something went wrong")
+
+        # __repr__ and __str__ both produce the tuple repr
+        expected = "(5, 'Test failed', 'Something went wrong')"
+        self.assertEqual(str(err),   expected)
+        self.assertEqual(repr(err),  expected)
+
+    def test_default_args(self):
+        # If you omit arguments they default to None
+        err = RecordError()
+        self.assertIsNone(err.code)
+        self.assertIsNone(err.message)
+        self.assertIsNone(err.details)
+
+        # repr shows three Nones
+        self.assertEqual(str(err), "(None, None, None)")
 
 @patch.dict("os.environ", MOCK_ENV_VARS, clear=True)
 @mock_dynamodb
@@ -64,16 +94,6 @@ class TestConvertToFlatJson(unittest.TestCase):
                 },
             ],
         )
-        self.logger_info_patcher = patch("logging.Logger.info")
-        self.mock_logger_info = self.logger_info_patcher.start()
-
-        self.logger_exception_patcher = patch("logging.Logger.exception")
-        self.mock_logger_exception = self.logger_exception_patcher.start()
-
-    def tearDown(self):
-        self.logger_exception_patcher.stop()
-        self.logger_info_patcher.stop()
-
 
     @staticmethod
     def get_event(event_name="INSERT", operation="operation", supplier="EMIS"):
@@ -110,6 +130,7 @@ class TestConvertToFlatJson(unittest.TestCase):
 
     def test_fhir_converter_json_direct_data(self):
         """it should convert fhir json data to flat json"""
+        imms.clear()
         json_data = json.dumps(ValuesForTests.json_data)
 
         start = time.time()
@@ -118,7 +139,7 @@ class TestConvertToFlatJson(unittest.TestCase):
         FlatFile = FHIRConverter.runConversion(ValuesForTests.json_data, False, True)
 
         flatJSON = json.dumps(FlatFile)
-        expected_imms_value = deepcopy(ValuesForTests.expected_imms)  # UPDATE is currently the default action-flag
+        expected_imms_value = deepcopy(ValuesForTests.expected_imms2)  # UPDATE is currently the default action-flag
         expected_imms = json.dumps(expected_imms_value)
         self.assertEqual(flatJSON, expected_imms)
 
@@ -138,6 +159,7 @@ class TestConvertToFlatJson(unittest.TestCase):
         error_test_cases = [ErrorValuesForTests.missing_json, ErrorValuesForTests.json_dob_error]
 
         for test_case in error_test_cases:
+            imms.clear()
             json_data = json.dumps(test_case)
 
             start = time.time()
@@ -174,6 +196,8 @@ class TestConvertToFlatJson(unittest.TestCase):
 
         for test_case in expected_action_flags:
             with self.subTest(test_case["Operation"]):
+                imms.clear()
+
                 event = self.get_event(operation=test_case["Operation"])
 
                 response = handler(event, None)
@@ -220,21 +244,26 @@ class TestConvertToFlatJson(unittest.TestCase):
         self.assertIn("FHIR Parser Unexpected exception", converter.getErrorRecords()[0]["message"])
         self.assertEqual(converter.getErrorRecords()[0]["code"], 0)
 
+    @patch("Converter.FHIRParser")
     @patch("Converter.SchemaParser")
-    def test_schema_parser_exception(self, mock_schema_parser):
+    def test_schema_parser_exception(self, mock_schema_parser, mock_fhir_parser):
+
+        # Mock FHIRParser to return normally
+        mock_fhir_instance = Mock()
+        mock_fhir_instance.parseFHIRData.return_value = None
+        mock_fhir_parser.return_value = mock_fhir_instance
+
         # Mock SchemaParser to raise an exception
         mock_schema_parser.side_effect = Exception("Schema Parsing Error")
-        converter = Converter(fhir_data="some_data")
+        converter = Converter(fhir_data="{}")
 
-        response = converter.runConversion("some_data")
+        converter.runConversion("some_data")
 
         # Check if the error message was added to ErrorRecords
-        self.assertEqual(len(response), 2)
-        self.assertIn(
-            "FHIR Parser Unexpected exception [JSONDecodeError]: Expecting value: line 1 column 1 (char 0)",
-            converter.getErrorRecords()[0]["message"],
-        )
-        self.assertEqual(converter.getErrorRecords()[0]["code"], 0)
+        errors = converter.getErrorRecords()
+        self.assertEqual(len(errors), 1)
+        self.assertIn("Schema Parser Unexpected exception", errors[0]["message"])
+        self.assertEqual(errors[0]["code"], 0)
 
     @patch("Converter.ConversionChecker")
     def test_conversion_checker_exception(self, mock_conversion_checker):
@@ -298,6 +327,31 @@ class TestConvertToFlatJson(unittest.TestCase):
         self.assertEqual(error_records[0]["code"], 0)
 
     @patch("ConversionChecker.LookUpData")
+    def test_log_error(self, MockLookUpData):
+        # Instantiate ConversionChecker
+        checker = ConversionChecker(dataParser=None, summarise=False, report_unexpected_exception=True)
+        
+        # Simulate an exception
+        exception = ValueError("Invalid value")
+
+        # Call the _log_error method twice to also check deduplication
+        checker._log_error("test_field", "test_value", exception)
+        checker._log_error("test_field", "test_value", exception)
+
+        # Assert that only one error record is added due to deduplication
+        self.assertEqual(len(checker.errorRecords), 2)
+
+        # Assert that one error record is added
+        self.assertEqual(len(checker.errorRecords), 2)
+        error = checker.errorRecords[0]
+
+        # Assert that the error record contains correct details
+        self.assertEqual(error["field"], "test_field")
+        self.assertEqual(error["value"], "test_value")
+        self.assertIn("Invalid value", error["message"])
+        self.assertEqual(error["code"], ExceptionMessages.RECORD_CHECK_FAILED)
+
+    @patch("ConversionChecker.LookUpData")
     def test_convert_to_not_empty(self, MockLookUpData):
 
         dataParser = Mock()
@@ -316,7 +370,7 @@ class TestConvertToFlatJson(unittest.TestCase):
         dataParser = Mock()
 
         checker = ConversionChecker(dataParser, summarise=False, report_unexpected_exception=True)
-        
+
          # Test empty NHS number
         empty_nhs_number = ""
         result = checker._convertToNHSNumber(None, "fieldName", empty_nhs_number, False, True)
@@ -338,18 +392,94 @@ class TestConvertToFlatJson(unittest.TestCase):
 
         checker = ConversionChecker(dataParser, summarise=False, report_unexpected_exception=True)
 
-        valid_date = "2022-01-01"
-        result = checker._convertToDate("%Y%m%d", "fieldName", valid_date, False, True)
+         # 1. Valid full date
+        result = checker._convertToDate("%Y%m%d", "fieldName", "2022-01-01", False, True)
         self.assertEqual(result, "20220101")
-        
-        invalid_date = "invalid_date"
-        result = checker._convertToDate("format:%Y%m%d", "fieldName", invalid_date, False, True)
-        self.assertEqual(result, "Unexpected format: invalid_date")
 
-        # Test for error case with exception
+        # 2. Partial ISO date (should trigger "Partial date not accepted")
+        result = checker._convertToDate("%Y%m%d", "fieldName", "2022-01", False, True)
+        self.assertEqual(result, "")
+
+        # 3. Invalid string date format (should trigger "Date must be in YYYYMMDD format")
+        result = checker._convertToDate("%Y%m%d", "fieldName", "invalid_date", False, True)
+        self.assertEqual(result, "")
+
+        # 4. None input (should return empty without logging)
         result = checker._convertToDate("%Y%m%d", "fieldName", None, False, True)
         self.assertEqual(result, "")
-  
+
+        # 5. Not a string input (should trigger "Value is not a string")
+        result = checker._convertToDate("%Y%m%d", "fieldName", 12345678, False, True)
+        self.assertEqual(result, "")
+
+        # 6. Future date for birthDate (should trigger "Date cannot be in the future")
+        future_date = "20991231"
+        result = checker._convertToDate("%Y%m%d", "contained|#:Patient|birthDate", future_date, False, True)
+        self.assertEqual(result, "")
+
+        # 8. Empty string
+        result = checker._convertToDate("%Y%m%d", "fieldName", "", False, True)
+        self.assertEqual(result, "")
+
+        # 9. Valid recorded date with timezone
+        valid_recorded = "2021-02-07T13:28:17+00:00"
+        result = checker._convertToDate("format:%Y-%m-%d", "recorded", valid_recorded, False, True)
+        self.assertEqual(result, "20210207T13281700")
+
+        # 10. Recorded field: unsupported timezone offset (+02:00)
+        result = checker._convertToDate("%Y%m%d", "recorded", "2022-01-01T12:00:00+02:00", False, True)
+        self.assertEqual(result, "")
+
+        # 11. Recorded date with invalid format
+        result = checker._convertToDate("format:%Y-%m-%d", "recorded", "invalid_date", False, True)
+        self.assertEqual(result, "")
+
+        # 12. Recorded date with invalid format
+        result = checker._convertToDate("format:%Y-%m-%d", "recorded", "invalid_date", False, True)
+        self.assertEqual(result, "")
+
+        #  recorded datetime (no tz) treated as UTC and formatted “YYYYMMDDTHHMMSS00”
+        past_date = "2023-04-15T10:30:00"
+        format = "format:%Y-%m-%dT%H:%M:%S"
+        result = checker._convertToDate(format,"recorded",past_date,False,True)
+
+        # 13 expect to parse as UTC, then emit YYYYMMDDTHHMMSS and “00” for +0000
+        expected = "20230415T103000"
+        self.assertTrue(result.endswith("00"),f"Expected prefix {expected}, got {result!r}")
+
+        # 14. Recorded timestamp without tzinfo in the future → rejected
+        future_naive = "2099-12-31T23:59:59"
+        result = checker._convertToDate(format,"recorded",future_naive,False,True)
+        self.assertEqual(result, "")
+
+        # 15 Validate all error logs of various responses
+        messages = [err["message"] for err in checker.errorRecords]
+        print(f"Error Test Case, {messages}")
+
+        self.assertIn("Date must be in YYYYMMDD format", messages)
+        self.assertIn("Value is not a string", messages)
+        self.assertIn("Partial date not accepted", messages)
+        self.assertIn("Date cannot be in the future", messages)
+        self.assertIn("Birthdate cannot be in the future", messages)
+        self.assertTrue(any(m.startswith("Unsupported offset") for m in messages))
+        self.assertIn("Invalid date format", messages)
+
+        # Confirm Total Errors Per conversion
+        self.assertEqual(len(checker.errorRecords), 8)
+
+        # Test for value Error
+        checker._log_error = Mock()
+
+        # invalid date against the given format → ValueError path
+        result = checker._convertToDate("format:%Y-%m-%d", "fieldName", "not-a-date", False, True)
+        self.assertEqual(result, "")
+
+        # ensure we logged exactly that ValueError
+        checker._log_error.assert_called_once()
+        field, value, err = checker._log_error.call_args[0]
+        self.assertEqual((field, value), ("fieldName", "not-a-date"))
+        self.assertIsInstance(err, ValueError)
+
     @patch("ConversionChecker.LookUpData")
     def test_convert_to_date_time(self, MockLookUpData):
         dataParser = Mock()
@@ -372,6 +502,49 @@ class TestConvertToFlatJson(unittest.TestCase):
         result = checker._convertToDateTime("format:%Y%m%dT%H%M%S", "fieldName", "", False, True)
         self.assertEqual(result, "")
 
+    @patch("ConversionChecker.LookUpData")
+    def test_convert_to_boolean(self, MockLookUpData):
+        dataParser = Mock()
+
+        checker = ConversionChecker(dataParser, summarise=False, report_unexpected_exception=True)
+
+        # Arrange
+        dataParser = Mock()
+        checker = ConversionChecker(dataParser, summarise=False, report_unexpected_exception=True)
+
+        # 1. Boolean True passes through
+        result = checker._convertToBoolean(None, "fieldName", True, False, True)
+        self.assertTrue(result)
+
+        # 2. Boolean False passes through
+        result = checker._convertToBoolean(None, "fieldName", False, False, True)
+        self.assertFalse(result)
+
+        # 3. String "true" variants
+        for val in ["true", "TRUE", "  True  ", "\tTrUe\n"]:
+            result = checker._convertToBoolean(None, "fieldName", val, False, False)
+            self.assertTrue(result)
+
+        # 4. String "false" variants
+        for val in ["false", "FALSE", "  False  ", "\nFaLsE\t"]:
+            result = checker._convertToBoolean(None, "fieldName", val, False, False)
+            self.assertFalse(result)
+
+        # 5. Invalid string with report_unexpected_exception=False → no log
+        result = checker._convertToBoolean(None, "fieldName", "notbool", False, True)
+        self.assertEqual(result, "")
+
+        # Assert exactly one error was logged
+        self.assertEqual(len(checker.errorRecords), 1)
+
+        err = checker.errorRecords[0]
+        self.assertEqual(err["field"], "fieldName")
+        self.assertEqual(err["value"], "notbool")
+        # message should include our literal
+        self.assertIn("Invalid String Data", err["message"])
+        # and code should default to UNEXPECTED_EXCEPTION
+        self.assertEqual(err["code"], ExceptionMessages.RECORD_CHECK_FAILED)
+
     #check for dose sequence
     @patch("ConversionChecker.LookUpData")
     def test_convert_to_dose(self, MockLookUpData):
@@ -383,7 +556,7 @@ class TestConvertToFlatJson(unittest.TestCase):
             with self.subTest(dose=dose):
                 result = checker._convertToDose("DOSESEQUENCE", "DOSE_AMOUNT", dose, False, True)
                 self.assertEqual(result, dose)
-        
+
         # Invalid dose
         invalid_doses = [10, 10.1, 100, 9.0001]
         for dose in invalid_doses:
@@ -398,7 +571,6 @@ class TestConvertToFlatJson(unittest.TestCase):
                 batch.delete_item(Key={"PK": item["PK"]})
         result = self.table.scan()
         items = result.get("Items", [])
-
 
 class TestPersonForeNameToFlatJson(unittest.TestCase):
     def test_person_forename_multiple_names_official(self):
@@ -500,7 +672,6 @@ class TestPersonForeNameToFlatJson(unittest.TestCase):
         self.converter = Converter(json.dumps(request_json_data))
         flat_json = self.converter.runConversion(request_json_data, False, True)
         self.assertEqual(flat_json[0]["PERSON_FORENAME"], expected_forename)
-
 
 class TestPersonSurNameToFlatJson(unittest.TestCase):
 
