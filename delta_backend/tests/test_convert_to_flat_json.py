@@ -169,7 +169,7 @@ class TestConvertToFlatJson(unittest.TestCase):
             errorRecords = FHIRConverter.getErrorRecords()
 
             # Check if bad data creates error records
-            self.assertEqual(len(errorRecords) > 0)
+            self.assertTrue(len(errorRecords) > 0)
 
     def test_handler_imms_convert_to_flat_json(self):
         """Test that the Imms field contains the correct flat JSON data for CREATE, UPDATE, and DELETE operations."""
