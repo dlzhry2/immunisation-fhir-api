@@ -27,33 +27,33 @@ request_json_data = ValuesForTests.json_data
 with patch.dict("os.environ", MOCK_ENV_VARS):
     from delta import handler, Converter
 
-# class TestRecordError(unittest.TestCase):
-#     def test_fields_and_str(self):
-#         err = RecordError(
-#             code=5,
-#             message="Test failed",
-#             details="Something went wrong"
-#         )
+class TestRecordError(unittest.TestCase):
+    def test_fields_and_str(self):
+        err = RecordError(
+            code=5,
+            message="Test failed",
+            details="Something went wrong"
+        )
 
-#         # The attributes should round‑trip
-#         self.assertEqual(err.code, 5)
-#         self.assertEqual(err.message, "Test failed")
-#         self.assertEqual(err.details, "Something went wrong")
+        # The attributes should round‑trip
+        self.assertEqual(err.code, 5)
+        self.assertEqual(err.message, "Test failed")
+        self.assertEqual(err.details, "Something went wrong")
 
-#         # __repr__ and __str__ both produce the tuple repr
-#         expected = "(5, 'Test failed', 'Something went wrong')"
-#         self.assertEqual(str(err),   expected)
-#         self.assertEqual(repr(err),  expected)
+        # __repr__ and __str__ both produce the tuple repr
+        expected = "(5, 'Test failed', 'Something went wrong')"
+        self.assertEqual(str(err),   expected)
+        self.assertEqual(repr(err),  expected)
 
-#     def test_default_args(self):
-#         # If you omit arguments they default to None
-#         err = RecordError()
-#         self.assertIsNone(err.code)
-#         self.assertIsNone(err.message)
-#         self.assertIsNone(err.details)
+    def test_default_args(self):
+        # If you omit arguments they default to None
+        err = RecordError()
+        self.assertIsNone(err.code)
+        self.assertIsNone(err.message)
+        self.assertIsNone(err.details)
 
-#         # repr shows three Nones
-#         self.assertEqual(str(err), "(None, None, None)")
+        # repr shows three Nones
+        self.assertEqual(str(err), "(None, None, None)")
 
 @patch.dict("os.environ", MOCK_ENV_VARS, clear=True)
 @mock_dynamodb
@@ -169,6 +169,7 @@ class TestConvertToFlatJson(unittest.TestCase):
             errorRecords = FHIRConverter.getErrorRecords()
 
             # Check if bad data creates error records
+            print(f"Error Test Case, {len(errorRecords)}")
             self.assertTrue(len(errorRecords) > 0)
 
     def test_handler_imms_convert_to_flat_json(self):
