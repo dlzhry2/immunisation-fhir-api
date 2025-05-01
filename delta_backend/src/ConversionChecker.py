@@ -2,7 +2,7 @@
 # Handles the transformation logic for each field based on the schema
 # Root and base type expression checker functions
 import ExceptionMessages
-from datetime import datetime,timezone
+from datetime import datetime,timedelta, timezone
 from zoneinfo import ZoneInfo
 import re
 from LookUpData import LookUpData
@@ -122,7 +122,6 @@ class ConversionChecker:
                     self._log_error(fieldName, fieldValue, "Value is not a string")
                 return ""
             try:
-                fieldValue = re.sub(r"\.\d+(?=[+-]\d{2}:\d{2}$)", "", fieldValue)  # Remove milliseconds
                 dt = datetime.fromisoformat(fieldValue)
                 return dt.strftime(expressionRule)
             except ValueError as e:
@@ -136,40 +135,29 @@ class ConversionChecker:
         if not fieldValue:
             return ""
 
-        # Reject partial dates like "2024" or "2024-05"
-        if re.match(r"^\d{4}(-\d{2})?$", fieldValue):
-            raise RecordError(
-                ExceptionMessages.RECORD_CHECK_FAILED,
-                f"{fieldName} rejected: partial datetime not accepted.",
-                f"Invalid partial datetime: {fieldValue}",
-            )
         try:
             dt = datetime.fromisoformat(fieldValue)
-        except ValueError:
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+        except Exception as e:
             if report_unexpected_exception:
-                return f"Unexpected format: {fieldValue}"
+                self._log_error(fieldName, fieldValue, e)
+            return ""
 
         # Allow only +00:00 or +01:00 offsets (UTC and BST) and reject unsupported timezones
         offset = dt.utcoffset()
-        allowed_offsets = [ZoneInfo("UTC").utcoffset(dt),
-                           ZoneInfo("Europe/London").utcoffset(dt)]
-        if offset not in allowed_offsets:
-            raise RecordError(
-                ExceptionMessages.RECORD_CHECK_FAILED,
-                f"{fieldName} rejected: unsupported timezone.",
-                f"Unsupported offset: {offset}",
-            )
+        allowed_offsets = [timedelta(hours=0), timedelta(hours=1)]
+        if offset is not None and offset not in allowed_offsets:
+            if report_unexpected_exception:
+                self._log_error(fieldName, fieldValue, "Unsupported Format or offset")
+            return ""
 
-        # Convert to UTC
-        dt_utc = dt.astimezone(ZoneInfo("UTC")).replace(microsecond=0)
+        # remove microseconds
+        dt_format = dt.replace(microsecond=0)
 
-        format_str = expressionRule.replace("format:", "")
-
-        if format_str == "csv-utc":
-            formatted = dt_utc.strftime("%Y%m%dT%H%M%S%z")
-            return formatted.replace("+0000", "00").replace("+0100", "01")
-
-        return dt_utc.strftime(format_str)
+        formatted = dt_format.strftime("%Y%m%dT%H%M%S%z")
+        return formatted.replace("+0000", "00").replace("+0100", "01")
+    
 
     # Not Empty Validate - Returns exactly what is in the extracted fields no parsing or logic needed
     def _convertToNotEmpty(self, expressionRule, fieldName, fieldValue, summarise, report_unexpected_exception):
