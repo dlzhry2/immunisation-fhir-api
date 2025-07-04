@@ -17,7 +17,6 @@ class VaccineTypes:
         default_factory=lambda: [VaccineTypes.covid_19, VaccineTypes.flu, VaccineTypes.hpv, VaccineTypes.mmr,VaccineTypes.rsv]
     )
 
-
 @dataclass
 class DiseaseDisplayTerms:
     """Disease display terms which correspond to disease codes"""
