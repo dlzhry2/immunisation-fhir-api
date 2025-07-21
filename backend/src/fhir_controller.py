@@ -167,7 +167,7 @@ class FhirController:
         try:
             if aws_event.get("headers"):
                 if response := self.authorize_request(aws_event):
-                        return response
+                    return response
             else:
                 raise UnauthorizedError()
         except UnauthorizedError as unauthorized:
@@ -364,7 +364,7 @@ class FhirController:
                 )
                 return self.create_response(400, json.dumps(exp_error))
             if outcome == UpdateOutcome.UPDATE:
-                return self.create_response(200, {"E-Tag": updated_version}) #include e-tag here, is it not included in the response resource
+                return self.create_response(200, None, {"E-Tag": updated_version}) #include e-tag here, is it not included in the response resource
         except ValidationError as error:
             return self.create_response(400, error.to_operation_outcome())
         except IdentifierDuplicationError as duplicate:
