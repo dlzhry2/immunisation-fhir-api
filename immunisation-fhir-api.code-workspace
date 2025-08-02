@@ -32,7 +32,13 @@
         },
 		{
             "path": "mns_subscription"
-        }
+        },
+		{
+			"path": "lambdas/id_sync"
+		},
+		{
+			"path": "lambdas/shared"
+		}
 	],
-	"settings": {},
+	"settings": {}
 }
