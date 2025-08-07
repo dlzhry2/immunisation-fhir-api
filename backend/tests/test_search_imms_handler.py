@@ -1,6 +1,7 @@
 import json
 import unittest
-from unittest.mock import create_autospec, patch
+from unittest.mock import patch
+import uuid
 
 from fhir_controller import FhirController
 from models.errors import Severity, Code, create_operation_outcome
@@ -12,9 +13,11 @@ script_location = Path(__file__).absolute().parent
 
 
 class TestSearchImmunizations(unittest.TestCase):
+    MOCK_RESOURCE_UUID = "6627941a-9c5a-4d0f-adce-dfe29dd38413"
+
     def setUp(self):
-        self.controller = create_autospec(FhirController)
         self.logger_exception_patcher = patch("logging.Logger.exception")
+        self.mock_controller = patch("search_imms_handler.controller", autospec=FhirController).start()
         self.mock_logger_exception = self.logger_exception_patcher.start()
 
     def tearDown(self):
@@ -25,13 +28,13 @@ class TestSearchImmunizations(unittest.TestCase):
         lambda_event = {"pathParameters": {"id": "an-id"}, "body": None}
         exp_res = {"a-key": "a-value"}
 
-        self.controller.search_immunizations.return_value = exp_res
+        self.mock_controller.search_immunizations.return_value = exp_res
 
         # When
-        act_res = search_imms(lambda_event, self.controller)
+        act_res = search_imms(lambda_event)
 
         # Then
-        self.controller.search_immunizations.assert_called_once_with(lambda_event)
+        self.mock_controller.search_immunizations.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
 
     def test_search_immunizations_to_get_imms_id(self):
@@ -46,13 +49,13 @@ class TestSearchImmunizations(unittest.TestCase):
         }
         exp_res = {"a-key": "a-value"}
 
-        self.controller.get_immunization_by_identifier.return_value = exp_res
+        self.mock_controller.get_immunization_by_identifier.return_value = exp_res
 
         # When
-        act_res = search_imms(lambda_event, self.controller)
+        act_res = search_imms(lambda_event)
 
         # Then
-        self.controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
+        self.mock_controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
 
     def test_search_immunizations_get_id_from_body(self):
@@ -64,13 +67,13 @@ class TestSearchImmunizations(unittest.TestCase):
         }
         exp_res = {"a-key": "a-value"}
 
-        self.controller.get_immunization_by_identifier.return_value = exp_res
+        self.mock_controller.get_immunization_by_identifier.return_value = exp_res
 
         # When
-        act_res = search_imms(lambda_event, self.controller)
+        act_res = search_imms(lambda_event)
 
         # Then
-        self.controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
+        self.mock_controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
 
     def test_search_immunizations_get_id_from_body_passing_none(self):
@@ -78,17 +81,17 @@ class TestSearchImmunizations(unittest.TestCase):
         lambda_event = {"pathParameters": {"id": "an-id"}, "body": None, "queryStringParameters": None}
         exp_res = {"a-key": "a-value"}
 
-        self.controller.search_immunizations.return_value = exp_res
+        self.mock_controller.search_immunizations.return_value = exp_res
 
         # When
-        act_res = search_imms(lambda_event, self.controller)
+        act_res = search_imms(lambda_event)
 
         # Then
-        self.controller.search_immunizations.assert_called_once_with(lambda_event)
+        self.mock_controller.search_immunizations.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
 
     def test_search_immunizations_get_id_from_body_element(self):
-        """it should enter into  get_immunization_by_identifier  only _element paramter is present"""
+        """it should enter into  get_immunization_by_identifier  only _element parameter is present"""
         lambda_event = {
             "pathParameters": {"id": "an-id"},
             "body": "X2VsZW1lbnQ9aWQlMkNtZXRh",
@@ -96,17 +99,17 @@ class TestSearchImmunizations(unittest.TestCase):
         }
         exp_res = {"a-key": "a-value"}
 
-        self.controller.get_immunization_by_identifier.return_value = exp_res
+        self.mock_controller.get_immunization_by_identifier.return_value = exp_res
 
         # When
-        act_res = search_imms(lambda_event, self.controller)
+        act_res = search_imms(lambda_event)
 
         # Then
-        self.controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
+        self.mock_controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
 
     def test_search_immunizations_get_id_from_body_imms_identifer(self):
-        """it should enter into  get_immunization_by_identifier  only immunization.identifier paramter is present"""
+        """it should enter into  get_immunization_by_identifier  only immunization.identifier parameter is present"""
         lambda_event = {
             "pathParameters": {"id": "an-id"},
             "body": "aW1tdW5pemF0aW9uLmlkZW50aWZpZXI9aWQlMkNtZXRh",
@@ -114,13 +117,13 @@ class TestSearchImmunizations(unittest.TestCase):
         }
         exp_res = {"a-key": "a-value"}
 
-        self.controller.get_immunization_by_identifier.return_value = exp_res
+        self.mock_controller.get_immunization_by_identifier.return_value = exp_res
 
         # When
-        act_res = search_imms(lambda_event, self.controller)
+        act_res = search_imms(lambda_event)
 
         # Then
-        self.controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
+        self.mock_controller.get_immunization_by_identifier.assert_called_once_with(lambda_event)
         self.assertDictEqual(exp_res, act_res)
 
     def test_search_immunizations_lambda_size_limit(self):
@@ -129,36 +132,38 @@ class TestSearchImmunizations(unittest.TestCase):
         request_file = script_location / "sample_data" / "sample_input_search_imms.json"
         with open(request_file) as f:
             exp_res = json.load(f)
-        self.controller.search_immunizations.return_value = json.dumps(exp_res)
+        self.mock_controller.search_immunizations.return_value = json.dumps(exp_res)
 
-        self.controller.search_immunizations.return_value = exp_res
+        self.mock_controller.search_immunizations.return_value = exp_res
 
         # When
-        act_res = search_imms(lambda_event, self.controller)
+        act_res = search_imms(lambda_event)
 
         # Then
-        self.controller.search_immunizations.assert_called_once_with(lambda_event)
+        self.mock_controller.search_immunizations.assert_called_once_with(lambda_event)
         self.assertEqual(act_res["statusCode"], 400)
 
-    def test_handle_exception(self):
+    @patch("search_imms_handler.uuid", autospec=uuid)
+    def test_handle_exception(self, mock_uuid):
         """unhandled exceptions should result in 500"""
         lambda_event = {"pathParameters": {"id": "an-id"}}
         error_msg = "an unhandled error"
-        self.controller.search_immunizations.side_effect = Exception(error_msg)
+        mock_uuid.uuid4.return_value = self.MOCK_RESOURCE_UUID
+        self.mock_controller.search_immunizations.side_effect = Exception(error_msg)
 
         exp_error = create_operation_outcome(
-            resource_id=None,
+            resource_id=self.MOCK_RESOURCE_UUID,
             severity=Severity.error,
             code=Code.server_error,
             diagnostics=GENERIC_SERVER_ERROR_DIAGNOSTICS_MESSAGE,
         )
 
         # When
-        act_res = search_imms(lambda_event, self.controller)
+        act_res = search_imms(lambda_event)
 
         # Then
+        self.mock_logger_exception.assert_called_once_with("Unhandled exception")
         act_body = json.loads(act_res["body"])
 
-        self.assertEqual(exp_error["issue"][0]["code"], act_body["issue"][0]["code"])
-        self.assertEqual(exp_error["issue"][0]["severity"], act_body["issue"][0]["severity"])
+        self.assertDictEqual(act_body, exp_error)
         self.assertEqual(act_res["statusCode"], 500)

@@ -13,12 +13,14 @@ from constants import GENERIC_SERVER_ERROR_DIAGNOSTICS_MESSAGE
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
 
+controller: FhirController = make_controller()
+
 @function_info
 def create_imms_handler(event, _context):
-    return create_immunization(event, make_controller())
+    return create_immunization(event)
 
 
-def create_immunization(event, controller: FhirController):
+def create_immunization(event):
     try:
         return controller.create_immunization(event)
     except Exception:  # pylint: disable = broad-exception-caught

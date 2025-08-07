@@ -1480,7 +1480,7 @@ class TestUpdateImmunization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 400)
         outcome = json.loads(response["body"])
         self.assertEqual(outcome["resourceType"], "OperationOutcome")
-    
+
     @patch("fhir_controller.get_supplier_permissions")
     def test_update_immunization_when_reinstated_true(self, mock_get_permissions):
         """it should update reinstated Immunization"""
@@ -1518,7 +1518,7 @@ class TestUpdateImmunization(unittest.TestCase):
         }
         with self.assertRaises(KeyError):
             self.controller.update_immunization(aws_event)
-    
+
     @patch("fhir_controller.get_supplier_permissions")
     def test_update_reinstated_immunization_with_diagnostics_error(self, mock_get_permissions):
         """it should return 400 if patient validation error is present"""
@@ -1603,9 +1603,8 @@ class TestDeleteImmunization(unittest.TestCase):
         self.assertEqual(response["statusCode"], 204)
         self.assertTrue("body" not in response)
 
-    @patch("fhir_controller.sqs_client.send_message")
     @patch("fhir_controller.get_supplier_permissions")
-    def test_delete_immunization_unauthorised_vax(self, mock_sqs_message,mock_get_permissions):
+    def test_delete_immunization_unauthorised_vax(self, mock_get_permissions):
         # Given
         imms_id = "an-id"
         mock_get_permissions.return_value = ["COVID19.CRUDS"]
@@ -1622,7 +1621,7 @@ class TestDeleteImmunization(unittest.TestCase):
         response = self.controller.delete_immunization(lambda_event)
 
         # Then
-        mock_sqs_message.assert_called_once()
+        mock_get_permissions.assert_called_once_with("Test")
         self.assertEqual(response["statusCode"], 403)
 
     @patch("fhir_controller.get_supplier_permissions")

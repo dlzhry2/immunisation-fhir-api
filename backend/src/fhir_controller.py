@@ -1,15 +1,12 @@
 import base64
-import boto3
 import json
 import os
 import re
 import uuid
 from decimal import Decimal
 from typing import Optional
-import boto3
 from aws_lambda_typing.events import APIGatewayProxyEventV1
 from fhir.resources.R4B.immunization import Immunization
-from boto3 import client as boto3_client
 
 from authorization import Authorization, UnknownPermission
 from fhir_repository import ImmunizationRepository, create_table
@@ -24,19 +21,15 @@ from models.errors import (
     ValidationError,
     IdentifierDuplicationError,
     ParameterException,
-    InconsistentIdError,
     UnauthorizedVaxError,
     UnauthorizedVaxOnRecordError,
     UnauthorizedSystemError,
 )
 from models.utils.generic_utils import check_keys_in_sources
 from models.utils.permissions import get_supplier_permissions
-from models.utils.permission_checker import ApiOperationCode, validate_permissions, _expand_permissions
+from models.utils.permission_checker import ApiOperationCode, validate_permissions, expand_permissions
 from parameter_parser import process_params, process_search_params, create_query_string
 import urllib.parse
-
-sqs_client = boto3_client("sqs", region_name="eu-west-2")
-queue_url = os.getenv("SQS_QUEUE_URL", "Queue_url")
 
 
 def make_controller(
@@ -416,7 +409,7 @@ class FhirController:
             return self.create_response(403, unauthorized.to_operation_outcome())
         # Check vaxx type permissions on the existing record - start
         try:
-            expanded_permissions = _expand_permissions(imms_vax_type_perms)
+            expanded_permissions = expand_permissions(imms_vax_type_perms)
             vax_type_perm = [
                 vaccine_type
                 for vaccine_type in search_params.immunization_targets

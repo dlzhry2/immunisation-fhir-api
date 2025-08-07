@@ -13,12 +13,14 @@ from constants import GENERIC_SERVER_ERROR_DIAGNOSTICS_MESSAGE
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
 
+controller: FhirController = make_controller()
+
 @function_info
 def update_imms_handler(event, _context):
-    return update_imms(event, make_controller())
+    return update_imms(event)
 
 
-def update_imms(event, controller: FhirController):
+def update_imms(event):
     try:
         return controller.update_immunization(event)
     except Exception:  # pylint: disable = broad-exception-caught
@@ -49,4 +51,3 @@ if __name__ == "__main__":
 
     pprint.pprint(event)
     pprint.pprint(update_imms_handler(event, {}))
- 

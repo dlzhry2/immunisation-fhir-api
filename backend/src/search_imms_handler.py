@@ -2,7 +2,6 @@ import argparse
 import json
 import logging
 import pprint
-import traceback
 import uuid
 
 from aws_lambda_typing import context as context_, events
@@ -18,12 +17,14 @@ import urllib.parse
 logging.basicConfig(level="INFO")
 logger = logging.getLogger()
 
+controller: FhirController = make_controller()
+
 @function_info
 def search_imms_handler(event: events.APIGatewayProxyEventV1, _context: context_):
-    return search_imms(event, make_controller())
+    return search_imms(event)
 
 
-def search_imms(event: events.APIGatewayProxyEventV1, controller: FhirController):
+def search_imms(event: events.APIGatewayProxyEventV1):
     try:
         query_params = event.get("queryStringParameters", {})
         body = event.get("body")

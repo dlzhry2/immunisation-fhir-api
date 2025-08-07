@@ -7,7 +7,7 @@ class ApiOperationCode(StrEnum):
     DELETE = "d"
     SEARCH = "s"
 
-def _expand_permissions(permissions: list[str]) -> dict[str, list[ApiOperationCode]]:
+def expand_permissions(permissions: list[str]) -> dict[str, list[ApiOperationCode]]:
     expanded_permissions = {}
     for permission in permissions:
         vaccine_type, operation_codes_str = permission.split(".", maxsplit=1)
@@ -21,7 +21,7 @@ def _expand_permissions(permissions: list[str]) -> dict[str, list[ApiOperationCo
     return expanded_permissions
 
 def validate_permissions(permissions: list[str], operation: ApiOperationCode, vaccine_types: list[str]):
-    expanded_permissions = _expand_permissions(permissions)
+    expanded_permissions = expand_permissions(permissions)
     print(f"operation: {operation}, expanded_permissions: {expanded_permissions}, vaccine_types: {vaccine_types}")
     return all(
         operation in expanded_permissions.get(vaccine_type.lower(), [])
